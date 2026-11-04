@@ -1,0 +1,117 @@
+[gd_scene load_steps=10 format=3]
+
+[ext_resource type="PackedScene" path="res://world/buildings/fantasy_house.tscn" id="1_house"]
+[ext_resource type="PackedScene" path="res://assets/Medieval Village MegaKit[Standard]/glTF/Prop_WoodenFence_Single.gltf" id="2_fence"]
+[ext_resource type="PackedScene" path="res://assets/Medieval Village MegaKit[Standard]/glTF/Prop_Wagon.gltf" id="3_wagon"]
+[ext_resource type="PackedScene" path="res://assets/Exports/glTF/FarmCrate_Carrot.gltf" id="4_carrot_crate"]
+[ext_resource type="PackedScene" path="res://assets/Exports/glTF/FarmCrate_Apple.gltf" id="5_apple_crate"]
+[ext_resource type="PackedScene" path="res://assets/Exports/glTF/Workbench.gltf" id="6_workbench"]
+[ext_resource type="PackedScene" path="res://assets/Exports/glTF/Carrot.gltf" id="7_carrot"]
+[ext_resource type="PackedScene" path="res://assets/Ultimate Stylized Nature - May 2022-20261102T070539Z-1-001/Ultimate Stylized Nature - May 2022/glTF/Bush_Small_Flowers.gltf" id="8_bush"]
+[ext_resource type="PackedScene" path="res://assets/Exports/glTF/Barrel.gltf" id="9_barrel"]
+
+[node name="FarmZone" type="Node3D"]
+
+[node name="FarmHouse" parent="." instance=ExtResource("1_house")]
+position = Vector3(-4.5, 0, -1.0)
+scale = Vector3(0.74, 0.74, 0.74)
+rotation_degrees = Vector3(0, 32, 0)
+
+[node name="Wagon" parent="." instance=ExtResource("3_wagon")]
+position = Vector3(3.6, 0, -2.2)
+scale = Vector3(0.85, 0.85, 0.85)
+rotation_degrees = Vector3(0, -25, 0)
+
+[node name="Workbench" parent="." instance=ExtResource("6_workbench")]
+position = Vector3(-1.2, 0, -3.4)
+rotation_degrees = Vector3(0, 15, 0)
+
+[node name="CarrotCrate" parent="." instance=ExtResource("4_carrot_crate")]
+position = Vector3(1.7, 0, -2.9)
+
+[node name="AppleCrate" parent="." instance=ExtResource("5_apple_crate")]
+position = Vector3(2.5, 0, -2.7)
+rotation_degrees = Vector3(0, 14, 0)
+
+[node name="Barrel" parent="." instance=ExtResource("9_barrel")]
+position = Vector3(-2.1, 0, -3.1)
+
+[node name="CropFenceNorth1" parent="." instance=ExtResource("2_fence")]
+position = Vector3(0, 0, 4.6)
+
+[node name="CropFenceNorth2" parent="." instance=ExtResource("2_fence")]
+position = Vector3(2, 0, 4.6)
+
+[node name="CropFenceNorth3" parent="." instance=ExtResource("2_fence")]
+position = Vector3(4, 0, 4.6)
+
+[node name="CropFenceSouth1" parent="." instance=ExtResource("2_fence")]
+position = Vector3(0, 0, -0.6)
+
+[node name="CropFenceSouth2" parent="." instance=ExtResource("2_fence")]
+position = Vector3(2, 0, -0.6)
+
+[node name="CropFenceSouth3" parent="." instance=ExtResource("2_fence")]
+position = Vector3(4, 0, -0.6)
+
+[node name="CropFenceWest1" parent="." instance=ExtResource("2_fence")]
+position = Vector3(-1, 0, 0.4)
+rotation_degrees = Vector3(0, 90, 0)
+
+[node name="CropFenceWest2" parent="." instance=ExtResource("2_fence")]
+position = Vector3(-1, 0, 2.4)
+rotation_degrees = Vector3(0, 90, 0)
+
+[node name="CropFenceEast1" parent="." instance=ExtResource("2_fence")]
+position = Vector3(5, 0, 0.4)
+rotation_degrees = Vector3(0, 90, 0)
+
+[node name="CropFenceEast2" parent="." instance=ExtResource("2_fence")]
+position = Vector3(5, 0, 2.4)
+rotation_degrees = Vector3(0, 90, 0)
+
+[node name="Carrot01" parent="." instance=ExtResource("7_carrot")]
+position = Vector3(0.2, 0, 0.6)
+[node name="Carrot02" parent="." instance=ExtResource("7_carrot")]
+position = Vector3(1.0, 0, 0.7)
+[node name="Carrot03" parent="." instance=ExtResource("7_carrot")]
+position = Vector3(1.8, 0, 0.6)
+[node name="Carrot04" parent="." instance=ExtResource("7_carrot")]
+position = Vector3(2.6, 0, 0.7)
+[node name="Carrot05" parent="." instance=ExtResource("7_carrot")]
+position = Vector3(3.4, 0, 0.6)
+[node name="Carrot06" parent="." instance=ExtResource("7_carrot")]
+position = Vector3(4.2, 0, 0.7)
+[node name="Carrot07" parent="." instance=ExtResource("7_carrot")]
+position = Vector3(0.2, 0, 2.0)
+[node name="Carrot08" parent="." instance=ExtResource("7_carrot")]
+position = Vector3(1.0, 0, 2.1)
+[node name="Carrot09" parent="." instance=ExtResource("7_carrot")]
+position = Vector3(1.8, 0, 2.0)
+[node name="Carrot10" parent="." instance=ExtResource("7_carrot")]
+position = Vector3(2.6, 0, 2.1)
+[node name="Carrot11" parent="." instance=ExtResource("7_carrot")]
+position = Vector3(3.4, 0, 2.0)
+[node name="Carrot12" parent="." instance=ExtResource("7_carrot")]
+position = Vector3(4.2, 0, 2.1)
+[node name="Carrot13" parent="." instance=ExtResource("7_carrot")]
+position = Vector3(0.2, 0, 3.4)
+[node name="Carrot14" parent="." instance=ExtResource("7_carrot")]
+position = Vector3(1.0, 0, 3.5)
+[node name="Carrot15" parent="." instance=ExtResource("7_carrot")]
+position = Vector3(1.8, 0, 3.4)
+[node name="Carrot16" parent="." instance=ExtResource("7_carrot")]
+position = Vector3(2.6, 0, 3.5)
+[node name="Carrot17" parent="." instance=ExtResource("7_carrot")]
+position = Vector3(3.4, 0, 3.4)
+[node name="Carrot18" parent="." instance=ExtResource("7_carrot")]
+position = Vector3(4.2, 0, 3.5)
+
+[node name="FlowerBush1" parent="." instance=ExtResource("8_bush")]
+position = Vector3(-1.2, 0, 5.1)
+scale = Vector3(0.65, 0.65, 0.65)
+
+[node name="FlowerBush2" parent="." instance=ExtResource("8_bush")]
+position = Vector3(5.2, 0, 5.0)
+scale = Vector3(0.58, 0.58, 0.58)
+rotation_degrees = Vector3(0, 45, 0)

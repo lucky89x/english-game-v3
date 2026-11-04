@@ -1,0 +1,33 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/elder_npc.gd" id="1_npc"]
+[ext_resource type="PackedScene" path="res://assets/redesign03/tom_elder.glb" id="2_model"]
+
+[sub_resource type="SphereShape3D" id="InteractionShape"]
+radius = 2.6
+
+[node name="ElderNPC" type="Node3D"]
+script = ExtResource("1_npc")
+
+[node name="ModelSocket" type="Node3D" parent="."]
+metadata/asset_status = "Redesign03 Tom: custom skinned mesh, Idle/Talk/Wave/Walk/Run"
+
+[node name="Wizard" parent="ModelSocket" instance=ExtResource("2_model")]
+scale = Vector3(1, 1, 1)
+
+[node name="MissingAssetMarker" type="Label3D" parent="."]
+position = Vector3(0, 2.0, 0)
+text = "Trưởng làng Tom"
+font_size = 32
+outline_size = 8
+modulate = Color(1, 0.91, 0.58, 1)
+billboard = 1
+no_depth_test = true
+
+[node name="InteractionArea" type="Area3D" parent="."]
+collision_layer = 0
+collision_mask = 1
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="InteractionArea"]
+position = Vector3(0, 1, 0)
+shape = SubResource("InteractionShape")

@@ -1,0 +1,58 @@
+[gd_scene load_steps=11 format=3]
+
+[ext_resource type="PackedScene" path="res://assets/Exports/glTF/Stall_Cart_Empty.gltf" id="1_cart"]
+[ext_resource type="PackedScene" path="res://assets/Exports/glTF/Stall_Empty.gltf" id="2_stall"]
+[ext_resource type="PackedScene" path="res://assets/Exports/glTF/Barrel_Apples.gltf" id="3_apples"]
+[ext_resource type="PackedScene" path="res://assets/Exports/glTF/Crate_Wooden.gltf" id="4_crate"]
+[ext_resource type="PackedScene" path="res://assets/Exports/glTF/FarmCrate_Apple.gltf" id="5_farm_crate"]
+[ext_resource type="PackedScene" path="res://assets/Exports/glTF/Bench.gltf" id="6_bench"]
+[ext_resource type="PackedScene" path="res://assets/Exports/glTF/Banner_1.gltf" id="7_banner"]
+[ext_resource type="PackedScene" path="res://assets/Exports/glTF/Lantern_Wall.gltf" id="8_lantern"]
+[ext_resource type="PackedScene" path="res://assets/Exports/glTF/Cauldron.gltf" id="9_cauldron"]
+[ext_resource type="PackedScene" path="res://assets/Exports/glTF/Bag.gltf" id="10_bag"]
+
+[node name="MarketSquare" type="Node3D"]
+
+[node name="ProduceCart" parent="." instance=ExtResource("1_cart")]
+position = Vector3(-3.8, 0, -0.7)
+rotation_degrees = Vector3(0, 92, 0)
+
+[node name="ClothStall" parent="." instance=ExtResource("2_stall")]
+position = Vector3(3.5, 0, 0.5)
+rotation_degrees = Vector3(0, -88, 0)
+
+[node name="AppleBarrel" parent="." instance=ExtResource("3_apples")]
+position = Vector3(-2.25, 0, -1.15)
+rotation_degrees = Vector3(0, 24, 0)
+
+[node name="WoodenCrate" parent="." instance=ExtResource("4_crate")]
+position = Vector3(2.35, 0, 1.3)
+rotation_degrees = Vector3(0, -18, 0)
+
+[node name="AppleCrate" parent="." instance=ExtResource("5_farm_crate")]
+position = Vector3(2.4, 0.02, -0.65)
+rotation_degrees = Vector3(0, 12, 0)
+
+[node name="RestBench" parent="." instance=ExtResource("6_bench")]
+position = Vector3(0.2, 0, 3.15)
+rotation_degrees = Vector3(0, 180, 0)
+
+[node name="VillageBanner" parent="." instance=ExtResource("7_banner")]
+position = Vector3(-0.2, 1.55, -3.3)
+rotation_degrees = Vector3(0, 90, 0)
+
+[node name="WarmLanternWest" parent="." instance=ExtResource("8_lantern")]
+position = Vector3(-2.8, 1.9, -0.9)
+rotation_degrees = Vector3(0, 90, 0)
+
+[node name="WarmLanternEast" parent="." instance=ExtResource("8_lantern")]
+position = Vector3(2.75, 1.9, 0.25)
+rotation_degrees = Vector3(0, -90, 0)
+
+[node name="Cauldron" parent="." instance=ExtResource("9_cauldron")]
+position = Vector3(4.25, 0, 2.25)
+rotation_degrees = Vector3(0, -25, 0)
+
+[node name="MerchantBag" parent="." instance=ExtResource("10_bag")]
+position = Vector3(-3.05, 0, 1.15)
+rotation_degrees = Vector3(0, 35, 0)

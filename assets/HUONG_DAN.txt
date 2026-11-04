@@ -1,0 +1,26 @@
+# EnglishQuestV3 — Ảnh tham chiếu (KHÔNG phải 3D mesh)
+
+## Giải nén ở đâu
+Giải nén nội dung ZIP vào thư mục gốc dự án Godot của bạn (nơi có `project.godot`).
+
+Ví dụ nếu dự án nằm ở `D:\EnglishQuestV3`, các ảnh sẽ ở:
+
+- `D:\EnglishQuestV3\assets\reference_art\village\starter_village_concept.png`
+- `D:\EnglishQuestV3\assets\reference_art\village\village_modular_asset_concept.png`
+- `D:\EnglishQuestV3\assets\reference_art\characters\characters_npc_creatures_concept.png`
+
+Trong Godot: `res://assets/reference_art/`.
+
+## Lưu ý
+- Ba file này là PNG phối cảnh / concept sheet, **không phải** `.glb`, `.gltf`, `Skeleton3D` hay model có Idle/Walk/Run.
+- Không được coi là đã hoàn thiện mô hình nhân vật bằng cách đặt PNG lên plane/billboard.
+- Dùng làm hướng dẫn mỹ thuật khi chọn asset 3D Quaternius hoặc dựng 3D mới bằng Blender.
+- Đặt `.glb` nhân vật tại `res://assets/characters/models/`; `.glb` NPC tại `res://assets/npc/models/`; nhà/cảnh tại `res://assets/environment/village/models/`.
+- Giữ nguyên thư mục `res://assets/third_party/` hiện có và kiểm tra giấy phép bộ model tải về.
+
+## Nhiệm vụ đề nghị cho Codex
+1. Kiểm kê asset 3D thật dưới `res://assets/third_party/`, thống kê model `.glb`/`.gltf` và animation có sẵn.
+2. Dùng hai ảnh concept là chuẩn phối màu, tỷ lệ, độ dày chi tiết của cảnh làng, thay thế mô hình tạm bằng asset 3D thật.
+3. Xác định nhân vật 3D có Skeleton3D/AnimationPlayer hoặc AnimationTree. Nếu thiếu phải báo cáo, không coi capsule là đã hoàn thành.
+4. Đối với các nhân vật chibi trong ảnh tham chiếu, tạo danh sách model/rig/animation cần sản xuất riêng.
+5. Nhập một nhân vật mẫu vào Godot trước, kiểm tra Idle/Walk/Run, scale, collision và FPS rồi mới mở rộng.

@@ -1,0 +1,71 @@
+[gd_scene load_steps=10 format=3]
+
+[sub_resource type="StandardMaterial3D" id="StoneMaterial"]
+albedo_color = Color(0.43, 0.44, 0.40, 1)
+roughness = 0.95
+
+[sub_resource type="StandardMaterial3D" id="WoodMaterial"]
+albedo_color = Color(0.34, 0.17, 0.075, 1)
+roughness = 0.9
+
+[sub_resource type="StandardMaterial3D" id="RoofMaterial"]
+albedo_color = Color(0.64, 0.22, 0.10, 1)
+roughness = 0.88
+
+[sub_resource type="CylinderMesh" id="WellBodyMesh"]
+material = SubResource("StoneMaterial")
+top_radius = 1.15
+bottom_radius = 1.28
+height = 0.9
+radial_segments = 12
+
+[sub_resource type="TorusMesh" id="WellRimMesh"]
+material = SubResource("StoneMaterial")
+inner_radius = 0.88
+outer_radius = 1.28
+rings = 12
+ring_segments = 8
+
+[sub_resource type="BoxMesh" id="PostMesh"]
+material = SubResource("WoodMaterial")
+size = Vector3(0.18, 2.8, 0.18)
+
+[sub_resource type="BoxMesh" id="RoofMesh"]
+material = SubResource("RoofMaterial")
+size = Vector3(1.65, 0.16, 2.8)
+
+[sub_resource type="CylinderShape3D" id="WellCollision"]
+radius = 1.25
+height = 1.1
+
+[node name="VillageWell" type="StaticBody3D"]
+
+[node name="Body" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.45, 0)
+mesh = SubResource("WellBodyMesh")
+
+[node name="Rim" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.92, 0)
+mesh = SubResource("WellRimMesh")
+
+[node name="PostLeft" type="MeshInstance3D" parent="."]
+position = Vector3(-1.05, 1.65, 0)
+mesh = SubResource("PostMesh")
+
+[node name="PostRight" type="MeshInstance3D" parent="."]
+position = Vector3(1.05, 1.65, 0)
+mesh = SubResource("PostMesh")
+
+[node name="RoofLeft" type="MeshInstance3D" parent="."]
+position = Vector3(-0.72, 2.95, 0)
+rotation_degrees = Vector3(0, 0, -27)
+mesh = SubResource("RoofMesh")
+
+[node name="RoofRight" type="MeshInstance3D" parent="."]
+position = Vector3(0.72, 2.95, 0)
+rotation_degrees = Vector3(0, 0, 27)
+mesh = SubResource("RoofMesh")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+position = Vector3(0, 0.55, 0)
+shape = SubResource("WellCollision")

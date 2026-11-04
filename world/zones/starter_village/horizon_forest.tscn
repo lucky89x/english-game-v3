@@ -1,0 +1,44 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="PackedScene" path="res://world/zones/starter_village/forest_cluster.tscn" id="1_cluster"]
+
+[node name="HorizonForest" type="Node3D"]
+
+[node name="North" parent="." instance=ExtResource("1_cluster")]
+position = Vector3(0, 2.0, -40)
+scale = Vector3(1.15, 1.15, 1.15)
+
+[node name="NorthEast" parent="." instance=ExtResource("1_cluster")]
+position = Vector3(29, 0.7, -31)
+scale = Vector3(1.05, 1.05, 1.05)
+rotation_degrees = Vector3(0, 42, 0)
+
+[node name="East" parent="." instance=ExtResource("1_cluster")]
+position = Vector3(40, 2.0, -4)
+scale = Vector3(1.12, 1.12, 1.12)
+rotation_degrees = Vector3(0, 90, 0)
+
+[node name="SouthEast" parent="." instance=ExtResource("1_cluster")]
+position = Vector3(31, 0.8, 31)
+scale = Vector3(1.08, 1.08, 1.08)
+rotation_degrees = Vector3(0, 135, 0)
+
+[node name="South" parent="." instance=ExtResource("1_cluster")]
+position = Vector3(0, 2.0, 41)
+scale = Vector3(1.16, 1.16, 1.16)
+rotation_degrees = Vector3(0, 180, 0)
+
+[node name="SouthWest" parent="." instance=ExtResource("1_cluster")]
+position = Vector3(-31, 0.8, 30)
+scale = Vector3(1.08, 1.08, 1.08)
+rotation_degrees = Vector3(0, 220, 0)
+
+[node name="West" parent="." instance=ExtResource("1_cluster")]
+position = Vector3(-41, 2.0, 0)
+scale = Vector3(1.15, 1.15, 1.15)
+rotation_degrees = Vector3(0, 270, 0)
+
+[node name="NorthWest" parent="." instance=ExtResource("1_cluster")]
+position = Vector3(-30, 0.8, -31)
+scale = Vector3(1.08, 1.08, 1.08)
+rotation_degrees = Vector3(0, 315, 0)

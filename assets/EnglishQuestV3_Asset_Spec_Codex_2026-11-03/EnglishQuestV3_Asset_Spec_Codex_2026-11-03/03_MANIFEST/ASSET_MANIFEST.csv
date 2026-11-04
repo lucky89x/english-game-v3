@@ -1,0 +1,106 @@
+﻿id,group,name,priority,reference,target_path,rig,animations,enterable,notes,delivery_status
+chr_ngoc_adventurer,characters,Ngọc - nữ phiêu lưu,P0,REF_01_FEMALE_HERO.png,assets/original_3d/characters/chr_ngoc_adventurer_v01.glb,Skeleton3D,Idle|Walk|Run|Jump|Fall|Land|Talk|Interact,,"1.50m, red scarf, goggles, 2K textures, HUD portrait",NOT_STARTED
+npc_tom_elder,npcs,Trưởng làng Tom,P0,REF_02_ELDER_NPCS.png,assets/original_3d/npcs/npc_tom_elder_v01.glb,Skeleton3D,Idle|Walk|Talk|Wave,,,NOT_STARTED
+npc_sam_fisherman,npcs,Bác Sam ngư dân,P1,REF_02_ELDER_NPCS.png,assets/original_3d/npcs/npc_sam_fisherman_v01.glb,Skeleton3D,Idle|Walk|Talk|Fishing,,,NOT_STARTED
+npc_ben_merchant,npcs,Chú Ben bán hàng,P1,REF_02_ELDER_NPCS.png,assets/original_3d/npcs/npc_ben_merchant_v01.glb,Skeleton3D,Idle|Walk|Talk|GiveItem,,,NOT_STARTED
+npc_professor_scholar,npcs,Giáo viên học giả,P1,REF_02_ELDER_NPCS.png,assets/original_3d/npcs/npc_professor_scholar_v01.glb,Skeleton3D,Idle|Read|Talk|Point,,,NOT_STARTED
+npc_forge_blacksmith,npcs,Thợ rèn,P1,REF_02_ELDER_NPCS.png,assets/original_3d/npcs/npc_forge_blacksmith_v01.glb,Skeleton3D,Idle|Hammer|Talk,,,NOT_STARTED
+npc_herbalist,npcs,Người bán thảo dược,P1,REF_02_ELDER_NPCS.png,assets/original_3d/npcs/npc_herbalist_v01.glb,Skeleton3D,Idle|Walk|Talk|PickHerb,,,NOT_STARTED
+chr_forest_druid,characters,Nữ pháp sư rừng,P2,REF_01_FEMALE_HERO.png,assets/original_3d/characters/chr_forest_druid_v01.glb,Skeleton3D,Idle|Walk|Talk,,,NOT_STARTED
+chr_winter_traveler,characters,Nữ lữ khách,P2,REF_01_FEMALE_HERO.png,assets/original_3d/characters/chr_winter_traveler_v01.glb,Skeleton3D,Idle|Walk|Talk,,,NOT_STARTED
+npc_baker_girl,characters,Nữ thợ bánh,P2,REF_01_FEMALE_HERO.png,assets/original_3d/characters/npc_baker_girl_v01.glb,Skeleton3D,Idle|Walk|Talk,,,NOT_STARTED
+npc_musician_girl,characters,Nữ nhạc công,P2,REF_01_FEMALE_HERO.png,assets/original_3d/characters/npc_musician_girl_v01.glb,Skeleton3D,Idle|Walk|Talk,,,NOT_STARTED
+npc_fairy_mage,characters,Nữ pháp sư ánh sao,P2,REF_01_FEMALE_HERO.png,assets/original_3d/characters/npc_fairy_mage_v01.glb,Skeleton3D,Idle|Walk|Talk,,,NOT_STARTED
+bld_cottage_small_a,buildings,Nhà dân nhỏ mái đỏ,P1,REF_03_ENVIRONMENT.png|REF_04_VILLAGE_SCENE.png,assets/original_3d/buildings/bld_cottage_small_a_v01.glb,static_or_shader_mesh,,no,,NOT_STARTED
+bld_house_medium_blue,buildings,Nhà trung bình mái xanh,P1,REF_03_ENVIRONMENT.png|REF_04_VILLAGE_SCENE.png,assets/original_3d/buildings/bld_house_medium_blue_v01.glb,static_or_shader_mesh,,optional,,NOT_STARTED
+bld_house_large_family,buildings,Nhà dân lớn 2 tầng,P1,REF_03_ENVIRONMENT.png|REF_04_VILLAGE_SCENE.png,assets/original_3d/buildings/bld_house_large_family_v01.glb,static_or_shader_mesh,,yes,,NOT_STARTED
+bld_mayor_hall,buildings,Hội trường/Nhà trưởng làng,P0,REF_03_ENVIRONMENT.png|REF_04_VILLAGE_SCENE.png,assets/original_3d/buildings/bld_mayor_hall_v01.glb,static_or_shader_mesh,,yes,,NOT_STARTED
+bld_school_library,buildings,Trường học và thư viện,P1,REF_03_ENVIRONMENT.png|REF_04_VILLAGE_SCENE.png,assets/original_3d/buildings/bld_school_library_v01.glb,static_or_shader_mesh,,yes,,NOT_STARTED
+bld_shop_general,buildings,Cửa hàng trong nhà,P1,REF_03_ENVIRONMENT.png|REF_04_VILLAGE_SCENE.png,assets/original_3d/buildings/bld_shop_general_v01.glb,static_or_shader_mesh,,yes,,NOT_STARTED
+bld_riverside_fisher,buildings,Nhà ngư dân,P1,REF_03_ENVIRONMENT.png|REF_04_VILLAGE_SCENE.png,assets/original_3d/buildings/bld_riverside_fisher_v01.glb,static_or_shader_mesh,,optional,,NOT_STARTED
+bld_bakery,buildings,Tiệm bánh,P2,REF_03_ENVIRONMENT.png|REF_04_VILLAGE_SCENE.png,assets/original_3d/buildings/bld_bakery_v01.glb,static_or_shader_mesh,,yes,,NOT_STARTED
+bld_blacksmith,buildings,Lò rèn,P1,REF_03_ENVIRONMENT.png|REF_04_VILLAGE_SCENE.png,assets/original_3d/buildings/bld_blacksmith_v01.glb,static_or_shader_mesh,,yes,,NOT_STARTED
+bld_watchtower,buildings,Tháp canh,P1,REF_03_ENVIRONMENT.png|REF_04_VILLAGE_SCENE.png,assets/original_3d/buildings/bld_watchtower_v01.glb,static_or_shader_mesh,,optional,,NOT_STARTED
+bld_small_keep,buildings,Lâu đài nhỏ,P2,REF_03_ENVIRONMENT.png|REF_04_VILLAGE_SCENE.png,assets/original_3d/buildings/bld_small_keep_v01.glb,static_or_shader_mesh,,yes,,NOT_STARTED
+bld_farm_barn,buildings,Kho nông trại,P1,REF_03_ENVIRONMENT.png|REF_04_VILLAGE_SCENE.png,assets/original_3d/buildings/bld_farm_barn_v01.glb,static_or_shader_mesh,,optional,,NOT_STARTED
+bld_tavern,buildings,Quán nghỉ chân,P2,REF_03_ENVIRONMENT.png|REF_04_VILLAGE_SCENE.png,assets/original_3d/buildings/bld_tavern_v01.glb,static_or_shader_mesh,,yes,,NOT_STARTED
+brg_wood_arch,bridges,Cầu gỗ cong,P0,REF_03_ENVIRONMENT.png,assets/original_3d/bridges/brg_wood_arch_v01.glb,static_or_shader_mesh,,,,NOT_STARTED
+brg_stone_arch,bridges,Cầu đá vòm,P1,REF_03_ENVIRONMENT.png,assets/original_3d/bridges/brg_stone_arch_v01.glb,static_or_shader_mesh,,,,NOT_STARTED
+brg_rope_suspension,bridges,Cầu dây treo,P2,REF_03_ENVIRONMENT.png,assets/original_3d/bridges/brg_rope_suspension_v01.glb,static_or_shader_mesh,,,,NOT_STARTED
+trn_ground_grass_mix,terrain,Nền cỏ nhiều lớp,P0,REF_03_ENVIRONMENT.png,assets/original_3d/terrain/trn_ground_grass_mix_v01.glb,static_or_shader_mesh,,,"Terrain may be shader/mesh chunks, not necessarily GLB alone",NOT_STARTED
+trn_ground_dirt_path,terrain,Đường đất chuyển cỏ,P0,REF_03_ENVIRONMENT.png,assets/original_3d/terrain/trn_ground_dirt_path_v01.glb,static_or_shader_mesh,,,"Terrain may be shader/mesh chunks, not necessarily GLB alone",NOT_STARTED
+trn_ground_cobblestone,terrain,Đường đá tự nhiên,P1,REF_03_ENVIRONMENT.png,assets/original_3d/terrain/trn_ground_cobblestone_v01.glb,static_or_shader_mesh,,,"Terrain may be shader/mesh chunks, not necessarily GLB alone",NOT_STARTED
+trn_ground_shore,terrain,Đất bờ sông,P0,REF_03_ENVIRONMENT.png,assets/original_3d/terrain/trn_ground_shore_v01.glb,static_or_shader_mesh,,,"Terrain may be shader/mesh chunks, not necessarily GLB alone",NOT_STARTED
+trn_ground_farm_soil,terrain,Đất ruộng,P1,REF_03_ENVIRONMENT.png,assets/original_3d/terrain/trn_ground_farm_soil_v01.glb,static_or_shader_mesh,,,"Terrain may be shader/mesh chunks, not necessarily GLB alone",NOT_STARTED
+trn_cliff_straight,terrain,Vách đá thẳng,P1,REF_03_ENVIRONMENT.png,assets/original_3d/terrain/trn_cliff_straight_v01.glb,static_or_shader_mesh,,,"Terrain may be shader/mesh chunks, not necessarily GLB alone",NOT_STARTED
+trn_cliff_corner,terrain,Vách đá góc,P1,REF_03_ENVIRONMENT.png,assets/original_3d/terrain/trn_cliff_corner_v01.glb,static_or_shader_mesh,,,"Terrain may be shader/mesh chunks, not necessarily GLB alone",NOT_STARTED
+trn_cliff_stairs,terrain,Bậc thang vách đá,P1,REF_03_ENVIRONMENT.png,assets/original_3d/terrain/trn_cliff_stairs_v01.glb,static_or_shader_mesh,,,"Terrain may be shader/mesh chunks, not necessarily GLB alone",NOT_STARTED
+trn_rock_a,terrain,Đá lớn A,P1,REF_03_ENVIRONMENT.png,assets/original_3d/terrain/trn_rock_a_v01.glb,static_or_shader_mesh,,,"Terrain may be shader/mesh chunks, not necessarily GLB alone",NOT_STARTED
+trn_rock_b,terrain,Đá lớn B,P1,REF_03_ENVIRONMENT.png,assets/original_3d/terrain/trn_rock_b_v01.glb,static_or_shader_mesh,,,"Terrain may be shader/mesh chunks, not necessarily GLB alone",NOT_STARTED
+trn_rock_small_cluster,terrain,Cụm sỏi/đá nhỏ,P1,REF_03_ENVIRONMENT.png,assets/original_3d/terrain/trn_rock_small_cluster_v01.glb,static_or_shader_mesh,,,"Terrain may be shader/mesh chunks, not necessarily GLB alone",NOT_STARTED
+trn_cave_entrance,terrain,Cửa hang,P1,REF_03_ENVIRONMENT.png,assets/original_3d/terrain/trn_cave_entrance_v01.glb,static_or_shader_mesh,,,"Terrain may be shader/mesh chunks, not necessarily GLB alone",NOT_STARTED
+wat_river_straight,water,Sông thẳng,P0,REF_03_ENVIRONMENT.png,assets/original_3d/water/wat_river_straight_v01.glb,static_or_shader_mesh,,,Mesh .glb + motion shader in Godot,NOT_STARTED
+wat_river_curve,water,Sông uốn,P1,REF_03_ENVIRONMENT.png,assets/original_3d/water/wat_river_curve_v01.glb,static_or_shader_mesh,,,Mesh .glb + motion shader in Godot,NOT_STARTED
+wat_river_junction,water,Ngã ba sông,P2,REF_03_ENVIRONMENT.png,assets/original_3d/water/wat_river_junction_v01.glb,static_or_shader_mesh,,,Mesh .glb + motion shader in Godot,NOT_STARTED
+wat_pond_a,water,Hồ nhỏ,P1,REF_03_ENVIRONMENT.png,assets/original_3d/water/wat_pond_a_v01.glb,static_or_shader_mesh,,,Mesh .glb + motion shader in Godot,NOT_STARTED
+wat_pond_b,water,Hồ lớn,P2,REF_03_ENVIRONMENT.png,assets/original_3d/water/wat_pond_b_v01.glb,static_or_shader_mesh,,,Mesh .glb + motion shader in Godot,NOT_STARTED
+wat_waterfall_small,water,Thác nhỏ,P1,REF_03_ENVIRONMENT.png,assets/original_3d/water/wat_waterfall_small_v01.glb,static_or_shader_mesh,,,Mesh .glb + motion shader in Godot,NOT_STARTED
+wat_waterfall_large,water,Thác nhiều tầng,P2,REF_03_ENVIRONMENT.png,assets/original_3d/water/wat_waterfall_large_v01.glb,static_or_shader_mesh,,,Mesh .glb + motion shader in Godot,NOT_STARTED
+wat_shore_rocks,water,Cụm bờ đá ven sông,P0,REF_03_ENVIRONMENT.png,assets/original_3d/water/wat_shore_rocks_v01.glb,static_or_shader_mesh,,,Mesh .glb + motion shader in Godot,NOT_STARTED
+wat_lily_pads,water,Lá/hoa súng,P1,REF_03_ENVIRONMENT.png,assets/original_3d/water/wat_lily_pads_v01.glb,static_or_shader_mesh,,,Mesh .glb + motion shader in Godot,NOT_STARTED
+wat_reeds,water,Lau sậy ven bờ,P1,REF_03_ENVIRONMENT.png,assets/original_3d/water/wat_reeds_v01.glb,static_or_shader_mesh,,,Mesh .glb + motion shader in Godot,NOT_STARTED
+veg_oak_a,vegetation,Cây tán tròn A,P1,REF_03_ENVIRONMENT.png,assets/original_3d/vegetation/veg_oak_a_v01.glb,static_or_shader_mesh,,,,NOT_STARTED
+veg_oak_b,vegetation,Cây tán tròn B,P1,REF_03_ENVIRONMENT.png,assets/original_3d/vegetation/veg_oak_b_v01.glb,static_or_shader_mesh,,,,NOT_STARTED
+veg_pine_a,vegetation,Cây thông A,P1,REF_03_ENVIRONMENT.png,assets/original_3d/vegetation/veg_pine_a_v01.glb,static_or_shader_mesh,,,,NOT_STARTED
+veg_pine_b,vegetation,Cây thông B,P1,REF_03_ENVIRONMENT.png,assets/original_3d/vegetation/veg_pine_b_v01.glb,static_or_shader_mesh,,,,NOT_STARTED
+veg_blossom_pink,vegetation,Cây hoa anh đào,P1,REF_03_ENVIRONMENT.png,assets/original_3d/vegetation/veg_blossom_pink_v01.glb,static_or_shader_mesh,,,,NOT_STARTED
+veg_birch,vegetation,Cây bạch dương,P1,REF_03_ENVIRONMENT.png,assets/original_3d/vegetation/veg_birch_v01.glb,static_or_shader_mesh,,,,NOT_STARTED
+veg_bush_flower_white,vegetation,Bụi hoa trắng,P1,REF_03_ENVIRONMENT.png,assets/original_3d/vegetation/veg_bush_flower_white_v01.glb,static_or_shader_mesh,,,,NOT_STARTED
+veg_bush_berry_red,vegetation,Bụi quả đỏ,P1,REF_03_ENVIRONMENT.png,assets/original_3d/vegetation/veg_bush_berry_red_v01.glb,static_or_shader_mesh,,,,NOT_STARTED
+veg_flower_patch_a,vegetation,Cụm hoa dại A,P1,REF_03_ENVIRONMENT.png,assets/original_3d/vegetation/veg_flower_patch_a_v01.glb,static_or_shader_mesh,,,,NOT_STARTED
+veg_flower_patch_b,vegetation,Cụm hoa dại B,P1,REF_03_ENVIRONMENT.png,assets/original_3d/vegetation/veg_flower_patch_b_v01.glb,static_or_shader_mesh,,,,NOT_STARTED
+veg_grass_clump,vegetation,Cụm cỏ thấp,P1,REF_03_ENVIRONMENT.png,assets/original_3d/vegetation/veg_grass_clump_v01.glb,static_or_shader_mesh,,,,NOT_STARTED
+veg_mushroom_red,vegetation,Nấm đỏ,P1,REF_03_ENVIRONMENT.png,assets/original_3d/vegetation/veg_mushroom_red_v01.glb,static_or_shader_mesh,,,,NOT_STARTED
+veg_old_oak_lantern,vegetation,Cây cổ thụ đèn treo,P1,REF_03_ENVIRONMENT.png,assets/original_3d/vegetation/veg_old_oak_lantern_v01.glb,static_or_shader_mesh,,,,NOT_STARTED
+prop_lamp_post,props,Đèn đường,P1,REF_03_ENVIRONMENT.png,assets/original_3d/props/prop_lamp_post_v01.glb,static_or_shader_mesh,,,,NOT_STARTED
+prop_fence_straight,props,Hàng rào thẳng,P1,REF_03_ENVIRONMENT.png,assets/original_3d/props/prop_fence_straight_v01.glb,static_or_shader_mesh,,,,NOT_STARTED
+prop_fence_corner,props,Hàng rào góc,P1,REF_03_ENVIRONMENT.png,assets/original_3d/props/prop_fence_corner_v01.glb,static_or_shader_mesh,,,,NOT_STARTED
+prop_fence_gate,props,Cổng hàng rào,P1,REF_03_ENVIRONMENT.png,assets/original_3d/props/prop_fence_gate_v01.glb,static_or_shader_mesh,,,,NOT_STARTED
+prop_signpost,props,Biển chỉ đường,P1,REF_03_ENVIRONMENT.png,assets/original_3d/props/prop_signpost_v01.glb,static_or_shader_mesh,,,,NOT_STARTED
+prop_market_stall,props,Quầy chợ,P1,REF_03_ENVIRONMENT.png,assets/original_3d/props/prop_market_stall_v01.glb,static_or_shader_mesh,,,,NOT_STARTED
+prop_village_well,props,Giếng làng,P1,REF_03_ENVIRONMENT.png,assets/original_3d/props/prop_village_well_v01.glb,static_or_shader_mesh,,,,NOT_STARTED
+prop_dock_modular,props,Bến gỗ,P1,REF_03_ENVIRONMENT.png,assets/original_3d/props/prop_dock_modular_v01.glb,static_or_shader_mesh,,,,NOT_STARTED
+prop_rowboat,props,Thuyền chèo,P1,REF_03_ENVIRONMENT.png,assets/original_3d/props/prop_rowboat_v01.glb,static_or_shader_mesh,,,,NOT_STARTED
+prop_barrel,props,Thùng gỗ,P1,REF_03_ENVIRONMENT.png,assets/original_3d/props/prop_barrel_v01.glb,static_or_shader_mesh,,,,NOT_STARTED
+prop_crate,props,Hòm gỗ,P1,REF_03_ENVIRONMENT.png,assets/original_3d/props/prop_crate_v01.glb,static_or_shader_mesh,,,,NOT_STARTED
+prop_bench,props,Ghế ngồi,P1,REF_03_ENVIRONMENT.png,assets/original_3d/props/prop_bench_v01.glb,static_or_shader_mesh,,,,NOT_STARTED
+prop_table,props,Bàn,P1,REF_03_ENVIRONMENT.png,assets/original_3d/props/prop_table_v01.glb,static_or_shader_mesh,,,,NOT_STARTED
+prop_chair,props,Ghế,P1,REF_03_ENVIRONMENT.png,assets/original_3d/props/prop_chair_v01.glb,static_or_shader_mesh,,,,NOT_STARTED
+prop_bookshelf,props,Kệ sách,P1,REF_03_ENVIRONMENT.png,assets/original_3d/props/prop_bookshelf_v01.glb,static_or_shader_mesh,,,,NOT_STARTED
+prop_bed,props,Giường,P1,REF_03_ENVIRONMENT.png,assets/original_3d/props/prop_bed_v01.glb,static_or_shader_mesh,,,,NOT_STARTED
+prop_fireplace,props,Lò sưởi,P1,REF_03_ENVIRONMENT.png,assets/original_3d/props/prop_fireplace_v01.glb,static_or_shader_mesh,,,,NOT_STARTED
+prop_blackboard,props,Bảng học,P1,REF_03_ENVIRONMENT.png,assets/original_3d/props/prop_blackboard_v01.glb,static_or_shader_mesh,,,,NOT_STARTED
+prop_door_openable,props,Cửa mở được,P1,REF_03_ENVIRONMENT.png,assets/original_3d/props/prop_door_openable_v01.glb,static_or_shader_mesh,,,,NOT_STARTED
+prop_chest_openable,props,Rương mở được,P1,REF_03_ENVIRONMENT.png,assets/original_3d/props/prop_chest_openable_v01.glb,static_or_shader_mesh,,,,NOT_STARTED
+prop_vegetable_cart,props,Xe chở rau,P1,REF_03_ENVIRONMENT.png,assets/original_3d/props/prop_vegetable_cart_v01.glb,static_or_shader_mesh,,,,NOT_STARTED
+wpn_wood_practice_sword,weapons,Kiếm gỗ,P2,REF_05_WEAPONS.png,assets/original_3d/weapons/wpn_wood_practice_sword_v01.glb,static_or_shader_mesh,,,pivot at grip for handheld props,NOT_STARTED
+wpn_short_sword,weapons,Kiếm ngắn,P2,REF_05_WEAPONS.png,assets/original_3d/weapons/wpn_short_sword_v01.glb,static_or_shader_mesh,,,pivot at grip for handheld props,NOT_STARTED
+wpn_hero_sword,weapons,Kiếm phiêu lưu,P2,REF_05_WEAPONS.png,assets/original_3d/weapons/wpn_hero_sword_v01.glb,static_or_shader_mesh,,,pivot at grip for handheld props,NOT_STARTED
+wpn_bow_forest,weapons,Cung rừng,P2,REF_05_WEAPONS.png,assets/original_3d/weapons/wpn_bow_forest_v01.glb,static_or_shader_mesh,,,pivot at grip for handheld props,NOT_STARTED
+wpn_shield_star,weapons,Khiên sao,P2,REF_05_WEAPONS.png,assets/original_3d/weapons/wpn_shield_star_v01.glb,static_or_shader_mesh,,,pivot at grip for handheld props,NOT_STARTED
+wpn_staff_leaf,weapons,Gậy lá,P2,REF_05_WEAPONS.png,assets/original_3d/weapons/wpn_staff_leaf_v01.glb,static_or_shader_mesh,,,pivot at grip for handheld props,NOT_STARTED
+wpn_staff_scholar,weapons,Gậy học giả,P2,REF_05_WEAPONS.png,assets/original_3d/weapons/wpn_staff_scholar_v01.glb,static_or_shader_mesh,,,pivot at grip for handheld props,NOT_STARTED
+wpn_wand_star,weapons,Đũa phép sao,P2,REF_05_WEAPONS.png,assets/original_3d/weapons/wpn_wand_star_v01.glb,static_or_shader_mesh,,,pivot at grip for handheld props,NOT_STARTED
+wpn_lantern_staff,weapons,Gậy đèn,P2,REF_05_WEAPONS.png,assets/original_3d/weapons/wpn_lantern_staff_v01.glb,static_or_shader_mesh,,,pivot at grip for handheld props,NOT_STARTED
+tool_pickaxe,weapons,Cuốc chim,P2,REF_05_WEAPONS.png,assets/original_3d/weapons/tool_pickaxe_v01.glb,static_or_shader_mesh,,,pivot at grip for handheld props,NOT_STARTED
+tool_hammer,weapons,Búa,P2,REF_05_WEAPONS.png,assets/original_3d/weapons/tool_hammer_v01.glb,static_or_shader_mesh,,,pivot at grip for handheld props,NOT_STARTED
+tool_hoe,weapons,Cuốc ruộng,P2,REF_05_WEAPONS.png,assets/original_3d/weapons/tool_hoe_v01.glb,static_or_shader_mesh,,,pivot at grip for handheld props,NOT_STARTED
+tool_fishing_rod,weapons,Cần câu,P2,REF_05_WEAPONS.png,assets/original_3d/weapons/tool_fishing_rod_v01.glb,static_or_shader_mesh,,,pivot at grip for handheld props,NOT_STARTED
+tool_torch,weapons,Đuốc,P2,REF_05_WEAPONS.png,assets/original_3d/weapons/tool_torch_v01.glb,static_or_shader_mesh,,,pivot at grip for handheld props,NOT_STARTED
+tool_axe,weapons,Rìu,P2,REF_05_WEAPONS.png,assets/original_3d/weapons/tool_axe_v01.glb,static_or_shader_mesh,,,pivot at grip for handheld props,NOT_STARTED
+prop_scroll,weapons,Cuộn giấy,P2,REF_05_WEAPONS.png,assets/original_3d/weapons/prop_scroll_v01.glb,static_or_shader_mesh,,,pivot at grip for handheld props,NOT_STARTED
+prop_spellbook,weapons,Sách phép,P2,REF_05_WEAPONS.png,assets/original_3d/weapons/prop_spellbook_v01.glb,static_or_shader_mesh,,,pivot at grip for handheld props,NOT_STARTED
+prop_potion_red,weapons,Thuốc đỏ,P2,REF_05_WEAPONS.png,assets/original_3d/weapons/prop_potion_red_v01.glb,static_or_shader_mesh,,,pivot at grip for handheld props,NOT_STARTED
+prop_potion_blue,weapons,Thuốc xanh,P2,REF_05_WEAPONS.png,assets/original_3d/weapons/prop_potion_blue_v01.glb,static_or_shader_mesh,,,pivot at grip for handheld props,NOT_STARTED
+prop_compass,weapons,La bàn,P2,REF_05_WEAPONS.png,assets/original_3d/weapons/prop_compass_v01.glb,static_or_shader_mesh,,,pivot at grip for handheld props,NOT_STARTED
+prop_backpack,weapons,Ba lô,P2,REF_05_WEAPONS.png,assets/original_3d/weapons/prop_backpack_v01.glb,static_or_shader_mesh,,,pivot at grip for handheld props,NOT_STARTED

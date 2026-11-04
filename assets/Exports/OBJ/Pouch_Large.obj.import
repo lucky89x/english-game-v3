@@ -1,0 +1,25 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://ca7vc01r5vovw"
+path="res://.godot/imported/Pouch_Large.obj-563c49b6eaad600166cc02566046d1fc.mesh"
+
+[deps]
+
+files=["res://.godot/imported/Pouch_Large.obj-563c49b6eaad600166cc02566046d1fc.mesh"]
+
+source_file="res://assets/Exports/OBJ/Pouch_Large.obj"
+dest_files=["res://.godot/imported/Pouch_Large.obj-563c49b6eaad600166cc02566046d1fc.mesh", "res://.godot/imported/Pouch_Large.obj-563c49b6eaad600166cc02566046d1fc.mesh"]
+
+[params]
+
+generate_tangents=true
+generate_lods=true
+generate_shadow_mesh=true
+generate_lightmap_uv2=false
+generate_lightmap_uv2_texel_size=0.2
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+force_disable_mesh_compression=false

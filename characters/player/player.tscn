@@ -1,0 +1,40 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/player_controller.gd" id="1_controller"]
+[ext_resource type="PackedScene" path="res://assets/redesign03/ngoc_adventurer.glb" id="2_model"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape_player"]
+radius = 0.42
+height = 1.8
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial_player"]
+albedo_color = Color(0.12, 0.42, 0.92, 1)
+roughness = 0.72
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_body"]
+material = SubResource("StandardMaterial_player")
+radius = 0.42
+height = 1.8
+
+[node name="Player" type="CharacterBody3D" groups=["player"]]
+script = ExtResource("1_controller")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("CapsuleShape_player")
+
+[node name="VisualRoot" type="Node3D" parent="."]
+
+[node name="PlaceholderBody" type="MeshInstance3D" parent="VisualRoot"]
+visible = false
+mesh = SubResource("CapsuleMesh_body")
+cast_shadow = 1
+
+[node name="FacingMarker" type="MeshInstance3D" parent="VisualRoot"]
+position = Vector3(0, 0.2, 0.42)
+mesh = null
+
+[node name="AssetSocket" type="Node3D" parent="VisualRoot"]
+position = Vector3(0, -0.9, 0)
+metadata/_edit_group_ = true
+
+[node name="Adventurer" parent="VisualRoot/AssetSocket" instance=ExtResource("2_model")]

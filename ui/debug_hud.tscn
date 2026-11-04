@@ -1,0 +1,81 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/debug_hud.gd" id="1_hud"]
+
+[node name="DebugHUD" type="CanvasLayer" groups=["dialogue_ui"]]
+script = ExtResource("1_hud")
+
+[node name="ControlHint" type="PanelContainer" parent="."]
+offset_left = 20.0
+offset_top = 20.0
+offset_right = 430.0
+offset_bottom = 110.0
+
+[node name="MarginContainer" type="MarginContainer" parent="ControlHint"]
+theme_override_constants/margin_left = 14
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 14
+theme_override_constants/margin_bottom = 10
+
+[node name="Label" type="Label" parent="ControlHint/MarginContainer"]
+text = "WASD: Di chuyển    Shift: Chạy    Space: Nhảy\nGiữ chuột trái + kéo: Xoay camera 360°\nCuộn chuột: Zoom    E: Tương tác"
+
+[node name="FPSLabel" type="Label" parent="."]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -110.0
+offset_top = 18.0
+offset_right = -20.0
+offset_bottom = 48.0
+text = "FPS: --"
+horizontal_alignment = 2
+
+[node name="InteractionHint" type="Label" parent="."]
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -230.0
+offset_top = -150.0
+offset_right = 230.0
+offset_bottom = -110.0
+theme_override_colors/font_color = Color(1, 0.91, 0.55, 1)
+theme_override_colors/font_outline_color = Color(0.08, 0.06, 0.04, 1)
+theme_override_constants/outline_size = 8
+text = "Nhấn E để tương tác"
+horizontal_alignment = 1
+
+[node name="DialoguePanel" type="PanelContainer" parent="."]
+anchors_preset = 12
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 170.0
+offset_top = -190.0
+offset_right = -170.0
+offset_bottom = -32.0
+
+[node name="Margin" type="MarginContainer" parent="DialoguePanel"]
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 18
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 18
+
+[node name="VBox" type="VBoxContainer" parent="DialoguePanel/Margin"]
+theme_override_constants/separation = 8
+
+[node name="Speaker" type="Label" parent="DialoguePanel/Margin/VBox"]
+theme_override_colors/font_color = Color(1, 0.78, 0.3, 1)
+theme_override_font_sizes/font_size = 22
+text = "Cụ Rowan"
+
+[node name="Dialogue" type="Label" parent="DialoguePanel/Margin/VBox"]
+size_flags_vertical = 3
+text = "Hội thoại mẫu"
+autowrap_mode = 2
+
+[node name="CloseHint" type="Label" parent="DialoguePanel/Margin/VBox"]
+theme_override_colors/font_color = Color(0.7, 0.72, 0.75, 1)
+text = "Nhấn E để đóng"
+horizontal_alignment = 2

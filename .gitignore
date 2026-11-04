@@ -1,0 +1,23 @@
+# Godot caches and exports
+.godot/
+/android/
+# Local development tools and recovery copies
+/tools/blender_portable/
+/backups/
+/artifacts/
+/.agents/
+/.codex/
+/art_source/**/atlas_stage/
+*.blend1
+*.blend2
+__pycache__/
+*.pyc
+*.log
+# Local credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+desktop.ini
+Thumbs.db

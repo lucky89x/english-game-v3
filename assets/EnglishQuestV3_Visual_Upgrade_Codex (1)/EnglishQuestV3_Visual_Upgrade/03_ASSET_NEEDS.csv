@@ -1,0 +1,16 @@
+asset_id,category,priority,format_needed,rig_needed,animations_minimum,source_action
+player_girl_01,player,P0,glb_or_gltf,yes,"Idle;Walk;Run;Turn;Jump;Interact;Talk",Find license-compatible rigged model or model from concept
+elder_tom_01,npc,P1,glb_or_gltf,yes,"Idle;Talk;Greet;Point;Walk",Model from approved concept
+merchant_ben_01,npc,P1,glb_or_gltf,yes,"Idle;Talk;GiveItem;Walk",Find/license or custom model
+teacher_sage_01,npc,P1,glb_or_gltf,yes,"Idle;Talk;Point;ReadBook",Find/license or custom model
+rose_lily_01,npc,P1,glb_or_gltf,yes,"Idle;Walk;Talk;Wave",Reuse rigged model with separate outfit
+fisherman_sam_01,npc,P2,glb_or_gltf,yes,"Idle;Fish;Talk;Walk",Build after dock completion
+slime_01,creature,P1,glb_or_gltf,optional,"Idle;Hop;React",Simple custom animated mesh acceptable if actual 3D
+pet_01,companion,P2,glb_or_gltf,yes,"Idle;Follow;Celebrate",Build after NPC baseline
+village_terrain,environment,P0,mesh_shader,no,,Terrain with grass/dirt/rock blending and collision
+distant_mountains,environment,P0,lowpoly_glb_or_mesh,no,,Layered mountain silhouette and fog
+sky_fog,environment,P0,WorldEnvironment,no,,Sky + distance fog
+river_lake,environment,P0,mesh_shader,no,,Water plane custom material ripple and shoreline
+bridge_01,environment,P0,glb_or_gltf,no,,Existing Quaternius or custom bridge
+forest_edge,environment,P0,glb_or_gltf,no,,Trees under vegetation placement system
+farm_01,environment,P1,glb_or_gltf,no,,Fenced crops and small farmhouse

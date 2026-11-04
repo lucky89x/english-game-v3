@@ -1,0 +1,23 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Shader" path="res://assets/materials/stylized_ground.gdshader" id="1_ground_shader"]
+
+[sub_resource type="ShaderMaterial" id="GroundMaterial"]
+shader = ExtResource("1_ground_shader")
+
+[sub_resource type="BoxMesh" id="GroundMesh"]
+material = SubResource("GroundMaterial")
+size = Vector3(54, 0.5, 54)
+
+[sub_resource type="BoxShape3D" id="GroundShape"]
+size = Vector3(54, 0.5, 54)
+
+[node name="Ground" type="StaticBody3D"]
+position = Vector3(0, -0.25, 0)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+mesh = SubResource("GroundMesh")
+cast_shadow = 1
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("GroundShape")

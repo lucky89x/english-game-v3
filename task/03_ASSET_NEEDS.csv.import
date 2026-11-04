@@ -1,0 +1,19 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://c74eeuk2sutfx"
+
+[deps]
+
+files=["res://task/03_ASSET_NEEDS.category.translation", "res://task/03_ASSET_NEEDS.priority.translation", "res://task/03_ASSET_NEEDS.format.translation", "res://task/03_ASSET_NEEDS.rig.translation", "res://task/03_ASSET_NEEDS.animations.translation", "res://task/03_ASSET_NEEDS.source.translation"]
+
+source_file="res://task/03_ASSET_NEEDS.csv"
+dest_files=["res://task/03_ASSET_NEEDS.category.translation", "res://task/03_ASSET_NEEDS.priority.translation", "res://task/03_ASSET_NEEDS.format.translation", "res://task/03_ASSET_NEEDS.rig.translation", "res://task/03_ASSET_NEEDS.animations.translation", "res://task/03_ASSET_NEEDS.source.translation"]
+
+[params]
+
+compress=1
+delimiter=0
+unescape_keys=false
+unescape_translations=true

@@ -1,0 +1,75 @@
+[gd_scene load_steps=12 format=3]
+
+[ext_resource type="PackedScene" path="res://assets/Medieval Village MegaKit[Standard]/glTF/Wall_Plaster_Door_Round.gltf" id="1_wall_door"]
+[ext_resource type="PackedScene" path="res://assets/Medieval Village MegaKit[Standard]/glTF/Wall_Plaster_Window_Wide_Round.gltf" id="2_wall_window"]
+[ext_resource type="PackedScene" path="res://assets/Medieval Village MegaKit[Standard]/glTF/Wall_Plaster_Straight.gltf" id="3_wall"]
+[ext_resource type="PackedScene" path="res://assets/Medieval Village MegaKit[Standard]/glTF/Roof_RoundTiles_4x4.gltf" id="4_roof"]
+[ext_resource type="PackedScene" path="res://assets/Medieval Village MegaKit[Standard]/glTF/Door_1_Round.gltf" id="5_door"]
+[ext_resource type="PackedScene" path="res://assets/Medieval Village MegaKit[Standard]/glTF/Window_Wide_Round1.gltf" id="6_window"]
+[ext_resource type="PackedScene" path="res://assets/Medieval Village MegaKit[Standard]/glTF/WindowShutters_Wide_Round_Open.gltf" id="7_shutters"]
+[ext_resource type="PackedScene" path="res://assets/Medieval Village MegaKit[Standard]/glTF/Prop_Chimney.gltf" id="8_chimney"]
+[ext_resource type="PackedScene" path="res://assets/Medieval Village MegaKit[Standard]/glTF/Prop_Crate.gltf" id="9_crate"]
+[ext_resource type="PackedScene" path="res://assets/Medieval Village MegaKit[Standard]/glTF/Prop_Vine4.gltf" id="10_vine"]
+
+[sub_resource type="BoxShape3D" id="HouseCollision"]
+size = Vector3(4.15, 5.8, 4.15)
+
+[node name="FantasyHouse" type="StaticBody3D"]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+position = Vector3(0, 2.9, 0)
+shape = SubResource("HouseCollision")
+
+[node name="Architecture" type="Node3D" parent="."]
+
+[node name="FrontDoorWall" parent="Architecture" instance=ExtResource("1_wall_door")]
+position = Vector3(-1, 0, 2)
+
+[node name="FrontWindowWall" parent="Architecture" instance=ExtResource("2_wall_window")]
+position = Vector3(1, 0, 2)
+
+[node name="BackWallLeft" parent="Architecture" instance=ExtResource("3_wall")]
+position = Vector3(-1, 0, -2)
+rotation_degrees = Vector3(0, 180, 0)
+
+[node name="BackWindowWall" parent="Architecture" instance=ExtResource("2_wall_window")]
+position = Vector3(1, 0, -2)
+rotation_degrees = Vector3(0, 180, 0)
+
+[node name="LeftWallFront" parent="Architecture" instance=ExtResource("3_wall")]
+position = Vector3(-2, 0, 1)
+rotation_degrees = Vector3(0, -90, 0)
+
+[node name="LeftWallBack" parent="Architecture" instance=ExtResource("2_wall_window")]
+position = Vector3(-2, 0, -1)
+rotation_degrees = Vector3(0, -90, 0)
+
+[node name="RightWallFront" parent="Architecture" instance=ExtResource("2_wall_window")]
+position = Vector3(2, 0, 1)
+rotation_degrees = Vector3(0, 90, 0)
+
+[node name="RightWallBack" parent="Architecture" instance=ExtResource("3_wall")]
+position = Vector3(2, 0, -1)
+rotation_degrees = Vector3(0, 90, 0)
+
+[node name="Roof" parent="Architecture" instance=ExtResource("4_roof")]
+position = Vector3(0, 3.12, 0)
+
+[node name="Door" parent="Architecture" instance=ExtResource("5_door")]
+position = Vector3(-1, 0, 2.03)
+
+[node name="FrontWindow" parent="Architecture" instance=ExtResource("6_window")]
+position = Vector3(1, 0, 2.04)
+
+[node name="FrontShutters" parent="Architecture" instance=ExtResource("7_shutters")]
+position = Vector3(1, 0, 2.07)
+
+[node name="Chimney" parent="Architecture" instance=ExtResource("8_chimney")]
+position = Vector3(-1.15, 4.0, -0.4)
+
+[node name="Vine" parent="Architecture" instance=ExtResource("10_vine")]
+position = Vector3(1.7, 0.4, 2.08)
+
+[node name="Crate" parent="Architecture" instance=ExtResource("9_crate")]
+position = Vector3(2.35, 0, 1.35)
+rotation_degrees = Vector3(0, -18, 0)

@@ -1,0 +1,14 @@
+[gd_scene format=3 uid="uid://cajebe0mebnsx"]
+
+[ext_resource type="PackedScene" path="res://world/main_world.tscn" id="1_main"]
+
+[node name="MainWorldCompatibility" unique_id=1714429822 instance=ExtResource("1_main")]
+
+[node name="Sun" parent="." index="1"]
+transform = Transform3D(0.8480481, 0.41758206, -0.32625088, 0, 0.6156615, 0.7880107, 0.52991927, -0.668271, 0.5221106, 0, 0, 0)
+
+[node name="StarterVillageEnvironment" parent="WorldGeometry" index="0"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.369844, -1.5318146, -3.144165)
+
+[node name="Player" parent="Characters" index="0"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.95, 14)

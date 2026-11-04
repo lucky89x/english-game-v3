@@ -1,0 +1,25 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://f2gmd7av76ur"
+path="res://.godot/imported/Shelf_Small_Bottles.obj-f422ca4c0bc70dc1284ee3c9b3c43e3f.mesh"
+
+[deps]
+
+files=["res://.godot/imported/Shelf_Small_Bottles.obj-f422ca4c0bc70dc1284ee3c9b3c43e3f.mesh"]
+
+source_file="res://assets/Exports/OBJ/Shelf_Small_Bottles.obj"
+dest_files=["res://.godot/imported/Shelf_Small_Bottles.obj-f422ca4c0bc70dc1284ee3c9b3c43e3f.mesh", "res://.godot/imported/Shelf_Small_Bottles.obj-f422ca4c0bc70dc1284ee3c9b3c43e3f.mesh"]
+
+[params]
+
+generate_tangents=true
+generate_lods=true
+generate_shadow_mesh=true
+generate_lightmap_uv2=false
+generate_lightmap_uv2_texel_size=0.2
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+force_disable_mesh_compression=false

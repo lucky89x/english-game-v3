@@ -1,0 +1,48 @@
+[gd_scene load_steps=9 format=3]
+
+[ext_resource type="PackedScene" path="res://assets/glTF/Pine_1.gltf" id="1_pine1"]
+[ext_resource type="PackedScene" path="res://assets/glTF/Pine_3.gltf" id="2_pine3"]
+[ext_resource type="PackedScene" path="res://assets/Ultimate Stylized Nature - May 2022-20261102T070539Z-1-001/Ultimate Stylized Nature - May 2022/glTF/MapleTree_2.gltf" id="3_maple"]
+[ext_resource type="PackedScene" path="res://assets/Ultimate Stylized Nature - May 2022-20261102T070539Z-1-001/Ultimate Stylized Nature - May 2022/glTF/BirchTree_4.gltf" id="4_birch"]
+[ext_resource type="PackedScene" path="res://assets/Ultimate Stylized Nature - May 2022-20261102T070539Z-1-001/Ultimate Stylized Nature - May 2022/glTF/Bush_Large.gltf" id="5_bush"]
+[ext_resource type="PackedScene" path="res://assets/glTF/Rock_Medium_1.gltf" id="6_rock2"]
+[ext_resource type="PackedScene" path="res://assets/glTF/Rock_Medium_3.gltf" id="7_rock4"]
+[ext_resource type="PackedScene" path="res://assets/Ultimate Stylized Nature - May 2022-20261102T070539Z-1-001/Ultimate Stylized Nature - May 2022/glTF/Grass_Large.gltf" id="8_grass"]
+
+[node name="ForestCluster" type="Node3D"]
+
+[node name="PineTall" parent="." instance=ExtResource("1_pine1")]
+position = Vector3(-2.5, 0, 1.0)
+scale = Vector3(0.82, 0.82, 0.82)
+
+[node name="PineBack" parent="." instance=ExtResource("2_pine3")]
+position = Vector3(2.8, 0, 2.6)
+scale = Vector3(0.72, 0.72, 0.72)
+rotation_degrees = Vector3(0, 33, 0)
+
+[node name="Maple" parent="." instance=ExtResource("3_maple")]
+position = Vector3(0.5, 0, -2.4)
+scale = Vector3(0.68, 0.68, 0.68)
+rotation_degrees = Vector3(0, -42, 0)
+
+[node name="Birch" parent="." instance=ExtResource("4_birch")]
+position = Vector3(4.1, 0, -1.5)
+scale = Vector3(0.65, 0.65, 0.65)
+rotation_degrees = Vector3(0, 19, 0)
+
+[node name="Bush" parent="." instance=ExtResource("5_bush")]
+position = Vector3(-0.4, 0, 2.5)
+scale = Vector3(0.62, 0.62, 0.62)
+
+[node name="RockA" parent="." instance=ExtResource("6_rock2")]
+position = Vector3(-4.0, 0, -1.6)
+scale = Vector3(0.55, 0.55, 0.55)
+
+[node name="RockB" parent="." instance=ExtResource("7_rock4")]
+position = Vector3(2.1, 0, -0.8)
+scale = Vector3(0.42, 0.42, 0.42)
+rotation_degrees = Vector3(0, 58, 0)
+
+[node name="Grass" parent="." instance=ExtResource("8_grass")]
+position = Vector3(-1.0, 0, -1.2)
+scale = Vector3(1.5, 1.5, 1.5)

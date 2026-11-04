@@ -1,0 +1,161 @@
+[gd_scene load_steps=20 format=3]
+
+[ext_resource type="Script" path="res://world/zones/starter_village/procedural_landscape.gd" id="1_script"]
+[ext_resource type="Shader" path="res://assets/materials/terrain_blend.gdshader" id="2_terrain_shader"]
+[ext_resource type="Shader" path="res://assets/materials/stylized_path.gdshader" id="3_path_shader"]
+[ext_resource type="Shader" path="res://assets/materials/stylized_water.gdshader" id="4_water_shader"]
+[ext_resource type="PackedScene" path="res://world/zones/starter_village/village_square_zone.tscn" id="5_square"]
+[ext_resource type="PackedScene" path="res://world/zones/starter_village/river_dock_zone.tscn" id="6_dock"]
+[ext_resource type="PackedScene" path="res://world/zones/starter_village/farm_zone.tscn" id="7_farm"]
+[ext_resource type="PackedScene" path="res://world/zones/starter_village/forest_edge_zone.tscn" id="8_forest_edge"]
+[ext_resource type="PackedScene" path="res://world/zones/starter_village/horizon_forest.tscn" id="9_horizon_forest"]
+[ext_resource type="Script" path="res://world/zones/starter_village/water_boundary.gd" id="10_water_boundary"]
+
+[sub_resource type="ShaderMaterial" id="TerrainMaterial"]
+shader = ExtResource("2_terrain_shader")
+
+[sub_resource type="ShaderMaterial" id="PathMaterial"]
+shader = ExtResource("3_path_shader")
+
+[sub_resource type="ShaderMaterial" id="WaterMaterial"]
+render_priority = 1
+shader = ExtResource("4_water_shader")
+
+[sub_resource type="StandardMaterial3D" id="HillMaterial"]
+albedo_color = Color(0.19, 0.34, 0.19, 1)
+roughness = 1.0
+
+[sub_resource type="StandardMaterial3D" id="MountainMaterial"]
+albedo_color = Color(0.28, 0.36, 0.43, 1)
+roughness = 0.96
+
+[sub_resource type="SphereMesh" id="HillMesh"]
+material = SubResource("HillMaterial")
+radius = 1.0
+height = 2.0
+radial_segments = 16
+rings = 8
+
+[sub_resource type="CylinderMesh" id="MountainMesh"]
+material = SubResource("MountainMaterial")
+top_radius = 0.16
+bottom_radius = 1.0
+height = 2.0
+radial_segments = 9
+rings = 4
+
+[sub_resource type="BoxShape3D" id="RiverBoundaryShape"]
+size = Vector3(18, 3, 58)
+
+[node name="StarterVillageEnvironment" type="Node3D"]
+script = ExtResource("1_script")
+terrain_material = SubResource("TerrainMaterial")
+path_material = SubResource("PathMaterial")
+water_material = SubResource("WaterMaterial")
+
+[node name="Terrain" type="MeshInstance3D" parent="."]
+cast_shadow = 1
+
+[node name="TerrainBody" type="StaticBody3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="TerrainBody"]
+
+[node name="CurvedPaths" type="Node3D" parent="."]
+
+[node name="RiverSystem" type="Node3D" parent="."]
+
+[node name="WaterBoundary" type="Area3D" parent="RiverSystem"]
+position = Vector3(11.5, 0, 30)
+collision_layer = 0
+collision_mask = 1
+monitoring = true
+script = ExtResource("10_water_boundary")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="RiverSystem/WaterBoundary"]
+shape = SubResource("RiverBoundaryShape")
+
+[node name="Zones" type="Node3D" parent="."]
+
+[node name="VillageSquare" parent="Zones" instance=ExtResource("5_square")]
+
+[node name="RiverDock" parent="Zones" instance=ExtResource("6_dock")]
+position = Vector3(13, 0, 8)
+
+[node name="Farm" parent="Zones" instance=ExtResource("7_farm")]
+position = Vector3(-16, 0, 15)
+rotation_degrees = Vector3(0, -8, 0)
+
+[node name="ForestEdge" parent="Zones" instance=ExtResource("8_forest_edge")]
+position = Vector3(-18, 0.1, -16)
+rotation_degrees = Vector3(0, 12, 0)
+
+[node name="HorizonForest" parent="." instance=ExtResource("9_horizon_forest")]
+
+[node name="MidgroundHills" type="Node3D" parent="."]
+
+[node name="HillWest" type="MeshInstance3D" parent="MidgroundHills"]
+position = Vector3(-44, 1.2, 2)
+scale = Vector3(13, 5.5, 22)
+mesh = SubResource("HillMesh")
+
+[node name="HillNorthWest" type="MeshInstance3D" parent="MidgroundHills"]
+position = Vector3(-29, 1.5, -43)
+scale = Vector3(19, 6.5, 12)
+mesh = SubResource("HillMesh")
+
+[node name="HillNorthEast" type="MeshInstance3D" parent="MidgroundHills"]
+position = Vector3(28, 1.0, -45)
+scale = Vector3(20, 6, 12)
+mesh = SubResource("HillMesh")
+
+[node name="HillEast" type="MeshInstance3D" parent="MidgroundHills"]
+position = Vector3(49, 1.4, -2)
+scale = Vector3(10, 5, 20)
+mesh = SubResource("HillMesh")
+
+[node name="DistantMountains" type="Node3D" parent="."]
+
+[node name="MountainN1" type="MeshInstance3D" parent="DistantMountains"]
+position = Vector3(-34, 4, -66)
+scale = Vector3(19, 9, 17)
+mesh = SubResource("MountainMesh")
+
+[node name="MountainN2" type="MeshInstance3D" parent="DistantMountains"]
+position = Vector3(0, 5, -72)
+scale = Vector3(23, 11, 21)
+mesh = SubResource("MountainMesh")
+
+[node name="MountainN3" type="MeshInstance3D" parent="DistantMountains"]
+position = Vector3(34, 3.5, -66)
+scale = Vector3(18, 8, 16)
+mesh = SubResource("MountainMesh")
+
+[node name="MountainE1" type="MeshInstance3D" parent="DistantMountains"]
+position = Vector3(69, 4.5, -32)
+scale = Vector3(21, 10, 19)
+mesh = SubResource("MountainMesh")
+
+[node name="MountainE2" type="MeshInstance3D" parent="DistantMountains"]
+position = Vector3(74, 4, 18)
+scale = Vector3(20, 9, 18)
+mesh = SubResource("MountainMesh")
+
+[node name="MountainS1" type="MeshInstance3D" parent="DistantMountains"]
+position = Vector3(35, 4.5, 70)
+scale = Vector3(21, 10, 19)
+mesh = SubResource("MountainMesh")
+
+[node name="MountainS2" type="MeshInstance3D" parent="DistantMountains"]
+position = Vector3(-12, 4, 74)
+scale = Vector3(20, 9, 18)
+mesh = SubResource("MountainMesh")
+
+[node name="MountainW1" type="MeshInstance3D" parent="DistantMountains"]
+position = Vector3(-70, 4.5, 35)
+scale = Vector3(22, 10, 20)
+mesh = SubResource("MountainMesh")
+
+[node name="MountainW2" type="MeshInstance3D" parent="DistantMountains"]
+position = Vector3(-72, 3.5, -28)
+scale = Vector3(19, 8, 17)
+mesh = SubResource("MountainMesh")

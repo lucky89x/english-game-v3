@@ -1,0 +1,19 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://0aejw0bjlmfh"
+
+[deps]
+
+files=["res://assets/EnglishQuestV3_Asset_Spec_Codex_2026-11-03/EnglishQuestV3_Asset_Spec_Codex_2026-11-03/03_MANIFEST/ASSET_MANIFEST.group.translation", "res://assets/EnglishQuestV3_Asset_Spec_Codex_2026-11-03/EnglishQuestV3_Asset_Spec_Codex_2026-11-03/03_MANIFEST/ASSET_MANIFEST.name.translation", "res://assets/EnglishQuestV3_Asset_Spec_Codex_2026-11-03/EnglishQuestV3_Asset_Spec_Codex_2026-11-03/03_MANIFEST/ASSET_MANIFEST.priority.translation", "res://assets/EnglishQuestV3_Asset_Spec_Codex_2026-11-03/EnglishQuestV3_Asset_Spec_Codex_2026-11-03/03_MANIFEST/ASSET_MANIFEST.reference.translation", "res://assets/EnglishQuestV3_Asset_Spec_Codex_2026-11-03/EnglishQuestV3_Asset_Spec_Codex_2026-11-03/03_MANIFEST/ASSET_MANIFEST.target.translation", "res://assets/EnglishQuestV3_Asset_Spec_Codex_2026-11-03/EnglishQuestV3_Asset_Spec_Codex_2026-11-03/03_MANIFEST/ASSET_MANIFEST.rig.translation", "res://assets/EnglishQuestV3_Asset_Spec_Codex_2026-11-03/EnglishQuestV3_Asset_Spec_Codex_2026-11-03/03_MANIFEST/ASSET_MANIFEST.animations.translation", "res://assets/EnglishQuestV3_Asset_Spec_Codex_2026-11-03/EnglishQuestV3_Asset_Spec_Codex_2026-11-03/03_MANIFEST/ASSET_MANIFEST.enterable.translation", "res://assets/EnglishQuestV3_Asset_Spec_Codex_2026-11-03/EnglishQuestV3_Asset_Spec_Codex_2026-11-03/03_MANIFEST/ASSET_MANIFEST.notes.translation", "res://assets/EnglishQuestV3_Asset_Spec_Codex_2026-11-03/EnglishQuestV3_Asset_Spec_Codex_2026-11-03/03_MANIFEST/ASSET_MANIFEST.delivery.translation"]
+
+source_file="res://assets/EnglishQuestV3_Asset_Spec_Codex_2026-11-03/EnglishQuestV3_Asset_Spec_Codex_2026-11-03/03_MANIFEST/ASSET_MANIFEST.csv"
+dest_files=["res://assets/EnglishQuestV3_Asset_Spec_Codex_2026-11-03/EnglishQuestV3_Asset_Spec_Codex_2026-11-03/03_MANIFEST/ASSET_MANIFEST.group.translation", "res://assets/EnglishQuestV3_Asset_Spec_Codex_2026-11-03/EnglishQuestV3_Asset_Spec_Codex_2026-11-03/03_MANIFEST/ASSET_MANIFEST.name.translation", "res://assets/EnglishQuestV3_Asset_Spec_Codex_2026-11-03/EnglishQuestV3_Asset_Spec_Codex_2026-11-03/03_MANIFEST/ASSET_MANIFEST.priority.translation", "res://assets/EnglishQuestV3_Asset_Spec_Codex_2026-11-03/EnglishQuestV3_Asset_Spec_Codex_2026-11-03/03_MANIFEST/ASSET_MANIFEST.reference.translation", "res://assets/EnglishQuestV3_Asset_Spec_Codex_2026-11-03/EnglishQuestV3_Asset_Spec_Codex_2026-11-03/03_MANIFEST/ASSET_MANIFEST.target.translation", "res://assets/EnglishQuestV3_Asset_Spec_Codex_2026-11-03/EnglishQuestV3_Asset_Spec_Codex_2026-11-03/03_MANIFEST/ASSET_MANIFEST.rig.translation", "res://assets/EnglishQuestV3_Asset_Spec_Codex_2026-11-03/EnglishQuestV3_Asset_Spec_Codex_2026-11-03/03_MANIFEST/ASSET_MANIFEST.animations.translation", "res://assets/EnglishQuestV3_Asset_Spec_Codex_2026-11-03/EnglishQuestV3_Asset_Spec_Codex_2026-11-03/03_MANIFEST/ASSET_MANIFEST.enterable.translation", "res://assets/EnglishQuestV3_Asset_Spec_Codex_2026-11-03/EnglishQuestV3_Asset_Spec_Codex_2026-11-03/03_MANIFEST/ASSET_MANIFEST.notes.translation", "res://assets/EnglishQuestV3_Asset_Spec_Codex_2026-11-03/EnglishQuestV3_Asset_Spec_Codex_2026-11-03/03_MANIFEST/ASSET_MANIFEST.delivery.translation"]
+
+[params]
+
+compress=1
+delimiter=0
+unescape_keys=false
+unescape_translations=true

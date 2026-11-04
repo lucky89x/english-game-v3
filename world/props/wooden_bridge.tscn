@@ -1,0 +1,52 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://world/props/arched_bridge.gd" id="3_arch"]
+
+[ext_resource type="PackedScene" path="res://assets/Medieval Village MegaKit[Standard]/glTF/Floor_WoodDark.gltf" id="1_floor"]
+[ext_resource type="PackedScene" path="res://assets/Medieval Village MegaKit[Standard]/glTF/Prop_WoodenFence_Single.gltf" id="2_fence"]
+
+[sub_resource type="BoxShape3D" id="BridgeCollision"]
+size = Vector3(3.0, 0.28, 6.2)
+
+[node name="WoodenBridge" type="StaticBody3D"]
+script = ExtResource("3_arch")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+position = Vector3(0, 0.17, 0)
+shape = SubResource("BridgeCollision")
+
+[node name="Deck1" parent="." instance=ExtResource("1_floor")]
+position = Vector3(0, 0.28, -2)
+scale = Vector3(1.5, 1, 1)
+
+[node name="Deck2" parent="." instance=ExtResource("1_floor")]
+position = Vector3(0, 0.33, 0)
+scale = Vector3(1.5, 1, 1)
+
+[node name="Deck3" parent="." instance=ExtResource("1_floor")]
+position = Vector3(0, 0.28, 2)
+scale = Vector3(1.5, 1, 1)
+
+[node name="LeftRail1" parent="." instance=ExtResource("2_fence")]
+position = Vector3(-1.42, 0.35, -2)
+rotation_degrees = Vector3(0, 90, 0)
+
+[node name="LeftRail2" parent="." instance=ExtResource("2_fence")]
+position = Vector3(-1.42, 0.4, 0)
+rotation_degrees = Vector3(0, 90, 0)
+
+[node name="LeftRail3" parent="." instance=ExtResource("2_fence")]
+position = Vector3(-1.42, 0.35, 2)
+rotation_degrees = Vector3(0, 90, 0)
+
+[node name="RightRail1" parent="." instance=ExtResource("2_fence")]
+position = Vector3(1.42, 0.35, -2)
+rotation_degrees = Vector3(0, 90, 0)
+
+[node name="RightRail2" parent="." instance=ExtResource("2_fence")]
+position = Vector3(1.42, 0.4, 0)
+rotation_degrees = Vector3(0, 90, 0)
+
+[node name="RightRail3" parent="." instance=ExtResource("2_fence")]
+position = Vector3(1.42, 0.35, 2)
+rotation_degrees = Vector3(0, 90, 0)
