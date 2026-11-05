@@ -32,3 +32,31 @@ Script ghi đè `.blend`, `.glb`, palette và 4 texture mặt. Muốn đổi mà
 - Chưa có shape key/blendshape: biểu cảm dùng đổi texture mặt.
 - Animation là keyframe thủ tục, chưa qua chỉnh tay của animator; chân có thể trượt nhẹ vì tốc độ di chuyển của controller (5,5/8 m/s) lớn so với sải chân chibi.
 - Bản cũ `assets/redesign03/ngoc_adventurer.glb` vẫn giữ nguyên để đối chiếu, không còn được Player dùng.
+
+---
+
+# Lượt 2 — NPC, nhà, cây, nền đất, sông (chibi05)
+
+Tất cả dựng mới bằng script Blender, cùng phong cách với Ngọc (khối tròn, màu palette phẳng, đèn cửa sổ phát sáng). Thư viện chung: `tools/chibi05/chibi_lib.py`.
+
+| Hạng mục | Script | Runtime |
+|---|---|---|
+| Trưởng làng Tom (áo choàng xanh viền vàng, râu tóc trắng, gậy đèn lồng sáng) | `build_tom_chibi.py` | `assets/npc/models/npc_tom_elder_v02.glb` (27k tris; Idle/Walk/Run/Talk/Wave) |
+| Ben bán hàng (mũ kem viền đỏ, ria trắng, nơ đỏ, tạp dề xanh) | `build_villager_chibi.py ben` | `npc_ben_merchant_v02.glb` (22k tris) |
+| Sam ngư dân (nón rơm, râu trắng, khăn xanh, gile da) | `build_villager_chibi.py sam` | `npc_sam_fisherman_v02.glb` (23k tris) |
+| 8 công trình: nhà mái đỏ, nhà 2 tầng mái xanh, cửa hàng mái cam + mái hiên sọc, thư viện mái xanh lá, hội trường, chuồng bò đỏ, kho bến sông, tháp canh | `build_houses_chibi.py` | `assets/environment/village/models/bld_*_v02.glb` |
+| 10 cây/bụi: sồi (3 kiểu), hoa anh đào hồng, thông (2), bạch dương, bụi xanh/hoa/đỏ | `build_trees_chibi.py` | `veg_*_v02.glb` (cùng kích thước cây Quaternius cũ ~7 m) |
+
+Trong Godot:
+- `world/buildings/village_architecture.gd` đặt nhà chibi tại đúng vị trí cũ, giữ tên node (`HouseWest`, `VillageHall`, `HallWatchTower`...), cửa vào nội thất qua `BuildingTravel.register_door(..., door_local)`.
+- Mọi scene trong `world/` và `landscape_details.gd` trỏ sang cây chibi.
+- `assets/materials/terrain_blend.gdshader`: cỏ xanh tươi có mảng nắng và chấm hoa nhỏ, đường đất vàng mật ong, bờ sông cát, đá tím xám.
+- `assets/materials/stylized_water.gdshader`: nước xanh biển sáng, vệt caustic, bọt trắng chuyển động ven bờ.
+- Đá lát đường được tô lại xám tím ấm.
+- NPC dùng chung `scripts/ngoc_face_controller.gd` (chớp mắt; Tom nhép miệng khi hội thoại).
+
+Ngọc: đuôi khăn quàng dài bay như mẫu, thêm túi da sau hông, sửa pháp tuyến ở cực các khối tròn.
+
+Ảnh: `preview_npcs.png`, `preview_buildings.png`, `preview_vegetation.png`, `preview_village_ingame.png`, `preview_village_before_after.png`.
+
+Còn lại: nội thất 3 phòng, quầy chợ, cầu gỗ, hàng rào, rương vẫn là asset Quaternius; đồi/núi xa giữ nguyên; bờ sông vẫn là dải thẳng (chỉ thêm bọt/màu).

@@ -23,7 +23,7 @@ func _ready() -> void:
 	for building in [architecture.get_node("VillageHall"), architecture.get_node("RiverStorehouse"), architecture.get_node("FarmBarn")]:
 		var pivot := Node3D.new()
 		building.add_child(pivot)
-		pivot.position = Vector3(1.5, 2.0, 2.2)
+		pivot.position = building.get_meta("lantern_point", Vector3(1.5, 2.0, 2.2))
 		var lantern := preload("res://assets/Exports/glTF/Lantern_Wall.gltf").instantiate()
 		pivot.add_child(lantern)
 		lantern.scale = Vector3.ONE * 0.7

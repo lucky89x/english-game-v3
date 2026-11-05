@@ -1,6 +1,16 @@
 extends Node3D
 
 const NATURE := "res://assets/glTF/"
+## chibi05 replacements for the Quaternius trees/bushes (same real-world size).
+const CHIBI := {
+	"Pine_1": "veg_pine_a", "Pine_3": "veg_pine_b", "CommonTree_2": "veg_oak_b", "CommonTree_1": "veg_oak_a",
+	"Bush_Common_Flowers": "veg_bush_flower",
+}
+
+func asset_path(asset: String) -> String:
+	if CHIBI.has(asset):
+		return "res://assets/environment/village/models/%s_v02.glb" % CHIBI[asset]
+	return NATURE + asset + ".gltf"
 var random := RandomNumberGenerator.new()
 
 func _ready() -> void:
@@ -79,7 +89,7 @@ func _add_architecture() -> void:
 func place(asset: String, point: Vector3, factor: float) -> void:
 	if _inside_building(point):
 		return
-	var model = load(NATURE + asset + ".gltf").instantiate()
+	var model = load(asset_path(asset)).instantiate()
 	add_child(model)
 	model.position = point
 	model.scale = Vector3.ONE * factor

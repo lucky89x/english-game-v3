@@ -8,11 +8,11 @@ var nearby := -1
 var owns_hint := false
 var cooldown := 0.0
 
-func register_door(building: Node3D, title: String, room: String) -> void:
+func register_door(building: Node3D, title: String, room: String, door_local := Vector3(-1, 0, 3.4)) -> void:
 	var marker := Marker3D.new()
 	marker.name = "Entrance"
 	building.add_child(marker)
-	marker.position = Vector3(-1, 0, 3.4)
+	marker.position = door_local
 	doors.append({"marker": marker, "title": title, "scene": room})
 	var label := Label3D.new()
 	label.text = title + " · E"

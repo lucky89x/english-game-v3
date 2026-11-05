@@ -248,7 +248,13 @@ def ellipsoid(name, center, radii, seg=24, rings=14, rot=None, deform=None):
         out.append(Vector(center) + rm @ p)
     # flip winding so normals point outward
     faces = [tuple(reversed(f)) for f in faces]
-    return mesh_obj(name, out, faces)
+    ob = mesh_obj(name, out, faces)
+    bm = bmesh.new()   # pole fans wind opposite to the quads: make normals consistent
+    bm.from_mesh(ob.data)
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    bm.to_mesh(ob.data)
+    bm.free()
+    return ob
 
 
 def torus(name, center, R, r, seg=32, rseg=10, rot=None, sx=1, sy=1):
@@ -596,6 +602,14 @@ cork = tube('Ngoc_PotionCork', [POT + Vector((0, 0, .058)), POT + Vector((0, 0, 
 finish(cork, 'cork', ['hips'])
 holder = torus('Ngoc_PotionHolder', POT + Vector((0, 0, .006)), .041, .006, seg=20, rseg=6)
 finish(holder, 'leather_dark', ['hips'])
+# second small leather pouch on her left-back hip
+PC2 = Vector((.120, .100, .455))
+pouch2 = loft('Ngoc_Pouch2', [(PC2 + Vector((0, 0, -.040)), .044, .026), (PC2, .048, .030), (PC2 + Vector((0, 0, .040)), .046, .028)],
+              seg=14, caps=(True, True), ref=Vector((.6, .8, 0)))
+finish(pouch2, 'leather_dark', ['hips'], subsurf=1)
+finish(ellipsoid('Ngoc_Pouch2Flap', PC2 + Vector((.018, .024, .030)), (.046, .010, .022), seg=12, rings=8,
+                 rot=Quaternion((0, 0, 1), math.radians(37))), 'leather', ['hips'])
+finish(ellipsoid('Ngoc_Pouch2Stud', PC2 + Vector((.026, .036, .018)), (.008, .005, .008), seg=8, rings=6), 'gold', ['hips'])
 # rolled map scroll tucked diagonally behind the strap on the back
 sc_a, sc_b = Vector((-.15, .150, .520)), Vector((.12, .150, .760))
 scroll = tube('Ngoc_Scroll', [sc_a, sc_b], [.030, .030], seg=16)
@@ -620,10 +634,11 @@ finish(knot, 'scarf_dark', ['chest'])
 # two flowing tails sweeping back on her right side
 for k, (dz, spread, ln) in enumerate([(0, .0, 1.0), (-.03, .05, .82)]):
     pts = []
-    for i in range(9):
-        t = i / 8
-        pts.append((Vector((-.060 - .16 * t - spread * t, -.08 + .30 * t, .790 - .10 * t + .06 * math.sin(t * 3.0) + dz)), ln))
-    rings = [(p, .040 * (1 - .35 * (i / 8)), .008) for i, (p, _) in enumerate(pts)]
+    for i in range(11):
+        t = i / 10
+        # long ribbon that billows out to her right and back, like REF_01
+        pts.append((Vector((-.060 - .26 * t * ln - spread * t, -.08 + .34 * t * ln, .790 - .08 * t + .07 * math.sin(t * 3.4) + dz)), ln))
+    rings = [(p, .046 * (1 - .30 * (i / 10)) + .010 * math.sin(i * 1.1), .009) for i, (p, _) in enumerate(pts)]
     tail = loft(f'Ngoc_ScarfTail_{k}', rings, seg=12, ref=Vector((0, 0, 1)))
     finish(tail, 'scarf' if k == 0 else 'scarf_dark', ['scarf_tail.R'])
 

@@ -170,7 +170,7 @@ def frame_from(t, ref=None):
     return u, t.cross(u)
 
 
-def loft(name, rings, seg=24, caps=(True, True), ref=None, shape=None):
+def loft(name, rings, seg=24, caps=(True, True), ref=None, shape=None, cap_bulge=.25):
     """rings: (center, ra, rb[, twist[, ref]]) ellipse cross sections along a path;
     shape(theta, ring_index) -> radial factor."""
     verts, faces = [], []
@@ -193,11 +193,11 @@ def loft(name, rings, seg=24, caps=(True, True), ref=None, shape=None):
             a, b = i * seg + j, i * seg + (j + 1) % seg
             faces.append((a, b, b + seg, a + seg))
     if caps[0]:
-        verts.append(centers[0] - (centers[1] - centers[0]).normalized() * min(rings[0][1], rings[0][2]) * .25)
+        verts.append(centers[0] - (centers[1] - centers[0]).normalized() * min(rings[0][1], rings[0][2]) * cap_bulge)
         ci = len(verts) - 1
         faces += [(ci, (j + 1) % seg, j) for j in range(seg)]
     if caps[1]:
-        verts.append(centers[-1] + (centers[-1] - centers[-2]).normalized() * min(rings[-1][1], rings[-1][2]) * .25)
+        verts.append(centers[-1] + (centers[-1] - centers[-2]).normalized() * min(rings[-1][1], rings[-1][2]) * cap_bulge)
         ci = len(verts) - 1
         base = (n - 1) * seg
         faces += [(ci, base + j, base + (j + 1) % seg) for j in range(seg)]
@@ -227,7 +227,9 @@ def ellipsoid(name, center, radii, seg=24, rings=14, rot=None, deform=None):
         if deform:
             p = deform(p, v)
         out.append(Vector(center) + rm @ p)
-    return mesh_obj(name, out, [tuple(reversed(f)) for f in faces])
+    ob = mesh_obj(name, out, [tuple(reversed(f)) for f in faces])
+    recalc(ob)  # pole fans must wind like the quads, or they render as dark holes
+    return ob
 
 
 def torus(name, center, R, r, seg=32, rseg=10, rot=None, sx=1, sy=1):
@@ -266,7 +268,9 @@ def box(name, center, size, bevel=0.0, rot=None, segments=2):
 
 def cylinder(name, a, b, r0, r1=None, seg=16, caps=True):
     r1 = r0 if r1 is None else r1
-    return loft(name, [(Vector(a), r0, r0), (Vector(b), r1, r1)], seg=seg, caps=(caps, caps))
+    ob = loft(name, [(Vector(a), r0, r0), (Vector(b), r1, r1)], seg=seg, caps=(caps, caps), cap_bulge=0.0)
+    recalc(ob)
+    return ob
 
 
 def tube(name, pts, radii, seg=12, caps=(True, True), ref=None):
