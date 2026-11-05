@@ -7,7 +7,7 @@ func _initialize() -> void:
  call_deferred("run")
 func run() -> void:
  var report: Array = []
- for filename in ["res://assets/characters/models/chr_ngoc_adventurer_v02.glb","res://assets/redesign03/tom_elder.glb"]:
+ for filename in ["res://assets/characters/models/chr_ngoc_adventurer_v02.glb","res://assets/npc/models/npc_tom_elder_v02.glb","res://assets/npc/models/npc_ben_merchant_v02.glb","res://assets/npc/models/npc_sam_fisherman_v02.glb"]:
   var doc := GLTFDocument.new()
   var state := GLTFState.new()
   check(doc.append_from_file(filename,state)==OK,"GLB loads "+filename)

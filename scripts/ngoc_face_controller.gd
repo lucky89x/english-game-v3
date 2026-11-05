@@ -1,22 +1,18 @@
 class_name NgocFaceController
 extends Node
-## Drives Ngoc's painted face (chr_ngoc_adventurer_v02): random blinking, talking mouth
-## flaps and short "joy" expressions. The GLB exposes the face as the material named
-## "NgocFace"; this node swaps its albedo texture at runtime.
-
-const FACES := {
-	"happy": preload("res://assets/characters/models/ngoc_face_happy.png"),
-	"blink": preload("res://assets/characters/models/ngoc_face_blink.png"),
-	"talk": preload("res://assets/characters/models/ngoc_face_talk.png"),
-	"joy": preload("res://assets/characters/models/ngoc_face_joy.png"),
-}
+## Drives a chibi05 painted face: random blinking, talking mouth flaps and short "joy"
+## expressions. Works for Ngoc (material "NgocFace") and the chibi05 NPCs (materials named
+## "<asset>_Face"); textures are loaded from `texture_dir`/`texture_prefix`_face_<key>.png.
 
 @export var model_path: NodePath = ^".."
+@export var texture_dir := "res://assets/characters/models"
+@export var texture_prefix := "ngoc"
 @export var blink_interval := Vector2(2.2, 4.8)
 @export var blink_duration := 0.12
 @export var talk_flap_rate := 7.0
 
 var face_material: BaseMaterial3D
+var faces := {}
 var current_face := ""
 var _blink_wait := 0.0
 var _blink_left := 0.0
@@ -27,6 +23,12 @@ var _expression_left := 0.0
 
 
 func _ready() -> void:
+	for key in ["happy", "blink", "talk", "joy"]:
+		var path := "%s/%s_face_%s.png" % [texture_dir, texture_prefix, key]
+		if ResourceLoader.exists(path):
+			faces[key] = load(path)
+	if not faces.has("joy") and faces.has("happy"):
+		faces["joy"] = faces["happy"]
 	var model := get_node_or_null(model_path)
 	if model == null:
 		push_warning("NgocFaceController: model not found")
@@ -37,7 +39,7 @@ func _ready() -> void:
 			continue
 		for surface in mesh_instance.mesh.get_surface_count():
 			var material := mesh_instance.get_active_material(surface)
-			if material is BaseMaterial3D and material.resource_name == "NgocFace":
+			if material is BaseMaterial3D and (material.resource_name == "NgocFace" or material.resource_name.ends_with("_Face")):
 				face_material = material.duplicate() as BaseMaterial3D
 				mesh_instance.set_surface_override_material(surface, face_material)
 				break
@@ -49,12 +51,12 @@ func _ready() -> void:
 
 ## Mouth flaps for `duration` seconds (e.g. while a dialogue line is shown).
 func talk(duration: float = 1.6) -> void:
-	_talk_left = maxf(_talk_left, duration)
+	_talk_left = maxf(_talk_left, duration) if duration > 0.0 else 0.0
 
 
 ## Hold an expression ("joy", "happy", "blink", "talk") for `duration` seconds.
 func express(face: String, duration: float = 1.2) -> void:
-	if FACES.has(face):
+	if faces.has(face):
 		_expression = face
 		_expression_left = duration
 
@@ -81,7 +83,7 @@ func _process(delta: float) -> void:
 
 
 func _show(face: String) -> void:
-	if face == current_face or face_material == null:
+	if face == current_face or face_material == null or not faces.has(face):
 		return
 	current_face = face
-	face_material.albedo_texture = FACES[face]
+	face_material.albedo_texture = faces[face]

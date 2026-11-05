@@ -78,6 +78,12 @@ func _get_dialogue_hud() -> Node:
 func _play_gesture(clip: String) -> void:
 	if animation_player != null and animation_player.has_animation(clip):
 		animation_player.play(clip, 0.2)
+	var faces := find_children("*", "NgocFaceController", true, false)
+	if not faces.is_empty():
+		if clip in ["Wave", "Talk"]:
+			faces[0].talk(2.4)
+		else:
+			faces[0].talk(0.0)
 
 
 func _on_animation_finished(clip: StringName) -> void:

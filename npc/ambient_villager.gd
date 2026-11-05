@@ -1,5 +1,9 @@
 extends CharacterBody3D
 
+## chibi05 villager models: "Monk" -> Ben the merchant, "Cleric" -> Sam the fisherman.
+const VILLAGER_MODELS := {"Monk": "npc_ben_merchant_v02", "Cleric": "npc_sam_fisherman_v02"}
+const MODEL_HEIGHT := 1.32
+
 var route: Array[Vector3] = []
 var model_name := "Monk"
 var waypoint := 1
@@ -19,15 +23,21 @@ func _ready() -> void:
 	collider.shape = capsule
 	collider.position.y = 0.85
 	add_child(collider)
-	model = (load("res://assets/redesign03/npc_villager.glb") as PackedScene).instantiate()
+	var asset: String = VILLAGER_MODELS.get(model_name, VILLAGER_MODELS["Monk"])
+	model = (load("res://assets/npc/models/%s.glb" % asset) as PackedScene).instantiate()
 	add_child(model)
+	var face := Node.new()
+	face.set_script(preload("res://scripts/ngoc_face_controller.gd"))
+	face.set("texture_dir", "res://assets/npc/models")
+	face.set("texture_prefix", asset)
+	model.add_child(face)
 	var bounds := AABB()
 	var first := true
 	for mesh in model.find_children("*", "MeshInstance3D", true, false):
 		var local_bounds: AABB = (model.global_transform.affine_inverse() * mesh.global_transform) * mesh.get_aabb()
 		bounds = local_bounds if first else bounds.merge(local_bounds)
 		first = false
-	var factor := 1.55 / maxf(bounds.size.y, 0.1)
+	var factor := MODEL_HEIGHT / maxf(bounds.size.y, 0.1)
 	model.scale = Vector3.ONE * factor
 	model.position.y = -bounds.position.y * factor
 	animation = model.find_children("*", "AnimationPlayer", true, false)[0]
