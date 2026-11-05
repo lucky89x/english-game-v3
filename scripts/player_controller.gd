@@ -16,12 +16,20 @@ var animation_player: AnimationPlayer
 var idle_animation := ""
 var walk_animation := ""
 var run_animation := ""
+var jump_animation := ""
+var fall_animation := ""
+var land_animation := ""
 var action_time := 0.0
+var air_time := 0.0
+var was_airborne := false
+var face_controller: Node
 
 func play_action(clip: String) -> void:
 	if animation_player != null and animation_player.has_animation(clip):
 		action_time = animation_player.get_animation(clip).length
 		animation_player.play(clip, 0.18)
+		if face_controller != null and clip in ["Wave", "Celebrate"]:
+			face_controller.express("joy", action_time)
 
 
 func _ready() -> void:
@@ -33,9 +41,15 @@ func _ready() -> void:
 		idle_animation = _find_animation("idle")
 		walk_animation = _find_animation("walk")
 		run_animation = _find_animation("run")
-		for clip in [idle_animation, walk_animation, run_animation]:
+		jump_animation = _find_animation("jump")
+		fall_animation = _find_animation("fall")
+		land_animation = _find_animation("land")
+		for clip in [idle_animation, walk_animation, run_animation, fall_animation, _find_animation("talk")]:
 			if not clip.is_empty():
 				animation_player.get_animation(clip).loop_mode = Animation.LOOP_LINEAR
+	var faces := find_children("*", "NgocFaceController", true, false)
+	if not faces.is_empty():
+		face_controller = faces[0]
 
 
 func _physics_process(delta: float) -> void:
@@ -66,7 +80,7 @@ func _physics_process(delta: float) -> void:
 		)
 
 	move_and_slide()
-	_update_animation(move_direction, is_running)
+	_update_animation(move_direction, is_running, delta)
 
 
 func _camera_relative_direction(input_vector: Vector2) -> Vector3:
@@ -96,9 +110,29 @@ func _find_animation(keyword: String) -> String:
 	return ""
 
 
-func _update_animation(move_direction: Vector3, is_running: bool) -> void:
+func _update_animation(move_direction: Vector3, is_running: bool, delta: float = 0.0) -> void:
 	if animation_player == null:
 		return
+	# Airborne: Jump while rising, Fall once descending (short drops off steps are ignored).
+	if not is_on_floor():
+		air_time += delta
+		var rising := velocity.y > 0.5
+		if rising or air_time > 0.18:
+			was_airborne = true
+			action_time = 0.0
+			var air_clip := jump_animation if rising else fall_animation
+			if air_clip.is_empty():
+				air_clip = fall_animation if rising else jump_animation
+			if not air_clip.is_empty() and animation_player.current_animation != air_clip:
+				animation_player.play(air_clip, 0.12)
+			return
+	else:
+		air_time = 0.0
+		if was_airborne:
+			was_airborne = false
+			if not land_animation.is_empty() and move_direction == Vector3.ZERO:
+				play_action(land_animation)
+				return
 	if action_time > 0.0 and move_direction == Vector3.ZERO:
 		return
 	action_time = 0.0

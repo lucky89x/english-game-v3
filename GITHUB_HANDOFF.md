@@ -21,8 +21,7 @@ Blender authoring files are in art_source; generation scripts are in tools/redes
 ## Current work and known limitations
 
 Village houses are taller and spaced farther apart in the latest layout.
-Character art is still work in progress and has not passed visual acceptance against the reference sheet.
-The latest Ngoc proportion experiment shows overly elongated forearms in runtime captures; animation playback checks do not establish visual quality.
+Ngoc was rebuilt as an original chibi model (chibi05, `assets/characters/models/chr_ngoc_adventurer_v02.glb`) following REF_01; see art_source/chibi05/README.md. Tom and other NPCs still use the redesign03 revisions.
 The current files are preserved as requested, including this unfinished character revision.
 Existing third-party license files are retained; repository visibility does not change their licenses.
 

@@ -1,7 +1,8 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=7 format=3]
 
 [ext_resource type="Script" path="res://scripts/player_controller.gd" id="1_controller"]
-[ext_resource type="PackedScene" path="res://assets/redesign03/ngoc_adventurer.glb" id="2_model"]
+[ext_resource type="PackedScene" path="res://assets/characters/models/chr_ngoc_adventurer_v02.glb" id="2_model"]
+[ext_resource type="Script" path="res://scripts/ngoc_face_controller.gd" id="3_face"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape_player"]
 radius = 0.42
@@ -38,3 +39,6 @@ position = Vector3(0, -0.9, 0)
 metadata/_edit_group_ = true
 
 [node name="Adventurer" parent="VisualRoot/AssetSocket" instance=ExtResource("2_model")]
+
+[node name="FaceController" type="Node" parent="VisualRoot/AssetSocket/Adventurer"]
+script = ExtResource("3_face")

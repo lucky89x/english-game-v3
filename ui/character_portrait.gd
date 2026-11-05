@@ -4,7 +4,7 @@ func _ready() -> void:
 	size = Vector2i(256, 256)
 	own_world_3d = true
 	transparent_bg = true
-	var model = load("res://assets/redesign03/ngoc_adventurer.glb").instantiate()
+	var model = load("res://assets/characters/models/chr_ngoc_adventurer_v02.glb").instantiate()
 	add_child(model)
 	for animation in model.find_children("*", "AnimationPlayer", true, false):
 		animation.play("Idle")
@@ -12,10 +12,10 @@ func _ready() -> void:
 		animation.pause()
 	var camera := Camera3D.new()
 	add_child(camera)
-	camera.position = Vector3(0, 1.37, 1.3)
-	camera.look_at(Vector3(0, 1.25, 0))
+	camera.position = Vector3(0, 1.14, 1.3)
+	camera.look_at(Vector3(0, 1.12, 0))
 	camera.projection = Camera3D.PROJECTION_ORTHOGONAL
-	camera.size = 0.80
+	camera.size = 0.78
 	var light := DirectionalLight3D.new()
 	add_child(light)
 	light.rotation_degrees = Vector3(-25, -25, 0)

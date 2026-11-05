@@ -7,17 +7,17 @@ func _initialize() -> void:
  call_deferred("run")
 func run() -> void:
  var report: Array = []
- for filename in ["ngoc_adventurer.glb","tom_elder.glb"]:
+ for filename in ["res://assets/characters/models/chr_ngoc_adventurer_v02.glb","res://assets/redesign03/tom_elder.glb"]:
   var doc := GLTFDocument.new()
   var state := GLTFState.new()
-  check(doc.append_from_file("res://assets/redesign03/"+filename,state)==OK,"GLB loads "+filename)
+  check(doc.append_from_file(filename,state)==OK,"GLB loads "+filename)
   var model := doc.generate_scene(state)
   root.add_child(model)
   var skeletons := model.find_children("*","Skeleton3D",true,false)
   check(not skeletons.is_empty(),"Real skeleton "+filename)
   var skeleton := skeletons[0] as Skeleton3D
   var player := model.find_children("*","AnimationPlayer",true,false)[0] as AnimationPlayer
-  var wanted := ["Idle","Walk","Run","Interact","Wave"] if filename.begins_with("ngoc") else ["Idle","Walk","Run","Talk","Wave"]
+  var wanted := ["Idle","Walk","Run","Jump","Fall","Land","Talk","Interact","Wave","Celebrate"] if filename.get_file().begins_with("chr_ngoc") else ["Idle","Walk","Run","Talk","Wave"]
   var row := {"file":filename,"bones":skeleton.get_bone_count(),"clips":{}}
   for clip in wanted:
    check(player.has_animation(clip),"Required clip "+clip)
