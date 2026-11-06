@@ -13,6 +13,8 @@ extends Node3D
 @export var rotation_smoothing: float = 16.0
 @export var zoom_smoothing: float = 14.0
 @export var orbit_button: MouseButton = MOUSE_BUTTON_RIGHT
+## Left button also drags the camera (players naturally try "hold mouse and drag").
+@export var secondary_orbit_button: MouseButton = MOUSE_BUTTON_LEFT
 
 @onready var pitch_pivot: Node3D = $PitchPivot
 @onready var spring_arm: SpringArm3D = $PitchPivot/SpringArm3D
@@ -46,7 +48,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		target_pitch = deg_to_rad(pitch_degrees)
 		target_distance = distance
 	if event is InputEventMouseButton:
-		if event.button_index == orbit_button:
+		if event.button_index == orbit_button or event.button_index == secondary_orbit_button:
 			is_rotating = event.pressed
 			Input.set_default_cursor_shape(
 				Input.CURSOR_DRAG if is_rotating else Input.CURSOR_ARROW
@@ -62,7 +64,8 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _input(event: InputEvent) -> void:
-	if event is InputEventMouseButton and event.button_index == orbit_button and not event.pressed:
+	if event is InputEventMouseButton and not event.pressed \
+			and (event.button_index == orbit_button or event.button_index == secondary_orbit_button):
 		is_rotating = false
 		Input.set_default_cursor_shape(Input.CURSOR_ARROW)
 

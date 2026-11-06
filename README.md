@@ -13,7 +13,7 @@ Technical foundation for a PC 3D game made with Godot 4 and GDScript.
 - **WASD**: move relative to the camera
 - **Shift**: run
 - **Space**: jump
-- **Hold right mouse + drag**: orbit the camera 360 degrees
+- **Hold right or left mouse + drag**: orbit the camera 360 degrees
 - **R**: reset camera; sensitivity is exposed on OrbitCamera
 - **F1**: help; **F3**: development FPS
 - **Mouse wheel**: zoom

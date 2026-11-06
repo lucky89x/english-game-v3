@@ -30,6 +30,14 @@ Dự án có 25 skill game trong `.claude/skills/`. Trước khi làm một vi�
 
 Nếu không skill nào khớp, nói rõ và làm theo cách thông thường. Nguồn skill ghi ở `.claude/skills/README.md` (Apache-2.0).
 
+## Định hướng dài hạn (tóm tắt bản bàn giao của chủ dự án)
+- Game phiêu lưu fantasy chibi 3D, "game trước, bài học nằm tự nhiên trong gameplay"; không làm chuỗi trắc nghiệm khô khan. Học sinh lớp 6-9, nội dung Global Success (48 Unit, 12 Unit/lớp), soạn nguyên bản, không chép sách/âm thanh có bản quyền.
+- Cốt truyện "Bí mật La Bàn Ngôn Ngữ": Ngọc + Tom + tinh linh Pip tìm 8 mảnh la bàn, 8 vùng (Làng Khởi Đầu, Rừng Ký Ức, Sa Mạc Gió Vàng, Dãy Núi Vọng Âm, Hải Cảng, Học Viện, Thành Phố Tương Lai, Đảo Sao). Chỉ làm một vùng/lần, hoàn thiện Làng trước.
+- Thứ tự: P0 điều khiển/camera chơi được -> P1 nhiệm vụ "bức thư thất lạc" và vertical slice "Sửa cây cầu" (15-20 phút, bản lớp 6 và lớp 8) -> P2 5 asset chuẩn (Ngọc, Tom, nhà Tom có nội thất, cầu gỗ cong, địa hình) -> P3 làng sống động -> P4 Learning Engine + 48 Unit metadata -> P5 mở rộng từng chương -> P6 đánh giá.
+- Tách Learning Engine/dữ liệu khỏi gameplay; lưu tiến độ riêng theo lớp, Unit, kỹ năng; ID ổn định; có saveVersion. Không dùng dữ liệu lớp khác để thế lớp còn thiếu.
+- Mỗi task: một mục tiêu, một đầu ra kiểm chứng được; báo ĐÃ CÓ / CHƯA CÓ / CHƯA KIỂM THỬ / ĐÃ NGHIỆM THU; không tự nhận "đạt" khi chưa chạy Godot.
+- Thư mục làm việc thật của chủ dự án có thay đổi chưa commit (quest bức thư của Cline...) không nằm trên GitHub; đừng giả định chúng có trong repo. Không dùng `git add -A`, `reset --hard`, `clean`, force push trên bản của chủ dự án.
+
 ## Phong cách hình ảnh
 - Chibi fantasy, đầu to, màu ấm; không dùng capsule hay khối thô làm sản phẩm.
 - Ảnh mẫu: `assets/EnglishQuestV3_Asset_Spec_Codex_2026-11-03/EnglishQuestV3_Asset_Spec_Codex_2026-11-03/04_REFERENCES/` và `assets/assets/reference_art/`.
@@ -38,6 +46,7 @@ Nếu không skill nào khớp, nói rõ và làm theo cách thông thường. N
 
 ## Chạy test (Godot 4.7.2)
 - Nhanh: `godot --headless --path . --script res://tests/smoke_test.gd` (cần dòng `SMOKE TEST PASSED`).
+- Điều khiển bằng sự kiện phím/chuột thật: `tests/controls_e2e_test.gd` (26 mục).
 - Đầy đủ: `tests/village_life_test.gd`, `tests/skills_upgrade_test.gd`, `tests/chibi05_hero_test.gd`, `tests/redesign03/validate_characters.gd`, `tests/bridge_traversal_test.gd`.
 - Chụp ảnh trong game cần renderer thật: `xvfb-run godot --rendering-driver opengl3 --script res://tests/chibi05_world_capture.gd -- <tiền tố>`.
 - Sau khi thêm file model/ảnh mới, chạy `godot --headless --path . --import` để tạo file `.import`.
