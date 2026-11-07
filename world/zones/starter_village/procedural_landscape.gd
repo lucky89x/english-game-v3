@@ -1,8 +1,8 @@
 class_name ProceduralLandscape
 extends Node3D
 
-@export_range(48, 128, 1) var terrain_resolution := 80
-@export var terrain_size := 112.0
+@export_range(48, 220, 1) var terrain_resolution := 160
+@export var terrain_size := 240.0  # chibi05: world expanded from 112 m to 240 m
 @export var terrain_material: Material
 @export var path_material: Material
 @export var water_material: Material
@@ -15,7 +15,9 @@ extends Node3D
 
 func _ready() -> void:
 	_build_terrain()
+	_apply_road_shader()
 	_build_path_network()
+	_ground_forest_clusters()
 	_build_river()
 	_build_horizon()
 	var details := Node3D.new()
@@ -39,8 +41,8 @@ func _build_horizon() -> void:
 		for ring in range(2):
 			for j in range(2):
 				var angle := float(i + j) * TAU / 192.0
-				var radius := 52.0 if ring == 0 else 77.0 + sin(angle * 7.0) * 5.0
-				var height := 1.5 if ring == 0 else 10.0 + sin(angle * 9.0) * 3.5 + sin(angle * 17.0) * 2.0 + sin(angle * 5.0) * 4.0
+				var radius := 116.0 if ring == 0 else 168.0 + sin(angle * 7.0) * 8.0
+				var height := 4.0 if ring == 0 else 18.0 + sin(angle * 9.0) * 5.0 + sin(angle * 17.0) * 3.0 + sin(angle * 5.0) * 6.0
 				quad.append(Vector3(cos(angle) * radius, height, sin(angle) * radius))
 		for index in [0, 2, 1, 1, 2, 3]:
 			surface.add_vertex(quad[index])
@@ -57,7 +59,7 @@ func get_height_at(world_x: float, world_z: float) -> float:
 	var rolling := sin(world_x * 0.13) * cos(world_z * 0.11) * 0.34
 	rolling += sin((world_x + world_z) * 0.055) * 0.42
 	var edge_distance := maxf(absf(world_x), absf(world_z))
-	var rim := smoothstep(31.0, 55.0, edge_distance)
+	var rim := smoothstep(86.0, 118.0, edge_distance)
 	var hills := rim * (4.2 + sin(world_x * 0.18) * 1.1 + cos(world_z * 0.15) * 0.9)
 	var height := rolling * center_weight + hills
 
@@ -116,9 +118,38 @@ func _build_terrain() -> void:
 
 
 func _build_path_network() -> void:
-	# Paths are painted continuously in world space by terrain_blend now.
-	# Retain the root for compatibility, but avoid raised ribbon edges/z-fighting.
-	return
+	# Dirt verges are painted by terrain_blend; the cobbles are laid by paved_roads.gd.
+	var paved := Node3D.new()
+	paved.name = "PavedRoads"
+	paved.set_script(preload("res://world/zones/starter_village/paved_roads.gd"))
+	paths_root.add_child(paved)
+	paved.build(self)
+
+
+func _apply_road_shader() -> void:
+	var packed: Array = VillageLayout.shader_segments()
+	var segments: Array = packed[0]
+	var widths: Array = packed[1]
+	var material := terrain_mesh.mesh.surface_get_material(0) as ShaderMaterial
+	if material == null:
+		return
+	material.set_shader_parameter("road_seg", segments)
+	material.set_shader_parameter("road_half", PackedFloat32Array(widths))
+	material.set_shader_parameter("road_count", mini(segments.size(), 64))
+
+
+## The horizon forest clusters were placed for the old 112 m map: push them out to the
+## new rim and sit them on the terrain.
+func _ground_forest_clusters() -> void:
+	var forest := get_node_or_null("HorizonForest")
+	if forest == null:
+		return
+	for cluster in forest.get_children():
+		if cluster is Node3D:
+			var flat := Vector2(cluster.position.x, cluster.position.z)
+			if flat.length() > 1.0:
+				flat = flat.normalized() * 96.0
+			cluster.position = Vector3(flat.x, get_height_at(flat.x, flat.y) - 0.1, flat.y)
 
 
 func _build_legacy_path_network() -> void:
@@ -142,7 +173,7 @@ func _build_legacy_path_network() -> void:
 
 func _build_river() -> void:
 	var points := PackedVector2Array()
-	for z in range(3, 57, 3):
+	for z in range(3, 121, 3):
 		points.append(Vector2(10.5 + sin((float(z) - 7.0) * 0.085) * 3.0, float(z)))
 	_add_ribbon(water_root, points, 7.2, water_material, -0.14, true)
 

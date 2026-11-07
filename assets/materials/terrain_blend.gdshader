@@ -1,5 +1,8 @@
 shader_type spatial;
 render_mode diffuse_burley, specular_schlick_ggx;
+uniform vec4 road_seg[64];
+uniform float road_half[64];
+uniform int road_count = 0;
 varying vec3 world_pos;
 varying vec3 world_normal;
 void vertex(){
@@ -17,23 +20,13 @@ void fragment(){
  float broad=noise2(p*0.16)*0.65+noise2(p*0.39)*0.35;
  float detail=noise2(p*4.0);
  float flecks=noise2(p*17.0);
- float path=segment(p,vec2(0,19),vec2(-0.5,13));
- path=min(path,segment(p,vec2(-0.5,13),vec2(0.4,7)));
- path=min(path,segment(p,vec2(0.4,7),vec2(-0.2,1)));
- path=min(path,segment(p,vec2(-0.2,1),vec2(0.5,-6)));
- path=min(path,segment(p,vec2(0.5,-6),vec2(-1,-14)));
- path=min(path,segment(p,vec2(-1,-14),vec2(-2,-22)));
- float branch=segment(p,vec2(0,5),vec2(3,5.5));
- branch=min(branch,segment(p,vec2(3,5.5),vec2(5.3,7)));
- branch=min(branch,segment(p,vec2(15.8,7),vec2(18,8)));
- branch=min(branch,segment(p,vec2(18,8),vec2(18,12)));
- branch=min(branch,segment(p,vec2(0,11),vec2(-10,14)));
- branch=min(branch,segment(p,vec2(-10,14),vec2(-21,17)));
- branch=min(branch,segment(p,vec2(0,-7),vec2(-10,-12)));
- branch=min(branch,segment(p,vec2(-10,-12),vec2(-23,-20)));
+ // dirt verges follow VillageLayout.ROADS (set by procedural_landscape.gd)
  float edge=(noise2(p*1.5)-0.5)*0.45+(broad-0.5)*0.7;
- float worn=1.0-smoothstep(1.55,2.8,path+edge);
- worn=max(worn,1.0-smoothstep(0.9,1.95,branch+edge));
+ float worn=0.0;
+ for(int i=0;i<road_count;i++){
+  float d=segment(p,road_seg[i].xy,road_seg[i].zw)-road_half[i];
+  worn=max(worn,1.0-smoothstep(-0.2,1.1,d+edge*0.6));
+ }
  float yard=min(length((p-vec2(-12,-6))/vec2(6.5,4.5)),length((p-vec2(12,-6))/vec2(6.5,4.5)));
  yard=min(yard,length((p-vec2(-1,-24))/vec2(10,7)));
  worn=max(worn,(1.0-smoothstep(0.65,1.15,yard+(broad-0.5)*0.3))*0.72);

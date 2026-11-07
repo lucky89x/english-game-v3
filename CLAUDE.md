@@ -7,6 +7,7 @@ Game 3D học tiếng Anh cho học sinh THCS (lớp 6-9): thế giới phiêu l
 - Chỉ push lên GitHub khi người dùng nói "đẩy đi". Mặc định chỉ commit trong máy. Không tạo pull request nếu chưa được yêu cầu.
 - Chỉ làm đúng phạm vi được yêu cầu, không dựng lại phần khác. Gom việc, tránh chụp/kiểm tra thừa để tiết kiệm token.
 - Chạy test trước khi báo xong; báo trung thực nếu test lỗi hoặc phần nào chưa làm.
+- Cuối mỗi phiên: cập nhật `docs/TIEN_DO_PHAT_TRIEN.md` (checklist, nhật ký phiên, chỉ số hiệu năng) và báo tóm tắt tiến độ cho người dùng. Chỉ đánh `[x]` khi người dùng đã nghiệm thu bằng F5.
 
 ## Dùng skill game (bắt buộc)
 Dự án có 25 skill game trong `.claude/skills/`. Trước khi làm một việc về game, tự tìm và gọi skill phù hợp, không cần người dùng nhắc. Chỉ gọi skill liên quan đến việc đang làm.
@@ -57,3 +58,5 @@ Nếu không skill nào khớp, nói rõ và làm theo cách thông thường. N
 - Hướng nhân vật/NPC: mặt hướng +Z của Godot; 1 đơn vị = 1 m. Nhân vật chính cao ~1,55 m.
 - HUD hiện dùng số liệu mẫu, chưa phải tiến độ học thật. Chưa có minigame hay câu hỏi tiếng Anh; đó là việc giai đoạn tiếp theo.
 - Nội thất 3 phòng, quầy chợ, cầu gỗ, hàng rào, rương vẫn là asset Quaternius cũ.
+- Bố cục bản đồ (240 m) nằm ở `world/zones/starter_village/village_layout.gd`: đường (ROADS), nhà xóm (HAMLET), sông. Đường lát đá, shader nền, rải cây và đặt nhà đều đọc từ đây; sửa bố cục thì sửa file này.
+- Hiệu năng: cây/cỏ dùng MultiMesh chia ô 32 m + bản cây xa (`veg_*_lod_v02.glb`); bóng mặt trời 2 tầng, 45 m. Đo bằng Performance monitor trước khi tối ưu.

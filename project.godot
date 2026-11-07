@@ -72,4 +72,5 @@ interact={
 
 [rendering]
 
+mesh_lod/lod_change/threshold_pixels=2.0
 rendering_device/driver.windows="d3d12"

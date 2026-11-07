@@ -749,3 +749,19 @@ def paint_face(skin=(246, 200, 166), eyes='open', mouth='smile', iris=((44, 22, 
     else:
         d.polygon(arc(0, mz + .004, mouth_w * .75, .018, 200, 340, .006, .006), fill=(150, 56, 50, 255))
     return img.resize((size, size), Image.LANCZOS).convert('RGB')
+
+
+def patch_glb_materials(path, fn):
+    """rewrite the JSON chunk of a .glb so fn(material_dict) can set alphaMode/doubleSided etc."""
+    import json, struct
+    data = bytearray(open(path, 'rb').read())
+    jlen = struct.unpack_from('<I', data, 12)[0]
+    doc = json.loads(data[20:20 + jlen].decode('utf-8'))
+    for m in doc.get('materials', []):
+        fn(m)
+    js = json.dumps(doc, separators=(',', ':')).encode('utf-8')
+    js += b' ' * ((4 - len(js) % 4) % 4)
+    rest = data[20 + jlen:]
+    out = bytearray(data[:12]) + struct.pack('<I', len(js)) + b'JSON' + js + rest
+    struct.pack_into('<I', out, 8, len(out))
+    open(path, 'wb').write(out)

@@ -8,6 +8,10 @@ func shot(name: String) -> void:
 	await RenderingServer.frame_post_draw
 	root.get_texture().get_image().save_png("res://artifacts/chibi05/%s.png" % name)
 
+func get_viewport_camera() -> Camera3D:
+	return root.get_camera_3d()
+
+
 func run() -> void:
 	var prefix := "world"
 	var args := OS.get_cmdline_user_args()
@@ -26,7 +30,19 @@ func run() -> void:
 	var cam := Camera3D.new()
 	world.add_child(cam)
 	cam.fov = 50
+	var gameplay_cam := get_viewport_camera()
+	for i in range(10):
+		await process_frame
+	await shot("%s_gameplay" % prefix)
+	print("PERF gameplay draw_calls=%d primitives=%d objects=%d" % [
+		Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME),
+		Performance.get_monitor(Performance.RENDER_TOTAL_PRIMITIVES_IN_FRAME),
+		Performance.get_monitor(Performance.RENDER_TOTAL_OBJECTS_IN_FRAME)])
 	var views := [
+		["world", Vector3(0, 95, 125), Vector3(0, 0, 0)],
+		["west_hamlet", Vector3(-30, 14, 30), Vector3(-52, 1, 8)],
+		["east_orchard", Vector3(22, 12, 30), Vector3(45, 1, 12)],
+		["road", Vector3(-3, 3.2, 26), Vector3(0, 0, 10)],
 		["overview", Vector3(0, 32, 40), Vector3(0, 0, -2)],
 		["houses", Vector3(-2, 6, 6), Vector3(-6, 2, -12)],
 		["hall", Vector3(0, 5, -10), Vector3(0, 3, -24)],
