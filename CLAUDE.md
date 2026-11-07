@@ -7,7 +7,7 @@ Game 3D học tiếng Anh cho học sinh THCS (lớp 6-9): thế giới phiêu l
 - Chỉ push lên GitHub khi người dùng nói "đẩy đi". Mặc định chỉ commit trong máy. Không tạo pull request nếu chưa được yêu cầu.
 - Chỉ làm đúng phạm vi được yêu cầu, không dựng lại phần khác. Gom việc, tránh chụp/kiểm tra thừa để tiết kiệm token.
 - Chạy test trước khi báo xong; báo trung thực nếu test lỗi hoặc phần nào chưa làm.
-- Cuối mỗi phiên: cập nhật `docs/TIEN_DO_PHAT_TRIEN.md` (checklist, nhật ký phiên, chỉ số hiệu năng) và báo tóm tắt tiến độ cho người dùng. Chỉ đánh `[x]` khi người dùng đã nghiệm thu bằng F5.
+- Cuối mỗi phiên: cập nhật `docs/TIEN_DO_PHAT_TRIEN.md` và `docs/TIEN_DO_PHAT_TRIEN.xlsx` (sheet Checklist: cột Trạng thái; sheet Nhật ký phiên, Hiệu năng; sửa bằng openpyxl, giữ công thức ở sheet Tổng quan) và báo tóm tắt tiến độ cho người dùng. Chỉ đánh `[x]` khi người dùng đã nghiệm thu bằng F5.
 
 ## Dùng skill game (bắt buộc)
 Dự án có 25 skill game trong `.claude/skills/`. Trước khi làm một việc về game, tự tìm và gọi skill phù hợp, không cần người dùng nhắc. Chỉ gọi skill liên quan đến việc đang làm.
