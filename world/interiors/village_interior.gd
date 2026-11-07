@@ -5,6 +5,57 @@ const KIT := "res://assets/Medieval Village MegaKit[Standard]/glTF/"
 const PROPS := "res://assets/Exports/glTF/"
 
 func _ready() -> void:
+	if room_type == "hall":
+		_tom_house()
+	else:
+		_quaternius_room()
+	if room_type != "hall":
+		var keeper := CharacterBody3D.new()
+		keeper.set_script(preload("res://npc/ambient_villager.gd"))
+		keeper.model_name = "Monk" if room_type == "shop" else "Cleric"
+		keeper.position = Vector3(0, 0.1, -3.4)
+		add_child(keeper)
+	var light := OmniLight3D.new()
+	light.position = Vector3(0, 3.5, 0)
+	light.omni_range = 12
+	light.light_color = Color(1, 0.8, 0.55)
+	light.light_energy = 1.8
+	add_child(light)
+	var sign := Label3D.new()
+	sign.text = "Nhấn E gần lối vào để trở lại làng"
+	sign.position = Vector3(0, 1.5, 4.4)
+	sign.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	sign.font_size = 28
+	add_child(sign)
+
+
+## chibi05: Tom's house (tools/chibi05/build_props_chibi.py, int_tom_house_v02.glb) with box
+## collision proxies matching the furniture. Same 10 x 10 m room and door spot as before.
+func _tom_house() -> void:
+	prop("res://assets/environment/village/models/int_tom_house_v02.glb", Vector3.ZERO)
+	box(Vector3(10, 0.2, 10), Vector3(0, -0.1, 0))
+	box(Vector3(10, 3.2, 0.2), Vector3(0, 1.6, -5))
+	for side in [-1.0, 1.0]:
+		box(Vector3(0.2, 3.2, 10), Vector3(side * 5, 1.6, 0))
+	box(Vector3(10, 1, 0.2), Vector3(0, 0.5, 5))
+	box(Vector3(2.0, 1.1, 2.0), Vector3(0, 0.55, -1.5))      # round table
+	for side in [-1.0, 1.0]:
+		box(Vector3(0.6, 0.6, 0.6), Vector3(side * 1.5, 0.3, -1.5))   # stools
+	box(Vector3(2.4, 2.6, 0.9), Vector3(1.6, 1.3, -4.55))     # fireplace
+	box(Vector3(2.2, 2.6, 0.6), Vector3(-3.0, 1.3, -4.6))     # bookshelf
+	box(Vector3(1.7, 1.0, 2.5), Vector3(3.4, 0.5, -2.65))     # bed
+	box(Vector3(1.0, 0.6, 0.6), Vector3(3.4, 0.3, -1.0))      # chest
+	for x in [-4.3, 4.3]:
+		box(Vector3(0.6, 1.0, 0.6), Vector3(x, 0.5, 4.0))     # potted plants
+	var fire := OmniLight3D.new()
+	fire.position = Vector3(1.6, 0.8, -3.8)
+	fire.omni_range = 4.5
+	fire.light_color = Color(1.0, 0.6, 0.3)
+	fire.light_energy = 1.2
+	add_child(fire)
+
+
+func _quaternius_room() -> void:
 	for x in range(-4, 5, 2):
 		for z in range(-4, 5, 2):
 			prop(KIT + "Floor_WoodDark.gltf", Vector3(x, -0.1, z))
@@ -58,24 +109,6 @@ func _ready() -> void:
 			prop(PROPS + "BookGroup_Medium_2.gltf", Vector3(3.2, shelf_y, -4.0))
 		box(Vector3(2, 2.8, 0.8), Vector3(3.2, 1.4, -4.2))
 		prop(PROPS + "BookStand.gltf", Vector3(3, 0, 0))
-	if room_type != "hall":
-		var keeper := CharacterBody3D.new()
-		keeper.set_script(preload("res://npc/ambient_villager.gd"))
-		keeper.model_name = "Monk" if room_type == "shop" else "Cleric"
-		keeper.position = Vector3(0, 0.1, -3.4)
-		add_child(keeper)
-	var light := OmniLight3D.new()
-	light.position = Vector3(0, 3.5, 0)
-	light.omni_range = 12
-	light.light_color = Color(1, 0.8, 0.55)
-	light.light_energy = 1.8
-	add_child(light)
-	var sign := Label3D.new()
-	sign.text = "Nhấn E gần lối vào để trở lại làng"
-	sign.position = Vector3(0, 1.5, 4.4)
-	sign.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	sign.font_size = 28
-	add_child(sign)
 
 func prop(path: String, point: Vector3) -> Node3D:
 	var model := (load(path) as PackedScene).instantiate() as Node3D

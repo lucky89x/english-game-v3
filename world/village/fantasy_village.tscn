@@ -1,7 +1,7 @@
 [gd_scene load_steps=32 format=3]
 
 [ext_resource type="PackedScene" path="res://world/buildings/fantasy_house.tscn" id="1_house"]
-[ext_resource type="PackedScene" path="res://world/props/wooden_bridge.tscn" id="2_bridge"]
+[ext_resource type="PackedScene" path="res://world/props/chibi_bridge.tscn" id="2_bridge"]
 [ext_resource type="PackedScene" path="res://npc/elder/elder_npc.tscn" id="3_elder"]
 [ext_resource type="PackedScene" path="res://assets/environment/village/models/veg_oak_a_v02.glb" id="4_tree1"]
 [ext_resource type="PackedScene" path="res://assets/environment/village/models/veg_oak_b_v02.glb" id="5_tree2"]
@@ -167,9 +167,8 @@ cast_shadow = 0
 visible = false
 
 [node name="Bridge" parent="Pond" instance=ExtResource("2_bridge")]
-position = Vector3(0, 0.08, 0)
+position = Vector3(0, 0, 0)
 rotation_degrees = Vector3(0, 90, 0)
-scale = Vector3(1, 1, 1.3)
 
 [node name="PondRock1" parent="Pond" instance=ExtResource("9_rock1")]
 position = Vector3(-5.3, -0.05, -0.8)

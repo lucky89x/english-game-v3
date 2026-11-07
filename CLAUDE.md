@@ -57,6 +57,6 @@ Nếu không skill nào khớp, nói rõ và làm theo cách thông thường. N
 - Nhánh làm việc: `claude/adoring-wozniak-7dif4v`. Không đụng vào `main`.
 - Hướng nhân vật/NPC: mặt hướng +Z của Godot; 1 đơn vị = 1 m. Nhân vật chính cao ~1,55 m.
 - HUD hiện dùng số liệu mẫu, chưa phải tiến độ học thật. Chưa có minigame hay câu hỏi tiếng Anh; đó là việc giai đoạn tiếp theo.
-- Nội thất 3 phòng, quầy chợ, cầu gỗ, hàng rào, rương vẫn là asset Quaternius cũ.
+- Nội thất cửa hàng và thư viện, quầy chợ, hàng rào, rương vẫn là asset Quaternius cũ. Cầu gỗ cong, nội thất nhà Tom, cột đèn, biển chỉ đường, cổng Rừng Ký Ức là asset chibi05 (`tools/chibi05/build_props_chibi.py`; đặt bởi `village_props.gd`, `chibi_bridge.gd`).
 - Bố cục bản đồ (240 m) nằm ở `world/zones/starter_village/village_layout.gd`: đường (ROADS), nhà xóm (HAMLET), sông. Đường lát đá, shader nền, rải cây và đặt nhà đều đọc từ đây; sửa bố cục thì sửa file này.
 - Hiệu năng: cây/cỏ dùng MultiMesh chia ô 32 m + bản cây xa (`veg_*_lod_v02.glb`); bóng mặt trời 2 tầng, 45 m. Đo bằng Performance monitor trước khi tối ưu.

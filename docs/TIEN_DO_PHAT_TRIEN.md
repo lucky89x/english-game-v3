@@ -1,6 +1,6 @@
 # English Quest V3 — Kế hoạch và tiến độ phát triển
 
-Cập nhật lần cuối: **07/11/2026** (phiên 5). Claude cập nhật file này ở cuối mỗi phiên làm việc.
+Cập nhật lần cuối: **07/11/2026** (phiên 6). Claude cập nhật file này ở cuối mỗi phiên làm việc.
 
 **Ký hiệu trạng thái**
 - `[x]` **ĐÃ NGHIỆM THU**: chủ dự án đã chạy F5 và xác nhận.
@@ -13,7 +13,7 @@ Cập nhật lần cuối: **07/11/2026** (phiên 5). Claude cập nhật file n
 |---|---|---|
 | P0 | Điều khiển, camera, tương tác chơi được | Đã nghiệm thu |
 | P1 | Nhiệm vụ "Bức thư thất lạc" + vertical slice "Sửa cây cầu" | Chưa làm (cần file quest từ máy chủ dự án) |
-| P2 | 5 asset chuẩn mỹ thuật | Đang làm (4/5 đã dựng, chờ duyệt) |
+| P2 | 5 asset chuẩn mỹ thuật | Đã dựng đủ 5/5, chờ duyệt |
 | P3 | Làng sống động, bản đồ rộng | Đang làm |
 | P4 | Hệ thống học (Learning Engine, 48 Unit) | Chưa làm |
 | P5 | Mở rộng 7 chương còn lại | Chưa làm |
@@ -39,8 +39,8 @@ Cập nhật lần cuối: **07/11/2026** (phiên 5). Claude cập nhật file n
 - [~] Ngọc: chibi đầu to, mặt vẽ, tóc xoăn búi, kính, khăn, 10 animation, chớp mắt
 - [~] Tom: áo choàng xanh viền vàng, râu tóc trắng, gậy đèn lồng phát sáng, 5 animation
 - [~] Nhà chibi: 8 mẫu (mái đỏ, xanh, cam, xanh lá; hội trường, chuồng bò, kho, tháp)
-- [ ] Nhà Tom có nội thất mới (nội thất hiện vẫn là asset Quaternius cũ)
-- [ ] Cầu gỗ cong mới có lan can và va chạm (cầu hiện vẫn là asset cũ)
+- [~] Nhà Tom có nội thất mới: lò sưởi đá, giá sách, bàn tròn có bản đồ, giường chăn xanh, rương, thảm tròn, đèn treo
+- [~] Cầu gỗ cong mới có lan can, cột đèn hai đầu, mố đá; va chạm bám theo mặt cầu
 - [~] Địa hình: cỏ, đất, đá, bờ sông, nước có bọt và gợn sóng
 - [~] Cây có lá thật (tấm lá vẽ), vỏ cây có rãnh, bản rút gọn cho cây ở xa
 
@@ -51,7 +51,7 @@ Cập nhật lần cuối: **07/11/2026** (phiên 5). Claude cập nhật file n
 - [~] Ba xóm mới: xóm Tây (7 nhà), vườn cây phía Đông (4 nhà), đồng cỏ phía Nam (3 nhà)
 - [~] Đường lên cổng Rừng Ký Ức (chưa có cổng và biển báo)
 - [~] NPC dân làng: Ben (bán hàng), Sam (ngư dân), đi dạo theo tuyến
-- [ ] Cổng Rừng Ký Ức, biển chỉ đường, cột đèn ven đường
+- [~] Cổng Rừng Ký Ức (đóng, có biển và lời nhắn "mở ở Chương II"), 5 biển chỉ đường song ngữ Anh–Việt, cột đèn ven đường
 - [ ] Thêm NPC: Pip, Lily, Rose, Anna; lịch sinh hoạt theo giờ
 - [ ] Nội thất các nhà mới; nhà ở xóm mới hiện chưa vào được
 - [ ] Rương, bí mật, nhiệm vụ ẩn; bản đồ nhỏ (minimap)
@@ -90,6 +90,7 @@ Cập nhật lần cuối: **07/11/2026** (phiên 5). Claude cập nhật file n
 |---|---|---|---|
 | 5 (trước tối ưu) | 1.218 | 2.242.796 | Bản đồ vừa mở rộng |
 | 5 (sau tối ưu) | 700 | 1.185.218 | Chia ô cây/cỏ, bản cây xa, bóng 2 tầng 45 m |
+| 6 | 678 | 1.218.836 | Thêm cầu mới, cột đèn, biển, cổng rừng |
 
 ## Nhật ký các phiên làm việc
 
@@ -100,8 +101,9 @@ Cập nhật lần cuối: **07/11/2026** (phiên 5). Claude cập nhật file n
 | 3 | 06/11/2026 | Tải 25 skill game, tạo CLAUDE.md, đề án xin tài trợ | — |
 | 4 | 06/11/2026 | P0: kéo chuột trái cũng xoay camera; test điều khiển đầu-cuối 26 mục | 26/26 đạt; chủ dự án nghiệm thu điều khiển |
 | 5 | 07/11/2026 | Nhà ×1,45; cây có lá thật + bản rút gọn; đường lát đá toàn mạng; bản đồ 240 m với 3 xóm mới (14 nhà); sông dài ra; tối ưu hiệu năng −47% tam giác | 177 mục đạt (7 bộ test) |
+| 6 | 07/11/2026 | P2: cầu gỗ cong mới, nội thất nhà Tom; P3: cột đèn ven đường, 5 biển chỉ đường song ngữ, cổng Rừng Ký Ức | 177 mục đạt; đi qua cầu 2 chiều đạt |
 
 ## Việc nên làm tiếp (đề xuất)
-1. Chủ dự án chạy F5 kiểm tra phiên 5: kích thước nhà, cây, đường đá, đi thử ra 3 xóm mới.
-2. Gửi các file quest "Bức thư thất lạc" để làm P1.
-3. Dựng cầu gỗ cong mới và nhà Tom có nội thất (hoàn tất P2).
+1. Chủ dự án chạy F5 kiểm tra phiên 5–6: nhà, cây, đường đá, 3 xóm mới, cầu mới, nhà Tom, cổng rừng.
+2. Gửi các file quest "Bức thư thất lạc" để làm P1 (hoặc đồng ý để Claude dựng lại nhiệm vụ này từ đầu).
+3. Bắt đầu P4: khung Learning Engine + Unit 1 lớp 6 và một minigame đầu tiên.
