@@ -1,0 +1,267 @@
+{
+  "id": "g8_u07",
+  "grade": 8,
+  "unit": 7,
+  "title": "Environmental Protection",
+  "skills": [
+    "vocabulary"
+  ],
+  "objectives": [],
+  "vocabulary": [
+    {
+      "word": "absorb",
+      "vi": "hấp thụ",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "air pollution",
+      "vi": "ô nhiễm không khí",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "avoid",
+      "vi": "tránh",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "blast",
+      "vi": "vụ nổ",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "campfire",
+      "vi": "lửa trại",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "campsite",
+      "vi": "khu cắm trại",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "carbon footprint",
+      "vi": "lượng khí thải các-bon",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "climate change",
+      "vi": "biến đổi khí hậu",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "conical hat",
+      "vi": "nón lá",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "consumption",
+      "vi": "sự tiêu thụ",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "coral",
+      "vi": "san hô",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "cutting down trees",
+      "vi": "việc chặt phá cây",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "devices",
+      "vi": "thiết bị",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "dump",
+      "vi": "đổ, xả (rác)",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "Earth Day",
+      "vi": "Ngày Trái Đất",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "ecosystem",
+      "vi": "hệ sinh thái",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "effect",
+      "vi": "tác động",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "endangered species",
+      "vi": "loài có nguy cơ tuyệt chủng",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "environmental problems",
+      "vi": "vấn đề môi trường",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "extinction",
+      "vi": "sự tuyệt chủng",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "forest fire",
+      "vi": "cháy rừng",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "global warming",
+      "vi": "sự nóng lên toàn cầu",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "green product",
+      "vi": "sản phẩm xanh",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "habitat",
+      "vi": "môi trường sống",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "habitat loss",
+      "vi": "sự mất môi trường sống",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "harm",
+      "vi": "gây hại",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "harmful",
+      "vi": "có hại",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "heritage",
+      "vi": "di sản",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "littering",
+      "vi": "việc xả rác",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "marine animal",
+      "vi": "động vật biển",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "national park",
+      "vi": "vườn quốc gia",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "oxygen",
+      "vi": "khí ô-xy",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "participate",
+      "vi": "tham gia",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "permit",
+      "vi": "giấy phép; cho phép",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "plastic bags",
+      "vi": "túi ni-lông",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "protect",
+      "vi": "bảo vệ",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "protection",
+      "vi": "sự bảo vệ",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "quality",
+      "vi": "chất lượng",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "release",
+      "vi": "thải ra",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "renewable",
+      "vi": "có thể tái tạo",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "resident",
+      "vi": "cư dân",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "serious",
+      "vi": "nghiêm trọng",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "single-use product",
+      "vi": "sản phẩm dùng một lần",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "soil pollution",
+      "vi": "ô nhiễm đất",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "source",
+      "vi": "nguồn",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "species",
+      "vi": "loài",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "substance",
+      "vi": "chất",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "toxic",
+      "vi": "độc hại",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "turn off",
+      "vi": "tắt",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "water pollution",
+      "vi": "ô nhiễm nước",
+      "source": "sgk_notes"
+    }
+  ],
+  "grammar": [],
+  "activities": {},
+  "version": 1,
+  "source_note": "Từ vựng do chủ dự án chép từ sổ tay kiến thức; chưa có bài đọc hay hoạt động.",
+  "vocabulary_checked": true
+}

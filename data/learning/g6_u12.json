@@ -1,0 +1,207 @@
+{
+  "id": "g6_u12",
+  "grade": 6,
+  "unit": 12,
+  "title": "Robots",
+  "skills": [
+    "vocabulary"
+  ],
+  "objectives": [],
+  "vocabulary": [
+    {
+      "word": "age",
+      "vi": "độ tuổi",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "broken",
+      "vi": "bị hỏng, bị vỡ",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "build",
+      "vi": "xây dựng",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "ceiling",
+      "vi": "trần nhà",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "choice",
+      "vi": "sự lựa chọn",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "do the dishes",
+      "vi": "rửa bát",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "do the washing",
+      "vi": "giặt quần áo",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "doctor robot",
+      "vi": "người máy bác sĩ",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "factory",
+      "vi": "nhà máy",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "feelings",
+      "vi": "cảm xúc",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "guard",
+      "vi": "canh gác; người bảo vệ",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "height",
+      "vi": "chiều cao",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "home robot",
+      "vi": "người máy gia đình",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "household chores",
+      "vi": "công việc nhà",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "improve",
+      "vi": "cải thiện",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "interested in",
+      "vi": "thích thú, quan tâm",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "laboratory",
+      "vi": "phòng thí nghiệm",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "light",
+      "vi": "nhẹ",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "literature",
+      "vi": "văn học",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "machine",
+      "vi": "máy móc",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "mood",
+      "vi": "tâm trạng",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "price",
+      "vi": "giá",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "pronunciation",
+      "vi": "cách phát âm",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "put away",
+      "vi": "cất, dọn đi",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "repair",
+      "vi": "sửa chữa",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "sick people",
+      "vi": "người ốm",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "space robot",
+      "vi": "người máy không gian",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "space station",
+      "vi": "trạm vũ trụ",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "speed",
+      "vi": "tốc độ",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "strong",
+      "vi": "khỏe",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "tall",
+      "vi": "cao",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "teacher robot",
+      "vi": "người máy giáo viên",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "tidy",
+      "vi": "gọn gàng",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "understand",
+      "vi": "hiểu",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "useful",
+      "vi": "hữu ích",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "weekend",
+      "vi": "cuối tuần",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "weight",
+      "vi": "cân nặng",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "worker robot",
+      "vi": "người máy công nhân",
+      "source": "sgk_notes"
+    }
+  ],
+  "grammar": [],
+  "activities": {},
+  "version": 1,
+  "source_note": "Từ vựng do chủ dự án chép từ sổ tay kiến thức; chưa có bài đọc hay hoạt động.",
+  "vocabulary_checked": true
+}

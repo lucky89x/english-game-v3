@@ -1,0 +1,52 @@
+{
+  "id": "g6_u06",
+  "grade": 6,
+  "unit": 6,
+  "title": "Our Tet Holiday",
+  "skills": [
+    "vocabulary"
+  ],
+  "objectives": [],
+  "vocabulary": [
+    {
+      "word": "balloon",
+      "vi": "quả bóng bay",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "behave",
+      "vi": "cư xử",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "pick",
+      "vi": "hái (hoa, quả)",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "throw",
+      "vi": "ném",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "wash away",
+      "vi": "xua tan, cuốn trôi",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "welcome",
+      "vi": "chào đón",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "wish",
+      "vi": "điều ước, lời chúc; ước, chúc",
+      "source": "sgk_notes"
+    }
+  ],
+  "grammar": [],
+  "activities": {},
+  "version": 1,
+  "source_note": "Từ vựng do chủ dự án chép từ sổ tay kiến thức; chưa có bài đọc hay hoạt động.",
+  "vocabulary_checked": true
+}

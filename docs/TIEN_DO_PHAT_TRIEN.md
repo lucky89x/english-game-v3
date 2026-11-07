@@ -1,6 +1,6 @@
 # English Quest V3 — Kế hoạch và tiến độ phát triển
 
-Cập nhật lần cuối: **07/11/2026** (phiên 8). Claude cập nhật file này ở cuối mỗi phiên làm việc.
+Cập nhật lần cuối: **07/11/2026** (phiên 9). Claude cập nhật file này ở cuối mỗi phiên làm việc.
 
 **Ký hiệu trạng thái**
 - `[x]` **ĐÃ NGHIỆM THU**: chủ dự án đã chạy F5 và xác nhận.
@@ -61,7 +61,7 @@ Cập nhật lần cuối: **07/11/2026** (phiên 8). Claude cập nhật file n
 ## P4 — Hệ thống học tiếng Anh
 - [~] Learning Engine tách khỏi gameplay; dữ liệu bài học dạng file (`data/learning/`, `LearningCatalog`)
 - [~] Metadata 48 Unit Global Success (lớp 6–9), ID ổn định `g6_u01`... (tên Unit cần giáo viên đối chiếu)
-- [ ] Nội dung mẫu đầy đủ: Unit 1 lớp 6 và Unit 1 lớp 8 (đã có bản khởi đầu: mục tiêu, từ vựng, ngữ pháp, 1 bài đọc)
+- [ ] Nội dung mẫu đầy đủ: Unit 1 lớp 6 và Unit 1 lớp 8. Đã có: từ vựng đủ 12 Unit lớp 6 và 8 (859 từ, từ sổ tay của chủ dự án trên Drive), ngữ pháp và ngữ âm Unit 1 lớp 8, 1 bài đọc mỗi lớp. Chưa có: lớp 7 và 9, ngữ pháp Unit 1 lớp 6 chưa đối chiếu
 - [ ] Lưu tiến độ riêng theo lớp, Unit, kỹ năng (đã có); ôn tập cách quãng (chưa)
 - [ ] Minigame đầu tiên (ví dụ: Mua bán ở chợ Ben, Câu cá từ vựng với Sam)
 - [ ] Kiểm tra đầu vào, kiểm tra qua cổng, tổng kết; mức cơ bản và nâng cao
@@ -104,6 +104,7 @@ Cập nhật lần cuối: **07/11/2026** (phiên 8). Claude cập nhật file n
 | 5 | 07/11/2026 | Nhà ×1,45; cây có lá thật + bản rút gọn; đường lát đá toàn mạng; bản đồ 240 m với 3 xóm mới (14 nhà); sông dài ra; tối ưu hiệu năng −47% tam giác | 177 mục đạt (7 bộ test) |
 | 6 | 07/11/2026 | P2: cầu gỗ cong mới, nội thất nhà Tom; P3: cột đèn ven đường, 5 biển chỉ đường song ngữ, cổng Rừng Ký Ức | 177 mục đạt; đi qua cầu 2 chiều đạt |
 | 7 | 07/11/2026 | P1: quest "Bức thư thất lạc" dựng lại (chọn lớp, thư tiếng Anh, gợi ý, thưởng 1 lần); P4: 48 Unit metadata, Unit 1 lớp 6/8 mẫu, lưu tiến độ có version; khóa di chuyển khi chọn đáp án | 213 mục đạt (8 bộ test) |
+| 9 | 07/11/2026 | Đọc Drive (game english > global); nhập từ vựng lớp 6 và 8 (24 Unit, 859 từ) bằng công cụ nhập; ngữ pháp, ngữ âm Unit 1 lớp 8 | Test dữ liệu học 13 mục đạt |
 | 8 | 07/11/2026 | Bức thư theo luồng gốc: thư lạc trong nhà Tom, dấu ✉ trên cửa, vào nhà tìm, đọc, ra trả Tom | 215 mục đạt (8 bộ test) |
 
 ## Việc nên làm tiếp (đề xuất)

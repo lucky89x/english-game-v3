@@ -1,95 +1,223 @@
 {
- "id": "g6_u01",
- "grade": 6,
- "unit": 1,
- "title": "My New School",
- "skills": [
-  "vocabulary",
-  "reading",
-  "grammar"
- ],
- "objectives": [
-  "Name school things and school subjects",
-  "Use the present simple for routines and the present continuous for now",
-  "Read a short letter and find who it is for"
- ],
- "vocabulary": [
-  {
-   "word": "school bag",
-   "vi": "cặp sách"
+  "id": "g6_u01",
+  "grade": 6,
+  "unit": 1,
+  "title": "My New School",
+  "skills": [
+    "vocabulary",
+    "reading",
+    "grammar"
+  ],
+  "objectives": [
+    "Name school things and school subjects",
+    "Use the present simple for routines and the present continuous for now",
+    "Read a short letter and find who it is for"
+  ],
+  "vocabulary": [
+    {
+      "word": "school bag",
+      "vi": "cặp sách"
+    },
+    {
+      "word": "pencil case",
+      "vi": "hộp bút"
+    },
+    {
+      "word": "notebook",
+      "vi": "vở"
+    },
+    {
+      "word": "calculator",
+      "vi": "máy tính cầm tay"
+    },
+    {
+      "word": "compass",
+      "vi": "com-pa"
+    },
+    {
+      "word": "rubber",
+      "vi": "cục tẩy"
+    },
+    {
+      "word": "uniform",
+      "vi": "đồng phục"
+    },
+    {
+      "word": "library",
+      "vi": "thư viện"
+    },
+    {
+      "word": "librarian",
+      "vi": "thủ thư"
+    },
+    {
+      "word": "club",
+      "vi": "câu lạc bộ"
+    },
+    {
+      "word": "lesson",
+      "vi": "tiết học"
+    },
+    {
+      "word": "homework",
+      "vi": "bài tập về nhà"
+    },
+    {
+      "word": "classmate",
+      "vi": "bạn cùng lớp"
+    },
+    {
+      "word": "timetable",
+      "vi": "thời khoá biểu"
+    },
+    {
+      "word": "activity",
+      "vi": "hoạt động",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "art",
+      "vi": "môn mĩ thuật, nghệ thuật",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "art club",
+      "vi": "câu lạc bộ nghệ thuật",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "biology",
+      "vi": "môn sinh học",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "boarding school",
+      "vi": "trường nội trú",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "break time",
+      "vi": "giờ giải lao",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "computer room",
+      "vi": "phòng máy tính",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "favourite",
+      "vi": "yêu thích",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "field",
+      "vi": "bãi cỏ, sân bóng",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "history",
+      "vi": "môn lịch sử",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "international",
+      "vi": "quốc tế",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "knock",
+      "vi": "gõ (cửa)",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "lunch",
+      "vi": "bữa trưa",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "maths",
+      "vi": "môn toán",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "remember",
+      "vi": "nhớ",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "pencil sharpener",
+      "vi": "cái gọt bút chì",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "playground",
+      "vi": "sân chơi",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "put on",
+      "vi": "mặc (quần áo)",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "secondary school",
+      "vi": "trường trung học cơ sở",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "science",
+      "vi": "môn khoa học",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "share",
+      "vi": "chia sẻ",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "smart",
+      "vi": "gọn gàng, bảnh bao",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "subject",
+      "vi": "môn học",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "swimming pool",
+      "vi": "bể bơi",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "wear",
+      "vi": "mặc, đội, đeo",
+      "source": "sgk_notes"
+    }
+  ],
+  "grammar": [
+    "present simple: I walk to school every day.",
+    "present continuous: I am writing a letter now."
+  ],
+  "activities": {
+    "lost_letter": {
+      "skill": "reading",
+      "difficulty": "basic",
+      "letter": "Dear Mr Tom,\n\nMy name is Mai. I am a new student at Star Valley School. Every morning I walk to school with my classmate Nam. We have English and maths on Monday.\n\nToday I am writing this letter because I want to join the library club. Could you please give it to the librarian?\n\nThank you!\nMai",
+      "question": "Who should get this letter?",
+      "choices": [
+        "The librarian",
+        "Nam",
+        "Mai's maths teacher"
+      ],
+      "answer": 0,
+      "hint": "Đọc lại câu: \"Could you please give it to the ...?\""
+    }
   },
-  {
-   "word": "pencil case",
-   "vi": "hộp bút"
-  },
-  {
-   "word": "notebook",
-   "vi": "vở"
-  },
-  {
-   "word": "calculator",
-   "vi": "máy tính cầm tay"
-  },
-  {
-   "word": "compass",
-   "vi": "com-pa"
-  },
-  {
-   "word": "rubber",
-   "vi": "cục tẩy"
-  },
-  {
-   "word": "uniform",
-   "vi": "đồng phục"
-  },
-  {
-   "word": "library",
-   "vi": "thư viện"
-  },
-  {
-   "word": "librarian",
-   "vi": "thủ thư"
-  },
-  {
-   "word": "club",
-   "vi": "câu lạc bộ"
-  },
-  {
-   "word": "lesson",
-   "vi": "tiết học"
-  },
-  {
-   "word": "homework",
-   "vi": "bài tập về nhà"
-  },
-  {
-   "word": "classmate",
-   "vi": "bạn cùng lớp"
-  },
-  {
-   "word": "timetable",
-   "vi": "thời khoá biểu"
-  }
- ],
- "grammar": [
-  "present simple: I walk to school every day.",
-  "present continuous: I am writing a letter now."
- ],
- "activities": {
-  "lost_letter": {
-   "skill": "reading",
-   "difficulty": "basic",
-   "letter": "Dear Mr Tom,\n\nMy name is Mai. I am a new student at Star Valley School. Every morning I walk to school with my classmate Nam. We have English and maths on Monday.\n\nToday I am writing this letter because I want to join the library club. Could you please give it to the librarian?\n\nThank you!\nMai",
-   "question": "Who should get this letter?",
-   "choices": [
-    "The librarian",
-    "Nam",
-    "Mai's maths teacher"
-   ],
-   "answer": 0,
-   "hint": "Đọc lại câu: \"Could you please give it to the ...?\""
-  }
- },
- "version": 1,
- "source_note": "Original content written for English Quest; topic aligned with the Global Success unit, no textbook text copied."
+  "version": 1,
+  "source_note": "Original content written for English Quest; topic aligned with the Global Success unit, no textbook text copied.",
+  "vocabulary_checked": true,
+  "grammar_checked": false,
+  "note": "Ngữ âm và ngữ pháp Unit 1 lớp 6 chưa đối chiếu được với sách; chỉ chắc chắn có thì hiện tại đơn. Từ vựng đã đối chiếu với sổ tay."
 }

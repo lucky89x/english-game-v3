@@ -1,0 +1,287 @@
+{
+  "id": "g6_u04",
+  "grade": 6,
+  "unit": 4,
+  "title": "My Neighbourhood",
+  "skills": [
+    "vocabulary"
+  ],
+  "objectives": [],
+  "vocabulary": [
+    {
+      "word": "art gallery",
+      "vi": "phòng trưng bày nghệ thuật",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "bank",
+      "vi": "ngân hàng",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "beautiful",
+      "vi": "đẹp",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "boring",
+      "vi": "chán, buồn tẻ",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "bus stop",
+      "vi": "trạm xe buýt",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "busy",
+      "vi": "bận rộn, đông đúc",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "café",
+      "vi": "quán cà phê",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "cathedral",
+      "vi": "nhà thờ lớn",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "centre",
+      "vi": "trung tâm",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "cheap",
+      "vi": "rẻ",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "clean",
+      "vi": "sạch sẽ",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "cinema",
+      "vi": "rạp chiếu phim",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "convenient",
+      "vi": "thuận tiện",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "crowded",
+      "vi": "đông đúc",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "cross",
+      "vi": "đi ngang qua",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "delicious",
+      "vi": "ngon",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "dislike",
+      "vi": "không thích",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "excited",
+      "vi": "hào hứng",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "exciting",
+      "vi": "thú vị",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "expensive",
+      "vi": "đắt",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "famous",
+      "vi": "nổi tiếng",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "fantastic",
+      "vi": "hay, tuyệt vời",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "faraway",
+      "vi": "xa xôi",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "fast",
+      "vi": "nhanh",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "finally",
+      "vi": "cuối cùng",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "gym",
+      "vi": "phòng tập thể dục",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "heavy",
+      "vi": "nặng",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "hot",
+      "vi": "nóng",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "large",
+      "vi": "rộng, lớn",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "left",
+      "vi": "bên trái",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "lively",
+      "vi": "sôi động",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "modern",
+      "vi": "hiện đại",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "museum",
+      "vi": "bảo tàng",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "narrow",
+      "vi": "hẹp",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "noisy",
+      "vi": "ồn ào",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "office",
+      "vi": "văn phòng",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "outdoor",
+      "vi": "ngoài trời",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "park",
+      "vi": "công viên",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "peaceful",
+      "vi": "yên bình",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "post office",
+      "vi": "bưu điện",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "quiet",
+      "vi": "yên tĩnh",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "railway station",
+      "vi": "ga tàu hỏa",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "restaurant",
+      "vi": "nhà hàng",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "right",
+      "vi": "bên phải",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "sandy",
+      "vi": "có cát",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "seafood",
+      "vi": "hải sản",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "square",
+      "vi": "quảng trường",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "straight",
+      "vi": "thẳng",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "suburb",
+      "vi": "vùng ngoại ô",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "sunny",
+      "vi": "có nắng",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "temple",
+      "vi": "đền thờ",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "traffic",
+      "vi": "giao thông",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "turning",
+      "vi": "chỗ rẽ",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "workshop",
+      "vi": "xưởng",
+      "source": "sgk_notes"
+    }
+  ],
+  "grammar": [],
+  "activities": {},
+  "version": 1,
+  "source_note": "Từ vựng do chủ dự án chép từ sổ tay kiến thức; chưa có bài đọc hay hoạt động.",
+  "vocabulary_checked": true
+}

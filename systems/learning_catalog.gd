@@ -41,6 +41,11 @@ static func activity(grade: int, unit: int, activity_id: String) -> Dictionary:
 	return unit_content(grade, unit).get("activities", {}).get(activity_id, {})
 
 
+## Vocabulary list [{word, vi, source?}] for exactly this grade and unit, or [] when none was entered.
+static func vocabulary(grade: int, unit: int) -> Array:
+	return unit_content(grade, unit).get("vocabulary", [])
+
+
 static func _read_json(path: String) -> Variant:
 	if not FileAccess.file_exists(path):
 		push_warning("LearningCatalog: missing " + path)

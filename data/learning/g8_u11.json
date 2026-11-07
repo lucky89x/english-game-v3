@@ -1,0 +1,202 @@
+{
+  "id": "g8_u11",
+  "grade": 8,
+  "unit": 11,
+  "title": "Science and Technology",
+  "skills": [
+    "vocabulary"
+  ],
+  "objectives": [],
+  "vocabulary": [
+    {
+      "word": "application",
+      "vi": "ứng dụng",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "attendance",
+      "vi": "sự có mặt, điểm danh",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "available",
+      "vi": "có sẵn",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "biometric",
+      "vi": "(thuộc) sinh trắc học",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "borrow",
+      "vi": "mượn",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "breakout room",
+      "vi": "phòng thảo luận nhóm (học trực tuyến)",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "brilliant",
+      "vi": "xuất sắc",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "complain",
+      "vi": "phàn nàn",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "contact lens",
+      "vi": "kính áp tròng",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "cheating",
+      "vi": "sự gian lận",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "chemical element",
+      "vi": "nguyên tố hóa học",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "develop",
+      "vi": "phát triển",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "digital",
+      "vi": "kĩ thuật số",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "discussion",
+      "vi": "cuộc thảo luận",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "effortless",
+      "vi": "dễ dàng, không tốn sức",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "epidemic",
+      "vi": "dịch bệnh",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "equipment",
+      "vi": "thiết bị",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "eye-tracking",
+      "vi": "theo dõi chuyển động mắt",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "face recognition",
+      "vi": "nhận diện khuôn mặt",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "face to face",
+      "vi": "trực tiếp, mặt đối mặt",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "feedback",
+      "vi": "ý kiến phản hồi",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "fingerprint",
+      "vi": "dấu vân tay",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "fingerprint scanner",
+      "vi": "máy quét vân tay",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "headmaster",
+      "vi": "hiệu trưởng",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "interact",
+      "vi": "tương tác",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "invent",
+      "vi": "phát minh",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "motivate",
+      "vi": "thúc đẩy, động viên",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "online class",
+      "vi": "lớp học trực tuyến",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "platform",
+      "vi": "nền tảng",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "poor connection",
+      "vi": "kết nối kém",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "promise",
+      "vi": "hứa",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "scanner",
+      "vi": "máy quét",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "screen",
+      "vi": "màn hình",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "semester",
+      "vi": "học kỳ",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "solution",
+      "vi": "giải pháp, đáp án",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "truancy",
+      "vi": "sự trốn học",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "voice recognition",
+      "vi": "nhận diện giọng nói",
+      "source": "sgk_notes"
+    }
+  ],
+  "grammar": [],
+  "activities": {},
+  "version": 1,
+  "source_note": "Từ vựng do chủ dự án chép từ sổ tay kiến thức; chưa có bài đọc hay hoạt động.",
+  "vocabulary_checked": true
+}
