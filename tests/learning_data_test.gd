@@ -10,6 +10,14 @@ func check(ok: bool, message: String) -> void:
 	failed = failed or not ok
 
 
+var missing_files := 0
+
+
+func check_content_has_file(u: Dictionary, content: Dictionary) -> void:
+	if content.is_empty() or content.get("id", "") != u["id"]:
+		missing_files += 1
+
+
 func _initialize() -> void:
 	var units := LearningCatalog.units()
 	check(units.size() == 48, "48 units in the catalog")
@@ -54,6 +62,20 @@ func _initialize() -> void:
 	check(with_vocab == 24, "Grades 6 and 8 have vocabulary for all 24 units (got %d)" % with_vocab)
 	check(total_words > 800, "More than 800 words loaded (got %d)" % total_words)
 
+	var outline := 0
+	var playable := 0
+	for u in units:
+		var content := LearningCatalog.unit_content(int(u["grade"]), int(u["unit"]))
+		check_content_has_file(u, content)
+		if u.get("status", "") == "outline":
+			outline += 1
+			if not content.get("vocabulary", []).is_empty() or not content.get("activities", {}).is_empty():
+				bad.append("%s is an outline but holds words or activities" % u["id"])
+		elif u.get("status", "") == "playable":
+			playable += 1
+	check(missing_files == 0, "All 48 units have a content file (skeleton at least)")
+	check(outline == 24 and playable == 2, "24 outlines (grades 7 and 9) and 2 playable units (got %d / %d)" % [outline, playable])
+	check(bad.is_empty(), "Outlines hold no invented words or activities")
 	check(LearningCatalog.vocabulary(7, 1).is_empty() and LearningCatalog.vocabulary(9, 1).is_empty(),
 		"Grades 7 and 9 stay empty (no substitution from other grades)")
 	var words_8: Array = LearningCatalog.vocabulary(8, 1)
