@@ -1,0 +1,391 @@
+{
+ "version": 1,
+ "series": "Global Success",
+ "note": "Unit titles written from memory: verify against the official textbook list before release (verified=false). Content is original, not copied from the books.",
+ "units": [
+  {
+   "id": "g6_u01",
+   "grade": 6,
+   "unit": 1,
+   "title": "My New School",
+   "content_file": "g6_u01.json",
+   "verified": false
+  },
+  {
+   "id": "g6_u02",
+   "grade": 6,
+   "unit": 2,
+   "title": "My House",
+   "content_file": "",
+   "verified": false
+  },
+  {
+   "id": "g6_u03",
+   "grade": 6,
+   "unit": 3,
+   "title": "My Friends",
+   "content_file": "",
+   "verified": false
+  },
+  {
+   "id": "g6_u04",
+   "grade": 6,
+   "unit": 4,
+   "title": "My Neighbourhood",
+   "content_file": "",
+   "verified": false
+  },
+  {
+   "id": "g6_u05",
+   "grade": 6,
+   "unit": 5,
+   "title": "Natural Wonders of Viet Nam",
+   "content_file": "",
+   "verified": false
+  },
+  {
+   "id": "g6_u06",
+   "grade": 6,
+   "unit": 6,
+   "title": "Our Tet Holiday",
+   "content_file": "",
+   "verified": false
+  },
+  {
+   "id": "g6_u07",
+   "grade": 6,
+   "unit": 7,
+   "title": "Television",
+   "content_file": "",
+   "verified": false
+  },
+  {
+   "id": "g6_u08",
+   "grade": 6,
+   "unit": 8,
+   "title": "Sports and Games",
+   "content_file": "",
+   "verified": false
+  },
+  {
+   "id": "g6_u09",
+   "grade": 6,
+   "unit": 9,
+   "title": "Cities of the World",
+   "content_file": "",
+   "verified": false
+  },
+  {
+   "id": "g6_u10",
+   "grade": 6,
+   "unit": 10,
+   "title": "Our Houses in the Future",
+   "content_file": "",
+   "verified": false
+  },
+  {
+   "id": "g6_u11",
+   "grade": 6,
+   "unit": 11,
+   "title": "Our Greener World",
+   "content_file": "",
+   "verified": false
+  },
+  {
+   "id": "g6_u12",
+   "grade": 6,
+   "unit": 12,
+   "title": "Robots",
+   "content_file": "",
+   "verified": false
+  },
+  {
+   "id": "g7_u01",
+   "grade": 7,
+   "unit": 1,
+   "title": "Hobbies",
+   "content_file": "",
+   "verified": false
+  },
+  {
+   "id": "g7_u02",
+   "grade": 7,
+   "unit": 2,
+   "title": "Healthy Living",
+   "content_file": "",
+   "verified": false
+  },
+  {
+   "id": "g7_u03",
+   "grade": 7,
+   "unit": 3,
+   "title": "Community Service",
+   "content_file": "",
+   "verified": false
+  },
+  {
+   "id": "g7_u04",
+   "grade": 7,
+   "unit": 4,
+   "title": "Music and Arts",
+   "content_file": "",
+   "verified": false
+  },
+  {
+   "id": "g7_u05",
+   "grade": 7,
+   "unit": 5,
+   "title": "Food and Drink",
+   "content_file": "",
+   "verified": false
+  },
+  {
+   "id": "g7_u06",
+   "grade": 7,
+   "unit": 6,
+   "title": "A Visit to a School",
+   "content_file": "",
+   "verified": false
+  },
+  {
+   "id": "g7_u07",
+   "grade": 7,
+   "unit": 7,
+   "title": "Traffic",
+   "content_file": "",
+   "verified": false
+  },
+  {
+   "id": "g7_u08",
+   "grade": 7,
+   "unit": 8,
+   "title": "Films",
+   "content_file": "",
+   "verified": false
+  },
+  {
+   "id": "g7_u09",
+   "grade": 7,
+   "unit": 9,
+   "title": "Festivals around the World",
+   "content_file": "",
+   "verified": false
+  },
+  {
+   "id": "g7_u10",
+   "grade": 7,
+   "unit": 10,
+   "title": "Energy Sources",
+   "content_file": "",
+   "verified": false
+  },
+  {
+   "id": "g7_u11",
+   "grade": 7,
+   "unit": 11,
+   "title": "Travelling in the Future",
+   "content_file": "",
+   "verified": false
+  },
+  {
+   "id": "g7_u12",
+   "grade": 7,
+   "unit": 12,
+   "title": "English-speaking Countries",
+   "content_file": "",
+   "verified": false
+  },
+  {
+   "id": "g8_u01",
+   "grade": 8,
+   "unit": 1,
+   "title": "Leisure Time",
+   "content_file": "g8_u01.json",
+   "verified": false
+  },
+  {
+   "id": "g8_u02",
+   "grade": 8,
+   "unit": 2,
+   "title": "Life in the Countryside",
+   "content_file": "",
+   "verified": false
+  },
+  {
+   "id": "g8_u03",
+   "grade": 8,
+   "unit": 3,
+   "title": "Teenagers",
+   "content_file": "",
+   "verified": false
+  },
+  {
+   "id": "g8_u04",
+   "grade": 8,
+   "unit": 4,
+   "title": "Ethnic Groups of Viet Nam",
+   "content_file": "",
+   "verified": false
+  },
+  {
+   "id": "g8_u05",
+   "grade": 8,
+   "unit": 5,
+   "title": "Our Customs and Traditions",
+   "content_file": "",
+   "verified": false
+  },
+  {
+   "id": "g8_u06",
+   "grade": 8,
+   "unit": 6,
+   "title": "Lifestyles",
+   "content_file": "",
+   "verified": false
+  },
+  {
+   "id": "g8_u07",
+   "grade": 8,
+   "unit": 7,
+   "title": "Environmental Protection",
+   "content_file": "",
+   "verified": false
+  },
+  {
+   "id": "g8_u08",
+   "grade": 8,
+   "unit": 8,
+   "title": "Shopping",
+   "content_file": "",
+   "verified": false
+  },
+  {
+   "id": "g8_u09",
+   "grade": 8,
+   "unit": 9,
+   "title": "Natural Disasters",
+   "content_file": "",
+   "verified": false
+  },
+  {
+   "id": "g8_u10",
+   "grade": 8,
+   "unit": 10,
+   "title": "Communication in the Future",
+   "content_file": "",
+   "verified": false
+  },
+  {
+   "id": "g8_u11",
+   "grade": 8,
+   "unit": 11,
+   "title": "Science and Technology",
+   "content_file": "",
+   "verified": false
+  },
+  {
+   "id": "g8_u12",
+   "grade": 8,
+   "unit": 12,
+   "title": "Life on Other Planets",
+   "content_file": "",
+   "verified": false
+  },
+  {
+   "id": "g9_u01",
+   "grade": 9,
+   "unit": 1,
+   "title": "Local Community",
+   "content_file": "",
+   "verified": false
+  },
+  {
+   "id": "g9_u02",
+   "grade": 9,
+   "unit": 2,
+   "title": "City Life",
+   "content_file": "",
+   "verified": false
+  },
+  {
+   "id": "g9_u03",
+   "grade": 9,
+   "unit": 3,
+   "title": "Healthy Living for Teens",
+   "content_file": "",
+   "verified": false
+  },
+  {
+   "id": "g9_u04",
+   "grade": 9,
+   "unit": 4,
+   "title": "Remembering the Past",
+   "content_file": "",
+   "verified": false
+  },
+  {
+   "id": "g9_u05",
+   "grade": 9,
+   "unit": 5,
+   "title": "Our Experiences",
+   "content_file": "",
+   "verified": false
+  },
+  {
+   "id": "g9_u06",
+   "grade": 9,
+   "unit": 6,
+   "title": "Vietnamese Lifestyle: Then and Now",
+   "content_file": "",
+   "verified": false
+  },
+  {
+   "id": "g9_u07",
+   "grade": 9,
+   "unit": 7,
+   "title": "Natural Wonders of the World",
+   "content_file": "",
+   "verified": false
+  },
+  {
+   "id": "g9_u08",
+   "grade": 9,
+   "unit": 8,
+   "title": "Tourism",
+   "content_file": "",
+   "verified": false
+  },
+  {
+   "id": "g9_u09",
+   "grade": 9,
+   "unit": 9,
+   "title": "World Englishes",
+   "content_file": "",
+   "verified": false
+  },
+  {
+   "id": "g9_u10",
+   "grade": 9,
+   "unit": 10,
+   "title": "Planet Earth",
+   "content_file": "",
+   "verified": false
+  },
+  {
+   "id": "g9_u11",
+   "grade": 9,
+   "unit": 11,
+   "title": "Electronic Devices",
+   "content_file": "",
+   "verified": false
+  },
+  {
+   "id": "g9_u12",
+   "grade": 9,
+   "unit": 12,
+   "title": "Career Choices",
+   "content_file": "",
+   "verified": false
+  }
+ ]
+}

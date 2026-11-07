@@ -23,6 +23,12 @@ var action_time := 0.0
 var air_time := 0.0
 var was_airborne := false
 var face_controller: Node
+## True while an answer menu is open (HUD.show_choices); movement and jump are ignored.
+var input_locked := false
+
+
+func set_input_locked(locked: bool) -> void:
+	input_locked = locked
 
 func play_action(clip: String) -> void:
 	if animation_player != null and animation_player.has_animation(clip):
@@ -56,14 +62,14 @@ func _physics_process(delta: float) -> void:
 	action_time = maxf(0.0, action_time - delta)
 	if not is_on_floor():
 		velocity.y -= gravity * delta
-	elif Input.is_action_just_pressed("jump"):
+	elif Input.is_action_just_pressed("jump") and not input_locked:
 		velocity.y = jump_velocity
 
-	var input_vector := Input.get_vector(
-		"move_left", "move_right", "move_forward", "move_backward"
-	)
+	var input_vector := Vector2.ZERO
+	if not input_locked:
+		input_vector = Input.get_vector("move_left", "move_right", "move_forward", "move_backward")
 	var move_direction := _camera_relative_direction(input_vector)
-	var is_running := Input.is_action_pressed("run") and move_direction != Vector3.ZERO
+	var is_running := Input.is_action_pressed("run") and move_direction != Vector3.ZERO and not input_locked
 	var current_speed := run_speed if is_running else move_speed
 	var target_velocity := move_direction * current_speed
 	var change_rate := acceleration if move_direction != Vector3.ZERO else deceleration

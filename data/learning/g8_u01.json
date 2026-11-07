@@ -1,0 +1,87 @@
+{
+ "id": "g8_u01",
+ "grade": 8,
+ "unit": 1,
+ "title": "Leisure Time",
+ "skills": [
+  "vocabulary",
+  "reading",
+  "grammar"
+ ],
+ "objectives": [
+  "Talk about leisure activities",
+  "Use verbs of liking + V-ing / to-infinitive",
+  "Read a letter for the writer's request"
+ ],
+ "vocabulary": [
+  {
+   "word": "leisure time",
+   "vi": "thời gian rảnh"
+  },
+  {
+   "word": "hobby",
+   "vi": "sở thích"
+  },
+  {
+   "word": "DIY",
+   "vi": "tự làm đồ thủ công"
+  },
+  {
+   "word": "be keen on",
+   "vi": "say mê"
+  },
+  {
+   "word": "prefer",
+   "vi": "thích hơn"
+  },
+  {
+   "word": "fishing net",
+   "vi": "lưới câu"
+  },
+  {
+   "word": "keep an eye out for",
+   "vi": "để ý tìm giúp"
+  },
+  {
+   "word": "detest",
+   "vi": "ghét"
+  },
+  {
+   "word": "fancy",
+   "vi": "thích"
+  },
+  {
+   "word": "relaxing",
+   "vi": "thư giãn"
+  },
+  {
+   "word": "villager",
+   "vi": "dân làng"
+  },
+  {
+   "word": "favourite",
+   "vi": "yêu thích nhất"
+  }
+ ],
+ "grammar": [
+  "verbs of liking + V-ing: I love fishing.",
+  "prefer + V-ing / to-infinitive: I prefer making boats."
+ ],
+ "activities": {
+  "lost_letter": {
+   "skill": "reading",
+   "difficulty": "advanced",
+   "letter": "Dear Mr Tom,\n\nIn my leisure time I love fishing by the river and I am keen on making small wooden boats. Last week I lost my favourite fishing net near the old bridge. My grandson prefers doing DIY, so he wants to make me a new one, but I still miss the old net.\n\nCould you ask the villagers to keep an eye out for it?\n\nBest wishes,\nSam",
+   "question": "What does Sam want Mr Tom to do?",
+   "choices": [
+    "Buy him a new boat",
+    "Ask the villagers to look for his net",
+    "Teach his grandson DIY"
+   ],
+   "answer": 1,
+   "hint": "Tìm câu hỏi nhờ vả ở cuối thư: \"Could you ask the villagers to ...?\""
+  }
+ },
+ "version": 1,
+ "source_note": "Original content written for English Quest; topic aligned with the Global Success unit, no textbook text copied."
+}

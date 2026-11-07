@@ -1,6 +1,6 @@
 # English Quest V3 — Kế hoạch và tiến độ phát triển
 
-Cập nhật lần cuối: **07/11/2026** (phiên 6). Claude cập nhật file này ở cuối mỗi phiên làm việc.
+Cập nhật lần cuối: **07/11/2026** (phiên 7). Claude cập nhật file này ở cuối mỗi phiên làm việc.
 
 **Ký hiệu trạng thái**
 - `[x]` **ĐÃ NGHIỆM THU**: chủ dự án đã chạy F5 và xác nhận.
@@ -11,11 +11,11 @@ Cập nhật lần cuối: **07/11/2026** (phiên 6). Claude cập nhật file n
 
 | Giai đoạn | Nội dung | Trạng thái |
 |---|---|---|
-| P0 | Điều khiển, camera, tương tác chơi được | Đã nghiệm thu |
-| P1 | Nhiệm vụ "Bức thư thất lạc" + vertical slice "Sửa cây cầu" | Chưa làm (cần file quest từ máy chủ dự án) |
+| P0 | Điều khiển, camera, tương tác chơi được | Đã nghiệm thu phần chính; 2 mục chờ duyệt |
+| P1 | Nhiệm vụ "Bức thư thất lạc" + vertical slice "Sửa cây cầu" | Bức thư xong (chờ duyệt); Sửa cây cầu chưa làm |
 | P2 | 5 asset chuẩn mỹ thuật | Đã dựng đủ 5/5, chờ duyệt |
 | P3 | Làng sống động, bản đồ rộng | Đang làm |
-| P4 | Hệ thống học (Learning Engine, 48 Unit) | Chưa làm |
+| P4 | Hệ thống học (Learning Engine, 48 Unit) | Đã có khung dữ liệu + lưu tiến độ |
 | P5 | Mở rộng 7 chương còn lại | Chưa làm |
 | P6 | Đánh giá, tối ưu, thử nghiệm với học sinh | Chưa làm |
 
@@ -25,15 +25,15 @@ Cập nhật lần cuối: **07/11/2026** (phiên 6). Claude cập nhật file n
 - [x] E tương tác với NPC, cửa nhà, rương
 - [x] Hội thoại không khóa điều khiển; đi ra xa thì tự đóng hội thoại
 - [~] Animation nhảy, rơi, tiếp đất theo trạng thái thật
-- [ ] Khóa di chuyển khi mở bảng chọn đáp án (khi có minigame), và tự mở khóa khi đóng
+- [~] Khóa di chuyển khi mở bảng chọn đáp án, tự mở khóa khi chọn xong hoặc nhấn E
 
 ## P1 — Nhiệm vụ đầu tiên
-- [ ] Nhận các file quest "Bức thư thất lạc" từ máy chủ dự án (chưa có trên GitHub)
-- [ ] Chạy thử từ đầu đến cuối: Tom giao việc, vào nhà Tom, nhặt thư, trả thư
-- [ ] Thưởng 50 EXP + 20 Gold đúng một lần; HUD cập nhật
-- [ ] Lưu và nạp tiến độ nhiệm vụ (có saveVersion)
+- [~] Dựng lại quest "Bức thư thất lạc" trên bản GitHub (không cần file Cline; nếu gửi bản Cline thì cần gộp tay)
+- [~] Đầu-cuối: Tom hỏi lớp → giao việc → tìm thư gần đầu cầu Đông (dấu ✉) → đọc thư tiếng Anh, trả lời (sai có gợi ý) → trả Tom (dấu ?). Chưa có bước vào nhà Tom
+- [~] Thưởng 50 EXP + 20 Vàng đúng một lần; HUD cập nhật
+- [~] Lưu và nạp tiến độ (version 1, ghi an toàn + bản .bak)
 - [ ] Vertical slice "Sửa cây cầu" (15–20 phút): Tom → Ben → Sam → Pip → tìm vật liệu → nghe chỉ dẫn → sửa cầu → phần thưởng và manh mối vào rừng
-- [ ] Hai phiên bản nội dung: lớp 6 và lớp 8
+- [ ] Hai phiên bản nội dung: lớp 6 và lớp 8 (Bức thư đã có cả hai; Sửa cây cầu chưa)
 
 ## P2 — Asset chuẩn mỹ thuật (fantasy chibi)
 - [~] Ngọc: chibi đầu to, mặt vẽ, tóc xoăn búi, kính, khăn, 10 animation, chớp mắt
@@ -59,10 +59,10 @@ Cập nhật lần cuối: **07/11/2026** (phiên 6). Claude cập nhật file n
 - [ ] Âm thanh: nhạc nền, tiếng bước chân, tiếng nước
 
 ## P4 — Hệ thống học tiếng Anh
-- [ ] Learning Engine tách khỏi gameplay; dữ liệu bài học dạng file
-- [ ] Metadata 48 Unit Global Success (lớp 6–9), có ID ổn định
-- [ ] Nội dung mẫu đầy đủ: Unit 1 lớp 6 và Unit 1 lớp 8
-- [ ] Lưu tiến độ riêng theo lớp, Unit, kỹ năng; ôn tập cách quãng
+- [~] Learning Engine tách khỏi gameplay; dữ liệu bài học dạng file (`data/learning/`, `LearningCatalog`)
+- [~] Metadata 48 Unit Global Success (lớp 6–9), ID ổn định `g6_u01`... (tên Unit cần giáo viên đối chiếu)
+- [ ] Nội dung mẫu đầy đủ: Unit 1 lớp 6 và Unit 1 lớp 8 (đã có bản khởi đầu: mục tiêu, từ vựng, ngữ pháp, 1 bài đọc)
+- [ ] Lưu tiến độ riêng theo lớp, Unit, kỹ năng (đã có); ôn tập cách quãng (chưa)
 - [ ] Minigame đầu tiên (ví dụ: Mua bán ở chợ Ben, Câu cá từ vựng với Sam)
 - [ ] Kiểm tra đầu vào, kiểm tra qua cổng, tổng kết; mức cơ bản và nâng cao
 - [ ] Giọng đọc (thu âm hợp pháp) cho phần nghe
@@ -91,6 +91,7 @@ Cập nhật lần cuối: **07/11/2026** (phiên 6). Claude cập nhật file n
 | 5 (trước tối ưu) | 1.218 | 2.242.796 | Bản đồ vừa mở rộng |
 | 5 (sau tối ưu) | 700 | 1.185.218 | Chia ô cây/cỏ, bản cây xa, bóng 2 tầng 45 m |
 | 6 | 678 | 1.218.836 | Thêm cầu mới, cột đèn, biển, cổng rừng |
+| 7 | — | — | Không đo lại: chỉ thêm logic nhiệm vụ, 1 bức thư + 1 đèn nhỏ |
 
 ## Nhật ký các phiên làm việc
 
@@ -102,8 +103,9 @@ Cập nhật lần cuối: **07/11/2026** (phiên 6). Claude cập nhật file n
 | 4 | 06/11/2026 | P0: kéo chuột trái cũng xoay camera; test điều khiển đầu-cuối 26 mục | 26/26 đạt; chủ dự án nghiệm thu điều khiển |
 | 5 | 07/11/2026 | Nhà ×1,45; cây có lá thật + bản rút gọn; đường lát đá toàn mạng; bản đồ 240 m với 3 xóm mới (14 nhà); sông dài ra; tối ưu hiệu năng −47% tam giác | 177 mục đạt (7 bộ test) |
 | 6 | 07/11/2026 | P2: cầu gỗ cong mới, nội thất nhà Tom; P3: cột đèn ven đường, 5 biển chỉ đường song ngữ, cổng Rừng Ký Ức | 177 mục đạt; đi qua cầu 2 chiều đạt |
+| 7 | 07/11/2026 | P1: quest "Bức thư thất lạc" dựng lại (chọn lớp, thư tiếng Anh, gợi ý, thưởng 1 lần); P4: 48 Unit metadata, Unit 1 lớp 6/8 mẫu, lưu tiến độ có version; khóa di chuyển khi chọn đáp án | 213 mục đạt (8 bộ test) |
 
 ## Việc nên làm tiếp (đề xuất)
-1. Chủ dự án chạy F5 kiểm tra phiên 5–6: nhà, cây, đường đá, 3 xóm mới, cầu mới, nhà Tom, cổng rừng.
-2. Gửi các file quest "Bức thư thất lạc" để làm P1 (hoặc đồng ý để Claude dựng lại nhiệm vụ này từ đầu).
-3. Bắt đầu P4: khung Learning Engine + Unit 1 lớp 6 và một minigame đầu tiên.
+1. Chủ dự án chạy F5 kiểm tra phiên 5–7: nhà, cây, đường đá, xóm mới, cầu, nhà Tom, cổng rừng, nhiệm vụ Bức thư.
+2. Giáo viên tiếng Anh đối chiếu tên 48 Unit và nội dung thư lớp 6, lớp 8.
+3. Làm vertical slice "Sửa cây cầu" (Tom → Ben → Sam → Pip), minigame đầu tiên ở chợ Ben.

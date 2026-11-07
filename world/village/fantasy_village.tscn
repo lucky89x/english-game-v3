@@ -383,3 +383,4 @@ position = Vector3(7.6, 0, -12)
 [node name="ElderRowan" parent="NPCs" instance=ExtResource("3_elder")]
 position = Vector3(2.2, 0, 2.5)
 rotation_degrees = Vector3(0, -25, 0)
+quest_giver_id = "lost_letter"

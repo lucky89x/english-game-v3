@@ -12,6 +12,9 @@ var title: Label
 var hp_bar: ProgressBar
 var exp_bar: ProgressBar
 var wallet: Label
+var quest_label: Label
+var choices_box: VBoxContainer
+var _choice_callback: Callable
 
 
 func _ready() -> void:
@@ -23,6 +26,7 @@ func _ready() -> void:
 	$ControlHint.offset_bottom = 340
 	$ControlHint/MarginContainer/Label.text = "WASD: di chuyển · Shift: chạy · Space: nhảy\nGiữ chuột phải: xoay · Con lăn: zoom · R: đặt lại\nE: tương tác · F1: trợ giúp · F3: FPS"
 	_build_rpg_hud()
+	_build_quest_ui()
 	stats.changed.connect(_refresh_stats)
 	_refresh_stats()
 
@@ -33,6 +37,11 @@ func _unhandled_key_input(event: InputEvent) -> void:
 			$ControlHint.visible = not $ControlHint.visible
 		elif event.physical_keycode == KEY_F3:
 			fps_label.visible = not fps_label.visible
+		elif choices_box != null and choices_box.visible:
+			var index: int = event.physical_keycode - KEY_1
+			if index >= 0 and index < choices_box.get_child_count():
+				_pick_choice(index)
+				get_viewport().set_input_as_handled()
 
 
 func _style(color: Color, border: Color) -> StyleBoxFlat:
@@ -153,3 +162,71 @@ func show_dialogue(speaker: String, message: String) -> void:
 
 func hide_dialogue() -> void:
 	dialogue_panel.hide()
+	if choices_box != null and choices_box.visible:
+		_close_choices()
+
+
+# ------------------------------------------------------------------ quest tracker + answer choices
+func _build_quest_ui() -> void:
+	quest_label = Label.new()
+	quest_label.name = "QuestTracker"
+	quest_label.anchor_left = 1.0
+	quest_label.anchor_right = 1.0
+	quest_label.offset_left = -430
+	quest_label.offset_right = -18
+	quest_label.offset_top = 18
+	quest_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	quest_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	quest_label.add_theme_color_override("font_color", Color("#fff6dc"))
+	quest_label.add_theme_color_override("font_outline_color", Color("#3a2414"))
+	quest_label.add_theme_constant_override("outline_size", 6)
+	quest_label.add_theme_font_size_override("font_size", 18)
+	quest_label.hide()
+	add_child(quest_label)
+	choices_box = VBoxContainer.new()
+	choices_box.name = "Choices"
+	choices_box.add_theme_constant_override("separation", 6)
+	choices_box.hide()
+	$DialoguePanel/Margin/VBox.add_child(choices_box)
+
+
+func set_quest_text(text: String) -> void:
+	quest_label.text = text
+	quest_label.visible = not text.is_empty()
+
+
+## Shows the dialogue panel with answer buttons (mouse or keys 1-9). Movement is locked
+## until an answer is picked; callback(index) receives the chosen option.
+func show_choices(speaker: String, message: String, options: Array, callback: Callable) -> void:
+	show_dialogue(speaker, message)
+	for child in choices_box.get_children():
+		child.queue_free()
+	for i in range(options.size()):
+		var button := Button.new()
+		button.text = "%d. %s" % [i + 1, options[i]]
+		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		button.focus_mode = Control.FOCUS_NONE
+		button.pressed.connect(_pick_choice.bind(i))
+		choices_box.add_child(button)
+	_choice_callback = callback
+	choices_box.show()
+	get_tree().call_group("player", "set_input_locked", true)
+
+
+func _pick_choice(index: int) -> void:
+	var callback := _choice_callback
+	_close_choices()
+	if callback.is_valid():
+		callback.call(index)
+
+
+func _close_choices() -> void:
+	choices_box.hide()
+	for child in choices_box.get_children():
+		child.queue_free()
+	_choice_callback = Callable()
+	get_tree().call_group("player", "set_input_locked", false)
+
+
+func is_choosing() -> bool:
+	return choices_box != null and choices_box.visible

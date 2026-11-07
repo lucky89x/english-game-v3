@@ -81,6 +81,7 @@ func orbit_test(button: MouseButton, label: String) -> void:
 
 
 func run() -> void:
+	GameState.override_path = "user://test_controls_save.json"
 	world = load("res://world/main_world.tscn").instantiate()
 	root.add_child(world)
 	await frames(30)
@@ -132,6 +133,8 @@ func run() -> void:
 	# Talk to Tom with the real E key, then confirm movement and camera still work.
 	var npc: Node3D = world.get_node("WorldGeometry/FantasyVillage/NPCs/ElderRowan")
 	var hud := get_first_node_in_group("dialogue_ui")
+	# plain talk (quest finished) must never lock controls; quest menus are covered by lost_letter_quest_test
+	get_first_node_in_group("game_state").set_quest_step("lost_letter", "done")
 	actor.global_position = npc.global_position + Vector3(0, 0.9, 1.5)
 	actor.velocity = Vector3.ZERO
 	await frames(15)

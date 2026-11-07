@@ -4,6 +4,9 @@ extends Node3D
 @export var npc_name := "Trưởng làng Tom"
 @export_multiline var dialogue_text := "Chào mừng con đến Thung Lũng Ánh Sao. Ngôi làng vẫn đang được dựng lại, nhưng con cứ tự nhiên khám phá nhé!"
 
+## Quest this NPC gives (e.g. "lost_letter"); the quest node handles the talk when set.
+@export var quest_giver_id := ""
+
 var player_in_range := false
 var dialogue_open := false
 var animation_player: AnimationPlayer
@@ -34,10 +37,24 @@ func _unhandled_input(event: InputEvent) -> void:
 	query.exclude = [(actor as CollisionObject3D).get_rid()]
 	if not get_world_3d().direct_space_state.intersect_ray(query).is_empty():
 		return
-	dialogue_open = not dialogue_open
 	var hud := _get_dialogue_hud()
 	if hud == null:
 		return
+	# E while an answer menu or quest line is open closes it (never leaves the hero locked)
+	if (dialogue_open and hud.dialogue_panel.visible) or (hud.has_method("is_choosing") and hud.is_choosing()):
+		dialogue_open = false
+		_play_gesture("Idle")
+		hud.hide_dialogue()
+		hud.show_interaction("Nhấn E để trò chuyện với %s" % npc_name)
+		get_viewport().set_input_as_handled()
+		return
+	if quest_giver_id != "":
+		var quest := get_tree().get_first_node_in_group("quest_" + quest_giver_id)
+		if quest != null and quest.handle_tom(self):
+			dialogue_open = true
+			get_viewport().set_input_as_handled()
+			return
+	dialogue_open = true
 	if dialogue_open:
 		_play_gesture("Wave")
 		if actor.has_method("play_action"):
