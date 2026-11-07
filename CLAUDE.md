@@ -48,7 +48,7 @@ Nếu không skill nào khớp, nói rõ và làm theo cách thông thường. N
 ## Chạy test (Godot 4.7.2)
 - Nhanh: `godot --headless --path . --script res://tests/smoke_test.gd` (cần dòng `SMOKE TEST PASSED`).
 - Điều khiển bằng sự kiện phím/chuột thật: `tests/controls_e2e_test.gd` (26 mục).
-- Nhiệm vụ Bức thư (chọn lớp, đọc thư, thưởng, lưu/nạp): `tests/lost_letter_quest_test.gd` (36 mục).
+- Nhiệm vụ Bức thư (chọn lớp, đọc thư, thưởng, lưu/nạp): `tests/lost_letter_quest_test.gd` (38 mục).
 - Đầy đủ: `tests/village_life_test.gd`, `tests/skills_upgrade_test.gd`, `tests/chibi05_hero_test.gd`, `tests/redesign03/validate_characters.gd`, `tests/bridge_traversal_test.gd`.
 - Chụp ảnh trong game cần renderer thật: `xvfb-run godot --rendering-driver opengl3 --script res://tests/chibi05_world_capture.gd -- <tiền tố>`.
 - Sau khi thêm file model/ảnh mới, chạy `godot --headless --path . --import` để tạo file `.import`.
@@ -59,7 +59,7 @@ Nếu không skill nào khớp, nói rõ và làm theo cách thông thường. N
 - Hướng nhân vật/NPC: mặt hướng +Z của Godot; 1 đơn vị = 1 m. Nhân vật chính cao ~1,55 m.
 - Dữ liệu học ở `data/learning/` (units.json 48 Unit + nội dung từng Unit), đọc qua `systems/learning_catalog.gd`; lớp nào chưa có nội dung thì báo, không lấy lớp khác thế.
 - Tiến độ lưu bởi `systems/game_state.gd` (nhóm `game_state`, `user://english_quest_save.json`, có `version`). Test phải đặt `GameState.override_path` trước khi nạp world.
-- Quest "Bức thư thất lạc": `systems/lost_letter_quest.gd` (node Systems/LostLetterQuest); Tom gọi `handle_tom()` qua `quest_giver_id`. Bảng chọn đáp án: `debug_hud.show_choices()` (phím 1-9, khóa di chuyển). Chưa có minigame.
+- Quest "Bức thư thất lạc": `systems/lost_letter_quest.gd` (node Systems/LostLetterQuest); Tom gọi `handle_tom()` qua `quest_giver_id`; thư sinh ra trong nhà Tom khi `building_travel` phát `room_entered`. Bảng chọn đáp án: `debug_hud.show_choices()` (phím 1-9, khóa di chuyển). Chưa có minigame.
 - Nội thất cửa hàng và thư viện, quầy chợ, hàng rào, rương vẫn là asset Quaternius cũ. Cầu gỗ cong, nội thất nhà Tom, cột đèn, biển chỉ đường, cổng Rừng Ký Ức là asset chibi05 (`tools/chibi05/build_props_chibi.py`; đặt bởi `village_props.gd`, `chibi_bridge.gd`).
 - Bố cục bản đồ (240 m) nằm ở `world/zones/starter_village/village_layout.gd`: đường (ROADS), nhà xóm (HAMLET), sông. Đường lát đá, shader nền, rải cây và đặt nhà đều đọc từ đây; sửa bố cục thì sửa file này.
 - Hiệu năng: cây/cỏ dùng MultiMesh chia ô 32 m + bản cây xa (`veg_*_lod_v02.glb`); bóng mặt trời 2 tầng, 45 m. Đo bằng Performance monitor trước khi tối ưu.

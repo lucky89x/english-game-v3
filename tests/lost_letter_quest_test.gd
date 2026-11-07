@@ -1,6 +1,6 @@
 extends SceneTree
 ## "Bức thư thất lạc" end-to-end: grade choice, missing grade content (no substitution), offer,
-## letter pickup with real E key, wrong answer + hint, input lock, correct answer, reward once,
+## enter Tom's house, letter pickup with real E key, wrong answer + hint, input lock, correct answer, reward once,
 ## versioned save file and reload. Run: godot --headless --path . --script res://tests/lost_letter_quest_test.gd
 const SAVE := "user://test_lost_letter_save.json"
 var failed := false
@@ -67,7 +67,7 @@ func run() -> void:
 	check(state != null and quest != null, "GameState and quest nodes exist")
 	check(quest.step() == "not_started" and state.grade == 0, "Fresh save: quest not started, no grade")
 	check(quest.tom_marker != null and quest.tom_marker.visible, "Tom shows ! marker")
-	check(not quest.letter_root.visible, "Letter hidden before quest")
+	check(quest.letter_root == null and not quest.door_marker.visible, "No letter, no door marker before quest")
 
 	var tom: Node3D = world.get_node("WorldGeometry/FantasyVillage/NPCs/ElderRowan")
 	await teleport(tom.global_position + Vector3(0, 0, 1.5))
@@ -90,10 +90,15 @@ func run() -> void:
 	check(state.grade == 6 and hud.is_choosing(), "Grade 6 chosen, Tom offers the quest")
 	await key(KEY_1)   # accept
 	check(quest.step() == "find_letter", "Quest accepted: find_letter")
-	check(quest.letter_root.visible and not quest.tom_marker.visible, "Letter appears, Tom marker hides")
+	check(quest.door_marker.visible and not quest.tom_marker.visible, "Tom's door shows ✉, Tom marker hides")
 	check(hud.quest_label.visible and hud.quest_label.text.contains("Bức thư"), "Quest tracker shows the task")
 
-	await teleport(quest.letter_root.global_position + Vector3(1.0, 0, 0))
+	var travel: Node = get_first_node_in_group("building_travel")
+	var door: Node3D = travel.door_marker(LostLetterQuest.TOM_HOUSE)
+	await teleport(door.global_position)
+	await key(KEY_E)
+	check(travel.active_room != null and is_instance_valid(quest.letter_root) and quest.letter_root.visible, "E at the door enters Tom's house; letter is inside")
+	await teleport(quest.letter_root.global_position + Vector3(0.8, 0, 0.4))
 	check(quest.player_near_letter, "Player reaches the letter")
 	await key(KEY_E)
 	check(hud.is_choosing() and hud.dialogue_label.text.contains("Mai"), "E opens the English letter (grade 6 text)")
@@ -106,7 +111,11 @@ func run() -> void:
 	check(quest.step() == "return_letter" and not actor.input_locked, "Correct answer: return_letter, unlocked")
 	var row: Dictionary = state.learning["g6_u01"]["reading"]
 	check(int(row["attempts"]) == 2 and int(row["correct"]) == 1 and int(row["hints_used"]) == 1, "Learning record per grade/unit/skill")
-	check(not quest.letter_root.visible and quest.tom_marker.text == "?", "Letter gone, Tom shows ?")
+	check(not quest.letter_root.visible and quest.tom_marker.text == "?" and not quest.door_marker.visible, "Letter gone, door marker off, Tom shows ?")
+	await teleport(travel.active_room.global_position + Vector3(0, 0, 3.4))
+	await key(KEY_E)
+	await frames(10)
+	check(travel.active_room == null, "E at the room exit returns to the village")
 
 	await teleport(tom.global_position + Vector3(0, 0, 1.5))
 	var gold_before: int = hud.stats.gold
@@ -132,7 +141,7 @@ func run() -> void:
 	await load_world()
 	check(quest.step() == "done" and state.grade == 6, "Reload: quest done, grade 6")
 	check(hud.stats.gold == gold_after, "Reload: gold restored from save")
-	check(not quest.letter_root.visible and not quest.tom_marker.visible, "Reload: no letter/marker")
+	check(not quest.tom_marker.visible and not quest.door_marker.visible, "Reload: no markers")
 
 	print("LOST LETTER QUEST TEST PASSED" if not failed else "LOST LETTER QUEST TEST FAILED")
 	quit(1 if failed else 0)

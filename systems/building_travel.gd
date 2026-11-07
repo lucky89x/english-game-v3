@@ -1,4 +1,8 @@
 extends Node3D
+## Doors into interiors. Rooms are built on entry at x = 180 and freed on exit.
+
+signal room_entered(room: Node3D, scene_path: String)
+signal room_exited
 
 var doors: Array[Dictionary] = []
 var active_room: Node3D
@@ -7,6 +11,17 @@ var saved_camera := Vector3.ZERO
 var nearby := -1
 var owns_hint := false
 var cooldown := 0.0
+
+func _ready() -> void:
+	add_to_group("building_travel")
+
+
+func door_marker(scene_path: String) -> Node3D:
+	for door in doors:
+		if door.scene == scene_path:
+			return door.marker
+	return null
+
 
 func register_door(building: Node3D, title: String, room: String, door_local := Vector3(-1, 0, 3.4)) -> void:
 	var marker := Marker3D.new()
@@ -61,6 +76,7 @@ func travel(index: int) -> void:
 		camera.target_yaw = saved_camera.x
 		camera.target_pitch = saved_camera.y
 		camera.target_distance = saved_camera.z
+		room_exited.emit()
 	else:
 		return_position = player.global_position
 		saved_camera = Vector3(camera.target_yaw, camera.target_pitch, camera.target_distance)
@@ -71,6 +87,7 @@ func travel(index: int) -> void:
 		camera.target_yaw = 0
 		camera.target_pitch = deg_to_rad(-55)
 		camera.target_distance = 5.5
+		room_entered.emit(active_room, String(doors[index].scene))
 	player.velocity = Vector3.ZERO
 	camera.global_position = player.global_position + camera.target_offset
 	camera.rotation.y = camera.target_yaw

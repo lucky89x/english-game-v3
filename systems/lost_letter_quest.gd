@@ -1,22 +1,27 @@
 class_name LostLetterQuest
 extends Node3D
 ## Quest "Bức thư thất lạc" (P1, rebuilt on the GitHub version).
-## Tom asks Ngoc to find a letter blown away near the east end of the wooden bridge. She picks
-## it up, reads it IN ENGLISH and answers a question; then brings it back for 50 EXP + 20 Gold
-## (paid once). The letter text comes from the learning data of the chosen grade only.
+## Original flow: Tom gives the task -> the wind blew a letter for him somewhere inside his house
+## -> Ngoc enters Tom's house, finds it near the bookshelf, reads it IN ENGLISH and answers a
+## question -> brings it back to Tom for 50 EXP + 20 Gold (paid once). The letter text comes from
+## the learning data of the chosen grade only.
 ## Steps: not_started -> find_letter -> return_letter -> done.
 
 const QUEST_ID := "lost_letter"
 const UNIT := 1
 const REWARD_EXP := 50
 const REWARD_GOLD := 20
-const LETTER_SPOT := Vector3(16.8, 0.0, 11.3)
+const TOM_HOUSE := "res://world/interiors/hall_interior.tscn"
+## Local spot inside Tom's house (10 x 10 m room): on the floor in front of the bookshelf.
+const LETTER_SPOT := Vector3(-2.3, 0.0, -3.6)
 const TOM := "Trưởng làng Tom"
 
 var state: GameState
 var letter_root: Node3D
 var letter_marker: Label3D
 var tom_marker: Label3D
+var door_marker: Label3D
+var travel: Node
 var player_near_letter := false
 var _hint_shown := false
 
@@ -29,7 +34,14 @@ func _ready() -> void:
 func _setup() -> void:
 	state = get_tree().get_first_node_in_group("game_state") as GameState
 	_apply_saved_stats()
-	_build_letter()
+	travel = get_tree().get_first_node_in_group("building_travel")
+	if travel != null:
+		travel.room_entered.connect(_on_room_entered)
+		var door: Node3D = travel.door_marker(TOM_HOUSE)
+		if door != null:
+			door_marker = _marker("✉", Color(1.0, 0.85, 0.3))
+			door_marker.position.y = 2.6
+			door.add_child(door_marker)
 	_build_tom_marker()
 	_refresh()
 
@@ -51,15 +63,18 @@ func activity() -> Dictionary:
 
 
 # ------------------------------------------------------------------ world objects
-func _build_letter() -> void:
+func _on_room_entered(room: Node3D, scene_path: String) -> void:
+	if scene_path == TOM_HOUSE and step() == "find_letter":
+		_build_letter(room)
+
+
+## Built inside Tom's house each time she enters while the letter is still lost (the room is freed on exit).
+func _build_letter(room: Node3D) -> void:
 	letter_root = Node3D.new()
 	letter_root.name = "LostLetter"
-	add_child(letter_root)
-	var landscape := get_tree().root.find_child("StarterVillageEnvironment", true, false)
-	var y := 0.0
-	if landscape != null and landscape.has_method("get_height_at"):
-		y = landscape.get_height_at(LETTER_SPOT.x, LETTER_SPOT.z)
-	letter_root.global_position = Vector3(LETTER_SPOT.x, y, LETTER_SPOT.z)
+	room.add_child(letter_root)
+	letter_root.position = LETTER_SPOT
+	letter_root.tree_exiting.connect(func() -> void: player_near_letter = false)
 	var scroll := (load("res://assets/redesign03/props_scroll_sealed.glb") as PackedScene).instantiate() as Node3D
 	scroll.scale = Vector3.ONE * 0.8
 	scroll.position.y = 0.12
@@ -109,14 +124,17 @@ func _marker(text: String, color: Color) -> Label3D:
 
 
 func _process(delta: float) -> void:
-	if letter_root != null and letter_root.visible:
+	if is_instance_valid(letter_root) and letter_root.visible:
 		letter_root.get_child(0).rotation.y += delta * 0.8
 		letter_marker.position.y = 1.3 + sin(Time.get_ticks_msec() / 300.0) * 0.08
 
 
 func _refresh() -> void:
 	var s := step()
-	letter_root.visible = s == "find_letter"
+	if is_instance_valid(letter_root):
+		letter_root.visible = s == "find_letter"
+	if door_marker != null:
+		door_marker.visible = s == "find_letter"
 	if tom_marker != null:
 		tom_marker.visible = s in ["not_started", "return_letter"]
 		tom_marker.text = "?" if s == "return_letter" else "!"
@@ -125,7 +143,7 @@ func _refresh() -> void:
 		return
 	match s:
 		"find_letter":
-			hud.set_quest_text("Nhiệm vụ: Bức thư thất lạc\nTìm bức thư rơi gần đầu cầu gỗ phía Đông (✉)")
+			hud.set_quest_text("Nhiệm vụ: Bức thư thất lạc\nVào nhà trưởng làng Tom tìm bức thư (✉)")
 		"return_letter":
 			hud.set_quest_text("Nhiệm vụ: Bức thư thất lạc\nMang thư về cho trưởng làng Tom (?)")
 		_:
@@ -146,7 +164,7 @@ func handle_tom(elder: Node) -> bool:
 				_offer(elder)
 			return true
 		"find_letter":
-			hud.show_dialogue(TOM, "Bức thư bay về phía đầu cầu gỗ bên kia sông, gần bến thuyền đấy. Tìm dấu ✉ nhé!\n(The letter flew to the east end of the wooden bridge.)")
+			hud.show_dialogue(TOM, "Nhà ta ở phía Bắc quảng trường, mái xanh có dấu ✉. Thư bay lạc đâu đó gần giá sách ấy!\n(My house is north of the square. The letter is somewhere near the bookshelf.)")
 			return true
 		"return_letter":
 			_complete(elder)
@@ -173,7 +191,7 @@ func _offer(elder: Node) -> void:
 	if elder.has_method("_play_gesture"):
 		elder._play_gesture("Talk")
 	_hud().show_choices(TOM,
-		"Ôi, gió to quá! Một bức thư gửi tới làng vừa bị thổi bay, rơi gần đầu cầu gỗ phía Đông. Con tìm giúp Tom nhé?\n(A letter for the village blew away near the wooden bridge. Can you find it?)",
+		"Sáng nay có người gửi thư cho ta, nhưng gió lùa qua cửa sổ thổi nó bay lạc trong nhà. Mắt ta kém, con vào nhà tìm và đọc giúp ta nhé?\n(A letter for me blew away inside my house. Can you find it and read it for me?)",
 		["Vâng, con đi tìm ngay! (Yes, I'll find it!)", "Để lát nữa ạ (Maybe later)"],
 		func(i: int) -> void: _on_offer(i))
 
@@ -204,7 +222,7 @@ func _complete(elder: Node) -> void:
 	var actor := _player()
 	if actor != null and actor.has_method("play_action"):
 		actor.play_action("Celebrate")
-	hud.show_dialogue(TOM, "Cảm ơn con! Con đọc hiểu tiếng Anh giỏi lắm.\n(Thank you, Ngoc! You read English very well.)\n\nPhần thưởng: +%d EXP, +%d Vàng" % [REWARD_EXP, REWARD_GOLD])
+	hud.show_dialogue(TOM, "Cảm ơn con! Nhờ con đọc giúp mà ta biết thư viết gì. Con đọc hiểu tiếng Anh giỏi lắm.\n(Thank you, Ngoc! You read English very well.)\n\nPhần thưởng: +%d EXP, +%d Vàng" % [REWARD_EXP, REWARD_GOLD])
 	_refresh()
 
 
