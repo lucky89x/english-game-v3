@@ -13,7 +13,7 @@ var hp_bar: ProgressBar
 var exp_bar: ProgressBar
 var wallet: Label
 var quest_label: Label
-var choices_box: VBoxContainer
+var choices_box: HFlowContainer
 var _choice_callback: Callable
 
 
@@ -154,9 +154,13 @@ func hide_interaction() -> void:
 
 
 func show_dialogue(speaker: String, message: String) -> void:
+	if choices_box != null and choices_box.visible:
+		_close_choices()          # a plain line never keeps old answer buttons
 	speaker_label.text = speaker
-	dialogue_label.text = message
+	# keep the panel short: no empty lines between paragraphs
+	dialogue_label.text = message.strip_edges().replace("\n\n\n", "\n").replace("\n\n", "\n")
 	dialogue_panel.show()
+	$DialoguePanel/Margin/VBox/CloseHint.show()
 	interaction_hint.hide()
 
 
@@ -183,9 +187,10 @@ func _build_quest_ui() -> void:
 	quest_label.add_theme_font_size_override("font_size", 18)
 	quest_label.hide()
 	add_child(quest_label)
-	choices_box = VBoxContainer.new()
+	choices_box = HFlowContainer.new()
 	choices_box.name = "Choices"
-	choices_box.add_theme_constant_override("separation", 6)
+	choices_box.add_theme_constant_override("h_separation", 8)
+	choices_box.add_theme_constant_override("v_separation", 6)
 	choices_box.hide()
 	$DialoguePanel/Margin/VBox.add_child(choices_box)
 
@@ -210,6 +215,7 @@ func show_choices(speaker: String, message: String, options: Array, callback: Ca
 		choices_box.add_child(button)
 	_choice_callback = callback
 	choices_box.show()
+	$DialoguePanel/Margin/VBox/CloseHint.hide()
 	get_tree().call_group("player", "set_input_locked", true)
 
 
