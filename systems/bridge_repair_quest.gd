@@ -24,14 +24,14 @@ const PROPS := "res://assets/Exports/glTF/"
 ## Where each item lies: [needed (x, z), decoy (x, z)] and the models used.
 const SPOTS := {
 	"rope": [Vector2(17.0, 10.0), Vector2(17.0, 11.8)],
-	"axe": [Vector2(-10.0, 16.5), Vector2(-10.0, 20.5)],
 	"log": [Vector2(2.0, 49.6), Vector2(2.0, 51.6)],
 }
 const MODELS := {
 	"rope": "Rope_1.gltf", "chain": "Chain_Coil.gltf", "axe": "Axe_Bronze.gltf", "pickaxe": "Pickaxe_Bronze.gltf",
 	"log": "Anvil_Log.gltf", "rock": "res://assets/glTF/Rock_Medium_1.gltf",
 }
-const PLACE_NAMES := {"rope": "bến thuyền", "axe": "quầy Ben", "log": "bờ sông gần Sam"}
+const PLACE_NAMES := {"rope": "bến thuyền", "axe": "rìu: phụ Ben bán hàng", "log": "bờ sông gần Sam"}
+const NEEDED := ["rope", "axe", "log"]
 
 var state: GameState
 var land: Node
@@ -64,6 +64,9 @@ func _setup() -> void:
 	if tom != null:
 		tom.add_child(tom_marker)
 		tom_marker.position.y = 2.25
+	var market := get_tree().get_first_node_in_group("word_market")
+	if market != null and market.has_signal("round_finished"):
+		market.round_finished.connect(_on_market_round)
 	if state != null:
 		state.loaded.connect(_refresh)
 		state.quest_changed.connect(func(_id: String) -> void: _refresh())
@@ -136,25 +139,17 @@ func _build_sam() -> void:
 	sam.add_child(sam_marker)
 
 
-## Pip: a small glowing river spirit (placeholder look until its chibi model is built).
+## Pip: the little river spirit (chibi05 model from tools/chibi05/build_pip_chibi.py), glowing softly.
 func _build_pip() -> void:
 	pip = Node3D.new()
 	pip.name = "Pip"
 	add_child(pip)
 	pip.position = Vector3(PIP_POS.x, _y(PIP_POS.x, PIP_POS.y) + 1.6, PIP_POS.y)
-	var orb := MeshInstance3D.new()
-	var sphere := SphereMesh.new()
-	sphere.radius = 0.2
-	sphere.height = 0.4
-	orb.mesh = sphere
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(0.75, 0.95, 1.0)
-	mat.emission_enabled = true
-	mat.emission = Color(0.45, 0.85, 1.0)
-	mat.emission_energy_multiplier = 2.2
-	orb.material_override = mat
-	orb.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	pip.add_child(orb)
+	var model := (load("res://assets/npc/models/npc_pip_spirit_v02.glb") as PackedScene).instantiate() as Node3D
+	model.name = "Model"
+	model.scale = Vector3.ONE * 1.5
+	model.position.y = -0.45
+	pip.add_child(model)
 	var light := OmniLight3D.new()
 	light.light_color = Color(0.55, 0.85, 1.0)
 	light.light_energy = 1.2
@@ -162,7 +157,8 @@ func _build_pip() -> void:
 	pip.add_child(light)
 	var label := _marker("Pip", Color(0.75, 0.95, 1.0))
 	label.font_size = 48
-	label.position.y = 0.45
+	label.position.y = 0.55
+	label.font_size = 40
 	pip.add_child(label)
 	pip.visible = false
 
@@ -233,7 +229,13 @@ func _play(holder: Node3D, clip: String) -> void:
 
 func _process(_delta: float) -> void:
 	if pip != null and pip.visible:
-		pip.position.y = _y(PIP_POS.x, PIP_POS.y) + 1.6 + sin(Time.get_ticks_msec() / 400.0) * 0.12
+		var t := Time.get_ticks_msec() / 1000.0
+		pip.position.y = _y(PIP_POS.x, PIP_POS.y) + 1.6 + sin(t * 2.5) * 0.12
+		var actor := _player()
+		if actor != null:                            # always faces Ngọc, with a gentle sway
+			var to := actor.global_position - pip.global_position
+			pip.rotation.y = atan2(to.x, to.z)
+		pip.rotation.z = sin(t * 1.7) * 0.12
 
 
 ## Shows everything that depends on the quest step (also after a profile switch or a load).
@@ -272,7 +274,7 @@ func _update_tracker() -> void:
 		"collect":
 			var got := collected()
 			var lines := []
-			for id in SPOTS:
+			for id in NEEDED:
 				lines.append(("✔ " if got.has(id) else "• ") + PLACE_NAMES[id])
 			hud.set_quest_text("Nhiệm vụ: Sửa cây cầu · tìm đồ Sam cần (%d/3)\n%s" % [got.size(), "   ".join(lines)])
 		"repair":
@@ -324,6 +326,7 @@ func _finish(elder: Node) -> void:
 		hud.stats.add_gold(REWARD_GOLD)
 	q["done"] = true
 	state.flags["forest_clue"] = true
+	get_tree().call_group("sound", "play", "coin")
 	state.set_quest_step(QUEST_ID, "done")
 	state.stats = hud.stats.to_dict()
 	state.save_game()
@@ -331,6 +334,23 @@ func _finish(elder: Node) -> void:
 		elder._play_gesture("Wave")
 	hud.show_dialogue(TOM, "Con và Pip sửa được cây cầu rồi ư? Giỏi lắm!\nDấu chân về phía Rừng Ký Ức... Có lẽ mảnh La Bàn Ngôn Ngữ đầu tiên ở đó. Khi cổng rừng mở, ta sẽ cùng đi.\n\nPhần thưởng: +%d EXP, +%d Vàng" % [REWARD_EXP, REWARD_GOLD])
 	_refresh()
+
+
+# ------------------------------------------------------------------ Ben gives the axe for a market shift
+func needs_axe() -> bool:
+	return state != null and step() == "collect" and not collected().has("axe")
+
+
+func _on_market_round(_first_try: int, _total: int) -> void:
+	if not needs_axe():
+		return
+	var got: Array = collected()
+	got.append("axe")
+	state.quest(QUEST_ID)["items"] = got
+	state.save_game()
+	var hud := _hud()
+	hud.show_dialogue("Ben bán hàng", hud.dialogue_label.text + "\n\nĐây, cái rìu ta hứa! Cháu mang cho Sam nhé. (Nhận được: axe — cái rìu, %d/3)" % got.size())
+	_update_tracker()
 
 
 # ------------------------------------------------------------------ Sam, items, repair
@@ -402,6 +422,7 @@ func pick(item: Dictionary) -> bool:
 		var got: Array = collected()
 		got.append(item["id"])
 		state.quest(QUEST_ID)["items"] = got
+		get_tree().call_group("sound", "play", "pickup")
 		var node := item["node"] as Node3D
 		var tw := create_tween()
 		tw.tween_property(node, "scale", Vector3(1.3, 1.3, 1.3), 0.12).set_ease(Tween.EASE_OUT)
@@ -414,6 +435,7 @@ func pick(item: Dictionary) -> bool:
 		else:
 			hud.show_dialogue("Ngọc", "Đây rồi: \"%s\"! (%d/3)" % [item["word"], got.size()])
 	else:
+		get_tree().call_group("sound", "play", "wrong")
 		var node := item["node"] as Node3D
 		var base := node.position
 		var tw := create_tween()
@@ -461,6 +483,7 @@ func _on_repair_choice(choice_vi: String) -> void:
 	var expected: Dictionary = steps[_repair_step]
 	var correct := choice_vi == String(expected["vi"])
 	state.record_answer(state.grade, UNIT, "reading", correct, false)
+	get_tree().call_group("sound", "play", "correct" if correct else "wrong")
 	if not correct:
 		_ask_repair_step("Not yet! Read again: \"%s\"\n" % expected["en"])
 		return
@@ -476,6 +499,7 @@ func _complete_repair() -> void:
 	state.set_quest_step(QUEST_ID, "report_tom")
 	state.save_game()
 	_set_repaired(true)
+	get_tree().call_group("sound", "play", "fanfare")
 	fixed_bridge.scale = Vector3(1.0, 0.2, 1.0)
 	create_tween().tween_property(fixed_bridge, "scale", Vector3.ONE, 0.45).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	_play(sam, "Wave")

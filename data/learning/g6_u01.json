@@ -218,7 +218,7 @@
       "skill": "reading",
       "difficulty": "basic",
       "tom_offer": "Cây cầu gỗ phía Nam bị lũ làm gãy rồi. Sam ngư dân đang đợi ở đầu cầu, con ra giúp chú ấy nhé?",
-      "sam_request": "Hello! I'm Sam. The flood broke our bridge. We need three things: a rope, an axe and a log.\nThe rope is near my boat at the dock. The axe is at Ben's stall. The log is next to the river, near me.\nCan you bring them here, please?",
+      "sam_request": "Hello! I'm Sam. The flood broke our bridge. We need three things: a rope, an axe and a log.\nThe rope is near my boat at the dock. Ben has an axe at his stall. Help him, and he can give it to you. The log is next to the river, near me.\nCan you bring them here, please?",
       "materials": [
         {
           "id": "rope",

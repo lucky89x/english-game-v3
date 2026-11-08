@@ -1,4 +1,4 @@
-[gd_scene load_steps=16 format=3]
+[gd_scene load_steps=18 format=3]
 
 [ext_resource type="PackedScene" path="res://world/zones/starter_village/starter_village_environment.tscn" id="1_environment"]
 [ext_resource type="PackedScene" path="res://characters/player/player.tscn" id="2_player"]
@@ -12,6 +12,8 @@
 [ext_resource type="Script" path="res://systems/profile_menu.gd" id="9_profiles"]
 [ext_resource type="Script" path="res://systems/word_market.gd" id="10_market"]
 [ext_resource type="Script" path="res://systems/bridge_repair_quest.gd" id="11_bridge"]
+[ext_resource type="Script" path="res://systems/secret_chests.gd" id="12_chests"]
+[ext_resource type="Script" path="res://systems/game_sound.gd" id="13_sound"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_main"]
 sky_top_color = Color(0.08, 0.25, 0.52, 1)
@@ -84,6 +86,12 @@ script = ExtResource("10_market")
 
 [node name="BridgeRepairQuest" type="Node3D" parent="Systems"]
 script = ExtResource("11_bridge")
+
+[node name="SecretChests" type="Node3D" parent="Systems"]
+script = ExtResource("12_chests")
+
+[node name="GameSound" type="Node" parent="Systems"]
+script = ExtResource("13_sound")
 
 [node name="ProfileMenu" type="CanvasLayer" parent="Systems"]
 script = ExtResource("9_profiles")

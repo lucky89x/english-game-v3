@@ -51,7 +51,8 @@ Nếu không skill nào khớp, nói rõ và làm theo cách thông thường. N
 - Dữ liệu học: `tests/learning_data_test.gd` (16 mục).
 - Hồ sơ, ôn cách quãng, chợ Ben: `tests/profiles_market_test.gd` (40 mục).
 - Nhiệm vụ Bức thư (chọn lớp, đọc thư, thưởng, lưu/nạp): `tests/lost_letter_quest_test.gd` (39 mục).
-- Sửa cây cầu, cầu mới, bản đồ nhỏ: `tests/bridge_repair_quest_test.gd` (27 mục).
+- Sửa cây cầu, cầu mới, bản đồ nhỏ: `tests/bridge_repair_quest_test.gd` (31 mục).
+- Rương bí mật, âm thanh: `tests/secret_chests_test.gd` (20 mục).
 - Đầy đủ: `tests/village_life_test.gd`, `tests/skills_upgrade_test.gd`, `tests/chibi05_hero_test.gd`, `tests/redesign03/validate_characters.gd`, `tests/bridge_traversal_test.gd`.
 - Chụp ảnh trong game cần renderer thật: `xvfb-run godot --rendering-driver opengl3 --script res://tests/chibi05_world_capture.gd -- <tiền tố>`.
 - Sau khi thêm file model/ảnh mới, chạy `godot --headless --path . --import` để tạo file `.import`.
@@ -64,6 +65,9 @@ Nếu không skill nào khớp, nói rõ và làm theo cách thông thường. N
 - Hồ sơ từng con: `systems/profile_store.gd` (`user://profiles.json`, mỗi hồ sơ một file `user://profile_<id>.json`), màn chọn `systems/profile_menu.gd` (chỉ hiện khi bấm F5, test không hiện). Tiến độ lưu bởi `systems/game_state.gd` (nhóm `game_state`, có `version`, `use_profile()`). Test phải đặt `GameState.override_path` (và `ProfileStore.index_path` nếu tạo hồ sơ) trước khi nạp world.
 - Ôn cách quãng: `systems/word_review.gd` (hộp Leitner theo từng từ, chỉ lớp hiện tại và lớp dưới). Chợ Ben "Hũ Chữ": `systems/word_market.gd` (node Systems/WordMarket, quầy ở (-5, 18.5)); ngày đầu là kiểm tra đầu vào ẩn. Nguyên tắc: học tự nhiên trong lúc chơi, không khóa di chuyển, không hiện chữ "kiểm tra"/"ôn tập" với trẻ.
 - Quest "Bức thư thất lạc": `systems/lost_letter_quest.gd` (node Systems/LostLetterQuest); Tom gọi `handle_tom()` qua `quest_giver_id`; thư sinh ra trong nhà Tom khi `building_travel` phát `room_entered`. Làm xong thư thì Tom chuyển sang `systems/bridge_repair_quest.gd` ("Sửa cây cầu": cầu Nam ở (10.5, 44) hỏng đến khi sửa; model `prop_bridge_broken_v02.glb` dựng bằng `build_props_chibi.py bridge_broken`). Bảng chọn đáp án: `debug_hud.show_choices()` (phím 1-9, khóa di chuyển); khung hội thoại neo giữa-dưới, tự cao lên khi chữ dài. Lời nhân vật cần đọc kỹ (khách ở chợ) đưa vào `debug_hud.show_request()` (khung trên cùng), không thả chữ 3D lơ lửng.
+- Rìu trong "Sửa cây cầu" do Ben đưa sau một buổi chợ (`word_market.round_finished`). Pip: `assets/npc/models/npc_pip_spirit_v02.glb` (`tools/chibi05/build_pip_chibi.py`).
+- Rương bí mật khóa chữ: `systems/secret_chests.gd` (4 vị trí trong `CHESTS`, cờ `flags.secret_chests`).
+- Âm thanh: `systems/game_sound.gd` (nhóm `sound`, gọi `get_tree().call_group("sound", "play", "correct")`; bus SFX, Music). File tự tổng hợp bằng `python tools/audio/make_sounds.py`, không dùng âm thanh có bản quyền.
 - HUD góc phải trên: bản đồ nhỏ `ui/minimap.gd` (vẽ từ VillageLayout: đường, sông, nhà, `BRIDGES`, `AREAS`; dấu "!"/"?" là Label3D trong nhóm `quest_marker`), dưới nó là thẻ nhiệm vụ.
 - Khu ven sông (`world/zones/starter_village/river_areas.gd`): Cầu Trại Gỗ, Cầu Cuối Sông, Bến câu cá, Trại gỗ. Đã bỏ cầu tàu cũ, đá và cây chắn đường; kiểm tra lại khi thêm đồ vật mới (không đặt vật có va chạm trên đường hay đầu cầu).
 - Nội thất cửa hàng và thư viện, quầy chợ, hàng rào, rương vẫn là asset Quaternius cũ. Cầu gỗ cong, nội thất nhà Tom, cột đèn, biển chỉ đường, cổng Rừng Ký Ức là asset chibi05 (`tools/chibi05/build_props_chibi.py`; đặt bởi `village_props.gd`, `chibi_bridge.gd`).

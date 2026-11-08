@@ -90,7 +90,7 @@ func run() -> void:
 	check(quest.step() == "collect" and hud.dialogue_label.text.contains("rope"), "Sam asks in English for rope, axe, log")
 	await key(KEY_E)  # close
 	var shown := quest.items.filter(func(i): return (i["node"] as Node3D).visible)
-	check(shown.size() == 6, "6 items appear (3 needed + 3 look-alikes)")
+	check(shown.size() == 4, "4 items appear (rope, log + 2 look-alikes); the axe comes from Ben")
 	check(item_of("rope", false)["word"] == "chain", "Decoy next to the rope is a chain")
 
 	var decoy := item_of("rope", false)
@@ -102,7 +102,26 @@ func run() -> void:
 	await teleport((rope["node"] as Node3D).global_position + Vector3(-0.7, 0, 0))
 	await key(KEY_E)
 	check(quest.collected() == ["rope"], "Rope picked with the E key")
-	check(quest.pick(item_of("axe", true)) and quest.pick(item_of("log", true)), "Axe and log picked")
+	check(quest.pick(item_of("log", true)), "Log picked")
+	# Ben trades the axe for one market shift
+	var market := get_first_node_in_group("word_market") as WordMarket
+	check(quest.needs_axe(), "Axe still needed: Ben has it")
+	await teleport(market.to_global(Vector3(-1.0, 0, 0)))
+	market.talk_to_ben()
+	check(hud.is_choosing() and hud.dialogue_label.text.contains("Rìu"), "Ben offers the axe for a market shift")
+	await key(KEY_1)
+	check(market.active, "Market shift starts")
+	var guard := 0
+	while market.active and guard < 30:
+		guard += 1
+		if not market.waiting:
+			var t: Dictionary = market.round_cards[market.index]
+			for i in range(WordMarket.JARS):
+				if market.jar_cards[i].get("id", "") == t["id"]:
+					market.serve(i)
+		await create_timer(1.3).timeout
+	check(quest.collected().has("axe") and hud.dialogue_label.text.contains("axe"), "After the shift Ben gives the axe")
+	hud.hide_dialogue()
 	await frames(30)
 	check(quest.collected().size() == 3 and not (rope["node"] as Node3D).visible, "All 3 collected, picked items hidden")
 

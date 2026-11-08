@@ -41,6 +41,8 @@ var first_try := 0
 var streak := 0
 var gold_earned := 0
 var missed: Array = []
+signal round_finished(first_try: int, total: int)
+
 var waiting := false                 # short pause while the next traveller walks up
 
 
@@ -277,6 +279,15 @@ func talk_to_ben() -> void:
 		return
 	_play(ben, "Talk")
 	var first := not bool(state.flags.get("market_first_day", false))
+	var bridge := get_tree().get_first_node_in_group("quest_bridge_repair")
+	if bridge != null and bridge.has_method("needs_axe") and bridge.needs_axe():
+		hud.show_choices(BEN, "Rìu à? Ta có một cái rất tốt. Cháu phụ ta bán một buổi chợ, xong ta tặng cháu!\n(Đi tới hũ có nghĩa đúng rồi nhấn E.)",
+			["Vâng, cháu phụ bác!", "Để lát nữa ạ"], func(i: int) -> void:
+				if i == 0:
+					start_round()
+				else:
+					hud.show_dialogue(BEN, "Ừ, khi nào cần rìu thì quay lại nhé!"))
+		return
 	var text := "Hôm nay chợ đông khách lạ từ xứ khác tới. Họ chỉ nói tiếng Anh thôi! Cháu đọc tên món họ cần rồi đưa đúng hũ chữ giúp ta nhé?" if first \
 		else "Lại có khách tới mua hũ chữ đây. Cháu phụ ta một buổi nhé?"
 	hud.show_choices(BEN, text + "\n(Đi tới hũ có nghĩa đúng rồi nhấn E.)",
@@ -357,6 +368,8 @@ func serve(jar_index: int) -> bool:
 		hud.stats.add_gold(gold)
 		hud.stats.add_experience(EXP_PER_WORD)
 		_pop(jars[jar_index])
+		get_tree().call_group("sound", "play", "correct")
+		get_tree().call_group("sound", "play", "coin")
 		_float_text(jars[jar_index], "+%d Vàng" % gold + ("  Chuỗi %d!" % streak if streak >= 3 else ""), Color(1, 0.85, 0.25))
 		_play(customer, "Wave")
 		_say("Thank you!  \"%s\" = %s" % [target["word"], target["vi"]], "")
@@ -369,6 +382,7 @@ func serve(jar_index: int) -> bool:
 		if tries == 1:
 			missed.append(target)
 		_shake(jars[jar_index])
+		get_tree().call_group("sound", "play", "wrong")
 		var what := "That's \"%s\"!" % given.get("word", "?") if not given.is_empty() else "Hmm?"
 		_say("%s  I need \"%s\"." % [what, target["word"]], "Thử hũ khác nhé")
 		_save()
@@ -415,6 +429,7 @@ func end_round(left_early: bool) -> void:
 	if was_placement:
 		text += "\n(Ben đã nhớ những từ cháu còn lúng túng để lần sau hỏi lại.)"
 	hud.show_dialogue(BEN, text)
+	round_finished.emit(first_try, round_cards.size())   # after the summary, so listeners can add to it
 
 
 func _save() -> void:

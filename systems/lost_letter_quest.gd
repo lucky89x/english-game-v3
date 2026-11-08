@@ -227,6 +227,7 @@ func _complete(elder: Node) -> void:
 		q["rewarded"] = true
 		hud.stats.add_experience(REWARD_EXP)
 		hud.stats.add_gold(REWARD_GOLD)
+		get_tree().call_group("sound", "play", "fanfare")
 	q["done"] = true
 	state.set_quest_step(QUEST_ID, "done")
 	state.stats = hud.stats.to_dict()
@@ -281,6 +282,7 @@ func _on_answer(index: int) -> void:
 	var a := activity()
 	var correct := index == int(a["answer"])
 	state.record_answer(state.grade, UNIT, String(a.get("skill", "reading")), correct, _hint_shown)
+	get_tree().call_group("sound", "play", "correct" if correct else "wrong")
 	if correct:
 		state.set_quest_step(QUEST_ID, "return_letter")
 		state.flags["lost_letter_found"] = true

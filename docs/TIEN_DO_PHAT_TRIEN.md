@@ -1,6 +1,6 @@
 # English Quest V3 — Kế hoạch và tiến độ phát triển
 
-Cập nhật lần cuối: **08/11/2026** (phiên 12). Claude cập nhật file này ở cuối mỗi phiên làm việc.
+Cập nhật lần cuối: **08/11/2026** (phiên 13). Claude cập nhật file này ở cuối mỗi phiên làm việc.
 
 **Ký hiệu trạng thái**
 - `[x]` **ĐÃ NGHIỆM THU**: chủ dự án đã chạy F5 và xác nhận.
@@ -33,7 +33,7 @@ Cập nhật lần cuối: **08/11/2026** (phiên 12). Claude cập nhật file 
 - [~] Đầu-cuối theo luồng gốc: Tom hỏi lớp → giao việc → vào nhà Tom (dấu ✉ trên cửa) → tìm thư gần giá sách → đọc thư tiếng Anh, trả lời (sai có gợi ý) → ra trả Tom (dấu ?)
 - [~] Thưởng 50 EXP + 20 Vàng đúng một lần; HUD cập nhật
 - [~] Lưu và nạp tiến độ (version 1, ghi an toàn + bản .bak)
-- [~] Vertical slice "Sửa cây cầu" bản 1 (khoảng 6–8 phút): Tom → Sam ở cầu hỏng phía Nam → tìm dây thừng, rìu, khúc gỗ (mỗi món có đồ giống để gây nhầm) → Pip đọc chỉ dẫn tiếng Anh, làm đúng thứ tự → cầu lành → manh mối Rừng Ký Ức → Tom thưởng +80 EXP +30 Vàng. Chưa có: Ben trong chuỗi, giọng đọc thật
+- [~] Vertical slice "Sửa cây cầu" bản 1 (khoảng 6–8 phút): Tom → Sam ở cầu hỏng phía Nam → Ben đổi rìu lấy một buổi phụ bán hàng → tìm dây thừng, khúc gỗ (có đồ giống để gây nhầm) → Pip (model chibi) đọc chỉ dẫn tiếng Anh, làm đúng thứ tự → cầu lành → manh mối Rừng Ký Ức → Tom thưởng +80 EXP +30 Vàng. Khoảng 10–12 phút. Chưa có: giọng đọc thật
 - [~] Hai phiên bản nội dung: lớp 6 và lớp 8 (Bức thư và Sửa cây cầu)
 
 ## P2 — Asset chuẩn mỹ thuật (fantasy chibi)
@@ -53,12 +53,12 @@ Cập nhật lần cuối: **08/11/2026** (phiên 12). Claude cập nhật file 
 - [~] Đường lên cổng Rừng Ký Ức (chưa có cổng và biển báo)
 - [~] NPC dân làng: Ben (bán hàng), Sam (ngư dân), đi dạo theo tuyến
 - [~] Cổng Rừng Ký Ức (đóng, có biển và lời nhắn "mở ở Chương II"), 5 biển chỉ đường song ngữ Anh–Việt, cột đèn ven đường
-- [ ] Thêm NPC: Pip, Lily, Rose, Anna; lịch sinh hoạt theo giờ
+- [ ] Thêm NPC: Pip (đã có model chibi, xuất hiện ở nhiệm vụ cầu), Lily, Rose, Anna; lịch sinh hoạt theo giờ
 - [ ] Nội thất các nhà mới; nhà ở xóm mới hiện chưa vào được
-- [ ] Rương, bí mật, nhiệm vụ ẩn (đã có bản đồ nhỏ)
+- [~] Rương bí mật: 4 rương khóa chữ (bến câu, trại gỗ, cổng rừng, vườn cây), đánh vần từ tiếng Anh để mở; bản đồ nhỏ
 - [~] Thêm cầu qua sông: 4 cầu (Làng, Nam, Trại Gỗ, Cuối Sông); bỏ cầu tàu cũ sát cầu Làng
 - [~] Khu mới ven sông và rừng: Bến câu cá, Trại gỗ; dọn đá, cây, hàng rào chắn đường và đầu cầu
-- [ ] Âm thanh: nhạc nền, tiếng bước chân, tiếng nước
+- [ ] Âm thanh: đã có nhạc nền tự soạn + 6 hiệu ứng (đúng, sai, nhặt đồ, xu, bấm, mừng); chưa có tiếng bước chân, tiếng nước
 
 ## P4 — Hệ thống học tiếng Anh
 - [~] Learning Engine tách khỏi gameplay; dữ liệu bài học dạng file (`data/learning/`, `LearningCatalog`)
@@ -96,6 +96,7 @@ Cập nhật lần cuối: **08/11/2026** (phiên 12). Claude cập nhật file 
 | 6 | 678 | 1.218.836 | Thêm cầu mới, cột đèn, biển, cổng rừng |
 | 7–8 | — | — |
 | 9–11 | — | — | Không đo lại: chợ Ben thêm 4 thùng + hũ, 2 nhân vật, vài nhãn chữ |
+| 13 | — | — | Không đo lại: Pip, 4 rương, âm thanh |
 | 12 | 620 | 1.221.782 | Cây mới có cành và lá dày, thêm 3 cầu, bến câu, trại gỗ: gần như không đổi | Không đo lại: chỉ thêm logic nhiệm vụ, 1 bức thư + 1 đèn nhỏ |
 
 ## Nhật ký các phiên làm việc
@@ -109,6 +110,7 @@ Cập nhật lần cuối: **08/11/2026** (phiên 12). Claude cập nhật file 
 | 5 | 07/11/2026 | Nhà ×1,45; cây có lá thật + bản rút gọn; đường lát đá toàn mạng; bản đồ 240 m với 3 xóm mới (14 nhà); sông dài ra; tối ưu hiệu năng −47% tam giác | 177 mục đạt (7 bộ test) |
 | 6 | 07/11/2026 | P2: cầu gỗ cong mới, nội thất nhà Tom; P3: cột đèn ven đường, 5 biển chỉ đường song ngữ, cổng Rừng Ký Ức | 177 mục đạt; đi qua cầu 2 chiều đạt |
 | 7 | 07/11/2026 | P1: quest "Bức thư thất lạc" dựng lại (chọn lớp, thư tiếng Anh, gợi ý, thưởng 1 lần); P4: 48 Unit metadata, Unit 1 lớp 6/8 mẫu, lưu tiến độ có version; khóa di chuyển khi chọn đáp án | 213 mục đạt (8 bộ test) |
+| 13 | 08/11/2026 | Ben vào chuỗi Sửa cây cầu; model Pip chibi; 4 rương bí mật khóa chữ; nhạc nền + 6 hiệu ứng âm thanh | 12 bộ test, 342 mục đạt |
 | 12 | 08/11/2026 | Hội thoại gọn; "Sửa cây cầu" bản 1 (lớp 6, 8); 4 cầu, Bến câu cá, Trại gỗ; dọn vật chắn đường; bản đồ nhỏ; khung lời khách; cây có cành lá | 11 bộ test, 298 mục đạt |
 | 11 | 08/11/2026 | Từ vựng lớp 7, 9 (526 từ) — đủ 48 Unit; hồ sơ từng con + chọn lớp; chợ Ben "Hũ Chữ"; kiểm tra đầu vào ẩn; ôn cách quãng theo từng từ | 10 bộ test, 270 mục đạt |
 | 10 | 07/11/2026 | Dựng khung 24 Unit lớp 7 và 9 (chỉ tên Unit, chủ đề; không bịa từ vựng); công cụ make_outlines.py; đẩy lên GitHub | Test dữ liệu học 16 mục đạt |

@@ -285,7 +285,7 @@
       "skill": "reading",
       "difficulty": "advanced",
       "tom_offer": "Trận lũ hôm qua làm gãy cây cầu gỗ phía Nam. Sam ngư dân đang loay hoay ở đầu cầu, con ra giúp chú ấy nhé?",
-      "sam_request": "Hi, I'm Sam. I'm keen on fishing, but today I need your help. The flood damaged the south bridge, and I prefer fixing it myself to waiting for builders - I love doing DIY!\nPlease bring me a rope, an axe and a log. The rope is lying by my boat at the dock, the axe is at Ben's stall, and there's a log by the river, not far from here.",
+      "sam_request": "Hi, I'm Sam. I'm keen on fishing, but today I need your help. The flood damaged the south bridge, and I prefer fixing it myself to waiting for builders - I love doing DIY!\nPlease bring me a rope, an axe and a log. The rope is lying by my boat at the dock, Ben keeps an axe at his stall and will happily give it to you if you help him out for a while, and there's a log by the river, not far from here.",
       "materials": [
         {
           "id": "rope",
