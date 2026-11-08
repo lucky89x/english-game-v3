@@ -11,12 +11,118 @@
   "objectives": [
     "Talk about the topic: Electronic Devices"
   ],
-  "vocabulary": [],
+  "vocabulary": [
+    {
+      "word": "3D printer",
+      "vi": "máy in 3D",
+      "source": "vietjack"
+    },
+    {
+      "word": "aluminium",
+      "vi": "nhôm",
+      "source": "vietjack"
+    },
+    {
+      "word": "camcorder",
+      "vi": "máy quay phim xách tay",
+      "source": "vietjack"
+    },
+    {
+      "word": "cardboard",
+      "vi": "bìa cứng, các tông",
+      "source": "vietjack"
+    },
+    {
+      "word": "copper",
+      "vi": "đồng",
+      "source": "vietjack"
+    },
+    {
+      "word": "e-reader",
+      "vi": "máy đọc sách điện tử",
+      "source": "vietjack"
+    },
+    {
+      "word": "leaflet",
+      "vi": "tờ rơi (để quảng cáo)",
+      "source": "vietjack"
+    },
+    {
+      "word": "plastic",
+      "vi": "chất dẻo",
+      "source": "vietjack"
+    },
+    {
+      "word": "portable",
+      "vi": "có thể mang theo, xách tay",
+      "source": "vietjack"
+    },
+    {
+      "word": "portable music player",
+      "vi": "máy nghe nhạc cầm tay",
+      "source": "vietjack"
+    },
+    {
+      "word": "robotic vacuum cleaner",
+      "vi": "robot hút bụi tự động",
+      "source": "vietjack"
+    },
+    {
+      "word": "rubber",
+      "vi": "cao su",
+      "source": "vietjack"
+    },
+    {
+      "word": "self-portrait",
+      "vi": "ảnh chân dung tự chụp",
+      "source": "vietjack"
+    },
+    {
+      "word": "smartwatch",
+      "vi": "đồng hồ thông minh",
+      "source": "vietjack"
+    },
+    {
+      "word": "steel",
+      "vi": "thép",
+      "source": "vietjack"
+    },
+    {
+      "word": "stylish",
+      "vi": "hợp thời trang, kiểu cách",
+      "source": "vietjack"
+    },
+    {
+      "word": "suck",
+      "vi": "hút",
+      "source": "vietjack"
+    },
+    {
+      "word": "touchscreen",
+      "vi": "màn hình cảm ứng",
+      "source": "vietjack"
+    },
+    {
+      "word": "virtual",
+      "vi": "ảo",
+      "source": "vietjack"
+    },
+    {
+      "word": "window shade",
+      "vi": "mành cửa sổ",
+      "source": "vietjack"
+    },
+    {
+      "word": "wireless",
+      "vi": "không dây, vô tuyến",
+      "source": "vietjack"
+    }
+  ],
   "grammar": [],
   "activities": {},
   "version": 1,
   "vocabulary_checked": false,
   "grammar_checked": false,
-  "source_note": "Khung: chưa có từ vựng hay ngữ pháp đã đối chiếu; chưa lấy dữ liệu từ lớp khác.",
-  "status": "outline"
+  "source_note": "Từ vựng theo danh sách VietJack (Global Success), chỉ từ và nghĩa. Ngữ pháp và hoạt động chưa có.",
+  "status": "vocab"
 }

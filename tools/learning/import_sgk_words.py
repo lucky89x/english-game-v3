@@ -6,7 +6,10 @@ Mỗi Unit ghi vào data/learning/g<lớp>_u<NN>.json (tạo mới nếu chưa c
 trong units.json. Chạy lại nhiều lần vẫn cho kết quả như nhau: từ cũ giữ nguyên, từ mới thêm vào.
 Chỉ lấy từ và nghĩa; bài đọc, câu hỏi trong game vẫn soạn nguyên bản.
 
-    python tools/learning/import_sgk_words.py [đường_dẫn_nguồn]
+    python tools/learning/import_sgk_words.py [đường_dẫn_nguồn] [--tag tên_nguồn]
+
+Nguồn đang dùng: data/source/sgk_notes_vocab.txt (lớp 6, 8; tag sgk_notes) và
+data/source/web_vocab_g7_g9.txt (lớp 7, 9 từ VietJack; tag vietjack).
 """
 import json
 import re
@@ -16,7 +19,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 LEARNING = ROOT / "data" / "learning"
 DEFAULT_SOURCE = ROOT / "data" / "source" / "sgk_notes_vocab.txt"
-SOURCE_TAG = "sgk_notes"
+DEFAULT_TAG = "sgk_notes"
 
 
 def parse(path: Path) -> dict:
@@ -44,7 +47,13 @@ def parse(path: Path) -> dict:
 
 
 def main() -> int:
-    source = Path(sys.argv[1]) if len(sys.argv) > 1 else DEFAULT_SOURCE
+    args = sys.argv[1:]
+    tag = DEFAULT_TAG
+    if "--tag" in args:
+        i = args.index("--tag")
+        tag = args[i + 1]
+        del args[i:i + 2]
+    source = Path(args[0]) if args else DEFAULT_SOURCE
     parsed = parse(source)
     units_path = LEARNING / "units.json"
     catalog = json.loads(units_path.read_text(encoding="utf-8"))
@@ -70,7 +79,7 @@ def main() -> int:
         for word, meaning in pairs:
             if word.lower() in known:
                 continue
-            content["vocabulary"].append({"word": word, "vi": meaning, "source": SOURCE_TAG})
+            content["vocabulary"].append({"word": word, "vi": meaning, "source": tag})
             known.add(word.lower())
             added += 1
         content["vocabulary_checked"] = True

@@ -1,7 +1,7 @@
 {
   "version": 1,
   "series": "Global Success",
-  "note": "Unit titles written from memory: verify against the official textbook list before release (verified=false). Content is original, not copied from the books.",
+  "note": "Unit titles: grades 7 and 9 checked against VietJack Global Success lists (verified=true); grades 6 and 8 still to be checked against the textbook. Game texts are original, not copied from the books.",
   "units": [
     {
       "id": "g6_u01",
@@ -129,8 +129,9 @@
       "unit": 1,
       "title": "Hobbies",
       "content_file": "g7_u01.json",
-      "verified": false,
-      "status": "outline"
+      "verified": true,
+      "status": "vocab",
+      "vocab_count": 21
     },
     {
       "id": "g7_u02",
@@ -138,8 +139,9 @@
       "unit": 2,
       "title": "Healthy Living",
       "content_file": "g7_u02.json",
-      "verified": false,
-      "status": "outline"
+      "verified": true,
+      "status": "vocab",
+      "vocab_count": 22
     },
     {
       "id": "g7_u03",
@@ -147,8 +149,9 @@
       "unit": 3,
       "title": "Community Service",
       "content_file": "g7_u03.json",
-      "verified": false,
-      "status": "outline"
+      "verified": true,
+      "status": "vocab",
+      "vocab_count": 22
     },
     {
       "id": "g7_u04",
@@ -156,8 +159,9 @@
       "unit": 4,
       "title": "Music and Arts",
       "content_file": "g7_u04.json",
-      "verified": false,
-      "status": "outline"
+      "verified": true,
+      "status": "vocab",
+      "vocab_count": 20
     },
     {
       "id": "g7_u05",
@@ -165,8 +169,9 @@
       "unit": 5,
       "title": "Food and Drink",
       "content_file": "g7_u05.json",
-      "verified": false,
-      "status": "outline"
+      "verified": true,
+      "status": "vocab",
+      "vocab_count": 28
     },
     {
       "id": "g7_u06",
@@ -174,8 +179,9 @@
       "unit": 6,
       "title": "A Visit to a School",
       "content_file": "g7_u06.json",
-      "verified": false,
-      "status": "outline"
+      "verified": true,
+      "status": "vocab",
+      "vocab_count": 18
     },
     {
       "id": "g7_u07",
@@ -183,8 +189,9 @@
       "unit": 7,
       "title": "Traffic",
       "content_file": "g7_u07.json",
-      "verified": false,
-      "status": "outline"
+      "verified": true,
+      "status": "vocab",
+      "vocab_count": 20
     },
     {
       "id": "g7_u08",
@@ -192,8 +199,9 @@
       "unit": 8,
       "title": "Films",
       "content_file": "g7_u08.json",
-      "verified": false,
-      "status": "outline"
+      "verified": true,
+      "status": "vocab",
+      "vocab_count": 23
     },
     {
       "id": "g7_u09",
@@ -201,8 +209,9 @@
       "unit": 9,
       "title": "Festivals around the World",
       "content_file": "g7_u09.json",
-      "verified": false,
-      "status": "outline"
+      "verified": true,
+      "status": "vocab",
+      "vocab_count": 22
     },
     {
       "id": "g7_u10",
@@ -210,8 +219,9 @@
       "unit": 10,
       "title": "Energy Sources",
       "content_file": "g7_u10.json",
-      "verified": false,
-      "status": "outline"
+      "verified": true,
+      "status": "vocab",
+      "vocab_count": 20
     },
     {
       "id": "g7_u11",
@@ -219,8 +229,9 @@
       "unit": 11,
       "title": "Travelling in the Future",
       "content_file": "g7_u11.json",
-      "verified": false,
-      "status": "outline"
+      "verified": true,
+      "status": "vocab",
+      "vocab_count": 22
     },
     {
       "id": "g7_u12",
@@ -228,8 +239,9 @@
       "unit": 12,
       "title": "English-speaking Countries",
       "content_file": "g7_u12.json",
-      "verified": false,
-      "status": "outline"
+      "verified": true,
+      "status": "vocab",
+      "vocab_count": 23
     },
     {
       "id": "g8_u01",
@@ -357,8 +369,9 @@
       "unit": 1,
       "title": "Local Community",
       "content_file": "g9_u01.json",
-      "verified": false,
-      "status": "outline"
+      "verified": true,
+      "status": "vocab",
+      "vocab_count": 25
     },
     {
       "id": "g9_u02",
@@ -366,8 +379,9 @@
       "unit": 2,
       "title": "City Life",
       "content_file": "g9_u02.json",
-      "verified": false,
-      "status": "outline"
+      "verified": true,
+      "status": "vocab",
+      "vocab_count": 21
     },
     {
       "id": "g9_u03",
@@ -375,8 +389,9 @@
       "unit": 3,
       "title": "Healthy Living for Teens",
       "content_file": "g9_u03.json",
-      "verified": false,
-      "status": "outline"
+      "verified": true,
+      "status": "vocab",
+      "vocab_count": 18
     },
     {
       "id": "g9_u04",
@@ -384,8 +399,9 @@
       "unit": 4,
       "title": "Remembering the Past",
       "content_file": "g9_u04.json",
-      "verified": false,
-      "status": "outline"
+      "verified": true,
+      "status": "vocab",
+      "vocab_count": 21
     },
     {
       "id": "g9_u05",
@@ -393,8 +409,9 @@
       "unit": 5,
       "title": "Our Experiences",
       "content_file": "g9_u05.json",
-      "verified": false,
-      "status": "outline"
+      "verified": true,
+      "status": "vocab",
+      "vocab_count": 24
     },
     {
       "id": "g9_u06",
@@ -402,8 +419,9 @@
       "unit": 6,
       "title": "Vietnamese Lifestyle: Then and Now",
       "content_file": "g9_u06.json",
-      "verified": false,
-      "status": "outline"
+      "verified": true,
+      "status": "vocab",
+      "vocab_count": 21
     },
     {
       "id": "g9_u07",
@@ -411,8 +429,9 @@
       "unit": 7,
       "title": "Natural Wonders of the World",
       "content_file": "g9_u07.json",
-      "verified": false,
-      "status": "outline"
+      "verified": true,
+      "status": "vocab",
+      "vocab_count": 21
     },
     {
       "id": "g9_u08",
@@ -420,8 +439,9 @@
       "unit": 8,
       "title": "Tourism",
       "content_file": "g9_u08.json",
-      "verified": false,
-      "status": "outline"
+      "verified": true,
+      "status": "vocab",
+      "vocab_count": 24
     },
     {
       "id": "g9_u09",
@@ -429,8 +449,9 @@
       "unit": 9,
       "title": "World Englishes",
       "content_file": "g9_u09.json",
-      "verified": false,
-      "status": "outline"
+      "verified": true,
+      "status": "vocab",
+      "vocab_count": 25
     },
     {
       "id": "g9_u10",
@@ -438,8 +459,9 @@
       "unit": 10,
       "title": "Planet Earth",
       "content_file": "g9_u10.json",
-      "verified": false,
-      "status": "outline"
+      "verified": true,
+      "status": "vocab",
+      "vocab_count": 22
     },
     {
       "id": "g9_u11",
@@ -447,8 +469,9 @@
       "unit": 11,
       "title": "Electronic Devices",
       "content_file": "g9_u11.json",
-      "verified": false,
-      "status": "outline"
+      "verified": true,
+      "status": "vocab",
+      "vocab_count": 21
     },
     {
       "id": "g9_u12",
@@ -456,8 +479,9 @@
       "unit": 12,
       "title": "Career Choices",
       "content_file": "g9_u12.json",
-      "verified": false,
-      "status": "outline"
+      "verified": true,
+      "status": "vocab",
+      "vocab_count": 22
     }
   ]
 }

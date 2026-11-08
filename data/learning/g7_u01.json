@@ -11,12 +11,118 @@
   "objectives": [
     "Talk about the topic: Hobbies"
   ],
-  "vocabulary": [],
+  "vocabulary": [
+    {
+      "word": "belong to",
+      "vi": "thuộc về",
+      "source": "vietjack"
+    },
+    {
+      "word": "benefit",
+      "vi": "lợi ích",
+      "source": "vietjack"
+    },
+    {
+      "word": "bug",
+      "vi": "con bọ",
+      "source": "vietjack"
+    },
+    {
+      "word": "cardboard",
+      "vi": "bìa các tông",
+      "source": "vietjack"
+    },
+    {
+      "word": "dollhouse",
+      "vi": "nhà búp bê",
+      "source": "vietjack"
+    },
+    {
+      "word": "gardening",
+      "vi": "làm vườn",
+      "source": "vietjack"
+    },
+    {
+      "word": "glue",
+      "vi": "keo dán/ hồ",
+      "source": "vietjack"
+    },
+    {
+      "word": "horse riding",
+      "vi": "cưỡi ngựa",
+      "source": "vietjack"
+    },
+    {
+      "word": "insect",
+      "vi": "côn trùng",
+      "source": "vietjack"
+    },
+    {
+      "word": "jogging",
+      "vi": "đi/ chạy bộ thư giãn",
+      "source": "vietjack"
+    },
+    {
+      "word": "making models",
+      "vi": "làm mô hình",
+      "source": "vietjack"
+    },
+    {
+      "word": "maturity",
+      "vi": "sự trưởng thành",
+      "source": "vietjack"
+    },
+    {
+      "word": "patient",
+      "vi": "kiên nhẫn",
+      "source": "vietjack"
+    },
+    {
+      "word": "popular",
+      "vi": "được nhiều người ưa thích",
+      "source": "vietjack"
+    },
+    {
+      "word": "responsibility",
+      "vi": "sự chịu trách nhiệm",
+      "source": "vietjack"
+    },
+    {
+      "word": "set",
+      "vi": "(Mặt trời) lặn",
+      "source": "vietjack"
+    },
+    {
+      "word": "stress",
+      "vi": "sự căng thẳng",
+      "source": "vietjack"
+    },
+    {
+      "word": "take on",
+      "vi": "nhận thêm",
+      "source": "vietjack"
+    },
+    {
+      "word": "unusual",
+      "vi": "khác thường",
+      "source": "vietjack"
+    },
+    {
+      "word": "valuable",
+      "vi": "quý giá",
+      "source": "vietjack"
+    },
+    {
+      "word": "yoga",
+      "vi": "yoga",
+      "source": "vietjack"
+    }
+  ],
   "grammar": [],
   "activities": {},
   "version": 1,
   "vocabulary_checked": false,
   "grammar_checked": false,
-  "source_note": "Khung: chưa có từ vựng hay ngữ pháp đã đối chiếu; chưa lấy dữ liệu từ lớp khác.",
-  "status": "outline"
+  "source_note": "Từ vựng theo danh sách VietJack (Global Success), chỉ từ và nghĩa. Ngữ pháp và hoạt động chưa có.",
+  "status": "vocab"
 }

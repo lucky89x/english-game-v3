@@ -11,12 +11,138 @@
   "objectives": [
     "Talk about the topic: World Englishes"
   ],
-  "vocabulary": [],
+  "vocabulary": [
+    {
+      "word": "bilingual",
+      "vi": "sử dụng được hai ngôn ngữ",
+      "source": "vietjack"
+    },
+    {
+      "word": "borrowed word",
+      "vi": "từ mượn",
+      "source": "vietjack"
+    },
+    {
+      "word": "concentric",
+      "vi": "đồng tâm",
+      "source": "vietjack"
+    },
+    {
+      "word": "consist",
+      "vi": "bao gồm",
+      "source": "vietjack"
+    },
+    {
+      "word": "copy",
+      "vi": "chép lại",
+      "source": "vietjack"
+    },
+    {
+      "word": "establish",
+      "vi": "thành lập",
+      "source": "vietjack"
+    },
+    {
+      "word": "exchange student",
+      "vi": "học sinh trao đổi",
+      "source": "vietjack"
+    },
+    {
+      "word": "Expanding Circle",
+      "vi": "vòng tròn mở rộng",
+      "source": "vietjack"
+    },
+    {
+      "word": "first language",
+      "vi": "ngôn ngữ thứ nhất",
+      "source": "vietjack"
+    },
+    {
+      "word": "fluent",
+      "vi": "trôi trảy; thành thạo",
+      "source": "vietjack"
+    },
+    {
+      "word": "go over",
+      "vi": "ôn tập lại",
+      "source": "vietjack"
+    },
+    {
+      "word": "immigrant",
+      "vi": "người nhập cư",
+      "source": "vietjack"
+    },
+    {
+      "word": "Inner Circle",
+      "vi": "vòng tròn bên trong",
+      "source": "vietjack"
+    },
+    {
+      "word": "look up",
+      "vi": "tra (từ điển)",
+      "source": "vietjack"
+    },
+    {
+      "word": "mean",
+      "vi": "nghĩa là",
+      "source": "vietjack"
+    },
+    {
+      "word": "model",
+      "vi": "mô hình",
+      "source": "vietjack"
+    },
+    {
+      "word": "official language",
+      "vi": "ngôn ngữ chính thức",
+      "source": "vietjack"
+    },
+    {
+      "word": "Outer Circle",
+      "vi": "vòng tròn bên ngoài",
+      "source": "vietjack"
+    },
+    {
+      "word": "pick up",
+      "vi": "học (ngôn ngữ tự nhiên)",
+      "source": "vietjack"
+    },
+    {
+      "word": "propose",
+      "vi": "đề xuất",
+      "source": "vietjack"
+    },
+    {
+      "word": "second language",
+      "vi": "ngôn ngữ thứ hai",
+      "source": "vietjack"
+    },
+    {
+      "word": "standard",
+      "vi": "chuẩn mực",
+      "source": "vietjack"
+    },
+    {
+      "word": "translate",
+      "vi": "dịch",
+      "source": "vietjack"
+    },
+    {
+      "word": "variety",
+      "vi": "biến thể",
+      "source": "vietjack"
+    },
+    {
+      "word": "vocabulary",
+      "vi": "từ vựng",
+      "source": "vietjack"
+    }
+  ],
   "grammar": [],
   "activities": {},
   "version": 1,
   "vocabulary_checked": false,
   "grammar_checked": false,
-  "source_note": "Khung: chưa có từ vựng hay ngữ pháp đã đối chiếu; chưa lấy dữ liệu từ lớp khác.",
-  "status": "outline"
+  "source_note": "Từ vựng theo danh sách VietJack (Global Success), chỉ từ và nghĩa. Ngữ pháp và hoạt động chưa có.",
+  "status": "vocab"
 }

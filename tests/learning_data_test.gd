@@ -59,8 +59,8 @@ func _initialize() -> void:
 	for message in bad:
 		print("  ", message)
 	check(bad.is_empty(), "Every content file is consistent (no empty, duplicate or mismatched entries)")
-	check(with_vocab == 24, "Grades 6 and 8 have vocabulary for all 24 units (got %d)" % with_vocab)
-	check(total_words > 800, "More than 800 words loaded (got %d)" % total_words)
+	check(with_vocab == 48, "All 48 units have vocabulary (got %d)" % with_vocab)
+	check(total_words > 1300, "More than 1300 words loaded (got %d)" % total_words)
 
 	var outline := 0
 	var playable := 0
@@ -74,10 +74,11 @@ func _initialize() -> void:
 		elif u.get("status", "") == "playable":
 			playable += 1
 	check(missing_files == 0, "All 48 units have a content file (skeleton at least)")
-	check(outline == 24 and playable == 2, "24 outlines (grades 7 and 9) and 2 playable units (got %d / %d)" % [outline, playable])
+	check(outline == 0 and playable == 2, "No outline left and 2 playable units (got %d / %d)" % [outline, playable])
 	check(bad.is_empty(), "Outlines hold no invented words or activities")
-	check(LearningCatalog.vocabulary(7, 1).is_empty() and LearningCatalog.vocabulary(9, 1).is_empty(),
-		"Grades 7 and 9 stay empty (no substitution from other grades)")
+	var g7: Array = LearningCatalog.vocabulary(7, 1)
+	check(not g7.is_empty() and g7.all(func(w): return w.get("source", "") == "vietjack"),
+		"Grade 7 unit 1 has its own words (no substitution from other grades)")
 	var words_8: Array = LearningCatalog.vocabulary(8, 1)
 	var found := words_8.any(func(w): return w["word"] == "origami")
 	check(found, "Grade 8 unit 1 contains origami")

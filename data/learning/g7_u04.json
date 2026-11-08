@@ -11,12 +11,113 @@
   "objectives": [
     "Talk about the topic: Music and Arts"
   ],
-  "vocabulary": [],
+  "vocabulary": [
+    {
+      "word": "anthem",
+      "vi": "bài quốc ca",
+      "source": "vietjack"
+    },
+    {
+      "word": "character",
+      "vi": "nhân vật (trong phim, tác phẩm văn học ...)",
+      "source": "vietjack"
+    },
+    {
+      "word": "compose",
+      "vi": "soạn, biên soạn",
+      "source": "vietjack"
+    },
+    {
+      "word": "composer",
+      "vi": "nhà soạn nhạc, nhạc sĩ",
+      "source": "vietjack"
+    },
+    {
+      "word": "concert",
+      "vi": "buổi hoà nhạc",
+      "source": "vietjack"
+    },
+    {
+      "word": "control",
+      "vi": "điều khiển",
+      "source": "vietjack"
+    },
+    {
+      "word": "country music",
+      "vi": "nhạc đồng quê",
+      "source": "vietjack"
+    },
+    {
+      "word": "exhibition",
+      "vi": "cuộc triển lãm",
+      "source": "vietjack"
+    },
+    {
+      "word": "folk music",
+      "vi": "nhạc dân gian, nhạc truyền thống",
+      "source": "vietjack"
+    },
+    {
+      "word": "gallery",
+      "vi": "phòng triển lãm tranh",
+      "source": "vietjack"
+    },
+    {
+      "word": "muscial instrument",
+      "vi": "nhạc cũ",
+      "source": "vietjack"
+    },
+    {
+      "word": "originate",
+      "vi": "bắt nguồn, xuất phát từ",
+      "source": "vietjack"
+    },
+    {
+      "word": "perform",
+      "vi": "biểu diễn, trình diễn",
+      "source": "vietjack"
+    },
+    {
+      "word": "performance",
+      "vi": "sự trình diễn, tiết mục biểu diễn, buổi biểu diễn",
+      "source": "vietjack"
+    },
+    {
+      "word": "photography",
+      "vi": "nhiếp ảnh",
+      "source": "vietjack"
+    },
+    {
+      "word": "portrait",
+      "vi": "bức chân dung",
+      "source": "vietjack"
+    },
+    {
+      "word": "prefer",
+      "vi": "thích hơn",
+      "source": "vietjack"
+    },
+    {
+      "word": "puppet",
+      "vi": "con rối",
+      "source": "vietjack"
+    },
+    {
+      "word": "sculpture",
+      "vi": "điêu khắc, tác phẩm điêu khắc",
+      "source": "vietjack"
+    },
+    {
+      "word": "water puppetry",
+      "vi": "múa rối nước",
+      "source": "vietjack"
+    }
+  ],
   "grammar": [],
   "activities": {},
   "version": 1,
   "vocabulary_checked": false,
   "grammar_checked": false,
-  "source_note": "Khung: chưa có từ vựng hay ngữ pháp đã đối chiếu; chưa lấy dữ liệu từ lớp khác.",
-  "status": "outline"
+  "source_note": "Từ vựng theo danh sách VietJack (Global Success), chỉ từ và nghĩa. Ngữ pháp và hoạt động chưa có.",
+  "status": "vocab"
 }

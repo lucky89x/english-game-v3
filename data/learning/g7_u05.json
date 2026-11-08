@@ -11,12 +11,153 @@
   "objectives": [
     "Talk about the topic: Food and Drink"
   ],
-  "vocabulary": [],
+  "vocabulary": [
+    {
+      "word": "beef",
+      "vi": "thịt bò",
+      "source": "vietjack"
+    },
+    {
+      "word": "butter",
+      "vi": "bơ",
+      "source": "vietjack"
+    },
+    {
+      "word": "dish",
+      "vi": "món ăn",
+      "source": "vietjack"
+    },
+    {
+      "word": "eel",
+      "vi": "con lươn",
+      "source": "vietjack"
+    },
+    {
+      "word": "flour",
+      "vi": "bột",
+      "source": "vietjack"
+    },
+    {
+      "word": "fried",
+      "vi": "được chiên/ rán",
+      "source": "vietjack"
+    },
+    {
+      "word": "green tea",
+      "vi": "chè xanh, trà xanh",
+      "source": "vietjack"
+    },
+    {
+      "word": "ingredient",
+      "vi": "thành phần (nguyên liệu để tạo một món ăn)",
+      "source": "vietjack"
+    },
+    {
+      "word": "juice",
+      "vi": "nước ép (của quả, rau ...)",
+      "source": "vietjack"
+    },
+    {
+      "word": "lemonade",
+      "vi": "nước chanh",
+      "source": "vietjack"
+    },
+    {
+      "word": "mineral water",
+      "vi": "nước khoáng",
+      "source": "vietjack"
+    },
+    {
+      "word": "noodles",
+      "vi": "mì, mì sợi, phở",
+      "source": "vietjack"
+    },
+    {
+      "word": "omelette",
+      "vi": "trứng tráng",
+      "source": "vietjack"
+    },
+    {
+      "word": "onion",
+      "vi": "củ hành",
+      "source": "vietjack"
+    },
+    {
+      "word": "pancake",
+      "vi": "bánh kếp",
+      "source": "vietjack"
+    },
+    {
+      "word": "pepper",
+      "vi": "hạt tiêu",
+      "source": "vietjack"
+    },
+    {
+      "word": "pie",
+      "vi": "bánh nướng, bánh hấp",
+      "source": "vietjack"
+    },
+    {
+      "word": "pork",
+      "vi": "thịt lợn",
+      "source": "vietjack"
+    },
+    {
+      "word": "recipe",
+      "vi": "công thức làm món ăn",
+      "source": "vietjack"
+    },
+    {
+      "word": "roast",
+      "vi": "(Được) quay, nướng",
+      "source": "vietjack"
+    },
+    {
+      "word": "salt",
+      "vi": "muối",
+      "source": "vietjack"
+    },
+    {
+      "word": "sauce",
+      "vi": "nước chấm, nước xốt",
+      "source": "vietjack"
+    },
+    {
+      "word": "shrimp",
+      "vi": "con tôm",
+      "source": "vietjack"
+    },
+    {
+      "word": "soup",
+      "vi": "xúp, canh, cháo",
+      "source": "vietjack"
+    },
+    {
+      "word": "spring roll",
+      "vi": "nem rán",
+      "source": "vietjack"
+    },
+    {
+      "word": "tablespoon",
+      "vi": "khối lượng đựng trong một thìa/ muỗng xúp",
+      "source": "vietjack"
+    },
+    {
+      "word": "teaspoon",
+      "vi": "khối lượng đựng trong một thìa nhỏ dùng để quấy trà",
+      "source": "vietjack"
+    },
+    {
+      "word": "toast",
+      "vi": "bánh mì nướng",
+      "source": "vietjack"
+    }
+  ],
   "grammar": [],
   "activities": {},
   "version": 1,
   "vocabulary_checked": false,
   "grammar_checked": false,
-  "source_note": "Khung: chưa có từ vựng hay ngữ pháp đã đối chiếu; chưa lấy dữ liệu từ lớp khác.",
-  "status": "outline"
+  "source_note": "Từ vựng theo danh sách VietJack (Global Success), chỉ từ và nghĩa. Ngữ pháp và hoạt động chưa có.",
+  "status": "vocab"
 }

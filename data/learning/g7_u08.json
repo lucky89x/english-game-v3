@@ -11,12 +11,128 @@
   "objectives": [
     "Talk about the topic: Films"
   ],
-  "vocabulary": [],
+  "vocabulary": [
+    {
+      "word": "acting",
+      "vi": "diễn xuất",
+      "source": "vietjack"
+    },
+    {
+      "word": "comedy",
+      "vi": "phim hài",
+      "source": "vietjack"
+    },
+    {
+      "word": "confusing",
+      "vi": "khó hiểu, gây bối rối",
+      "source": "vietjack"
+    },
+    {
+      "word": "director",
+      "vi": "đạo diễn (phim, kịch ...)",
+      "source": "vietjack"
+    },
+    {
+      "word": "documentary",
+      "vi": "phim tài liệu",
+      "source": "vietjack"
+    },
+    {
+      "word": "dull",
+      "vi": "buồn tẻ, chán ngắt",
+      "source": "vietjack"
+    },
+    {
+      "word": "enjoyable",
+      "vi": "thú vị, thích thú",
+      "source": "vietjack"
+    },
+    {
+      "word": "fantasy",
+      "vi": "phim giả tưởng",
+      "source": "vietjack"
+    },
+    {
+      "word": "frightening",
+      "vi": "làm sợ hãi, rùng rợn",
+      "source": "vietjack"
+    },
+    {
+      "word": "gripping",
+      "vi": "hấp dẫn, thú vị",
+      "source": "vietjack"
+    },
+    {
+      "word": "horror film",
+      "vi": "phim kinh dị",
+      "source": "vietjack"
+    },
+    {
+      "word": "moving",
+      "vi": "cảm động",
+      "source": "vietjack"
+    },
+    {
+      "word": "must-see",
+      "vi": "bộ phim hấp dẫn, cần xem",
+      "source": "vietjack"
+    },
+    {
+      "word": "poster",
+      "vi": "áp phích quảng cáo",
+      "source": "vietjack"
+    },
+    {
+      "word": "review",
+      "vi": "bài phê bình (về một bộ phim)",
+      "source": "vietjack"
+    },
+    {
+      "word": "scary",
+      "vi": "sợ hãi, rùng rợn",
+      "source": "vietjack"
+    },
+    {
+      "word": "science fiction",
+      "vi": "thể loại phim khoa học viễn tưởng",
+      "source": "vietjack"
+    },
+    {
+      "word": "shocking",
+      "vi": "làng sửng sốt",
+      "source": "vietjack"
+    },
+    {
+      "word": "star",
+      "vi": "đóng vai chính",
+      "source": "vietjack"
+    },
+    {
+      "word": "survey",
+      "vi": "cuộc khảo sát",
+      "source": "vietjack"
+    },
+    {
+      "word": "twin",
+      "vi": "đứa trẻ sinh đôi",
+      "source": "vietjack"
+    },
+    {
+      "word": "violent",
+      "vi": "có nhiều cảnh bảo lực",
+      "source": "vietjack"
+    },
+    {
+      "word": "wizard",
+      "vi": "phù thuỷ",
+      "source": "vietjack"
+    }
+  ],
   "grammar": [],
   "activities": {},
   "version": 1,
   "vocabulary_checked": false,
   "grammar_checked": false,
-  "source_note": "Khung: chưa có từ vựng hay ngữ pháp đã đối chiếu; chưa lấy dữ liệu từ lớp khác.",
-  "status": "outline"
+  "source_note": "Từ vựng theo danh sách VietJack (Global Success), chỉ từ và nghĩa. Ngữ pháp và hoạt động chưa có.",
+  "status": "vocab"
 }

@@ -11,12 +11,118 @@
   "objectives": [
     "Talk about the topic: Remembering the Past"
   ],
-  "vocabulary": [],
+  "vocabulary": [
+    {
+      "word": "ancient",
+      "vi": "cổ đại, lâu đời",
+      "source": "vietjack"
+    },
+    {
+      "word": "anniversary",
+      "vi": "ngày kỉ niệm, lễ kỉ niệm",
+      "source": "vietjack"
+    },
+    {
+      "word": "barefoot",
+      "vi": "chân trần",
+      "source": "vietjack"
+    },
+    {
+      "word": "basic",
+      "vi": "cơ bản",
+      "source": "vietjack"
+    },
+    {
+      "word": "castle",
+      "vi": "lâu đài",
+      "source": "vietjack"
+    },
+    {
+      "word": "communal",
+      "vi": "dùng chung, thuộc cộng đồng",
+      "source": "vietjack"
+    },
+    {
+      "word": "complex",
+      "vi": "khu phức hợp, quần thể",
+      "source": "vietjack"
+    },
+    {
+      "word": "deep-rooted",
+      "vi": "lâu đời, ăn sâu bén rễ",
+      "source": "vietjack"
+    },
+    {
+      "word": "face to face",
+      "vi": "trực tiếp, trực diện",
+      "source": "vietjack"
+    },
+    {
+      "word": "fish and chips",
+      "vi": "món cá và khoai tây rán (món ăn truyền thống của người Anh)",
+      "source": "vietjack"
+    },
+    {
+      "word": "found",
+      "vi": "thành lập",
+      "source": "vietjack"
+    },
+    {
+      "word": "generation",
+      "vi": "thế hệ",
+      "source": "vietjack"
+    },
+    {
+      "word": "monument",
+      "vi": "tượng đài",
+      "source": "vietjack"
+    },
+    {
+      "word": "observe",
+      "vi": "duy trì, tuân theo",
+      "source": "vietjack"
+    },
+    {
+      "word": "occupied",
+      "vi": "có người ở",
+      "source": "vietjack"
+    },
+    {
+      "word": "occupy",
+      "vi": "chiếm giữ",
+      "source": "vietjack"
+    },
+    {
+      "word": "promote",
+      "vi": "thúc đẩy",
+      "source": "vietjack"
+    },
+    {
+      "word": "recognise",
+      "vi": "công nhận",
+      "source": "vietjack"
+    },
+    {
+      "word": "religious",
+      "vi": "(thuộc) tôn giáo",
+      "source": "vietjack"
+    },
+    {
+      "word": "structure",
+      "vi": "cấu trúc",
+      "source": "vietjack"
+    },
+    {
+      "word": "takeaway",
+      "vi": "đồ ăn bán sẵn (để mang về)",
+      "source": "vietjack"
+    }
+  ],
   "grammar": [],
   "activities": {},
   "version": 1,
   "vocabulary_checked": false,
   "grammar_checked": false,
-  "source_note": "Khung: chưa có từ vựng hay ngữ pháp đã đối chiếu; chưa lấy dữ liệu từ lớp khác.",
-  "status": "outline"
+  "source_note": "Từ vựng theo danh sách VietJack (Global Success), chỉ từ và nghĩa. Ngữ pháp và hoạt động chưa có.",
+  "status": "vocab"
 }

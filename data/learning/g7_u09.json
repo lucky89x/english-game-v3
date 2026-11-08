@@ -11,12 +11,123 @@
   "objectives": [
     "Talk about the topic: Festivals around the World"
   ],
-  "vocabulary": [],
+  "vocabulary": [
+    {
+      "word": "candy",
+      "vi": "kẹo",
+      "source": "vietjack"
+    },
+    {
+      "word": "cannes Film Festival",
+      "vi": "liên hoan phim Cannes",
+      "source": "vietjack"
+    },
+    {
+      "word": "carve",
+      "vi": "chạm, khắc",
+      "source": "vietjack"
+    },
+    {
+      "word": "costume",
+      "vi": "trang phục",
+      "source": "vietjack"
+    },
+    {
+      "word": "decorate",
+      "vi": "trang trí",
+      "source": "vietjack"
+    },
+    {
+      "word": "decoration",
+      "vi": "đồ trang trí",
+      "source": "vietjack"
+    },
+    {
+      "word": "disappointing",
+      "vi": "đáng thất vọng",
+      "source": "vietjack"
+    },
+    {
+      "word": "disappointment",
+      "vi": "sự thất vọng",
+      "source": "vietjack"
+    },
+    {
+      "word": "dutch",
+      "vi": "thuộc về Hà Lan Người Hà Lan",
+      "source": "vietjack"
+    },
+    {
+      "word": "Easter",
+      "vi": "lễ Phục sinh",
+      "source": "vietjack"
+    },
+    {
+      "word": "feast",
+      "vi": "bữa tiệc",
+      "source": "vietjack"
+    },
+    {
+      "word": "feature",
+      "vi": "trình diễn đặc biệt",
+      "source": "vietjack"
+    },
+    {
+      "word": "fireworks display",
+      "vi": "bắn pháo hoa",
+      "source": "vietjack"
+    },
+    {
+      "word": "float",
+      "vi": "xe diễu hành",
+      "source": "vietjack"
+    },
+    {
+      "word": "folk dance",
+      "vi": "điệu nhảy/ múa dân gian",
+      "source": "vietjack"
+    },
+    {
+      "word": "mid-Autumn Festival",
+      "vi": "tết Trung thu",
+      "source": "vietjack"
+    },
+    {
+      "word": "(the) Netherlands",
+      "vi": "nước Hà Lan",
+      "source": "vietjack"
+    },
+    {
+      "word": "parade",
+      "vi": "cuộc diễu hành",
+      "source": "vietjack"
+    },
+    {
+      "word": "prosperity",
+      "vi": "sự thịnh vượng",
+      "source": "vietjack"
+    },
+    {
+      "word": "symbol",
+      "vi": "biểu tượng",
+      "source": "vietjack"
+    },
+    {
+      "word": "take part in",
+      "vi": "tham gia",
+      "source": "vietjack"
+    },
+    {
+      "word": "Thanksgiving",
+      "vi": "lễ Tạ ơn",
+      "source": "vietjack"
+    }
+  ],
   "grammar": [],
   "activities": {},
   "version": 1,
   "vocabulary_checked": false,
   "grammar_checked": false,
-  "source_note": "Khung: chưa có từ vựng hay ngữ pháp đã đối chiếu; chưa lấy dữ liệu từ lớp khác.",
-  "status": "outline"
+  "source_note": "Từ vựng theo danh sách VietJack (Global Success), chỉ từ và nghĩa. Ngữ pháp và hoạt động chưa có.",
+  "status": "vocab"
 }
