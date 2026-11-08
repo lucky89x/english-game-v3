@@ -170,25 +170,31 @@ def branch(a, b, r, col='bark'):
 
 
 def canopy(center, radius, clusters, cols, seed=0, squash=.85, bump=.16, variant=0, card_density=1.0):
-    """leafy crown: a dark lumpy core, clumps as volume, and painted leaf cards sprouting from
-    every clump surface so the silhouette reads as leaves, not balloons."""
+    """leafy crown v03: no solid ball. A small dark inner core, many smaller clumps each held by a
+    visible branch from the crown base, and dense painted leaf cards that stick out past every
+    clump so the outline reads as leaves and the branches show through the gaps."""
     rnd = random.Random(seed)
     c0 = Vector(center)
-    finish(ellipsoid('CanopyCore', c0, (radius * .78, radius * .78, radius * .68 * squash), seg=16, rings=10,
+    base = c0 - Vector((0, 0, radius * .55))
+    finish(ellipsoid('CanopyCore', c0, (radius * .42, radius * .42, radius * .36 * squash), seg=12, rings=8,
                      deform=lambda q, v: lumpy(q, v, radius * .05, 5, seed)), cols[2] if len(cols) > 2 else cols[0], ['x'])
-    for k in range(clusters):
-        y = 1 - (k + .5) / clusters * 1.35
+    n = int(clusters * 1.5)
+    for k in range(n):
+        y = 1 - (k + .5) / n * 1.4
         r = math.sqrt(max(0, 1 - y * y))
         a = k * 2.399 + seed
         d = Vector((math.cos(a) * r, math.sin(a) * r, y * squash))
-        s = radius * rnd.uniform(.40, .54)
+        s = radius * rnd.uniform(.28, .38)
         col = cols[1] if d.z > .25 else (cols[2] if d.z < -.2 else rnd.choice(cols[:2]))
         if d.z > .55:
             col = cols[3] if len(cols) > 3 else cols[1]
-        cc = c0 + d * radius * .70
-        finish(ellipsoid('Clump', cc, (s * .82, s * .82, s * .72), seg=12, rings=8,
+        cc = c0 + d * radius * rnd.uniform(.66, .8)
+        # twig from the crown base out to the clump (visible between clumps)
+        mid = base.lerp(cc, .55) + Vector((0, 0, radius * .12))
+        finish(tube('Twig', [base + d * radius * .12, mid, cc.lerp(c0, .2)], [radius * .05, radius * .035, radius * .02], seg=6), 'bark', ['x'])
+        finish(ellipsoid('Clump', cc, (s * .68, s * .68, s * .58), seg=10, rings=7,
                          deform=lambda q, v, k=k: lumpy(q, v, s * bump, 6, k + seed)), col, ['x'])
-        cards(cc, s, int(10 * card_density), variant, seed * 13 + k, size=1.15, spread=.80, upper=-.5)
+        cards(cc, s, int(14 * card_density), variant, seed * 13 + k, size=1.5, spread=.98, upper=-.6)
 
 
 def dots(center, radius, n, colors, size=.12, seed=0, upper=.0):

@@ -129,7 +129,9 @@ func run() -> void:
 	var gold_after: int = hud.stats.gold
 	await key(KEY_E)  # close
 	await key(KEY_E)  # talk again: plain dialogue, no second reward
-	check(hud.stats.gold == gold_after and not hud.is_choosing(), "Reward paid only once")
+	check(hud.stats.gold == gold_after, "Reward paid only once")
+	check(hud.is_choosing() and hud.dialogue_label.text.contains("Sam"), "Talking again: Tom hands over to the bridge quest")
+	hud.hide_dialogue()
 
 	var data = JSON.parse_string(FileAccess.get_file_as_string(SAVE))
 	check(data is Dictionary and int(data["version"]) == GameState.SAVE_VERSION, "Save file has version")

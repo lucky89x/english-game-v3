@@ -14,6 +14,12 @@ var exp_bar: ProgressBar
 var wallet: Label
 var quest_label: Label
 var choices_box: HFlowContainer
+var quest_panel: PanelContainer
+var request_panel: PanelContainer
+var request_title: Label
+var request_text: Label
+var request_hint: Label
+var minimap: Control
 var _choice_callback: Callable
 
 
@@ -172,21 +178,50 @@ func hide_dialogue() -> void:
 
 # ------------------------------------------------------------------ quest tracker + answer choices
 func _build_quest_ui() -> void:
+	minimap = preload("res://ui/minimap.gd").new()
+	minimap.name = "Minimap"
+	add_child(minimap)
+	# quest tracker: a small parchment card under the minimap
+	quest_panel = PanelContainer.new()
+	quest_panel.name = "QuestPanel"
+	quest_panel.anchor_left = 1.0
+	quest_panel.anchor_right = 1.0
+	quest_panel.offset_left = -352
+	quest_panel.offset_right = -16
+	quest_panel.offset_top = 16 + preload("res://ui/minimap.gd").SIZE + 10
+	quest_panel.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	quest_panel.add_theme_stylebox_override("panel", _card_style(Color(0.16, 0.11, 0.07, 0.78), Color(0.85, 0.66, 0.35)))
+	quest_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	quest_panel.hide()
+	add_child(quest_panel)
 	quest_label = Label.new()
 	quest_label.name = "QuestTracker"
-	quest_label.anchor_left = 1.0
-	quest_label.anchor_right = 1.0
-	quest_label.offset_left = -430
-	quest_label.offset_right = -18
-	quest_label.offset_top = 18
-	quest_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	quest_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	quest_label.add_theme_color_override("font_color", Color("#fff6dc"))
-	quest_label.add_theme_color_override("font_outline_color", Color("#3a2414"))
-	quest_label.add_theme_constant_override("outline_size", 6)
-	quest_label.add_theme_font_size_override("font_size", 18)
+	quest_label.add_theme_font_size_override("font_size", 16)
 	quest_label.hide()
-	add_child(quest_label)
+	quest_panel.add_child(quest_label)
+	# request card (top centre): what a character asks for, e.g. the traveller at Ben's stall
+	request_panel = PanelContainer.new()
+	request_panel.name = "RequestCard"
+	request_panel.anchor_left = 0.5
+	request_panel.anchor_right = 0.5
+	request_panel.offset_left = -300
+	request_panel.offset_right = 300
+	request_panel.offset_top = 40
+	request_panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	request_panel.add_theme_stylebox_override("panel", _card_style(Color(0.99, 0.95, 0.84, 0.96), Color(0.62, 0.42, 0.2)))
+	request_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	request_panel.hide()
+	add_child(request_panel)
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 2)
+	request_panel.add_child(column)
+	request_title = _card_label(15, Color(0.55, 0.36, 0.16))
+	request_text = _card_label(26, Color(0.18, 0.11, 0.05))
+	request_hint = _card_label(14, Color(0.4, 0.32, 0.22))
+	for l in [request_title, request_text, request_hint]:
+		column.add_child(l)
 	choices_box = HFlowContainer.new()
 	choices_box.name = "Choices"
 	choices_box.add_theme_constant_override("h_separation", 8)
@@ -198,6 +233,42 @@ func _build_quest_ui() -> void:
 func set_quest_text(text: String) -> void:
 	quest_label.text = text
 	quest_label.visible = not text.is_empty()
+	quest_panel.visible = quest_label.visible
+
+
+## A card at the top of the screen with what a character asks for (English line in big type).
+func show_request(title: String, text: String, hint := "") -> void:
+	request_title.text = title
+	request_text.text = text
+	request_hint.text = hint
+	request_hint.visible = not hint.is_empty()
+	request_panel.show()
+
+
+func hide_request() -> void:
+	request_panel.hide()
+
+
+func _card_style(bg: Color, border: Color) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = bg
+	style.border_color = border
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(10)
+	style.content_margin_left = 14
+	style.content_margin_right = 14
+	style.content_margin_top = 8
+	style.content_margin_bottom = 8
+	return style
+
+
+func _card_label(size: int, color: Color) -> Label:
+	var l := Label.new()
+	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	l.add_theme_font_size_override("font_size", size)
+	l.add_theme_color_override("font_color", color)
+	return l
 
 
 ## Shows the dialogue panel with answer buttons (mouse or keys 1-9). Movement is locked

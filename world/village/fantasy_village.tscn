@@ -154,7 +154,7 @@ scale = Vector3(0.92, 0.92, 0.92)
 [node name="InteractiveProps" type="Node3D" parent="."]
 
 [node name="AnimatedChest" parent="InteractiveProps" instance=ExtResource("25_animated_chest")]
-position = Vector3(-2.6, 0, 10.5)
+position = Vector3(-4.3, 0, 10.5)
 rotation_degrees = Vector3(0, 18, 0)
 
 [node name="Pond" type="Node3D" parent="."]
@@ -170,25 +170,7 @@ visible = false
 position = Vector3(0, 0, 0)
 rotation_degrees = Vector3(0, 90, 0)
 
-[node name="PondRock1" parent="Pond" instance=ExtResource("9_rock1")]
-position = Vector3(-5.3, -0.05, -0.8)
-scale = Vector3(0.55, 0.55, 0.55)
-
-[node name="PondRock2" parent="Pond" instance=ExtResource("10_rock2")]
-position = Vector3(5.8, -0.05, -3.0)
-scale = Vector3(0.6, 0.6, 0.6)
-rotation_degrees = Vector3(0, 48, 0)
-
-[node name="PondRock3" parent="Pond" instance=ExtResource("11_rock3")]
-position = Vector3(-3.9, -0.1, 3.3)
-scale = Vector3(0.45, 0.45, 0.45)
-rotation_degrees = Vector3(0, -30, 0)
-
 [node name="Vegetation" type="Node3D" parent="."]
-
-[node name="TreeNW" parent="Vegetation" instance=ExtResource("4_tree1")]
-position = Vector3(-15, 0, -14)
-scale = Vector3(0.82, 0.82, 0.82)
 
 [node name="TreeN" parent="Vegetation" instance=ExtResource("5_tree2")]
 position = Vector3(-7, 0, -16)
@@ -203,10 +185,6 @@ scale = Vector3(0.8, 0.8, 0.8)
 position = Vector3(-16, 0, 2)
 scale = Vector3(0.68, 0.68, 0.68)
 rotation_degrees = Vector3(0, -65, 0)
-
-[node name="TreeSW" parent="Vegetation" instance=ExtResource("4_tree1")]
-position = Vector3(-15, 0, 15)
-scale = Vector3(0.75, 0.75, 0.75)
 
 [node name="TreeSE" parent="Vegetation" instance=ExtResource("6_tree3")]
 position = Vector3(17, 0, 15)
@@ -334,10 +312,6 @@ rotation_degrees = Vector3(0, 28, 0)
 
 [node name="TreeCollisions" type="StaticBody3D" parent="Vegetation"]
 
-[node name="NW" type="CollisionShape3D" parent="Vegetation/TreeCollisions"]
-position = Vector3(-15, 2, -14)
-shape = SubResource("TreeTrunkCollision")
-
 [node name="N" type="CollisionShape3D" parent="Vegetation/TreeCollisions"]
 position = Vector3(-7, 2, -16)
 shape = SubResource("TreeTrunkCollision")
@@ -348,10 +322,6 @@ shape = SubResource("TreeTrunkCollision")
 
 [node name="W" type="CollisionShape3D" parent="Vegetation/TreeCollisions"]
 position = Vector3(-16, 2, 2)
-shape = SubResource("TreeTrunkCollision")
-
-[node name="SW" type="CollisionShape3D" parent="Vegetation/TreeCollisions"]
-position = Vector3(-15, 2, 15)
 shape = SubResource("TreeTrunkCollision")
 
 [node name="SE" type="CollisionShape3D" parent="Vegetation/TreeCollisions"]

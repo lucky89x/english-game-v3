@@ -10,7 +10,7 @@
 [node name="ForestEdgeZone" type="Node3D"]
 
 [node name="MainCluster" parent="." instance=ExtResource("1_cluster")]
-position = Vector3(-2, 0, -1)
+position = Vector3(-0.8, 0, -4.0)
 
 [node name="SideCluster" parent="." instance=ExtResource("1_cluster")]
 position = Vector3(8, 0, -5)
@@ -34,18 +34,9 @@ rotation_degrees = Vector3(0, 198, 0)
 position = Vector3(-4.6, 0, 4.0)
 rotation_degrees = Vector3(0, -18, 0)
 
-[node name="FenceRight" parent="." instance=ExtResource("4_fence_single")]
-position = Vector3(4.7, 0, 4.0)
-rotation_degrees = Vector3(0, 18, 0)
-
 [node name="TrailStone1" parent="." instance=ExtResource("5_path_rock")]
 position = Vector3(0, 0.04, 2.6)
 scale = Vector3(0.8, 0.8, 0.8)
-
-[node name="TrailStone2" parent="." instance=ExtResource("5_path_rock")]
-position = Vector3(0.4, 0.04, 0.9)
-scale = Vector3(0.72, 0.72, 0.72)
-rotation_degrees = Vector3(0, 25, 0)
 
 [node name="SecretFlowers" parent="." instance=ExtResource("6_flowers")]
 position = Vector3(-5.5, 0, -1.0)

@@ -45,27 +45,6 @@ position = Vector3(2, 0, 4.6)
 [node name="CropFenceNorth3" parent="." instance=ExtResource("2_fence")]
 position = Vector3(4, 0, 4.6)
 
-[node name="CropFenceSouth1" parent="." instance=ExtResource("2_fence")]
-position = Vector3(0, 0, -0.6)
-
-[node name="CropFenceSouth2" parent="." instance=ExtResource("2_fence")]
-position = Vector3(2, 0, -0.6)
-
-[node name="CropFenceSouth3" parent="." instance=ExtResource("2_fence")]
-position = Vector3(4, 0, -0.6)
-
-[node name="CropFenceWest1" parent="." instance=ExtResource("2_fence")]
-position = Vector3(-1, 0, 0.4)
-rotation_degrees = Vector3(0, 90, 0)
-
-[node name="CropFenceWest2" parent="." instance=ExtResource("2_fence")]
-position = Vector3(-1, 0, 2.4)
-rotation_degrees = Vector3(0, 90, 0)
-
-[node name="CropFenceEast1" parent="." instance=ExtResource("2_fence")]
-position = Vector3(5, 0, 0.4)
-rotation_degrees = Vector3(0, 90, 0)
-
 [node name="CropFenceEast2" parent="." instance=ExtResource("2_fence")]
 position = Vector3(5, 0, 2.4)
 rotation_degrees = Vector3(0, 90, 0)

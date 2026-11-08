@@ -52,7 +52,14 @@ def deck_z(y):
     return BRIDGE_H * math.cos(math.pi * y / BRIDGE_L) - .03
 
 
-def bridge():
+GAP = (-1.9, 2.3)   # broken variant: deck planks and rails missing between these y values
+
+
+def in_gap(y):
+    return GAP[0] < y < GAP[1]
+
+
+def bridge(broken=False):
     glow = emissive_cell('glass', 2.4)
     L_, W = BRIDGE_L, BRIDGE_W
     y = -L_ / 2 + .16
@@ -60,6 +67,17 @@ def bridge():
     while y < L_ / 2 - .1:
         z = deck_z(y)
         slope = -BRIDGE_H * math.pi / L_ * math.sin(math.pi * y / L_)
+        if broken and in_gap(y):
+            # a couple of loose planks hang from the broken edges
+            if abs(y - GAP[0]) < .35 or abs(y - GAP[1]) < .35:
+                edge = GAP[0] if y < 0 else GAP[1]
+                tilt = math.radians(55 if y < 0 else -55)
+                hang = box('LoosePlank', (0, 0, 0), (W * .55, .29, .10), bevel=.025)
+                finish(P(hang, Matrix.Translation((rnd.uniform(-.5, .5), edge, deck_z(edge) - .45)) @ Matrix.Rotation(tilt, 4, 'X')),
+                       'wood_dark', ['x'])
+            y += .32
+            k += 1
+            continue
         plank = box('Plank', (0, 0, 0), (W + rnd.uniform(-.06, .06), .29, .10), bevel=.025)
         finish(P(plank, Matrix.Translation((rnd.uniform(-.03, .03), y, z - .05)) @ Matrix.Rotation(math.atan(slope), 4, 'X')),
                ['wood', 'wood_light', 'wood', 'wood_dark'][k % 4], ['x'])
@@ -73,10 +91,15 @@ def bridge():
                 for yy in ys]
         tube_through('ArchRib', arch, .13, 'wood_dark', seg=10)
         rails = [Vector((sx * (W / 2 + .02), yy, deck_z(yy) + .92)) for yy in ys[1:-1]]
-        tube_through('Handrail', rails, .065, 'wood_light', seg=10)
-        tube_through('MidRail', [p + Vector((0, 0, -.45)) for p in rails], .04, 'wood')
+        parts = [rails] if not broken else [[r for r in rails if r.y <= GAP[0]], [r for r in rails if r.y >= GAP[1]]]
+        for part in parts:
+            if len(part) >= 2:
+                tube_through('Handrail', part, .065, 'wood_light', seg=10)
+                tube_through('MidRail', [p + Vector((0, 0, -.45)) for p in part], .04, 'wood')
         for i in range(1, 24, 2):
             yy = ys[i]
+            if broken and in_gap(yy):
+                continue
             base = Vector((sx * (W / 2 + .02), yy, deck_z(yy) - .05))
             finish(cylinder('Post', base, base + Vector((0, 0, .99)), .075, seg=10), 'wood', ['x'])
             finish(ellipsoid('PostCap', base + Vector((0, 0, 1.0)), (.09, .09, .06), seg=10, rings=6), 'wood_dark', ['x'])
@@ -304,7 +327,7 @@ def tom_interior():
     finish(box('LanternCap', (0, 0, H - .66), (.36, .36, .06), bevel=.02), 'iron', ['x'])
 
 
-ALL = {'bridge': ('prop_bridge_curved', bridge), 'lamp': ('prop_lamp_post', lamp), 'signpost': ('prop_signpost', signpost),
+ALL = {'bridge': ('prop_bridge_curved', bridge), 'bridge_broken': ('prop_bridge_broken', lambda: bridge(True)), 'lamp': ('prop_lamp_post', lamp), 'signpost': ('prop_signpost', signpost),
        'sign_board': ('prop_sign_board', sign_board), 'gate': ('prop_forest_gate', forest_gate), 'interior': ('int_tom_house', tom_interior)}
 if __name__ == '__main__':
     args = [a for a in sys.argv[1:] if not a.startswith('-')]

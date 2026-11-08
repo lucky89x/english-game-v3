@@ -12,8 +12,10 @@ const SIGNPOSTS := [
 		["South Meadow", "Đồng cỏ phía Nam", Vector2(0, 40)]]],
 	[Vector2(-24.5, 20.0), [["West Hamlet", "Xóm Tây", Vector2(-45, 12)], ["Village Square", "Quảng trường", Vector2(0, 11)]]],
 	[Vector2(-25.5, -16.5), [["Forest of Memories", "Rừng Ký Ức", Vector2(-24, -74)], ["Village Hall", "Nhà trưởng làng", Vector2(-1, -24)]]],
-	[Vector2(21.0, 14.5), [["Orchard", "Vườn cây", Vector2(48, 8)], ["River Dock", "Bến sông", Vector2(20, 1)], ["Village Square", "Quảng trường", Vector2(0, 5)]]],
+	[Vector2(20.8, 16.4), [["Orchard", "Vườn cây", Vector2(48, 8)], ["River Dock", "Bến sông", Vector2(20, 1)], ["Village Square", "Quảng trường", Vector2(0, 5)]]],
 	[Vector2(3.0, 29.0), [["South Meadow", "Đồng cỏ phía Nam", Vector2(-3, 72)], ["Village Square", "Quảng trường", Vector2(0, 5)]]],
+	[Vector2(-5.6, 58.4), [["Fishing Pier", "Bến câu cá", Vector2(3.6, 60)], ["Village Square", "Quảng trường", Vector2(0, 5)]]],
+	[Vector2(-6.0, 77.8), [["Lumber Camp", "Trại gỗ", Vector2(38, 85)], ["South Meadow", "Đồng cỏ phía Nam", Vector2(-3, 72)]]],
 ]
 const GATE_POSITION := Vector2(-24.0, -77.0)
 
@@ -69,7 +71,7 @@ func _lamps() -> void:
 				var p := a + along * t + normal * side * (width * 0.5 + 0.75)
 				t += LAMP_SPACING
 				side = -side
-				if LAYOUT.in_river(p.x, p.y, 4.6) or LAYOUT.near_building(p.x, p.y, 0.5):
+				if LAYOUT.in_river(p.x, p.y, 4.6) or LAYOUT.near_building(p.x, p.y, 0.5) or LAYOUT.road_distance(p.x, p.y) < 0.4:  # not in the river, by a house or on another road
 					continue
 				# the lamp arm points over the road
 				var facing := -normal * side * -1.0

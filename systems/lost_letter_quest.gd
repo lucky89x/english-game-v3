@@ -42,6 +42,7 @@ func _setup() -> void:
 		var door: Node3D = travel.door_marker(TOM_HOUSE)
 		if door != null:
 			door_marker = _marker("✉", Color(1.0, 0.85, 0.3))
+			door_marker.add_to_group("quest_marker")
 			door_marker.position.y = 2.6
 			door.add_child(door_marker)
 	_build_tom_marker()
@@ -89,6 +90,7 @@ func _build_letter(room: Node3D) -> void:
 	glow.position.y = 0.6
 	letter_root.add_child(glow)
 	letter_marker = _marker("✉", Color(1.0, 0.85, 0.3))
+	letter_marker.add_to_group("quest_marker")
 	letter_marker.position.y = 1.3
 	letter_root.add_child(letter_marker)
 	var area := Area3D.new()
@@ -106,6 +108,7 @@ func _build_letter(room: Node3D) -> void:
 
 func _build_tom_marker() -> void:
 	tom_marker = _marker("!", Color(1.0, 0.82, 0.2))
+	tom_marker.add_to_group("quest_marker")
 	var tom := get_tree().root.find_child("ElderRowan", true, false) as Node3D
 	if tom != null:
 		tom.add_child(tom_marker)
@@ -149,7 +152,13 @@ func _refresh() -> void:
 		"return_letter":
 			hud.set_quest_text("Nhiệm vụ: Bức thư thất lạc\nMang thư về cho trưởng làng Tom (?)")
 		_:
-			hud.set_quest_text("")
+			var bridge := get_tree().get_first_node_in_group("quest_bridge_repair")
+			if bridge != null and bridge.has_method("_update_tracker") and bridge.state != null:
+				bridge._update_tracker()          # the bridge quest owns the tracker after the letter
+			else:
+				hud.set_quest_text("")
+	if tom_marker != null and s == "done":
+		tom_marker.visible = false
 
 
 # ------------------------------------------------------------------ Tom (called by elder_npc.gd)
@@ -171,6 +180,9 @@ func handle_tom(elder: Node) -> bool:
 		"return_letter":
 			_complete(elder)
 			return true
+		"done":
+			var bridge := get_tree().get_first_node_in_group("quest_bridge_repair")
+			return bridge != null and bridge.handle_tom(elder)
 	return false
 
 

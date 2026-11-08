@@ -27,6 +27,7 @@ var customer: Node3D
 var bubble: Label3D
 var jars: Array[Node3D] = []
 var jar_labels: Array[Label3D] = []
+var jar_tags: Array[MeshInstance3D] = []
 var jar_cards: Array = []
 var ben_marker: Label3D
 
@@ -73,6 +74,7 @@ func _build() -> void:
 	ben = _character("npc_ben_merchant_v02.glb", Vector3(1.7, 0, 0), -PI / 2)
 	ben.name = "BenStall"
 	ben_marker = _marker("!", Color(1.0, 0.82, 0.2), 2.3)
+	ben_marker.add_to_group("quest_marker")
 	ben.add_child(ben_marker)
 	var sign := Label3D.new()
 	sign.text = "Ben's Word Jars\nHũ Chữ của Ben"
@@ -110,9 +112,9 @@ func _build() -> void:
 		var label := Label3D.new()
 		label.font_size = 40
 		label.pixel_size = 0.005
-		label.modulate = Color(1, 0.97, 0.85)
-		label.outline_size = 14
-		label.outline_modulate = Color(0.35, 0.2, 0.08)
+		label.modulate = Color(0.25, 0.15, 0.06)
+		label.outline_size = 0
+		label.render_priority = 2
 		label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 		label.no_depth_test = true
 		label.position.y = top + 0.95
@@ -120,6 +122,10 @@ func _build() -> void:
 		label.width = 300
 		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		jar.add_child(label)
+		var tag := _tag()
+		tag.position = label.position + Vector3(0, 0, 0)
+		jar.add_child(tag)
+		jar_tags.append(tag)
 		jars.append(jar)
 		jar_labels.append(label)
 		jar_cards.append({})
@@ -137,6 +143,7 @@ func _build() -> void:
 	bubble.width = 520
 	bubble.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	bubble.position.y = 3.0
+	bubble.visible = false
 	customer.add_child(bubble)
 	_set_jars_visible(false)
 
@@ -192,6 +199,31 @@ func _play(holder: Node3D, clip: String) -> void:
 func _set_jars_visible(on: bool) -> void:
 	for label in jar_labels:
 		label.visible = on
+	for tag in jar_tags:
+		tag.visible = on
+
+
+## Parchment tag behind a jar label (a camera-facing card, so the word is easy to read).
+func _tag() -> MeshInstance3D:
+	var tag := MeshInstance3D.new()
+	var quad := QuadMesh.new()
+	quad.size = Vector2(1.45, 0.5)
+	tag.mesh = quad
+	var mat := StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.albedo_color = Color(0.98, 0.93, 0.78)
+	mat.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+	mat.no_depth_test = true
+	mat.render_priority = 1
+	tag.material_override = mat
+	tag.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	return tag
+
+
+func _fit_tag(i: int) -> void:
+	var text := jar_labels[i].text
+	var lines := 2 if text.length() > 16 else 1
+	(jar_tags[i].mesh as QuadMesh).size = Vector2(clampf(float(mini(text.length(), 16)) * 0.105 + 0.35, 0.7, 1.6), 0.32 + 0.24 * lines)
 
 
 # ------------------------------------------------------------------ input
@@ -288,12 +320,13 @@ func _next_customer() -> void:
 	for i in range(JARS):
 		jar_cards[i] = options[i] if i < options.size() else {}
 		jar_labels[i].text = String(jar_cards[i].get("vi", ""))
+		_fit_tag(i)
 	_set_jars_visible(true)
 	customer.visible = true
 	customer.scale = Vector3(0.6, 1.25, 0.6)
 	create_tween().tween_property(customer, "scale", Vector3.ONE, 0.25).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	_play(customer, "Wave")
-	bubble.text = "A jar of \"%s\", please!" % target["word"]
+	_say("A jar of \"%s\", please!" % target["word"], "Đi tới hũ có nghĩa đúng rồi nhấn E")
 	waiting = false
 	_update_tracker()
 
@@ -326,7 +359,7 @@ func serve(jar_index: int) -> bool:
 		_pop(jars[jar_index])
 		_float_text(jars[jar_index], "+%d Vàng" % gold + ("  Chuỗi %d!" % streak if streak >= 3 else ""), Color(1, 0.85, 0.25))
 		_play(customer, "Wave")
-		bubble.text = "Thank you! \"%s\" = %s" % [target["word"], target["vi"]]
+		_say("Thank you!  \"%s\" = %s" % [target["word"], target["vi"]], "")
 		index += 1
 		waiting = true
 		_save()
@@ -337,14 +370,24 @@ func serve(jar_index: int) -> bool:
 			missed.append(target)
 		_shake(jars[jar_index])
 		var what := "That's \"%s\"!" % given.get("word", "?") if not given.is_empty() else "Hmm?"
-		bubble.text = "%s\nI need \"%s\"." % [what, target["word"]]
+		_say("%s  I need \"%s\"." % [what, target["word"]], "Thử hũ khác nhé")
 		_save()
 	_update_tracker()
 	return correct
 
 
+## The traveller speaks: the line goes to the HUD request card (bubble mirrors it, hidden).
+func _say(text: String, hint: String) -> void:
+	bubble.text = text
+	var hud := _hud()
+	if hud != null and hud.has_method("show_request"):
+		hud.show_request("Khách lạ (Traveller):", text, hint)
+
+
 func end_round(left_early: bool) -> void:
 	active = false
+	if _hud() != null and _hud().has_method("hide_request"):
+		_hud().hide_request()
 	_set_jars_visible(false)
 	customer.visible = false
 	ben_marker.visible = true

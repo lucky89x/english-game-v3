@@ -129,6 +129,11 @@ func _build_path_network() -> void:
 	props.set_script(preload("res://world/zones/starter_village/village_props.gd"))
 	paths_root.add_child(props)
 	props.build(self)
+	var areas := Node3D.new()
+	areas.name = "RiverAreas"
+	areas.set_script(preload("res://world/zones/starter_village/river_areas.gd"))
+	paths_root.add_child(areas)
+	areas.build(self)
 
 
 func _apply_road_shader() -> void:

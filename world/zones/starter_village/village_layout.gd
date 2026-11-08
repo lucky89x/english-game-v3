@@ -25,6 +25,15 @@ const ROADS := [
 	# east orchard road (starts at the existing bridge) and its lane
 	[3.0, [Vector2(18, 12), Vector2(26, 16), Vector2(36, 14), Vector2(48, 8), Vector2(60, 12), Vector2(74, 10)]],
 	[2.4, [Vector2(36, 14), Vector2(40, 28), Vector2(38, 42)]],
+	# south bridge (repaired in the "Sửa cây cầu" quest) and its links to the meadow road and the orchard lane
+	[2.6, [Vector2(-1.5, 43), Vector2(4.4, 44)]],
+	[2.6, [Vector2(16.6, 44), Vector2(27, 43.5), Vector2(38, 42)]],
+	# riverside areas: fishing pier, east-south bridge to the lumber camp, far-south bridge loop
+	[2.6, [Vector2(-3.4, 60), Vector2(1.5, 60)]],
+	[2.6, [Vector2(-3.6, 76), Vector2(3.3, 76)]],
+	[2.6, [Vector2(15.2, 76), Vector2(26, 78), Vector2(36, 83)]],
+	[2.6, [Vector2(-6, 88), Vector2(-5, 100), Vector2(1, 104), Vector2(7.4, 104)]],
+	[2.6, [Vector2(19.2, 104), Vector2(30, 100), Vector2(37, 88)]],
 ]
 
 ## Extra houses outside the core village: [model, position (x, z), scale]. They face the
@@ -50,6 +59,24 @@ const HAMLET := [
 const CORE_FOOTPRINTS := [
 	Vector3(-12, -6, 6.5), Vector3(12, -6, 7.0), Vector3(-14, 7, 5.5), Vector3(-1, -24.5, 9.0),
 	Vector3(12, -24, 7.0), Vector3(-11.5, -24, 4.5), Vector3(-27, 6, 6.5), Vector3(20, 1, 5.0),
+	# clearings kept free of trees: Ben's stall, fishing pier, lumber camp
+	Vector3(-6, 18.5, 4.5), Vector3(2.5, 60, 3.5), Vector3(38, 85, 6.5),
+]
+
+
+## River crossings [centre (x, z), name]. The bridge spans X (11.5 m). z = 44 is broken until
+## the "Sửa cây cầu" quest; the others are built by RiverAreas.
+const BRIDGES := [
+	[Vector2(10.0, 7.0), "Cầu Làng"],
+	[Vector2(10.5, 44.0), "Cầu Nam"],
+	[Vector2(9.3, 76.0), "Cầu Trại Gỗ"],
+	[Vector2(13.3, 104.0), "Cầu Cuối Sông"],
+]
+## Named places shown on the minimap and signposts [centre (x, z), Vietnamese name].
+const AREAS := [
+	[Vector2(0, 4), "Quảng trường"], [Vector2(-45, 12), "Xóm Tây"], [Vector2(48, 10), "Vườn cây"],
+	[Vector2(-3, 72), "Đồng cỏ Nam"], [Vector2(-24, -74), "Rừng Ký Ức"], [Vector2(-5, 18.5), "Chợ Ben"],
+	[Vector2(3.5, 60), "Bến câu cá"], [Vector2(38, 85), "Trại gỗ"], [Vector2(-1, -24), "Nhà Tom"],
 ]
 
 

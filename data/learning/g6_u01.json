@@ -213,6 +213,57 @@
       ],
       "answer": 0,
       "hint": "Đọc lại câu: \"Could you please give it to the ...?\""
+    },
+    "bridge_repair": {
+      "skill": "reading",
+      "difficulty": "basic",
+      "tom_offer": "Cây cầu gỗ phía Nam bị lũ làm gãy rồi. Sam ngư dân đang đợi ở đầu cầu, con ra giúp chú ấy nhé?",
+      "sam_request": "Hello! I'm Sam. The flood broke our bridge. We need three things: a rope, an axe and a log.\nThe rope is near my boat at the dock. The axe is at Ben's stall. The log is next to the river, near me.\nCan you bring them here, please?",
+      "materials": [
+        {
+          "id": "rope",
+          "word": "rope",
+          "vi": "dây thừng",
+          "decoy": {
+            "word": "chain",
+            "vi": "dây xích"
+          }
+        },
+        {
+          "id": "axe",
+          "word": "axe",
+          "vi": "cái rìu",
+          "decoy": {
+            "word": "pickaxe",
+            "vi": "cái cuốc chim"
+          }
+        },
+        {
+          "id": "log",
+          "word": "log",
+          "vi": "khúc gỗ",
+          "decoy": {
+            "word": "rock",
+            "vi": "tảng đá"
+          }
+        }
+      ],
+      "pip_intro": "Hi! I'm Pip, a little spirit of the river. Listen, I can read the old bridge book for you!",
+      "instructions": [
+        {
+          "en": "First, cut the log into planks with the axe.",
+          "vi": "Dùng rìu xẻ khúc gỗ thành ván"
+        },
+        {
+          "en": "Next, put the planks on the bridge.",
+          "vi": "Đặt ván lên cầu"
+        },
+        {
+          "en": "Finally, tie the planks with the rope.",
+          "vi": "Buộc chặt ván bằng dây thừng"
+        }
+      ],
+      "clue": "Look! There are small footprints on the other side. They go to the Forest of Memories. Maybe the first compass piece is there!"
     }
   },
   "version": 1,

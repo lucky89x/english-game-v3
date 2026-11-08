@@ -13,11 +13,6 @@
 
 [node name="RiverDockZone" type="Node3D"]
 
-[node name="Pier" parent="." instance=ExtResource("1_pier")]
-position = Vector3(3.3, 0.12, 3.7)
-scale = Vector3(0.7, 0.7, 0.9)
-rotation_degrees = Vector3(0, 90, 0)
-
 [node name="Barrel1" parent="." instance=ExtResource("2_barrel")]
 position = Vector3(1.0, 0, 2.4)
 
@@ -28,15 +23,6 @@ scale = Vector3(0.82, 0.82, 0.82)
 [node name="DockBench" parent="." instance=ExtResource("3_bench")]
 position = Vector3(-2.2, 0, 3.1)
 rotation_degrees = Vector3(0, 165, 0)
-
-[node name="BankRock1" parent="." instance=ExtResource("4_rock1")]
-position = Vector3(-6.5, -0.1, -3.2)
-scale = Vector3(0.7, 0.7, 0.7)
-
-[node name="BankRock2" parent="." instance=ExtResource("5_rock3")]
-position = Vector3(4.6, -0.12, -0.7)
-scale = Vector3(0.58, 0.58, 0.58)
-rotation_degrees = Vector3(0, 48, 0)
 
 [node name="Reeds1" parent="." instance=ExtResource("6_reeds")]
 position = Vector3(-3.2, 0, 0.4)
