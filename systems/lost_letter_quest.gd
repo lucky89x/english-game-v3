@@ -33,6 +33,8 @@ func _ready() -> void:
 
 func _setup() -> void:
 	state = get_tree().get_first_node_in_group("game_state") as GameState
+	if state != null:
+		state.loaded.connect(_on_profile_loaded)
 	_apply_saved_stats()
 	travel = get_tree().get_first_node_in_group("building_travel")
 	if travel != null:
@@ -279,7 +281,17 @@ func _on_answer(index: int) -> void:
 		_ask_letter("Chưa đúng, thử lại nhé! Gợi ý: %s\n\n" % String(a.get("hint", "")))
 
 
+func _on_profile_loaded() -> void:
+	_apply_saved_stats()
+	_refresh()
+
+
+## Stats come from the profile's save; a new profile starts from the default stats (no carry-over).
 func _apply_saved_stats() -> void:
 	var hud := _hud()
-	if state != null and hud != null and not state.stats.is_empty():
+	if state == null or hud == null:
+		return
+	if state.stats.is_empty():
+		hud.stats.update(preload("res://systems/player_stats.gd").new().to_dict())
+	else:
 		hud.stats.update(state.stats)

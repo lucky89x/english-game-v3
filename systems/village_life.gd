@@ -6,7 +6,7 @@ var elapsed := 0.0
 
 func _ready() -> void:
 	name = "VillageLife"
-	spawn("MarketWalker", "Monk", [Vector3(1.7, 0.1, 11), Vector3(1.7, 0.1, 5)])
+	# Ben now keeps his word-jar stall east of the square (systems/word_market.gd)
 	spawn("VillageWalker", "Cleric", [Vector3(-1.6, 0.1, -2), Vector3(-1.6, 0.1, -13)])
 	spawn("DockWalker", "Monk", [Vector3(17.5, 0.1, 8), Vector3(18.5, 0.1, 13)])
 	spawn("Farmer", "Monk", [Vector3(-12, 0.1, 18), Vector3(-18, 0.1, 19)])

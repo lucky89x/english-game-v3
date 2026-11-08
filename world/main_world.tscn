@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3]
+[gd_scene load_steps=15 format=3]
 
 [ext_resource type="PackedScene" path="res://world/zones/starter_village/starter_village_environment.tscn" id="1_environment"]
 [ext_resource type="PackedScene" path="res://characters/player/player.tscn" id="2_player"]
@@ -9,6 +9,8 @@
 [ext_resource type="Script" path="res://systems/redesigned_equipment.gd" id="6_equipment"]
 [ext_resource type="Script" path="res://systems/game_state.gd" id="7_state"]
 [ext_resource type="Script" path="res://systems/lost_letter_quest.gd" id="8_letter"]
+[ext_resource type="Script" path="res://systems/profile_menu.gd" id="9_profiles"]
+[ext_resource type="Script" path="res://systems/word_market.gd" id="10_market"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_main"]
 sky_top_color = Color(0.08, 0.25, 0.52, 1)
@@ -75,6 +77,12 @@ script = ExtResource("7_state")
 
 [node name="LostLetterQuest" type="Node3D" parent="Systems"]
 script = ExtResource("8_letter")
+
+[node name="WordMarket" type="Node3D" parent="Systems"]
+script = ExtResource("10_market")
+
+[node name="ProfileMenu" type="CanvasLayer" parent="Systems"]
+script = ExtResource("9_profiles")
 
 [node name="OrbitCamera" type="Node3D" parent="."]
 script = ExtResource("3_camera")

@@ -5,6 +5,8 @@ extends Node
 
 signal changed
 signal quest_changed(quest_id: String)
+## Fired after a profile was switched and its save loaded (HUD/quests refresh on it).
+signal loaded
 
 const SAVE_VERSION := 1
 const DEFAULT_PATH := "user://english_quest_save.json"
@@ -20,6 +22,9 @@ var quests := {}                  # quest_id -> {"step": String, "done": bool, "
 var flags := {}                   # world flags, e.g. {"lost_letter_picked": true}
 var learning := {}                # "g6_u01" -> {"reading": {"attempts": n, "correct": n, "hints_used": n, "last_reviewed": "..."}}
 var stats := {}                   # mirror of PlayerStats fields at save time
+var words := {}                   # spaced review deck: word id -> {"box", "due", "seen", "right", "wrong"} (WordReview)
+var profile_id := ""
+var profile_name := ""
 var last_error := ""
 
 
@@ -60,7 +65,8 @@ func record_answer(grade_value: int, unit: int, skill: String, correct: bool, us
 
 # ------------------------------------------------------------------ save / load
 func capture() -> Dictionary:
-	return {"version": SAVE_VERSION, "grade": grade, "quests": quests, "flags": flags, "learning": learning, "stats": stats}
+	return {"version": SAVE_VERSION, "grade": grade, "quests": quests, "flags": flags, "learning": learning, "stats": stats,
+		"words": words, "profile": {"id": profile_id, "name": profile_name}}
 
 
 func save_game() -> Error:
@@ -102,6 +108,7 @@ func load_game() -> bool:
 		var saved_stats: Dictionary = data.get("stats", {})
 		for key in saved_stats:
 			stats[key] = int(saved_stats[key]) if saved_stats[key] is float else saved_stats[key]
+		words = data.get("words", {})
 		changed.emit()
 		return true
 	return false
@@ -122,4 +129,18 @@ func reset() -> void:
 	flags = {}
 	learning = {}
 	stats = {}
+	words = {}
 	changed.emit()
+
+
+## Switch to a child's profile: its own save file, its own grade. A new profile starts fresh.
+func use_profile(profile: Dictionary) -> void:
+	reset()
+	profile_id = String(profile.get("id", ""))
+	profile_name = String(profile.get("name", ""))
+	save_path = String(profile.get("save", DEFAULT_PATH))
+	load_game()
+	if grade == 0 and GRADES.has(int(profile.get("grade", 0))):
+		grade = int(profile["grade"])
+	save_game()
+	loaded.emit()

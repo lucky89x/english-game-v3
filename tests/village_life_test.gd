@@ -12,7 +12,7 @@ func run() -> void:
 		await physics_frame
 	var travel := root.find_child("BuildingTravel", true, false)
 	var villagers := get_nodes_in_group("ambient_villagers")
-	check(villagers.size() == 5, "Five animated ambient NPCs")
+	check(villagers.size() == 4, "Four animated ambient NPCs (Ben now keeps his market stall)")
 	var starts: Array[Vector3] = []
 	for npc in villagers:
 		starts.append(npc.global_position)
