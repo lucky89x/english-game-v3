@@ -28,6 +28,8 @@ Repo → Settings → Pages → Deploy from a branch → chọn nhánh chứa `i
 - Làng có 3 nhiệm vụ: Bức thư, Hũ chữ, Sửa cây cầu. Rương bí mật, nội thất chưa làm. Chương III–VIII chỉ có dàn ý.
 - Sửa cây cầu chỉ có nội dung lớp 6 và 8; lớp 7, 9 game báo "chưa được soạn" và cầu tự mở.
 - Bức thư chỉ có nội dung lớp 6 và 8; lớp 7, 9 game báo "chưa được soạn".
-- Ngọc, Tom, Ben, Sam, Pip và nhà dùng lại model GLB của bản Godot. Chưa có nhân vật mới, nội thất, giọng đọc.
+- Model dựng bằng script Blender trong `tools/chibi05/` (chạy bằng module `bpy`, xem đầu mỗi file). Ngọc là bản v03; Lily, Rose, Anna là biến thể của Ngọc (đổi màu, vòng hoa), chưa có trang phục và đạo cụ riêng như ảnh mẫu.
+- Ảnh mẫu ở `docs/reference_art/` chỉ để định hướng. Model giống về khối, màu, phụ kiện; chưa đạt mức chi tiết của tranh.
+- Chưa có nội thất, giọng đọc, thầy giáo, thợ rèn, thầy thuốc, chó, cú, golem. Các map chương III–VIII chưa dựng.
 - FPS đo bằng trình dựng phần mềm (không GPU), không phản ánh máy thật.
 - `data/learning/` copy từ bản Godot.
