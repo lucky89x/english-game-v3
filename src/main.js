@@ -237,9 +237,7 @@ async function boot() {
   player = new Player(ngoc, { blink, talk, joy }); scene.add(player.root);
   tom = new Npc(tomG, 2.6, 7.6, -0.4); sam = new Npc(samG, 14, 17, 1.2); ben = new Npc(benG, -9.9, 19.5, Math.PI / 2); scene.add(tom.root, sam.root, ben.root);
   pip = new Pip(pipG.scene); scene.add(pip.root);
-  for (const [id, file] of [['lily', 'npc_lily_druid_v01'], ['rose', 'npc_rose_baker_v01'], ['anna', 'npc_anna_bard_v01']]) {
-    const f = FRIENDS[id], npc = new Npc(await gltf(file), ...f.at); scene.add(npc.root); friends.push({ ...f, npc });
-  }
+  for (const f of Object.values(FRIENDS)) { const npc = new Npc(await gltf(f.file), ...f.at); scene.add(npc.root); friends.push({ ...f, npc }); }
   const F = L.REGIONS.forest;
   crystals = new Crystals(scene, F.LANDMARKS.filter((l) => l.id !== 'tree'), F.walkHeight);
   const hall = L.REGIONS.village.LANDMARKS.find((l) => l.id === 'hall').spot;

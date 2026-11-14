@@ -17,7 +17,8 @@ sys.path.insert(0, str(ROOT / 'tools/chibi05'))
 from chibi_lib import *  # noqa
 
 VAR = (sys.argv[sys.argv.index('--') + 1] if '--' in sys.argv else (sys.argv[1] if len(sys.argv) > 1 else 'ben')).lower()
-NAME = {'ben': 'npc_ben_merchant_v02', 'sam': 'npc_sam_fisherman_v02'}[VAR]
+NAME = {'ben': 'npc_ben_merchant_v02', 'sam': 'npc_sam_fisherman_v02', 'forge': 'npc_forge_blacksmith_v01'}[VAR]
+BASE = 'sam' if VAR == 'sam' else 'ben'      # forge reuses Ben's body: apron, trousers, cap
 OUT = ROOT / 'assets/npc/models'
 SRC = ROOT / 'art_source/chibi05'
 SKIN = (246, 196, 164)
@@ -33,7 +34,7 @@ PAL = {
     'straw': ('d9b66a', .85, 0), 'straw_dark': ('b48d45', .85, 0), 'blue': ('3f7cc4', .72, 0), 'blue_dark': ('2d5c98', .75, 0),
     'fish': ('5aa0d8', .4, 0), 'checker': ('e9e2d6', .8, 0),
 }
-if VAR == 'ben':
+if BASE == 'ben':
     FA = dict(skin=SKIN, eye_x=.100, eye_z=-.020, eye_w=.070, eye_h=.075, mouth_z=-.122, mouth_w=.038)
     faces = {'happy': paint_face(eyes='happy', mouth='laugh', **FA), 'talk': paint_face(eyes='happy', mouth='talk', **FA),
              'blink': paint_face(eyes='closed', mouth='laugh', **FA)}
@@ -41,6 +42,9 @@ else:
     FA = dict(skin=SKIN, eye_x=.100, eye_z=-.025, eye_w=.074, eye_h=.084, mouth_z=-.125, mouth_w=.036, brows=None)
     faces = {'happy': paint_face(eyes='open', mouth='laugh', **FA), 'talk': paint_face(eyes='open', mouth='talk', **FA),
              'blink': paint_face(eyes='closed', mouth='laugh', **FA)}
+if VAR == 'forge':      # brown leather apron and cap, red neckerchief instead of the bow tie colours
+    PAL.update({'apron': ('8a5430', .6, 0), 'apron_dark': ('5f3519', .65, 0), 'cap': ('7a4a2c', .7, 0), 'trousers': ('5a4a44', .8, 0)})
+    PAL.update({'iron': ('8a8f98', .35, .8), 'iron_dark': ('4a4c52', .45, .7), 'lens': ('3f7a8c', .1, .2)})
 init(NAME, PAL, OUT, SRC, faces)
 
 HZ = 1.000
@@ -84,10 +88,10 @@ for s in (-1, 1):
     finish(ellipsoid(f'V_Moustache_{s}', (s * .062, -.250, HZ - .084), (.074, .036, .032), seg=16, rings=10,
                      rot=Quaternion((0, 1, 0), math.radians(-16 * s)) @ Quaternion((0, 0, 1), math.radians(-18 * s)),
                      deform=lambda q, v: lumpy(q, v, .006, 6, 2)), 'white_light', ['head'])
-    if VAR == 'ben':
+    if BASE == 'ben':
         finish(curve_tube(f'V_MoustacheCurl_{s}', helix((s * .128, -.232, HZ - .090), (s, .2, .7), .035, .016, 1.0, n=14,
                                                          phase=0 if s > 0 else math.pi), .020, .008), 'white', ['head'])
-if VAR == 'ben':  # short tidy chin beard
+if BASE == 'ben':  # short tidy chin beard
     finish(ellipsoid('V_ChinBeard', (0, -.190, HZ - .215), (.120, .080, .080), seg=18, rings=10,
                      deform=lambda q, v: lumpy(q, v, .010, 6, 3)), 'white_shade', ['head'])
 else:  # full fluffy beard
@@ -99,7 +103,7 @@ else:  # full fluffy beard
                              deform=lambda q, v, k=k: lumpy(q, v, .012, 6, k + s)), W3[k], ['head'])
 
 # ---- headwear
-if VAR == 'ben':
+if BASE == 'ben':
     cap = ellipsoid('V_Cap', (0, .010, HZ + .130), (HA + .040, HB + .045, .150), seg=32, rings=14,
                     deform=lambda q, v: Vector((q.x, q.y, q.z * (1 if v.z > 0 else .2))))
     cut_faces(cap, lambda c, n: c.z < HZ + .085)
@@ -130,10 +134,10 @@ torso = loft('V_Shirt', TORSO, seg=28, ref=Vector((1, 0, 0)))
 finish(torso, 'shirt', ['hips', 'spine', 'chest', 'neck'], subsurf=1)
 TT = bvh_of(torso)
 finish(torus('V_Belt', (0, .006, .440), .222, .018, seg=40, rseg=8, sy=.197 / .222), 'leather', ['hips'])
-if VAR != 'ben':
+if BASE != 'ben':
     finish(torus('V_Buckle', (0, -.200, .440), .026, .007, seg=4, rseg=6, rot=Quaternion((1, 0, 0), math.radians(90)) @ Quaternion((0, 0, 1), math.radians(45))),
            'gold', ['hips'], smooth=False)
-if VAR == 'ben':
+if BASE == 'ben':
     # long green apron from chest to the knees, with pocket and neck strap
     rings = []
     for k, z in enumerate([.70, .62, .52, .42, .32, .22, .15]):
@@ -170,7 +174,7 @@ for s in (-1, 1):
 
 # ---- legs: trousers (Ben) or knee shorts (Sam) + boots
 for s, side in ((1, 'L'), (-1, 'R')):
-    if VAR == 'ben':
+    if BASE == 'ben':
         leg = loft(f'V_Trouser_{s}', [((s * .085, .010, .420), .105, .100), ((s * .090, .008, .300), .092, .088), ((s * .090, .006, .180), .082, .080),
                                       ((s * .090, .004, .120), .080, .078)], seg=18, caps=(False, False))
         finish(leg, 'trousers', [('hips', 1.5), f'thigh.{side}', f'shin.{side}'], subsurf=1)
@@ -228,6 +232,16 @@ if VAR == 'sam':
                          rot=Quaternion((0, 1, 0), math.radians(20 * (k - 1)))), col, ['hand.L'])
     finish(tube('V_BucketHandle', [BK + Vector((-.100, 0, .085)), BK + Vector((-.06, 0, .175)), HL + Vector((.03, -.02, -.02)),
                                    BK + Vector((.06, 0, .175)), BK + Vector((.100, 0, .085))], [.006] * 5, seg=6), 'leather_dark', ['hand.L'])
+elif VAR == 'forge':
+    # big hammer in the right hand, brass goggles on the cap
+    a, b = HR + Vector((0, .02, -.20)), HR + Vector((-.04, -.04, .42))
+    finish(tube('V_HammerShaft', [a, HR, b], [.022, .020, .020], seg=8), 'leather', ['hand.R'])
+    finish(box('V_HammerHead', b + Vector((0, 0, .05)), (.30, .13, .15), bevel=.02), 'iron', ['hand.R'])
+    finish(box('V_HammerFace', b + Vector((.16, 0, .05)), (.04, .15, .17), bevel=.015), 'iron_dark', ['hand.R'])
+    for sgn in (-1, 1):
+        gp = Vector((sgn * .085, -.215, HZ + .185))
+        finish(torus(f'V_Goggle_{sgn}', gp, .058, .017, seg=18, rseg=6, rot=Quaternion((1, 0, 0), math.radians(72))), 'gold', ['head'])
+        finish(ellipsoid(f'V_GoggleLens_{sgn}', gp, (.050, .014, .050), seg=12, rings=6, rot=Quaternion((1, 0, 0), math.radians(-18))), 'lens', ['head'])
 else:
     BK = HL + Vector((.04, -.04, -.20))
     basket = loft('V_Basket', [(BK + Vector((0, 0, -.075)), .090, .075), (BK + Vector((0, 0, .0)), .125, .100), (BK + Vector((0, 0, .060)), .130, .105)],

@@ -512,6 +512,7 @@ function prop(kind, x, z, rot = 0, s = 1) {
   if (kind === 'fruit') { M(new THREE.BoxGeometry(0.8, 0.36, 0.6), wood, 0, 0.18, 0); const cols = [0xe23a2a, 0xf6c62e, 0x8fd05a, 0xf08a3c]; for (let i = 0; i < 9; i++) M(new THREE.SphereGeometry(0.11, 7, 5), mat(cols[i % 4], 0.5), -0.26 + (i % 3) * 0.26, 0.42, -0.17 + Math.floor(i / 3) * 0.17); }
   if (kind === 'bench') { M(new THREE.BoxGeometry(1.7, 0.09, 0.5), wood, 0, 0.5, 0); M(new THREE.BoxGeometry(1.7, 0.42, 0.08), wood, 0, 0.86, -0.24, -0.15); for (const sx of [-1, 1]) { M(new THREE.BoxGeometry(0.1, 0.5, 0.46), dark, sx * 0.72, 0.25, 0); M(new THREE.BoxGeometry(0.09, 0.62, 0.09), dark, sx * 0.72, 0.8, -0.25, -0.15); } }
   if (kind === 'hay') { const h = M(new THREE.CylinderGeometry(0.55, 0.55, 1.1, 14), mat(0xe6c35a, 1), 0, 0.55, 0, 0, 0, Math.PI / 2); h.scale.z = 1; for (const sx of [-0.3, 0.3]) M(new THREE.TorusGeometry(0.56, 0.025, 4, 16), mat(0xb48d45), sx, 0.55, 0, 0, Math.PI / 2); }
+  if (kind === 'anvil') { M(new THREE.CylinderGeometry(0.42, 0.46, 0.6, 10), wood, 0, 0.3, 0); M(new THREE.BoxGeometry(0.34, 0.2, 0.3), iron, 0, 0.7, 0); M(new THREE.BoxGeometry(0.8, 0.16, 0.36), iron, 0, 0.88, 0); const horn = M(new THREE.ConeGeometry(0.13, 0.4, 8), iron, 0.58, 0.88, 0, 0, 0, -Math.PI / 2); horn.scale.z = 1; }
   if (kind === 'cart') { M(new THREE.BoxGeometry(1.5, 0.12, 0.95), wood, 0, 0.55, 0); for (const sz of [-1, 1]) { M(new THREE.BoxGeometry(1.5, 0.3, 0.07), dark, 0, 0.75, sz * 0.46); const w = M(new THREE.TorusGeometry(0.36, 0.06, 6, 14), dark, -0.2, 0.37, sz * 0.56); w.rotation.set(0, 0, 0); M(new THREE.CylinderGeometry(0.07, 0.07, 0.1, 8), iron, -0.2, 0.37, sz * 0.56, Math.PI / 2); }
     M(new THREE.BoxGeometry(0.07, 0.3, 0.95), dark, -0.72, 0.75, 0); M(new THREE.BoxGeometry(0.9, 0.06, 0.06), dark, 1.15, 0.5, 0.3, 0, 0, -0.2); M(new THREE.BoxGeometry(0.9, 0.06, 0.06), dark, 1.15, 0.5, -0.3, 0, 0, -0.2);
     for (const [px, pz, r] of [[-0.3, 0.1, 0.34], [0.3, -0.12, 0.28], [0.1, 0.25, 0.22]]) { const pk = M(new THREE.SphereGeometry(r, 10, 8), mat(0xf08a2c, 0.6), px, 0.62 + r * 0.8, pz); pk.scale.y = 0.8; M(new THREE.CylinderGeometry(0.03, 0.04, 0.12, 5), mat(0x4f8a3a), px, 0.62 + r * 1.5, pz); } }
@@ -565,8 +566,28 @@ function creatures() {
     }
     g.add(o); list.push({ o, slime, x: sp.x, z: sp.z, r: 0.8 + (i % 3) * 0.5, ph: i * 1.7, sp: (slime ? 0.25 : 0.45) * (i % 2 ? 1 : -1) });
   });
+  if (L.NAME === 'village') {      // a corgi trotting round the well and an owl on the market sign
+    const dog = new THREE.Group(), fur = new THREE.MeshStandardMaterial({ color: 0xe8a04a, roughness: 0.95 }), cream = new THREE.MeshStandardMaterial({ color: 0xfff4e2, roughness: 0.95 });
+    const B = (geo, m, x, y, z, sx = 1, sy = 1, sz = 1) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.scale.set(sx, sy, sz); o.castShadow = true; dog.add(o); return o; };
+    B(new THREE.SphereGeometry(0.3, 12, 10), fur, 0, 0.36, 0, 0.85, 0.8, 1.45); B(new THREE.SphereGeometry(0.22, 10, 8), cream, 0, 0.3, 0.2, 0.8, 0.7, 0.9);
+    B(new THREE.SphereGeometry(0.25, 12, 10), fur, 0, 0.62, 0.42); B(new THREE.SphereGeometry(0.13, 10, 8), cream, 0, 0.56, 0.62, 1, 0.8, 1.1);
+    B(new THREE.SphereGeometry(0.04, 6, 5), eye, 0, 0.6, 0.76);
+    for (const sx of [-1, 1]) { B(new THREE.ConeGeometry(0.09, 0.2, 6), fur, sx * 0.14, 0.9, 0.38); B(new THREE.CapsuleGeometry(0.06, 0.12, 3, 6), cream, sx * 0.14, 0.12, 0.3); B(new THREE.CapsuleGeometry(0.06, 0.12, 3, 6), cream, sx * 0.14, 0.12, -0.3); }
+    const tailD = B(new THREE.SphereGeometry(0.11, 8, 6), cream, 0, 0.5, -0.45);
+    B(new THREE.TorusGeometry(0.2, 0.045, 6, 14), new THREE.MeshStandardMaterial({ color: 0xd23b30 }), 0, 0.5, 0.3).rotation.x = 1.2;
+    face(dog, 0.68, 0.62, 0.1);
+    g.add(dog); list.push({ o: dog, dog: true, tail: tailD, x: 0, z: 4, r: 4.2, ph: 1, sp: 0.35 });
+    const owl = new THREE.Group(), brown = new THREE.MeshStandardMaterial({ color: 0x9a6a3c, roughness: 0.95 });
+    const O = (geo, m, x, y, z, sx = 1, sy = 1, sz = 1) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.scale.set(sx, sy, sz); owl.add(o); return o; };
+    O(new THREE.SphereGeometry(0.2, 12, 10), brown, 0, 0.2, 0, 1, 1.15, 0.9); O(new THREE.SphereGeometry(0.15, 10, 8), cream, 0, 0.16, 0.08, 0.9, 1, 0.7);
+    for (const sx of [-1, 1]) { O(new THREE.SphereGeometry(0.075, 10, 8), cream, sx * 0.075, 0.3, 0.14); O(new THREE.SphereGeometry(0.04, 8, 6), eye, sx * 0.075, 0.3, 0.2); O(new THREE.ConeGeometry(0.045, 0.1, 5), brown, sx * 0.11, 0.44, 0.02); O(new THREE.SphereGeometry(0.1, 8, 6), brown, sx * 0.19, 0.2, 0, 0.4, 1, 0.8); }
+    O(new THREE.ConeGeometry(0.03, 0.06, 5), new THREE.MeshStandardMaterial({ color: 0xf0a030 }), 0, 0.25, 0.2).rotation.x = Math.PI / 2;
+    owl.position.set(2.9, L.groundHeight(2.9, 14.5) + 2.32, 14.5); g.add(owl); list.push({ o: owl, owl: true });
+  }
   g.userData.update = (t) => {
     for (const c of list) {
+      if (c.owl) { c.o.rotation.y = Math.sin(t * 0.5) * 1.1; c.o.scale.y = 1 + Math.sin(t * 2) * 0.03; continue; }
+      if (c.dog) { const a = c.ph + t * c.sp, x = c.x + Math.cos(a) * c.r, z = c.z + Math.sin(a) * c.r; c.o.position.set(x, L.groundHeight(x, z) + Math.abs(Math.sin(t * 9)) * 0.06, z); c.o.rotation.y = -a; c.tail.position.x = Math.sin(t * 14) * 0.06; continue; }
       const a = c.ph + t * c.sp, x = c.x + Math.cos(a) * c.r, z = c.z + Math.sin(a) * c.r, hop = Math.abs(Math.sin(t * (c.slime ? 2.4 : 5) + c.ph));
       if (!L.walkable(x, z, 0.4)) continue;
       c.o.position.set(x, L.groundHeight(x, z) + hop * (c.slime ? 0.22 : 0.3), z); c.o.rotation.y = -a + (c.sp > 0 ? 0 : Math.PI);
@@ -682,7 +703,7 @@ export const VILLAGE_PROPS = [
   ['bench', -3.4, -4.4, 1.57, 1], ['bench', 4.7, 9.2, 3.14, 1], ['barrel', 7.5, -11.4, 0, 1], ['crate', 7.4, -2.6, 0.5, 1], ['crate', 6.6, -2.0, 0.1, 0.8],
   ['fruit', 7.4, -9.9, 1.57, 1], ['cart', -12.6, 22.6, 0.5, 1], ['hay', -17.5, 22.6, 0.3, 1], ['hay', -18.9, 23.3, 1.2, 1], ['hay', -18.2, 22.9, 0.7, 0.8],
   ['barrel', -10.9, 12.8, 0, 1], ['crate', -8.0, 5.4, 0.2, 1], ['bench', 3.6, -13.6, -1.57, 1], ['barrel', -4.6, -17.6, 0, 1], ['crate', 4.6, -17.4, 0.4, 1],
-  ['fruit', -3.6, 23.6, 0.2, 1], ['barrel', 12.2, 19.6, 0, 1], ['crate', 13.3, 20.3, 0.6, 0.9],
+  ['fruit', -3.6, 23.6, 0.2, 1], ['anvil', 7.6, -13.9, 0.4, 1], ['barrel', 12.2, 19.6, 0, 1], ['crate', 13.3, 20.3, 0.6, 0.9],
 ];
 
 /** Loose planks bobbing in the river and a warning sign at the west end of a broken bridge (hidden when open). */
