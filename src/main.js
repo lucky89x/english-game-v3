@@ -97,8 +97,11 @@ const NOTES = {      // short English objectives for the village chain
   jars: "Help Ben at the market.", jars_play: "Help Ben at the market.", tom_bridge: 'Tom wants to see you at the square.',
   bridge: 'Meet Sam at the broken south bridge.', plan: 'Listen to Pip and put the steps in order.', open: 'Tom wants to see you at the square.', done: 'Go to the forest gate in the north-west. ★',
 };
+let shownLevel = 0;
 function refresh() {
   if (!profile) return;
+  if (shownLevel && profile.stats.level > shownLevel) { profile.stats.hp = Save.maxHp(profile); ui.toast(`LEVEL UP!  Lv ${profile.stats.level}`); sfx('fanfare'); }
+  shownLevel = profile.stats.level;
   const learned = Review.learned(profile.words);
   if (L.NAME === 'forest') {
     ui.hud(profile, 'Rừng Ký Ức', `Pha lê ${quest.q.found.length}/5`, learned);
@@ -168,7 +171,7 @@ async function enterRegion(name, at) {
   switching = false; save(); refresh();
 }
 async function chooseProfile(p) {
-  unlock(); profile = p; store.last = p.id; started = false;
+  unlock(); profile = p; store.last = p.id; started = false; shownLevel = 0;
   const units = await loadGrade(p.grade);                                   // this grade only
   const forestMarks = L.REGIONS.forest.LANDMARKS, find = (w) => { for (let n = 0; n < 12; n++) { const u = units[n]; if (u && (u.vocabulary || []).some((v) => v.word.toLowerCase() === w)) return `g${p.grade}_u${String(n + 1).padStart(2, '0')}:${w}`; } return null; };
   wordIds = {}; forestMarks.forEach((l) => { wordIds[l.en] = find(l.en) || 'forest:' + l.en; });

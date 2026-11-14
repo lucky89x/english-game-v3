@@ -51,6 +51,10 @@ export function recordSkill(profile, skill, correct, hints) {
   row.attempts += 1; row.hints += hints || 0;
   if (correct) { row.correct += 1; if (!hints) row.firstTry += 1; }
 }
+/** EXP needed to go from `level` to the next one. */
+export const expNeed = (level) => 60 + (level - 1) * 30;
+/** Hit points grow with the level; equipment adds on top (profile.gear, later). */
+export const maxHp = (profile) => 100 + (profile.stats.level - 1) * 12 + ((profile.gear && profile.gear.hp) || 0);
 export function addExp(profile, amount) {
   const s = profile.stats; s.exp += amount;
   let need = 60 + (s.level - 1) * 30, ups = 0;

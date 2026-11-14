@@ -37,10 +37,16 @@ export class UI {
 
   // ---------------------------------------------------------------- HUD + clue
   hud(profile, place, extra, learned) {
+    const st = profile.stats, need = 60 + (st.level - 1) * 30, hpMax = 100 + (st.level - 1) * 12 + ((profile.gear && profile.gear.hp) || 0), hp = Math.min(hpMax, st.hp ?? hpMax);
     $('hud').classList.remove('hidden');
-    $('hud').innerHTML = `<b>${esc(profile.name)}</b> · lớp ${profile.grade}<div class="row">Cấp ${profile.stats.level} · EXP ${profile.stats.exp}</div>
-      <div class="row">Vàng: <b>${profile.stats.gold}</b> · Từ đã học: <b>${learned}</b></div><div class="row">${esc(place)}${extra ? ' · ' + esc(extra) : ''}</div>`;
+    $('hud').innerHTML = `<div class="top"><div class="portrait"><i></i><span class="lv">${st.level}</span></div>
+      <div class="who"><b>${esc(profile.name)}</b><small>Lớp ${profile.grade} · ${esc(place)}</small>
+        <div class="bar hp" title="Máu"><u style="width:${Math.round(hp / hpMax * 100)}%"></u><em>${Math.round(hp)}/${hpMax}</em></div>
+        <div class="bar xp" title="Kinh nghiệm"><u style="width:${Math.min(100, Math.round(st.exp / need * 100))}%"></u><em>EXP ${st.exp}/${need}</em></div></div></div>
+      <div class="chips"><span class="chip gold" title="Vàng"><i>●</i>${st.gold}</span><span class="chip word" title="Từ đã học"><i>✎</i>${learned}</span>${extra ? `<span class="chip star"><i></i>${esc(extra)}</span>` : ''}</div>`;
   }
+  /** Big centre banner for a level up or a reward. */
+  toast(text) { const el = $('toast'); if (!el) return; el.textContent = text; el.classList.remove('show'); void el.offsetWidth; el.classList.add('show'); }
   /** clue: {text, key} | null; level 0..3; meaning: Vietnamese of the keyword */
   clue(clue, level, meaning, note) {
     const el = $('clue');
