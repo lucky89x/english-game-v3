@@ -84,12 +84,14 @@ check((await page.textContent('#prompt')).includes('còn khóa'), 'Forest gate i
 const closeDialog = async () => { for (let k = 0; k < 8 && await page.isVisible('#dialog') && !(await page.$('#dialog .opts')); k++) { await page.keyboard.press('KeyE'); await wait(200); } };
 check(await ev(() => __eq.story.step === 'tom_bridge'), 'After the market Tom has news');
 await ev(() => __eq.teleport(1.6, 9.2)); await wait(400); await page.keyboard.press('KeyE'); await wait(250);
+check((await page.textContent('#dialog')).includes('bad news'), 'Tom thanks Ngọc and has bad news');
+await page.keyboard.press('KeyE'); await wait(250);
 check((await page.textContent('#dialog')).includes('south bridge'), 'Tom: the storm broke the south bridge');
 await closeDialog();
 check(await ev(() => __eq.story.step === 'bridge'), 'Bridge quest starts');
 const sb = await ev(() => { const b = __eq.L.BRIDGES.find((x) => x.id === 'south'); return { x: b.x, z: b.z, open: b.open }; });
 check(!sb.open && await ev((b) => !__eq.L.walkable(b.x, b.z) && __eq.L.inWater(b.x, b.z), sb), 'South bridge is broken: its middle is water');
-check(await ev((b) => __eq.minimap.travelTo(b.x, b.z) === false), 'Minimap refuses the gap in the broken bridge');
+check(await ev((b) => __eq.minimap.travelTo(b.x, b.z) === false, sb), 'Minimap refuses the gap in the broken bridge');
 await ev((b) => __eq.teleport(b.x - 7.5, b.z), sb); await wait(300);
 const detour = await ev((b) => { const ok = __eq.minimap.travelTo(b.x + 7.5, b.z), r = __eq.player.route || []; const crosses = r.some((p) => Math.abs(p.z - b.z) < 1.5 && Math.abs(p.x - b.x) < 5); __eq.player.route = null; __eq.minimap.clearRoute(); return { ok, len: r.length, crosses }; }, sb);
 check(detour.ok && !detour.crosses && detour.len > 40, `Minimap goes round by the village bridge, never over the gap (${detour.len} steps)`);
