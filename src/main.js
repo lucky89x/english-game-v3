@@ -227,7 +227,7 @@ addEventListener('resize', resize);
 async function boot() {
   resize();
   $('loadtext').textContent = 'Đang gọi Ngọc và các bạn…';
-  const [ngoc, tomG, samG, benG, pipG, blink, talk, joy] = await Promise.all([gltf('chr_ngoc_adventurer_v02'), gltf('npc_tom_elder_v02'), gltf('npc_sam_fisherman_v02'), gltf('npc_ben_merchant_v02'), gltf('npc_pip_spirit_v02'), faceTex('blink'), faceTex('talk'), faceTex('joy')]);
+  const [ngoc, tomG, samG, benG, pipG, blink, talk, joy] = await Promise.all([gltf('chr_ngoc_adventurer_v03'), gltf('npc_tom_elder_v02'), gltf('npc_sam_fisherman_v02'), gltf('npc_ben_merchant_v02'), gltf('npc_pip_spirit_v02'), faceTex('blink'), faceTex('talk'), faceTex('joy')]);
   $('loadtext').textContent = 'Đang dựng ngôi làng…';
   L.setRegion('village');
   world = await buildWorld(scene, staticModel);

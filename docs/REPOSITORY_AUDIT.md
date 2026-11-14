@@ -6,7 +6,7 @@ Audited once on 2026-11-13; binary files were listed by size, not re-read.
 | What | Source in the Godot repo | Use here |
 |---|---|---|
 | Curriculum data, stable ids `g6_u01`… | `data/learning/*.json` (48 units, 1,385 words) | copied to `data/learning/`, read by `src/core/catalog.js` |
-| Ngọc (skinned, 10 clips, face textures) | `assets/characters/models/chr_ngoc_adventurer_v02.glb` 1.8 MB | player |
+| Ngọc (skinned, 10 clips, face textures) | `assets/characters/models/chr_ngoc_adventurer_v03.glb` 1.8 MB | player |
 | Tom, Sam, Pip | `assets/npc/models/npc_*_v02.glb` 1.1 / 1.0 / 0.1 MB | NPCs |
 | Curved bridge, cottage, forest gate | `assets/environment/village/models/*_v02.glb` | landmarks |
 | Story | CLAUDE.md "Bí mật La Bàn Ngôn Ngữ", 8 regions | `src/game/content.js` OUTLINE |

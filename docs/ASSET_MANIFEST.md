@@ -4,7 +4,7 @@
 |---|---|---|
 | `vendor/three.module.min.js` | 0.69 MB | renderer |
 | `vendor/addons/loaders/GLTFLoader.js`, `utils/BufferGeometryUtils.js` | 0.14 MB | model loading, geometry merge |
-| `assets/models/chr_ngoc_adventurer_v02.glb` | 1.79 MB | Ngọc, 10 animations |
+| `assets/models/chr_ngoc_adventurer_v03.glb` | 1.79 MB | Ngọc, 10 animations |
 | `assets/models/npc_tom_elder_v02.glb` | 1.11 MB | Tom |
 | `assets/models/npc_sam_fisherman_v02.glb` | 0.99 MB | Sam |
 | `assets/models/npc_pip_spirit_v02.glb` | 0.12 MB | Pip |
