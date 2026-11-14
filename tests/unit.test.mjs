@@ -275,3 +275,19 @@ test('mini games: stars, race rings and start signs are on reachable ground', as
   try { for (const [x, z] of [...STARS, ...RACE, ...STARTS]) assert.ok(L.walkable(x, z, 0.9) && findPath(L.SPAWN.x, L.SPAWN.z, x, z), x + ',' + z); }
   finally { L.setRegion('forest'); }
 });
+
+// ---------------------------------------------------------------- combat rules
+import { MONSTERS, SPAWNS, playerAtk, hurt, inArc } from '../src/core/rules.js';
+test('combat: attack grows with level and weapon, armour never blocks everything, the arc is in front only', () => {
+  const p = S.newProfile('An', 6);
+  assert.equal(playerAtk(p), 10); p.stats.level = 5; p.gear = { atk: 6, def: 4 };
+  assert.equal(playerAtk(p), 24); assert.equal(hurt(11, p), 7); assert.equal(hurt(2, p), 1);
+  assert.ok(inArc(0, 0, 0, 0, 2)); assert.ok(!inArc(0, 0, 0, 0, -2), 'behind'); assert.ok(!inArc(0, 0, 0, 0, 3), 'too far'); assert.ok(inArc(0, 0, Math.PI / 2, 2, 0));
+  assert.ok(Math.ceil(MONSTERS.slime.hp / 10) <= 3, 'a level 1 child beats a slime in 3 hits');
+  assert.equal(S.maxHp(S.newProfile('x', 6)), 100);
+});
+test('combat: every monster spawn is on reachable ground east of the river', () => {
+  L.setRegion('village');
+  try { for (const [kind, x, z] of SPAWNS) { assert.ok(MONSTERS[kind]); assert.ok(L.walkable(x, z, 1) && findPath(L.SPAWN.x, L.SPAWN.z, x, z), kind + ' ' + x + ',' + z); assert.ok(Math.hypot(x, z - 4) > 25, 'not in the village square'); } }
+  finally { L.setRegion('forest'); }
+});

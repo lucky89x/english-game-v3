@@ -174,6 +174,17 @@ check(await ev(() => !__eq.mini.active && __eq.mini.data.best.apple >= 3), 'Appl
 for (let k = 0; k < 3 && await page.isVisible('#dialog'); k++) { await page.keyboard.press('KeyE'); await wait(200); }
 const z0m = await ev(() => __eq.minimap.zoom); await page.click('#mapin'); await page.click('#mapin');
 check(await ev((z) => __eq.minimap.zoom > z * 1.5, z0m), 'Minimap + button zooms in'); await page.click('#mapout'); await page.click('#mapout');
+// ---------------------------------------------------------------- Wild Meadow: train on monsters with the J key
+const mob = await ev(() => { const m = __eq.wild.mobs[0]; return { x: m.x, z: m.z, hp: m.hp }; });
+const before = await ev(() => ({ exp: __eq.profile.stats.exp, lv: __eq.profile.stats.level, gold: __eq.profile.stats.gold }));
+await ev((m) => { __eq.teleport(m.x, m.z - 1.6); __eq.player.yaw = 0; }, mob); await wait(400);
+await page.keyboard.press('KeyJ'); await wait(700);
+check(await ev((h) => __eq.wild.mobs[0].hp < h, mob.hp), 'J swings: the slime in front loses health');
+await snap('03e_wild_fight');
+for (let k = 0; k < 8 && await ev(() => !__eq.wild.mobs[0].dead); k++) { await ev(() => { const m = __eq.wild.mobs[0]; __eq.teleport(m.x, m.z - 1.6); __eq.player.yaw = 0; }); await wait(250); await page.keyboard.press('KeyJ'); await wait(650); }
+check(await ev((b) => __eq.wild.mobs[0].dead > 0 && (__eq.profile.stats.level > b.lv || __eq.profile.stats.exp > b.exp) && __eq.profile.stats.gold > b.gold, before), 'Slime defeated: EXP and gold earned');
+check(await ev(() => __eq.profile.stats.hp > 0 && __eq.profile.stats.hp <= 100 + (__eq.profile.stats.level - 1) * 12) && (await page.innerHTML('#hud')).includes('bar hp'), 'HUD shows the health and EXP bars');
+await ev(() => __eq.teleport(0, 13)); await wait(300);
 await view(-8, 26, 0.6, 0.5, 16); await wait(1500); await snap('03_village_market_side');
 await view(14, 14, -2.2, 0.4, 14); await wait(1500); await snap('04_village_bridge_dock');
 await view(0, -12, 0.0, 0.3, 13); await wait(1500); await snap('05_village_hall');
