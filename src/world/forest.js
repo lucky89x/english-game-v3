@@ -1,7 +1,7 @@
 // Forest of Memories — everything you can see. Built procedurally from core/layout.js
 // (InstancedMesh for trees, rocks, grass, flowers, cobbles, fences) plus 4 compact GLBs.
 import * as THREE from 'three';
-import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { mergeGeometries, mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
 import * as L from '../core/layout.js';
 
 export const TIME = { value: 0 };
@@ -21,7 +21,8 @@ const at = (geo, x, y, z, sx = 1, sy = sx, sz = sx, ry = 0, rx = 0, rz = 0) => {
   const m = new THREE.Matrix4().compose(new THREE.Vector3(x, y, z), new THREE.Quaternion().setFromEuler(new THREE.Euler(rx, ry, rz)), new THREE.Vector3(sx, sy, sz));
   return geo.applyMatrix4(m);
 };
-function lumpy(geo, amount, seed = 1) {
+function lumpy(geo, amount, seed = 1, smoothShade = true) {
+  if (smoothShade) { geo.deleteAttribute('normal'); geo.deleteAttribute('uv'); geo = mergeVertices(geo, 1e-3); }   // shared vertices -> rounded shading
   const p = geo.attributes.position;
   for (let i = 0; i < p.count; i++) {
     const x = p.getX(i), y = p.getY(i), z = p.getZ(i);
@@ -191,7 +192,7 @@ function leafyGeo(trunkHex, palette, { h = 2.6, r = 2.1, clumps = 9, trunkR = 0.
   for (let i = 0; i < clumps; i++) {
     const y = 1 - ((i + 0.5) / clumps) * 1.5, rr = Math.sqrt(Math.max(0, 1 - y * y)), a = i * 2.399 + seed;
     const s = r * (0.42 + 0.16 * ((i * 7 + seed) % 5) / 5);
-    const g = lumpy(new THREE.IcosahedronGeometry(s, 1), 0.12, i + seed);
+    const g = lumpy(new THREE.IcosahedronGeometry(s, 1), 0.1, i + seed);
     parts.push(tint(at(g, Math.cos(a) * rr * r * 0.62, h + r * 0.55 + y * r * 0.55, Math.sin(a) * rr * r * 0.62), palette[y > 0.35 ? 2 : y > -0.2 ? 1 : 0], 0.16));
   }
   return mergeGeometries(parts);
@@ -209,7 +210,7 @@ function buildTrees() {
   return g;
 }
 function buildRocks() {
-  const geo = lumpy(new THREE.IcosahedronGeometry(1, 1), 0.2, 3), n = geo.attributes.position.count, col = new Float32Array(n * 3);
+  const geo = lumpy(new THREE.IcosahedronGeometry(1, 1), 0.2, 3, false), n = geo.attributes.position.count, col = new Float32Array(n * 3);
   const a = C(0x9d9aa8), b = C(0xc3bfcc), moss = C(0x74b84a), t = new THREE.Color();
   for (let i = 0; i < n; i++) { const y = geo.attributes.position.getY(i); t.copy(a).lerp(b, 0.5 + 0.5 * Math.sin(i * 1.7)); if (y > 0.55) t.lerp(moss, 0.75); col.set([t.r, t.g, t.b], i * 3); }
   geo.setAttribute('color', new THREE.BufferAttribute(col, 3)); geo.deleteAttribute('uv');
@@ -242,7 +243,7 @@ function buildFlowers() {
   head.deleteAttribute('uv');
   const hues = [0xffffff, 0xff8fc0, 0xffd84a, 0xb69cf2, 0xff6f61, 0x7fc8ff];
   const mesh = instanced(head, new THREE.MeshStandardMaterial({ roughness: 0.8 }), scatterGround(2200, (x, z) => L.pathDistance(x, z) < 6 || L.riverDistance(x, z) < 9 || rnd() < 0.2), (t, p, e, s, i, m) => {
-    p.set(t.x, L.groundHeight(t.x, t.z) + 0.2 * t.s, t.z); e.set(R(-0.3, 0.3), t.rot, 0); s.setScalar(t.s);
+    p.set(t.x, L.groundHeight(t.x, t.z) + 0.16 * t.s, t.z); e.set(R(-0.3, 0.3), t.rot, 0); s.setScalar(t.s * 0.62);
     m.setColorAt(i, C(hues[Math.floor(t.c * hues.length)]));
   }, false);
   mesh.userData.density = true;
@@ -349,7 +350,7 @@ function cave() {
   const g = new THREE.Group(), y = L.groundHeight(56, 2), rock = std({ flatShading: true });
   const parts = [];
   for (const [x, yy, z, s] of [[0, 1.6, -3.4, 2.6], [0.4, 1.7, 3.5, 2.7], [0.2, 4.9, 0, 3.1], [1.2, 4.2, -2.4, 2.4], [1.2, 4.3, 2.5, 2.4], [-0.3, 0.6, -5.4, 1.5], [-0.2, 0.6, 5.6, 1.6]])
-    parts.push(tint(at(lumpy(new THREE.IcosahedronGeometry(s, 1), 0.16, x + z), x, yy, z), 0xa29fae, 0.18));
+    parts.push(tint(at(lumpy(new THREE.IcosahedronGeometry(s, 1), 0.16, x + z, false), x, yy, z), 0xa29fae, 0.18));
   const arch = new THREE.Mesh(mergeGeometries(parts), rock); arch.castShadow = true; arch.receiveShadow = true; g.add(arch);
   const dark = new THREE.Mesh(new THREE.CircleGeometry(2.3, 16), new THREE.MeshBasicMaterial({ color: 0x0c1830 })); dark.position.set(-0.75, 1.9, 0); dark.rotation.y = -Math.PI / 2; g.add(dark);
   for (const [x, z, s, r] of [[-1.5, -1.5, 1.3, 0.2], [-1.3, 1.6, 1.0, -0.3], [-2.4, 0.6, 0.7, 0.4], [-2.2, -2.6, 0.6, -0.2], [-1.0, 0.2, 0.8, 0]]) { const c = crystal(0x58c8ff, s); c.position.set(x, 0.55 * s, z); c.rotation.z = r; g.add(c); }

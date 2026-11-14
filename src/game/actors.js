@@ -80,7 +80,7 @@ export class Player {
 
 export class OrbitCamera {
   constructor(camera, dom) {
-    this.camera = camera; this.yaw = 0; this.pitch = 0.42; this.dist = 8.5; this.tYaw = 0; this.tPitch = 0.42; this.tDist = 8.5; this.cur = 8.5;
+    this.camera = camera; this.yaw = 0; this.pitch = 0.52; this.dist = 8.5; this.tYaw = 0; this.tPitch = 0.52; this.tDist = 8.5; this.cur = 8.5;
     this.target = new THREE.Vector3(); let drag = false, lx = 0, ly = 0;
     dom.addEventListener('mousedown', (e) => { if (e.button === 0 || e.button === 2) { drag = true; lx = e.clientX; ly = e.clientY; } });
     addEventListener('mouseup', () => (drag = false));

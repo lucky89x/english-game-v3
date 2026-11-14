@@ -1,7 +1,7 @@
 {
- "date": "2026-11-13",
+ "date": "2026-11-14",
  "renderer": "Chromium headless + SwiftShader (software GL, no GPU)",
- "downloadBytes": 6339203,
+ "downloadBytes": 6339422,
  "files": {
   "assets/models/chr_ngoc_adventurer_v02.glb": 1794724,
   "assets/models/npc_tom_elder_v02.glb": 1114512,
@@ -15,9 +15,9 @@
   "assets/tex/ngoc_face_talk.png": 77428,
   "assets/tex/ngoc_face_blink.png": 47318,
   "assets/tex/ngoc_face_joy.png": 46271,
-  "src/world/forest.js": 36816,
+  "src/world/forest.js": 37025,
   "vendor/addons/utils/BufferGeometryUtils.js": 31768,
-  "src/main.js": 13918,
+  "src/main.js": 13928,
   "src/core/layout.js": 11687,
   "src/game/actors.js": 11166,
   "data/learning/g6_u01.json": 6826,
@@ -57,22 +57,22 @@
  },
  "perf": {
   "low": {
-   "fps": 4,
-   "ms": 250,
-   "calls": 101,
-   "tris": 448874
+   "fps": 2.3,
+   "ms": 432.5,
+   "calls": 98,
+   "tris": 601502
   },
   "medium": {
-   "fps": 4,
-   "ms": 250,
-   "calls": 103,
-   "tris": 489242
+   "fps": 1.4,
+   "ms": 739.4,
+   "calls": 100,
+   "tris": 641870
   },
   "high": {
-   "fps": 4,
-   "ms": 250,
-   "calls": 103,
-   "tris": 540018
+   "fps": 1.1,
+   "ms": 942.4,
+   "calls": 100,
+   "tris": 692646
   }
  },
  "checks": 39,

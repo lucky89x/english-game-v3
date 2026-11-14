@@ -170,7 +170,7 @@ export const ROCKS = [];   // {x, z, s}
     const a = rnd() * Math.PI * 2, d = Math.sqrt(rnd()) * 82;
     const x = Math.cos(a) * d, z = Math.sin(a) * d;
     const inside = d < PLAY_RADIUS + 2;
-    if (inside && (pathDistance(x, z) < 2.2 || riverDistance(x, z) < riverHalf(z) + 2.4 || !clearOf(x, z, 1.5))) continue;
+    if (inside && (pathDistance(x, z) < 3.6 || riverDistance(x, z) < riverHalf(z) + 2.4 || !clearOf(x, z, 1.5))) continue;
     if (z < -52 && Math.abs(x - riverX(RIVER_START)) < 5) continue;
     if (groundHeight(x, z) < 0 || (inside && slopeAt(x, z) > 0.75)) continue;
     if (TREES.some((t) => Math.hypot(t.x - x, t.z - z) < 3.1)) continue;

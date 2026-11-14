@@ -18,6 +18,12 @@ npm i playwright && node tests/e2e.mjs --shots screenshots       # trình duyệ
 ## Điều khiển
 WASD đi · Shift chạy · Space nhảy · E tương tác · H gợi ý · giữ chuột trái kéo để xoay · lăn chuột để zoom · bấm bản đồ nhỏ để tự đi · F3 hiệu năng.
 
+## Tài liệu
+`docs/`: REPOSITORY_AUDIT, GAME_DESIGN, ART_DIRECTION, LEARNING_DESIGN, ASSET_MANIFEST, PERFORMANCE_BUDGET, IMPLEMENTATION_PLAN, measurements.json. Ảnh chụp: `screenshots/`.
+
+## Đăng lên GitHub Pages
+Repo → Settings → Pages → Deploy from a branch → chọn nhánh chứa `index.html`, thư mục `/ (root)`. Không cần bước build.
+
 ## Ghi chú trung thực
 - Mới có Rừng Ký Ức (Chương II); Làng Khởi Đầu và các chương còn lại chưa port.
 - Ngọc, Tom, Sam, Pip dùng lại model GLB của bản Godot. Chưa có nhân vật mới, nội thất, giọng đọc.
