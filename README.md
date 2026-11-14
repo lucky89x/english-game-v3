@@ -19,7 +19,7 @@ npm i playwright && node tests/e2e.mjs --shots screenshots       # trình duyệ
 WASD đi · Shift chạy · Space nhảy · E tương tác · H gợi ý · giữ chuột trái kéo để xoay · lăn chuột để zoom · bấm bản đồ nhỏ để tự đi · F3 hiệu năng.
 
 ## Tài liệu
-`docs/`: REPOSITORY_AUDIT, GAME_DESIGN, ART_DIRECTION, LEARNING_DESIGN, ASSET_MANIFEST, PERFORMANCE_BUDGET, IMPLEMENTATION_PLAN, measurements.json. Ảnh chụp: `screenshots/`.
+`docs/`: REPOSITORY_AUDIT, GAME_DESIGN, ART_DIRECTION, LEARNING_DESIGN, ASSET_MANIFEST, PERFORMANCE_BUDGET, IMPLEMENTATION_PLAN, measurements.json. Ảnh chụp: `screenshots/`. Ảnh tham chiếu mỹ thuật (nhân vật, các map): `docs/reference_art/`.
 
 ## Đăng lên GitHub Pages
 Repo → Settings → Pages → Deploy from a branch → chọn nhánh chứa `index.html`, thư mục `/ (root)`. Không cần bước build.
