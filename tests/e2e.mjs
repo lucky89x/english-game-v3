@@ -176,7 +176,7 @@ const z0m = await ev(() => __eq.minimap.zoom); await page.click('#mapin'); await
 check(await ev((z) => __eq.minimap.zoom > z * 1.5, z0m), 'Minimap + button zooms in'); await page.click('#mapout'); await page.click('#mapout');
 // ---------------------------------------------------------------- Wild Meadow: train on monsters with the J key
 const mob = await ev(() => { const m = __eq.wild.mobs[0]; return { x: m.x, z: m.z, hp: m.hp }; });
-const before = await ev(() => ({ exp: __eq.profile.stats.exp, lv: __eq.profile.stats.level, gold: __eq.profile.stats.gold }));
+const fight0 = await ev(() => ({ exp: __eq.profile.stats.exp, lv: __eq.profile.stats.level, gold: __eq.profile.stats.gold }));
 await ev((m) => { __eq.teleport(m.x, m.z - 1.6); __eq.player.yaw = 0; }, mob); await wait(400);
 await page.keyboard.press('KeyJ'); await wait(700);
 check(await ev((h) => __eq.wild.mobs[0].hp < h, mob.hp), 'J swings: the slime in front loses health');
