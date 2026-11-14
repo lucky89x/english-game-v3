@@ -1,16 +1,17 @@
 {
  "date": "2026-11-14",
  "renderer": "Chromium headless + SwiftShader (software GL, no GPU)",
- "downloadBytes": 17418792,
+ "downloadBytes": 18543515,
  "files": {
-  "assets/models/chr_ngoc_adventurer_v03.glb": 2039532,
-  "assets/models/npc_lily_druid_v01.glb": 2018888,
-  "assets/models/npc_anna_bard_v01.glb": 2018888,
-  "assets/models/npc_rose_baker_v01.glb": 2018884,
+  "assets/models/npc_lily_druid_v01.glb": 2073108,
+  "assets/models/npc_rose_baker_v01.glb": 2068020,
+  "assets/models/npc_anna_bard_v01.glb": 2053048,
+  "assets/models/chr_ngoc_adventurer_v03.glb": 2039604,
   "assets/models/bld_hall_blue_v02.glb": 1603020,
   "assets/models/npc_tom_elder_v02.glb": 1114512,
   "assets/models/npc_sam_fisherman_v02.glb": 1071452,
   "assets/models/npc_ben_merchant_v02.glb": 1000276,
+  "assets/models/npc_forge_blacksmith_v01.glb": 982132,
   "assets/models/bld_house_blue_v02.glb": 971112,
   "assets/models/bld_shop_orange_v02.glb": 938052,
   "assets/models/bld_cottage_red_v02.glb": 706380,
@@ -20,14 +21,14 @@
   "assets/models/npc_pip_spirit_v02.glb": 116944,
   "vendor/addons/loaders/GLTFLoader.js": 110273,
   "assets/tex/ngoc_face_talk.png": 85507,
-  "src/world/forest.js": 66097,
+  "src/world/forest.js": 70782,
   "assets/tex/ngoc_face_blink.png": 48276,
   "assets/tex/ngoc_face_joy.png": 46147,
   "vendor/addons/utils/BufferGeometryUtils.js": 31768,
-  "src/main.js": 23980,
+  "src/main.js": 23877,
   "src/game/village.js": 13550,
   "src/game/actors.js": 11311,
-  "src/game/content.js": 9436,
+  "src/game/content.js": 9727,
   "src/core/regionkit.js": 8173,
   "data/learning/g6_u01.json": 6826,
   "src/game/quest.js": 6411,
@@ -42,8 +43,8 @@
   "src/core/regions/forest.js": 3760,
   "data/learning/g6_u08.json": 3598,
   "src/core/save.js": 3459,
+  "src/core/regions/village.js": 3399,
   "src/core/nav.js": 3376,
-  "src/core/regions/village.js": 3269,
   "data/learning/g9_u05.json": 3227,
   "data/learning/g6_u02.json": 3098,
   "data/learning/g9_u01.json": 3071,
@@ -69,21 +70,21 @@
  "perf": {
   "low": {
    "fps": 2.2,
-   "ms": 446.4,
-   "calls": 123,
-   "tris": 734332
+   "ms": 447.6,
+   "calls": 128,
+   "tris": 735006
   },
   "medium": {
-   "fps": 1.3,
-   "ms": 768.5,
-   "calls": 125,
-   "tris": 794412
+   "fps": 1.1,
+   "ms": 907,
+   "calls": 130,
+   "tris": 795006
   },
   "high": {
-   "fps": 1,
-   "ms": 960.5,
-   "calls": 125,
-   "tris": 923852
+   "fps": 0.8,
+   "ms": 1269.2,
+   "calls": 130,
+   "tris": 924446
   }
  },
  "checks": 76,
