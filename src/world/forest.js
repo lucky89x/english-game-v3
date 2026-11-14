@@ -443,6 +443,24 @@ function critters() {
   return pts;
 }
 
+/** Mossy boulders stacked beside the waterfall and at its foot, so the cliff reads as rock, not a grey wall. */
+function fallRocks() {
+  const fx = L.riverX(L.RIVER_START), top = L.groundHeight(fx, -60) + 0.45, parts = [];
+  const rock = (x, y, z, r, seed) => {
+    let g = lumpy(new THREE.IcosahedronGeometry(r, 1), 0.2, seed, false); g = g.index ? g.toNonIndexed() : g; g.deleteAttribute('uv');
+    const n = g.attributes.position.count, col = new Float32Array(n * 3), a = C(seed % 2 ? 0x9d9aa8 : 0xb4b0bf), moss = C(0x74b84a), t = new THREE.Color();
+    for (let i = 0; i < n; i++) { t.copy(a); if (g.attributes.position.getY(i) > r * 0.5) t.lerp(moss, 0.8); col.set([t.r, t.g, t.b], i * 3); }
+    g.setAttribute('color', new THREE.BufferAttribute(col, 3)); g.scale(1, 0.8, 0.9); g.translate(x, y, z); g.computeVertexNormals(); parts.push(g);
+  };
+  for (const side of [-1, 1]) for (let i = 0; i < 9; i++) {
+    const f = i / 8, x = fx + side * (3.9 + (i % 3) * 1.5 + f * 1.2), z = -53.4 + (i % 2) * 1.3 + f * 0.6;
+    rock(x, L.WATER_LEVEL + f * (top - L.WATER_LEVEL) * 0.95, z, 1.5 - f * 0.5 + (i % 2) * 0.3, i * 3 + (side > 0 ? 1 : 0));
+  }
+  for (let i = 0; i < 6; i++) rock(fx + (i - 2.5) * 1.5 + ((i * 7) % 3) * 0.3, L.WATER_LEVEL - 0.25, -51.3 + (i % 2) * 0.8, 0.75 + (i % 3) * 0.2, 40 + i);
+  const m = new THREE.Mesh(mergeGeometries(parts), std({ flatShading: true })); m.castShadow = true; m.receiveShadow = true;
+  return m;
+}
+
 // ------------------------------------------------------------------ riverside and ground dressing (both regions)
 function riverside() {
   const g = new THREE.Group(), reeds = [], pads = [], blooms = [];
@@ -699,7 +717,7 @@ export async function buildWorld(scene, loadModel) {
   const updaters = [], add = (o) => { root.add(o); if (o.userData.update) updaters.push(o.userData.update); return o; };
   add(buildTerrain());
   const detail = { cobbles: add(buildCobbles()), grass: add(buildGrass()), flowers: add(buildFlowers()), far: add(mountains()), critters: add(critters()) };
-  add(buildWater()); add(buildTrees()); add(buildRocks()); add(buildFences()); add(riverside()); add(bushes()); add(creatures());
+  add(buildWater()); add(buildTrees()); add(buildRocks()); add(buildFences()); add(riverside()); add(bushes()); add(creatures()); if (L.WATERFALL) add(fallRocks());
   const shadowed = (o) => { o.traverse((c) => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } }); return o; };
   const bridges = {};
   for (const b of L.BRIDGES) {

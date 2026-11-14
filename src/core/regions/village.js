@@ -1,12 +1,12 @@
 // Starter Village (Chapter I): square with a well, Tom's hall, shop, cottages, Ben's market,
 // river with the curved bridge and the south bridge, dock, farm, orchard and the forest gate.
-import { makeRegion, P, gauss, BRIDGE_LEN } from '../regionkit.js';
+import { makeRegion, P, gauss, smooth, BRIDGE_LEN } from '../regionkit.js';
 const riverX = (z) => 22 + 3 * Math.sin(z * 0.08);
 const bw = (b) => [b.x - BRIDGE_LEN / 2 - 0.8, b.z], be = (b) => [b.x + BRIDGE_LEN / 2 + 0.8, b.z];
 export const GATE = { x: -30, z: -44 };
 export default makeRegion({
   name: 'village', title: 'Starter Village', size: 140, playRadius: 62, seed: 4242, trees: 230, rocks: 40, roughness: 0.3, treeMix: [0.3, 0.85],
-  riverX, riverHalf: () => 3.4, riverStart: -90,
+  riverX, riverHalf: () => 3.4, riverStart: -52, waterfall: true,
   bridges: [{ id: 'village', z: 6, name: 'Village Bridge' }, { id: 'south', z: 40, name: 'South Bridge', closed: true }], stonesZ: null,
   landmarks: [
     { id: 'hall', en: 'village hall', vi: 'nhà trưởng làng', label: 'Village Hall', x: 0, z: -25, spot: [0, -16.5] },
@@ -31,7 +31,8 @@ export default makeRegion({
     P(2.2, [0, -4], [8, -6]),
     P(2.2, [-10, -1], [-10, 8]),
   ]; },
-  hills: (x, z, h) => h + 3.2 * gauss(Math.hypot(x + 44, z + 20), 12) + 2.4 * gauss(Math.hypot(x - 46, z + 30), 11),
+  hills: (x, z, h) => h + 3.2 * gauss(Math.hypot(x + 44, z + 20), 12) + 2.4 * gauss(Math.hypot(x - 46, z + 30), 11)
+    + 8.5 * (1 - smooth(-57.5, -52.5, z)) * smooth(-4, 8, x),      // north-east cliff with the waterfall
   treeFree: (x, z) => (Math.abs(x) < 20 && z > -34 && z < 26) || (x < -12 && x > -36 && z > 22 && z < 40) || (x > 30 && x < 52 && z > -4 && z < 26),
   keepClear: [{ x: 0, z: 4, r: 9 }, { x: 16, z: 18, r: 5 }],
   solids: [

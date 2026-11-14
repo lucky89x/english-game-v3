@@ -53,6 +53,8 @@ PALETTE = {  # name: (sRGB hex, roughness, metallic)
     'parchment': ('f0ddb0', .85, 0), 'parchment_edge': ('d9bd86', .85, 0), 'ribbon': ('c2312c', .7, 0),
     'eye_dark': ('2a140a', .3, 0),
 }
+PALETTE.update({'white': ('fbf8f0', .8, 0), 'bread': ('d9953f', .7, 0), 'bread_light': ('f0c070', .7, 0), 'wicker': ('b98a4a', .85, 0),
+                'crystal': ('58e07a', .1, 0), 'leaf': ('4d9a3a', .8, 0), 'lute': ('c98a48', .5, 0), 'lute_dark': ('7a4a26', .6, 0)})
 VARIANT = os.environ.get('NGOC_VARIANT', 'ngoc')
 VARIANTS = {   # friends built on Ngoc's body: (file name, palette overrides)
     'lily': ('npc_lily_druid_v01', {'hair': 'e0702c', 'hair_light': 'f08a3c', 'hair_dark': 'b8531c', 'bandana': '5fa83c', 'bandana_dark': '3f7d2a',
@@ -865,6 +867,58 @@ else:
         p = on_hair(az, math.radians(40 - 6 * abs(k - 5) / 5), .030)
         finish(ellipsoid(f'Ngoc_Crown_{k}', p, (.050, .050, .040), seg=10, rings=6), 'lens_shine' if k % 2 else 'parchment', ['head'])
         finish(ellipsoid(f'Ngoc_CrownDot_{k}', p + (p - HAIR_C).normalized() * .034, (.020, .020, .016), seg=6, rings=4), 'gold', ['head'])
+
+# ---------------- friends' own props (v03 round 2) -----------------------------------------
+_D = Vector((ARM_DIR.x, ARM_DIR.y, ARM_DIR.z))
+HAND_L = Vector((SHOULDER.x, SHOULDER.y, SHOULDER.z)) + _D * (UPPER + FORE + .045)
+HAND_R = Vector((-HAND_L.x, HAND_L.y, HAND_L.z))
+if VARIANT == 'lily':
+    # twisted wooden staff with a glowing green crystal and leaves, leaf cape over the shoulders
+    a, b = HAND_R + Vector((.0, -.02, -.40)), HAND_R + Vector((-.03, -.02, .88))
+    finish(tube('Lily_Staff', [a, HAND_R, b + Vector((.0, 0, -.14)), b], [.024, .022, .020, .016], seg=8), 'leather', ['hand.R'])
+    finish(torus('Lily_StaffLoop', b + Vector((0, 0, .075)), .075, .018, seg=18, rseg=6, rot=Quaternion((1, 0, 0), math.radians(90))), 'leather', ['hand.R'])
+    cr = ellipsoid('Lily_Crystal', b + Vector((0, 0, .075)), (.038, .030, .060), seg=6, rings=4)
+    finish(cr, 'crystal', ['hand.R'], smooth=False)
+    for k in range(5):
+        ang = k * 1.3
+        finish(ellipsoid(f'Lily_StaffLeaf_{k}', b + Vector((math.cos(ang) * .07, .0, -.05 - k * .11)), (.050, .012, .028), seg=8, rings=5,
+                         rot=Quaternion((0, 1, 0), ang)), 'leaf', ['hand.R'])
+    for k in range(9):
+        az = -math.pi * .9 + k * math.pi * 1.8 / 8
+        c = Vector((math.sin(az) * .175, .01 - math.cos(az) * .135, .735))
+        finish(ellipsoid(f'Lily_CapeLeaf_{k}', c + Vector((0, 0, -.05)), (.075, .022, .105), seg=10, rings=6,
+                         rot=Quaternion((0, 0, 1), -az) @ Quaternion((1, 0, 0), math.radians(-28))), 'leaf' if k % 2 else 'bandana', ['chest'])
+elif VARIANT == 'rose':
+    # tall baker's hat over the bun, basket of bread on her left arm
+    finish(ellipsoid('Rose_HatPuff', BUN + Vector((0, -.02, .05)), (.215, .200, .150), seg=20, rings=12,
+                     deform=lambda q, v: q + v * (.012 * math.sin(math.atan2(v.y, v.x) * 7))), 'white', ['bun'])
+    finish(loft('Rose_HatBand', [(BUN + Vector((0, -.02, -.095)), .150, .140), (BUN + Vector((0, -.02, -.02)), .155, .145)], seg=24, caps=(False, False)),
+           'white', ['head'])
+    BK = HAND_L + Vector((.03, -.05, -.17))
+    finish(loft('Rose_Basket', [(BK + Vector((0, 0, -.07)), .085, .070), (BK, .120, .095), (BK + Vector((0, 0, .05)), .125, .100)], seg=20,
+                caps=(True, False), shape=lambda a, i: 1 + .03 * math.cos(12 * a)), 'wicker', ['hand.L'])
+    finish(torus('Rose_BasketRim', BK + Vector((0, 0, .05)), .125, .013, seg=24, rseg=6, sy=.100 / .125), 'wicker', ['hand.L'])
+    for k, (dx, dy, rz) in enumerate(((-.05, .0, 20), (.045, -.02, -25), (.0, .03, 70))):
+        finish(ellipsoid(f'Rose_Bread_{k}', BK + Vector((dx, dy, .085)), (.036, .085, .034), seg=12, rings=8,
+                         rot=Quaternion((0, 0, 1), math.radians(rz)) @ Quaternion((1, 0, 0), math.radians(18))), 'bread' if k % 2 else 'bread_light', ['hand.L'])
+    finish(tube('Rose_BasketHandle', [BK + Vector((-.122, 0, .05)), BK + Vector((-.07, 0, .15)), HAND_L, BK + Vector((.07, 0, .15)),
+                                      BK + Vector((.122, 0, .05))], [.010] * 5, seg=8), 'wicker', ['hand.L'])
+elif VARIANT == 'anna':
+    # big yellow bow on the bun and a little lute on her back strap, neck up over the left shoulder
+    for sgn in (-1, 1):
+        finish(ellipsoid(f'Anna_Bow_{sgn}', BUN + Vector((sgn * .135, -.06, .02)), (.125, .040, .085), seg=14, rings=8,
+                         rot=Quaternion((0, 1, 0), math.radians(-22 * sgn))), 'bandana', ['bun'])
+        finish(loft(f'Anna_BowTail_{sgn}', [(BUN + Vector((sgn * .04, -.08, -.02)), .030, .010), (BUN + Vector((sgn * .11, -.07, -.20)), .040, .010)],
+                    seg=8, ref=Vector((0, 1, 0))), 'bandana_dark', ['bun'])
+    finish(ellipsoid('Anna_BowKnot', BUN + Vector((0, -.085, .02)), (.045, .035, .045), seg=10, rings=6), 'bandana_dark', ['bun'])
+    LC = Vector((-.05, .215, .560))
+    lq = Quaternion((0, 1, 0), math.radians(-32))
+    finish(ellipsoid('Anna_LuteBody', LC, (.135, .060, .165), seg=18, rings=10, rot=lq), 'lute', ['chest', 'spine'])
+    finish(ellipsoid('Anna_LuteHole', LC + Vector((0, .058, .0)), (.040, .008, .040), seg=10, rings=4, rot=lq), 'lute_dark', ['chest', 'spine'])
+    n0, n1 = LC + lq @ Vector((0, 0, .15)), LC + lq @ Vector((0, 0, .46))
+    finish(tube('Anna_LuteNeck', [n0, n1], [.022, .018], seg=8), 'lute_dark', ['chest'])
+    finish(box('Anna_LuteHead', n1 + lq @ Vector((0, 0, .03)), (.060, .030, .075), bevel=.008, rot=lq) if 'box' in globals() else
+           ellipsoid('Anna_LuteHead', n1 + lq @ Vector((0, 0, .03)), (.034, .018, .042), seg=8, rings=5, rot=lq), 'lute', ['chest'])
 
 # --------------------------------------------------------------------------------------
 # Armature
