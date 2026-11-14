@@ -119,3 +119,73 @@ test('quest: five crystals lead to the tree challenge and a clear ending', () =>
   assert.equal(quest.step, 'done'); assert.equal(quest.q.review, 3);
   assert.ok(profile.flags.compass_piece_forest); assert.ok(profile.skills.vocabulary.correct === 3);
 });
+
+// ---------------------------------------------------------------- village region
+test('village: landmarks, spawn and both bridges are walkable; forest gate is reachable; no tree in the square', () => {
+  L.setRegion('village');
+  try {
+    assert.equal(L.NAME, 'village');
+    assert.ok(L.walkable(L.SPAWN.x, L.SPAWN.z));
+    for (const b of L.BRIDGES) assert.ok(L.walkable(b.x, b.z) && !L.inWater(b.x, b.z));
+    assert.ok(L.inWater(L.riverX(20), 20));
+    for (const l of L.LANDMARKS.filter((x) => x.spot)) assert.ok(L.walkable(l.spot[0], l.spot[1]), l.id);
+    const ex = L.EXITS[0];
+    for (const [x, z] of [[ex.x, ex.z + 1.5], [40, 8], [-20, 30], [15.5, 15]]) assert.ok(findPath(L.SPAWN.x, L.SPAWN.z, x, z), 'route to ' + x + ',' + z);
+    assert.equal(findPath(L.SPAWN.x, L.SPAWN.z, 0, -25.5), null, 'inside the hall');
+    assert.ok(L.TREES.every((t) => Math.hypot(t.x, t.z - 4) > 9 && L.pathDistance(t.x, t.z) > 1.2 || Math.hypot(t.x, t.z) > L.PLAY_RADIUS));
+  } finally { L.setRegion('forest'); }
+});
+
+// ---------------------------------------------------------------- village story (no browser)
+import { VillageStory, CUSTOMERS } from '../src/game/village.js';
+function villageHarness({ grade = 6, letter = { letter: 'Dear Tom,\n\nPlease give it to the librarian.', question: 'Who gets it?', choices: ['The librarian', 'Nam', 'Mai'], answer: 0, hint: 'đọc lại' }, n = 8 } = {}) {
+  const profile = S.newProfile('An', grade), log = [];
+  const cards = Array.from({ length: n }, (_, i) => ({ id: `g${grade}_u01:w${i}`, word: 'w' + i, vi: 'nghĩa ' + i }));
+  const ui = { dialogue: (pages, done) => { log.push(pages); if (done) done(); }, choose: (page, options, pick) => { ui.pending = { page, options, pick }; } };
+  const story = new VillageStory({ profile, save() {}, ui, sfx() {}, onChange() {}, letter, cards, cardOf: (id) => cards.find((c) => c.id === id) });
+  return { profile, story, ui, log, cards };
+}
+test('village: letter read with a wrong then a right answer, hint only after the mistake, reward once', () => {
+  const { profile, story, ui } = villageHarness();
+  story.talkTom(); assert.equal(story.step, 'letter_find');
+  story.readLetter();
+  assert.equal(ui.pending.page.vi, undefined, 'no Vietnamese before the first try');
+  ui.pending.pick(1);
+  assert.ok(ui.pending.page.vi.includes('đọc lại'), 'hint after a wrong answer');
+  ui.pending.pick(0);
+  assert.equal(story.step, 'letter_return'); assert.equal(profile.stats.gold, 3);
+  assert.deepEqual(profile.skills.reading, { attempts: 2, correct: 1, firstTry: 0, hints: 1 });
+  story.talkTom(); assert.equal(story.step, 'jars'); assert.equal(profile.stats.gold, 23);
+  story.talkTom(); assert.equal(profile.stats.gold, 23, 'Tom pays once');
+});
+test('village: a grade without a letter is told so and continues (no borrowed content)', () => {
+  const { story, log } = villageHarness({ grade: 7, letter: null });
+  story.talkTom(); story.readLetter();
+  assert.ok(log.at(-1)[0].vi.includes('lớp 7 chưa được soạn')); assert.equal(story.step, 'letter_return');
+});
+test('village: word jars — wrong jar teaches, first-try pays more, due words come first, gate opens after', () => {
+  const { profile, story, cards } = villageHarness();
+  story.q.step = 'jars';
+  R.record(profile.words, cards[5].id, { correct: false }, R.today());          // due review word
+  story.talkBen();
+  assert.ok(story.market && story.step === 'jars_play');
+  assert.equal(story.customer.target.id, cards[5].id, 'due word asked first');
+  assert.equal(story.customer.options.length, 4);
+  assert.equal(new Set(story.customer.options.map((o) => o.vi)).size, 4);
+  const wrong = story.customer.options.findIndex((o) => o.id !== story.customer.target.id);
+  assert.equal(story.serve(wrong), false);
+  assert.ok(story.customer.said.includes('I need'));
+  const g0 = profile.stats.gold;
+  story.serve(story.customer.options.findIndex((o) => o.id === story.customer.target.id));
+  assert.equal(profile.stats.gold, g0 + 1);
+  for (let i = 1; i < CUSTOMERS; i++) story.serve(story.customer.options.findIndex((o) => o.id === story.customer.target.id));
+  assert.equal(story.market, null); assert.equal(story.step, 'open');
+  assert.equal(profile.stats.gold, g0 + 1 + 3 * (CUSTOMERS - 1));
+  assert.ok(!profile.flags.forest_open);
+  story.talkTom(); assert.equal(story.step, 'done'); assert.equal(profile.flags.forest_open, true);
+});
+test('village: no vocabulary for the unit -> Ben says so and the story is not blocked', () => {
+  const { story, log } = villageHarness({ n: 0 });
+  story.q.step = 'jars'; story.talkBen();
+  assert.ok(log.at(-1)[0].vi.includes('chưa có')); assert.equal(story.step, 'open');
+});

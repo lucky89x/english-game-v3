@@ -2,7 +2,8 @@
 // Progressive support (H key): 1 English only -> 2 keyword highlighted -> 3 Vietnamese meaning of the
 // keyword -> 4 marker on the minimap. A wrong crystal explains what that place is (and is recorded,
 // so guessing is never rewarded). Finale: the ancient tree asks for 3 of the words by definition.
-import { LANDMARKS, mulberry32 } from '../core/layout.js';
+import { REGIONS, mulberry32 } from '../core/layout.js';
+const LANDMARKS = REGIONS.forest.LANDMARKS;
 import { CLUES, DEFINITIONS, TOM_INTRO } from './content.js';
 import * as Review from '../core/review.js';
 import { recordSkill, addExp } from '../core/save.js';

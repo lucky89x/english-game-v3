@@ -114,8 +114,10 @@ export class Npc {
     this.root = gltf.scene; this.mixer = gltf.animations.length ? new THREE.AnimationMixer(this.root) : null; this.actions = {}; this.cur = '';
     for (const c of gltf.animations) this.actions[c.name] = this.mixer.clipAction(c);
     this.root.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.frustumCulled = false; } });
-    this.x = x; this.z = z; this.home = yaw; this.root.position.set(x, L.walkHeight(x, z), z); this.root.rotation.y = yaw; this.play('Idle');
+    this.move(x, z, yaw); this.play('Idle');
   }
+  move(x, z, yaw) { this.x = x; this.z = z; this.home = yaw; this.root.position.set(x, L.walkHeight(x, z), z); this.root.rotation.y = yaw; this.root.visible = true; }
+  hide() { this.root.visible = false; this.x = 1e6; }
   play(n) { if (!this.actions[n] || this.cur === n) return; const a = this.actions[n]; a.reset().play(); if (this.actions[this.cur]) this.actions[this.cur].crossFadeTo(a, 0.2, false); this.cur = n; }
   update(dt, player, talking) {
     const d = Math.hypot(player.x - this.x, player.z - this.z);
@@ -145,14 +147,14 @@ export class Pip {
 
 /** One glowing memory crystal per landmark (pooled: shown or hidden, never rebuilt). */
 export class Crystals {
-  constructor(scene, landmarks) {
+  constructor(scene, landmarks, heightAt = L.walkHeight) {
     this.items = new Map();
     const mat = new THREE.MeshStandardMaterial({ color: 0x8ff0ff, emissive: 0x4fd8ff, emissiveIntensity: 2.4, roughness: 0.25, transparent: true, opacity: 0.92 });
     const halo = new THREE.SpriteMaterial({ map: haloTexture(), color: 0x9ff3ff, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
     for (const l of landmarks) {
       const g = new THREE.Group(), m = new THREE.Mesh(new THREE.OctahedronGeometry(0.36, 0), mat); m.scale.y = 1.6; g.add(m);
       const s = new THREE.Sprite(halo); s.scale.setScalar(2.4); g.add(s);
-      const y = L.walkHeight(l.spot[0], l.spot[1]); g.position.set(l.spot[0], y + 1.0, l.spot[1]); g.userData = { y: y + 1.0, mesh: m, phase: l.x };
+      const y = heightAt(l.spot[0], l.spot[1]); g.position.set(l.spot[0], y + 1.0, l.spot[1]); g.userData = { y: y + 1.0, mesh: m, phase: l.x };
       g.visible = false; scene.add(g); this.items.set(l.id, g);
     }
   }

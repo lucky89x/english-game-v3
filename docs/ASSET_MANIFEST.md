@@ -10,7 +10,11 @@
 | `assets/models/npc_pip_spirit_v02.glb` | 0.12 MB | Pip |
 | `assets/models/bld_cottage_red_v02.glb` | 0.59 MB | woodcutter's cottage |
 | `assets/models/prop_bridge_curved_v02.glb` | 0.34 MB | two bridges |
-| `assets/models/prop_forest_gate_v02.glb` | 0.19 MB | entrance gate |
+| `assets/models/prop_forest_gate_v02.glb` | 0.19 MB | forest gate (both regions) |
+| `assets/models/bld_hall_blue_v02.glb` | 1.40 MB | Tom's village hall |
+| `assets/models/bld_shop_orange_v02.glb` | 0.81 MB | shop |
+| `assets/models/bld_house_blue_v02.glb` | 0.84 MB | house |
+| `assets/models/npc_ben_merchant_v02.glb` | 0.92 MB | Ben |
 | `assets/tex/ngoc_face_{blink,talk,joy}.png` | 3 × 1024 px | facial expressions |
 | `data/learning/*.json` | 49 files, about 0.2 MB | curriculum (12 files of the chosen grade are fetched) |
 | `src/**/*.js`, `index.html` | about 0.1 MB | game code |

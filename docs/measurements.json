@@ -1,11 +1,15 @@
 {
  "date": "2026-11-14",
  "renderer": "Chromium headless + SwiftShader (software GL, no GPU)",
- "downloadBytes": 6339422,
+ "downloadBytes": 10333613,
  "files": {
   "assets/models/chr_ngoc_adventurer_v02.glb": 1794724,
+  "assets/models/bld_hall_blue_v02.glb": 1401308,
   "assets/models/npc_tom_elder_v02.glb": 1114512,
   "assets/models/npc_sam_fisherman_v02.glb": 992032,
+  "assets/models/npc_ben_merchant_v02.glb": 915348,
+  "assets/models/bld_house_blue_v02.glb": 841084,
+  "assets/models/bld_shop_orange_v02.glb": 806016,
   "vendor/three.module.min.js": 691648,
   "assets/models/bld_cottage_red_v02.glb": 592292,
   "assets/models/prop_bridge_curved_v02.glb": 341028,
@@ -14,26 +18,29 @@
   "vendor/addons/loaders/GLTFLoader.js": 110273,
   "assets/tex/ngoc_face_talk.png": 77428,
   "assets/tex/ngoc_face_blink.png": 47318,
+  "src/world/forest.js": 47059,
   "assets/tex/ngoc_face_joy.png": 46271,
-  "src/world/forest.js": 37025,
   "vendor/addons/utils/BufferGeometryUtils.js": 31768,
-  "src/main.js": 13928,
-  "src/core/layout.js": 11687,
-  "src/game/actors.js": 11166,
+  "src/main.js": 20601,
+  "src/game/actors.js": 11311,
+  "src/game/village.js": 8254,
+  "src/core/regionkit.js": 7837,
   "data/learning/g6_u01.json": 6826,
-  "src/game/quest.js": 6369,
-  "src/ui/ui.js": 6026,
+  "src/game/quest.js": 6411,
+  "src/ui/ui.js": 6137,
   "data/learning/g6_u04.json": 5432,
-  "src/ui/minimap.js": 5336,
+  "src/ui/minimap.js": 5400,
   "index.html": 5309,
   "src/game/content.js": 5232,
   "data/learning/g6_u11.json": 4428,
   "data/learning/g6_u05.json": 4394,
   "data/learning/g6_u12.json": 4079,
   "data/learning/g6_u10.json": 3796,
+  "src/core/regions/forest.js": 3760,
   "data/learning/g6_u08.json": 3598,
   "src/core/save.js": 3459,
-  "src/core/nav.js": 3297,
+  "src/core/nav.js": 3376,
+  "src/core/regions/village.js": 3255,
   "data/learning/g9_u05.json": 3227,
   "data/learning/g6_u02.json": 3098,
   "data/learning/g9_u01.json": 3071,
@@ -49,6 +56,7 @@
   "data/learning/g9_u07.json": 2647,
   "data/learning/g9_u03.json": 2629,
   "data/learning/g9_u06.json": 2614,
+  "src/core/layout.js": 1868,
   "data/learning/g6_u03.json": 1855,
   "src/audio.js": 1586,
   "src/core/review.js": 1478,
@@ -58,23 +66,23 @@
  "perf": {
   "low": {
    "fps": 2.3,
-   "ms": 432.5,
-   "calls": 98,
-   "tris": 601502
+   "ms": 443.6,
+   "calls": 88,
+   "tris": 447216
   },
   "medium": {
-   "fps": 1.4,
-   "ms": 739.4,
-   "calls": 100,
-   "tris": 641870
+   "fps": 1.1,
+   "ms": 897.7,
+   "calls": 90,
+   "tris": 487584
   },
   "high": {
-   "fps": 1.1,
-   "ms": 942.4,
-   "calls": 100,
-   "tris": 692646
+   "fps": 0.9,
+   "ms": 1159.2,
+   "calls": 90,
+   "tris": 538336
   }
  },
- "checks": 39,
+ "checks": 55,
  "failed": 0
 }

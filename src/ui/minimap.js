@@ -12,6 +12,7 @@ export class Minimap {
     canvas.addEventListener('mousedown', (e) => e.stopPropagation());
     canvas.addEventListener('click', (e) => { const r = canvas.getBoundingClientRect(); this.travelTo(...this.toWorld((e.clientX - r.left) * canvas.width / r.width, (e.clientY - r.top) * canvas.height / r.height)); });
   }
+  rebuild() { this.bg = this.renderBase(); this.route = null; }
   renderBase() {
     const n = L.SIZE * BASE, cv = document.createElement('canvas'); cv.width = cv.height = n;
     const ctx = cv.getContext('2d'), img = ctx.createImageData(n, n);

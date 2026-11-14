@@ -36,11 +36,10 @@ export class UI {
   }
 
   // ---------------------------------------------------------------- HUD + clue
-  hud(profile, quest, learned) {
+  hud(profile, place, extra, learned) {
     $('hud').classList.remove('hidden');
-    const q = quest.q, found = q.found.length;
     $('hud').innerHTML = `<b>${esc(profile.name)}</b> · lớp ${profile.grade}<div class="row">Cấp ${profile.stats.level} · EXP ${profile.stats.exp}</div>
-      <div class="row">Vàng: <b>${profile.stats.gold}</b> · Từ đã học: <b>${learned}</b></div><div class="row">Pha lê ký ức: <b>${found}/5</b></div>`;
+      <div class="row">Vàng: <b>${profile.stats.gold}</b> · Từ đã học: <b>${learned}</b></div><div class="row">${esc(place)}${extra ? ' · ' + esc(extra) : ''}</div>`;
   }
   /** clue: {text, key} | null; level 0..3; meaning: Vietnamese of the keyword */
   clue(clue, level, meaning, note) {
@@ -50,9 +49,10 @@ export class UI {
     if (!clue) { el.innerHTML = `<div class="en" style="font-size:17px">${esc(note)}</div>`; return; }
     let text = esc(clue.text);
     if (level >= 1) text = text.replace(esc(clue.key), `<mark>${esc(clue.key)}</mark>`);
-    el.innerHTML = `<div class="who">Pip says:</div><div class="en">${text}</div>` +
+    const canHint = clue.hints !== false;
+    el.innerHTML = `<div class="who">${esc(clue.who || 'Pip')} says:</div><div class="en">${text}</div>` +
       (level >= 2 ? `<div class="vi">${esc(meaning)}</div>` : '') + (level >= 3 ? '<div class="vi">Chỗ cần tới đã hiện dấu ★ trên bản đồ nhỏ.</div>' : '') +
-      `<div class="tip">${level < 3 ? 'H: xin gợi ý' + (level ? ' thêm' : '') : 'Đã dùng hết gợi ý'}</div>`;
+      (canHint ? `<div class="tip">${level < 3 ? 'H: xin gợi ý' + (level ? ' thêm' : '') : 'Đã dùng hết gợi ý'}</div>` : (clue.tip ? `<div class="tip">${esc(clue.tip)}</div>` : ''));
   }
   prompt(text) { const el = $('prompt'); if (!text || this.busy) el.classList.add('hidden'); else { el.textContent = text; el.classList.remove('hidden'); } }
 

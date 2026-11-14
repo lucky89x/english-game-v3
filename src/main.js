@@ -4,10 +4,11 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import * as L from './core/layout.js';
 import * as Save from './core/save.js';
 import * as Review from './core/review.js';
-import { findWord } from './core/catalog.js';
-import { buildForest, TIME } from './world/forest.js';
+import { loadGrade } from './core/catalog.js';
+import { buildWorld, TIME, MARKET_JARS } from './world/forest.js';
 import { Player, OrbitCamera, Npc, Pip, Crystals } from './game/actors.js';
 import { ForestQuest, landmark } from './game/quest.js';
+import { VillageStory } from './game/village.js';
 import { SAM_LINES } from './game/content.js';
 import { UI } from './ui/ui.js';
 import { Minimap } from './ui/minimap.js';
@@ -59,11 +60,11 @@ const staticModel = async (name) => (await gltf(name)).scene.clone(true);
 const faceTex = async (name) => { const t = await texLoader.loadAsync(`./assets/tex/ngoc_face_${name}.png`); t.flipY = false; t.colorSpace = THREE.SRGBColorSpace; return t; };
 
 const ui = new UI(), store = Save.load();
-let profile = null, quest = null, world = null, player = null, cam = null, tom = null, sam = null, pip = null, crystals = null, minimap = null;
-let quality = localStorage.getItem('eq-quality') || 'medium', perfOn = false, started = false, wordIds = {};
+let profile = null, quest = null, story = null, world = null, player = null, cam = null, tom = null, sam = null, ben = null, pip = null, crystals = null, minimap = null, letterProp = null;
+let quality = localStorage.getItem('eq-quality') || 'medium', perfOn = false, started = false, switching = false, wordIds = {}, jarKey = '';
 const keys = new Set();
-const game = { errors, get profile() { return profile; }, get quest() { return quest; }, get player() { return player; }, get cam() { return cam; }, get minimap() { return minimap; }, ui, L, stats: { fps: 0, ms: 0, calls: 0, tris: 0 },
-  teleport(x, z) { player.place(x, z); cam.target.set(x, player.pos.y + 1.25, z); }, setQuality, key: (code) => onKey({ code, preventDefault() {} }), get started() { return started; }, chooseProfile };
+const game = { errors, get profile() { return profile; }, get quest() { return quest; }, get story() { return story; }, get player() { return player; }, get cam() { return cam; }, get minimap() { return minimap; }, ui, L, stats: { fps: 0, ms: 0, calls: 0, tris: 0 },
+  teleport(x, z) { player.place(x, z); cam.target.set(x, player.pos.y + 1.25, z); }, setQuality, key: (code) => onKey({ code, preventDefault() {} }), get started() { return started && !switching; }, get region() { return L.NAME; }, chooseProfile, enterRegion, MARKET_JARS };
 globalThis.__eq = game;
 
 function resize() { const w = innerWidth, h = innerHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
@@ -88,38 +89,100 @@ function renderGear() {
   $('ge').onclick = () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([Save.exportProfile(profile)], { type: 'application/json' })); a.download = `english-quest-${profile.name}.json`; a.click(); };
   $('gp').onclick = () => { save(); ui.showMenu(store, chooseProfile); };
 }
-function save() { if (!profile) return; store.last = profile.id; try { Save.persist(store); } catch (e) { console.warn('save failed', e); } }
+function save() { if (!profile) return; store.last = profile.id; profile.region = L.NAME; try { Save.persist(store); } catch (e) { console.warn('save failed', e); } }
+
+const NOTES = {      // short English objectives for the village chain
+  arrive: 'Talk to Tom in the village square. (E)', letter_find: "Find Tom's letter near the door of his hall. ✉", letter_return: 'Take the letter back to Tom.',
+  jars: "Help Ben at the market.", jars_play: "Help Ben at the market.", open: 'Tom wants to see you at the square.', done: 'Go to the forest gate in the north-west. ★',
+};
 function refresh() {
   if (!profile) return;
-  ui.hud(profile, quest, Review.learned(profile.words));
-  const c = quest.clue, t = quest.targetId ? landmark(quest.targetId) : null;
-  if (quest.step === 'seek') { if (c) ui.clue(c, quest.q.hint, `${t.en} = ${t.vi}`); else ui.clue(null, 0, '', `Lời gợi ý cho lớp ${profile.grade} chưa được soạn.`); }
-  else if (quest.step === 'intro') ui.clue(null, 0, '', 'Nói chuyện với trưởng làng Tom ở cổng rừng (nhấn E).');
-  else if (quest.step === 'tree') ui.clue(null, 0, '', 'Take the crystals to the ancient tree. ★');
-  else ui.clue(null, 0, '', 'Rừng Ký Ức đã nhớ lại các từ. Con có thể dạo chơi tiếp!');
-  if (crystals) crystals.show(quest.crystalIds());
+  const learned = Review.learned(profile.words);
+  if (L.NAME === 'forest') {
+    ui.hud(profile, 'Rừng Ký Ức', `Pha lê ${quest.q.found.length}/5`, learned);
+    const c = quest.clue, t = quest.targetId ? landmark(quest.targetId) : null;
+    if (quest.step === 'seek') { if (c) ui.clue(c, quest.q.hint, `${t.en} = ${t.vi}`); else ui.clue(null, 0, '', `Lời gợi ý cho lớp ${profile.grade} chưa được soạn.`); }
+    else if (quest.step === 'intro') ui.clue(null, 0, '', 'Talk to Tom at the forest gate. (E)');
+    else if (quest.step === 'tree') ui.clue(null, 0, '', 'Take the crystals to the ancient tree. ★');
+    else ui.clue(null, 0, '', 'The forest remembers its words again. You can explore!');
+    crystals.show(quest.crystalIds());
+  } else {
+    ui.hud(profile, 'Làng Khởi Đầu', '', learned);
+    const c = story.customer;
+    if (c) ui.clue({ who: `Traveller ${c.index + 1}/${c.total}`, text: c.said || `A jar of "${c.target.word}", please!`, key: c.target.word, hints: false, tip: 'Đi tới hũ có nghĩa đúng rồi nhấn E' }, c.said ? 1 : 0, '');
+    else ui.clue(null, 0, '', quest.step === 'done' && story.step === 'done' ? 'Chapter complete! The compass piece points to the desert.' : NOTES[story.step] || '');
+    crystals.show([]);
+    const key = c ? c.index + ':' + c.options.map((o) => o.id).join('|') : '';
+    if (key !== jarKey) { jarKey = key; world.setJars(c ? c.options.map((o) => o.vi) : null); }
+  }
+  if (letterProp) letterProp.visible = L.NAME === 'village' && story.step === 'letter_find';
+}
+function placeActors() {
+  if (L.NAME === 'village') {
+    tom.move(2.6, 7.6, -0.4); ben.move(-9.9, 19.5, Math.PI / 2); sam.move(L.riverX(18) - 5.6, 17.2, 1.2);
+    const ex = L.EXITS[0]; if (profile && profile.flags.forest_open) { pip.root.visible = true; pip.place(ex.x + 2.2, ex.z + 3); } else pip.root.visible = false;
+  } else {
+    tom.move(L.ENTRANCE.x + 2.4, L.ENTRANCE.z - 12, 0.2); sam.move(30.2, 49.6, 2.2); ben.hide();
+    pip.root.visible = true; pip.place(L.ENTRANCE.x + 3.4, L.ENTRANCE.z - 12.5);
+  }
+}
+/** Loads another region: swaps map data, rebuilds the scenery, moves everyone. at = [x, z] or the region's spawn. */
+async function enterRegion(name, at) {
+  switching = true; ui.prompt('');
+  if (story) story.leaveMarket();
+  L.setRegion(name);
+  if (world) world.dispose();
+  jarKey = '';
+  world = await buildWorld(scene, staticModel);
+  const q = QUALITY[quality]; world.setDetail(q.density, q.particles, q.far);
+  scene.traverse((o) => { if (o.material) [].concat(o.material).forEach((m) => (m.needsUpdate = true)); });
+  minimap.rebuild(); placeActors();
+  const [x, z] = at || [L.SPAWN.x, L.SPAWN.z];
+  game.teleport(x, z); player.yaw = Math.PI; cam.tYaw = cam.yaw = 0.25;
+  if (quest && quest.step === 'seek') quest.clueStart = performance.now();
+  switching = false; save(); refresh();
 }
 async function chooseProfile(p) {
-  unlock(); profile = p; store.last = p.id;
-  wordIds = {};
-  const hits = await Promise.all(L.LANDMARKS.map((l) => findWord(p.grade, l.en)));                     // own grade only
-  L.LANDMARKS.forEach((l, i) => { wordIds[l.en] = hits[i] ? hits[i].id : 'forest:' + l.en; });
+  unlock(); profile = p; store.last = p.id; started = false;
+  const units = await loadGrade(p.grade);                                   // this grade only
+  const forestMarks = L.REGIONS.forest.LANDMARKS, find = (w) => { for (let n = 0; n < 12; n++) { const u = units[n]; if (u && (u.vocabulary || []).some((v) => v.word.toLowerCase() === w)) return `g${p.grade}_u${String(n + 1).padStart(2, '0')}:${w}`; } return null; };
+  wordIds = {}; forestMarks.forEach((l) => { wordIds[l.en] = find(l.en) || 'forest:' + l.en; });
+  const unit = units[(p.unit || 1) - 1], uid = `g${p.grade}_u${String(p.unit || 1).padStart(2, '0')}`;
+  const cards = ((unit && unit.vocabulary) || []).filter((w) => w.word.length <= 22 && w.vi.length <= 34).map((w) => ({ id: `${uid}:${w.word.toLowerCase()}`, word: w.word, vi: w.vi }));
+  const cardOf = (id) => { const [u, w] = id.split(':'), m = /^g(\d)_u(\d\d)$/.exec(u); if (!m || Number(m[1]) !== p.grade) return null; const src = units[Number(m[2]) - 1], hit = src && (src.vocabulary || []).find((v) => v.word.toLowerCase() === w); return hit ? { id, word: hit.word, vi: hit.vi } : null; };
   quest = new ForestQuest({ profile, save, ui, sfx, wordId: (w) => wordIds[w] || 'forest:' + w, onChange: refresh });
-  if (quest.step === 'seek') quest.clueStart = performance.now();
-  game.teleport(L.ENTRANCE.x, L.ENTRANCE.z - 9); player.yaw = Math.PI; cam.tYaw = cam.yaw = 0.25;
-  pip.place(L.ENTRANCE.x + 3.4, L.ENTRANCE.z - 12.5);
-  $('mapbox').classList.remove('hidden'); started = true;
-  save(); refresh(); renderGear();
+  story = new VillageStory({ profile, save, ui, sfx, onChange: refresh, letter: (unit && unit.activities && unit.activities.lost_letter) || null, cards, cardOf });
+  if (story.step === 'jars_play') story.q.step = 'jars';
+  $('mapbox').classList.remove('hidden');
+  await enterRegion(p.region === 'forest' && p.flags.forest_open ? 'forest' : 'village');
+  started = true; renderGear();
 }
 
+const near = (x, z, r) => Math.hypot(player.pos.x - x, player.pos.z - z) < r;
 function interactTarget() {
-  const p = player.pos, near = (x, z, r) => Math.hypot(p.x - x, p.z - z) < r;
-  const c = crystals.nearest(p);
-  if (c) return { text: 'E · Chạm vào pha lê ký ức', run: () => { player.emote('Interact'); const ok = quest.touch(c); if (ok) player.emote('Celebrate'); } };
-  if (near(tom.x, tom.z, 3)) return { text: 'E · Nói chuyện với Tom', run: () => quest.talkTom() };
-  if (near(sam.x, sam.z, 3)) return { text: 'E · Nói chuyện với Sam', run: () => ui.dialogue(SAM_LINES) };
-  const tree = landmark('tree');
-  if (quest.step === 'tree' && near(tree.spot[0], tree.spot[1], 3.2)) return { text: 'E · Đặt pha lê vào cây cổ thụ', run: () => quest.treeChallenge() };
+  const p = player.pos;
+  for (const ex of L.EXITS) if (near(ex.x, ex.z, ex.r)) {
+    if (ex.flag && !profile.flags[ex.flag]) return { text: 'Cổng rừng còn khóa. Hãy giúp Tom và Ben trước.', run() {} };
+    return { text: 'E · ' + ex.label, run: () => { const back = ex.to === 'village' ? [L.REGIONS.village.EXITS[0].x + 0.5, L.REGIONS.village.EXITS[0].z + 5] : null; enterRegion(ex.to, back); } };
+  }
+  if (L.NAME === 'forest') {
+    const c = crystals.nearest(p);
+    if (c) return { text: 'E · Chạm vào pha lê ký ức', run: () => { player.emote('Interact'); if (quest.touch(c)) player.emote('Celebrate'); } };
+    if (near(tom.x, tom.z, 3)) return { text: 'E · Nói chuyện với Tom', run: () => quest.talkTom() };
+    if (near(sam.x, sam.z, 3)) return { text: 'E · Nói chuyện với Sam', run: () => ui.dialogue(SAM_LINES) };
+    const tree = landmark('tree');
+    if (quest.step === 'tree' && near(tree.spot[0], tree.spot[1], 3.2)) return { text: 'E · Đặt pha lê vào cây cổ thụ', run: () => quest.treeChallenge() };
+    return null;
+  }
+  if (story.market) {
+    const i = MARKET_JARS.findIndex(([x, z]) => near(x, z, 1.35));
+    if (i >= 0) return { text: 'E · Đưa hũ này cho khách', run: () => { player.emote('Interact'); if (story.serve(i)) { player.emote('Celebrate'); } } };
+    return null;
+  }
+  if (letterProp.visible && near(letterProp.position.x, letterProp.position.z, 2.2)) return { text: 'E · Nhặt bức thư', run: () => { player.emote('Interact'); story.readLetter(); } };
+  if (near(tom.x, tom.z, 3)) return { text: 'E · Nói chuyện với Tom', run: () => story.talkTom() };
+  if (near(ben.x, ben.z, 3.6)) return { text: 'E · Nói chuyện với Ben', run: () => story.talkBen() };
+  if (near(sam.x, sam.z, 3)) return { text: 'E · Nói chuyện với Sam', run: () => ui.dialogue([{ who: 'Sam', en: 'Good morning! The fish are jumping today.' }, { who: 'Sam', en: 'The south bridge goes to the orchard. The apples are red and sweet!' }]) };
   return null;
 }
 function onKey(e) {
@@ -138,18 +201,24 @@ addEventListener('resize', resize);
 
 async function boot() {
   resize();
-  $('loadtext').textContent = 'Đang dựng khu rừng…';
-  world = await buildForest(scene, staticModel);
   $('loadtext').textContent = 'Đang gọi Ngọc và các bạn…';
-  const [ngoc, tomG, samG, pipG, blink, talk, joy] = await Promise.all([gltf('chr_ngoc_adventurer_v02'), gltf('npc_tom_elder_v02'), gltf('npc_sam_fisherman_v02'), gltf('npc_pip_spirit_v02'), faceTex('blink'), faceTex('talk'), faceTex('joy')]);
+  const [ngoc, tomG, samG, benG, pipG, blink, talk, joy] = await Promise.all([gltf('chr_ngoc_adventurer_v02'), gltf('npc_tom_elder_v02'), gltf('npc_sam_fisherman_v02'), gltf('npc_ben_merchant_v02'), gltf('npc_pip_spirit_v02'), faceTex('blink'), faceTex('talk'), faceTex('joy')]);
+  $('loadtext').textContent = 'Đang dựng ngôi làng…';
+  L.setRegion('village');
+  world = await buildWorld(scene, staticModel);
   player = new Player(ngoc, { blink, talk, joy }); scene.add(player.root);
-  tom = new Npc(tomG, L.ENTRANCE.x + 2.4, L.ENTRANCE.z - 12, 0.2); scene.add(tom.root);
-  sam = new Npc(samG, 30.2, 49.6, 2.2); scene.add(sam.root);
+  tom = new Npc(tomG, 2.6, 7.6, -0.4); sam = new Npc(samG, 14, 17, 1.2); ben = new Npc(benG, -9.9, 19.5, Math.PI / 2); scene.add(tom.root, sam.root, ben.root);
   pip = new Pip(pipG.scene); scene.add(pip.root);
-  crystals = new Crystals(scene, L.LANDMARKS.filter((l) => l.id !== 'tree'));
+  const F = L.REGIONS.forest;
+  crystals = new Crystals(scene, F.LANDMARKS.filter((l) => l.id !== 'tree'), F.walkHeight);
+  const hall = L.REGIONS.village.LANDMARKS.find((l) => l.id === 'hall').spot;
+  letterProp = new THREE.Group();
+  const roll = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.6, 10), new THREE.MeshStandardMaterial({ color: 0xfff1cf, emissive: 0xffd88a, emissiveIntensity: 0.6 })); roll.rotation.z = Math.PI / 2; letterProp.add(roll);
+  const band = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, 0.1, 10), new THREE.MeshStandardMaterial({ color: 0xd8342a })); band.rotation.z = Math.PI / 2; letterProp.add(band);
+  letterProp.position.set(hall[0] + 1.2, L.REGIONS.village.groundHeight(hall[0] + 1.2, hall[1]) + 0.5, hall[1]); letterProp.visible = false; scene.add(letterProp);
   cam = new OrbitCamera(camera, canvas);
   minimap = new Minimap($('minimap'), (path) => { player.route = path.slice(1); });
-  player.place(L.ENTRANCE.x, L.ENTRANCE.z - 9); pip.place(L.ENTRANCE.x + 3.4, L.ENTRANCE.z - 12.5);
+  placeActors(); player.place(L.SPAWN.x, L.SPAWN.z);
   setQuality(quality);
   $('loading').classList.add('hidden');
   ui.showMenu(store, chooseProfile);
@@ -169,18 +238,27 @@ function frame() {
   if (hadRoute && !player.route) minimap.clearRoute();
   cam.update(dt, player.pos);
   const talkingTo = ui.busy && ui.pages ? ui.pages[0].who : '';
-  tom.update(dt, player.pos, talkingTo === 'Tom'); sam.update(dt, player.pos, talkingTo === 'Sam');
-  if (ui.busy && player.grounded && player.current === 'Idle' && talkingTo === 'Ngọc') player.play('Talk');
-  pip.update(dt, t, player, started && quest && quest.step !== 'intro');
-  crystals.update(t); world.update(t);
+  tom.update(dt, player.pos, talkingTo === 'Tom'); sam.update(dt, player.pos, talkingTo === 'Sam'); ben.update(dt, player.pos, talkingTo === 'Ben');
+  if (pip.root.visible) pip.update(dt, t, player, started && L.NAME === 'forest' && quest && quest.step !== 'intro');
+  crystals.update(t); if (world) world.update(t);
+  if (letterProp.visible) { letterProp.rotation.y = t * 1.5; letterProp.position.y += Math.sin(t * 2.2) * 0.002; }
   sun.position.copy(player.pos).addScaledVector(sunDir, 90); sun.target.position.copy(player.pos);
   sky.position.copy(camera.position);
-  if (started) {
+  if (started && !switching) {
     const it = ui.modal ? null : interactTarget(); ui.prompt(it ? it.text : '');
     const markers = [];
-    if (quest.step === 'intro') markers.push({ x: tom.x, z: tom.z, text: '!' });
-    if (quest.step === 'tree') { const s = landmark('tree').spot; markers.push({ x: s[0], z: s[1], text: '★' }); }
-    if (quest.step === 'seek' && quest.q.hint >= 3) { const s = landmark(quest.targetId).spot; markers.push({ x: s[0], z: s[1], text: '★' }); }
+    if (L.NAME === 'forest') {
+      if (quest.step === 'intro') markers.push({ x: tom.x, z: tom.z, text: '!' });
+      if (quest.step === 'tree') { const s = landmark('tree').spot; markers.push({ x: s[0], z: s[1], text: '★' }); }
+      if (quest.step === 'seek' && quest.q.hint >= 3) { const s = landmark(quest.targetId).spot; markers.push({ x: s[0], z: s[1], text: '★' }); }
+    } else {
+      const st = story.step;
+      if (st === 'arrive' || st === 'letter_return' || st === 'open') markers.push({ x: tom.x, z: tom.z, text: st === 'arrive' ? '!' : '?' });
+      if (st === 'letter_find') markers.push({ x: letterProp.position.x, z: letterProp.position.z, text: '✉' });
+      if (st === 'jars') markers.push({ x: ben.x, z: ben.z, text: '!' });
+      if (st === 'done' && quest.step !== 'done') markers.push({ x: L.EXITS[0].x, z: L.EXITS[0].z, text: '★' });
+      if (story.market && Math.hypot(player.pos.x + 7, player.pos.z - 19.5) > 15) story.leaveMarket();
+    }
     minimap.draw(player.pos, player.yaw, markers);
     autosave += dt; if (autosave > 20) { autosave = 0; save(); }
   }

@@ -18,7 +18,8 @@ check(await page.isVisible('#menu'), 'Profile menu shown on start');
 await page.click('#mnew'); await page.fill('#mname', 'An'); await page.click('[data-g="6"]'); await page.click('#mgo');
 await page.waitForFunction(() => __eq.started, null, { timeout: 60000 });
 check(await ev(() => __eq.profile.name === 'An' && __eq.profile.grade === 6), 'Profile An (grade 6) created');
-await wait(1500); await snap('01_gate');
+check(await ev(() => __eq.region === 'village' && __eq.story.step === 'arrive'), 'A new child starts in the Starter Village');
+await wait(1500); await snap('01_village_square');
 
 // movement with real keys
 const p0 = await ev(() => ({ x: __eq.player.pos.x, z: __eq.player.pos.z }));
@@ -42,6 +43,54 @@ await page.mouse.up();
 check(Math.abs((await ev(() => __eq.cam.tYaw)) - yaw0) > Math.PI * 2, 'Left-drag rotates the camera more than 360°');
 const d0 = await ev(() => __eq.cam.tDist); await page.mouse.move(640, 400); await page.mouse.wheel(0, 400);
 check((await ev(() => __eq.cam.tDist)) > d0, 'Wheel zooms the camera');
+// ---------------------------------------------------------------- Chapter I in the village
+await ev(() => __eq.teleport(1.6, 9.2)); await wait(500);
+await page.keyboard.press('KeyE'); await wait(300);
+check((await page.textContent('#dialog')).includes('Welcome to our village'), 'E on Tom: village welcome in English');
+for (let i = 0; i < 3; i++) { await page.keyboard.press('KeyE'); await wait(200); }
+check(await ev(() => __eq.story.step === 'letter_find'), 'Lost Letter quest started');
+await ev(() => __eq.teleport(0.6, -15.6)); await wait(500);
+check((await page.textContent('#prompt')).includes('thư'), 'Prompt at the letter');
+await page.keyboard.press('KeyE'); await wait(300);
+check((await page.textContent('#dialog .en')).includes('Dear'), 'Letter is shown in English (grade 6 text from the curriculum file)');
+for (let i = 0; i < 6 && !(await page.$('#dialog .opts')); i++) { await page.keyboard.press('KeyE'); await wait(200); }
+check(!!(await page.$('#dialog .opts')) && !(await page.isVisible('#dialog .vi')), 'Question with choices, no Vietnamese before the first try');
+await page.keyboard.press('Digit2'); await wait(300);
+check(await page.isVisible('#dialog .vi'), 'Wrong answer: Vietnamese hint appears');
+await page.keyboard.press('Digit1'); await wait(300); await page.keyboard.press('KeyE'); await wait(200);
+check(await ev(() => __eq.story.step === 'letter_return'), 'Letter understood → return to Tom');
+await ev(() => __eq.teleport(1.6, 9.2)); await wait(400); await page.keyboard.press('KeyE'); await wait(250); await page.keyboard.press('KeyE'); await wait(200); await page.keyboard.press('KeyE'); await wait(200);
+check(await ev(() => __eq.story.step === 'jars' && __eq.profile.stats.gold >= 23), 'Tom rewards and sends Ngọc to Ben');
+await ev(() => __eq.teleport(-6.6, 19.6)); await wait(500);
+await page.keyboard.press('KeyE'); await wait(250); await page.keyboard.press('KeyE'); await wait(400);
+check(await ev(() => !!__eq.story.market) && (await page.textContent('#clue .en')).includes('A jar of'), "Ben's market: traveller asks in English on the request card");
+await snap('02_market');
+const firstWrong = await ev(() => { const c = __eq.story.customer; return c.options.findIndex((o) => o.id !== c.target.id); });
+await ev((i) => { const [x, z] = __eq.MARKET_JARS[i]; __eq.teleport(x + 1.0, z); }, firstWrong); await wait(450);
+await page.keyboard.press('KeyE'); await wait(300);
+check((await page.textContent('#clue .en')).includes('I need') && await ev(() => __eq.story.customer.index === 0), 'Wrong jar (real E): traveller names it and asks again');
+for (let n = 0; n < 5; n++) {
+  const i = await ev(() => { const c = __eq.story.customer; return c ? c.options.findIndex((o) => o.id === c.target.id) : -1; });
+  if (i < 0) break;
+  await ev((i) => { const [x, z] = __eq.MARKET_JARS[i]; __eq.teleport(x + 1.0, z); }, i); await wait(450);
+  await page.keyboard.press('KeyE'); await wait(350);
+}
+check(await ev(() => !__eq.story.market && __eq.story.step === 'open' && Object.keys(__eq.profile.words).length === 5), 'Five travellers served; words stored for review');
+for (let k = 0; k < 4 && await page.isVisible('#dialog'); k++) { await page.keyboard.press('KeyE'); await wait(200); }
+const gate = await ev(() => ({ x: __eq.L.EXITS[0].x, z: __eq.L.EXITS[0].z }));
+await ev((g) => __eq.teleport(g.x, g.z + 1.2), gate); await wait(450);
+check((await page.textContent('#prompt')).includes('còn khóa'), 'Forest gate is locked before Tom opens it');
+await ev(() => __eq.teleport(1.6, 9.2)); await wait(400); for (let k = 0; k < 3; k++) { await page.keyboard.press('KeyE'); await wait(220); }
+check(await ev(() => __eq.story.step === 'done' && __eq.profile.flags.forest_open === true), 'Tom opens the forest gate');
+await view(-8, 26, 0.6, 0.5, 16); await wait(1500); await snap('03_village_market_side');
+await view(14, 14, -2.2, 0.4, 14); await wait(1500); await snap('04_village_bridge_dock');
+await view(0, -12, 0.0, 0.3, 13); await wait(1500); await snap('05_village_hall');
+await view(38, 12, -0.6, 0.35, 13); await wait(1500); await snap('06_orchard');
+await ev((g) => __eq.teleport(g.x, g.z + 1.2), gate); await wait(450);
+await page.keyboard.press('KeyE');
+await page.waitForFunction(() => __eq.region === 'forest' && __eq.started, null, { timeout: 60000 });
+check(true, 'E at the open gate travels to the Forest of Memories');
+await wait(1200); await snap('07_forest_gate');
 await view(-37, 9.5, -1.57, 0.3, 14); await wait(1200);            // cottage is right behind the camera direction
 check(await ev(() => __eq.cam.cur < 13 && __eq.cam.camera.position.y > __eq.L.groundHeight(__eq.cam.camera.position.x, __eq.cam.camera.position.z)), 'Camera is pulled in front of the cottage and stays above ground');
 
@@ -68,7 +117,8 @@ check((await page.textContent('#prompt')).includes('pha lê'), 'Prompt appears n
 await page.keyboard.press('KeyE'); await wait(300);
 check((await page.textContent('#dialog')).includes('Not here'), 'Wrong crystal: Pip explains what this place is');
 await page.keyboard.press('KeyE'); await wait(200);
-check(await ev(() => __eq.quest.q.found.length === 0 && __eq.profile.stats.gold === 0), 'Wrong crystal gives nothing');
+const goldBefore = await ev(() => __eq.profile.stats.gold);
+check(await ev(() => __eq.quest.q.found.length === 0), 'Wrong crystal gives nothing');
 
 // minimap: refuses water, travels on a route across the bridge
 check(await ev(() => __eq.minimap.travelTo(__eq.L.riverX(0), 0) === false), 'Minimap refuses a destination in the river');
@@ -90,16 +140,16 @@ for (let n = 0; n < 5; n++) {
   const id = await ev(() => __eq.quest.targetId);
   await ev((id) => { const s = __eq.L.LANDMARKS.find((l) => l.id === id).spot; __eq.teleport(s[0] + 0.8, s[1] + 0.5); }, id); await wait(450);
   await page.keyboard.press('KeyE'); await wait(300);
-  if (n === 1) await snap('06_crystal_found');
+  if (n === 1) await snap('08_crystal_found');
   for (let k = 0; k < 3 && await page.isVisible('#dialog'); k++) { await page.keyboard.press('KeyE'); await wait(200); }
 }
 check(await ev(() => __eq.quest.step === 'tree' && __eq.quest.q.found.length === 5), 'Five crystals found → go to the ancient tree');
-check(await ev(() => __eq.profile.stats.gold > 0 && Object.keys(__eq.profile.words).length >= 5), 'Gold earned and words stored for review');
+check(await ev((g) => __eq.profile.stats.gold > g && Object.keys(__eq.profile.words).length >= 10, goldBefore), 'Gold earned and words stored for review');
 await ev(() => { const s = __eq.L.LANDMARKS.find((l) => l.id === 'tree').spot; __eq.teleport(s[0] + 0.5, s[1] + 0.8); }); await wait(500);
 await page.keyboard.press('KeyE'); await wait(300);
 for (let n = 0; n < 3; n++) {
   const idx = await ev((n) => { const want = __eq.L.LANDMARKS.find((l) => l.id === __eq.quest.q.order[n]).en; return __eq.ui.options.indexOf(want); }, n);
-  if (n === 0) await snap('07_tree_challenge');
+  if (n === 0) await snap('09_tree_challenge');
   await page.keyboard.press('Digit' + (idx + 1)); await wait(300);
 }
 check(await ev(() => __eq.quest.step === 'done' && __eq.profile.flags.compass_piece_forest === true), 'Tree challenge answered with number keys → chapter ending');
@@ -110,12 +160,17 @@ const before = await ev(() => ({ gold: __eq.profile.stats.gold, words: Object.ke
 await page.reload(); await page.waitForFunction(() => globalThis.__eq && !document.getElementById('menu').classList.contains('hidden'), null, { timeout: 120000 });
 check((await page.textContent('#menucard')).includes('An · Lớp 6'), 'After reload the profile is listed');
 await page.click('[data-profile]'); await page.waitForFunction(() => __eq.started, null, { timeout: 60000 });
-check(await ev((b) => __eq.quest.step === 'done' && __eq.profile.stats.gold === b.gold && Object.keys(__eq.profile.words).length === b.words, before), 'Progress, gold and review words survive a reload');
+check(await ev((b) => __eq.region === 'forest' && __eq.quest.step === 'done' && __eq.profile.stats.gold === b.gold && Object.keys(__eq.profile.words).length === b.words, before), 'Progress, gold and review words survive a reload');
 const saved = await ev(() => JSON.parse(localStorage.getItem('english-quest-web')));
 check(saved.version === 2 && saved.profiles.length === 1, 'Save is versioned JSON in localStorage');
 await page.click('#gp'); await page.click('#mnew'); await page.fill('#mname', 'Minh'); await page.click('[data-g="9"]'); await page.click('#mgo');
 await page.waitForFunction(() => __eq.started && __eq.profile.name === 'Minh', null, { timeout: 60000 });
-check(await ev(() => __eq.profile.stats.gold === 0 && __eq.quest.step === 'intro'), 'Second profile (grade 9) starts fresh');
+check(await ev(() => __eq.profile.stats.gold === 0 && __eq.region === 'village' && __eq.story.step === 'arrive' && !__eq.profile.flags.forest_open), 'Second profile (grade 9) starts fresh in the village');
+await ev(() => __eq.story.talkTom()); for (let k = 0; k < 3; k++) { await page.keyboard.press('KeyE'); await wait(200); }
+await ev(() => __eq.story.readLetter()); await wait(200);
+check((await page.textContent('#dialog')).includes('lớp 9 chưa được soạn'), 'Grade 9 has no letter yet: the game says so (nothing borrowed)');
+await page.keyboard.press('KeyE'); await wait(200);
+await ev(() => __eq.enterRegion('forest')); await page.waitForFunction(() => __eq.region === 'forest' && __eq.started, null, { timeout: 60000 });
 await ev(() => __eq.quest.start());
 const g9 = await ev(() => ({ text: __eq.quest.clue.text, en: __eq.L.LANDMARKS.find((l) => l.id === __eq.quest.targetId).en }));
 check(!g9.text.toLowerCase().includes(g9.en), 'Grade 9 clue paraphrases the place instead of naming it');
@@ -125,11 +180,11 @@ const perf = {};
 for (const q of ['low', 'medium', 'high']) { await ev((q) => __eq.setQuality(q), q); await view(-10, 30, 1.9, 0.42, 13); await wait(2500); perf[q] = await ev(() => __eq.stats); }
 check(perf.low.tris < perf.high.tris && perf.low.calls <= perf.high.calls, `Low quality draws less (${perf.low.tris} < ${perf.high.tris} triangles)`);
 await ev(() => __eq.setQuality('medium'));
-const SPOTS = { '02_riverside': [-10, 30, 1.9, 0.42, 13], '03_ancient_tree': [24, -12, -0.35, 0.16, 17], '04_cave': [47, 3, -1.75, 0.22, 9], '05_camp': [27, 41, -0.95, 0.32, 10], '08_mushrooms': [34.5, 23, -1.45, 0.26, 9], '09_ruins': [-38.5, -32, 0.85, 0.28, 10], '10_tower': [43.5, -35, -0.75, 0.16, 14], '11_cottage': [-33, 12, 1.25, 0.3, 11], '12_closeup': [-30, 49, 2.9, 0.1, 3.0], '13_bridge': [-27.5, 35.5, -1.2, 0.26, 9] };
+const SPOTS = { '10_riverside': [-10, 30, 1.9, 0.42, 13], '11_ancient_tree': [24, -12, -0.35, 0.16, 17], '12_cave': [47, 3, -1.75, 0.22, 9], '13_camp': [27, 41, -0.95, 0.32, 10], '14_mushrooms': [34.5, 23, -1.45, 0.26, 9], '15_ruins': [-38.5, -32, 0.85, 0.28, 10], '16_tower': [43.5, -35, -0.75, 0.16, 14], '17_closeup': [-30, 49, 2.9, 0.1, 3.0] };
 for (const [name, v] of Object.entries(SPOTS)) { await view(...v); await wait(1500); await snap(name); }
 for (const [w, h] of [[1920, 1080], [1024, 600]]) { await page.setViewportSize({ width: w, height: h }); await wait(1200);
   const ok = await ev(() => { const r = (id) => document.getElementById(id).getBoundingClientRect(); const a = r('hud'), c = r('clue'), m = r('mapbox'); return a.right <= c.left + 2 && c.right <= m.left + 2 && m.right <= innerWidth && c.width > 250; });
-  check(ok, `HUD, clue card and minimap do not overlap at ${w}x${h}`); if (w === 1024) await snap('14_low_res_1024x600'); }
+  check(ok, `HUD, clue card and minimap do not overlap at ${w}x${h}`); if (w === 1024) await snap('18_low_res_1024x600'); }
 await page.setViewportSize({ width: 1280, height: 720 });
 const noise = logs.filter((l) => !l.includes('ReadPixels') && !l.includes('GPU stall'));
 check((await ev(() => __eq.errors.length)) === 0 && noise.filter((l) => l.startsWith('error') || l.startsWith('pageerror')).length === 0, 'No console errors during the whole run' + (noise.length ? ' — ' + noise[0].slice(0, 160) : ''));

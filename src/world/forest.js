@@ -3,6 +3,7 @@
 import * as THREE from 'three';
 import { mergeGeometries, mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
 import * as L from '../core/layout.js';
+import { ORCHARD_TREES, GATE } from '../core/regions/village.js';
 
 export const TIME = { value: 0 };
 const C = (hex) => new THREE.Color(hex);
@@ -162,6 +163,7 @@ function buildWater() {
   const river = new THREE.BufferGeometry();
   river.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); river.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); river.setIndex(idx);
   g.add(new THREE.Mesh(river, waterMaterial(false)));
+  if (!L.WATERFALL) return g;
   const fx = L.riverX(L.RIVER_START), top = L.groundHeight(fx, -60) + 0.45;
   const upper = new THREE.PlaneGeometry(7, 26); upper.rotateX(-Math.PI / 2);
   const um = new THREE.Mesh(upper, waterMaterial(false)); um.position.set(fx, top, -66.5); g.add(um);
@@ -221,7 +223,7 @@ function scatterGround(count, ok) {
   let guard = 0;
   while (out.length < count && guard++ < count * 12) {
     const x = R(-74, 74), z = R(-74, 74);
-    if (Math.hypot(x, z) > 74 || L.pathDistance(x, z) < 0.35 || L.groundHeight(x, z) < 0.12 || z < -53) continue;
+    if (Math.hypot(x, z) > 74 || L.pathDistance(x, z) < 0.35 || L.groundHeight(x, z) < 0.12 || (L.WATERFALL && z < -53)) continue;
     if (ok && !ok(x, z)) continue;
     out.push({ x, z, s: R(0.7, 1.35), rot: R(0, 6.28), c: rnd() });
   }
@@ -434,36 +436,136 @@ function critters() {
   return pts;
 }
 
-/** Builds the whole forest. `loadModel(name)` resolves a cloned GLB scene. */
-export async function buildForest(scene, loadModel) {
-  const updaters = [], add = (o) => { scene.add(o); if (o.userData.update) updaters.push(o.userData.update); return o; };
+// ------------------------------------------------------------------ village landmarks
+export const MARKET_JARS = [[-6.4, 17.2], [-6.4, 18.75], [-6.4, 20.3], [-6.4, 21.85]];
+export const MARKET_CUSTOMER = [-3.2, 22.6];
+function well() {
+  const g = new THREE.Group(), stone = new THREE.MeshStandardMaterial({ color: 0xb4afbe, roughness: 0.95, flatShading: true }), wood = new THREE.MeshStandardMaterial({ color: 0x8a5a30, roughness: 0.85 });
+  const ring = new THREE.Mesh(new THREE.CylinderGeometry(1.25, 1.35, 1.0, 12, 1, true), stone); ring.position.y = 0.5; ring.material.side = THREE.DoubleSide; ring.castShadow = true; g.add(ring);
+  const water = new THREE.Mesh(new THREE.CircleGeometry(1.2, 14), new THREE.MeshStandardMaterial({ color: 0x3fb6e0, roughness: 0.2 })); water.rotation.x = -Math.PI / 2; water.position.y = 0.7; g.add(water);
+  for (const sx of [-1, 1]) { const p = new THREE.Mesh(new THREE.BoxGeometry(0.16, 2.4, 0.16), wood); p.position.set(sx * 1.15, 1.7, 0); p.castShadow = true; g.add(p); }
+  const roof = new THREE.Mesh(new THREE.ConeGeometry(1.9, 1.1, 4), new THREE.MeshStandardMaterial({ color: 0x3d6fc6, roughness: 0.8 })); roof.position.y = 3.4; roof.rotation.y = Math.PI / 4; roof.castShadow = true; g.add(roof);
+  const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 2.3, 6), wood); bar.rotation.z = Math.PI / 2; bar.position.y = 2.5; g.add(bar);
+  g.position.set(0, L.groundHeight(0, 4), 4);
+  return g;
+}
+function marketStall() {
+  const g = new THREE.Group(), wood = new THREE.MeshStandardMaterial({ color: 0x9a6436, roughness: 0.85 });
+  const cv = document.createElement('canvas'); cv.width = 64; cv.height = 8; const c = cv.getContext('2d');
+  for (let i = 0; i < 8; i++) { c.fillStyle = i % 2 ? '#fff6ea' : '#e2402f'; c.fillRect(i * 8, 0, 8, 8); }
+  const stripes = new THREE.CanvasTexture(cv); stripes.colorSpace = THREE.SRGBColorSpace; stripes.magFilter = THREE.NearestFilter;
+  for (const [x, z] of [[-1, -2.2], [-1, 2.2], [1.3, -2.2], [1.3, 2.2]]) { const p = new THREE.Mesh(new THREE.BoxGeometry(0.14, 2.6, 0.14), wood); p.position.set(x, 1.3, z); p.castShadow = true; g.add(p); }
+  const awning = new THREE.Mesh(new THREE.BoxGeometry(3.0, 0.08, 5.0), new THREE.MeshStandardMaterial({ map: stripes, roughness: 0.9 })); awning.position.set(0.25, 2.7, 0); awning.rotation.z = -0.22; awning.castShadow = true; g.add(awning);
+  const counter = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.95, 4.4), new THREE.MeshStandardMaterial({ color: 0xb97d46, roughness: 0.85 })); counter.position.set(-0.6, 0.47, 0); counter.castShadow = true; g.add(counter);
+  const fruit = [0xe2402f, 0xf4b942, 0x6fbf4a, 0xe2402f, 0xf08a3c];
+  for (let i = 0; i < 14; i++) { const f = new THREE.Mesh(new THREE.SphereGeometry(0.13, 7, 5), new THREE.MeshStandardMaterial({ color: fruit[i % 5], roughness: 0.6 })); f.position.set(-0.6 + (i % 2) * 0.28 - 0.14, 1.05, -1.9 + i * 0.29); g.add(f); }
+  g.position.set(-8.6, L.groundHeight(-8.6, 19.5), 19.5);
+  return g;
+}
+function jarRow() {
+  const g = new THREE.Group(), clay = new THREE.MeshStandardMaterial({ color: 0x5c6f9a, roughness: 0.6 }), crate = new THREE.MeshStandardMaterial({ color: 0xa8743f, roughness: 0.9 });
+  const prof = [[0.01, 0], [0.34, 0.03], [0.44, 0.3], [0.36, 0.58], [0.26, 0.66], [0.3, 0.72]].map(([r, y]) => new THREE.Vector2(r, y));
+  for (const [x, z] of MARKET_JARS) {
+    const y = L.groundHeight(x, z), b = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.7, 0.8), crate); b.position.set(x, y + 0.35, z); b.castShadow = true; g.add(b);
+    const j = new THREE.Mesh(new THREE.LatheGeometry(prof, 14), clay); j.position.set(x, y + 0.7, z); j.castShadow = true; g.add(j);
+  }
+  return g;
+}
+function dock() {
+  const g = new THREE.Group(), wood = new THREE.MeshStandardMaterial({ color: 0xa8743f, roughness: 0.9 }), dark = new THREE.MeshStandardMaterial({ color: 0x6b4024, roughness: 0.9 });
+  const x0 = L.riverX(18) - 3.4;
+  const deck = new THREE.Mesh(new THREE.BoxGeometry(4.6, 0.16, 2.6), wood); deck.position.set(x0 - 0.2, 0.12, 18); deck.receiveShadow = true; deck.castShadow = true; g.add(deck);
+  for (const [dx, dz] of [[-2, -1.1], [-2, 1.1], [1.9, -1.1], [1.9, 1.1]]) { const p = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 1.5, 7), dark); p.position.set(x0 - 0.2 + dx, -0.2, 18 + dz); g.add(p); }
+  const hull = new THREE.Mesh(new THREE.SphereGeometry(1, 12, 8, 0, 6.283, Math.PI / 2, Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0x9a5a30, roughness: 0.8, side: THREE.DoubleSide })); hull.scale.set(0.7, 0.5, 1.7); hull.position.set(x0 + 3.2, L.WATER_LEVEL + 0.32, 20.2); hull.castShadow = true; g.add(hull);
+  const seat = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.07, 0.3), wood); seat.position.set(x0 + 3.2, L.WATER_LEVEL + 0.2, 20.2); g.add(seat);
+  for (const [dx, dz] of [[-1.4, 2.0], [-0.8, 2.3]]) { const b = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.32, 0.9, 10), dark); b.position.set(x0 + dx, L.groundHeight(x0 + dx, 18 + dz) + 0.45, 18 + dz); b.castShadow = true; g.add(b); }
+  return g;
+}
+function farm() {
+  const g = new THREE.Group(), soil = new THREE.MeshStandardMaterial({ color: 0x7a4f2c, roughness: 1 }), wood = new THREE.MeshStandardMaterial({ color: 0x9a6436, roughness: 0.85 });
+  const crops = [[0x5fb84a, 0.22], [0xf08a3c, 0.2], [0x8fd05a, 0.28], [0xe2c04a, 0.24]];
+  for (let r = 0; r < 4; r++) {
+    const z = 25.5 + r * 2.9, y = L.groundHeight(-24, z);
+    const bed = new THREE.Mesh(new THREE.BoxGeometry(11, 0.24, 1.9), soil); bed.position.set(-24, y + 0.06, z); bed.receiveShadow = true; g.add(bed);
+    for (let i = 0; i < 12; i++) { const c = new THREE.Mesh(new THREE.SphereGeometry(crops[r][1], 7, 5), new THREE.MeshStandardMaterial({ color: crops[r][0], roughness: 0.8 })); c.position.set(-29 + i * 0.9, y + 0.3, z + (i % 2 ? 0.3 : -0.3)); c.scale.y = r === 3 ? 2.2 : 0.9; g.add(c); }
+  }
+  const sy = L.groundHeight(-27, 27), pole = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 2.4, 6), wood); pole.position.set(-27, sy + 1.2, 27); g.add(pole);
+  const arms = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 1.6, 6), wood); arms.rotation.z = Math.PI / 2; arms.position.set(-27, sy + 1.7, 27); g.add(arms);
+  const shirt = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.8, 0.3), new THREE.MeshStandardMaterial({ color: 0x3d6fc6, roughness: 0.9 })); shirt.position.set(-27, sy + 1.5, 27); shirt.castShadow = true; g.add(shirt);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.28, 10, 8), new THREE.MeshStandardMaterial({ color: 0xf1d9a0 })); head.position.set(-27, sy + 2.2, 27); g.add(head);
+  const hat = new THREE.Mesh(new THREE.ConeGeometry(0.5, 0.4, 10), new THREE.MeshStandardMaterial({ color: 0xd9b25a })); hat.position.set(-27, sy + 2.55, 27); g.add(hat);
+  return g;
+}
+function orchard(list) {
+  const g = new THREE.Group(), geo = leafyGeo(0x7a4a26, [0x4faa3a, 0x77c948, 0xa9dd55], { h: 2.2, r: 2.3, clumps: 10, trunkR: 0.3, seed: 6 }), apple = new THREE.MeshStandardMaterial({ color: 0xe23a2a, roughness: 0.5 }), lemon = new THREE.MeshStandardMaterial({ color: 0xf6c62e, roughness: 0.5 });
+  list.forEach(([x, z], k) => {
+    const t = new THREE.Mesh(geo, windy(std(), 0.012)); t.castShadow = true; t.position.set(x, L.groundHeight(x, z) - 0.05, z); t.rotation.y = k * 1.3; g.add(t);
+    for (let i = 0; i < 10; i++) { const a = i * 2.399 + k, f = new THREE.Mesh(new THREE.SphereGeometry(0.17, 8, 6), k % 3 === 2 ? lemon : apple); f.position.set(x + Math.cos(a) * 1.7, L.groundHeight(x, z) + 2.6 + (i % 4) * 0.45, z + Math.sin(a) * 1.7); g.add(f); }
+  });
+  return g;
+}
+
+async function forestExtras(add, loadModel, shadowed) {
+  add(ancientTree()); add(mushrooms()); add(camp()); add(cave()); add(ruins()); add(tower()); add(woodpile()); add(blossomTree()); add(stonesAndLilies());
+  for (const [x, z] of [[-31, 56], [-29, 42], [-36, 27], [-33, 4], [-12, -11], [11, -17], [20, -9], [38, -4], [33, 14], [36, 30], [10, 41], [24, 46], [-27, -19], [38, -27], [13, -33]]) add(lampPost(x + 1.9, z + 0.4));
+  const cottage = shadowed(await loadModel('bld_cottage_red_v02')); cottage.position.set(-41, L.groundHeight(-41, 7) - 0.05, 7); cottage.rotation.y = Math.PI / 2; cottage.scale.setScalar(1.3); add(cottage);
+  const gate = shadowed(await loadModel('prop_forest_gate_v02')); gate.position.set(L.ENTRANCE.x, L.groundHeight(L.ENTRANCE.x, L.ENTRANCE.z + 3), L.ENTRANCE.z + 3); gate.rotation.y = Math.PI; add(gate);
+  const title = label('Forest of Memories\nRừng Ký Ức', { size: 30 }); title.position.set(L.ENTRANCE.x, L.groundHeight(L.ENTRANCE.x, L.ENTRANCE.z + 3) + 4.4, L.ENTRANCE.z + 3); add(title);
+  signs(add, [[-24.5, 39, 'Camp →\n← Cottage'], [21, -11.5, 'Cave →\nTower ↑'], [-22, -9.5, '← Ruins\nAncient Tree →']]);
+}
+function signs(add, list) {
+  for (const [x, z, text] of list) {
+    const y = L.groundHeight(x, z), post = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.1, 2.3, 7), new THREE.MeshStandardMaterial({ color: 0x8a5a30 })); post.position.set(x, y + 1.1, z); post.castShadow = true; add(post);
+    const s = label(text, { size: 26, scale: 0.75 }); s.position.set(x, y + 2.7, z); add(s);
+  }
+}
+async function villageExtras(add, loadModel, shadowed) {
+  const place = async (name, x, z, rot, scale) => { const m = shadowed(await loadModel(name)); m.position.set(x, L.groundHeight(x, z) - 0.05, z); m.rotation.y = rot; m.scale.setScalar(scale); add(m); return m; };
+  await place('bld_hall_blue_v02', 0, -25.5, 0, 1.35);
+  await place('bld_shop_orange_v02', 12.5, -8, -Math.PI / 2, 1.3);
+  await place('bld_cottage_red_v02', -14.5, -8, Math.PI / 2, 1.3);
+  await place('bld_house_blue_v02', -15, 9, Math.PI / 2, 1.3);
+  const gate = await place('prop_forest_gate_v02', GATE.x, GATE.z, 0, 1); gate.position.y += 0.05;
+  const title = label('Forest of Memories\nRừng Ký Ức', { size: 28 }); title.position.set(GATE.x, L.groundHeight(GATE.x, GATE.z) + 4.4, GATE.z); add(title);
+  add(well()); add(marketStall()); add(jarRow()); add(dock()); add(farm()); add(orchard(ORCHARD_TREES));
+  const stallName = label("Ben's Word Jars", { size: 28, scale: 0.8 }); stallName.position.set(-8.4, L.groundHeight(-8.6, 19.5) + 3.5, 19.5); add(stallName);
+  for (const [x, z] of [[2.6, -12], [-2.6, -2], [2.8, 10], [-3, 16], [1.5, 27], [6, 8.2], [-8, 1.5], [-20, -10], [-26, -26], [32, 9], [42.6, 22], [8, 38]]) add(lampPost(x, z));
+  signs(add, [[2.9, 14.5, '← Market\nFarm ↓'], [3.2, 1.2, 'Bridge →\n← Forest'], [30.5, 9.5, 'Orchard']]);
+}
+
+/** Builds the active region (core/layout.js). `loadModel(name)` resolves a cloned GLB scene. */
+export async function buildWorld(scene, loadModel) {
+  const root = new THREE.Group(); root.name = 'world:' + L.NAME; scene.add(root);
+  const updaters = [], add = (o) => { root.add(o); if (o.userData.update) updaters.push(o.userData.update); return o; };
   add(buildTerrain());
   const detail = { cobbles: add(buildCobbles()), grass: add(buildGrass()), flowers: add(buildFlowers()), far: add(mountains()), critters: add(critters()) };
   add(buildWater()); add(buildTrees()); add(buildRocks()); add(buildFences());
-  add(ancientTree()); add(mushrooms()); add(camp()); add(cave()); add(ruins()); add(tower()); add(woodpile()); add(blossomTree()); add(stonesAndLilies());
-  for (const [x, z] of [[-31, 56], [-29, 42], [-36, 27], [-33, 4], [-12, -11], [11, -17], [20, -9], [38, -4], [33, 14], [36, 30], [10, 41], [24, 46], [-27, -19], [38, -27], [13, -33]]) add(lampPost(x + 1.9, z + 0.4));
   const shadowed = (o) => { o.traverse((c) => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } }); return o; };
   for (const b of L.BRIDGES) {
     const m = shadowed(await loadModel('prop_bridge_curved_v02'));
     const base = (L.groundHeight(b.x - L.BRIDGE_LEN / 2 - 0.9, b.z) + L.groundHeight(b.x + L.BRIDGE_LEN / 2 + 0.9, b.z)) / 2;
     m.position.set(b.x, base, b.z); m.rotation.y = Math.PI / 2; add(m);
   }
-  const cottage = shadowed(await loadModel('bld_cottage_red_v02')); cottage.position.set(-41, L.groundHeight(-41, 7) - 0.05, 7); cottage.rotation.y = Math.PI / 2; cottage.scale.setScalar(1.3); add(cottage);
-  const gate = shadowed(await loadModel('prop_forest_gate_v02')); gate.position.set(L.ENTRANCE.x, L.groundHeight(L.ENTRANCE.x, L.ENTRANCE.z + 3), L.ENTRANCE.z + 3); gate.rotation.y = Math.PI; add(gate);
-  const title = label('Forest of Memories\nRừng Ký Ức', { size: 30 }); title.position.set(L.ENTRANCE.x, L.groundHeight(L.ENTRANCE.x, L.ENTRANCE.z + 3) + 4.4, L.ENTRANCE.z + 3); add(title);
-  for (const [x, z, text] of [[-24.5, 39, 'Camp →\n← Cottage'], [21, -11.5, 'Cave →\nTower ↑'], [-22, -9.5, '← Ruins\nAncient Tree →']]) {
-    const y = L.groundHeight(x, z), post = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.1, 2.3, 7), new THREE.MeshStandardMaterial({ color: 0x8a5a30 })); post.position.set(x, y + 1.1, z); post.castShadow = true; add(post);
-    const s = label(text, { size: 26, scale: 0.75 }); s.position.set(x, y + 2.7, z); add(s);
-  }
+  if (L.NAME === 'forest') await forestExtras(add, loadModel, shadowed); else await villageExtras(add, loadModel, shadowed);
+  // jar labels (village market): four pooled sprites, text swapped per customer
+  const jarLabels = [];
   return {
-    detail,
+    root, detail,
     update(t) { for (const u of updaters) u(t); },
-    /** density 0..1 for grass/flowers/cobbles, particles on/off, far scenery on/off */
     setDetail(density, particles, far) {
       for (const k of ['grass', 'flowers']) detail[k].count = Math.floor(detail[k].userData.full * density);
       detail.cobbles.count = Math.floor(detail.cobbles.userData.full * Math.max(0.5, density));
-      scene.traverse((o) => { if (o.userData.particles) o.visible = particles; });
+      root.traverse((o) => { if (o.userData.particles) o.visible = particles; });
       detail.far.visible = far;
+    },
+    setJars(texts) {
+      for (const s of jarLabels.splice(0)) { root.remove(s); s.material.map.dispose(); s.material.dispose(); }
+      if (!texts) return;
+      texts.forEach((text, i) => { const [x, z] = MARKET_JARS[i], s = label(text, { size: 30, scale: 0.62 }); s.position.set(x, L.groundHeight(x, z) + 2.0, z); s.material.depthTest = false; s.renderOrder = 5; root.add(s); jarLabels.push(s); });
+    },
+    dispose() {
+      scene.remove(root);
+      root.traverse((o) => { if (o.geometry) o.geometry.dispose(); if (o.material) [].concat(o.material).forEach((m) => { if (m.map && m.map.isCanvasTexture) m.map.dispose(); m.dispose(); }); });
     },
   };
 }
