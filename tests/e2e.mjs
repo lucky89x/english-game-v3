@@ -75,7 +75,7 @@ for (let n = 0; n < 5; n++) {
   await ev((i) => { const [x, z] = __eq.MARKET_JARS[i]; __eq.teleport(x + 1.0, z); }, i); await wait(450);
   await page.keyboard.press('KeyE'); await wait(350);
 }
-check(await ev(() => !__eq.story.market && __eq.story.step === 'open' && Object.keys(__eq.profile.words).length === 5), 'Five travellers served; words stored for review');
+check(await ev(() => !__eq.story.market && __eq.story.step === 'tom_bridge' && Object.keys(__eq.profile.words).length === 5), 'Five travellers served; words stored for review');
 for (let k = 0; k < 4 && await page.isVisible('#dialog'); k++) { await page.keyboard.press('KeyE'); await wait(200); }
 const gate = await ev(() => ({ x: __eq.L.EXITS[0].x, z: __eq.L.EXITS[0].z }));
 await ev((g) => __eq.teleport(g.x, g.z + 1.2), gate); await wait(450);
