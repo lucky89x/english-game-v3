@@ -1,0 +1,345 @@
+{
+  "id": "g8_u01",
+  "grade": 8,
+  "unit": 1,
+  "title": "Leisure Time",
+  "skills": [
+    "vocabulary",
+    "reading",
+    "grammar"
+  ],
+  "objectives": [
+    "Talk about leisure activities",
+    "Use verbs of liking + V-ing / to-infinitive",
+    "Read a letter for the writer's request"
+  ],
+  "vocabulary": [
+    {
+      "word": "leisure time",
+      "vi": "thời gian rảnh"
+    },
+    {
+      "word": "hobby",
+      "vi": "sở thích"
+    },
+    {
+      "word": "DIY",
+      "vi": "tự làm đồ thủ công"
+    },
+    {
+      "word": "be keen on",
+      "vi": "say mê"
+    },
+    {
+      "word": "prefer",
+      "vi": "thích hơn"
+    },
+    {
+      "word": "fishing net",
+      "vi": "lưới câu"
+    },
+    {
+      "word": "keep an eye out for",
+      "vi": "để ý tìm giúp"
+    },
+    {
+      "word": "detest",
+      "vi": "ghét"
+    },
+    {
+      "word": "fancy",
+      "vi": "thích"
+    },
+    {
+      "word": "relaxing",
+      "vi": "thư giãn"
+    },
+    {
+      "word": "villager",
+      "vi": "dân làng"
+    },
+    {
+      "word": "favourite",
+      "vi": "yêu thích nhất"
+    },
+    {
+      "word": "balance",
+      "vi": "sự cân bằng",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "be crazy about",
+      "vi": "rất thích, mê",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "be fond of",
+      "vi": "thích",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "be interested in",
+      "vi": "quan tâm, thích",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "be into",
+      "vi": "thích",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "bracelet",
+      "vi": "vòng đeo tay",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "brain",
+      "vi": "bộ não",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "build a dollhouse",
+      "vi": "làm nhà búp bê",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "comedy",
+      "vi": "phim hài",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "creativity",
+      "vi": "sự sáng tạo",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "cruel",
+      "vi": "độc ác",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "dislike",
+      "vi": "không thích",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "do DIY",
+      "vi": "tự làm đồ (DIY)",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "do puzzles",
+      "vi": "chơi giải đố",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "dollhouse",
+      "vi": "nhà búp bê",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "enjoy",
+      "vi": "thích, tận hưởng",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "fold",
+      "vi": "gấp",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "go cycling",
+      "vi": "đi đạp xe",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "go to the cinema",
+      "vi": "đi xem phim ở rạp",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "hang out",
+      "vi": "đi chơi",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "hate",
+      "vi": "ghét",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "increase",
+      "vi": "tăng lên",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "ingredient",
+      "vi": "nguyên liệu, thành phần",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "keep in touch",
+      "vi": "giữ liên lạc",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "knit",
+      "vi": "đan (len)",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "knitting kit",
+      "vi": "bộ dụng cụ đan len",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "love",
+      "vi": "yêu, rất thích",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "make paper flowers",
+      "vi": "làm hoa giấy",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "mental",
+      "vi": "(thuộc) tinh thần",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "message",
+      "vi": "nhắn tin; tin nhắn",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "muscle",
+      "vi": "cơ bắp",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "origami",
+      "vi": "nghệ thuật gấp giấy",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "outdoors",
+      "vi": "ở ngoài trời",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "play sports",
+      "vi": "chơi thể thao",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "recipe",
+      "vi": "công thức nấu ăn",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "resort",
+      "vi": "khu nghỉ dưỡng",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "snowboarding",
+      "vi": "trượt tuyết bằng ván",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "stay in shape",
+      "vi": "giữ dáng",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "surf the net",
+      "vi": "lướt mạng",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "surprised",
+      "vi": "ngạc nhiên",
+      "source": "sgk_notes"
+    }
+  ],
+  "grammar": [
+    "verbs of liking + V-ing or to V: love, like, prefer, hate (both forms); enjoy, fancy, adore, dislike, detest, don't mind (V-ing only)",
+    "expressions about hobbies: be keen on, be a fan of, be interested in, be hooked on, be addicted to (like); be obsessed with, be mad about, be crazy about (love); be bad at, be terrible at (dislike)"
+  ],
+  "activities": {
+    "lost_letter": {
+      "skill": "reading",
+      "difficulty": "advanced",
+      "letter": "Dear Mr Tom,\n\nIn my leisure time I love fishing by the river and I am keen on making small wooden boats. Last week I lost my favourite fishing net near the old bridge. My grandson prefers doing DIY, so he wants to make me a new one, but I still miss the old net.\n\nCould you ask the villagers to keep an eye out for it?\n\nBest wishes,\nSam",
+      "question": "What does Sam want Mr Tom to do?",
+      "choices": [
+        "Buy him a new boat",
+        "Ask the villagers to look for his net",
+        "Teach his grandson DIY"
+      ],
+      "answer": 1,
+      "hint": "Tìm câu hỏi nhờ vả ở cuối thư: \"Could you ask the villagers to ...?\""
+    },
+    "bridge_repair": {
+      "skill": "reading",
+      "difficulty": "advanced",
+      "tom_offer": "Trận lũ hôm qua làm gãy cây cầu gỗ phía Nam. Sam ngư dân đang loay hoay ở đầu cầu, con ra giúp chú ấy nhé?",
+      "sam_request": "Hi, I'm Sam. I'm keen on fishing, but today I need your help. The flood damaged the south bridge, and I prefer fixing it myself to waiting for builders - I love doing DIY!\nPlease bring me a rope, an axe and a log. The rope is lying by my boat at the dock, Ben keeps an axe at his stall and will happily give it to you if you help him out for a while, and there's a log by the river, not far from here.",
+      "materials": [
+        {
+          "id": "rope",
+          "word": "rope",
+          "vi": "dây thừng",
+          "decoy": {
+            "word": "chain",
+            "vi": "dây xích"
+          }
+        },
+        {
+          "id": "axe",
+          "word": "axe",
+          "vi": "cái rìu",
+          "decoy": {
+            "word": "pickaxe",
+            "vi": "cái cuốc chim"
+          }
+        },
+        {
+          "id": "log",
+          "word": "log",
+          "vi": "khúc gỗ",
+          "decoy": {
+            "word": "rock",
+            "vi": "tảng đá"
+          }
+        }
+      ],
+      "pip_intro": "Hello there! I'm Pip, the river spirit. I'm crazy about old books, and this one explains how to mend the bridge. Follow the steps carefully!",
+      "instructions": [
+        {
+          "en": "Before you do anything else, use the axe to cut the log into planks.",
+          "vi": "Dùng rìu xẻ khúc gỗ thành ván"
+        },
+        {
+          "en": "After that, lay the planks carefully across the gap.",
+          "vi": "Đặt ván ngang qua chỗ gãy"
+        },
+        {
+          "en": "Last of all, tie them tightly with the rope so they don't slip.",
+          "vi": "Buộc chặt ván bằng dây thừng"
+        }
+      ],
+      "clue": "Look over there! Someone has left small footprints that lead towards the Forest of Memories. I bet the first piece of the compass is hidden there!"
+    }
+  },
+  "version": 1,
+  "source_note": "Original content written for English Quest; topic aligned with the Global Success unit, no textbook text copied.",
+  "vocabulary_checked": true,
+  "pronunciation": [
+    "/ʊ/ (full, wood, could)",
+    "/uː/ (food, blue, group)"
+  ],
+  "grammar_checked": true,
+  "status": "playable"
+}

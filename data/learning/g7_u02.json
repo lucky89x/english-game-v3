@@ -1,0 +1,133 @@
+{
+  "id": "g7_u02",
+  "grade": 7,
+  "unit": 2,
+  "title": "Healthy Living",
+  "skills": [
+    "vocabulary",
+    "reading",
+    "grammar"
+  ],
+  "objectives": [
+    "Talk about the topic: Healthy Living"
+  ],
+  "vocabulary": [
+    {
+      "word": "acne",
+      "vi": "mụn trứng cá",
+      "source": "vietjack"
+    },
+    {
+      "word": "affect",
+      "vi": "tác động, ảnh hưởng đến",
+      "source": "vietjack"
+    },
+    {
+      "word": "avoid",
+      "vi": "tránh",
+      "source": "vietjack"
+    },
+    {
+      "word": "chapped",
+      "vi": "bị nứt nẻ, hiện tượng nứt nẻ trên da",
+      "source": "vietjack"
+    },
+    {
+      "word": "dim",
+      "vi": "lờ mờ, không đủ sáng",
+      "source": "vietjack"
+    },
+    {
+      "word": "disease",
+      "vi": "bệnh",
+      "source": "vietjack"
+    },
+    {
+      "word": "eye drops",
+      "vi": "thuốc nhỏ mắt",
+      "source": "vietjack"
+    },
+    {
+      "word": "fat",
+      "vi": "mỡ",
+      "source": "vietjack"
+    },
+    {
+      "word": "fit",
+      "vi": "gọn gàng, cân đối",
+      "source": "vietjack"
+    },
+    {
+      "word": "health",
+      "vi": "sức khoẻ",
+      "source": "vietjack"
+    },
+    {
+      "word": "healthy",
+      "vi": "khoẻ mạnh, lành mạnh",
+      "source": "vietjack"
+    },
+    {
+      "word": "indoors",
+      "vi": "trong nhà",
+      "source": "vietjack"
+    },
+    {
+      "word": "lip balm",
+      "vi": "kem bôi môi (chống nẻ)",
+      "source": "vietjack"
+    },
+    {
+      "word": "pimple",
+      "vi": "mụn",
+      "source": "vietjack"
+    },
+    {
+      "word": "pop",
+      "vi": "nặn (mụn)",
+      "source": "vietjack"
+    },
+    {
+      "word": "protein",
+      "vi": "chất đạm",
+      "source": "vietjack"
+    },
+    {
+      "word": "skin condition",
+      "vi": "tình trạng da",
+      "source": "vietjack"
+    },
+    {
+      "word": "soybean",
+      "vi": "đậu nành",
+      "source": "vietjack"
+    },
+    {
+      "word": "sunburn",
+      "vi": "sự cháy nắng",
+      "source": "vietjack"
+    },
+    {
+      "word": "tofu",
+      "vi": "đậu phụ",
+      "source": "vietjack"
+    },
+    {
+      "word": "virus",
+      "vi": "(Con) vi rút",
+      "source": "vietjack"
+    },
+    {
+      "word": "vitamin",
+      "vi": "vitamin",
+      "source": "vietjack"
+    }
+  ],
+  "grammar": [],
+  "activities": {},
+  "version": 1,
+  "vocabulary_checked": false,
+  "grammar_checked": false,
+  "source_note": "Từ vựng theo danh sách VietJack (Global Success), chỉ từ và nghĩa. Ngữ pháp và hoạt động chưa có.",
+  "status": "vocab"
+}

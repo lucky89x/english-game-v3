@@ -1,0 +1,168 @@
+{
+  "id": "g8_u12",
+  "grade": 8,
+  "unit": 12,
+  "title": "Life on Other Planets",
+  "skills": [
+    "vocabulary"
+  ],
+  "objectives": [],
+  "vocabulary": [
+    {
+      "word": "atmosphere",
+      "vi": "bầu khí quyển",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "attack",
+      "vi": "tấn công",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "break down",
+      "vi": "bị hỏng",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "commander",
+      "vi": "người chỉ huy",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "crater",
+      "vi": "miệng hố (núi lửa, thiên thạch)",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "creature",
+      "vi": "sinh vật",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "fight",
+      "vi": "chiến đấu",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "flow",
+      "vi": "chảy",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "habitable",
+      "vi": "có thể sống được",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "imaginary",
+      "vi": "tưởng tượng",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "Jupiter",
+      "vi": "sao Mộc",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "Mars",
+      "vi": "sao Hỏa",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "Mercury",
+      "vi": "sao Thủy",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "Milky Way",
+      "vi": "dải Ngân Hà",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "Neptune",
+      "vi": "sao Hải Vương",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "oppose",
+      "vi": "chống lại",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "outer space",
+      "vi": "ngoài vũ trụ",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "possibility",
+      "vi": "khả năng",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "promising",
+      "vi": "đầy hứa hẹn",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "punish",
+      "vi": "trừng phạt",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "rocket",
+      "vi": "tên lửa",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "Saturn",
+      "vi": "sao Thổ",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "soldier",
+      "vi": "người lính",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "solar system",
+      "vi": "hệ Mặt Trời",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "solid",
+      "vi": "chất rắn",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "take over",
+      "vi": "chiếm, tiếp quản",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "thrilling",
+      "vi": "ly kỳ, hồi hộp",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "trace",
+      "vi": "dấu vết",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "Uranus",
+      "vi": "sao Thiên Vương",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "Venus",
+      "vi": "sao Kim",
+      "source": "sgk_notes"
+    }
+  ],
+  "grammar": [],
+  "activities": {},
+  "version": 1,
+  "source_note": "Từ vựng do chủ dự án chép từ sổ tay kiến thức; chưa có bài đọc hay hoạt động.",
+  "vocabulary_checked": true,
+  "status": "vocab"
+}

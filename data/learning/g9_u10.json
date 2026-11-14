@@ -1,0 +1,133 @@
+{
+  "id": "g9_u10",
+  "grade": 9,
+  "unit": 10,
+  "title": "Planet Earth",
+  "skills": [
+    "vocabulary",
+    "reading",
+    "grammar"
+  ],
+  "objectives": [
+    "Talk about the topic: Planet Earth"
+  ],
+  "vocabulary": [
+    {
+      "word": "affect",
+      "vi": "gây ảnh hưởng",
+      "source": "vietjack"
+    },
+    {
+      "word": "appreciate",
+      "vi": "đánh giá cao",
+      "source": "vietjack"
+    },
+    {
+      "word": "climate change",
+      "vi": "biến đổi khí hậu",
+      "source": "vietjack"
+    },
+    {
+      "word": "droppings",
+      "vi": "phân (động vật)",
+      "source": "vietjack"
+    },
+    {
+      "word": "essential",
+      "vi": "vô cùng quan trọng",
+      "source": "vietjack"
+    },
+    {
+      "word": "ecological balance",
+      "vi": "cân bằng sinh thái",
+      "source": "vietjack"
+    },
+    {
+      "word": "fascinating",
+      "vi": "rất thú vị và hấp dẫn",
+      "source": "vietjack"
+    },
+    {
+      "word": "fertilizer",
+      "vi": "phân bón",
+      "source": "vietjack"
+    },
+    {
+      "word": "food chain",
+      "vi": "chuỗi thức ăn",
+      "source": "vietjack"
+    },
+    {
+      "word": "grassland",
+      "vi": "khu vực đồng cỏ",
+      "source": "vietjack"
+    },
+    {
+      "word": "habitat",
+      "vi": "môi trường sống của động thực vật",
+      "source": "vietjack"
+    },
+    {
+      "word": "harm",
+      "vi": "làm hại",
+      "source": "vietjack"
+    },
+    {
+      "word": "landform",
+      "vi": "dạng địa hình, địa mạo",
+      "source": "vietjack"
+    },
+    {
+      "word": "nature reserve",
+      "vi": "khu bảo tồn thiên nhiên",
+      "source": "vietjack"
+    },
+    {
+      "word": "observe",
+      "vi": "quan sát, chú ý",
+      "source": "vietjack"
+    },
+    {
+      "word": "orbit",
+      "vi": "quay quanh quỹ đạo",
+      "source": "vietjack"
+    },
+    {
+      "word": "outer space",
+      "vi": "ngoài vũ trụ",
+      "source": "vietjack"
+    },
+    {
+      "word": "pesticide",
+      "vi": "thuốc diệt cỏ",
+      "source": "vietjack"
+    },
+    {
+      "word": "pole",
+      "vi": "cực (bắc / nam)",
+      "source": "vietjack"
+    },
+    {
+      "word": "preserve",
+      "vi": "bảo tồn",
+      "source": "vietjack"
+    },
+    {
+      "word": "threat",
+      "vi": "nỗi đe doạ",
+      "source": "vietjack"
+    },
+    {
+      "word": "vital",
+      "vi": "quan trọng mức sống còn",
+      "source": "vietjack"
+    }
+  ],
+  "grammar": [],
+  "activities": {},
+  "version": 1,
+  "vocabulary_checked": false,
+  "grammar_checked": false,
+  "source_note": "Từ vựng theo danh sách VietJack (Global Success), chỉ từ và nghĩa. Ngữ pháp và hoạt động chưa có.",
+  "status": "vocab"
+}

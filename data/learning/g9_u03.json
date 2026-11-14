@@ -1,0 +1,113 @@
+{
+  "id": "g9_u03",
+  "grade": 9,
+  "unit": 3,
+  "title": "Healthy Living for Teens",
+  "skills": [
+    "vocabulary",
+    "reading",
+    "grammar"
+  ],
+  "objectives": [
+    "Talk about the topic: Healthy Living for Teens"
+  ],
+  "vocabulary": [
+    {
+      "word": "accomplish",
+      "vi": "hoàn thành, đạt được (mục đích ...)",
+      "source": "vietjack"
+    },
+    {
+      "word": "additional",
+      "vi": "thêm, thêm vào",
+      "source": "vietjack"
+    },
+    {
+      "word": "anxiety",
+      "vi": "nỗi lo, mối băn khoăn, sự lo lắng",
+      "source": "vietjack"
+    },
+    {
+      "word": "appropriately",
+      "vi": "phù hợp, thích đáng",
+      "source": "vietjack"
+    },
+    {
+      "word": "assignment",
+      "vi": "nhiệm vụ, bài tập dành cho học sinh / sinh viên",
+      "source": "vietjack"
+    },
+    {
+      "word": "counsellor",
+      "vi": "cố vấn, người tư vấn",
+      "source": "vietjack"
+    },
+    {
+      "word": "deadline",
+      "vi": "thời hạn cuối cùng, hạn cuối",
+      "source": "vietjack"
+    },
+    {
+      "word": "distraction",
+      "vi": "điều làm sao lãng",
+      "source": "vietjack"
+    },
+    {
+      "word": "due date",
+      "vi": "hạn chót (ngày đến hạn để hoàn thành một việc gì đó)",
+      "source": "vietjack"
+    },
+    {
+      "word": "fattening",
+      "vi": "gây béo phì",
+      "source": "vietjack"
+    },
+    {
+      "word": "mental",
+      "vi": "(thuộc) tinh thần, (thuộc) trí tuệ, (thuộc) trí óc",
+      "source": "vietjack"
+    },
+    {
+      "word": "minimise",
+      "vi": "giảm đến mức tối thiểu",
+      "source": "vietjack"
+    },
+    {
+      "word": "mood",
+      "vi": "tâm trạng",
+      "source": "vietjack"
+    },
+    {
+      "word": "optimistic",
+      "vi": "lạc quan",
+      "source": "vietjack"
+    },
+    {
+      "word": "physical",
+      "vi": "(thuộc) cơ thể, (thuộc) thân thể",
+      "source": "vietjack"
+    },
+    {
+      "word": "priority",
+      "vi": "sự ưu tiên, trường hợp ưu tiên",
+      "source": "vietjack"
+    },
+    {
+      "word": "stressed out",
+      "vi": "căng thẳng",
+      "source": "vietjack"
+    },
+    {
+      "word": "well-balanced",
+      "vi": "cân bằng, đúng mực",
+      "source": "vietjack"
+    }
+  ],
+  "grammar": [],
+  "activities": {},
+  "version": 1,
+  "vocabulary_checked": false,
+  "grammar_checked": false,
+  "source_note": "Từ vựng theo danh sách VietJack (Global Success), chỉ từ và nghĩa. Ngữ pháp và hoạt động chưa có.",
+  "status": "vocab"
+}

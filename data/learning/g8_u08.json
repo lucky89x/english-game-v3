@@ -1,0 +1,243 @@
+{
+  "id": "g8_u08",
+  "grade": 8,
+  "unit": 8,
+  "title": "Shopping",
+  "skills": [
+    "vocabulary"
+  ],
+  "objectives": [],
+  "vocabulary": [
+    {
+      "word": "access",
+      "vi": "sự truy cập; truy cập",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "addicted to",
+      "vi": "nghiện, say mê",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "advertise",
+      "vi": "quảng cáo",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "advertisement",
+      "vi": "mẩu quảng cáo",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "affect",
+      "vi": "ảnh hưởng",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "announcement",
+      "vi": "thông báo",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "assistant",
+      "vi": "người bán hàng, trợ lý",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "attract",
+      "vi": "thu hút",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "bargain",
+      "vi": "mặc cả",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "brand",
+      "vi": "thương hiệu",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "change",
+      "vi": "tiền lẻ, tiền thừa",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "complaint",
+      "vi": "lời phàn nàn, khiếu nại",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "convenience store",
+      "vi": "cửa hàng tiện lợi",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "credit card",
+      "vi": "thẻ tín dụng",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "customer",
+      "vi": "khách hàng",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "discount",
+      "vi": "sự giảm giá",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "discount shop",
+      "vi": "cửa hàng giảm giá",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "display",
+      "vi": "trưng bày",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "documentary",
+      "vi": "phim tài liệu",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "dollar store",
+      "vi": "cửa hàng đồng giá",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "excitement",
+      "vi": "sự hào hứng",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "farmers' market",
+      "vi": "chợ nông sản",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "fixed price",
+      "vi": "giá cố định",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "florist shop",
+      "vi": "cửa hàng hoa",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "goods",
+      "vi": "hàng hóa",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "goods and services",
+      "vi": "hàng hóa và dịch vụ",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "home-grown products",
+      "vi": "sản phẩm nhà trồng",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "home-made products",
+      "vi": "sản phẩm nhà làm",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "indoor",
+      "vi": "trong nhà",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "internet access",
+      "vi": "truy cập Internet",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "lower price",
+      "vi": "giá thấp hơn",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "on sale",
+      "vi": "đang giảm giá",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "online shop",
+      "vi": "cửa hàng trực tuyến",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "open-air market",
+      "vi": "chợ ngoài trời",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "order",
+      "vi": "đặt hàng",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "price tag",
+      "vi": "nhãn giá",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "range of products",
+      "vi": "danh mục sản phẩm",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "saving",
+      "vi": "tiền tiết kiệm",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "schedule",
+      "vi": "lịch trình",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "shopaholic",
+      "vi": "người nghiện mua sắm",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "shopping mall",
+      "vi": "trung tâm mua sắm",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "similar",
+      "vi": "tương tự",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "speciality shop",
+      "vi": "cửa hàng chuyên doanh",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "spicy",
+      "vi": "cay",
+      "source": "sgk_notes"
+    },
+    {
+      "word": "wander",
+      "vi": "đi lang thang",
+      "source": "sgk_notes"
+    }
+  ],
+  "grammar": [],
+  "activities": {},
+  "version": 1,
+  "source_note": "Từ vựng do chủ dự án chép từ sổ tay kiến thức; chưa có bài đọc hay hoạt động.",
+  "vocabulary_checked": true,
+  "status": "vocab"
+}

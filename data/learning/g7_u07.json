@@ -1,0 +1,123 @@
+{
+  "id": "g7_u07",
+  "grade": 7,
+  "unit": 7,
+  "title": "Traffic",
+  "skills": [
+    "vocabulary",
+    "reading",
+    "grammar"
+  ],
+  "objectives": [
+    "Talk about the topic: Traffic"
+  ],
+  "vocabulary": [
+    {
+      "word": "bumpy",
+      "vi": "lồi lõm, nhiều ổ gà",
+      "source": "vietjack"
+    },
+    {
+      "word": "distance",
+      "vi": "khoảng cách",
+      "source": "vietjack"
+    },
+    {
+      "word": "fine",
+      "vi": "phạt",
+      "source": "vietjack"
+    },
+    {
+      "word": "fly",
+      "vi": "bay, lái máy bay, đi trên máy bay",
+      "source": "vietjack"
+    },
+    {
+      "word": "handlebars",
+      "vi": "tay lái, ghi đông",
+      "source": "vietjack"
+    },
+    {
+      "word": "lane",
+      "vi": "làn đường",
+      "source": "vietjack"
+    },
+    {
+      "word": "obey traffic rules",
+      "vi": "tuân theo luật giao thông",
+      "source": "vietjack"
+    },
+    {
+      "word": "passenger",
+      "vi": "hành khách",
+      "source": "vietjack"
+    },
+    {
+      "word": "pavement",
+      "vi": "vỉa hè (cho người đi bộ)",
+      "source": "vietjack"
+    },
+    {
+      "word": "pedestrian",
+      "vi": "người đi bộ",
+      "source": "vietjack"
+    },
+    {
+      "word": "plane",
+      "vi": "máy bay",
+      "source": "vietjack"
+    },
+    {
+      "word": "road sign/ Traffic sign",
+      "vi": "biển báo giao thông",
+      "source": "vietjack"
+    },
+    {
+      "word": "roof",
+      "vi": "nóc xe, mái nhà",
+      "source": "vietjack"
+    },
+    {
+      "word": "safety",
+      "vi": "sự an toàn",
+      "source": "vietjack"
+    },
+    {
+      "word": "seat belt",
+      "vi": "đai an toàn",
+      "source": "vietjack"
+    },
+    {
+      "word": "signal",
+      "vi": "tín hiệu, dấu hiệu",
+      "source": "vietjack"
+    },
+    {
+      "word": "traffic jam",
+      "vi": "tắc đường",
+      "source": "vietjack"
+    },
+    {
+      "word": "traffic rule/ law",
+      "vi": "luật giao thông",
+      "source": "vietjack"
+    },
+    {
+      "word": "vehicle",
+      "vi": "xe cộ, phương tiện giao thông",
+      "source": "vietjack"
+    },
+    {
+      "word": "zebra crossing",
+      "vi": "vạch kẻ cho người đi bộ sang đường",
+      "source": "vietjack"
+    }
+  ],
+  "grammar": [],
+  "activities": {},
+  "version": 1,
+  "vocabulary_checked": false,
+  "grammar_checked": false,
+  "source_note": "Từ vựng theo danh sách VietJack (Global Success), chỉ từ và nghĩa. Ngữ pháp và hoạt động chưa có.",
+  "status": "vocab"
+}

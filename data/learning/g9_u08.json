@@ -1,0 +1,143 @@
+{
+  "id": "g9_u08",
+  "grade": 9,
+  "unit": 8,
+  "title": "Tourism",
+  "skills": [
+    "vocabulary",
+    "reading",
+    "grammar"
+  ],
+  "objectives": [
+    "Talk about the topic: Tourism"
+  ],
+  "vocabulary": [
+    {
+      "word": "agency",
+      "vi": "hãng (du lịch)",
+      "source": "vietjack"
+    },
+    {
+      "word": "agent",
+      "vi": "nhân viên hãng",
+      "source": "vietjack"
+    },
+    {
+      "word": "brochure",
+      "vi": "quyển quảng cáo (du lịch)",
+      "source": "vietjack"
+    },
+    {
+      "word": "domestic tourism",
+      "vi": "du lịch trong nước",
+      "source": "vietjack"
+    },
+    {
+      "word": "estimate",
+      "vi": "ước tính",
+      "source": "vietjack"
+    },
+    {
+      "word": "fixed",
+      "vi": "cố định",
+      "source": "vietjack"
+    },
+    {
+      "word": "food tourism",
+      "vi": "du lịch ẩm thực",
+      "source": "vietjack"
+    },
+    {
+      "word": "graveyard",
+      "vi": "nghĩa địa",
+      "source": "vietjack"
+    },
+    {
+      "word": "holidaymaker",
+      "vi": "người đi nghỉ",
+      "source": "vietjack"
+    },
+    {
+      "word": "homestay",
+      "vi": "nhà trọ",
+      "source": "vietjack"
+    },
+    {
+      "word": "hop-on hop-off",
+      "vi": "(tour) bằng xe buýt có thể lên, xuống tạinhiều điểm",
+      "source": "vietjack"
+    },
+    {
+      "word": "hunt",
+      "vi": "săn tìm",
+      "source": "vietjack"
+    },
+    {
+      "word": "itinerary",
+      "vi": "lịch trình",
+      "source": "vietjack"
+    },
+    {
+      "word": "loft",
+      "vi": "gác mái",
+      "source": "vietjack"
+    },
+    {
+      "word": "low season",
+      "vi": "mùa (du lịch) vắng khách",
+      "source": "vietjack"
+    },
+    {
+      "word": "online app",
+      "vi": "ứng dụng trên mạng",
+      "source": "vietjack"
+    },
+    {
+      "word": "package holiday",
+      "vi": "kì nghỉ trọn gói",
+      "source": "vietjack"
+    },
+    {
+      "word": "ruinous",
+      "vi": "đổ nát",
+      "source": "vietjack"
+    },
+    {
+      "word": "self-guided",
+      "vi": "tự tổ chức",
+      "source": "vietjack"
+    },
+    {
+      "word": "shopping tourism",
+      "vi": "du lịch mua sắm",
+      "source": "vietjack"
+    },
+    {
+      "word": "smooth",
+      "vi": "trôi chảy",
+      "source": "vietjack"
+    },
+    {
+      "word": "wander",
+      "vi": "dạo chơi",
+      "source": "vietjack"
+    },
+    {
+      "word": "world-famous",
+      "vi": "nổi tiếng thế giới",
+      "source": "vietjack"
+    },
+    {
+      "word": "work out",
+      "vi": "soạn thảo, lên (kế hoạch)",
+      "source": "vietjack"
+    }
+  ],
+  "grammar": [],
+  "activities": {},
+  "version": 1,
+  "vocabulary_checked": false,
+  "grammar_checked": false,
+  "source_note": "Từ vựng theo danh sách VietJack (Global Success), chỉ từ và nghĩa. Ngữ pháp và hoạt động chưa có.",
+  "status": "vocab"
+}

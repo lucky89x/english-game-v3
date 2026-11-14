@@ -1,0 +1,133 @@
+{
+  "id": "g7_u11",
+  "grade": 7,
+  "unit": 11,
+  "title": "Travelling in the Future",
+  "skills": [
+    "vocabulary",
+    "reading",
+    "grammar"
+  ],
+  "objectives": [
+    "Talk about the topic: Travelling in the Future"
+  ],
+  "vocabulary": [
+    {
+      "word": "appear",
+      "vi": "xuất hiện",
+      "source": "vietjack"
+    },
+    {
+      "word": "autopilot",
+      "vi": "lái tự động",
+      "source": "vietjack"
+    },
+    {
+      "word": "bamboo-copter",
+      "vi": "chong chóng tre",
+      "source": "vietjack"
+    },
+    {
+      "word": "comfortable",
+      "vi": "thoải mái, đủ tiện nghi",
+      "source": "vietjack"
+    },
+    {
+      "word": "convenient",
+      "vi": "thuận tiện, tiện lợi",
+      "source": "vietjack"
+    },
+    {
+      "word": "disappear",
+      "vi": "biến mất",
+      "source": "vietjack"
+    },
+    {
+      "word": "driverless",
+      "vi": "không người lái",
+      "source": "vietjack"
+    },
+    {
+      "word": "eco-friendly",
+      "vi": "thân thiện với môi trường",
+      "source": "vietjack"
+    },
+    {
+      "word": "economical",
+      "vi": "tiết kiệm nhiên liệu",
+      "source": "vietjack"
+    },
+    {
+      "word": "fume",
+      "vi": "khói",
+      "source": "vietjack"
+    },
+    {
+      "word": "function",
+      "vi": "chức năng",
+      "source": "vietjack"
+    },
+    {
+      "word": "hyperloop",
+      "vi": "hệ thống giao thông tốc độ cao",
+      "source": "vietjack"
+    },
+    {
+      "word": "mode of travel",
+      "vi": "phương thức đi lại",
+      "source": "vietjack"
+    },
+    {
+      "word": "pedal",
+      "vi": "đạp (xe đạp)",
+      "source": "vietjack"
+    },
+    {
+      "word": "run on",
+      "vi": "chạy bằng (nhiên liệu nào)",
+      "source": "vietjack"
+    },
+    {
+      "word": "sail",
+      "vi": "lướt buồm",
+      "source": "vietjack"
+    },
+    {
+      "word": "skyTran",
+      "vi": "hệ thống tàu điện trên không",
+      "source": "vietjack"
+    },
+    {
+      "word": "solar-powered",
+      "vi": "chạy bằng năng lượng mặt trời",
+      "source": "vietjack"
+    },
+    {
+      "word": "solar-powered ship",
+      "vi": "tàu thuỷ chạy bằng năng lượng mặt trời",
+      "source": "vietjack"
+    },
+    {
+      "word": "solowheel",
+      "vi": "phương tiện tự hành cá nhân một bánh",
+      "source": "vietjack"
+    },
+    {
+      "word": "walkcar",
+      "vi": "ô tô tự hành dùng chân",
+      "source": "vietjack"
+    },
+    {
+      "word": "teleporter",
+      "vi": "phương tiện di chuyển tức thời",
+      "source": "vietjack"
+    }
+  ],
+  "grammar": [],
+  "activities": {},
+  "version": 1,
+  "vocabulary_checked": false,
+  "grammar_checked": false,
+  "source_note": "Từ vựng theo danh sách VietJack (Global Success), chỉ từ và nghĩa. Ngữ pháp và hoạt động chưa có.",
+  "status": "vocab"
+}

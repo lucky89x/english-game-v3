@@ -1,0 +1,133 @@
+{
+  "id": "g7_u03",
+  "grade": 7,
+  "unit": 3,
+  "title": "Community Service",
+  "skills": [
+    "vocabulary",
+    "reading",
+    "grammar"
+  ],
+  "objectives": [
+    "Talk about the topic: Community Service"
+  ],
+  "vocabulary": [
+    {
+      "word": "board game",
+      "vi": "trò chơi trên bàn cờ",
+      "source": "vietjack"
+    },
+    {
+      "word": "clean-up activity",
+      "vi": "hoạt động dọn rửa",
+      "source": "vietjack"
+    },
+    {
+      "word": "collect",
+      "vi": "thu thập, sưu tầm",
+      "source": "vietjack"
+    },
+    {
+      "word": "community",
+      "vi": "cộng đồng",
+      "source": "vietjack"
+    },
+    {
+      "word": "community service",
+      "vi": "dịch vụ cộng đồng",
+      "source": "vietjack"
+    },
+    {
+      "word": "develop",
+      "vi": "phát triển",
+      "source": "vietjack"
+    },
+    {
+      "word": "donate",
+      "vi": "cho, tặng",
+      "source": "vietjack"
+    },
+    {
+      "word": "elderly",
+      "vi": "lớn tuổi, cao tuổi",
+      "source": "vietjack"
+    },
+    {
+      "word": "exchange",
+      "vi": "trao đổi",
+      "source": "vietjack"
+    },
+    {
+      "word": "flooded",
+      "vi": "bị lũ lụt",
+      "source": "vietjack"
+    },
+    {
+      "word": "homeless",
+      "vi": "vô gia cư, không có gia đình",
+      "source": "vietjack"
+    },
+    {
+      "word": "mountainous",
+      "vi": "vùng núi",
+      "source": "vietjack"
+    },
+    {
+      "word": "nursing",
+      "vi": "chăm sóc, điều dưỡng",
+      "source": "vietjack"
+    },
+    {
+      "word": "nursing home",
+      "vi": "viện dưỡng lão",
+      "source": "vietjack"
+    },
+    {
+      "word": "orphanage",
+      "vi": "trại trẻ mồ côi",
+      "source": "vietjack"
+    },
+    {
+      "word": "plant",
+      "vi": "trồng cây",
+      "source": "vietjack"
+    },
+    {
+      "word": "proud",
+      "vi": "tự hào",
+      "source": "vietjack"
+    },
+    {
+      "word": "provide",
+      "vi": "cung cấp",
+      "source": "vietjack"
+    },
+    {
+      "word": "rural area",
+      "vi": "vùng nông thôn",
+      "source": "vietjack"
+    },
+    {
+      "word": "skill",
+      "vi": "kĩ năng",
+      "source": "vietjack"
+    },
+    {
+      "word": "teenager",
+      "vi": "thanh thiếu niên",
+      "source": "vietjack"
+    },
+    {
+      "word": "volunteer",
+      "vi": "tình nguyện viên",
+      "source": "vietjack"
+    }
+  ],
+  "grammar": [],
+  "activities": {},
+  "version": 1,
+  "vocabulary_checked": false,
+  "grammar_checked": false,
+  "source_note": "Từ vựng theo danh sách VietJack (Global Success), chỉ từ và nghĩa. Ngữ pháp và hoạt động chưa có.",
+  "status": "vocab"
+}

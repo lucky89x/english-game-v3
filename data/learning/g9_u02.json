@@ -1,0 +1,128 @@
+{
+  "id": "g9_u02",
+  "grade": 9,
+  "unit": 2,
+  "title": "City Life",
+  "skills": [
+    "vocabulary",
+    "reading",
+    "grammar"
+  ],
+  "objectives": [
+    "Talk about the topic: City Life"
+  ],
+  "vocabulary": [
+    {
+      "word": "bustling",
+      "vi": "hối hả, nhộn nhịp, náo nhiệt",
+      "source": "vietjack"
+    },
+    {
+      "word": "carry out",
+      "vi": "tiến hành (nghiên cứu, nhiệm vụ)",
+      "source": "vietjack"
+    },
+    {
+      "word": "come down with",
+      "vi": "bị ốm (vì bệnh gì)",
+      "source": "vietjack"
+    },
+    {
+      "word": "concrete jungle",
+      "vi": "rừng bê tông (dùng để miêu tả một khu vực có nhiều nhà cao tầng)",
+      "source": "vietjack"
+    },
+    {
+      "word": "congested",
+      "vi": "tắc nghẽn (giao thông)",
+      "source": "vietjack"
+    },
+    {
+      "word": "construction site",
+      "vi": "công trường xây dựng",
+      "source": "vietjack"
+    },
+    {
+      "word": "downtown",
+      "vi": "khu trung tâm thành phố, thị trấn",
+      "source": "vietjack"
+    },
+    {
+      "word": "get around",
+      "vi": "đi xung quanh (khu vực), di chuyển từ nơi này đến nơi khác",
+      "source": "vietjack"
+    },
+    {
+      "word": "hang out with",
+      "vi": "đi chơi (cùng ai)",
+      "source": "vietjack"
+    },
+    {
+      "word": "hygiene",
+      "vi": "vệ sinh, vấn đề vệ sinh",
+      "source": "vietjack"
+    },
+    {
+      "word": "itchy",
+      "vi": "ngứa, gây ngứa",
+      "source": "vietjack"
+    },
+    {
+      "word": "leftover",
+      "vi": "thức ăn thừa",
+      "source": "vietjack"
+    },
+    {
+      "word": "liveable",
+      "vi": "(nơi, địa điểm) đáng sống",
+      "source": "vietjack"
+    },
+    {
+      "word": "metro",
+      "vi": "hệ thống tàu điện ngầm",
+      "source": "vietjack"
+    },
+    {
+      "word": "pricey",
+      "vi": "đắt đỏ",
+      "source": "vietjack"
+    },
+    {
+      "word": "process",
+      "vi": "xử lí",
+      "source": "vietjack"
+    },
+    {
+      "word": "public amenities",
+      "vi": "những tiện ích công cộng",
+      "source": "vietjack"
+    },
+    {
+      "word": "rush hour",
+      "vi": "giờ cao điểm",
+      "source": "vietjack"
+    },
+    {
+      "word": "sky train",
+      "vi": "tàu điện trên không",
+      "source": "vietjack"
+    },
+    {
+      "word": "tram",
+      "vi": "xe điện",
+      "source": "vietjack"
+    },
+    {
+      "word": "underground",
+      "vi": "(hệ thống) tàu điện ngầm",
+      "source": "vietjack"
+    }
+  ],
+  "grammar": [],
+  "activities": {},
+  "version": 1,
+  "vocabulary_checked": false,
+  "grammar_checked": false,
+  "source_note": "Từ vựng theo danh sách VietJack (Global Success), chỉ từ và nghĩa. Ngữ pháp và hoạt động chưa có.",
+  "status": "vocab"
+}

@@ -1,0 +1,133 @@
+{
+  "id": "g9_u12",
+  "grade": 9,
+  "unit": 12,
+  "title": "Career Choices",
+  "skills": [
+    "vocabulary",
+    "reading",
+    "grammar"
+  ],
+  "objectives": [
+    "Talk about the topic: Career Choices"
+  ],
+  "vocabulary": [
+    {
+      "word": "agriculture engineering",
+      "vi": "ngành kĩ sư nông nghiệp",
+      "source": "vietjack"
+    },
+    {
+      "word": "assembly worker",
+      "vi": "công nhân dây chuyền",
+      "source": "vietjack"
+    },
+    {
+      "word": "bartender",
+      "vi": "thợ pha chế đồ uống có cồn",
+      "source": "vietjack"
+    },
+    {
+      "word": "career",
+      "vi": "sự nghiệp",
+      "source": "vietjack"
+    },
+    {
+      "word": "cashier",
+      "vi": "thu ngân",
+      "source": "vietjack"
+    },
+    {
+      "word": "decisive",
+      "vi": "quyết đoán",
+      "source": "vietjack"
+    },
+    {
+      "word": "demanding",
+      "vi": "(yêu cầu) khắt khe, phức tạp",
+      "source": "vietjack"
+    },
+    {
+      "word": "fabric",
+      "vi": "vải vóc",
+      "source": "vietjack"
+    },
+    {
+      "word": "garment worker",
+      "vi": "công nhân may",
+      "source": "vietjack"
+    },
+    {
+      "word": "hand-eye coordination",
+      "vi": "sự phối hợp tay và mắt",
+      "source": "vietjack"
+    },
+    {
+      "word": "hands-on",
+      "vi": "có tính thực tiễn, thực hành",
+      "source": "vietjack"
+    },
+    {
+      "word": "inquiring",
+      "vi": "ham học hỏi, tìm tòi",
+      "source": "vietjack"
+    },
+    {
+      "word": "knowledgeable",
+      "vi": "am hiểu, thông thạo",
+      "source": "vietjack"
+    },
+    {
+      "word": "mechanic",
+      "vi": "thợ sửa chữa",
+      "source": "vietjack"
+    },
+    {
+      "word": "orientation",
+      "vi": "sự định hướng",
+      "source": "vietjack"
+    },
+    {
+      "word": "repetitive",
+      "vi": "lặp đi lặp lại",
+      "source": "vietjack"
+    },
+    {
+      "word": "rewarding",
+      "vi": "bổ ích, xứng đáng",
+      "source": "vietjack"
+    },
+    {
+      "word": "sew",
+      "vi": "khâu, may vá",
+      "source": "vietjack"
+    },
+    {
+      "word": "software engineer",
+      "vi": "kĩ sư phần mềm",
+      "source": "vietjack"
+    },
+    {
+      "word": "surgeon",
+      "vi": "bác sĩ phẫu thuật",
+      "source": "vietjack"
+    },
+    {
+      "word": "vocational",
+      "vi": "thuộc về nghề nghiệp, hướng nghiệp",
+      "source": "vietjack"
+    },
+    {
+      "word": "well-paid",
+      "vi": "được trả lương cao",
+      "source": "vietjack"
+    }
+  ],
+  "grammar": [],
+  "activities": {},
+  "version": 1,
+  "vocabulary_checked": false,
+  "grammar_checked": false,
+  "source_note": "Từ vựng theo danh sách VietJack (Global Success), chỉ từ và nghĩa. Ngữ pháp và hoạt động chưa có.",
+  "status": "vocab"
+}

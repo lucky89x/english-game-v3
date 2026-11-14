@@ -1,0 +1,128 @@
+{
+  "id": "g9_u07",
+  "grade": 9,
+  "unit": 7,
+  "title": "Natural Wonders of the World",
+  "skills": [
+    "vocabulary",
+    "reading",
+    "grammar"
+  ],
+  "objectives": [
+    "Talk about the topic: Natural Wonders of the World"
+  ],
+  "vocabulary": [
+    {
+      "word": "access",
+      "vi": "tiếp cận, đến được",
+      "source": "vietjack"
+    },
+    {
+      "word": "annual",
+      "vi": "(xảy ra) hằng năm",
+      "source": "vietjack"
+    },
+    {
+      "word": "biodiversity",
+      "vi": "sự đa dạng sinh học",
+      "source": "vietjack"
+    },
+    {
+      "word": "coral",
+      "vi": "san hô",
+      "source": "vietjack"
+    },
+    {
+      "word": "crazy",
+      "vi": "thích mê",
+      "source": "vietjack"
+    },
+    {
+      "word": "destination",
+      "vi": "điểm đến",
+      "source": "vietjack"
+    },
+    {
+      "word": "ecosystem",
+      "vi": "hệ sinh thái",
+      "source": "vietjack"
+    },
+    {
+      "word": "feature",
+      "vi": "đặc điểm",
+      "source": "vietjack"
+    },
+    {
+      "word": "locate",
+      "vi": "định vị, đặt ở",
+      "source": "vietjack"
+    },
+    {
+      "word": "location",
+      "vi": "địa điểm, nơi chốn",
+      "source": "vietjack"
+    },
+    {
+      "word": "majestic",
+      "vi": "uy nghi, tráng lệ",
+      "source": "vietjack"
+    },
+    {
+      "word": "occur",
+      "vi": "xảy ra",
+      "source": "vietjack"
+    },
+    {
+      "word": "paradise",
+      "vi": "thiên đường, nơi đẹp tuyệt trần",
+      "source": "vietjack"
+    },
+    {
+      "word": "peak",
+      "vi": "đỉnh, đỉnh núi",
+      "source": "vietjack"
+    },
+    {
+      "word": "permission",
+      "vi": "sự cho phép",
+      "source": "vietjack"
+    },
+    {
+      "word": "permit",
+      "vi": "cho phép",
+      "source": "vietjack"
+    },
+    {
+      "word": "possess",
+      "vi": "có, sở hữu",
+      "source": "vietjack"
+    },
+    {
+      "word": "support",
+      "vi": "ủng hộ, giúp đỡ",
+      "source": "vietjack"
+    },
+    {
+      "word": "sustainable",
+      "vi": "bền vững",
+      "source": "vietjack"
+    },
+    {
+      "word": "travel destination",
+      "vi": "điểm đến du lịch",
+      "source": "vietjack"
+    },
+    {
+      "word": "urgent",
+      "vi": "gấp, cấp bách",
+      "source": "vietjack"
+    }
+  ],
+  "grammar": [],
+  "activities": {},
+  "version": 1,
+  "vocabulary_checked": false,
+  "grammar_checked": false,
+  "source_note": "Từ vựng theo danh sách VietJack (Global Success), chỉ từ và nghĩa. Ngữ pháp và hoạt động chưa có.",
+  "status": "vocab"
+}

@@ -1,0 +1,123 @@
+{
+  "id": "g7_u10",
+  "grade": 7,
+  "unit": 10,
+  "title": "Energy Sources",
+  "skills": [
+    "vocabulary",
+    "reading",
+    "grammar"
+  ],
+  "objectives": [
+    "Talk about the topic: Energy Sources"
+  ],
+  "vocabulary": [
+    {
+      "word": "available",
+      "vi": "sẵn có",
+      "source": "vietjack"
+    },
+    {
+      "word": "electricity",
+      "vi": "điện năng",
+      "source": "vietjack"
+    },
+    {
+      "word": "energy",
+      "vi": "năng lượng",
+      "source": "vietjack"
+    },
+    {
+      "word": "hydro",
+      "vi": "liên quan đến nước",
+      "source": "vietjack"
+    },
+    {
+      "word": "light bulb",
+      "vi": "bóng đèn",
+      "source": "vietjack"
+    },
+    {
+      "word": "limited",
+      "vi": "bị hạn chế",
+      "source": "vietjack"
+    },
+    {
+      "word": "non-renewable",
+      "vi": "không thể tái tạo",
+      "source": "vietjack"
+    },
+    {
+      "word": "nuclear",
+      "vi": "thuộc về hạt nhân",
+      "source": "vietjack"
+    },
+    {
+      "word": "overcool",
+      "vi": "làm cho quá lạnh",
+      "source": "vietjack"
+    },
+    {
+      "word": "overheat",
+      "vi": "làm cho quá nóng",
+      "source": "vietjack"
+    },
+    {
+      "word": "panel",
+      "vi": "tấm ghép",
+      "source": "vietjack"
+    },
+    {
+      "word": "produce",
+      "vi": "sản xuất",
+      "source": "vietjack"
+    },
+    {
+      "word": "reduce",
+      "vi": "giảm",
+      "source": "vietjack"
+    },
+    {
+      "word": "renewable",
+      "vi": "có thể tái tạo",
+      "source": "vietjack"
+    },
+    {
+      "word": "replace",
+      "vi": "thay thế",
+      "source": "vietjack"
+    },
+    {
+      "word": "solar",
+      "vi": "liên quan đến mặt trời",
+      "source": "vietjack"
+    },
+    {
+      "word": "source",
+      "vi": "nguồn",
+      "source": "vietjack"
+    },
+    {
+      "word": "syllable",
+      "vi": "âm tiết",
+      "source": "vietjack"
+    },
+    {
+      "word": "tap",
+      "vi": "vòi",
+      "source": "vietjack"
+    },
+    {
+      "word": "warm",
+      "vi": "(Làm cho) ấm lên, nóng lên",
+      "source": "vietjack"
+    }
+  ],
+  "grammar": [],
+  "activities": {},
+  "version": 1,
+  "vocabulary_checked": false,
+  "grammar_checked": false,
+  "source_note": "Từ vựng theo danh sách VietJack (Global Success), chỉ từ và nghĩa. Ngữ pháp và hoạt động chưa có.",
+  "status": "vocab"
+}

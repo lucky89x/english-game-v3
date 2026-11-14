@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>English Quest · Forest of Memories</title>
+<script type="importmap">{ "imports": { "three": "./vendor/three.module.min.js", "three/addons/": "./vendor/addons/" } }</script>
+<style>
+  :root { --paper:#fdf3da; --ink:#4a2a10; --line:#b07a3c; --gold:#e2a52f; --blue:#2f6fd0; }
+  * { box-sizing: border-box; }
+  html, body { margin:0; height:100%; overflow:hidden; background:#7ec3f5; font-family:"Nunito","Trebuchet MS","Segoe UI",sans-serif; color:var(--ink); }
+  canvas#view { position:fixed; inset:0; width:100%; height:100%; display:block; }
+  .card { background:var(--paper); border:3px solid var(--line); border-radius:16px; box-shadow:0 4px 0 rgba(74,42,16,.25); }
+  #hud { position:fixed; left:14px; top:14px; padding:10px 14px; min-width:210px; }
+  #hud b { font-size:18px; } #hud .row { font-size:14px; margin-top:4px; }
+  #clue { position:fixed; left:50%; top:14px; transform:translateX(-50%); width:min(560px, calc(100vw - 560px)); min-width:300px; padding:10px 16px; text-align:center; }
+  #clue .who { font-size:13px; color:#9a6a35; } #clue .en { font-size:21px; font-weight:800; line-height:1.3; }
+  #clue .en mark { background:#ffe27a; border-radius:6px; padding:0 4px; color:inherit; }
+  #clue .vi { font-size:14px; margin-top:4px; color:#6b4a26; } #clue .tip { font-size:12px; color:#9a8060; margin-top:3px; }
+  #mapbox { position:fixed; right:14px; top:14px; padding:6px; } #mapbox canvas { display:block; border-radius:10px; cursor:pointer; }
+  #mapbox .cap { font-size:11px; text-align:center; color:#9a8060; margin-top:2px; }
+  #prompt { position:fixed; left:50%; bottom:150px; transform:translateX(-50%); padding:6px 14px; font-weight:700; font-size:15px; }
+  #dialog { position:fixed; left:50%; bottom:18px; transform:translateX(-50%); width:min(760px, calc(100vw - 32px)); padding:12px 18px; }
+  #dialog .who { font-weight:800; color:#b0661a; font-size:15px; } #dialog .en { font-size:19px; font-weight:700; margin:2px 0; line-height:1.35; }
+  #dialog .vi { font-size:14px; color:#6b4a26; } #dialog .next { text-align:right; font-size:12px; color:#9a8060; }
+  #dialog .opts { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
+  button { font:inherit; font-weight:800; color:var(--ink); background:#ffe9b0; border:3px solid var(--line); border-radius:12px; padding:8px 14px; cursor:pointer; }
+  button:hover, button:focus-visible { background:#ffd97a; outline:none; } button.on { background:var(--gold); color:#fff; }
+  #menu { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(20,50,40,.55); }
+  #menu .card { width:min(520px, calc(100vw - 32px)); padding:22px 26px; text-align:center; }
+  #menu h1 { margin:0 0 4px; font-size:34px; color:#a0541a; } #menu h2 { margin:0 0 12px; font-size:17px; font-weight:700; }
+  #menu input[type=text] { font:inherit; font-size:18px; width:100%; padding:8px 12px; border:3px solid var(--line); border-radius:12px; background:#fffaf0; margin:6px 0 10px; }
+  #menu .list button { display:block; width:100%; margin:6px 0; font-size:18px; } #menu .grades { display:flex; gap:8px; justify-content:center; margin:6px 0 14px; }
+  #menu .small { font-size:13px; margin-top:10px; } #menu .small button { font-size:13px; padding:4px 10px; border-width:2px; }
+  #gear { position:fixed; left:14px; bottom:14px; padding:8px 10px; font-size:13px; display:flex; gap:6px; align-items:center; flex-wrap:wrap; max-width:420px; }
+  #gear button, #gear select { font:inherit; font-size:13px; padding:3px 8px; border:2px solid var(--line); border-radius:8px; background:#ffe9b0; }
+  #perf { position:fixed; right:14px; bottom:14px; padding:6px 10px; font:12px/1.35 ui-monospace,Consolas,monospace; background:rgba(20,30,40,.78); color:#d7ffe0; border-radius:8px; white-space:pre; }
+  #loading { position:fixed; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; background:linear-gradient(#7ec3f5,#c9ecff); font-weight:800; font-size:20px; gap:12px; }
+  #loading .bar { width:280px; height:16px; border:3px solid var(--line); border-radius:10px; background:#fffaf0; overflow:hidden; } #loading .bar i { display:block; height:100%; width:0; background:var(--gold); transition:width .2s; }
+  .hidden { display:none !important; }
+  @media (max-width: 900px) { #clue { top:120px; width:calc(100vw - 28px); } #mapbox canvas { width:150px; height:150px; } }
+</style>
+</head>
+<body>
+<canvas id="view"></canvas>
+<div id="hud" class="card hidden"></div>
+<div id="clue" class="card hidden"></div>
+<div id="mapbox" class="card hidden"><canvas id="minimap" width="220" height="220"></canvas><div class="cap">Bấm để tự đi · lăn chuột để phóng</div></div>
+<div id="prompt" class="card hidden"></div>
+<div id="dialog" class="card hidden"></div>
+<div id="gear" class="card hidden"></div>
+<div id="perf" class="hidden"></div>
+<div id="menu" class="hidden"><div class="card" id="menucard"></div></div>
+<div id="loading"><div>English Quest</div><div class="bar"><i id="loadbar"></i></div><div id="loadtext" style="font-size:14px;font-weight:600">Đang tải…</div></div>
+<script type="module" src="./src/main.js"></script>
+</body>
+</html>
