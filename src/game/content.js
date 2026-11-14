@@ -68,7 +68,7 @@ export const SAM_LINES = [
   { who: 'Sam', en: 'Long ago, every tree here had a name. Now the words are gone.' },
 ];
 export const OUTLINE = [
-  'I. The Starter Village — lost letter, word jars, the broken bridge (Godot build; web port is the next batch).',
+  'I. The Starter Village — lost letter, word jars, fixing the broken south bridge.',
   'II. Forest of Memories — the forest forgot its words; memory crystals, the ancient tree, the first compass piece.',
   'III. Golden Wind Desert — traders speak in riddles; directions, numbers and bargaining across the oasis.',
   'IV. Echo Mountains — echoes repeat only what is said clearly; listening and pronunciation trials.',
@@ -77,3 +77,50 @@ export const OUTLINE = [
   'VII. Future City — machines misunderstand people; giving precise instructions and explanations.',
   'VIII. Star Island and the Crystal Tower — all pieces join; a final adventure using every skill.',
 ];
+
+// "Fix the Bridge" (Chapter I, after Ben's market). Original texts. Only grades 6 and 8 are written so far;
+// another grade is told the plan is not written yet and the bridge opens by itself (nothing borrowed).
+// need: what Sam asks for. items: the right object and its look-alike decoy, with the line Sam says when the
+// decoy is picked. plan: Pip reads it, then asks the steps in order (options never carry First/Next words).
+export const BRIDGE = {
+  6: {
+    need: [
+      { who: 'Sam', en: 'Oh no! The storm broke the south bridge.' },
+      { who: 'Sam', en: 'We need three things to fix it: a rope, a log and an axe.' },
+      { who: 'Sam', en: 'The rope and the log are near the path. Ben has an axe.', vi: 'Tìm sợi dây thừng và khúc gỗ gần đường đi, xin Ben cái rìu.' },
+    ],
+    items: {
+      rope: { en: 'rope', vi: 'dây thừng', decoy: 'chain', wrong: 'That is a chain. It is too heavy. We need a rope.', wrongVi: 'chain = dây xích. Rope = dây thừng (mềm, bằng sợi).' },
+      log: { en: 'log', vi: 'khúc gỗ', decoy: 'boulder', wrong: 'That is a big rock. We cannot cut a rock! We need a log.', wrongVi: 'rock = hòn đá. Log = khúc gỗ (thân cây đã đốn).' },
+    },
+    plan: [
+      { who: 'Pip', en: 'I can read the plan! First, cut the log with the axe.' },
+      { who: 'Pip', en: 'Next, put the log across the river. Then, tie the log with the rope.' },
+      { who: 'Pip', en: 'Finally, walk across slowly. Now, tell me the steps!' },
+    ],
+    steps: ['Cut the log with the axe.', 'Put the log across the river.', 'Tie the log with the rope.', 'Walk across slowly.'],
+    ask: ['What do we do first?', 'What do we do next?', 'And then?', 'What do we do last?'],
+    hint: 'Đọc lại lời Pip: First → Next → Then → Finally.',
+  },
+  8: {
+    need: [
+      { who: 'Sam', en: "I'm afraid last night's storm has broken the south bridge." },
+      { who: 'Sam', en: "To repair it, we'll need a strong rope, a long log and a sharp axe." },
+      { who: 'Sam', en: "You'll find the rope and the log somewhere near the path. Ben keeps an axe at his market.", vi: 'Tìm dây thừng và khúc gỗ gần đường đi; rìu ở chỗ Ben.' },
+    ],
+    items: {
+      rope: { en: 'rope', vi: 'dây thừng', decoy: 'chain', wrong: "That's a metal chain. It's far too heavy to tie a log with.", wrongVi: 'chain = dây xích kim loại. Rope = dây thừng.' },
+      log: { en: 'log', vi: 'khúc gỗ', decoy: 'boulder', wrong: "That's a boulder, not a log. You can't build a bridge with a rock you can't even lift!", wrongVi: 'boulder = tảng đá lớn. Log = khúc gỗ.' },
+    },
+    plan: [
+      { who: 'Pip', en: "Before we put the log across the river, we have to cut it to the right length with the axe." },
+      { who: 'Pip', en: "Once the log is in place, tie it tightly to the posts with the rope." },
+      { who: 'Pip', en: "Nobody should cross until we have tested it carefully. Can you put the steps in order?" },
+    ],
+    steps: ['Cut the log to the right length.', 'Put the log across the river.', 'Tie the log to the posts.', 'Test the bridge carefully.'],
+    ask: ['Which step comes first?', 'What happens after that?', 'And after the log is in place?', 'What must we do before anyone crosses?'],
+    hint: 'Before A, B = làm B trước. Once A, B = xong A rồi mới B. Until = cho đến khi.',
+  },
+};
+/** Where the bridge things lie in the Starter Village (x, z). Decoys sit next to the path too. */
+export const BRIDGE_SPOTS = { rope: [7, 43.5], chain: [10.5, 36.6], log: [-6, 36.5], boulder: [2.5, 44.5], sam: [12.6, 42.6], pip: [13.5, 37.5] };

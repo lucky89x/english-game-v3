@@ -8,6 +8,12 @@ let cur = forest;
 export let NAME, TITLE, SIZE, PLAY_RADIUS, RIVER_START, RIVER_END, WATERFALL, BRIDGES, STONES_Z, STONES, LANDMARKS, ENTRANCE, SPAWN, EXITS, PATHS, SOLIDS, TREES, ROCKS;
 const listeners = [];
 export function onRegionChange(f) { listeners.push(f); }
+/** Opens or closes a bridge of any region; listeners (nav grid, minimap) refresh when the active map changed. */
+export function setBridgeOpen(region, id, open) {
+  const r = REGIONS[region]; if (!r || !r.setBridgeOpen(id, open)) return false;
+  if (r === cur) for (const f of listeners) f(cur.NAME);
+  return true;
+}
 export function setRegion(name) {
   cur = REGIONS[name] || forest;
   ({ NAME, TITLE, SIZE, PLAY_RADIUS, RIVER_START, RIVER_END, WATERFALL, BRIDGES, STONES_Z, STONES, LANDMARKS, ENTRANCE, SPAWN, EXITS, PATHS, SOLIDS, TREES, ROCKS } = cur);

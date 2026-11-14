@@ -1,5 +1,6 @@
-// Chapter I chain in the Starter Village: arrive -> The Lost Letter -> Ben's Word Jars -> the forest
-// gate opens. Texts are original; the letter itself comes from the grade's own curriculum file
+// Chapter I chain in the Starter Village: arrive -> The Lost Letter -> Ben's Word Jars -> Fix the Bridge
+// (Sam names the things, Ngọc picks the rope and log among look-alikes, earns Ben's axe, puts Pip's plan
+// in order) -> the forest gate opens. Texts are original; the letter itself comes from the grade's own curriculum file
 // (activities.lost_letter). A grade without that activity is told so and moves on, nothing is borrowed.
 import { mulberry32 } from '../core/regionkit.js';
 import * as Review from '../core/review.js';
@@ -8,7 +9,8 @@ import { recordSkill, addExp } from '../core/save.js';
 export const CUSTOMERS = 5, JARS = 4;
 
 export class VillageStory {
-  /** api: { profile, save(), ui, sfx(name), onChange(), letter: object|null, cards: [{id, word, vi}], cardOf(id) } */
+  /** api: { profile, save(), ui, sfx(name), onChange(), letter: object|null, cards: [{id, word, vi}], cardOf(id),
+   *  bridge: grade's BRIDGE content or null, onBridgeFixed() } */
   constructor(api) { this.api = api; this.market = null; }
   get q() { const qs = this.api.profile.quests; if (!qs.village) qs.village = { step: 'arrive', letterWrong: 0, rounds: 0 }; return qs.village; }
   get step() { return this.q.step; }
@@ -28,6 +30,9 @@ export class VillageStory {
       ui.dialogue([{ who: 'Tom', en: 'Thank you for reading it to me! (+20 gold)' },
         { who: 'Tom', en: 'Ben is very busy at the market today. Can you help him?', vi: 'Chợ của Ben ở phía Nam quảng trường (dấu ! trên bản đồ).' }], () => this.set('jars'));
     } else if (s === 'jars' || s === 'jars_play') ui.dialogue([{ who: 'Tom', en: 'Ben is waiting for you at the market.' }]);
+    else if (s === 'tom_bridge') ui.dialogue([{ who: 'Tom', en: 'Thank you for helping Ben! But there is bad news.' },
+      { who: 'Tom', en: 'The storm broke the south bridge. Sam is there now. Please help him!', vi: 'Cầu phía Nam bị gãy. Tới đầu cầu gặp Sam (dấu ! trên bản đồ).' }], () => this.set('bridge'));
+    else if (s === 'bridge' || s === 'gather' || s === 'plan') ui.dialogue([{ who: 'Tom', en: 'Sam is waiting for you at the south bridge.' }]);
     else if (s === 'open') {
       profile.flags.forest_open = true; this.api.sfx('fanfare');
       ui.dialogue([{ who: 'Tom', en: 'You are a great helper! Now, something strange is happening…' },
@@ -64,8 +69,13 @@ export class VillageStory {
     const { ui, cards } = this.api, s = this.step;
     if (this.market) return;
     if (s === 'arrive' || s === 'letter_find' || s === 'letter_return') { ui.dialogue([{ who: 'Ben', en: 'Hello! Come back later. I am busy now.' }]); return; }
-    if (cards.length < JARS) { ui.dialogue([{ who: 'Ben', en: 'Sorry, I have no jars today.', vi: `Từ vựng Unit ${this.api.profile.unit} lớp ${this.api.profile.grade} chưa có.` }], () => { if (s === 'jars') this.set('open'); }); return; }
-    ui.dialogue([{ who: 'Ben', en: s === 'jars' ? 'Travellers are here, and they only speak English! Please give them the right word jar.' : 'More travellers! Can you help me again?',
+    const wantsAxe = s === 'gather' && !this.q.items.includes('axe');
+    if (cards.length < JARS) {
+      ui.dialogue([{ who: 'Ben', en: wantsAxe ? 'I have no jars today, but here is my axe!' : 'Sorry, I have no jars today.', vi: `Từ vựng Unit ${this.api.profile.unit} lớp ${this.api.profile.grade} chưa có.` }], () => {
+        if (s === 'jars') this.set('tom_bridge'); else if (wantsAxe) this.take('axe'); });
+      return;
+    }
+    ui.dialogue([{ who: 'Ben', en: s === 'jars' ? 'Travellers are here, and they only speak English! Please give them the right word jar.' : wantsAxe ? 'An axe? Sure! But first, help me with these travellers, please.' : 'More travellers! Can you help me again?',
       vi: 'Đọc món khách cần, đi tới hũ có nghĩa đúng rồi nhấn E.' }], () => this.startMarket());
   }
   startMarket(seed = Date.now() & 0xffff) {
@@ -102,9 +112,69 @@ export class VillageStory {
     const m = this.market, { ui } = this.api; this.market = null; this.q.rounds += 1;
     const lines = [{ who: 'Ben', en: `Well done! ${m.firstTry} of ${m.queue.length} jars were right the first time. (+${m.gold} gold)` }];
     if (m.missed.length) lines.push({ who: 'Ben', en: 'Remember: ' + m.missed.slice(0, 3).map((c) => `${c.word}`).join(', ') + '.', vi: m.missed.slice(0, 3).map((c) => `${c.word} = ${c.vi}`).join(' · ') });
-    if (this.step === 'jars_play') { lines.push({ who: 'Ben', en: 'Tom wants to see you at the square.' }); this.q.step = 'open'; }
+    if (this.step === 'jars_play') { lines.push({ who: 'Ben', en: 'Tom wants to see you at the square.' }); this.q.step = 'tom_bridge'; }
+    const axe = this.step === 'gather' && !this.q.items.includes('axe');
+    if (axe) lines.push({ who: 'Ben', en: 'Thank you! Here is my axe. Be careful, it is sharp!' });
     this.api.save(); this.api.onChange();
-    ui.dialogue(lines);
+    ui.dialogue(lines, axe ? () => this.take('axe') : undefined);
   }
   leaveMarket() { if (!this.market) return; this.market = null; if (this.step === 'jars_play') this.q.step = 'jars'; this.api.onChange(); }
+
+  // ---------------------------------------------------------------- Fix the Bridge
+  get items() { return this.q.items || (this.q.items = []); }
+  /** Things still lying on the ground (right ones and decoys) while Ngọc is gathering. */
+  groundItems() { if (this.step !== 'gather' || !this.api.bridge) return []; return ['rope', 'chain', 'log', 'boulder'].filter((id) => !this.items.includes(id)); }
+  talkSam() {
+    const { ui, bridge, profile } = this.api, s = this.step;
+    if (s === 'bridge') {
+      if (!bridge) {      // not written for this grade: say so and open the bridge, never borrow another grade's text
+        ui.dialogue([{ who: 'Sam', en: 'Look! The bridge is fixed now.', vi: `Nhiệm vụ Sửa cây cầu cho lớp ${profile.grade} chưa được soạn. Cầu đã mở, con quay lại gặp Tom nhé.` }], () => this.fixBridge());
+        return;
+      }
+      this.q.items = []; this.q.decoys = 0;
+      ui.dialogue(bridge.need, () => this.set('gather'));
+    } else if (s === 'gather') {
+      const left = ['rope', 'log', 'axe'].filter((id) => !this.items.includes(id));
+      if (left.length) ui.dialogue([{ who: 'Sam', en: `We still need: ${left.map((id) => (id === 'axe' ? 'an axe' : 'a ' + id)).join(', ')}.` }]);
+      else { this.set('plan'); ui.dialogue([{ who: 'Sam', en: 'Great, we have everything! Pip, can you read the plan for us?' }, ...bridge.plan], () => this.askStep(0, false)); }
+    } else if (s === 'plan') ui.dialogue(bridge.plan, () => this.askStep(this.q.order || 0, false));
+    else ui.dialogue([{ who: 'Sam', en: 'Good morning! The fish are jumping today.' }, { who: 'Sam', en: 'The south bridge goes to the orchard. The apples are red and sweet!' }]);
+  }
+  /** Ngọc picks up a thing on the ground. Decoys are explained and recorded, never taken. */
+  pick(id) {
+    const { ui, bridge, profile } = this.api;
+    if (!this.groundItems().includes(id)) return false;
+    const right = id === 'rope' || id === 'log', item = right ? bridge.items[id] : Object.values(bridge.items).find((it) => it.decoy === id);
+    recordSkill(profile, 'vocabulary', right, 0);
+    if (!right) { this.q.decoys = (this.q.decoys || 0) + 1; this.api.sfx('wrong'); this.api.save(); ui.dialogue([{ who: 'Sam', en: item.wrong, vi: item.wrongVi }]); return false; }
+    ui.dialogue([{ who: 'Ngọc', en: `I found the ${item.en}!` }], () => this.take(id));
+    return true;
+  }
+  take(id) {
+    if (this.items.includes(id)) return;
+    this.items.push(id); this.api.profile.stats.gold += 2; addExp(this.api.profile, 5); this.api.sfx('correct');
+    if (['rope', 'log', 'axe'].every((k) => this.items.includes(k))) this.api.ui.dialogue([{ who: 'Ngọc', en: 'I have the rope, the log and the axe!', vi: 'Mang đồ về cho Sam ở đầu cầu phía Nam.' }]);
+    this.api.save(); this.api.onChange();
+  }
+  /** Pip's plan: the steps are asked one by one, options shuffled, no sequence words in them. */
+  askStep(n, retry) {
+    const { ui, bridge, profile } = this.api;
+    if (n >= bridge.steps.length) return this.fixBridge();
+    this.q.order = n; this.api.save();
+    const rnd = mulberry32(n * 7 + 3), left = bridge.steps.slice(n), options = [...left].sort(() => rnd() - 0.5);
+    ui.choose({ who: 'Pip', en: bridge.ask[n], vi: retry ? bridge.hint : undefined }, options, (i) => {
+      const ok = options[i] === bridge.steps[n];
+      recordSkill(profile, 'reading', ok, retry && ok ? 1 : 0);
+      this.api.sfx(ok ? 'correct' : 'wrong');
+      if (!ok) { this.q.orderWrong = (this.q.orderWrong || 0) + 1; this.api.save(); return this.askStep(n, true); }
+      if (!retry) profile.stats.gold += 3;
+      this.askStep(n + 1, false);
+    });
+  }
+  fixBridge() {
+    const { profile, ui } = this.api;
+    profile.flags.bridge_fixed = true; addExp(profile, 30); this.api.sfx('fanfare');
+    this.q.step = 'open'; this.api.save(); this.api.onBridgeFixed(); this.api.onChange();
+    if (this.api.bridge) ui.dialogue([{ who: 'Sam', en: 'The bridge is strong again. Thank you!' }, { who: 'Sam', en: 'Go and tell Tom the good news.', vi: 'Quay lại quảng trường gặp Tom.' }]);
+  }
 }

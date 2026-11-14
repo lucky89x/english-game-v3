@@ -533,6 +533,32 @@ async function villageExtras(add, loadModel, shadowed) {
   signs(add, [[2.9, 14.5, '← Market\nFarm ↓'], [3.2, 1.2, 'Bridge →\n← Forest'], [30.5, 9.5, 'Orchard']]);
 }
 
+/** Loose planks bobbing in the river and a warning sign at the west end of a broken bridge (hidden when open). */
+function brokenBits(b, base) {
+  const g = new THREE.Group(), wood = new THREE.MeshStandardMaterial({ color: 0x8a5a30, roughness: 0.9 });
+  const planks = [[-0.6, 1.8, 0.4], [1.1, -2.2, -0.5], [2.4, 0.9, 1.1]].map(([dx, dz, rot]) => {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.12, 0.42), wood); m.position.set(b.x + dx, L.WATER_LEVEL + 0.04, b.z + dz); m.rotation.y = rot; m.castShadow = true; g.add(m); return m;
+  });
+  const wx = b.x - L.BRIDGE_LEN / 2 - 1.6, wz = b.z + 1.9, post = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.08, 1.3, 6), wood);
+  post.position.set(wx, L.groundHeight(wx, wz) + 0.65, wz); g.add(post);
+  const sign = label('⚠ Broken bridge', { size: 30, scale: 0.7, bg: 'rgba(255,214,120,0.95)' }); sign.position.set(wx, L.groundHeight(wx, wz) + 1.6, wz); g.add(sign);
+  g.userData.update = (t) => { planks.forEach((m, i) => { m.position.y = L.WATER_LEVEL + 0.04 + Math.sin(t * 1.3 + i * 2) * 0.03; m.rotation.z = Math.sin(t * 0.9 + i) * 0.05; }); };
+  return g;
+}
+
+/** Things for "Fix the Bridge": rope coil, metal chain, log and boulder (no labels: the word is the task). */
+export function bridgeItem(kind) {
+  const g = new THREE.Group();
+  const mat = (color, metal = 0) => new THREE.MeshStandardMaterial({ color, roughness: metal ? 0.35 : 0.9, metalness: metal });
+  if (kind === 'rope') { for (let i = 0; i < 3; i++) { const t = new THREE.Mesh(new THREE.TorusGeometry(0.42 - i * 0.04, 0.07, 8, 24), mat(0xc9a165)); t.rotation.x = Math.PI / 2; t.position.y = 0.08 + i * 0.13; g.add(t); } }
+  else if (kind === 'chain') { for (let i = 0; i < 6; i++) { const t = new THREE.Mesh(new THREE.TorusGeometry(0.16, 0.045, 6, 14), mat(0x8c939c, 0.8)); t.position.set(-0.6 + i * 0.24, 0.07, Math.sin(i) * 0.1); t.rotation.set(Math.PI / 2, i % 2 ? Math.PI / 2 : 0, 0); g.add(t); } }
+  else if (kind === 'log') { const c = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.3, 2.2, 12), mat(0x7a4f2a)); c.rotation.z = Math.PI / 2; c.position.y = 0.3; g.add(c);
+    for (const sx of [-1.1, 1.1]) { const r = new THREE.Mesh(new THREE.CircleGeometry(0.27, 12), mat(0xe2b97a)); r.position.set(sx * 1.003, 0.3, 0); r.rotation.y = sx * Math.PI / 2; g.add(r); } }
+  else { const r = new THREE.Mesh(new THREE.DodecahedronGeometry(0.75, 0), mat(0x8f8a84)); r.scale.set(1.2, 0.8, 1); r.position.y = 0.45; g.add(r); }
+  g.traverse((c) => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
+  return g;
+}
+
 /** Builds the active region (core/layout.js). `loadModel(name)` resolves a cloned GLB scene. */
 export async function buildWorld(scene, loadModel) {
   const root = new THREE.Group(); root.name = 'world:' + L.NAME; scene.add(root);
@@ -541,16 +567,29 @@ export async function buildWorld(scene, loadModel) {
   const detail = { cobbles: add(buildCobbles()), grass: add(buildGrass()), flowers: add(buildFlowers()), far: add(mountains()), critters: add(critters()) };
   add(buildWater()); add(buildTrees()); add(buildRocks()); add(buildFences());
   const shadowed = (o) => { o.traverse((c) => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } }); return o; };
+  const bridges = {};
   for (const b of L.BRIDGES) {
     const m = shadowed(await loadModel('prop_bridge_curved_v02'));
     const base = (L.groundHeight(b.x - L.BRIDGE_LEN / 2 - 0.9, b.z) + L.groundHeight(b.x + L.BRIDGE_LEN / 2 + 0.9, b.z)) / 2;
     m.position.set(b.x, base, b.z); m.rotation.y = Math.PI / 2; add(m);
+    bridges[b.id] = { model: m, bridge: b, broken: add(brokenBits(b, base)) };
   }
+  // A closed bridge: its middle is clipped away (own material copies, so the other bridge is untouched),
+  // loose planks float below and a warning sign stands at the west end.
+  const setBridgeOpen = (id, open) => {
+    const e = bridges[id]; if (!e) return;
+    if (!e.own) { e.own = true; e.model.traverse((c) => { if (c.isMesh) c.material = Array.isArray(c.material) ? c.material.map((m) => m.clone()) : c.material.clone(); }); }
+    const gap = 1.7, x = e.bridge.x;
+    const planes = open ? [] : [new THREE.Plane(new THREE.Vector3(-1, 0, 0), x - gap), new THREE.Plane(new THREE.Vector3(1, 0, 0), -(x + gap))];
+    e.model.traverse((c) => { if (c.isMesh) [].concat(c.material).forEach((m) => { m.clippingPlanes = planes; m.clipIntersection = true; m.needsUpdate = true; }); });
+    e.broken.visible = !open;
+  };
+  for (const b of L.BRIDGES) setBridgeOpen(b.id, b.open);
   if (L.NAME === 'forest') await forestExtras(add, loadModel, shadowed); else await villageExtras(add, loadModel, shadowed);
   // jar labels (village market): four pooled sprites, text swapped per customer
   const jarLabels = [];
   return {
-    root, detail,
+    root, detail, setBridgeOpen,
     update(t) { for (const u of updaters) u(t); },
     setDetail(density, particles, far) {
       for (const k of ['grass', 'flowers']) detail[k].count = Math.floor(detail[k].userData.full * density);

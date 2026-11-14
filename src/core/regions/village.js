@@ -7,7 +7,7 @@ export const GATE = { x: -30, z: -44 };
 export default makeRegion({
   name: 'village', title: 'Starter Village', size: 140, playRadius: 62, seed: 4242, trees: 230, rocks: 40, roughness: 0.3, treeMix: [0.3, 0.85],
   riverX, riverHalf: () => 3.4, riverStart: -90,
-  bridges: [{ id: 'village', z: 6, name: 'Village Bridge' }, { id: 'south', z: 40, name: 'South Bridge' }], stonesZ: null,
+  bridges: [{ id: 'village', z: 6, name: 'Village Bridge' }, { id: 'south', z: 40, name: 'South Bridge', closed: true }], stonesZ: null,
   landmarks: [
     { id: 'hall', en: 'village hall', vi: 'nhà trưởng làng', label: 'Village Hall', x: 0, z: -25, spot: [0, -16.5] },
     { id: 'square', en: 'square', vi: 'quảng trường', label: 'Square', x: 0, z: 4 },

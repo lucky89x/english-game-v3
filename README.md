@@ -1,6 +1,6 @@
 # English Quest — Web (Three.js)
 
-Bản web nhẹ của English Quest, tách khỏi bản Godot (`lucky89x/english-game-v3`). Hiện có: **Làng Khởi Đầu** (Bức thư thất lạc, Hũ chữ của Ben, mở cổng rừng) nối với **Rừng Ký Ức** (nhiệm vụ "Echoes of the Forest", lớp 6–9), hồ sơ nhiều học sinh, bản đồ nhỏ có tự đi (A*), gợi ý theo cấp, ôn cách quãng.
+Bản web nhẹ của English Quest, tách khỏi bản Godot (`lucky89x/english-game-v3`). Hiện có: **Làng Khởi Đầu** (Bức thư thất lạc, Hũ chữ của Ben, Sửa cây cầu, mở cổng rừng) nối với **Rừng Ký Ức** (nhiệm vụ "Echoes of the Forest", lớp 6–9), hồ sơ nhiều học sinh, bản đồ nhỏ có tự đi (A*), gợi ý theo cấp, ôn cách quãng.
 
 ## Chạy thử
 ```bash
@@ -25,7 +25,8 @@ WASD đi · Shift chạy · Space nhảy · E tương tác · H gợi ý · gi�
 Repo → Settings → Pages → Deploy from a branch → chọn nhánh chứa `index.html`, thư mục `/ (root)`. Không cần bước build.
 
 ## Ghi chú trung thực
-- Làng mới có 2 nhiệm vụ đầu; Sửa cây cầu, rương bí mật, nội thất chưa port. Chương III–VIII chỉ có dàn ý.
+- Làng có 3 nhiệm vụ: Bức thư, Hũ chữ, Sửa cây cầu. Rương bí mật, nội thất chưa làm. Chương III–VIII chỉ có dàn ý.
+- Sửa cây cầu chỉ có nội dung lớp 6 và 8; lớp 7, 9 game báo "chưa được soạn" và cầu tự mở.
 - Bức thư chỉ có nội dung lớp 6 và 8; lớp 7, 9 game báo "chưa được soạn".
 - Ngọc, Tom, Ben, Sam, Pip và nhà dùng lại model GLB của bản Godot. Chưa có nhân vật mới, nội thất, giọng đọc.
 - FPS đo bằng trình dựng phần mềm (không GPU), không phản ánh máy thật.

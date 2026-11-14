@@ -121,12 +121,12 @@ test('quest: five crystals lead to the tree challenge and a clear ending', () =>
 });
 
 // ---------------------------------------------------------------- village region
-test('village: landmarks, spawn and both bridges are walkable; forest gate is reachable; no tree in the square', () => {
+test('village: landmarks, spawn and the village bridge are walkable; forest gate is reachable; no tree in the square', () => {
   L.setRegion('village');
   try {
     assert.equal(L.NAME, 'village');
     assert.ok(L.walkable(L.SPAWN.x, L.SPAWN.z));
-    for (const b of L.BRIDGES) assert.ok(L.walkable(b.x, b.z) && !L.inWater(b.x, b.z));
+    const [vb] = L.BRIDGES; assert.ok(L.walkable(vb.x, vb.z) && !L.inWater(vb.x, vb.z));
     assert.ok(L.inWater(L.riverX(20), 20));
     for (const l of L.LANDMARKS.filter((x) => x.spot)) assert.ok(L.walkable(l.spot[0], l.spot[1]), l.id);
     const ex = L.EXITS[0];
@@ -136,14 +136,50 @@ test('village: landmarks, spawn and both bridges are walkable; forest gate is re
   } finally { L.setRegion('forest'); }
 });
 
+test('village: the south bridge starts broken; minimap routes go round by the village bridge until it is fixed', () => {
+  L.setRegion('village');
+  try {
+    const s = L.BRIDGES.find((b) => b.id === 'south'), w = [s.x - 7.5, s.z], e = [s.x + 7.5, s.z];
+    const onSouth = (p) => Math.abs(p.z - s.z) < 1.5 && Math.abs(p.x - s.x) < L.BRIDGE_LEN / 2;
+    assert.equal(s.open, false);
+    assert.ok(!L.walkable(s.x, s.z) && L.inWater(s.x, s.z), 'broken middle is water');
+    assert.ok(!L.canStep(s.x - 0.5, s.z, s.x + 0.5, s.z));
+    const round = findPath(...w, ...e);
+    assert.ok(round && round.length > 40 && !round.some(onSouth), 'detour by the village bridge, never over the gap');
+    assert.ok(round.some((p) => Math.abs(p.z - L.BRIDGES[0].z) < 1.5 && L.onBridge(p.x, p.z)), 'the detour uses the village bridge');
+    assert.ok(L.setBridgeOpen('village', 'south', true));
+    assert.ok(L.walkable(s.x, s.z) && !L.inWater(s.x, s.z) && L.walkHeight(s.x, s.z) > L.WATER_LEVEL + 0.8);
+    const straight = findPath(...w, ...e);
+    assert.ok(straight.length < 20 && straight.some(onSouth), 'fixed bridge is the short way');
+    assert.equal(L.setBridgeOpen('village', 'south', true), false, 'no change, no rebuild');
+  } finally { L.setBridgeOpen('village', 'south', false); L.setRegion('forest'); }
+});
+test('village: bridge things and Sam / Pip spots are on dry, reachable ground', () => {
+  L.setRegion('village');
+  try { for (const [id, [x, z]] of Object.entries(BRIDGE_SPOTS)) assert.ok(L.walkable(x, z, 0.9) && findPath(L.SPAWN.x, L.SPAWN.z, x, z), id); }
+  finally { L.setRegion('forest'); }
+});
+test('content: bridge quest is written for grades 6 and 8 only, English lines carry no Vietnamese', () => {
+  assert.deepEqual(Object.keys(BRIDGE).map(Number), [6, 8]);
+  const vi = /[àáảãạăằắẳẵặâầấẩẫậđèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵ]/i;
+  for (const b of Object.values(BRIDGE)) {
+    assert.equal(b.steps.length, 4); assert.equal(b.ask.length, 4); assert.equal(new Set(b.steps).size, 4);
+    for (const line of [...b.need, ...b.plan]) assert.ok(!vi.test(line.en), line.en);
+    for (const st of b.steps) assert.ok(!/\b(first|next|then|finally|before|after)\b/i.test(st), 'no sequence word in an option: ' + st);
+    assert.deepEqual(Object.values(b.items).map((i) => i.decoy).sort(), ['boulder', 'chain']);
+  }
+});
+
 // ---------------------------------------------------------------- village story (no browser)
 import { VillageStory, CUSTOMERS } from '../src/game/village.js';
+import { BRIDGE, BRIDGE_SPOTS } from '../src/game/content.js';
 function villageHarness({ grade = 6, letter = { letter: 'Dear Tom,\n\nPlease give it to the librarian.', question: 'Who gets it?', choices: ['The librarian', 'Nam', 'Mai'], answer: 0, hint: 'đọc lại' }, n = 8 } = {}) {
   const profile = S.newProfile('An', grade), log = [];
   const cards = Array.from({ length: n }, (_, i) => ({ id: `g${grade}_u01:w${i}`, word: 'w' + i, vi: 'nghĩa ' + i }));
   const ui = { dialogue: (pages, done) => { log.push(pages); if (done) done(); }, choose: (page, options, pick) => { ui.pending = { page, options, pick }; } };
-  const story = new VillageStory({ profile, save() {}, ui, sfx() {}, onChange() {}, letter, cards, cardOf: (id) => cards.find((c) => c.id === id) });
-  return { profile, story, ui, log, cards };
+  const fixed = { n: 0 };
+  const story = new VillageStory({ profile, save() {}, ui, sfx() {}, onChange() {}, letter, cards, cardOf: (id) => cards.find((c) => c.id === id), bridge: BRIDGE[grade] || null, onBridgeFixed: () => fixed.n++ });
+  return { profile, story, ui, log, cards, fixed };
 }
 test('village: letter read with a wrong then a right answer, hint only after the mistake, reward once', () => {
   const { profile, story, ui } = villageHarness();
@@ -179,13 +215,51 @@ test('village: word jars — wrong jar teaches, first-try pays more, due words c
   story.serve(story.customer.options.findIndex((o) => o.id === story.customer.target.id));
   assert.equal(profile.stats.gold, g0 + 1);
   for (let i = 1; i < CUSTOMERS; i++) story.serve(story.customer.options.findIndex((o) => o.id === story.customer.target.id));
-  assert.equal(story.market, null); assert.equal(story.step, 'open');
+  assert.equal(story.market, null); assert.equal(story.step, 'tom_bridge');
   assert.equal(profile.stats.gold, g0 + 1 + 3 * (CUSTOMERS - 1));
   assert.ok(!profile.flags.forest_open);
+});
+const serveAll = (story) => { while (story.market) story.serve(story.customer.options.findIndex((o) => o.id === story.customer.target.id)); };
+test('village: Fix the Bridge — Sam names the things, decoys teach, Ben trades the axe, Pip\'s plan in order opens the bridge', () => {
+  const { profile, story, ui, log, fixed } = villageHarness({ grade: 6 });
+  story.q.step = 'tom_bridge';
+  story.talkSam(); assert.equal(story.step, 'tom_bridge', 'Sam does not start it before Tom');
+  story.talkTom(); assert.equal(story.step, 'bridge');
+  assert.deepEqual(story.groundItems(), []);
+  story.talkSam(); assert.equal(story.step, 'gather');
+  assert.ok(log.at(-1).some((l) => l.en.includes('a rope, a log and an axe')));
+  assert.deepEqual(story.groundItems(), ['rope', 'chain', 'log', 'boulder']);
+  assert.equal(story.pick('chain'), false);
+  assert.ok(log.at(-1)[0].en.includes('chain') && log.at(-1)[0].vi.includes('dây xích'), 'decoy is explained');
+  assert.equal(story.pick('boulder'), false);
+  assert.ok(story.groundItems().includes('chain'), 'decoys are never taken');
+  assert.deepEqual(profile.skills.vocabulary, { attempts: 2, correct: 0, firstTry: 0, hints: 0 });
+  assert.equal(story.pick('rope'), true); assert.equal(story.pick('log'), true);
+  assert.deepEqual(story.items, ['rope', 'log']);
+  story.talkSam(); assert.ok(log.at(-1)[0].en.includes('an axe'), 'Sam says what is still missing'); assert.equal(story.step, 'gather');
+  story.talkBen(); assert.ok(story.market, 'Ben asks for one market round first'); serveAll(story);
+  assert.ok(story.items.includes('axe'), 'Ben gives the axe after the round');
+  assert.equal(story.step, 'gather');
+  story.talkSam(); assert.equal(story.step, 'plan');
+  assert.ok(ui.pending && ui.pending.options.length === 4 && ui.pending.page.vi === undefined);
+  const wrong = ui.pending.options.findIndex((o) => o !== BRIDGE[6].steps[0]); ui.pending.pick(wrong);
+  assert.ok(ui.pending.page.vi.includes('First'), 'hint after a wrong order');
+  for (let n = 0; n < 4; n++) ui.pending.pick(ui.pending.options.indexOf(BRIDGE[6].steps[n]));
+  assert.equal(story.step, 'open'); assert.equal(profile.flags.bridge_fixed, true); assert.equal(fixed.n, 1);
+  assert.equal(story.q.orderWrong, 1);
   story.talkTom(); assert.equal(story.step, 'done'); assert.equal(profile.flags.forest_open, true);
+});
+test('village: grade 7 has no bridge plan — Sam says so and the bridge opens by itself', () => {
+  const { profile, story, log, fixed } = villageHarness({ grade: 7, letter: null });
+  story.q.step = 'bridge'; story.talkSam();
+  assert.ok(log.at(-1)[0].vi.includes('lớp 7 chưa được soạn'));
+  assert.equal(story.step, 'open'); assert.ok(profile.flags.bridge_fixed); assert.equal(fixed.n, 1);
+  assert.deepEqual(story.groundItems(), []);
 });
 test('village: no vocabulary for the unit -> Ben says so and the story is not blocked', () => {
   const { story, log } = villageHarness({ n: 0 });
   story.q.step = 'jars'; story.talkBen();
-  assert.ok(log.at(-1)[0].vi.includes('chưa có')); assert.equal(story.step, 'open');
+  assert.ok(log.at(-1)[0].vi.includes('chưa có')); assert.equal(story.step, 'tom_bridge');
+  story.q.step = 'gather'; story.q.items = []; story.talkBen();
+  assert.ok(story.items.includes('axe'), 'no jars: Ben still hands over the axe');
 });

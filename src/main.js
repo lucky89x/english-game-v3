@@ -5,11 +5,11 @@ import * as L from './core/layout.js';
 import * as Save from './core/save.js';
 import * as Review from './core/review.js';
 import { loadGrade } from './core/catalog.js';
-import { buildWorld, TIME, MARKET_JARS } from './world/forest.js';
+import { buildWorld, bridgeItem, TIME, MARKET_JARS } from './world/forest.js';
 import { Player, OrbitCamera, Npc, Pip, Crystals } from './game/actors.js';
 import { ForestQuest, landmark } from './game/quest.js';
 import { VillageStory } from './game/village.js';
-import { SAM_LINES } from './game/content.js';
+import { SAM_LINES, BRIDGE, BRIDGE_SPOTS } from './game/content.js';
 import { UI } from './ui/ui.js';
 import { Minimap } from './ui/minimap.js';
 import { sfx, setSound, soundOn, unlock } from './audio.js';
@@ -27,7 +27,7 @@ addEventListener('unhandledrejection', (e) => errors.push(String(e.reason)));
 const canvas = $('view');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
 renderer.outputColorSpace = THREE.SRGBColorSpace; renderer.toneMapping = THREE.NeutralToneMapping; renderer.toneMappingExposure = 1.08;
-renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap; renderer.localClippingEnabled = true;   // broken bridge gap
 const scene = new THREE.Scene(); scene.fog = new THREE.Fog(0xbfe4ff, 70, 330);
 const camera = new THREE.PerspectiveCamera(52, 1, 0.3, 700);
 
@@ -60,11 +60,11 @@ const staticModel = async (name) => (await gltf(name)).scene.clone(true);
 const faceTex = async (name) => { const t = await texLoader.loadAsync(`./assets/tex/ngoc_face_${name}.png`); t.flipY = false; t.colorSpace = THREE.SRGBColorSpace; return t; };
 
 const ui = new UI(), store = Save.load();
-let profile = null, quest = null, story = null, world = null, player = null, cam = null, tom = null, sam = null, ben = null, pip = null, crystals = null, minimap = null, letterProp = null;
+let profile = null, quest = null, story = null, world = null, player = null, cam = null, tom = null, sam = null, ben = null, pip = null, crystals = null, minimap = null, letterProp = null, itemProps = {};
 let quality = localStorage.getItem('eq-quality') || 'medium', perfOn = false, started = false, switching = false, wordIds = {}, jarKey = '';
 const keys = new Set();
 const game = { errors, get profile() { return profile; }, get quest() { return quest; }, get story() { return story; }, get player() { return player; }, get cam() { return cam; }, get minimap() { return minimap; }, ui, L, stats: { fps: 0, ms: 0, calls: 0, tris: 0 },
-  teleport(x, z) { player.place(x, z); cam.target.set(x, player.pos.y + 1.25, z); }, setQuality, key: (code) => onKey({ code, preventDefault() {} }), get started() { return started && !switching; }, get region() { return L.NAME; }, chooseProfile, enterRegion, MARKET_JARS };
+  teleport(x, z) { player.place(x, z); cam.target.set(x, player.pos.y + 1.25, z); }, setQuality, key: (code) => onKey({ code, preventDefault() {} }), get started() { return started && !switching; }, get region() { return L.NAME; }, chooseProfile, enterRegion, MARKET_JARS, BRIDGE_SPOTS };
 globalThis.__eq = game;
 
 function resize() { const w = innerWidth, h = innerHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
@@ -93,7 +93,8 @@ function save() { if (!profile) return; store.last = profile.id; profile.region 
 
 const NOTES = {      // short English objectives for the village chain
   arrive: 'Talk to Tom in the village square. (E)', letter_find: "Find Tom's letter near the door of his hall. ✉", letter_return: 'Take the letter back to Tom.',
-  jars: "Help Ben at the market.", jars_play: "Help Ben at the market.", open: 'Tom wants to see you at the square.', done: 'Go to the forest gate in the north-west. ★',
+  jars: "Help Ben at the market.", jars_play: "Help Ben at the market.", tom_bridge: 'Tom wants to see you at the square.',
+  bridge: 'Meet Sam at the broken south bridge. !', plan: 'Listen to Pip and put the steps in order.', open: 'Tom wants to see you at the square.', done: 'Go to the forest gate in the north-west. ★',
 };
 function refresh() {
   if (!profile) return;
@@ -110,17 +111,37 @@ function refresh() {
     ui.hud(profile, 'Làng Khởi Đầu', '', learned);
     const c = story.customer;
     if (c) ui.clue({ who: `Traveller ${c.index + 1}/${c.total}`, text: c.said || `A jar of "${c.target.word}", please!`, key: c.target.word, hints: false, tip: 'Đi tới hũ có nghĩa đúng rồi nhấn E' }, c.said ? 1 : 0, '');
+    else if (story.step === 'gather') { const have = story.items, need = ['rope', 'log', 'axe'];
+      ui.clue(null, 0, '', need.every((k) => have.includes(k)) ? 'Take everything to Sam at the bridge.' : 'Find: ' + need.map((k) => (have.includes(k) ? '✓ ' : '☐ ') + k).join('   ')); }
     else ui.clue(null, 0, '', quest.step === 'done' && story.step === 'done' ? 'Chapter complete! The compass piece points to the desert.' : NOTES[story.step] || '');
     crystals.show([]);
     const key = c ? c.index + ':' + c.options.map((o) => o.id).join('|') : '';
     if (key !== jarKey) { jarKey = key; world.setJars(c ? c.options.map((o) => o.vi) : null); }
   }
   if (letterProp) letterProp.visible = L.NAME === 'village' && story.step === 'letter_find';
+  const ground = L.NAME === 'village' ? story.groundItems() : [];
+  for (const [id, m] of Object.entries(itemProps)) m.visible = ground.includes(id);
+  if (L.NAME === 'village') placeVillageHelpers();
+}
+/** Sam waits at the broken bridge during "Fix the Bridge"; Pip joins him to read the plan. */
+function placeVillageHelpers() {
+  const st = story.step, atBridge = st === 'bridge' || st === 'gather' || st === 'plan';
+  const [sx, sz] = atBridge ? BRIDGE_SPOTS.sam : [L.riverX(18) - 5.6, 17.2];
+  if (sam.x !== sx || sam.z !== sz) sam.move(sx, sz, atBridge ? 1.4 : 1.2);
+  if (st === 'plan' || (st === 'gather' && ['rope', 'log', 'axe'].every((k) => story.items.includes(k)))) { pip.root.visible = true; pip.place(...BRIDGE_SPOTS.pip); }
+  else if (!profile.flags.forest_open) pip.root.visible = false;
+}
+/** Applies this profile's bridge state to the map, the scenery and the minimap. */
+function applyBridge() {
+  const open = !!(profile && profile.flags.bridge_fixed);
+  const changed = L.setBridgeOpen('village', 'south', open);
+  if (L.NAME === 'village' && world) { world.setBridgeOpen('south', open); if (changed && minimap) minimap.rebuild(); }
 }
 function placeActors() {
   if (L.NAME === 'village') {
     tom.move(2.6, 7.6, -0.4); ben.move(-9.9, 19.5, Math.PI / 2); sam.move(L.riverX(18) - 5.6, 17.2, 1.2);
     const ex = L.EXITS[0]; if (profile && profile.flags.forest_open) { pip.root.visible = true; pip.place(ex.x + 2.2, ex.z + 3); } else pip.root.visible = false;
+    if (story) placeVillageHelpers();
   } else {
     tom.move(L.ENTRANCE.x + 2.4, L.ENTRANCE.z - 12, 0.2); sam.move(30.2, 49.6, 2.2); ben.hide();
     pip.root.visible = true; pip.place(L.ENTRANCE.x + 3.4, L.ENTRANCE.z - 12.5);
@@ -151,8 +172,11 @@ async function chooseProfile(p) {
   const cards = ((unit && unit.vocabulary) || []).filter((w) => w.word.length <= 22 && w.vi.length <= 34).map((w) => ({ id: `${uid}:${w.word.toLowerCase()}`, word: w.word, vi: w.vi }));
   const cardOf = (id) => { const [u, w] = id.split(':'), m = /^g(\d)_u(\d\d)$/.exec(u); if (!m || Number(m[1]) !== p.grade) return null; const src = units[Number(m[2]) - 1], hit = src && (src.vocabulary || []).find((v) => v.word.toLowerCase() === w); return hit ? { id, word: hit.word, vi: hit.vi } : null; };
   quest = new ForestQuest({ profile, save, ui, sfx, wordId: (w) => wordIds[w] || 'forest:' + w, onChange: refresh });
-  story = new VillageStory({ profile, save, ui, sfx, onChange: refresh, letter: (unit && unit.activities && unit.activities.lost_letter) || null, cards, cardOf });
+  story = new VillageStory({ profile, save, ui, sfx, onChange: refresh, letter: (unit && unit.activities && unit.activities.lost_letter) || null, cards, cardOf,
+    bridge: BRIDGE[p.grade] || null, onBridgeFixed: applyBridge });
   if (story.step === 'jars_play') story.q.step = 'jars';
+  if ((story.step === 'open' || story.step === 'done') && !p.flags.bridge_fixed) p.flags.bridge_fixed = true;   // saves from before the bridge quest
+  applyBridge();
   $('mapbox').classList.remove('hidden');
   await enterRegion(p.region === 'forest' && p.flags.forest_open ? 'forest' : 'village');
   started = true; renderGear();
@@ -180,9 +204,10 @@ function interactTarget() {
     return null;
   }
   if (letterProp.visible && near(letterProp.position.x, letterProp.position.z, 2.2)) return { text: 'E · Nhặt bức thư', run: () => { player.emote('Interact'); story.readLetter(); } };
+  for (const [id, m] of Object.entries(itemProps)) if (m.visible && near(m.position.x, m.position.z, 2.0)) return { text: 'E · Nhặt vật này', run: () => { player.emote('Interact'); if (story.pick(id)) player.emote('Celebrate'); } };
   if (near(tom.x, tom.z, 3)) return { text: 'E · Nói chuyện với Tom', run: () => story.talkTom() };
   if (near(ben.x, ben.z, 3.6)) return { text: 'E · Nói chuyện với Ben', run: () => story.talkBen() };
-  if (near(sam.x, sam.z, 3)) return { text: 'E · Nói chuyện với Sam', run: () => ui.dialogue([{ who: 'Sam', en: 'Good morning! The fish are jumping today.' }, { who: 'Sam', en: 'The south bridge goes to the orchard. The apples are red and sweet!' }]) };
+  if (near(sam.x, sam.z, 3)) return { text: 'E · Nói chuyện với Sam', run: () => story.talkSam() };
   return null;
 }
 function onKey(e) {
@@ -216,6 +241,7 @@ async function boot() {
   const roll = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.6, 10), new THREE.MeshStandardMaterial({ color: 0xfff1cf, emissive: 0xffd88a, emissiveIntensity: 0.6 })); roll.rotation.z = Math.PI / 2; letterProp.add(roll);
   const band = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, 0.1, 10), new THREE.MeshStandardMaterial({ color: 0xd8342a })); band.rotation.z = Math.PI / 2; letterProp.add(band);
   letterProp.position.set(hall[0] + 1.2, L.REGIONS.village.groundHeight(hall[0] + 1.2, hall[1]) + 0.5, hall[1]); letterProp.visible = false; scene.add(letterProp);
+  for (const id of ['rope', 'chain', 'log', 'boulder']) { const [x, z] = BRIDGE_SPOTS[id], m = bridgeItem(id); m.position.set(x, L.REGIONS.village.groundHeight(x, z), z); m.visible = false; scene.add(m); itemProps[id] = m; }
   cam = new OrbitCamera(camera, canvas);
   minimap = new Minimap($('minimap'), (path) => { player.route = path.slice(1); });
   placeActors(); player.place(L.SPAWN.x, L.SPAWN.z);
@@ -256,6 +282,11 @@ function frame() {
       if (st === 'arrive' || st === 'letter_return' || st === 'open') markers.push({ x: tom.x, z: tom.z, text: st === 'arrive' ? '!' : '?' });
       if (st === 'letter_find') markers.push({ x: letterProp.position.x, z: letterProp.position.z, text: '✉' });
       if (st === 'jars') markers.push({ x: ben.x, z: ben.z, text: '!' });
+      if (st === 'tom_bridge') markers.push({ x: tom.x, z: tom.z, text: '!' });
+      if (st === 'bridge' || st === 'plan') markers.push({ x: sam.x, z: sam.z, text: '!' });
+      if (st === 'gather') { const have = story.items;
+        if (!have.includes('axe')) markers.push({ x: ben.x, z: ben.z, text: '!' });
+        if (['rope', 'log', 'axe'].every((k) => have.includes(k))) markers.push({ x: sam.x, z: sam.z, text: '?' }); }
       if (st === 'done' && quest.step !== 'done') markers.push({ x: L.EXITS[0].x, z: L.EXITS[0].z, text: '★' });
       if (story.market && Math.hypot(player.pos.x + 7, player.pos.z - 19.5) > 15) story.leaveMarket();
     }

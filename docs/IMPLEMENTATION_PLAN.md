@@ -6,8 +6,11 @@ Engine shell (renderer, sky, light, fog, quality presets, perf panel) · map dat
 ## Done (milestone 1)
 Region system (`core/regionkit.js`, `core/regions/*`, live facade `core/layout.js`) · Starter Village scenery · Lost Letter and Word Jars ported (`game/village.js`) · forest gate as a two-way exit · saves remember the region · 18 logic tests + 55 real-browser checks.
 
+## Done (milestone 2)
+Bridges can be closed per profile (`setBridgeOpen`: walking, A* and minimap follow; the model shows a clipped gap, floating planks, a sign) · Fix the Bridge quest in `game/village.js` (grades 6 and 8) · saves from before the quest keep an open bridge.
+
 ## Next batches (in order)
-1. **Finish Chapter I**: broken south bridge + Bridge Repair (Sam, Ben's axe, Pip's ordered steps), secret word chests, enterable hall interior.
+1. **Finish Chapter I**: secret word chests, enterable hall interior.
 2. **Chapter I story chain**: arrival, footprints, language symbol, festival, chapter review, unlock; target 45–90 min.
 3. **Characters**: Ben; Lily, Rose, Anna and travellers; Ngọc v03 per the turnaround sheet; NPC schedules.
 4. **Learning**: later encounters that ask due words; listening with generated audio (replay, slow); sentence building.
