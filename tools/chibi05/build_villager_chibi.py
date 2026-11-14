@@ -203,6 +203,43 @@ for s, side in ((1, 'L'), (-1, 'R')):
     finish(ellipsoid(f'V_Thumb_{s}', hc + Vector((0, -.032, .010)) - d * .010, (.015, .015, .027), seg=10, rings=8,
                      rot=Vector((0, 0, 1)).rotation_difference((d + Vector((0, -.6, 0))).normalized())), 'skin', [f'hand.{side}'])
 
+
+# ---- hand props (v03): Sam's fishing rod + bucket of fish, Ben's apple basket
+PAL_OK = True
+HR = Vector((-SHOULDER[0], 0, SHOULDER[2])) + Vector((-ARM_DIR.x, ARM_DIR.y, ARM_DIR.z)) * (UPPER + FORE + .045)
+HL = Vector((SHOULDER[0], 0, SHOULDER[2])) + Vector((ARM_DIR.x, ARM_DIR.y, ARM_DIR.z)) * (UPPER + FORE + .045)
+if VAR == 'sam':
+    a, b = HR + Vector((.0, .03, -.42)), HR + Vector((-.06, -.10, 1.05))
+    finish(tube('V_Rod', [a, HR, b], [.020, .017, .008], seg=8), 'leather', ['hand.R'])
+    finish(torus('V_RodGrip', HR + Vector((0, 0, -.05)), .024, .010, seg=12, rseg=6), 'leather_dark', ['hand.R'])
+    tip = b
+    hook = tip + Vector((.10, -.16, -.42))
+    finish(tube('V_Line', [tip, tip + Vector((.06, -.10, -.10)), hook], [.0035] * 3, seg=5), 'white_shade', ['hand.R'])
+    finish(ellipsoid('V_LineFish', hook + Vector((0, 0, -.06)), (.030, .016, .062), seg=12, rings=8), 'fish', ['hand.R'])
+    finish(loft('V_LineFishTail', [(hook + Vector((0, 0, -.115)), .006, .010), (hook + Vector((0, 0, -.160)), .005, .040)], seg=6,
+                ref=Vector((1, 0, 0))), 'blue', ['hand.R'])
+    BK = HL + Vector((.03, -.02, -.215))
+    finish(loft('V_Bucket', [(BK + Vector((0, 0, -.085)), .078, .078), (BK + Vector((0, 0, .085)), .100, .100)], seg=20, caps=(True, False)),
+           'white_shade', ['hand.L'])
+    finish(torus('V_BucketRim', BK + Vector((0, 0, .085)), .100, .009, seg=24, rseg=6), 'white', ['hand.L'])
+    finish(ellipsoid('V_BucketWater', BK + Vector((0, 0, .060)), (.094, .094, .010), seg=18, rings=6), 'blue', ['hand.L'])
+    for k, (dx, dy, col) in enumerate(((-.03, .01, 'fish'), (.035, -.02, 'red'), (.0, .04, 'fish'))):
+        finish(ellipsoid(f'V_BucketFish_{k}', BK + Vector((dx, dy, .085)), (.024, .020, .050), seg=10, rings=6,
+                         rot=Quaternion((0, 1, 0), math.radians(20 * (k - 1)))), col, ['hand.L'])
+    finish(tube('V_BucketHandle', [BK + Vector((-.100, 0, .085)), BK + Vector((-.06, 0, .175)), HL + Vector((.03, -.02, -.02)),
+                                   BK + Vector((.06, 0, .175)), BK + Vector((.100, 0, .085))], [.006] * 5, seg=6), 'leather_dark', ['hand.L'])
+else:
+    BK = HL + Vector((.04, -.04, -.20))
+    basket = loft('V_Basket', [(BK + Vector((0, 0, -.075)), .090, .075), (BK + Vector((0, 0, .0)), .125, .100), (BK + Vector((0, 0, .060)), .130, .105)],
+                  seg=22, caps=(True, False), shape=lambda a, i: 1 + .03 * math.cos(12 * a))
+    finish(basket, 'straw_dark', ['hand.L'])
+    finish(torus('V_BasketRim', BK + Vector((0, 0, .060)), .130, .014, seg=28, rseg=6, sy=.105 / .130), 'straw', ['hand.L'])
+    for k, (dx, dy, col) in enumerate(((-.055, -.02, 'red'), (.05, -.03, 'apron'), (.0, .035, 'red'), (-.01, -.05, 'straw'), (.06, .04, 'red_dark'))):
+        finish(ellipsoid(f'V_Apple_{k}', BK + Vector((dx, dy, .075)), (.042, .042, .038), seg=12, rings=8), col, ['hand.L'])
+        finish(tube(f'V_AppleStem_{k}', [BK + Vector((dx, dy, .108)), BK + Vector((dx + .006, dy, .128))], [.004, .003], seg=5), 'leather_dark', ['hand.L'])
+    finish(tube('V_BasketHandle', [BK + Vector((-.128, 0, .060)), BK + Vector((-.08, 0, .170)), HL + Vector((.04, -.04, .0)),
+                                   BK + Vector((.08, 0, .170)), BK + Vector((.128, 0, .060))], [.011] * 5, seg=8), 'straw', ['hand.L'])
+
 # ---- rig & clips
 build_rig(f'{NAME}_Rig', humanoid_bones(SHOULDER, ARM_DIR, UPPER, FORE, HAND, HIP_X, .420, .520, .640, .760, .800, 1.18, .240, .075, toe_y=-.13))
 skin_and_join(NAME)

@@ -107,13 +107,23 @@ class Bld:
             finish(M(slab, Matrix.Translation(mid) @ R), dark, ['x'])
             n = R.to_3x3() @ Vector((0, 0, 1))
             t_dir = R.to_3x3() @ Vector((0, -side, 0)) * -1  # along slope, eave -> ridge
-            rows = max(5, int(L / .34))
+            rows = max(6, int(L / .42))
+            import random as _r
+            _r.seed(int(w * 10 + d * 7 + (side > 0)))
+            tw = .62
+            cols = int((w + 2 * ov) / tw) + 1
             for k in range(rows):
-                t = (k + .55) / rows
-                c = Vector((0, side * half, zt - .05)) + (Vector((0, -side * half, rh)) * t) + n * .13
-                tile = loft('TileRow', [(c + Vector((-(w / 2 + ov + .02), 0, 0)), .09, .20, 0, n), (c + Vector((w / 2 + ov + .02, 0, 0)), .09, .20, 0, n)],
-                            seg=10, caps=(True, True))
-                finish(tile, color, ['x'])
+                t = (k + .5) / rows
+                for j in range(cols + 1):
+                    x = -(w / 2 + ov) + (j + (.5 if k % 2 else 0) - .25) * tw
+                    if x < -(w / 2 + ov) - .2 or x > (w / 2 + ov) + .2:
+                        continue
+                    c = Vector((x, side * half, zt - .05)) + (Vector((0, -side * half, rh)) * t) + n * (.15 + .012 * _r.random())
+                    u = _r.random()
+                    col = 'leaf' if u < .035 else (dark if u < .30 else color)
+                    tile = box('Tile', (0, 0, 0), (tw * .96, L / rows * 1.38, .085), bevel=.035, segments=1)
+                    tilt = Matrix.Rotation(ang + (-.10 if side < 0 else .10), 4, 'X')
+                    finish(M(tile, Matrix.Translation(c) @ tilt), col, ['x'])
         finish(cylinder('Ridge', (-(w / 2 + ov + .05), 0, zt + rh + .08), (w / 2 + ov + .05, 0, zt + rh + .08), .17, seg=12), dark, ['x'])
         # gable end walls with a round attic window
         for sx in (-1, 1):
@@ -132,8 +142,26 @@ class Bld:
         if chimney:
             cx, cy = s.w / 2 - .9, d / 4
             zb = zt + rh * (1 - cy / half) - .3
-            finish(box('Chimney', (cx, cy, zb + .75), (.6, .6, 1.6), bevel=.05), 'stone', ['x'])
-            finish(box('ChimneyCap', (cx, cy, zb + 1.58), (.78, .78, .18), bevel=.05), 'stone_dark', ['x'])
+            finish(box('Chimney', (cx, cy, zb + .85), (.78, .78, 1.9), bevel=.07), 'stone', ['x'])
+            for k in range(5):      # a few lighter and darker stones so it reads as masonry
+                for fx in (-1, 1):
+                    finish(box('ChimneyStone', (cx + fx * .40, cy + (.15 if k % 2 else -.15), zb + .25 + k * .34), (.06, .34, .22), bevel=.03, segments=1),
+                           'stone_light' if (k + fx) % 2 else 'stone_dark', ['x'])
+                finish(box('ChimneyStoneF', (cx + (.15 if k % 2 else -.15), cy - .40, zb + .25 + k * .34), (.34, .06, .22), bevel=.03, segments=1),
+                       'stone_dark' if k % 2 else 'stone_light', ['x'])
+            finish(box('ChimneyCap', (cx, cy, zb + 1.88), (.98, .98, .20), bevel=.06), 'stone_dark', ['x'])
+            finish(box('ChimneyPot', (cx, cy, zb + 2.08), (.46, .46, .26), bevel=.05), 'stone_light', ['x'])
+        # ivy climbing a front corner and moss on the foundation
+        import random as _r2
+        _r2.seed(int(w * 13))
+        for k in range(16):
+            t = k / 15
+            px = -w / 2 + .05 + _r2.uniform(-.05, .55) * (1 - t * .5)
+            pz = s.found + .1 + t * (zt - s.found) * .92
+            r = _r2.uniform(.13, .22)
+            finish(ellipsoid('Ivy', (px, -d / 2 - .06, pz), (r, .07, r * .9), seg=7, rings=5), 'leaf' if k % 3 else 'leaf_light', ['x'])
+        for k in range(3):
+            finish(ellipsoid('IvyFlower', (-w / 2 + .15 + .2 * k, -d / 2 - .12, s.found + .7 + .9 * k), (.06, .05, .06), seg=6, rings=4), 'flower_white', ['x'])
 
     # ------------------------------------------------------------ openings & dressing
     def window(s, face, x, z, ww=.85, wh=1.05, flowers=True, shutters=True):
