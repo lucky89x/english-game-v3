@@ -523,6 +523,42 @@ function smoke(x, y, z) {
   return pts;
 }
 
+/** Friendly creatures: bouncing slimes and hopping bunnies (decoration only, no collision). */
+function creatures() {
+  const g = new THREE.Group(), list = [];
+  const spots = scatterGround(11, (x, z) => L.walkable(x, z, 1.5) && L.pathDistance(x, z) > 2.5 && L.pathDistance(x, z) < 14 && Math.hypot(x, z) < L.PLAY_RADIUS - 6);
+  const eye = new THREE.MeshBasicMaterial({ color: 0x24140c }), white = new THREE.MeshBasicMaterial({ color: 0xffffff }), blush = new THREE.MeshBasicMaterial({ color: 0xff9fb0 });
+  const face = (o, y, z, w) => { for (const sx of [-1, 1]) { const e = new THREE.Mesh(new THREE.SphereGeometry(0.07, 8, 6), eye); e.position.set(sx * w, y, z); o.add(e); const h = new THREE.Mesh(new THREE.SphereGeometry(0.025, 5, 4), white); h.position.set(sx * w + 0.02, y + 0.03, z + 0.05); o.add(h); const b = new THREE.Mesh(new THREE.SphereGeometry(0.05, 6, 4), blush); b.scale.set(1.3, 0.6, 0.4); b.position.set(sx * (w + 0.12), y - 0.08, z - 0.01); o.add(b); } };
+  spots.forEach((sp, i) => {
+    const o = new THREE.Group(), slime = i % 2 === 0;
+    if (slime) {
+      const hue = [0x6fc8ff, 0x8fe08a, 0xffb0d0][i % 3];
+      const body = new THREE.Mesh(new THREE.SphereGeometry(0.45, 16, 12), new THREE.MeshStandardMaterial({ color: hue, roughness: 0.15, transparent: true, opacity: 0.88, emissive: hue, emissiveIntensity: 0.15 }));
+      body.scale.set(1, 0.78, 1); body.position.y = 0.34; body.castShadow = true; o.add(body);
+      const tip = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.26, 8), body.material); tip.position.set(0.05, 0.76, 0); tip.rotation.z = -0.3; o.add(tip);
+      face(o, 0.36, 0.4, 0.15);
+    } else {
+      const fur = new THREE.MeshStandardMaterial({ color: i % 4 === 1 ? 0xfaf6ee : 0xd9b48a, roughness: 0.95 }), pink = new THREE.MeshStandardMaterial({ color: 0xffb6c8 });
+      const body = new THREE.Mesh(new THREE.SphereGeometry(0.3, 12, 10), fur); body.scale.set(0.9, 0.85, 1.1); body.position.y = 0.28; body.castShadow = true; o.add(body);
+      const head = new THREE.Mesh(new THREE.SphereGeometry(0.24, 12, 10), fur); head.position.set(0, 0.56, 0.2); o.add(head);
+      for (const sx of [-1, 1]) { const ear = new THREE.Mesh(new THREE.CapsuleGeometry(0.06, 0.3, 3, 6), fur); ear.position.set(sx * 0.1, 0.9, 0.16); ear.rotation.z = -sx * 0.18; o.add(ear); const inn = new THREE.Mesh(new THREE.CapsuleGeometry(0.03, 0.2, 3, 5), pink); inn.position.set(sx * 0.1, 0.9, 0.205); inn.rotation.z = -sx * 0.18; o.add(inn); }
+      const tail = new THREE.Mesh(new THREE.SphereGeometry(0.1, 8, 6), new THREE.MeshStandardMaterial({ color: 0xffffff })); tail.position.set(0, 0.3, -0.33); o.add(tail);
+      face(o, 0.6, 0.42, 0.1);
+    }
+    g.add(o); list.push({ o, slime, x: sp.x, z: sp.z, r: 0.8 + (i % 3) * 0.5, ph: i * 1.7, sp: (slime ? 0.25 : 0.45) * (i % 2 ? 1 : -1) });
+  });
+  g.userData.update = (t) => {
+    for (const c of list) {
+      const a = c.ph + t * c.sp, x = c.x + Math.cos(a) * c.r, z = c.z + Math.sin(a) * c.r, hop = Math.abs(Math.sin(t * (c.slime ? 2.4 : 5) + c.ph));
+      if (!L.walkable(x, z, 0.4)) continue;
+      c.o.position.set(x, L.groundHeight(x, z) + hop * (c.slime ? 0.22 : 0.3), z); c.o.rotation.y = -a + (c.sp > 0 ? 0 : Math.PI);
+      if (c.slime) c.o.scale.set(1 + (1 - hop) * 0.18, 0.82 + hop * 0.3, 1 + (1 - hop) * 0.18);
+    }
+  };
+  g.userData.update(0);
+  return g;
+}
+
 // ------------------------------------------------------------------ village landmarks
 export const MARKET_JARS = [[-6.4, 17.2], [-6.4, 18.75], [-6.4, 20.3], [-6.4, 21.85]];
 export const MARKET_CUSTOMER = [-3.2, 22.6];
@@ -663,7 +699,7 @@ export async function buildWorld(scene, loadModel) {
   const updaters = [], add = (o) => { root.add(o); if (o.userData.update) updaters.push(o.userData.update); return o; };
   add(buildTerrain());
   const detail = { cobbles: add(buildCobbles()), grass: add(buildGrass()), flowers: add(buildFlowers()), far: add(mountains()), critters: add(critters()) };
-  add(buildWater()); add(buildTrees()); add(buildRocks()); add(buildFences()); add(riverside()); add(bushes());
+  add(buildWater()); add(buildTrees()); add(buildRocks()); add(buildFences()); add(riverside()); add(bushes()); add(creatures());
   const shadowed = (o) => { o.traverse((c) => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } }); return o; };
   const bridges = {};
   for (const b of L.BRIDGES) {

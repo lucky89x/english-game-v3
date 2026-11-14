@@ -9,7 +9,7 @@ import { buildWorld, bridgeItem, TIME, MARKET_JARS } from './world/forest.js';
 import { Player, OrbitCamera, Npc, Pip, Crystals } from './game/actors.js';
 import { ForestQuest, landmark } from './game/quest.js';
 import { VillageStory } from './game/village.js';
-import { SAM_LINES, BRIDGE, BRIDGE_SPOTS } from './game/content.js';
+import { SAM_LINES, BRIDGE, BRIDGE_SPOTS, FRIENDS } from './game/content.js';
 import { UI } from './ui/ui.js';
 import { Minimap } from './ui/minimap.js';
 import { sfx, setSound, soundOn, unlock } from './audio.js';
@@ -60,7 +60,7 @@ const staticModel = async (name) => (await gltf(name)).scene.clone(true);
 const faceTex = async (name) => { const t = await texLoader.loadAsync(`./assets/tex/ngoc_face_${name}.png`); t.flipY = false; t.colorSpace = THREE.SRGBColorSpace; return t; };
 
 const ui = new UI(), store = Save.load();
-let profile = null, quest = null, story = null, world = null, player = null, cam = null, tom = null, sam = null, ben = null, pip = null, crystals = null, minimap = null, letterProp = null, itemProps = {};
+let profile = null, quest = null, story = null, world = null, player = null, cam = null, tom = null, sam = null, ben = null, pip = null, crystals = null, minimap = null, letterProp = null, itemProps = {}, friends = [];
 let quality = localStorage.getItem('eq-quality') || 'medium', perfOn = false, started = false, switching = false, wordIds = {}, jarKey = '';
 const keys = new Set();
 const game = { errors, get profile() { return profile; }, get quest() { return quest; }, get story() { return story; }, get player() { return player; }, get cam() { return cam; }, get minimap() { return minimap; }, ui, L, stats: { fps: 0, ms: 0, calls: 0, tris: 0 },
@@ -142,8 +142,10 @@ function placeActors() {
     tom.move(2.6, 7.6, -0.4); ben.move(-9.9, 19.5, Math.PI / 2); sam.move(L.riverX(18) - 5.6, 17.2, 1.2);
     const ex = L.EXITS[0]; if (profile && profile.flags.forest_open) { pip.root.visible = true; pip.place(ex.x + 2.2, ex.z + 3); } else pip.root.visible = false;
     if (story) placeVillageHelpers();
+    for (const f of friends) f.npc.move(...f.at);
   } else {
     tom.move(L.ENTRANCE.x + 2.4, L.ENTRANCE.z - 12, 0.2); sam.move(30.2, 49.6, 2.2); ben.hide();
+    for (const f of friends) f.npc.hide();
     pip.root.visible = true; pip.place(L.ENTRANCE.x + 3.4, L.ENTRANCE.z - 12.5);
   }
 }
@@ -208,6 +210,7 @@ function interactTarget() {
   if (near(tom.x, tom.z, 3)) return { text: 'E · Nói chuyện với Tom', run: () => story.talkTom() };
   if (near(ben.x, ben.z, 3.6)) return { text: 'E · Nói chuyện với Ben', run: () => story.talkBen() };
   if (near(sam.x, sam.z, 3)) return { text: 'E · Nói chuyện với Sam', run: () => story.talkSam() };
+  for (const f of friends) if (near(f.npc.x, f.npc.z, 2.6)) return { text: 'E · Nói chuyện với ' + f.who, run: () => ui.dialogue(f.lines.map((en) => ({ who: f.who, en }))) };
   return null;
 }
 function onKey(e) {
@@ -234,6 +237,9 @@ async function boot() {
   player = new Player(ngoc, { blink, talk, joy }); scene.add(player.root);
   tom = new Npc(tomG, 2.6, 7.6, -0.4); sam = new Npc(samG, 14, 17, 1.2); ben = new Npc(benG, -9.9, 19.5, Math.PI / 2); scene.add(tom.root, sam.root, ben.root);
   pip = new Pip(pipG.scene); scene.add(pip.root);
+  for (const [id, file] of [['lily', 'npc_lily_druid_v01'], ['rose', 'npc_rose_baker_v01'], ['anna', 'npc_anna_bard_v01']]) {
+    const f = FRIENDS[id], npc = new Npc(await gltf(file), ...f.at); scene.add(npc.root); friends.push({ ...f, npc });
+  }
   const F = L.REGIONS.forest;
   crystals = new Crystals(scene, F.LANDMARKS.filter((l) => l.id !== 'tree'), F.walkHeight);
   const hall = L.REGIONS.village.LANDMARKS.find((l) => l.id === 'hall').spot;
@@ -265,6 +271,7 @@ function frame() {
   cam.update(dt, player.pos);
   const talkingTo = ui.busy && ui.pages ? ui.pages[0].who : '';
   tom.update(dt, player.pos, talkingTo === 'Tom'); sam.update(dt, player.pos, talkingTo === 'Sam'); ben.update(dt, player.pos, talkingTo === 'Ben');
+  for (const f of friends) if (f.npc.root.visible) f.npc.update(dt, player.pos, talkingTo === f.who);
   if (pip.root.visible) pip.update(dt, t, player, started && L.NAME === 'forest' && quest && quest.step !== 'intro');
   crystals.update(t); if (world) world.update(t);
   if (letterProp.visible) { letterProp.rotation.y = t * 1.5; letterProp.position.y += Math.sin(t * 2.2) * 0.002; }

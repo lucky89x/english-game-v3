@@ -53,6 +53,24 @@ PALETTE = {  # name: (sRGB hex, roughness, metallic)
     'parchment': ('f0ddb0', .85, 0), 'parchment_edge': ('d9bd86', .85, 0), 'ribbon': ('c2312c', .7, 0),
     'eye_dark': ('2a140a', .3, 0),
 }
+VARIANT = os.environ.get('NGOC_VARIANT', 'ngoc')
+VARIANTS = {   # friends built on Ngoc's body: (file name, palette overrides)
+    'lily': ('npc_lily_druid_v01', {'hair': 'e0702c', 'hair_light': 'f08a3c', 'hair_dark': 'b8531c', 'bandana': '5fa83c', 'bandana_dark': '3f7d2a',
+                                    'scarf': '6cb444', 'scarf_dark': '4a8a30', 'shirt': '8cc25a', 'shirt_shade': '6a9e42', 'shorts': 'f0e6cc',
+                                    'shorts_cuff': 'd9c9a2', 'glass': '4fd06a', 'ribbon': '5fa83c'}),
+    'rose': ('npc_rose_baker_v01', {'hair': 'ee8a94', 'hair_light': 'f8a8b0', 'hair_dark': 'd06a78', 'bandana': 'f6f0e6', 'bandana_dark': 'd8cfc0',
+                                    'scarf': 'c8352e', 'scarf_dark': '9a2620', 'shirt': 'fbf6ec', 'shirt_shade': 'e6dcc8', 'shorts': 'c8352e',
+                                    'shorts_cuff': '9a2620', 'glass': 'f6c62e', 'ribbon': 'c8352e'}),
+    'anna': ('npc_anna_bard_v01', {'hair': '6b3a1e', 'hair_light': '8a5230', 'hair_dark': '4a2612', 'bandana': 'f2c230', 'bandana_dark': 'c99a1e',
+                                   'scarf': 'f2c230', 'scarf_dark': 'c99a1e', 'shirt': '3f6fc6', 'shirt_shade': '2c539a', 'shorts': 'f4efe6',
+                                   'shorts_cuff': 'd8d0c0', 'glass': 'b684e8', 'ribbon': 'f2c230'}),
+}
+if VARIANT in VARIANTS:
+    _name, _over = VARIANTS[VARIANT]
+    for _k, _v in _over.items():
+        PALETTE[_k] = (_v,) + PALETTE[_k][1:]
+    GLB = OUT_DIR / f'{_name}.glb'
+    BLEND = SRC_DIR / f'{_name}.blend'
 CELL = 16
 GRID = 16
 NAMES = list(PALETTE)
@@ -496,31 +514,31 @@ for s in (-1, 1):
     finish(leg, 'skin', [f'thigh.{side}', f'shin.{side}'], subsurf=1)
     # boot shaft
     shaft = loft(f'Ngoc_BootShaft_{s}', [
-        ((s * .090, .004, .070), .066, .070),
-        ((s * .090, .004, .140), .062, .064),
-        ((s * .090, .004, .205), .064, .064),
-        ((s * .090, .004, .225), .066, .066),
+        ((s * .090, .004, .070), .080, .084),
+        ((s * .090, .004, .140), .076, .078),
+        ((s * .090, .004, .215), .080, .080),
+        ((s * .090, .004, .245), .084, .084),
     ], seg=20, caps=(False, False))
     finish(shaft, 'boot', [f'shin.{side}', f'foot.{side}'], subsurf=1)
-    cuffb = torus(f'Ngoc_BootCuff_{s}', (s * .090, .004, .228), .066, .020, seg=24, rseg=8)
+    cuffb = torus(f'Ngoc_BootCuff_{s}', (s * .090, .004, .248), .084, .024, seg=24, rseg=8)
     finish(cuffb, 'boot_cuff', [f'shin.{side}'])
-    foot = ellipsoid(f'Ngoc_BootFoot_{s}', (s * .092, -.040, .058), (.072, .118, .066), seg=22, rings=12,
+    foot = ellipsoid(f'Ngoc_BootFoot_{s}', (s * .094, -.045, .062), (.088, .138, .076), seg=22, rings=12,
                      deform=lambda p, v: Vector((p.x * (1 + .12 * max(0, -v.y)), p.y, p.z * (1 - .25 * max(0, -v.y)) if p.z > 0 else p.z * .55)))
     finish(foot, 'boot', [f'foot.{side}', f'shin.{side}'], subsurf=0)
     sole = loft(f'Ngoc_BootSole_{s}', [
-        ((s * .092, .07, .012), .074, .010),
-        ((s * .092, .02, .012), .078, .010),
-        ((s * .093, -.06, .012), .080, .010),
-        ((s * .094, -.135, .014), .062, .010),
+        ((s * .094, .085, .012), .088, .012),
+        ((s * .094, .02, .012), .094, .012),
+        ((s * .095, -.07, .012), .096, .012),
+        ((s * .096, -.165, .014), .074, .012),
     ], seg=16, caps=(True, True), ref=Vector((1, 0, 0)))
     finish(sole, 'sole', [f'foot.{side}'])
     # criss-cross laces on the front of the shaft
     for k in range(3):
         z = .095 + k * .040
         for d in (-1, 1):
-            l = tube(f'Ngoc_Lace_{s}_{k}_{d}', [(s * .090 - .030 * d, -.064, z), (s * .090 + .030 * d, -.068, z + .030)], [.0065, .0065], seg=6)
+            l = tube(f'Ngoc_Lace_{s}_{k}_{d}', [(s * .090 - .036 * d, -.078, z), (s * .090 + .036 * d, -.082, z + .034)], [.008, .008], seg=6)
             finish(l, 'lace', [f'shin.{side}'])
-    bow = ellipsoid(f'Ngoc_LaceBow_{s}', (s * .090, -.071, .220), (.022, .008, .012), seg=10, rings=6)
+    bow = ellipsoid(f'Ngoc_LaceBow_{s}', (s * .090, -.086, .236), (.028, .010, .015), seg=10, rings=6)
     finish(bow, 'lace', [f'shin.{side}'])
 
 # ---------------- arms ------------------------------------------------------------------
@@ -544,18 +562,18 @@ for s in (-1, 1):
     arm = tube(f'Ngoc_Arm_{s}', [sh + d * .06, elbow, wrist - d * .01], [.040, .036, .032], seg=14)
     finish(arm, 'skin', [f'upper_arm.{side}', f'forearm.{side}'], subsurf=1)
     # glove: cuff + mitten hand + thumb
-    gcuff = loft(f'Ngoc_GloveCuff_{s}', [(wrist - d * .035, .040, .040), (wrist - d * .005, .044, .044), (wrist + d * .010, .040, .040)],
+    gcuff = loft(f'Ngoc_GloveCuff_{s}', [(wrist - d * .045, .050, .050), (wrist - d * .005, .056, .056), (wrist + d * .012, .048, .048)],
                  seg=16, caps=(False, False))
     finish(gcuff, 'leather_dark', [f'forearm.{side}', f'hand.{side}'], subsurf=1)
     hc = wrist + d * .045
-    hand = ellipsoid(f'Ngoc_Hand_{s}', hc, (.036, .026, .046), seg=16, rings=10,
+    hand = ellipsoid(f'Ngoc_Hand_{s}', hc, (.046, .034, .054), seg=16, rings=10,
                      rot=Vector((0, 0, 1)).rotation_difference(d))
     finish(hand, 'glove', [f'hand.{side}'])
     thumb = ellipsoid(f'Ngoc_Thumb_{s}', hc + Vector((0, -.026, .008)) - d * .008, (.012, .012, .024), seg=10, rings=8,
                       rot=Vector((0, 0, 1)).rotation_difference((d + Vector((0, -.6, 0))).normalized()))
     finish(thumb, 'glove', [f'hand.{side}'])
     # skin finger tips peeking out of the fingerless gloves
-    tips = ellipsoid(f'Ngoc_FingerTips_{s}', hc + d * .036, (.030, .021, .016), seg=12, rings=8,
+    tips = ellipsoid(f'Ngoc_FingerTips_{s}', hc + d * .044, (.036, .026, .018), seg=12, rings=8,
                      rot=Vector((0, 0, 1)).rotation_difference(d))
     finish(tips, 'skin', [f'hand.{side}'])
 
@@ -591,16 +609,16 @@ finish(flap, 'leather_light', ['hips'])
 pstud = ellipsoid('Ngoc_PouchStud', PC + PQ @ Vector((0, -.042, .016)), (.009, .005, .009), seg=8, rings=6)
 finish(pstud, 'gold', ['hips'])
 # blue potion on the left hip (+X)
-POT = Vector((.168, -.060, .440))
-flask = ellipsoid('Ngoc_Potion', POT, (.040, .040, .042), seg=18, rings=12)
+POT = Vector((.185, -.075, .425))
+flask = ellipsoid('Ngoc_Potion', POT, (.060, .060, .062), seg=18, rings=12)
 finish(flask, 'glass', ['hips'])
-liquid_hi = ellipsoid('Ngoc_PotionShine', POT + Vector((-.012, -.033, .015)), (.010, .006, .014), seg=8, rings=6)
+liquid_hi = ellipsoid('Ngoc_PotionShine', POT + Vector((-.018, -.052, .022)), (.014, .008, .020), seg=8, rings=6)
 finish(liquid_hi, 'lens_shine', ['hips'])
-pneck = tube('Ngoc_PotionNeck', [POT + Vector((0, 0, .034)), POT + Vector((0, 0, .062))], [.014, .013], seg=10)
+pneck = tube('Ngoc_PotionNeck', [POT + Vector((0, 0, .052)), POT + Vector((0, 0, .086))], [.020, .018], seg=10)
 finish(pneck, 'glass', ['hips'])
-cork = tube('Ngoc_PotionCork', [POT + Vector((0, 0, .058)), POT + Vector((0, 0, .080))], [.015, .013], seg=10)
+cork = tube('Ngoc_PotionCork', [POT + Vector((0, 0, .082)), POT + Vector((0, 0, .108))], [.021, .018], seg=10)
 finish(cork, 'cork', ['hips'])
-holder = torus('Ngoc_PotionHolder', POT + Vector((0, 0, .006)), .041, .006, seg=20, rseg=6)
+holder = torus('Ngoc_PotionHolder', POT + Vector((0, 0, .008)), .061, .008, seg=20, rseg=6)
 finish(holder, 'leather_dark', ['hips'])
 # second small leather pouch on her left-back hip
 PC2 = Vector((.120, .100, .455))
@@ -611,14 +629,14 @@ finish(ellipsoid('Ngoc_Pouch2Flap', PC2 + Vector((.018, .024, .030)), (.046, .01
                  rot=Quaternion((0, 0, 1), math.radians(37))), 'leather', ['hips'])
 finish(ellipsoid('Ngoc_Pouch2Stud', PC2 + Vector((.026, .036, .018)), (.008, .005, .008), seg=8, rings=6), 'gold', ['hips'])
 # rolled map scroll tucked diagonally behind the strap on the back
-sc_a, sc_b = Vector((-.15, .150, .520)), Vector((.12, .150, .760))
-scroll = tube('Ngoc_Scroll', [sc_a, sc_b], [.030, .030], seg=16)
+sc_a, sc_b = Vector((-.20, .165, .500)), Vector((.19, .165, .850))
+scroll = tube('Ngoc_Scroll', [sc_a, sc_b], [.044, .044], seg=16)
 finish(scroll, 'parchment', ['chest', 'spine'])
 for t in (0.0, 1.0):
     endp = sc_a.lerp(sc_b, t)
-    cap = torus(f'Ngoc_ScrollEnd_{t}', endp, .024, .009, seg=16, rseg=6, rot=Vector((0, 0, 1)).rotation_difference(sc_b - sc_a))
+    cap = torus(f'Ngoc_ScrollEnd_{t}', endp, .036, .012, seg=16, rseg=6, rot=Vector((0, 0, 1)).rotation_difference(sc_b - sc_a))
     finish(cap, 'parchment_edge', ['chest', 'spine'])
-rib = torus('Ngoc_ScrollRibbon', sc_a.lerp(sc_b, .5), .032, .006, seg=16, rseg=6, rot=Vector((0, 0, 1)).rotation_difference(sc_b - sc_a))
+rib = torus('Ngoc_ScrollRibbon', sc_a.lerp(sc_b, .5), .046, .008, seg=16, rseg=6, rot=Vector((0, 0, 1)).rotation_difference(sc_b - sc_a))
 finish(rib, 'ribbon', ['chest', 'spine'])
 
 # ---------------- neck scarf ------------------------------------------------------------
@@ -629,7 +647,7 @@ for v in scarf.data.vertices:
     a = math.atan2(v.co.y, v.co.x)
     v.co.z += .006 * math.sin(a * 5)
 finish(scarf, 'scarf', ['neck', 'chest'])
-knot = ellipsoid('Ngoc_ScarfKnot', (-.050, -.090, .800), (.034, .026, .030), seg=14, rings=10)
+knot = ellipsoid('Ngoc_ScarfKnot', (-.050, -.100, .800), (.046, .034, .040), seg=14, rings=10)
 finish(knot, 'scarf_dark', ['chest'])
 # two flowing tails sweeping back on her right side
 for k, (dz, spread, ln) in enumerate([(0, .0, 1.0), (-.03, .05, .82)]):
@@ -637,8 +655,8 @@ for k, (dz, spread, ln) in enumerate([(0, .0, 1.0), (-.03, .05, .82)]):
     for i in range(11):
         t = i / 10
         # long ribbon that billows out to her right and back, like REF_01
-        pts.append((Vector((-.060 - .26 * t * ln - spread * t, -.08 + .34 * t * ln, .790 - .08 * t + .07 * math.sin(t * 3.4) + dz)), ln))
-    rings = [(p, .046 * (1 - .30 * (i / 10)) + .010 * math.sin(i * 1.1), .009) for i, (p, _) in enumerate(pts)]
+        pts.append((Vector((-.060 - .36 * t * ln - spread * t, -.08 + .40 * t * ln, .800 - .04 * t + .09 * math.sin(t * 3.4) + dz)), ln))
+    rings = [(p, .074 * (1 - .30 * (i / 10)) + .014 * math.sin(i * 1.1), .011) for i, (p, _) in enumerate(pts)]
     tail = loft(f'Ngoc_ScarfTail_{k}', rings, seg=12, ref=Vector((0, 0, 1)))
     finish(tail, 'scarf' if k == 0 else 'scarf_dark', ['scarf_tail.R'])
 
@@ -721,6 +739,24 @@ for k, az in enumerate((-.62, -.22, .22, .62)):
                      rot=Vector((0, 0, 1)).rotation_difference((p - HAIR_C).normalized()))
     finish(puff, HAIR_COLS[k % 2], ['head'])
 
+# v03: curly volume — rounded tufts all over the crown, sides and back so the hair reads as curls, not a cap
+import random as _rnd
+_rnd.seed(7)
+_k = 0
+for el_deg, count, size in ((74, 6, .074), (58, 10, .078), (40, 12, .082), (22, 12, .086), (4, 11, .084), (-12, 9, .076)):
+    for i in range(count):
+        az = (i + .5 * (_k % 2)) / count * 2 * math.pi - math.pi
+        if abs(az) < math.radians(62) and el_deg < 50:
+            continue                                  # keep the face and the bandana front clear
+        if abs(az) < math.radians(40) and el_deg < 66:
+            continue                                  # goggles sit here
+        p = on_hair(az + _rnd.uniform(-.08, .08), math.radians(el_deg + _rnd.uniform(-5, 5)), .004)
+        r = size * _rnd.uniform(.85, 1.15)
+        tuft = ellipsoid(f'Ngoc_Tuft_{_k}', p, (r, r * .92, r * .80), seg=12, rings=8,
+                         rot=Vector((0, 0, 1)).rotation_difference((p - HAIR_C).normalized()))
+        finish(tuft, HAIR_COLS[_k % 3], ['head'])
+        _k += 1
+
 # fringe: chunky hooked curls tumbling out under the bandana onto the forehead
 for i, (az0, da, el0, r0) in enumerate([(-.04, -.30, 24, .034), (.10, .30, 24, .032), (-.36, -.26, 22, .032),
                                         (.40, .26, 22, .030), (-.66, -.24, 16, .030), (.68, .24, 16, .030)]):
@@ -794,32 +830,41 @@ for k, (dz, sw) in enumerate(((-.11, .03), (-.07, .09))):
     tl = loft(f'Ngoc_BandanaTail_{k}', rings, seg=10, ref=Vector((0, 1, 0)))
     finish(tl, 'bandana' if k else 'bandana_dark', ['head'])
 
-# goggle strap around the head, just above the bandana
-GS_N = Vector((0, .25, 1)).normalized()
-gs_c = HAIR_C + Vector((0, 0, .130))
-gstrap = wrap_band('Ngoc_GoggleStrap', HAIR_TREE, gs_c, GS_N, [-.016, .0, .016], .026, seg=64, thick=.010)
-bpy.data.objects.remove(gstrap)   # v03: no dark ring, the goggles sit on the red band
-# big brass goggles resting on the crown, lenses looking forward/up
-for s in (-1, 1):
-    p, n = surf(HAIR_TREE, HAIR_C, hair_dir(math.radians(26) * s, math.radians(36)), .030)
-    q = Vector((0, 0, 1)).rotation_difference(n)
-    rim = torus(f'Ngoc_GoggleRim_{s}', p + n * .020, .066, .019, seg=24, rseg=8, rot=q)
-    finish(rim, 'brass', ['head'])
-    cup = loft(f'Ngoc_GoggleCup_{s}', [(p - n * .012, .062, .062), (p + n * .018, .072, .072)], seg=24, caps=(True, False))
-    finish(cup, 'brass_dark', ['head'])
-    lens = ellipsoid(f'Ngoc_GoggleLens_{s}', p + n * .018, (.058, .058, .012), seg=20, rings=10, rot=q)
-    finish(lens, 'lens', ['head'])
-    shine = ellipsoid(f'Ngoc_GoggleShine_{s}', p + n * .027 + (q @ Vector((-.014, .014, 0))), (.012, .008, .003), seg=8, rings=6, rot=q)
-    finish(shine, 'lens_shine', ['head'])
-    for r in range(4):  # rivets
-        a = math.pi / 4 + r * math.pi / 2
-        rv = ellipsoid(f'Ngoc_GoggleRivet_{s}_{r}', p + n * .034 + q @ Vector((math.cos(a) * .050, math.sin(a) * .054, 0)), (.006, .006, .004),
-                       seg=6, rings=4, rot=q)
-        finish(rv, 'gold', ['head'])
-bl = on_hair(math.radians(-11), math.radians(37), .056)
-br = on_hair(math.radians(11), math.radians(37), .056)
-bridge = tube('Ngoc_GoggleBridge', [bl, (bl + br) / 2 + Vector((0, -.004, .010)), br], [.011, .011, .011], seg=8)
-finish(bridge, 'brass', ['head'])
+if VARIANT == 'ngoc':
+    # goggle strap around the head, just above the bandana
+    GS_N = Vector((0, .25, 1)).normalized()
+    gs_c = HAIR_C + Vector((0, 0, .130))
+    gstrap = wrap_band('Ngoc_GoggleStrap', HAIR_TREE, gs_c, GS_N, [-.016, .0, .016], .026, seg=64, thick=.010)
+    bpy.data.objects.remove(gstrap)   # v03: no dark ring, the goggles sit on the red band
+    # big brass goggles resting on the crown, lenses looking forward/up
+    for s in (-1, 1):
+        p, n = surf(HAIR_TREE, HAIR_C, hair_dir(math.radians(26) * s, math.radians(36)), .030)
+        q = Vector((0, 0, 1)).rotation_difference(n)
+        rim = torus(f'Ngoc_GoggleRim_{s}', p + n * .020, .066, .019, seg=24, rseg=8, rot=q)
+        finish(rim, 'brass', ['head'])
+        cup = loft(f'Ngoc_GoggleCup_{s}', [(p - n * .012, .062, .062), (p + n * .018, .072, .072)], seg=24, caps=(True, False))
+        finish(cup, 'brass_dark', ['head'])
+        lens = ellipsoid(f'Ngoc_GoggleLens_{s}', p + n * .018, (.058, .058, .012), seg=20, rings=10, rot=q)
+        finish(lens, 'lens', ['head'])
+        shine = ellipsoid(f'Ngoc_GoggleShine_{s}', p + n * .027 + (q @ Vector((-.014, .014, 0))), (.012, .008, .003), seg=8, rings=6, rot=q)
+        finish(shine, 'lens_shine', ['head'])
+        for r in range(4):  # rivets
+            a = math.pi / 4 + r * math.pi / 2
+            rv = ellipsoid(f'Ngoc_GoggleRivet_{s}_{r}', p + n * .034 + q @ Vector((math.cos(a) * .050, math.sin(a) * .054, 0)), (.006, .006, .004),
+                           seg=6, rings=4, rot=q)
+            finish(rv, 'gold', ['head'])
+    bl = on_hair(math.radians(-11), math.radians(37), .056)
+    br = on_hair(math.radians(11), math.radians(37), .056)
+    bridge = tube('Ngoc_GoggleBridge', [bl, (bl + br) / 2 + Vector((0, -.004, .010)), br], [.011, .011, .011], seg=8)
+    finish(bridge, 'brass', ['head'])
+else:
+    _fl = {'lily': ('f6f2ea', 'f4d04a'), 'rose': ('e2483e', 'f6f2ea'), 'anna': ('f2c230', 'f6f2ea')}[VARIANT]
+    PALETTE_EXTRA = True
+    for k in range(11):
+        az = math.radians(-100 + k * 20)
+        p = on_hair(az, math.radians(40 - 6 * abs(k - 5) / 5), .030)
+        finish(ellipsoid(f'Ngoc_Crown_{k}', p, (.050, .050, .040), seg=10, rings=6), 'lens_shine' if k % 2 else 'parchment', ['head'])
+        finish(ellipsoid(f'Ngoc_CrownDot_{k}', p + (p - HAIR_C).normalized() * .034, (.020, .020, .016), seg=6, rings=4), 'gold', ['head'])
 
 # --------------------------------------------------------------------------------------
 # Armature
