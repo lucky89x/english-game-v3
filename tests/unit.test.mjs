@@ -126,7 +126,13 @@ test('village: landmarks, spawn and both bridges are walkable; forest gate is re
   try {
     assert.equal(L.NAME, 'village');
     assert.ok(L.walkable(L.SPAWN.x, L.SPAWN.z));
-    for (const b of L.BRIDGES) assert.ok(L.walkable(b.x, b.z) && !L.inWater(b.x, b.z));
+    const [vb, sb] = L.BRIDGES;
+    assert.ok(L.walkable(vb.x, vb.z) && !L.inWater(vb.x, vb.z));
+    assert.ok(L.inWater(sb.x, sb.z), 'broken south bridge cannot be crossed');
+    L.setBridgeOpen('village', 'south', true);
+    assert.ok(L.walkable(sb.x, sb.z) && findPath(-2, 36, sb.x + 8, sb.z), 'repaired bridge is walkable and routable');
+    L.setBridgeOpen('village', 'south', false);
+    assert.equal(findPath(4, 39.5, sb.x, sb.z), null);
     assert.ok(L.inWater(L.riverX(20), 20));
     for (const l of L.LANDMARKS.filter((x) => x.spot)) assert.ok(L.walkable(l.spot[0], l.spot[1]), l.id);
     const ex = L.EXITS[0];
@@ -142,8 +148,12 @@ function villageHarness({ grade = 6, letter = { letter: 'Dear Tom,\n\nPlease giv
   const profile = S.newProfile('An', grade), log = [];
   const cards = Array.from({ length: n }, (_, i) => ({ id: `g${grade}_u01:w${i}`, word: 'w' + i, vi: 'nghĩa ' + i }));
   const ui = { dialogue: (pages, done) => { log.push(pages); if (done) done(); }, choose: (page, options, pick) => { ui.pending = { page, options, pick }; } };
-  const story = new VillageStory({ profile, save() {}, ui, sfx() {}, onChange() {}, letter, cards, cardOf: (id) => cards.find((c) => c.id === id) });
-  return { profile, story, ui, log, cards };
+  const bridgeState = { open: false };
+  const bridge = arguments[0] && arguments[0].noBridge ? null : { sam_request: 'We need a rope, an axe and a log.\nBen has an axe.', pip_intro: 'I can read the book!',
+    materials: [{ id: 'rope', word: 'rope', vi: 'dây thừng', decoy: { word: 'chain', vi: 'dây xích' } }, { id: 'axe', word: 'axe', vi: 'cái rìu', decoy: { word: 'pickaxe', vi: 'cuốc' } }, { id: 'log', word: 'log', vi: 'khúc gỗ', decoy: { word: 'rock', vi: 'tảng đá' } }],
+    instructions: [{ en: 'First, cut the log.', vi: 'Xẻ gỗ' }, { en: 'Next, put the planks.', vi: 'Đặt ván' }, { en: 'Finally, tie the rope.', vi: 'Buộc dây' }], clue: 'Footprints go to the forest!' };
+  const story = new VillageStory({ profile, save() {}, ui, sfx() {}, onChange() {}, letter, bridge, setBridge: (o) => { bridgeState.open = o; }, cards, cardOf: (id) => cards.find((c) => c.id === id) });
+  return { profile, story, ui, log, cards, bridgeState };
 }
 test('village: letter read with a wrong then a right answer, hint only after the mistake, reward once', () => {
   const { profile, story, ui } = villageHarness();
@@ -179,13 +189,41 @@ test('village: word jars — wrong jar teaches, first-try pays more, due words c
   story.serve(story.customer.options.findIndex((o) => o.id === story.customer.target.id));
   assert.equal(profile.stats.gold, g0 + 1);
   for (let i = 1; i < CUSTOMERS; i++) story.serve(story.customer.options.findIndex((o) => o.id === story.customer.target.id));
-  assert.equal(story.market, null); assert.equal(story.step, 'open');
+  assert.equal(story.market, null); assert.equal(story.step, 'bridge_ask');
   assert.equal(profile.stats.gold, g0 + 1 + 3 * (CUSTOMERS - 1));
   assert.ok(!profile.flags.forest_open);
-  story.talkTom(); assert.equal(story.step, 'done'); assert.equal(profile.flags.forest_open, true);
 });
 test('village: no vocabulary for the unit -> Ben says so and the story is not blocked', () => {
   const { story, log } = villageHarness({ n: 0 });
   story.q.step = 'jars'; story.talkBen();
   assert.ok(log.at(-1)[0].vi.includes('chưa có')); assert.equal(story.step, 'open');
+});
+
+test('village: bridge repair — decoy refused, axe from Ben after a market shift, steps in order, bridge opens, then the gate', () => {
+  const { profile, story, ui, log, bridgeState } = villageHarness();
+  story.q.step = 'bridge_ask'; story.talkTom(); assert.equal(story.step, 'bridge_sam');
+  assert.equal(story.talkSam(), true); assert.equal(story.step, 'bridge_collect');
+  assert.deepEqual(story.itemsOut(), ['rope', 'log']);
+  assert.equal(story.pick('rope', false), false);
+  assert.ok(log.at(-1)[0].vi.includes('dây xích'), 'decoy is explained');
+  assert.equal(story.pick('rope', true), true); assert.equal(story.pick('rope', true), false, 'no double pick');
+  story.pick('log', true);
+  assert.deepEqual(story.itemsOut(), []); assert.ok(story.needsAxe());
+  story.talkSam(); assert.equal(story.step, 'bridge_collect', 'Sam repeats until all three are there');
+  story.talkBen(); assert.ok(story.market, 'Ben trades the axe for a shift');
+  for (let i = 0; i < CUSTOMERS; i++) story.serve(story.customer.options.findIndex((o) => o.id === story.customer.target.id));
+  assert.ok(story.q.items.includes('axe')); assert.equal(story.step, 'bridge_collect');
+  story.talkSam(); assert.equal(story.step, 'bridge_fix');
+  const pickVi = (vi) => ui.pending.pick(ui.pending.options.indexOf(vi));
+  pickVi('Buộc dây');
+  assert.ok(ui.pending.page.en.includes('Read again') && ui.pending.page.en.includes('First, cut the log.'), 'wrong step: Pip repeats that line');
+  assert.equal(bridgeState.open, false);
+  pickVi('Xẻ gỗ'); pickVi('Đặt ván'); pickVi('Buộc dây');
+  assert.equal(story.step, 'open'); assert.equal(bridgeState.open, true); assert.equal(profile.flags.bridge_repaired, true);
+  story.talkTom(); assert.equal(story.step, 'done'); assert.equal(profile.flags.forest_open, true);
+});
+test('village: a grade without bridge content — Sam says so, bridge opens, story continues', () => {
+  const { story, log, bridgeState } = villageHarness({ noBridge: true });
+  story.q.step = 'bridge_sam'; story.talkSam();
+  assert.ok(log.at(-1)[0].vi.includes('chưa được soạn')); assert.equal(bridgeState.open, true); assert.equal(story.step, 'open');
 });

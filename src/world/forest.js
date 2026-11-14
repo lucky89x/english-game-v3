@@ -3,7 +3,7 @@
 import * as THREE from 'three';
 import { mergeGeometries, mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
 import * as L from '../core/layout.js';
-import { ORCHARD_TREES, GATE } from '../core/regions/village.js';
+import { ORCHARD_TREES, GATE, ITEM_SPOTS } from '../core/regions/village.js';
 
 export const TIME = { value: 0 };
 const C = (hex) => new THREE.Color(hex);
@@ -505,6 +505,24 @@ function orchard(list) {
   return g;
 }
 
+/** Bridge-repair things lying in the village: rope/chain and log/rock, each with an English name tag. */
+function questItems() {
+  const g = new THREE.Group(), items = {};
+  const make = { rope: () => { const m = new THREE.Mesh(new THREE.TorusGeometry(0.34, 0.09, 8, 18), new THREE.MeshStandardMaterial({ color: 0xd9b47a, roughness: 0.95 })); m.rotation.x = Math.PI / 2; m.position.y = 0.12; return m; },
+    chain: () => { const m = new THREE.Mesh(new THREE.TorusGeometry(0.32, 0.06, 6, 14), new THREE.MeshStandardMaterial({ color: 0x8a8f98, roughness: 0.4, metalness: 0.8 })); m.rotation.x = Math.PI / 2; m.position.y = 0.1; return m; },
+    log: () => { const m = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.28, 1.5, 10), new THREE.MeshStandardMaterial({ color: 0x8a5a30, roughness: 0.9 })); m.rotation.z = Math.PI / 2; m.position.y = 0.28; return m; },
+    rock: () => { const m = new THREE.Mesh(lumpy(new THREE.IcosahedronGeometry(0.45, 1), 0.2, 5, false), new THREE.MeshStandardMaterial({ color: 0xa29fae, roughness: 1, flatShading: true })); m.position.y = 0.3; return m; } };
+  const pairs = { rope: ['rope', 'chain'], log: ['log', 'rock'] };
+  for (const [id, spots] of Object.entries(ITEM_SPOTS)) spots.forEach(([x, z], k) => {
+    const h = new THREE.Group(), word = pairs[id][k], m = make[word](); m.castShadow = true; h.add(m);
+    const tag = label(word, { size: 30, scale: 0.6 }); tag.position.y = 1.25; h.add(tag);
+    h.position.set(x, L.groundHeight(x, z), z); h.visible = false; g.add(h);
+    (items[id] = items[id] || []).push(h);
+  });
+  g.userData.items = items;
+  return g;
+}
+
 async function forestExtras(add, loadModel, shadowed) {
   add(ancientTree()); add(mushrooms()); add(camp()); add(cave()); add(ruins()); add(tower()); add(woodpile()); add(blossomTree()); add(stonesAndLilies());
   for (const [x, z] of [[-31, 56], [-29, 42], [-36, 27], [-33, 4], [-12, -11], [11, -17], [20, -9], [38, -4], [33, 14], [36, 30], [10, 41], [24, 46], [-27, -19], [38, -27], [13, -33]]) add(lampPost(x + 1.9, z + 0.4));
@@ -541,11 +559,14 @@ export async function buildWorld(scene, loadModel) {
   const detail = { cobbles: add(buildCobbles()), grass: add(buildGrass()), flowers: add(buildFlowers()), far: add(mountains()), critters: add(critters()) };
   add(buildWater()); add(buildTrees()); add(buildRocks()); add(buildFences());
   const shadowed = (o) => { o.traverse((c) => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } }); return o; };
+  const bridges = {};
   for (const b of L.BRIDGES) {
-    const m = shadowed(await loadModel('prop_bridge_curved_v02'));
     const base = (L.groundHeight(b.x - L.BRIDGE_LEN / 2 - 0.9, b.z) + L.groundHeight(b.x + L.BRIDGE_LEN / 2 + 0.9, b.z)) / 2;
-    m.position.set(b.x, base, b.z); m.rotation.y = Math.PI / 2; add(m);
+    const m = shadowed(await loadModel('prop_bridge_curved_v02')); m.position.set(b.x, base, b.z); m.rotation.y = Math.PI / 2; add(m);
+    bridges[b.id] = { whole: m };
+    if (L.NAME === 'village' && b.id === 'south') { const br = shadowed(await loadModel('prop_bridge_broken_v02')); br.position.copy(m.position); br.rotation.y = Math.PI / 2; add(br); bridges[b.id].broken = br; }
   }
+  const quest = L.NAME === 'village' ? add(questItems()) : null;
   if (L.NAME === 'forest') await forestExtras(add, loadModel, shadowed); else await villageExtras(add, loadModel, shadowed);
   // jar labels (village market): four pooled sprites, text swapped per customer
   const jarLabels = [];
@@ -558,6 +579,10 @@ export async function buildWorld(scene, loadModel) {
       root.traverse((o) => { if (o.userData.particles) o.visible = particles; });
       detail.far.visible = far;
     },
+    /** Shows the whole or the broken model of a bridge. */
+    setBridge(id, open) { const b = bridges[id]; if (!b) return; b.whole.visible = open || !b.broken; if (b.broken) b.broken.visible = !open; },
+    /** ids of the quest things still lying around (needed + decoy shown together). */
+    setItems(ids) { if (!quest) return; for (const [id, list] of Object.entries(quest.userData.items)) for (const h of list) h.visible = ids.includes(id); },
     setJars(texts) {
       for (const s of jarLabels.splice(0)) { root.remove(s); s.material.map.dispose(); s.material.dispose(); }
       if (!texts) return;

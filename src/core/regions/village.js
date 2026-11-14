@@ -7,7 +7,7 @@ export const GATE = { x: -30, z: -44 };
 export default makeRegion({
   name: 'village', title: 'Starter Village', size: 140, playRadius: 62, seed: 4242, trees: 230, rocks: 40, roughness: 0.3, treeMix: [0.3, 0.85],
   riverX, riverHalf: () => 3.4, riverStart: -90,
-  bridges: [{ id: 'village', z: 6, name: 'Village Bridge' }, { id: 'south', z: 40, name: 'South Bridge' }], stonesZ: null,
+  bridges: [{ id: 'village', z: 6, name: 'Village Bridge' }, { id: 'south', z: 40, name: 'South Bridge' }], stonesZ: null, closed: ['south'],
   landmarks: [
     { id: 'hall', en: 'village hall', vi: 'nhà trưởng làng', label: 'Village Hall', x: 0, z: -25, spot: [0, -16.5] },
     { id: 'square', en: 'square', vi: 'quảng trường', label: 'Square', x: 0, z: 4 },
@@ -43,4 +43,7 @@ export default makeRegion({
     { x: -27, z: 27, r: 1.0 },                                                // scarecrow
   ],
 });
+/** Bridge-repair items: needed thing and its look-alike decoy, [x, z] each. The axe comes from Ben. */
+export const ITEM_SPOTS = { rope: [[13.2, 20.4], [13.4, 22.4]], log: [[-17.5, 34.6], [-15.2, 35.4]] };
+export const SAM_BRIDGE = [9.2, 42.2];
 export const ORCHARD_TREES = [[36, 0], [42, 3], [46, 9], [38, 20], [45, 18], [34, 13]];

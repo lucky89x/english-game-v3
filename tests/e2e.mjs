@@ -75,11 +75,45 @@ for (let n = 0; n < 5; n++) {
   await ev((i) => { const [x, z] = __eq.MARKET_JARS[i]; __eq.teleport(x + 1.0, z); }, i); await wait(450);
   await page.keyboard.press('KeyE'); await wait(350);
 }
-check(await ev(() => !__eq.story.market && __eq.story.step === 'open' && Object.keys(__eq.profile.words).length === 5), 'Five travellers served; words stored for review');
+check(await ev(() => !__eq.story.market && __eq.story.step === 'bridge_ask' && Object.keys(__eq.profile.words).length === 5), 'Five travellers served; words stored for review');
 for (let k = 0; k < 4 && await page.isVisible('#dialog'); k++) { await page.keyboard.press('KeyE'); await wait(200); }
 const gate = await ev(() => ({ x: __eq.L.EXITS[0].x, z: __eq.L.EXITS[0].z }));
 await ev((g) => __eq.teleport(g.x, g.z + 1.2), gate); await wait(450);
 check((await page.textContent('#prompt')).includes('còn khóa'), 'Forest gate is locked before Tom opens it');
+// ---- repair the south bridge
+const sb = await ev(() => ({ x: __eq.L.BRIDGES[1].x, z: __eq.L.BRIDGES[1].z }));
+await ev(() => __eq.teleport(4, 39.5)); await wait(300);
+const brokenRoute = await ev((b) => { const ok = __eq.minimap.travelTo(b.x + 9, b.z); const r = __eq.minimap.route; __eq.player.route = null; __eq.minimap.clearRoute(); return { ok, len: r ? r.length : 0, crosses: r ? r.some((p) => Math.abs(p.z - b.z) < 1.5 && Math.abs(p.x - b.x) < 6) : false }; }, sb);
+check(await ev((b) => __eq.L.inWater(b.x, b.z), sb) && brokenRoute.ok && !brokenRoute.crosses && brokenRoute.len > 60, `South bridge is broken: nobody can cross it, the long way round is ${brokenRoute.len} steps`);
+await ev(() => __eq.teleport(1.6, 9.2)); await wait(400); for (let k = 0; k < 3; k++) { await page.keyboard.press('KeyE'); await wait(220); }
+check(await ev(() => __eq.story.step === 'bridge_sam'), 'Tom sends Ngọc to Sam');
+await wait(300); await ev(() => __eq.teleport(__eq.SAM_BRIDGE[0] - 1.4, __eq.SAM_BRIDGE[1] - 0.6)); await wait(500);
+await view(4, 44, -1.9, 0.38, 12); await ev(() => __eq.teleport(__eq.SAM_BRIDGE[0] - 1.4, __eq.SAM_BRIDGE[1] - 0.6)); await wait(1500); await snap('03b_broken_bridge');
+await page.keyboard.press('KeyE'); await wait(300);
+check((await page.textContent('#dialog')).includes('Sam') && (await page.textContent('#dialog .en')).length > 10, 'E on Sam at the broken bridge: request in English');
+for (let k = 0; k < 6 && await page.isVisible('#dialog'); k++) { await page.keyboard.press('KeyE'); await wait(200); }
+check(await ev(() => __eq.story.step === 'bridge_collect' && __eq.story.itemsOut().length === 2), 'Rope and log appear in the village (each next to a look-alike)');
+await ev(() => { const [x, z] = __eq.ITEM_SPOTS.rope[1]; __eq.teleport(x - 0.8, z); }); await wait(450);
+await page.keyboard.press('KeyE'); await wait(300);
+check((await page.textContent('#dialog')).includes('chain') && await ev(() => __eq.story.q.items.length === 0), 'Decoy (chain) with the real E key is refused and explained');
+await page.keyboard.press('KeyE'); await wait(200);
+for (const id of ['rope', 'log']) { await ev((id) => { const [x, z] = __eq.ITEM_SPOTS[id][0]; __eq.teleport(x - 0.8, z - 0.3); }, id); await wait(450); await page.keyboard.press('KeyE'); await wait(300); for (let k = 0; k < 3 && await page.isVisible('#dialog'); k++) { await page.keyboard.press('KeyE'); await wait(200); } }
+check(await ev(() => __eq.story.q.items.length === 2 && __eq.story.needsAxe()), 'Rope and log picked with E; the axe is still missing');
+await ev(() => __eq.teleport(-6.6, 19.6)); await wait(500); await page.keyboard.press('KeyE'); await wait(250); await page.keyboard.press('KeyE'); await wait(400);
+check(await ev(() => !!__eq.story.market), 'Ben trades the axe for a market shift');
+for (let n = 0; n < 5; n++) { const i = await ev(() => { const c = __eq.story.customer; return c ? c.options.findIndex((o) => o.id === c.target.id) : -1; }); if (i < 0) break; await ev((i) => __eq.story.serve(i), i); await wait(150); }
+for (let k = 0; k < 5 && await page.isVisible('#dialog'); k++) { await page.keyboard.press('KeyE'); await wait(200); }
+check(await ev(() => __eq.story.q.items.includes('axe')), 'Axe received from Ben');
+await ev(() => __eq.teleport(__eq.SAM_BRIDGE[0] - 1.4, __eq.SAM_BRIDGE[1] - 0.6)); await wait(600);
+await page.keyboard.press('KeyE'); await wait(300); await page.keyboard.press('KeyE'); await wait(300);
+check(await ev(() => __eq.story.step === 'bridge_fix') && !!(await page.$('#dialog .opts')), 'Pip reads the repair steps; choices appear');
+for (let n = 0; n < 3; n++) { const i = await ev((n) => { const st = __eq.story.api.bridge.instructions; return st.map((x) => x.vi).sort().indexOf(st[n].vi); }, n); await page.keyboard.press('Digit' + (i + 1)); await wait(300); }
+check(await ev((b) => __eq.profile.flags.bridge_repaired === true && !__eq.L.inWater(b.x, b.z) && __eq.L.walkable(b.x, b.z), sb), 'Steps in order: the bridge is repaired and walkable');
+for (let k = 0; k < 3 && await page.isVisible('#dialog'); k++) { await page.keyboard.press('KeyE'); await wait(200); }
+await ev(() => __eq.teleport(4, 39.5)); await wait(400);
+const openRoute = await ev((b) => { __eq.minimap.travelTo(b.x + 9, b.z); const r = __eq.minimap.route; __eq.player.route = null; __eq.minimap.clearRoute(); return { len: r.length, crosses: r.some((p) => Math.abs(p.z - b.z) < 1.5 && Math.abs(p.x - b.x) < 6) }; }, sb);
+check(openRoute.crosses && openRoute.len < brokenRoute.len / 2, `Minimap now routes across the repaired bridge (${openRoute.len} steps instead of ${brokenRoute.len})`);
+await ev(() => { __eq.player.route = null; }); await view(4, 44, -1.9, 0.38, 12); await wait(1500); await snap('03c_repaired_bridge');
 await ev(() => __eq.teleport(1.6, 9.2)); await wait(400); for (let k = 0; k < 3; k++) { await page.keyboard.press('KeyE'); await wait(220); }
 check(await ev(() => __eq.story.step === 'done' && __eq.profile.flags.forest_open === true), 'Tom opens the forest gate');
 await view(-8, 26, 0.6, 0.5, 16); await wait(1500); await snap('03_village_market_side');
@@ -160,12 +194,13 @@ const before = await ev(() => ({ gold: __eq.profile.stats.gold, words: Object.ke
 await page.reload(); await page.waitForFunction(() => globalThis.__eq && !document.getElementById('menu').classList.contains('hidden'), null, { timeout: 120000 });
 check((await page.textContent('#menucard')).includes('An · Lớp 6'), 'After reload the profile is listed');
 await page.click('[data-profile]'); await page.waitForFunction(() => __eq.started, null, { timeout: 60000 });
-check(await ev((b) => __eq.region === 'forest' && __eq.quest.step === 'done' && __eq.profile.stats.gold === b.gold && Object.keys(__eq.profile.words).length === b.words, before), 'Progress, gold and review words survive a reload');
+check(await ev((b) => __eq.region === 'forest' && __eq.L.bridgeOpen('village', 'south') && __eq.quest.step === 'done' && __eq.profile.stats.gold === b.gold && Object.keys(__eq.profile.words).length === b.words, before), 'Progress, gold and review words survive a reload');
 const saved = await ev(() => JSON.parse(localStorage.getItem('english-quest-web')));
 check(saved.version === 2 && saved.profiles.length === 1, 'Save is versioned JSON in localStorage');
 await page.click('#gp'); await page.click('#mnew'); await page.fill('#mname', 'Minh'); await page.click('[data-g="9"]'); await page.click('#mgo');
 await page.waitForFunction(() => __eq.started && __eq.profile.name === 'Minh', null, { timeout: 60000 });
 check(await ev(() => __eq.profile.stats.gold === 0 && __eq.region === 'village' && __eq.story.step === 'arrive' && !__eq.profile.flags.forest_open), 'Second profile (grade 9) starts fresh in the village');
+check(await ev(() => !__eq.L.bridgeOpen('village', 'south')), "The other child's bridge is still broken");
 await ev(() => __eq.story.talkTom()); for (let k = 0; k < 3; k++) { await page.keyboard.press('KeyE'); await wait(200); }
 await ev(() => __eq.story.readLetter()); await wait(200);
 check((await page.textContent('#dialog')).includes('lớp 9 chưa được soạn'), 'Grade 9 has no letter yet: the game says so (nothing borrowed)');

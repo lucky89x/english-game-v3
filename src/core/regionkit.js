@@ -31,6 +31,7 @@ export function makeRegion(cfg) {
   const hasRiver = (z) => z >= R.RIVER_START && z <= R.RIVER_END;
   R.riverDistance = (x, z) => (hasRiver(z) ? Math.abs(x - R.riverX(z)) : 99);
   R.BRIDGES = cfg.bridges.map((b) => ({ ...b, x: R.riverX(b.z) }));
+  R.closed = new Set(cfg.closed || []);            // broken bridges: not walkable until repaired
   R.STONES_Z = cfg.stonesZ ?? null;
   R.STONES = [];
   if (R.STONES_Z !== null) { const cx = R.riverX(R.STONES_Z); for (let i = -3; i <= 3; i++) R.STONES.push({ x: cx + i * 1.55, z: R.STONES_Z + (i % 2 ? 0.35 : -0.25), r: 0.72 }); }
@@ -58,11 +59,11 @@ export function makeRegion(cfg) {
     }
     return h;
   };
-  R.onBridge = (x, z) => R.BRIDGES.some((b) => Math.abs(z - b.z) < 1.45 && Math.abs(x - b.x) < BRIDGE_LEN / 2 + 0.9);
+  R.onBridge = (x, z) => R.BRIDGES.some((b) => !R.closed.has(b.id) && Math.abs(z - b.z) < 1.45 && Math.abs(x - b.x) < BRIDGE_LEN / 2 + 0.9);
   R.walkHeight = (x, z) => {
     for (const b of R.BRIDGES) {
       const dx = x - b.x;
-      if (Math.abs(z - b.z) < 1.45 && Math.abs(dx) < BRIDGE_LEN / 2 + 0.9) {
+      if (!R.closed.has(b.id) && Math.abs(z - b.z) < 1.45 && Math.abs(dx) < BRIDGE_LEN / 2 + 0.9) {
         const base = (R.groundHeight(b.x - BRIDGE_LEN / 2 - 0.9, b.z) + R.groundHeight(b.x + BRIDGE_LEN / 2 + 0.9, b.z)) / 2;
         const deck = base + BRIDGE_RISE * Math.cos(Math.PI * Math.max(-0.5, Math.min(0.5, dx / BRIDGE_LEN))) - 0.03;
         return Math.max(deck, R.groundHeight(x, z));

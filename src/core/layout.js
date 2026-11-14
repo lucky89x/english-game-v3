@@ -14,6 +14,9 @@ export function setRegion(name) {
   for (const f of listeners) f(name);
 }
 setRegion('forest');
+/** Opens or closes a bridge of a region (broken south bridge of the village). */
+export function setBridgeOpen(region, id, open) { const r = REGIONS[region]; if (open) r.closed.delete(id); else r.closed.add(id); for (const f of listeners) f(cur.NAME); }
+export const bridgeOpen = (region, id) => !REGIONS[region].closed.has(id);
 export const riverX = (z) => cur.riverX(z);
 export const riverHalf = (z) => cur.riverHalf(z);
 export const riverDistance = (x, z) => cur.riverDistance(x, z);

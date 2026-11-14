@@ -6,7 +6,8 @@
 1. Arrival: Tom welcomes Ngọc in the square (English).
 2. **The Lost Letter**: the letter lies at the hall door; Ngọc reads it in English (text from the grade's own curriculum file) and answers one question. A wrong answer shows the Vietnamese hint and asks again. Grades without a letter are told so and continue.
 3. **Ben's Word Jars**: five travellers ask for a word in English; Ngọc walks to the jar with the right meaning and presses E. A wrong jar is named by the traveller. Due review words are asked first.
-4. Tom opens the forest gate (north-west); Pip waits there. The gate is a real exit: E travels to the forest and back.
+4. **Repair the south bridge**: Tom sends Ngọc to Sam at the broken bridge. Sam asks in English for a rope, an axe and a log. The rope and log lie in the village, each next to a look-alike (chain, rock) that is refused and explained. Ben gives the axe after one market shift. Pip reads the repair steps in English and Ngọc picks them in order. The bridge model and walkability change for real. Grades without this content: Sam says so, the bridge opens, the story goes on.
+5. Tom opens the forest gate (north-west); Pip waits there. The gate is a real exit: E travels to the forest and back.
 Map: square with a well, Tom's hall, shop, two cottages, market stall, river with two bridges, dock with a boat, farm with a scarecrow, orchard, forest gate.
 
 ## Implemented: "Echoes of the Forest" (Forest of Memories, 10–15 min)
