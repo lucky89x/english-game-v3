@@ -9,6 +9,7 @@ import { buildWorld, bridgeItem, TIME, MARKET_JARS } from './world/forest.js';
 import { Player, OrbitCamera, Npc, Pip, Crystals } from './game/actors.js';
 import { ForestQuest, landmark } from './game/quest.js';
 import { VillageStory } from './game/village.js';
+import { MiniGames, STARS } from './game/minigames.js';
 import { SAM_LINES, BRIDGE, BRIDGE_SPOTS, FRIENDS } from './game/content.js';
 import { UI } from './ui/ui.js';
 import { Minimap } from './ui/minimap.js';
@@ -60,11 +61,11 @@ const staticModel = async (name) => (await gltf(name)).scene.clone(true);
 const faceTex = async (name) => { const t = await texLoader.loadAsync(`./assets/tex/ngoc_face_${name}.png`); t.flipY = false; t.colorSpace = THREE.SRGBColorSpace; return t; };
 
 const ui = new UI(), store = Save.load();
-let profile = null, quest = null, story = null, world = null, player = null, cam = null, tom = null, sam = null, ben = null, pip = null, crystals = null, minimap = null, letterProp = null, itemProps = {}, friends = [];
+let profile = null, quest = null, story = null, world = null, player = null, cam = null, tom = null, sam = null, ben = null, pip = null, crystals = null, minimap = null, letterProp = null, itemProps = {}, friends = [], mini = null;
 let quality = localStorage.getItem('eq-quality') || 'medium', perfOn = false, started = false, switching = false, wordIds = {}, jarKey = '';
 const keys = new Set();
 const game = { errors, get profile() { return profile; }, get quest() { return quest; }, get story() { return story; }, get player() { return player; }, get cam() { return cam; }, get minimap() { return minimap; }, ui, L, stats: { fps: 0, ms: 0, calls: 0, tris: 0 },
-  teleport(x, z) { player.place(x, z); cam.target.set(x, player.pos.y + 1.25, z); }, setQuality, key: (code) => onKey({ code, preventDefault() {} }), get started() { return started && !switching; }, get region() { return L.NAME; }, chooseProfile, enterRegion, MARKET_JARS, BRIDGE_SPOTS };
+  teleport(x, z) { player.place(x, z); cam.target.set(x, player.pos.y + 1.25, z); }, setQuality, key: (code) => onKey({ code, preventDefault() {} }), get started() { return started && !switching; }, get region() { return L.NAME; }, chooseProfile, enterRegion, MARKET_JARS, BRIDGE_SPOTS, get mini() { return mini; } };
 globalThis.__eq = game;
 
 function resize() { const w = innerWidth, h = innerHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
@@ -108,9 +109,10 @@ function refresh() {
     else ui.clue(null, 0, '', 'The forest remembers its words again. You can explore!');
     crystals.show(quest.crystalIds());
   } else {
-    ui.hud(profile, 'Làng Khởi Đầu', '', learned);
+    ui.hud(profile, 'Làng Khởi Đầu', mini ? `★ ${mini.data.stars.length}/${STARS.length}` : '', learned);
     const c = story.customer;
     if (c) ui.clue({ who: `Traveller ${c.index + 1}/${c.total}`, text: c.said || `A jar of "${c.target.word}", please!`, key: c.target.word, hints: false, tip: 'Đi tới hũ có nghĩa đúng rồi nhấn E' }, c.said ? 1 : 0, '');
+    else if (mini && mini.note) ui.clue(null, 0, '', mini.note);
     else if (story.step === 'gather') { const have = story.items, need = ['rope', 'log', 'axe'];
       ui.clue(null, 0, '', need.every((k) => have.includes(k)) ? 'Take everything to Sam at the bridge.' : 'Find: ' + need.map((k) => (have.includes(k) ? '✓ ' : '☐ ') + k).join('   ')); }
     else ui.clue(null, 0, '', quest.step === 'done' && story.step === 'done' ? 'Chapter complete! The compass piece points to the desert.' : NOTES[story.step] || '');
@@ -159,7 +161,7 @@ async function enterRegion(name, at) {
   world = await buildWorld(scene, staticModel);
   const q = QUALITY[quality]; world.setDetail(q.density, q.particles, q.far);
   scene.traverse((o) => { if (o.material) [].concat(o.material).forEach((m) => (m.needsUpdate = true)); });
-  minimap.rebuild(); placeActors();
+  minimap.rebuild(); placeActors(); if (mini) mini.setRegion(name);
   const [x, z] = at || [L.SPAWN.x, L.SPAWN.z];
   game.teleport(x, z); player.yaw = Math.PI; cam.tYaw = cam.yaw = 0.25;
   if (quest && quest.step === 'seek') quest.clueStart = performance.now();
@@ -177,6 +179,7 @@ async function chooseProfile(p) {
   story = new VillageStory({ profile, save, ui, sfx, onChange: refresh, letter: (unit && unit.activities && unit.activities.lost_letter) || null, cards, cardOf,
     bridge: BRIDGE[p.grade] || null, onBridgeFixed: applyBridge });
   if (story.step === 'jars_play') story.q.step = 'jars';
+  if (mini) { mini.stop(); mini.syncStars(); }
   if ((story.step === 'open' || story.step === 'done') && !p.flags.bridge_fixed) p.flags.bridge_fixed = true;   // saves from before the bridge quest
   applyBridge();
   $('mapbox').classList.remove('hidden');
@@ -205,6 +208,7 @@ function interactTarget() {
     if (i >= 0) return { text: 'E · Đưa hũ này cho khách', run: () => { player.emote('Interact'); if (story.serve(i)) { player.emote('Celebrate'); } } };
     return null;
   }
+  { const m = mini && mini.interact(player.pos); if (m) return m; }
   if (letterProp.visible && near(letterProp.position.x, letterProp.position.z, 2.2)) return { text: 'E · Nhặt bức thư', run: () => { player.emote('Interact'); story.readLetter(); } };
   for (const [id, m] of Object.entries(itemProps)) if (m.visible && near(m.position.x, m.position.z, 2.0)) return { text: 'E · Nhặt vật này', run: () => { player.emote('Interact'); if (story.pick(id)) player.emote('Celebrate'); } };
   if (near(tom.x, tom.z, 3)) return { text: 'E · Nói chuyện với Tom', run: () => story.talkTom() };
@@ -247,6 +251,7 @@ async function boot() {
   letterProp.position.set(hall[0] + 1.2, L.REGIONS.village.groundHeight(hall[0] + 1.2, hall[1]) + 0.5, hall[1]); letterProp.visible = false; scene.add(letterProp);
   for (const id of ['rope', 'chain', 'log', 'boulder']) { const [x, z] = BRIDGE_SPOTS[id], m = bridgeItem(id); m.position.set(x, L.REGIONS.village.groundHeight(x, z), z); m.visible = false; scene.add(m); itemProps[id] = m; }
   cam = new OrbitCamera(camera, canvas);
+  mini = new MiniGames({ scene, player, ui, sfx, profile: () => profile, save, onNote: refresh });
   minimap = new Minimap($('minimap'), (path) => { player.route = path.slice(1); });
   placeActors(); player.place(L.SPAWN.x, L.SPAWN.z);
   setQuality(quality);
@@ -272,6 +277,7 @@ function frame() {
   for (const f of friends) if (f.npc.root.visible) f.npc.update(dt, player.pos, talkingTo === f.who);
   if (pip.root.visible) pip.update(dt, t, player, started && L.NAME === 'forest' && quest && quest.step !== 'intro');
   crystals.update(t); if (world) world.update(t);
+  if (mini && started && !switching && !ui.modal) mini.update(dt, player.pos);
   if (letterProp.visible) { letterProp.rotation.y = t * 1.5; letterProp.position.y += Math.sin(t * 2.2) * 0.002; }
   sun.position.copy(player.pos).addScaledVector(sunDir, 90); sun.target.position.copy(player.pos);
   sky.position.copy(camera.position);
@@ -294,6 +300,7 @@ function frame() {
         if (['rope', 'log', 'axe'].every((k) => have.includes(k))) markers.push({ x: sam.x, z: sam.z, text: '?' }); }
       if (st === 'done' && quest.step !== 'done') markers.push({ x: L.EXITS[0].x, z: L.EXITS[0].z, text: '★' });
       if (story.market && Math.hypot(player.pos.x + 7, player.pos.z - 19.5) > 15) story.leaveMarket();
+      if (!story.market) markers.push(...mini.markers());
     }
     minimap.draw(player.pos, player.yaw, markers);
     autosave += dt; if (autosave > 20) { autosave = 0; save(); }

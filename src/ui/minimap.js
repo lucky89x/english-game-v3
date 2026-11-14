@@ -8,10 +8,13 @@ export class Minimap {
   constructor(canvas, onTravel) {
     this.cv = canvas; this.ctx = canvas.getContext('2d'); this.zoom = 1.6; this.route = null; this.onTravel = onTravel; this.markers = [];
     this.bg = this.renderBase();
-    canvas.addEventListener('wheel', (e) => { e.preventDefault(); e.stopPropagation(); this.zoom = Math.min(4, Math.max(0.75, this.zoom * (e.deltaY < 0 ? 1.2 : 1 / 1.2))); }, { passive: false });
+    const box = canvas.parentElement || canvas;       // wheel anywhere on the map card zooms the map, never the camera
+    box.addEventListener('wheel', (e) => { e.preventDefault(); e.stopPropagation(); this.zoomBy(e.deltaY < 0 ? 1.25 : 1 / 1.25); }, { passive: false });
+    for (const [id, k] of [['mapin', 1.4], ['mapout', 1 / 1.4]]) { const b = document.getElementById(id); if (b) { b.addEventListener('click', (e) => { e.stopPropagation(); this.zoomBy(k); }); b.addEventListener('mousedown', (e) => e.stopPropagation()); } }
     canvas.addEventListener('mousedown', (e) => e.stopPropagation());
     canvas.addEventListener('click', (e) => { const r = canvas.getBoundingClientRect(); this.travelTo(...this.toWorld((e.clientX - r.left) * canvas.width / r.width, (e.clientY - r.top) * canvas.height / r.height)); });
   }
+  zoomBy(k) { this.zoom = Math.min(6, Math.max(0.6, this.zoom * k)); }
   rebuild() { this.bg = this.renderBase(); this.route = null; }
   renderBase() {
     const n = L.SIZE * BASE, cv = document.createElement('canvas'); cv.width = cv.height = n;

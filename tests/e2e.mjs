@@ -142,6 +142,38 @@ check(arrivedB, 'Ngọc walks across the fixed south bridge');
 await view(sb.x - 9, sb.z + 6, -2.3, 0.35, 14); await wait(1500); await snap('04d_fixed_bridge');
 await ev(() => __eq.teleport(1.6, 9.2)); await wait(400); for (let k = 0; k < 3; k++) { await page.keyboard.press('KeyE'); await wait(220); }
 check(await ev(() => __eq.story.step === 'done' && __eq.profile.flags.forest_open === true), 'Tom opens the forest gate');
+// ---------------------------------------------------------------- mini games (no English in them)
+const MG = await ev(() => ({ stars: __eq.mini.stars.map((s) => [s.x, s.z]), rings: __eq.mini.rings.map((r) => [r.x, r.z]) }));
+const gold0 = await ev(() => __eq.profile.stats.gold);
+await ev((p) => __eq.teleport(p[0], p[1]), MG.stars[0]); await wait(500);
+check(await ev((g) => __eq.mini.data.stars.length === 1 && __eq.profile.stats.gold === g + 3, gold0) && (await page.textContent('#hud')).includes('★ 1/12'), 'Walking into a hidden star collects it (HUD shows ★ 1/12)');
+await ev(() => __eq.teleport(-22.8, 4.6)); await wait(450);
+check((await page.textContent('#prompt')).includes('Chạy vòng'), 'Prompt at the ring race sign');
+await page.keyboard.press('KeyE'); await wait(300);
+check(await ev(() => __eq.mini.active && __eq.mini.active.id === 'race') && (await page.textContent('#clue')).includes('🏁'), 'Ring race starts: timer on the card');
+await snap('03b_ring_race');
+for (const r of MG.rings) { await ev((p) => __eq.teleport(p[0], p[1]), r); await wait(350); }
+check(await ev(() => !__eq.mini.active && __eq.mini.data.best.race > 0) && (await page.textContent('#dialog')).includes('ring race'), 'All rings passed: time saved as the record, reward shown');
+await page.keyboard.press('KeyE'); await wait(250);
+await ev(() => __eq.teleport(20.4, 19.8)); await wait(450); await page.keyboard.press('KeyE'); await wait(300);
+check(await ev(() => __eq.mini.active && __eq.mini.active.id === 'fish') && (await page.textContent('#clue')).includes('◆'), 'Fishing starts: moving marker on the bar');
+for (let c = 0; c < 5; c++) {
+  await page.waitForFunction(() => { const a = __eq.mini.active; return !a || (a.wait <= 0 && Math.abs(a.pos - a.centre) < a.width * 0.3); }, null, { timeout: 30000, polling: 30 });
+  if (c === 0) await snap('03c_fishing');
+  await page.keyboard.press('KeyE'); await wait(1300);
+}
+check(await ev(() => !__eq.mini.active && __eq.mini.data.best.fish >= 1), 'Five casts with real E: fish caught, best score saved');
+for (let k = 0; k < 3 && await page.isVisible('#dialog'); k++) { await page.keyboard.press('KeyE'); await wait(200); }
+await ev(() => __eq.teleport(34, 6.6)); await wait(450); await page.keyboard.press('KeyE'); await wait(300);
+check(await ev(() => __eq.mini.active && __eq.mini.active.id === 'apple'), 'Apple catch starts in the orchard');
+for (let k = 0; k < 40 && await ev(() => __eq.mini.active && __eq.mini.active.score < 3); k++) { await ev(() => { const f = __eq.mini.apples.find((a) => a.live && a.y < 3.5); if (f) __eq.teleport(f.x, f.z); }); await wait(250); }
+check(await ev(() => __eq.mini.active && __eq.mini.active.score >= 3), 'Standing under falling apples catches them');
+await snap('03d_apple_catch');
+await ev(() => { __eq.mini.active.time = 0.2; }); await wait(900);
+check(await ev(() => !__eq.mini.active && __eq.mini.data.best.apple >= 3), 'Apple round ends on time, score saved');
+for (let k = 0; k < 3 && await page.isVisible('#dialog'); k++) { await page.keyboard.press('KeyE'); await wait(200); }
+const z0m = await ev(() => __eq.minimap.zoom); await page.click('#mapin'); await page.click('#mapin');
+check(await ev((z) => __eq.minimap.zoom > z * 1.5, z0m), 'Minimap + button zooms in'); await page.click('#mapout'); await page.click('#mapout');
 await view(-8, 26, 0.6, 0.5, 16); await wait(1500); await snap('03_village_market_side');
 await view(14, 14, -2.2, 0.4, 14); await wait(1500); await snap('04_village_bridge_dock');
 await view(0, -12, 0.0, 0.3, 13); await wait(1500); await snap('05_village_hall');

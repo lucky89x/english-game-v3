@@ -199,20 +199,56 @@ function leafyGeo(trunkHex, palette, { h = 2.6, r = 2.1, clumps = 15, trunkR = 0
   }
   return mergeGeometries(parts);
 }
+/** Leaf-cluster texture: a handful of pointed leaves on a transparent ground (tinted by vertex colour). */
+let LEAF_TEX = null;
+function leafTexture() {
+  if (LEAF_TEX) return LEAF_TEX;
+  const cv = document.createElement('canvas'); cv.width = cv.height = 128; const c = cv.getContext('2d');
+  const leaf = (x, y, r, a, shade) => { c.save(); c.translate(x, y); c.rotate(a); c.beginPath(); c.moveTo(0, -r); c.quadraticCurveTo(r * 0.75, -r * 0.2, 0, r); c.quadraticCurveTo(-r * 0.75, -r * 0.2, 0, -r); c.fillStyle = `rgb(${shade},${shade},${shade})`; c.fill();
+    c.strokeStyle = 'rgba(255,255,255,0.55)'; c.lineWidth = 1.5; c.beginPath(); c.moveTo(0, -r * 0.8); c.lineTo(0, r * 0.8); c.stroke(); c.restore(); };
+  const spots = [[64, 64, 30, 0, 235], [34, 50, 26, -0.9, 205], [94, 50, 26, 0.9, 215], [44, 90, 25, -2.2, 190], [86, 92, 25, 2.2, 200], [64, 28, 24, 0.2, 250], [64, 100, 22, 3.1, 180], [22, 76, 19, -1.5, 215], [106, 76, 19, 1.5, 225]];
+  for (const [x, y, r, a, sh] of spots) leaf(x, y, r, a, sh);
+  LEAF_TEX = new THREE.CanvasTexture(cv); LEAF_TEX.colorSpace = THREE.SRGBColorSpace; LEAF_TEX.anisotropy = 4;
+  return LEAF_TEX;
+}
+/** Leaf cards wrapped round a canopy: quads facing outward with soft spherical normals, lighter towards the top. */
+function leafCards(palette, { h = 2.6, r = 2.1, count = 150, seed = 1 } = {}) {
+  const pos = [], nor = [], uv = [], col = [], idx = [], rr = L.mulberry32(seed * 977 + 13), cy = h + r * 0.55;
+  const cols = palette.map((x) => C(x)), t = new THREE.Color(), q = new THREE.Quaternion(), v = new THREE.Vector3(), up = new THREE.Vector3(0, 0, 1);
+  for (let i = 0; i < count; i++) {
+    const y = 1 - ((i + 0.5) / count) * 1.75, ring = Math.sqrt(Math.max(0, 1 - y * y)), a = i * 2.399 + seed;
+    const n = new THREE.Vector3(Math.cos(a) * ring, y * 0.85, Math.sin(a) * ring).normalize();
+    const d = r * (0.86 + rr() * 0.3), c = new THREE.Vector3(n.x * d * 1.02, cy + n.y * d * 0.8, n.z * d * 1.02), size = r * (0.42 + rr() * 0.22);
+    q.setFromUnitVectors(up, n); const roll = new THREE.Quaternion().setFromAxisAngle(n, rr() * 6.28); q.premultiply(roll);
+    const k = (y + 1) / 2; t.copy(cols[0]).lerp(cols[1], Math.min(1, k * 1.6)); if (k > 0.6) t.lerp(cols[2], (k - 0.6) / 0.4); t.multiplyScalar(0.9 + rr() * 0.2);
+    const base = pos.length / 3;
+    for (const [px, py, u, w] of [[-1, -1, 0, 0], [1, -1, 1, 0], [1, 1, 1, 1], [-1, 1, 0, 1]]) { v.set(px * size, py * size, 0).applyQuaternion(q).add(c); pos.push(v.x, v.y, v.z); nor.push(n.x, Math.max(0.15, n.y * 0.6 + 0.4), n.z); uv.push(u, w); col.push(t.r, t.g, t.b); }
+    idx.push(base, base + 1, base + 2, base, base + 2, base + 3);
+  }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3));
+  g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.setIndex(idx);
+  return g;
+}
+const leafMat = (wind) => windy(new THREE.MeshStandardMaterial({ map: leafTexture(), vertexColors: true, alphaTest: 0.5, side: THREE.DoubleSide, roughness: 0.85 }), wind);
 function buildTrees() {
   const g = new THREE.Group();
+  const dark = (pal) => pal.map((x) => C(x).multiplyScalar(0.72).getHex());
+  const leafy = (trunk, pal, o = {}) => ({ core: leafyGeo(trunk, dark(pal), { clumps: 8, ...o }), cards: leafCards(pal, { h: o.h, r: o.r, seed: o.seed, count: o.count }), wind: 0.016 });
   const kinds = {
-    pine: [pineGeo(), 0.010], oak: [leafyGeo(0x7a4a26, [0x3f9a3a, 0x5fbe3f, 0x9ad64a]), 0.016],
-    birch: [leafyGeo(0xe9e4d6, [0x7fc24a, 0xa5d85a, 0xd4e86a], { h: 3.2, r: 1.6, clumps: 7, trunkR: 0.16, seed: 4 }), 0.018],
+    pine: { core: pineGeo(), wind: 0.010 },
+    oak: leafy(0x7a4a26, [0x3f9a3a, 0x5fbe3f, 0xa6dc52], { seed: 1 }),
+    birch: leafy(0xe9e4d6, [0x7fc24a, 0xa5d85a, 0xdcec72], { h: 3.2, r: 1.6, trunkR: 0.16, seed: 4, count: 110 }),
+    gold: leafy(0x7a4a26, [0xc9a82a, 0xecd448, 0xf8f08a], { seed: 2 }),
+    blossom: leafy(0x6b4024, [0xf07aa8, 0xff9fc4, 0xffd6e6], { seed: 3 }),
+    maple: leafy(0x6b4024, [0xd0402a, 0xf0683a, 0xfaa25e], { seed: 5 }),
   };
   // some oaks become golden, blossom or autumn-red trees (same map data, just a different look)
-  kinds.gold = [leafyGeo(0x7a4a26, [0xc9b632, 0xe8d84a, 0xf6ee7a], { seed: 2 }), 0.016];
-  kinds.blossom = [leafyGeo(0x6b4024, [0xf07aa8, 0xff9fc4, 0xffd0e2], { seed: 3 }), 0.016];
-  kinds.maple = [leafyGeo(0x6b4024, [0xd8482e, 0xf0683a, 0xf99a5a], { seed: 5 }), 0.016];
   const look = (t) => { if (t.kind !== 'oak') return t.kind; const k = Math.abs(Math.sin(t.x * 12.9898 + t.z * 78.233) * 43758.5453) % 1; return k < 0.14 ? 'gold' : k < 0.24 ? 'blossom' : k < 0.31 ? 'maple' : 'oak'; };
-  for (const [kind, [geo, wind]] of Object.entries(kinds)) {
+  for (const [kind, K] of Object.entries(kinds)) {
     const list = L.TREES.filter((t) => look(t) === kind);
-    g.add(instanced(geo, windy(std(), wind), list, (t, p, e, s) => { p.set(t.x, L.groundHeight(t.x, t.z) - 0.08, t.z); e.set(0, t.rot, 0); s.setScalar(t.s * (kind === 'pine' ? 1.25 : 1.15)); }));
+    const place = (t, p, e, s) => { p.set(t.x, L.groundHeight(t.x, t.z) - 0.08, t.z); e.set(0, t.rot, 0); s.setScalar(t.s * (kind === 'pine' ? 1.25 : 1.15)); };
+    g.add(instanced(K.core, windy(std(), K.wind), list, place));
+    if (K.cards) g.add(instanced(K.cards, leafMat(K.wind), list, place));
   }
   return g;
 }
@@ -659,9 +695,11 @@ function farm() {
   return g;
 }
 function orchard(list) {
-  const g = new THREE.Group(), geo = leafyGeo(0x7a4a26, [0x4faa3a, 0x77c948, 0xa9dd55], { h: 2.2, r: 2.3, clumps: 10, trunkR: 0.3, seed: 6 }), apple = new THREE.MeshStandardMaterial({ color: 0xe23a2a, roughness: 0.5 }), lemon = new THREE.MeshStandardMaterial({ color: 0xf6c62e, roughness: 0.5 });
+  const cards = leafCards([0x4faa3a, 0x77c948, 0xb4e45c], { h: 2.2, r: 2.3, seed: 6 }), cardMat = leafMat(0.012);
+  const g = new THREE.Group(), geo = leafyGeo(0x7a4a26, [0x3a8a2c, 0x4f9e36, 0x62ae40], { h: 2.2, r: 2.3, clumps: 8, trunkR: 0.3, seed: 6 }), apple = new THREE.MeshStandardMaterial({ color: 0xe23a2a, roughness: 0.5 }), lemon = new THREE.MeshStandardMaterial({ color: 0xf6c62e, roughness: 0.5 });
   list.forEach(([x, z], k) => {
     const t = new THREE.Mesh(geo, windy(std(), 0.012)); t.castShadow = true; t.position.set(x, L.groundHeight(x, z) - 0.05, z); t.rotation.y = k * 1.3; g.add(t);
+    const lc = new THREE.Mesh(cards, cardMat); lc.castShadow = true; lc.position.copy(t.position); lc.rotation.y = t.rotation.y; g.add(lc);
     for (let i = 0; i < 10; i++) { const a = i * 2.399 + k, f = new THREE.Mesh(new THREE.SphereGeometry(0.17, 8, 6), k % 3 === 2 ? lemon : apple); f.position.set(x + Math.cos(a) * 1.7, L.groundHeight(x, z) + 2.6 + (i % 4) * 0.45, z + Math.sin(a) * 1.7); g.add(f); }
   });
   return g;
