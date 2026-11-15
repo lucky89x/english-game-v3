@@ -33,10 +33,10 @@ Mỗi 5 cấp có một "cổng kiến thức" (ôn từ đến hạn) mới lê
 | A2 | Cấp 1–20 | Đường cong EXP, hiệu ứng lên cấp, chỉ số tăng theo cấp | một phần (có EXP, cấp) |
 | A3 | Chiến đấu | Đánh thường (J/F), máu, đẩy lùi, hồi sinh ở làng | xong (chưa có né) |
 | A4 | Đồng Hoang | Đông Bắc làng: slime xanh, slime đỏ, golem đá | xong (chưa có dơi) |
-| A5 | Cửa hàng + trang bị | Bram bán vũ khí, Ben bán giáp/phụ kiện, Rose bán bánh hồi máu | chưa |
-| A6 | Túi đồ | Ô trang bị, đồ đang mặc hiện trên người Ngọc | chưa |
+| A5 | Cửa hàng + trang bị | Bram bán kiếm và giáp, Rose bán bùa và bánh hồi máu (phím Q) | xong |
+| A6 | Túi đồ | Kiếm hiện trên tay Ngọc; chưa có màn hình túi đồ riêng, giáp chưa đổi hình | một phần |
 | A7 | Boss map 1 | Vua Slime; đòn đặc biệt mở bằng câu trả lời từ vựng Unit | chưa |
-| B1 | Xếp kẹo (match-3) | Tiệm bánh của Rose | chưa |
+| B1 | Xếp kẹo (match-3) | Biển phía Tây quảng trường, 25 lượt, có combo | xong |
 | B2 | Đua xe | Xe bí ngô quanh làng, né chướng ngại | chưa |
 | B3 | Bắn súng cao su | Bắn bia/slime ở bãi tập | chưa |
 | B4 | Xếp hình (khối rơi) | Xưởng rèn của Bram | chưa |

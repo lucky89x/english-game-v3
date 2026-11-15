@@ -1,7 +1,7 @@
 {
  "date": "2026-11-15",
  "renderer": "Chromium headless + SwiftShader (software GL, no GPU)",
- "downloadBytes": 11459988,
+ "downloadBytes": 11474871,
  "files": {
   "assets/models/npc_lily_druid_v01.glb": 1215688,
   "assets/models/npc_rose_baker_v01.glb": 1211160,
@@ -25,21 +25,23 @@
   "assets/tex/ngoc_face_blink.png": 48276,
   "assets/tex/ngoc_face_joy.png": 46147,
   "vendor/addons/utils/BufferGeometryUtils.js": 31768,
-  "src/main.js": 26057,
+  "src/main.js": 29843,
   "src/game/village.js": 13550,
   "src/game/actors.js": 11437,
-  "src/game/minigames.js": 9914,
-  "src/game/content.js": 9727,
-  "index.html": 8711,
+  "src/game/minigames.js": 10114,
+  "src/game/content.js": 9665,
+  "index.html": 9572,
   "src/core/regionkit.js": 8173,
   "src/game/combat.js": 7661,
-  "src/ui/ui.js": 6963,
+  "src/ui/ui.js": 7063,
   "data/learning/g6_u01.json": 6826,
   "src/game/quest.js": 6411,
   "src/ui/minimap.js": 6074,
   "data/learning/g6_u04.json": 5432,
+  "src/ui/arcade.js": 4511,
   "data/learning/g6_u11.json": 4428,
   "data/learning/g6_u05.json": 4394,
+  "src/core/rules.js": 4277,
   "data/learning/g6_u12.json": 4079,
   "data/learning/g6_u10.json": 3796,
   "src/core/save.js": 3769,
@@ -57,6 +59,7 @@
   "data/learning/g9_u02.json": 2899,
   "data/learning/g9_u12.json": 2887,
   "data/learning/g9_u10.json": 2798,
+  "src/core/match3.js": 2767,
   "data/learning/g9_u04.json": 2712,
   "data/learning/g9_u11.json": 2657,
   "data/learning/g9_u07.json": 2647,
@@ -65,7 +68,6 @@
   "src/core/layout.js": 2187,
   "data/learning/g6_u03.json": 1855,
   "src/audio.js": 1586,
-  "src/core/rules.js": 1557,
   "src/core/review.js": 1478,
   "src/core/catalog.js": 1477,
   "data/learning/g6_u06.json": 1072
@@ -73,23 +75,23 @@
  "perf": {
   "low": {
    "fps": 2.1,
-   "ms": 480.6,
+   "ms": 465.3,
    "calls": 106,
    "tris": 560944
   },
   "medium": {
-   "fps": 0.9,
-   "ms": 1096.8,
+   "fps": 1,
+   "ms": 1047.7,
    "calls": 108,
    "tris": 602784
   },
   "high": {
-   "fps": 0.8,
-   "ms": 1200.8,
+   "fps": 1,
+   "ms": 1051.1,
    "calls": 108,
    "tris": 659384
   }
  },
- "checks": 89,
+ "checks": 98,
  "failed": 0
 }
