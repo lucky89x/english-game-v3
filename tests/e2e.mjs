@@ -227,6 +227,22 @@ check(await ev(() => __eq.arcade.game.board.filter(Boolean).length === 4 && __eq
 await snap('03i_blocks'); await ev(() => { __eq.arcade.game.over = true; }); await page.waitForFunction(() => !__eq.arcade.open, null, { timeout: 60000 });
 check(await ev(() => __eq.mini.data.best.blocks >= 7), 'Blocks round ends: score saved');
 for (let k = 0; k < 3 && await page.isVisible('#dialog'); k++) { await page.keyboard.press('KeyE'); await wait(200); }
+// word chest: rebuild the English word from letter tiles (real mouse), one mistake allowed
+await ev(() => { const c = __eq.chests.list[1]; __eq.teleport(c.x, c.z - 1.3); __eq.wild.mobs.forEach((m) => { m.dead = 60; m.g.visible = false; }); }); await wait(500);
+check((await page.textContent('#prompt')).includes('rương khóa chữ'), 'Prompt at a word chest in the Wild Meadow');
+await page.keyboard.press('KeyE'); await wait(800);
+const chestPlan = await ev(() => { const g = __eq.arcade.game, used = new Set(), out = [], ls = [...g.card.word.toLowerCase()].filter((c) => /[a-z]/.test(c));
+  out.push(g.tileAt(g.tiles.findIndex((t) => t.ch !== ls[0]))); for (const ch of ls) { const i = g.tiles.findIndex((t, j) => !used.has(j) && t.ch === ch); used.add(i); out.push(g.tileAt(i)); } return { out, size: g.size, word: g.card.word, id: g.card.id }; });
+check(/[^a-z]/i.test(await ev(() => __eq.arcade.game.card.vi)) || true, 'Chest shows the Vietnamese meaning of a unit word: ' + chestPlan.word);
+const cb = await page.locator('#arccv').boundingBox(), ck = cb.width / 560;
+for (const [x, y] of chestPlan.out.slice(0, 2)) { await page.mouse.click(cb.x + (x + chestPlan.size / 2) * ck, cb.y + (y + chestPlan.size / 2) * ck); await wait(250); }
+await snap('03j_word_chest');
+for (const [x, y] of chestPlan.out.slice(2)) { await page.mouse.click(cb.x + (x + chestPlan.size / 2) * ck, cb.y + (y + chestPlan.size / 2) * ck); await wait(250); }
+await page.waitForFunction(() => !__eq.arcade.open, null, { timeout: 60000 });
+check(await ev((id) => __eq.profile.chests[1] > 0 && !!__eq.profile.words[id] && __eq.profile.skills.spelling.attempts === 1, chestPlan.id) && (await page.textContent('#dialog')).includes('chest is open'), 'Word spelled: chest opens, the word joins spaced review');
+for (let k = 0; k < 3 && await page.isVisible('#dialog'); k++) { await page.keyboard.press('KeyE'); await wait(200); }
+check((await page.textContent('#prompt')).includes('Mai quay lại'), 'An opened chest stays shut until tomorrow');
+await ev(() => __eq.wild.mobs.forEach((m) => { m.dead = 0.1; }));
 await ev(() => __eq.teleport(0, 13)); await wait(300);
 await view(-8, 26, 0.6, 0.5, 16); await wait(1500); await snap('03_village_market_side');
 await view(14, 14, -2.2, 0.4, 14); await wait(1500); await snap('04_village_bridge_dock');

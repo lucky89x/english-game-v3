@@ -89,11 +89,20 @@ export class OrbitCamera {
     dom.addEventListener('contextmenu', (e) => e.preventDefault());
   }
   /** Shortest unobstructed distance from the target towards the wanted camera spot. */
+  /** Tree crowns near the player as spheres {x, y, z, r}: the camera must not sit inside the leaves. */
+  crowns() {
+    if (this.crownRegion !== L.NAME) { this.crownRegion = L.NAME; this.allCrowns = L.TREES.map((t) => { const sc = t.s * (t.kind === 'pine' ? 1.25 : 1.15), h = t.kind === 'birch' ? 3.2 : 2.6, r = t.kind === 'birch' ? 1.6 : 2.1;
+      return t.kind === 'pine' ? { x: t.x, z: t.z, y: L.groundHeight(t.x, t.z) + 3.4 * sc, r: 1.5 * sc } : { x: t.x, z: t.z, y: L.groundHeight(t.x, t.z) + (h + r * 0.55) * sc, r: r * sc * 1.05 }; }); }
+    const tx = this.target.x, tz = this.target.z;
+    return this.allCrowns.filter((c) => Math.abs(c.x - tx) < 22 && Math.abs(c.z - tz) < 22);
+  }
   clearDistance(dir, want) {
+    const crowns = this.crowns();
     for (let d = 1.0; d <= want; d += 0.35) {
       const x = this.target.x + dir.x * d, y = this.target.y + dir.y * d, z = this.target.z + dir.z * d;
       if (y < L.groundHeight(x, z) + 0.35) return Math.max(1.2, d - 0.4);
       if (y < 4.5) for (const s of L.solidsNear(x, z)) if (s.r > 0.9 && Math.hypot(x - s.x, z - s.z) < s.r + 0.2) return Math.max(1.2, d - 0.4);
+      for (const c of crowns) if ((x - c.x) ** 2 + (y - c.y) ** 2 + (z - c.z) ** 2 < c.r * c.r) return Math.max(1.2, d - 0.4);
     }
     return want;
   }

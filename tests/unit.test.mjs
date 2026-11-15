@@ -338,3 +338,18 @@ test('blocks: pieces stay inside walls, rotate with kicks, a full row clears and
   assert.equal(B.lock(b, o), 1); assert.equal(b[19 * B.W + 8], 2, 'top half of the O fell into the bottom row'); assert.equal(b.filter(Boolean).length, 2);
   assert.deepEqual(B.blocksReward(800), { gold: 10, exp: 16 });
 });
+
+// ---------------------------------------------------------------- word chests (letter lock)
+import * as SP from '../src/core/spell.js';
+test('spell: tiles hold every letter plus decoys, only the next letter is accepted, spaces are kept in the hint', () => {
+  const rnd = L.mulberry32(3), word = 'pencil case', tl = SP.tiles(word, rnd);
+  assert.equal(tl.length, 10 + 2);
+  const st = { word, typed: '', wrong: 0 };
+  assert.equal(SP.shown(st), '______ ____');
+  const wrongI = tl.findIndex((t) => t.ch !== 'p'); assert.equal(SP.press(st, tl, wrongI), 'wrong'); assert.equal(st.wrong, 1);
+  let last = '';
+  for (const ch of SP.letters(word)) { const i = tl.findIndex((t) => !t.used && t.ch === ch); last = SP.press(st, tl, i); }
+  assert.equal(last, 'done'); assert.equal(SP.shown(st), 'pencil case');
+  assert.ok(SP.spellable('school bag') && !SP.spellable('a') && !SP.spellable('extraordinarily long words'));
+  assert.deepEqual(SP.chestReward(0), { gold: 15, exp: 20 }); assert.deepEqual(SP.chestReward(9), { gold: 6, exp: 8 });
+});
