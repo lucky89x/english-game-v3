@@ -8,18 +8,31 @@ Mục tiêu: trẻ muốn chơi tiếp vì trò chơi vui. Tiếng Anh nằm tro
 - Map 1 có 20 cấp. Lên cấp bằng EXP. Cổng sang map 2 mở khi đạt cấp 20 và thắng boss.
 - Nội dung học theo lớp của hồ sơ (6–9). Lớp chưa soạn thì game nói rõ, không mượn lớp khác.
 
-## Cấp và Unit (đề xuất, chờ duyệt)
-- Mỗi map 20 cấp, dạy 2 Unit: cấp 1–10 là Unit 1, cấp 11–20 là Unit 2.
-- 6 map đầu dạy đủ 12 Unit. Map 7–8 ôn tập và thi cuối.
-- Mỗi 5 cấp có một "cổng kiến thức" (ôn từ đến hạn) mới lên tiếp được.
+## Cấp và Unit
+Chơi chung map, chương trình học theo lớp của hồ sơ. 10 map cho 12 Unit:
+
+| Map | Tên | Unit | Cấp |
+|---|---|---|---|
+| 1 | Làng Khởi Đầu + Đồng Hoang | 1 | 1–20 |
+| 2 | Rừng Ký Ức | 2 | 21–40 |
+| 3 | Sa mạc Gió Vàng | 3 | 41–60 |
+| 4 | Ôn tập 1: Vườn cây – hội chợ | ôn 1–3 | 61–70 |
+| 5 | Núi Vọng Âm | 4–5 | 71–90 |
+| 6 | Cảng Đại Dương | 6–7 | 91–110 |
+| 7 | Ôn tập 2: Cầu đèn đỏ ban đêm | ôn 4–7 | 111–120 |
+| 8 | Học viện Tri thức | 8–9 | 121–140 |
+| 9 | Thành phố Tương lai | 10–11 | 141–160 |
+| 10 | Đảo Trời + Tháp Pha lê | 12 + thi cuối | 161–180 |
+
+Mỗi 5 cấp có một "cổng kiến thức" (ôn từ đến hạn) mới lên tiếp được.
 
 ## Hệ thống cần làm
 | # | Hạng mục | Nội dung | Trạng thái |
 |---|---|---|---|
-| A1 | HUD nhân vật | Khung chân dung, cấp, thanh máu, thanh EXP, vàng, sao | chưa |
+| A1 | HUD nhân vật | Khung chân dung, cấp, thanh máu, thanh EXP, vàng, sao | xong |
 | A2 | Cấp 1–20 | Đường cong EXP, hiệu ứng lên cấp, chỉ số tăng theo cấp | một phần (có EXP, cấp) |
-| A3 | Chiến đấu | Đánh thường, né, máu, hồi sinh ở làng | chưa |
-| A4 | Đồng Hoang | Khu quái ngoài cầu Nam: slime, dơi, golem; quái theo cấp | chưa |
+| A3 | Chiến đấu | Đánh thường (J/F), máu, đẩy lùi, hồi sinh ở làng | xong (chưa có né) |
+| A4 | Đồng Hoang | Đông Bắc làng: slime xanh, slime đỏ, golem đá | xong (chưa có dơi) |
 | A5 | Cửa hàng + trang bị | Bram bán vũ khí, Ben bán giáp/phụ kiện, Rose bán bánh hồi máu | chưa |
 | A6 | Túi đồ | Ô trang bị, đồ đang mặc hiện trên người Ngọc | chưa |
 | A7 | Boss map 1 | Vua Slime; đòn đặc biệt mở bằng câu trả lời từ vựng Unit | chưa |
@@ -33,7 +46,7 @@ Mục tiêu: trẻ muốn chơi tiếp vì trò chơi vui. Tiếng Anh nằm tro
 | C3 | Nhiệm vụ săn quái có lời thoại tiếng Anh | NPC giao việc bằng câu mẫu Unit | chưa |
 | C4 | Cổng kiến thức mỗi 5 cấp | Ôn cách quãng | chưa |
 | D1 | Lấp đất trống | Bãi tập, đường đua, trại, ao, cối xay | chưa |
-| D2 | Nén model | Giảm dung lượng tải (hiện ~17.7 MB) | chưa |
+| D2 | Nhẹ máy | Tải 17.7 → 10.9 MB; 723 → 210 vật thể vẽ; tự hạ đồ họa | xong, chờ đo FPS máy thật |
 
 ## Thứ tự làm
 1. A1 HUD → A2 cấp → A3 chiến đấu → A4 Đồng Hoang (lõi "train").
