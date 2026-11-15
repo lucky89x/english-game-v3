@@ -38,11 +38,11 @@ Mỗi 5 cấp có một "cổng kiến thức" (ôn từ đến hạn) mới lê
 | A7 | Boss map 1 | Vua Slime; đòn đặc biệt mở bằng câu trả lời từ vựng Unit | chưa |
 | B1 | Xếp kẹo (match-3) | Biển phía Tây quảng trường, 25 lượt, có combo | xong |
 | B2 | Đua xe | Xe bí ngô quanh làng, né chướng ngại | chưa |
-| B3 | Bắn súng cao su | Bắn bia/slime ở bãi tập | chưa |
-| B4 | Xếp hình (khối rơi) | Xưởng rèn của Bram | chưa |
+| B3 | Bắn súng cao su | Kéo thả ná, đạn bay vòng cung, slime và bóng bay | xong |
+| B4 | Xếp hình (khối rơi) | Bãi chơi phía Tây, phím mũi tên | xong |
 | B5 | Câu cá, hứng táo, chạy vòng, 12 sao | Đã có | xong |
 | C1 | Tiếng Anh trong truyện | Thư, Hũ chữ, Sửa cầu | xong (lớp 6, 8) |
-| C2 | Rương khóa chữ | Rương trong Đồng Hoang, mở bằng từ Unit | chưa |
+| C2 | Rương khóa chữ | 5 rương ở Đồng Hoang, ghép từ Unit theo nghĩa, 1 lần/ngày, vào ôn tập | xong |
 | C3 | Nhiệm vụ săn quái có lời thoại tiếng Anh | NPC giao việc bằng câu mẫu Unit | chưa |
 | C4 | Cổng kiến thức mỗi 5 cấp | Ôn cách quãng | chưa |
 | D1 | Lấp đất trống | Bãi tập, đường đua, trại, ao, cối xay | chưa |
