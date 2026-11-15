@@ -1,7 +1,7 @@
 {
  "date": "2026-11-15",
  "renderer": "Chromium headless + SwiftShader (software GL, no GPU)",
- "downloadBytes": 11517882,
+ "downloadBytes": 11517908,
  "files": {
   "assets/models/npc_lily_druid_v01.glb": 1215688,
   "assets/models/npc_rose_baker_v01.glb": 1211160,
@@ -24,7 +24,7 @@
   "src/world/forest.js": 77205,
   "assets/tex/ngoc_face_blink.png": 48276,
   "assets/tex/ngoc_face_joy.png": 46147,
-  "src/main.js": 35928,
+  "src/main.js": 35954,
   "vendor/addons/utils/BufferGeometryUtils.js": 31768,
   "src/ui/arcade.js": 21657,
   "src/game/combat.js": 15445,
@@ -77,24 +77,24 @@
  },
  "perf": {
   "low": {
-   "fps": 1.9,
-   "ms": 530,
+   "fps": 2.2,
+   "ms": 457,
    "calls": 106,
    "tris": 560944
   },
   "medium": {
    "fps": 1,
-   "ms": 1049.2,
+   "ms": 986.1,
    "calls": 108,
    "tris": 602784
   },
   "high": {
    "fps": 0.9,
-   "ms": 1097.6,
+   "ms": 1059.8,
    "calls": 108,
    "tris": 659384
   }
  },
  "checks": 122,
- "failed": 1
+ "failed": 0
 }
