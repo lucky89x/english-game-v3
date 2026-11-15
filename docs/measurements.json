@@ -1,7 +1,7 @@
 {
  "date": "2026-11-15",
  "renderer": "Chromium headless + SwiftShader (software GL, no GPU)",
- "downloadBytes": 11508448,
+ "downloadBytes": 11517882,
  "files": {
   "assets/models/npc_lily_druid_v01.glb": 1215688,
   "assets/models/npc_rose_baker_v01.glb": 1211160,
@@ -21,16 +21,16 @@
   "assets/models/npc_pip_spirit_v02.glb": 116944,
   "vendor/addons/loaders/GLTFLoader.js": 110273,
   "assets/tex/ngoc_face_talk.png": 85507,
-  "src/world/forest.js": 77144,
+  "src/world/forest.js": 77205,
   "assets/tex/ngoc_face_blink.png": 48276,
   "assets/tex/ngoc_face_joy.png": 46147,
-  "src/main.js": 32542,
+  "src/main.js": 35928,
   "vendor/addons/utils/BufferGeometryUtils.js": 31768,
-  "src/ui/arcade.js": 17070,
-  "src/game/combat.js": 14717,
+  "src/ui/arcade.js": 21657,
+  "src/game/combat.js": 15445,
   "src/game/village.js": 13550,
   "src/game/actors.js": 12293,
-  "src/game/minigames.js": 10339,
+  "src/game/minigames.js": 10453,
   "src/game/content.js": 9665,
   "index.html": 9572,
   "src/core/regionkit.js": 8173,
@@ -42,10 +42,10 @@
   "data/learning/g6_u04.json": 5432,
   "data/learning/g6_u11.json": 4428,
   "data/learning/g6_u05.json": 4394,
+  "src/core/save.js": 4327,
   "data/learning/g6_u12.json": 4079,
   "src/game/chests.js": 4069,
   "data/learning/g6_u10.json": 3796,
-  "src/core/save.js": 3769,
   "src/core/regions/forest.js": 3760,
   "data/learning/g6_u08.json": 3598,
   "src/core/regions/village.js": 3500,
@@ -77,24 +77,24 @@
  },
  "perf": {
   "low": {
-   "fps": 1.4,
-   "ms": 711.1,
+   "fps": 1.9,
+   "ms": 530,
    "calls": 106,
    "tris": 560944
   },
   "medium": {
-   "fps": 0.9,
-   "ms": 1089.9,
+   "fps": 1,
+   "ms": 1049.2,
    "calls": 108,
    "tris": 602784
   },
   "high": {
-   "fps": 0.8,
-   "ms": 1203.5,
+   "fps": 0.9,
+   "ms": 1097.6,
    "calls": 108,
    "tris": 659384
   }
  },
- "checks": 116,
- "failed": 0
+ "checks": 122,
+ "failed": 1
 }

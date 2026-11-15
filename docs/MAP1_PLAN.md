@@ -31,20 +31,20 @@ Mỗi 5 cấp có một "cổng kiến thức" (ôn từ đến hạn) mới lê
 |---|---|---|---|
 | A1 | HUD nhân vật | Khung chân dung, cấp, thanh máu, thanh EXP, vàng, sao | xong |
 | A2 | Cấp 1–20 | Đường cong EXP, hiệu ứng lên cấp, chỉ số tăng theo cấp | một phần (có EXP, cấp) |
-| A3 | Chiến đấu | Đánh thường (J/F), máu, đẩy lùi, hồi sinh ở làng | xong (chưa có né) |
+| A3 | Chiến đấu | Đánh (J/F), né lăn (K), máu, đẩy lùi, hồi sinh ở làng | xong |
 | A4 | Đồng Hoang | Đông Bắc làng: slime xanh, slime đỏ, golem đá | xong (chưa có dơi) |
 | A5 | Cửa hàng + trang bị | Bram bán kiếm và giáp, Rose bán bùa và bánh hồi máu (phím Q) | xong |
 | A6 | Túi đồ | Kiếm hiện trên tay Ngọc; chưa có màn hình túi đồ riêng, giáp chưa đổi hình | một phần |
 | A7 | Boss map 1 | Vua Slime (cấp 6+), 3 khiên chữ phá bằng cách chọn đúng từ tiếng Anh | xong |
 | B1 | Xếp kẹo (match-3) | Biển phía Tây quảng trường, 25 lượt, có combo | xong |
-| B2 | Đua xe | Xe bí ngô quanh làng, né chướng ngại | chưa |
+| B2 | Đua xe | Xe bí ngô, giữ phím để lái, né đá và bùn, nhặt xu | xong |
 | B3 | Bắn súng cao su | Kéo thả ná, đạn bay vòng cung, slime và bóng bay | xong |
 | B4 | Xếp hình (khối rơi) | Bãi chơi phía Tây, phím mũi tên | xong |
 | B5 | Câu cá, hứng táo, chạy vòng, 12 sao | Đã có | xong |
 | C1 | Tiếng Anh trong truyện | Thư, Hũ chữ, Sửa cầu | xong (lớp 6, 8) |
 | C2 | Rương khóa chữ | 5 rương ở Đồng Hoang, ghép từ Unit theo nghĩa, 1 lần/ngày, vào ôn tập | xong |
 | C3 | Nhiệm vụ săn quái có lời thoại tiếng Anh | Bảng nhiệm vụ ở Đồng Hoang, 4 việc xoay vòng, câu ngắn cho lớp 6–7 | xong |
-| C4 | Cổng kiến thức mỗi 5 cấp | Ôn cách quãng | chưa |
+| C4 | Cổng kiến thức mỗi 5 cấp | Cú Mèo hỏi 5 câu (Anh↔Việt), đúng 4 mới lên cấp | xong |
 | D1 | Lấp đất trống | Bãi tập, đường đua, trại, ao, cối xay | chưa |
 | D2 | Nhẹ máy | Tải 17.7 → 10.9 MB; 723 → 210 vật thể vẽ; tự hạ đồ họa | xong, chờ đo FPS máy thật |
 
