@@ -73,6 +73,27 @@ export function label(text, { size = 34, color = '#4a2a10', bg = 'rgba(255,246,2
 }
 
 // ------------------------------------------------------------------ terrain
+/** Merges the plain static meshes of a group into one vertex-coloured mesh (one draw call instead of dozens).
+ *  Meshes with a texture, glow, transparency or their own animation are kept as they are. */
+export function bake(group) {
+  group.updateMatrixWorld(true);
+  const parts = [], keep = [], out = new THREE.Group();
+  group.traverse((o) => {
+    if (!o.isMesh) return;
+    const m = o.material, plain = !o.userData.live && !Array.isArray(m) && (m.isMeshStandardMaterial || m.isMeshBasicMaterial) && !m.map && !m.transparent && !m.vertexColors && m.side === THREE.FrontSide && (!m.emissive || m.emissive.getHex() === 0 || m.emissiveIntensity === 0) && !o.isInstancedMesh && !o.isSkinnedMesh;
+    if (!plain) { keep.push(o); return; }
+    let g = o.geometry.clone(); g = g.index ? g.toNonIndexed() : g; for (const k of Object.keys(g.attributes)) if (k !== 'position' && k !== 'normal') g.deleteAttribute(k);
+    if (!g.attributes.normal) g.computeVertexNormals();
+    g.applyMatrix4(o.matrixWorld);
+    const n = g.attributes.position.count, col = new Float32Array(n * 3); for (let i = 0; i < n; i++) col.set([m.color.r, m.color.g, m.color.b], i * 3);
+    g.setAttribute('color', new THREE.BufferAttribute(col, 3)); parts.push(g);
+  });
+  for (const o of keep) { o.updateMatrixWorld(true); const w = o.matrixWorld.clone(); out.add(o); o.matrix.copy(w); o.matrix.decompose(o.position, o.quaternion, o.scale); }
+  if (parts.length) { const mesh = new THREE.Mesh(mergeGeometries(parts), std({ roughness: 0.85 })); mesh.castShadow = true; mesh.receiveShadow = true; out.add(mesh); }
+  return out;
+}
+/** Same, for a small moving thing built at the origin (a creature): its parts become one mesh inside the same group. */
+export function compact(group) { const b = bake(group); group.clear(); for (const c of [...b.children]) group.add(c); return group; }
 function buildTerrain() {
   const seg = 180, geo = new THREE.PlaneGeometry(L.SIZE + 40, L.SIZE + 40, seg, seg);
   geo.rotateX(-Math.PI / 2);
@@ -600,7 +621,7 @@ function creatures() {
       const tail = new THREE.Mesh(new THREE.SphereGeometry(0.1, 8, 6), new THREE.MeshStandardMaterial({ color: 0xffffff })); tail.position.set(0, 0.3, -0.33); o.add(tail);
       face(o, 0.6, 0.42, 0.1);
     }
-    g.add(o); list.push({ o, slime, x: sp.x, z: sp.z, r: 0.8 + (i % 3) * 0.5, ph: i * 1.7, sp: (slime ? 0.25 : 0.45) * (i % 2 ? 1 : -1) });
+    compact(o); g.add(o); list.push({ o, slime, x: sp.x, z: sp.z, r: 0.8 + (i % 3) * 0.5, ph: i * 1.7, sp: (slime ? 0.25 : 0.45) * (i % 2 ? 1 : -1) });
   });
   if (L.NAME === 'village') {      // a corgi trotting round the well and an owl on the market sign
     const dog = new THREE.Group(), fur = new THREE.MeshStandardMaterial({ color: 0xe8a04a, roughness: 0.95 }), cream = new THREE.MeshStandardMaterial({ color: 0xfff4e2, roughness: 0.95 });
@@ -609,16 +630,16 @@ function creatures() {
     B(new THREE.SphereGeometry(0.25, 12, 10), fur, 0, 0.62, 0.42); B(new THREE.SphereGeometry(0.13, 10, 8), cream, 0, 0.56, 0.62, 1, 0.8, 1.1);
     B(new THREE.SphereGeometry(0.04, 6, 5), eye, 0, 0.6, 0.76);
     for (const sx of [-1, 1]) { B(new THREE.ConeGeometry(0.09, 0.2, 6), fur, sx * 0.14, 0.9, 0.38); B(new THREE.CapsuleGeometry(0.06, 0.12, 3, 6), cream, sx * 0.14, 0.12, 0.3); B(new THREE.CapsuleGeometry(0.06, 0.12, 3, 6), cream, sx * 0.14, 0.12, -0.3); }
-    const tailD = B(new THREE.SphereGeometry(0.11, 8, 6), cream, 0, 0.5, -0.45);
+    const tailD = B(new THREE.SphereGeometry(0.11, 8, 6), cream, 0, 0.5, -0.45); tailD.userData.live = true;
     B(new THREE.TorusGeometry(0.2, 0.045, 6, 14), new THREE.MeshStandardMaterial({ color: 0xd23b30 }), 0, 0.5, 0.3).rotation.x = 1.2;
     face(dog, 0.68, 0.62, 0.1);
-    g.add(dog); list.push({ o: dog, dog: true, tail: tailD, x: 0, z: 4, r: 4.2, ph: 1, sp: 0.35 });
+    compact(dog); g.add(dog); list.push({ o: dog, dog: true, tail: tailD, x: 0, z: 4, r: 4.2, ph: 1, sp: 0.35 });
     const owl = new THREE.Group(), brown = new THREE.MeshStandardMaterial({ color: 0x9a6a3c, roughness: 0.95 });
     const O = (geo, m, x, y, z, sx = 1, sy = 1, sz = 1) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.scale.set(sx, sy, sz); owl.add(o); return o; };
     O(new THREE.SphereGeometry(0.2, 12, 10), brown, 0, 0.2, 0, 1, 1.15, 0.9); O(new THREE.SphereGeometry(0.15, 10, 8), cream, 0, 0.16, 0.08, 0.9, 1, 0.7);
     for (const sx of [-1, 1]) { O(new THREE.SphereGeometry(0.075, 10, 8), cream, sx * 0.075, 0.3, 0.14); O(new THREE.SphereGeometry(0.04, 8, 6), eye, sx * 0.075, 0.3, 0.2); O(new THREE.ConeGeometry(0.045, 0.1, 5), brown, sx * 0.11, 0.44, 0.02); O(new THREE.SphereGeometry(0.1, 8, 6), brown, sx * 0.19, 0.2, 0, 0.4, 1, 0.8); }
     O(new THREE.ConeGeometry(0.03, 0.06, 5), new THREE.MeshStandardMaterial({ color: 0xf0a030 }), 0, 0.25, 0.2).rotation.x = Math.PI / 2;
-    owl.position.set(2.9, L.groundHeight(2.9, 14.5) + 2.32, 14.5); g.add(owl); list.push({ o: owl, owl: true });
+    compact(owl); owl.position.set(2.9, L.groundHeight(2.9, 14.5) + 2.32, 14.5); g.add(owl); list.push({ o: owl, owl: true });
   }
   g.userData.update = (t) => {
     for (const c of list) {
@@ -706,8 +727,10 @@ function orchard(list) {
 }
 
 async function forestExtras(add, loadModel, shadowed) {
-  add(ancientTree()); add(mushrooms()); add(camp()); add(cave()); add(ruins()); add(tower()); add(woodpile()); add(blossomTree()); add(stonesAndLilies());
-  for (const [x, z] of [[-31, 56], [-29, 42], [-36, 27], [-33, 4], [-12, -11], [11, -17], [20, -9], [38, -4], [33, 14], [36, 30], [10, 41], [24, 46], [-27, -19], [38, -27], [13, -33]]) add(lampPost(x + 1.9, z + 0.4));
+  add(ancientTree()); add(mushrooms()); add(camp()); add(cave()); add(ruins()); add(tower()); add(blossomTree()); add(stonesAndLilies());
+  const still = new THREE.Group(); still.add(woodpile());
+  for (const [x, z] of [[-31, 56], [-29, 42], [-36, 27], [-33, 4], [-12, -11], [11, -17], [20, -9], [38, -4], [33, 14], [36, 30], [10, 41], [24, 46], [-27, -19], [38, -27], [13, -33]]) still.add(lampPost(x + 1.9, z + 0.4));
+  add(bake(still));
   const cottage = shadowed(await loadModel('bld_cottage_red_v02')); cottage.position.set(-41, L.groundHeight(-41, 7) - 0.05, 7); cottage.rotation.y = Math.PI / 2; cottage.scale.setScalar(1.3); add(cottage);
   const gate = shadowed(await loadModel('prop_forest_gate_v02')); gate.position.set(L.ENTRANCE.x, L.groundHeight(L.ENTRANCE.x, L.ENTRANCE.z + 3), L.ENTRANCE.z + 3); gate.rotation.y = Math.PI; add(gate);
   const title = label('Forest of Memories\nRừng Ký Ức', { size: 30 }); title.position.set(L.ENTRANCE.x, L.groundHeight(L.ENTRANCE.x, L.ENTRANCE.z + 3) + 4.4, L.ENTRANCE.z + 3); add(title);
@@ -727,11 +750,13 @@ async function villageExtras(add, loadModel, shadowed) {
   await place('bld_house_blue_v02', -15, 9, Math.PI / 2, 1.3);
   const gate = await place('prop_forest_gate_v02', GATE.x, GATE.z, 0, 1); gate.position.y += 0.05;
   const title = label('Forest of Memories\nRừng Ký Ức', { size: 28 }); title.position.set(GATE.x, L.groundHeight(GATE.x, GATE.z) + 4.4, GATE.z); add(title);
-  add(well()); add(marketStall()); add(jarRow()); add(dock()); add(farm()); add(orchard(ORCHARD_TREES));
+  const still = new THREE.Group(); for (const g of [well(), marketStall(), dock(), farm()]) still.add(g);
+  add(jarRow()); add(bake(orchard(ORCHARD_TREES)));
   const stallName = label("Ben's Word Jars", { size: 28, scale: 0.8 }); stallName.position.set(-8.4, L.groundHeight(-8.6, 19.5) + 3.5, 19.5); add(stallName);
-  for (const [x, z] of [[2.6, -12], [-2.6, -2], [2.8, 10], [-3, 16], [1.5, 27], [6, 8.2], [-8, 1.5], [-20, -10], [-26, -26], [32, 9], [42.6, 22], [8, 38]]) add(lampPost(x, z));
+  for (const [x, z] of [[2.6, -12], [-2.6, -2], [2.8, 10], [-3, 16], [1.5, 27], [6, 8.2], [-8, 1.5], [-20, -10], [-26, -26], [32, 9], [42.6, 22], [8, 38]]) still.add(lampPost(x, z));
   signs(add, [[2.9, 14.5, '← Market\nFarm ↓'], [3.2, 1.2, 'Bridge →\n← Forest'], [30.5, 9.5, 'Orchard']]);
-  for (const [kind, x, z, rot, sc] of VILLAGE_PROPS) add(prop(kind, x, z, rot, sc));
+  for (const [kind, x, z, rot, sc] of VILLAGE_PROPS) still.add(prop(kind, x, z, rot, sc));
+  add(bake(still));
   add(bunting(-5.2, -3.2, 5.2, -3.2)); add(bunting(-6.5, 10.5, -6.5, 15.2, 3.0)); add(bunting(5.4, 9.6, 5.4, 2.2, 3.0));
   for (const [x, y, z] of [[4.0, 14.2, -24.3], [14.6, 9.3, -4.6], [-16.5, 7.4, -4.9], [-17.3, 10.6, 12.2]]) add(smoke(x, L.groundHeight(x, z) + y, z));
 }

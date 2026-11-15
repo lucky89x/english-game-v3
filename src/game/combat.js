@@ -5,6 +5,7 @@ import * as THREE from 'three';
 import * as L from '../core/layout.js';
 import { MONSTERS, SPAWNS, playerAtk, hurt, inArc } from '../core/rules.js';
 import { addExp, maxHp } from '../core/save.js';
+import { compact } from '../world/forest.js';
 
 export class Wild {
   /** api: { scene, player, ui, sfx(name), profile() -> profile, save(), onChange(), respawn() } */
@@ -13,13 +14,14 @@ export class Wild {
     const eye = new THREE.MeshBasicMaterial({ color: 0x24140c }), white = new THREE.MeshBasicMaterial({ color: 0xffffff });
     this.mobs = SPAWNS.map(([kind, x, z], i) => {
       const def = MONSTERS[kind], g = new THREE.Group(), mat = new THREE.MeshStandardMaterial({ color: def.color, roughness: kind === 'golem' ? 0.95 : 0.2, transparent: kind !== 'golem', opacity: kind === 'golem' ? 1 : 0.9, emissive: def.color, emissiveIntensity: 0.12, flatShading: kind === 'golem' });
-      const body = new THREE.Mesh(kind === 'golem' ? new THREE.IcosahedronGeometry(0.55, 1) : new THREE.SphereGeometry(0.5, 16, 12), mat); body.scale.set(1, kind === 'golem' ? 1.1 : 0.8, 1); body.position.y = kind === 'golem' ? 0.6 : 0.4; body.castShadow = true; g.add(body);
+      const body = new THREE.Mesh(kind === 'golem' ? new THREE.IcosahedronGeometry(0.55, 1) : new THREE.SphereGeometry(0.5, 16, 12), mat); body.scale.set(1, kind === 'golem' ? 1.1 : 0.8, 1); body.position.y = kind === 'golem' ? 0.6 : 0.4; body.castShadow = true; body.userData.live = true; g.add(body);
       if (kind === 'golem') { for (const sx of [-1, 1]) { const arm = new THREE.Mesh(new THREE.IcosahedronGeometry(0.26, 0), mat); arm.position.set(sx * 0.66, 0.5, 0.1); arm.castShadow = true; g.add(arm); } const moss = new THREE.Mesh(new THREE.SphereGeometry(0.34, 8, 6), new THREE.MeshStandardMaterial({ color: 0x74b84a })); moss.scale.y = 0.4; moss.position.y = 1.12; g.add(moss); }
       for (const sx of [-1, 1]) {         // angry eyes: big dark eye, white glint, slanted brow
         const e = new THREE.Mesh(new THREE.SphereGeometry(0.085, 8, 6), kind === 'golem' ? new THREE.MeshBasicMaterial({ color: 0xffd23c }) : eye); e.position.set(sx * 0.17, body.position.y + 0.06, 0.44); g.add(e);
         const h = new THREE.Mesh(new THREE.SphereGeometry(0.03, 5, 4), white); h.position.set(sx * 0.19, body.position.y + 0.1, 0.5); g.add(h);
         const brow = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.045, 0.04), eye); brow.position.set(sx * 0.17, body.position.y + 0.19, 0.47); brow.rotation.z = -sx * 0.45; g.add(brow);
       }
+      compact(g);        // eyes, brows, arms and moss become one mesh; the body stays separate because it flashes when hit
       const bar = new THREE.Sprite(new THREE.SpriteMaterial({ color: 0xe23a2a, depthTest: false })); bar.center.set(0, 0.5); bar.scale.set(1, 0.12, 1); bar.position.set(-0.5, kind === 'golem' ? 1.75 : 1.2, 0); bar.renderOrder = 6; g.add(bar);
       const back = new THREE.Sprite(new THREE.SpriteMaterial({ color: 0x3a2410, depthTest: false })); back.center.set(0, 0.5); back.scale.set(1.04, 0.16, 1); back.position.set(-0.52, bar.position.y, 0); back.renderOrder = 5; g.add(back);
       g.scale.setScalar(def.size); this.root.add(g);
