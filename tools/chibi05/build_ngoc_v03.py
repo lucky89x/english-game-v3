@@ -410,6 +410,9 @@ def shrink_to(obj, target, offset):
     m.offset = offset
     with bpy.context.temp_override(object=obj, active_object=obj):
         bpy.ops.object.modifier_apply(modifier=m.name)
+    for o in _sel:
+        o.select_set(True)
+    bpy.context.view_layer.objects.active = _act
 
 
 # --------------------------------------------------------------------------------------
@@ -1311,6 +1314,7 @@ def _decimate(ob):
     r = float(_os.environ.get('CHIBI_DECIMATE', '1'))
     if r >= 1:
         return
+    _sel, _act = list(bpy.context.selected_objects), bpy.context.view_layer.objects.active      # the exporter relies on the selection
     bpy.context.view_layer.objects.active = ob
     for o in bpy.context.selected_objects:
         o.select_set(False)
@@ -1324,6 +1328,9 @@ def _decimate(ob):
     print('decimated to', sum(len(p.vertices) - 2 for p in ob.data.polygons), 'triangles')
 
 _decimate(body)
+for o in bpy.context.view_layer.objects:      # select rig + body again: the exporter writes the skin only for selected objects
+    o.select_set(o in (rig, body))
+bpy.context.view_layer.objects.active = rig
 props = bpy.ops.export_scene.gltf.get_rna_type().properties.keys()
 bpy.ops.export_scene.gltf(**{k: v for k, v in export_kwargs.items() if k in props})
 print('exported', GLB, 'triangles', tri_count)

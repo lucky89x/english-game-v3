@@ -113,7 +113,7 @@ function buildCobbles() {
       stones.push({ x, z, s: R(0.25, 0.34), rot: R(0, 6.28), c: rnd() });
     }
   }
-  const geo = lumpy(new THREE.IcosahedronGeometry(1, 1), 0.08, 5); geo.scale(1, 0.34, 1);
+  const geo = lumpy(new THREE.IcosahedronGeometry(1, 0), 0.06, 5); geo.scale(1, 0.34, 1);       // 20 triangles a pebble: thousands of them are drawn
   const mesh = instanced(geo, new THREE.MeshStandardMaterial({ roughness: 0.95 }), stones, (st, p, e, s, i, m) => {
     p.set(st.x, L.groundHeight(st.x, st.z) + 0.02, st.z); e.set(0, st.rot, 0); s.set(st.s, st.s * 0.9, st.s * R(0.78, 1.15));
     m.setColorAt(i, C(st.c < 0.3 ? 0xc9bfb6 : st.c < 0.6 ? 0xddd5ca : st.c < 0.85 ? 0xb5aca8 : 0xcdb9a2));
