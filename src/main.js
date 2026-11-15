@@ -11,7 +11,8 @@ import { ForestQuest, landmark } from './game/quest.js';
 import { VillageStory } from './game/village.js';
 import { MiniGames, STARS } from './game/minigames.js';
 import { Wild } from './game/combat.js';
-import { WILD } from './core/rules.js';
+import { Arcade, candyGame } from './ui/arcade.js';
+import { ITEMS, bag, wear, buy, eat, shopList } from './core/rules.js';
 import { SAM_LINES, BRIDGE, BRIDGE_SPOTS, FRIENDS } from './game/content.js';
 import { UI } from './ui/ui.js';
 import { Minimap } from './ui/minimap.js';
@@ -63,11 +64,11 @@ const staticModel = async (name) => (await gltf(name)).scene.clone(true);
 const faceTex = async (name) => { const t = await texLoader.loadAsync(`./assets/tex/ngoc_face_${name}.png`); t.flipY = false; t.colorSpace = THREE.SRGBColorSpace; return t; };
 
 const ui = new UI(), store = Save.load();
-let profile = null, quest = null, story = null, world = null, player = null, cam = null, tom = null, sam = null, ben = null, pip = null, crystals = null, minimap = null, letterProp = null, itemProps = {}, friends = [], mini = null, wild = null;
+let profile = null, quest = null, story = null, world = null, player = null, cam = null, tom = null, sam = null, ben = null, pip = null, crystals = null, minimap = null, letterProp = null, itemProps = {}, friends = [], mini = null, wild = null, arcade = null;
 let quality = localStorage.getItem('eq-quality') || 'medium', perfOn = false, started = false, switching = false, wordIds = {}, jarKey = '';
 const keys = new Set();
 const game = { errors, get profile() { return profile; }, get quest() { return quest; }, get story() { return story; }, get player() { return player; }, get cam() { return cam; }, get minimap() { return minimap; }, ui, L, stats: { fps: 0, ms: 0, calls: 0, tris: 0 },
-  teleport(x, z) { player.place(x, z); cam.target.set(x, player.pos.y + 1.25, z); }, setQuality, key: (code) => onKey({ code, preventDefault() {} }), get started() { return started && !switching; }, get region() { return L.NAME; }, chooseProfile, enterRegion, MARKET_JARS, BRIDGE_SPOTS, get mini() { return mini; }, get wild() { return wild; }, get scene() { return scene; } };
+  teleport(x, z) { player.place(x, z); cam.target.set(x, player.pos.y + 1.25, z); }, setQuality, key: (code) => onKey({ code, preventDefault() {} }), get started() { return started && !switching; }, get region() { return L.NAME; }, chooseProfile, enterRegion, MARKET_JARS, BRIDGE_SPOTS, get mini() { return mini; }, get wild() { return wild; }, get scene() { return scene; }, openShop, get sword() { return swordMesh; }, get arcade() { return arcade; } };
 globalThis.__eq = game;
 
 function resize() { const w = innerWidth, h = innerHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
@@ -114,7 +115,7 @@ function refresh() {
     else ui.clue(null, 0, '', 'The forest remembers its words again. You can explore!');
     crystals.show(quest.crystalIds());
   } else {
-    ui.hud(profile, 'Làng Khởi Đầu', mini ? `★ ${mini.data.stars.length}/${STARS.length}` : '', learned);
+    ui.hud(profile, 'Làng Khởi Đầu', mini ? `★ ${mini.data.stars.length}/${STARS.length}` : '', learned, bag(profile).food);
     const c = story.customer;
     if (c) ui.clue({ who: `Traveller ${c.index + 1}/${c.total}`, text: c.said || `A jar of "${c.target.word}", please!`, key: c.target.word, hints: false, tip: 'Đi tới hũ có nghĩa đúng rồi nhấn E' }, c.said ? 1 : 0, '');
     else if (mini && mini.note) ui.clue(null, 0, '', mini.note);
@@ -185,6 +186,7 @@ async function chooseProfile(p) {
     bridge: BRIDGE[p.grade] || null, onBridgeFixed: applyBridge });
   if (story.step === 'jars_play') story.q.step = 'jars';
   if (mini) { mini.stop(); mini.syncStars(); }
+  wear(profile); setSword();
   if ((story.step === 'open' || story.step === 'done') && !p.flags.bridge_fixed) p.flags.bridge_fixed = true;   // saves from before the bridge quest
   applyBridge();
   $('mapbox').classList.remove('hidden');
@@ -192,6 +194,34 @@ async function chooseProfile(p) {
   started = true; renderGear();
 }
 
+/** Shop: a choice list. Buying puts the item on at once; owned items can be put on again for free. */
+function openShop(who, seller, hello) {
+  const b = bag(profile), ids = shopList(seller);
+  const line = (id) => { const it = ITEMS[id], own = it.slot !== 'food' && b.owned.includes(id), on = b[it.slot] === id;
+    const stat = [it.atk && `ATK +${it.atk}`, it.def && `DEF +${it.def}`, it.hp && `HP +${it.hp}`, it.heal && `heals ${it.heal}`].filter(Boolean).join(', ');
+    return `${it.en} (${stat}) · ${on ? 'wearing' : own ? 'put on' : it.cost + ' ●' + (profile.stats.level < it.level ? ' · Lv ' + it.level : '')}`; };
+  ui.choose({ who, en: hello, vi: `Vàng: ${profile.stats.gold} ● · Bánh trong túi: ${b.food}` }, [...ids.map(line), 'Goodbye!'], (i) => {
+    if (i >= ids.length) return;
+    const id = ids[i], it = ITEMS[id], r = buy(profile, id);
+    if (r.ok) { sfx('correct'); setSword(); save(); refresh(); return openShop(who, seller, r.why === 'owned' ? `You are wearing the ${it.en} now.` : `Here is your ${it.en}! Anything else?`); }
+    sfx('wrong'); openShop(who, seller, r.why === 'gold' ? `Sorry, the ${it.en} costs ${it.cost} gold.` : `The ${it.en} is for level ${it.level} heroes. Train a little more!`);
+  });
+}
+/** Shows the worn weapon in Ngọc's right hand. */
+let swordMesh = null;
+function setSword() {
+  if (!player || !profile) return;
+  let hand = null; player.root.traverse((o) => { if (!hand && o.isBone && /hand.?R$/i.test(o.name)) hand = o; });
+  if (swordMesh) { swordMesh.removeFromParent(); swordMesh = null; }
+  const it = ITEMS[bag(profile).weapon]; if (!hand || !it) return;
+  const g = new THREE.Group(), mat = (c, m = 0) => new THREE.MeshStandardMaterial({ color: c, roughness: m ? 0.3 : 0.7, metalness: m, emissive: it.color === 0x7fd6ff ? 0x2f8fd0 : 0, emissiveIntensity: 0.6 });
+  const blade = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.6, 0.022), mat(it.color, it.atk > 5 ? 0.7 : 0)); blade.position.y = 0.4; g.add(blade);
+  const tip = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.12, 4), blade.material); tip.position.y = 0.76; tip.scale.z = 0.45; g.add(tip);
+  const guard = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.04, 0.05), mat(0xe2b04a, 0.8)); guard.position.y = 0.09; g.add(guard);
+  const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.16, 8), mat(0x5f3519)); g.add(grip);
+  g.traverse((o) => { if (o.isMesh) o.castShadow = true; });
+  g.rotation.set(Math.PI / 2, 0, 0); g.position.set(0, 0.05, 0.03); hand.add(g); swordMesh = g;
+}
 const near = (x, z, r) => Math.hypot(player.pos.x - x, player.pos.z - z) < r;
 function interactTarget() {
   const p = player.pos;
@@ -219,16 +249,21 @@ function interactTarget() {
   if (near(tom.x, tom.z, 3)) return { text: 'E · Nói chuyện với Tom', run: () => story.talkTom() };
   if (near(ben.x, ben.z, 3.6)) return { text: 'E · Nói chuyện với Ben', run: () => story.talkBen() };
   if (near(sam.x, sam.z, 3)) return { text: 'E · Nói chuyện với Sam', run: () => story.talkSam() };
-  for (const f of friends) if (near(f.npc.x, f.npc.z, 2.6)) return { text: 'E · Nói chuyện với ' + f.who, run: () => ui.dialogue(f.lines.map((en) => ({ who: f.who, en }))) };
+  for (const f of friends) if (near(f.npc.x, f.npc.z, 2.6)) {
+    if (f.shop) return { text: 'E · Cửa hàng của ' + f.who, run: () => openShop(f.who, f.shop, f.lines[0]) };
+    return { text: 'E · Nói chuyện với ' + f.who, run: () => ui.dialogue(f.lines.map((en) => ({ who: f.who, en }))) };
+  }
   return null;
 }
 function onKey(e) {
   if (!started) return;
+  if (arcade && arcade.key(e.code)) { e.preventDefault(); return; }
   if (e.code === 'F3') { perfOn = !perfOn; $('perf').classList.toggle('hidden', !perfOn); e.preventDefault(); return; }
   if (ui.key(e)) { e.preventDefault(); return; }
   if (ui.modal) return;
   if (e.code === 'KeyE') { const t = interactTarget(); if (t) t.run(); }
   if (e.code === 'KeyH') quest.hint();
+  if (e.code === 'KeyQ' && profile) { const got = eat(profile, Save.maxHp(profile)); if (got) { sfx('correct'); ui.toast(`+${got} HP`); save(); refresh(); } }
   if ((e.code === 'KeyJ' || e.code === 'KeyF') && wild && !(mini && mini.active)) wild.attack();
   if (e.code === 'Space') e.preventDefault();
 }
@@ -257,9 +292,15 @@ async function boot() {
   letterProp.position.set(hall[0] + 1.2, L.REGIONS.village.groundHeight(hall[0] + 1.2, hall[1]) + 0.5, hall[1]); letterProp.visible = false; scene.add(letterProp);
   for (const id of ['rope', 'chain', 'log', 'boulder']) { const [x, z] = BRIDGE_SPOTS[id], m = bridgeItem(id); m.position.set(x, L.REGIONS.village.groundHeight(x, z), z); m.visible = false; scene.add(m); itemProps[id] = m; }
   cam = new OrbitCamera(camera, canvas);
+  arcade = new Arcade((g, res) => {       // a finished board game pays gold and EXP; quitting pays nothing
+    if (!res) return;
+    const best = mini.data.best, record = best[res.id] === undefined || res.score > best[res.id]; if (record) best[res.id] = res.score;
+    profile.stats.gold += res.gold; Save.addExp(profile, res.exp); sfx('fanfare'); save(); refresh();
+    ui.dialogue([{ who: 'Ngọc', en: `${res.text} (+${res.gold} gold, +${res.exp} EXP)`, vi: record ? 'Kỷ lục mới của con!' : undefined }]);
+  });
   wild = new Wild({ scene, player, ui, sfx, profile: () => profile, save, onChange: refresh,
     respawn: () => { game.teleport(L.SPAWN.x, L.SPAWN.z); ui.dialogue([{ who: 'Tom', en: 'You fainted, so I carried you home. Rest, then try again!', vi: 'Con hết máu nên được đưa về làng. Máu đã đầy lại. Mua trang bị tốt hơn rồi quay lại nhé.' }]); } });
-  mini = new MiniGames({ scene, player, ui, sfx, profile: () => profile, save, onNote: refresh });
+  mini = new MiniGames({ scene, player, ui, sfx, profile: () => profile, save, onNote: refresh, board: (id) => { if (id === 'candy') arcade.start(candyGame()); } });
   minimap = new Minimap($('minimap'), (path) => { player.route = path.slice(1); });
   placeActors(); player.place(L.SPAWN.x, L.SPAWN.z);
   setQuality(quality);
@@ -273,7 +314,8 @@ const AUTO = !navigator.webdriver && !localStorage.getItem('eq-quality-manual');
 function frame() {
   const now = performance.now(), raw = (now - last) / 1000, real = Math.min(0.25, raw); last = now;
   const dt = Math.min(0.05, real); TIME.value += real; const t = TIME.value;
-  const frozen = ui.modal || !started;
+  const frozen = ui.modal || !started || (arcade && arcade.open);
+  if (arcade) arcade.update(real);
   const input = { x: (keys.has('KeyD') || keys.has('ArrowRight') ? 1 : 0) - (keys.has('KeyA') || keys.has('ArrowLeft') ? 1 : 0), z: (keys.has('KeyW') || keys.has('ArrowUp') ? 1 : 0) - (keys.has('KeyS') || keys.has('ArrowDown') ? 1 : 0), run: keys.has('ShiftLeft') || keys.has('ShiftRight'), jump: keys.has('Space') };
   if (frozen) { input.x = input.z = 0; input.jump = false; }
   const hadRoute = !!player.route;
@@ -286,8 +328,8 @@ function frame() {
   for (const f of friends) f.npc.update(dt, player.pos, talkingTo === f.who);
   if (pip.root.visible) pip.update(dt, t, player, started && L.NAME === 'forest' && quest && quest.step !== 'intro');
   crystals.update(t); if (world) world.update(t);
-  if (mini && started && !switching && !ui.modal) mini.update(real, player.pos);      // real time, so timers stay honest on slow machines
-  if (wild && started && !switching) wild.update(real, !!ui.modal);
+  if (mini && started && !switching && !ui.modal && !arcade.open) mini.update(real, player.pos);      // real time, so timers stay honest on slow machines
+  if (wild && started && !switching) wild.update(real, !!ui.modal || arcade.open);
   if (letterProp.visible) { letterProp.rotation.y = t * 1.5; letterProp.position.y += Math.sin(t * 2.2) * 0.002; }
   sun.position.copy(player.pos).addScaledVector(sunDir, 90); sun.target.position.copy(player.pos);
   sky.position.copy(camera.position);

@@ -24,6 +24,10 @@
   #hud .bar em { position:absolute; inset:0; font-style:normal; font-size:9.5px; font-weight:800; color:#fff; text-align:center; line-height:11px; text-shadow:0 1px 1px rgba(0,0,0,.7); }
   #hud .chips { display:flex; gap:6px; margin-top:8px; } #hud .chip { flex:1; display:flex; align-items:center; justify-content:center; gap:4px; height:24px; border-radius:12px; background:#fff; border:1.5px solid #d8b888; font-weight:800; font-size:13px; white-space:nowrap; }
   #hud .chip i { font-style:normal; } #hud .chip.gold i { color:#e8a01c; text-shadow:0 0 0 #8a5a2a; } #hud .chip.word i { color:#3d8fd6; } #hud .chip.star i { display:none; }
+  #arcade { position:fixed; inset:0; z-index:25; display:flex; align-items:center; justify-content:center; background:rgba(40,24,8,.45); } #arcade.hidden { display:none; }
+  #arcade .box { padding:12px 14px; max-width:calc(100vw - 20px); } #arcade canvas { display:block; width:min(560px, calc(100vw - 48px), calc(100vh - 150px)); height:auto; aspect-ratio:1; border-radius:12px; border:2px solid #b98a52; cursor:pointer; }
+  #arcade .head { display:flex; align-items:center; gap:12px; margin-bottom:8px; } #arcade .head b { font-size:19px; } #arcade .head span { flex:1; font-weight:700; color:#6a4a2a; } #arcade .head button { border:1.5px solid #b98a52; background:#fff4dc; border-radius:10px; padding:4px 10px; font-weight:700; cursor:pointer; color:#4a2a10; }
+  #arcade .help { font-size:13px; color:#8a6a48; margin-top:8px; max-width:560px; }
   #toast { position:fixed; left:50%; top:30%; transform:translate(-50%,-50%) scale(.6); padding:14px 34px; border-radius:18px; background:linear-gradient(180deg,#ffe98a,#f0a82a); border:3px solid #8a5a2a; color:#4a2a10; font-weight:800; font-size:30px; opacity:0; pointer-events:none; z-index:30; box-shadow:0 6px 0 #8a5a2a, 0 14px 30px rgba(0,0,0,.3); }
   #toast.show { animation:toast 2.2s ease-out forwards; } @keyframes toast { 0% { opacity:0; transform:translate(-50%,-50%) scale(.6); } 12% { opacity:1; transform:translate(-50%,-50%) scale(1.08); } 20% { transform:translate(-50%,-50%) scale(1); } 80% { opacity:1; } 100% { opacity:0; transform:translate(-50%,-70%) scale(1); } }
   #clue { position:fixed; left:50%; top:14px; transform:translateX(-50%); width:min(560px, calc(100vw - 560px)); min-width:300px; padding:10px 16px; text-align:center; }
@@ -33,7 +37,7 @@
   #mapbox { position:fixed; right:14px; top:14px; padding:6px; } #mapbox canvas { display:block; border-radius:10px; cursor:pointer; }
   #mapbox .cap { font-size:11px; text-align:center; color:#9a8060; margin-top:2px; } #mapbox .cap button { width:22px; height:22px; border-radius:11px; border:1.5px solid #b98a52; background:#fff4dc; color:#4a2a10; font-weight:800; cursor:pointer; padding:0; line-height:1; }
   #prompt { position:fixed; left:50%; bottom:150px; transform:translateX(-50%); padding:6px 14px; font-weight:700; font-size:15px; }
-  #dialog { position:fixed; left:50%; bottom:18px; transform:translateX(-50%); width:min(760px, calc(100vw - 32px)); padding:12px 18px; }
+  #dialog { position:fixed; left:50%; bottom:18px; transform:translateX(-50%); width:min(760px, calc(100vw - 32px)); padding:12px 18px; z-index:20; }
   #dialog .who { font-weight:800; color:#b0661a; font-size:15px; } #dialog .en { font-size:19px; font-weight:700; margin:2px 0; line-height:1.35; }
   #dialog .vi { font-size:14px; color:#6b4a26; } #dialog .next { text-align:right; font-size:12px; color:#9a8060; }
   #dialog .opts { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }

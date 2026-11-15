@@ -184,6 +184,30 @@ await snap('03e_wild_fight');
 for (let k = 0; k < 8 && await ev(() => !__eq.wild.mobs[0].dead); k++) { await ev(() => { const m = __eq.wild.mobs[0]; __eq.teleport(m.x, m.z - 1.6); __eq.player.yaw = 0; }); await wait(250); await page.keyboard.press('KeyJ'); await wait(650); }
 check(await ev((b) => __eq.wild.mobs[0].dead > 0 && (__eq.profile.stats.level > b.lv || __eq.profile.stats.exp > b.exp) && __eq.profile.stats.gold > b.gold, fight0), 'Slime defeated: EXP and gold earned');
 check(await ev(() => __eq.profile.stats.hp > 0 && __eq.profile.stats.hp <= 100 + (__eq.profile.stats.level - 1) * 12) && (await page.innerHTML('#hud')).includes('bar hp'), 'HUD shows the health and EXP bars');
+// ---------------------------------------------------------------- shop, equipment, bread, candy board
+await ev(() => { __eq.profile.stats.gold += 100; __eq.teleport(5.2, -12.2); }); await wait(500);
+check((await page.textContent('#prompt')).includes('Cửa hàng'), 'Prompt at Bram the blacksmith: shop');
+await page.keyboard.press('KeyE'); await wait(300);
+check((await page.textContent('#dialog')).includes('Wooden Sword'), 'Shop list shows items with prices');
+const shopGold = await ev(() => __eq.profile.stats.gold);
+await page.keyboard.press('Digit1'); await wait(350);
+check(await ev((g) => __eq.profile.stats.gold === g - 40 && __eq.profile.inv.weapon === 'wood_sword' && __eq.profile.gear.atk === 5 && !!__eq.sword, shopGold), 'Buying the wooden sword: gold paid, attack up, sword in her hand');
+await snap('03f_shop'); await page.keyboard.press('Digit6'); await wait(250);
+await ev(() => __eq.teleport(5.0, -8.0)); await wait(450); await page.keyboard.press('KeyE'); await wait(300);
+await page.keyboard.press('Digit2'); await wait(300); await page.keyboard.press('Digit3'); await wait(250);
+check(await ev(() => __eq.profile.inv.food === 1) && (await page.innerHTML('#hud')).includes('chip food'), 'Rose sells honey bread; the HUD shows it');
+await ev(() => { __eq.profile.stats.hp = 40; }); await page.keyboard.press('KeyQ'); await wait(250);
+check(await ev(() => __eq.profile.stats.hp === 90 && __eq.profile.inv.food === 0), 'Q eats the bread: +50 health');
+await ev(() => __eq.teleport(3.0, -8.0)); await wait(450);
+check((await page.textContent('#prompt')).includes('Xếp kẹo'), 'Prompt at the Candy Match sign');
+await page.keyboard.press('KeyE'); await wait(800);
+const cmv = await ev(async () => { const M = await import('./src/core/match3.js'); const b = __eq.arcade.game.board; for (let i = 0; i < 49; i++) for (const j of [i + 1, i + 7]) { if (j >= 49 || !M.adjacent(i, j)) continue; if (M.move([...b], i, j, Math.random).ok) return [i, j]; } return null; });
+const cbox = await page.locator('#arccv').boundingBox();
+for (const i of cmv) { await page.mouse.click(cbox.x + (i % 7 + 0.5) * cbox.width / 7, cbox.y + (Math.floor(i / 7) + 0.5) * cbox.width / 7); await wait(400); }
+check(await ev(() => __eq.arcade.open && __eq.arcade.game.score >= 30 && __eq.arcade.game.moves === 24), 'Candy Match: a real mouse swap lines up three and scores');
+await snap('03g_candy'); await ev(() => { __eq.arcade.game.moves = 0; }); await wait(1800);
+check(await ev(() => !__eq.arcade.open && __eq.mini.data.best.candy >= 30) && (await page.textContent('#dialog')).includes('Candy Match'), 'Board ends: gold and EXP paid, record saved');
+for (let k = 0; k < 3 && await page.isVisible('#dialog'); k++) { await page.keyboard.press('KeyE'); await wait(200); }
 await ev(() => __eq.teleport(0, 13)); await wait(300);
 await view(-8, 26, 0.6, 0.5, 16); await wait(1500); await snap('03_village_market_side');
 await view(14, 14, -2.2, 0.4, 14); await wait(1500); await snap('04_village_bridge_dock');

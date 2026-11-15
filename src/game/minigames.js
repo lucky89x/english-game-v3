@@ -9,6 +9,7 @@ export const STARTS = [
   { id: 'fish', x: 19.8, z: 19.2, text: 'E · Câu cá (trò chơi)', sign: '🎣 Fishing' },
   { id: 'apple', x: 33.5, z: 6, text: 'E · Hứng táo (trò chơi)', sign: '🍎 Apple catch' },
   { id: 'race', x: -22, z: 4, text: 'E · Chạy vòng (trò chơi)', sign: '🏁 Ring race' },
+  { id: 'candy', x: 3.6, z: -8.6, text: 'E · Xếp kẹo (trò chơi)', sign: '🍬 Candy Match', board: true },
 ];
 export const ORCHARD = { x: 40, z: 11, r: 8 };
 
@@ -20,7 +21,7 @@ export const raceGold = (seconds) => (seconds < 30 ? 12 : seconds < 40 ? 8 : 5);
 export const fishBar = (pos, centre, width, n = 23) => { let s = ''; const m = Math.round(pos * (n - 1)); for (let i = 0; i < n; i++) { const x = i / (n - 1); s += i === m ? '◆' : Math.abs(x - centre) <= width / 2 ? '█' : '─'; } return s; };
 
 export class MiniGames {
-  /** api: { scene, player, ui, sfx(name), profile() -> profile, save(), onNote() } */
+  /** api: { scene, player, ui, sfx(name), profile() -> profile, save(), onNote(), board(id) -> opens an arcade board game } */
   constructor(api) {
     this.api = api; this.active = null; this.note = ''; this.t = 0; this.root = new THREE.Group(); api.scene.add(this.root);
     const V = L.REGIONS.village, glow = (hex, k = 1.6) => new THREE.MeshStandardMaterial({ color: hex, emissive: hex, emissiveIntensity: k, roughness: 0.4 });
@@ -58,6 +59,7 @@ export class MiniGames {
   }
   start(id) {
     const s = STARTS.find((x) => x.id === id); this.api.sfx('tick');
+    if (s.board) return this.api.board(id);
     if (id === 'fish') { this.active = { id, s, cast: 0, caught: 0, pos: 0, centre: 0.5, width: 0.26, speed: 1.6, wait: 0, msg: '' }; this.newCast(); }
     if (id === 'apple') this.active = { id, s, time: 30, score: 0, next: 0.5 };
     if (id === 'race') { this.active = { id, s, i: 0, time: 0 }; this.rings.forEach((r, k) => { r.m.visible = k === 0; }); }

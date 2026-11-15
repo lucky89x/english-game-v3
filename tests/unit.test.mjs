@@ -268,7 +268,7 @@ test('village: no vocabulary for the unit -> Ben says so and the story is not bl
 test('mini games: stars, race rings and start signs are on reachable ground', async () => {
   const STARS = [[-46, -6], [-38, -34], [-12, -38], [30, -30], [48, -12], [52, 20], [44, 38], [10, 50], [-22, 50], [-48, 30], [-30, 14], [8, -36]];
   const RACE = [[-20, 2], [-32, 4], [-42, 14], [-40, 28], [-34, 42], [-18, 46], [-6, 44], [-8, 30], [-20, 2]];
-  const STARTS = [[19.8, 19.2], [33.5, 6], [-22, 4]];
+  const STARTS = [[19.8, 19.2], [33.5, 6], [-22, 4], [3.6, -8.6]];
   const src = (await import('node:fs')).readFileSync(new URL('../src/game/minigames.js', import.meta.url), 'utf8');
   assert.ok(src.includes(JSON.stringify(STARS).replace(/,/g, ', ').replace(/\], \[/g, '], [')), 'test list matches the game list');
   L.setRegion('village');
@@ -290,4 +290,38 @@ test('combat: every monster spawn is on reachable ground east of the river', () 
   L.setRegion('village');
   try { for (const [kind, x, z] of SPAWNS) { assert.ok(MONSTERS[kind]); assert.ok(L.walkable(x, z, 1) && findPath(L.SPAWN.x, L.SPAWN.z, x, z), kind + ' ' + x + ',' + z); assert.ok(Math.hypot(x, z - 4) > 25, 'not in the village square'); } }
   finally { L.setRegion('forest'); }
+});
+
+// ---------------------------------------------------------------- shop
+import { ITEMS, bag, wear, buy, eat, shopList } from '../src/core/rules.js';
+test('shop: buying needs gold and level, puts the item on, owned items are free to wear again, bread heals', () => {
+  const p = S.newProfile('An', 6);
+  assert.deepEqual(buy(p, 'wood_sword'), { ok: false, why: 'gold' });
+  p.stats.gold = 500;
+  assert.equal(buy(p, 'iron_sword').why, 'level');
+  assert.ok(buy(p, 'wood_sword').ok); assert.equal(p.stats.gold, 460); assert.equal(bag(p).weapon, 'wood_sword'); assert.equal(playerAtk(p), 15);
+  p.stats.level = 5; assert.ok(buy(p, 'iron_sword').ok); assert.equal(playerAtk(p), 10 + 8 + 12);
+  const g = p.stats.gold; assert.equal(buy(p, 'wood_sword').why, 'owned'); assert.equal(p.stats.gold, g, 'no second payment'); assert.equal(bag(p).weapon, 'wood_sword');
+  assert.ok(buy(p, 'leather_vest').ok); assert.equal(S.maxHp(p), 100 + 4 * 12 + 20); assert.equal(hurt(6, p), 4);
+  assert.ok(buy(p, 'bread').ok && buy(p, 'bread').ok); assert.equal(bag(p).food, 2);
+  p.stats.hp = 30; assert.equal(eat(p, S.maxHp(p)), 50); assert.equal(p.stats.hp, 80); assert.equal(bag(p).food, 1);
+  p.stats.hp = S.maxHp(p); assert.equal(eat(p, S.maxHp(p)), 0, 'not wasted at full health'); assert.equal(bag(p).food, 1);
+  assert.deepEqual(shopList('rose'), ['clover', 'bread']); assert.equal(shopList('forge').length, 5);
+  for (const it of Object.values(ITEMS)) assert.ok(it.en && it.vi && it.cost > 0);
+});
+
+// ---------------------------------------------------------------- match-3 rules
+import * as M3 from '../src/core/match3.js';
+test('match-3: fresh boards have no match but always a move; a good swap clears, falls and refills; a bad swap is undone', () => {
+  const rnd = L.mulberry32(5);
+  for (let k = 0; k < 20; k++) { const b = M3.newBoard(rnd); assert.equal(M3.matches(b).size, 0); assert.equal(b.length, 49); assert.ok(b.every((g) => g >= 0 && g < M3.KINDS)); }
+  const b = M3.newBoard(L.mulberry32(9)); let found = null;
+  for (let i = 0; i < 49 && !found; i++) for (const j of [i + 1, i + 7]) { if (j >= 49 || !M3.adjacent(i, j)) continue; const c = [...b]; if (M3.move(c, i, j, L.mulberry32(1)).ok) { found = [i, j]; break; } }
+  assert.ok(found, 'a move exists'); assert.ok(M3.hasMove(b));
+  const r = M3.move(b, found[0], found[1], L.mulberry32(1));
+  assert.ok(r.ok && r.cleared >= 3 && r.score >= 30 && r.combo >= 1); assert.ok(b.every((g) => g >= 0), 'refilled'); assert.equal(M3.matches(b).size, 0, 'cascades resolved');
+  const flat = Array.from({ length: 49 }, (_, i) => (i + Math.floor(i / 7)) % 6), copy = [...flat];
+  assert.equal(M3.move(flat, 0, 2, rnd).ok, false, 'not neighbours'); assert.deepEqual(flat, copy);
+  assert.ok(!M3.adjacent(6, 7), 'row ends are not neighbours');
+  assert.deepEqual(M3.candyReward(600), { gold: 10, exp: 15 }); assert.deepEqual(M3.candyReward(99999), { gold: 30, exp: 40 });
 });
