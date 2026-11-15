@@ -11,6 +11,7 @@ export const STARTS = [
   { id: 'race', x: -22, z: 4, text: 'E · Chạy vòng (trò chơi)', sign: '🏁 Ring race' },
   { id: 'candy', x: -4.4, z: -8.5, text: 'E · Xếp kẹo (trò chơi)', sign: '🍬 Candy Match', board: true },
   { id: 'sling', x: -20, z: -4, text: 'E · Bắn súng cao su (trò chơi)', sign: '🎯 Slingshot', board: true },
+  { id: 'race2', x: 10, z: 28, text: 'E · Đua xe bí ngô (trò chơi)', sign: '🏎 Cart Race', board: true },
   { id: 'blocks', x: -26, z: -2, text: 'E · Xếp hình (trò chơi)', sign: '🧱 Blocks', board: true },
 ];
 export const ORCHARD = { x: 40, z: 11, r: 8 };

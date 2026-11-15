@@ -11,7 +11,7 @@ import { ForestQuest, landmark } from './game/quest.js';
 import { VillageStory } from './game/village.js';
 import { MiniGames, STARS } from './game/minigames.js';
 import { Wild } from './game/combat.js';
-import { Arcade, candyGame, blocksGame, slingGame, spellGame } from './ui/arcade.js';
+import { Arcade, candyGame, blocksGame, slingGame, spellGame, raceGame } from './ui/arcade.js';
 import { Chests } from './game/chests.js';
 import { ITEMS, bag, wear, buy, eat, shopList } from './core/rules.js';
 import { SAM_LINES, BRIDGE, BRIDGE_SPOTS, FRIENDS } from './game/content.js';
@@ -297,6 +297,7 @@ function onKey(e) {
   if (e.code === 'KeyE') { const t = interactTarget(); if (t) t.run(); }
   if (e.code === 'KeyH') quest.hint();
   if (e.code === 'KeyQ' && profile) { const got = eat(profile, Save.maxHp(profile)); if (got) { sfx('correct'); ui.toast(`+${got} HP`); save(); refresh(); } }
+  if (e.code === 'KeyK' && wild && !(mini && mini.active)) wild.dodge();
   if ((e.code === 'KeyJ' || e.code === 'KeyF') && wild && !(mini && mini.active)) wild.attack();
   if (e.code === 'Space') e.preventDefault();
 }
@@ -355,7 +356,7 @@ async function boot() {
       });
     },
     respawn: () => { game.teleport(L.SPAWN.x, L.SPAWN.z); ui.dialogue([{ who: 'Tom', en: 'You fainted, so I carried you home. Rest, then try again!', vi: 'Con hết máu nên được đưa về làng. Máu đã đầy lại. Mua trang bị tốt hơn rồi quay lại nhé.' }]); } });
-  mini = new MiniGames({ scene, player, ui, sfx, profile: () => profile, save, onNote: refresh, board: (id) => arcade.start(({ candy: candyGame, blocks: blocksGame, sling: slingGame })[id]()) });
+  mini = new MiniGames({ scene, player, ui, sfx, profile: () => profile, save, onNote: refresh, board: (id) => arcade.start(({ candy: candyGame, blocks: blocksGame, sling: slingGame, race2: raceGame })[id]()) });
   minimap = new Minimap($('minimap'), (path) => { player.route = path.slice(1); });
   placeActors(); player.place(L.SPAWN.x, L.SPAWN.z);
   setQuality(quality);
@@ -370,7 +371,7 @@ function frame() {
   const now = performance.now(), raw = (now - last) / 1000, real = Math.min(0.25, raw); last = now;
   const dt = Math.min(0.05, real); TIME.value += real; const t = TIME.value;
   const frozen = ui.modal || !started || (arcade && arcade.open);
-  if (arcade) arcade.update(real);
+  if (arcade) arcade.update(real, keys);
   const input = { x: (keys.has('KeyD') || keys.has('ArrowRight') ? 1 : 0) - (keys.has('KeyA') || keys.has('ArrowLeft') ? 1 : 0), z: (keys.has('KeyW') || keys.has('ArrowUp') ? 1 : 0) - (keys.has('KeyS') || keys.has('ArrowDown') ? 1 : 0), run: keys.has('ShiftLeft') || keys.has('ShiftRight'), jump: keys.has('Space') };
   if (frozen) { input.x = input.z = 0; input.jump = false; }
   const hadRoute = !!player.route;

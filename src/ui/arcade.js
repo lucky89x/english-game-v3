@@ -21,9 +21,9 @@ export class Arcade {
   start(game) { this.game = game; this.t = 0; this.el.classList.remove('hidden'); this.el.querySelector('#arctitle').textContent = game.title; this.el.querySelector('#archelp').textContent = game.help; }
   close(result) { const g = this.game; this.game = null; this.el.classList.add('hidden'); if (g) this.onFinish(g, result); }
   key(code) { if (!this.game) return false; if (code === 'Escape') this.close(null); else if (this.game.key) this.game.key(code); return true; }
-  update(dt) {
+  update(dt, held = new Set()) {
     const g = this.game; if (!g) return;
-    this.t += dt; g.update(dt); g.draw(this.ctx, this.cv.width, this.cv.height, this.t);
+    this.t += dt; g.update(dt, held); g.draw(this.ctx, this.cv.width, this.cv.height, this.t);
     this.el.querySelector('#arcinfo').textContent = g.info();
     const res = g.done(); if (res) this.close(res);
   }
@@ -170,6 +170,50 @@ export function spellGame(card, rnd = Math.random) {
       c.fillStyle = '#4a2a10'; c.font = `800 ${Math.round(size * 0.55)}px sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(tt.ch, x + size / 2, y + size / 2 + 2); c.textBaseline = 'alphabetic'; c.globalAlpha = 1;
     });
     if (done) { c.fillStyle = '#ffe28a'; c.font = '800 34px sans-serif'; c.fillText('Opened!', 280, 525); }
+  };
+  return g;
+}
+
+/** Pumpkin Cart Race: hold ← → (A D) to steer on a winding road, dodge rocks, collect coins. 45 seconds, 3 hearts. */
+export function raceGame(rnd = Math.random) {
+  const g = { title: '🏎 Pumpkin Cart Race', help: 'Giữ phím ← → (hoặc A D) để lái. Né đá và vũng bùn, nhặt đồng xu. Đường càng lúc càng nhanh. 45 giây, 3 tim.',
+    x: 280, time: 45, hearts: 3, coins: 0, dist: 0, speed: 260, things: [], next: 0.4, hurt: 0, endT: 0, curve: 0 };
+  const roadAt = (y) => 280 + Math.sin((g.dist - y) / 260) * 90;          // centre of the road at screen height y
+  g.info = () => `❤ ${g.hearts} · ● ${g.coins} · ⏱ ${Math.max(0, Math.ceil(g.time))} s`;
+  g.update = (dt, held) => {
+    if (g.time <= 0 || g.hearts <= 0) { g.endT += dt; return; }
+    g.time -= dt; g.speed = 260 + (45 - g.time) * 7; g.dist += g.speed * dt; g.hurt = Math.max(0, g.hurt - dt);
+    const steer = ((held.has('ArrowRight') || held.has('KeyD')) ? 1 : 0) - ((held.has('ArrowLeft') || held.has('KeyA')) ? 1 : 0);
+    g.x = Math.max(40, Math.min(520, g.x + steer * 330 * dt)); g.steer = steer;
+    g.next -= dt;
+    if (g.next <= 0) { g.next = Math.max(0.28, 0.75 - (45 - g.time) * 0.008) * (0.7 + rnd() * 0.6); const kind = rnd() < 0.42 ? 'coin' : rnd() < 0.7 ? 'rock' : 'mud'; g.things.push({ kind, off: (rnd() - 0.5) * 150, y: -30 }); }
+    for (const t of g.things) {
+      t.y += g.speed * dt; const tx = roadAt(t.y) + t.off;
+      if (!t.hit && Math.abs(t.y - 470) < 26 && Math.abs(tx - g.x) < (t.kind === 'coin' ? 30 : 34)) {
+        t.hit = true;
+        if (t.kind === 'coin') g.coins += 1; else if (g.hurt <= 0) { g.hearts -= t.kind === 'rock' ? 1 : 0; g.hurt = t.kind === 'rock' ? 1.0 : 0.6; if (t.kind === 'mud') g.speed *= 0.6; }
+      }
+    }
+    // leaving the road slows the cart a lot
+    if (Math.abs(g.x - roadAt(470)) > 110) g.dist -= g.speed * dt * 0.5;
+    g.things = g.things.filter((t) => t.y < 600 && !(t.hit && t.kind === 'coin'));
+  };
+  const score = () => g.coins * 10 + Math.floor(g.dist / 100) + g.hearts * 20;
+  g.done = () => (g.endT > 0.8 ? { id: 'race2', score: score(), gold: Math.min(30, g.coins * 2 + g.hearts * 2), exp: Math.min(40, Math.floor(score() / 6)), text: g.hearts > 0 ? `Race finished: ${g.coins} coins, ${score()} points!` : `Crash! ${g.coins} coins, ${score()} points.` } : null);
+  g.draw = (c, w, h, t) => {
+    c.fillStyle = '#6cc044'; c.fillRect(0, 0, w, h);
+    for (let y = -20; y < h + 20; y += 20) { const cx = roadAt(y); c.fillStyle = '#d9c08a'; c.fillRect(cx - 120, y, 240, 21); c.fillStyle = Math.floor((g.dist - y) / 40) % 2 ? '#fff4dc' : '#e2483e'; c.fillRect(cx - 128, y, 8, 21); c.fillRect(cx + 120, y, 8, 21);
+      if (Math.floor((g.dist - y) / 60) % 2) { c.fillStyle = 'rgba(255,255,255,.6)'; c.fillRect(cx - 3, y, 6, 21); } }
+    for (let i = 0; i < 9; i++) { const y = ((i * 97 + g.dist * 1.0) % (h + 80)) - 40, side = i % 2 ? 1 : -1, cx = roadAt(y) + side * (170 + (i % 3) * 25); c.fillStyle = '#3f9a3a'; c.beginPath(); c.arc(cx, y, 22, 0, 7); c.fill(); c.fillStyle = '#5fbe3f'; c.beginPath(); c.arc(cx - 6, y - 6, 12, 0, 7); c.fill(); }
+    for (const tg of g.things) { const x = roadAt(tg.y) + tg.off;
+      if (tg.kind === 'coin') { c.fillStyle = '#ffd23c'; c.beginPath(); c.ellipse(x, tg.y, 12 * Math.abs(Math.cos(t * 5 + tg.off)) + 3, 13, 0, 0, 7); c.fill(); c.strokeStyle = '#b07a1c'; c.lineWidth = 2; c.stroke(); }
+      else if (tg.kind === 'rock') { c.fillStyle = '#8f8a84'; c.beginPath(); c.ellipse(x, tg.y, 24, 18, 0, 0, 7); c.fill(); c.fillStyle = '#b5b0aa'; c.beginPath(); c.ellipse(x - 6, tg.y - 5, 10, 6, 0, 0, 7); c.fill(); }
+      else { c.fillStyle = 'rgba(110,70,30,.75)'; c.beginPath(); c.ellipse(x, tg.y, 34, 14, 0, 0, 7); c.fill(); } }
+    if (!(g.hurt > 0 && Math.floor(t * 12) % 2)) { c.save(); c.translate(g.x, 470); c.rotate((g.steer || 0) * 0.15);
+      c.fillStyle = '#7a4a26'; c.fillRect(-26, -10, 52, 34); c.fillStyle = '#3a2410'; for (const [wx, wy] of [[-28, -4], [28, -4], [-28, 18], [28, 18]]) { c.fillRect(wx - 5, wy - 8, 10, 16); }
+      c.fillStyle = '#f08a2c'; c.beginPath(); c.ellipse(0, -2, 22, 18, 0, 0, 7); c.fill(); c.fillStyle = '#4f8a3a'; c.fillRect(-3, -24, 6, 8);
+      c.fillStyle = '#c9322c'; c.beginPath(); c.arc(0, 18, 9, 0, 7); c.fill(); c.restore(); }
+    if (g.time <= 0 || g.hearts <= 0) { c.fillStyle = 'rgba(255,244,220,.9)'; c.fillRect(130, 230, 300, 80); c.fillStyle = '#4a2a10'; c.font = '800 32px sans-serif'; c.textAlign = 'center'; c.fillText(g.hearts > 0 ? 'Finish!' : 'Crash!', 280, 282); }
   };
   return g;
 }

@@ -61,6 +61,14 @@ export class Wild {
   }
   setRegion(name) { this.root.visible = name === 'village'; for (const m of this.mobs) this.place(m); }
   place(m) { m.g.position.set(m.x, L.groundHeight(m.x, m.z), m.z); }
+  /** K: a quick roll forward. Monsters cannot hurt Ngọc for half a second. */
+  dodge() {
+    const { player } = this.api; if (!this.root.visible || this.rollCool > 0) return false;
+    this.rollCool = 0.8; this.iframes = 0.5; player.emote('Jump'); this.api.sfx('tick');
+    let x = player.pos.x, z = player.pos.z; const dx = Math.sin(player.yaw), dz = Math.cos(player.yaw);
+    for (let d = 0; d < 3.2; d += 0.2) { const nx = x + dx * 0.2, nz = z + dz * 0.2; if (!L.canStep(x, z, nx, nz)) break; x = nx; z = nz; }
+    const yaw = player.yaw; player.place(x, z); player.yaw = yaw; return true;
+  }
   /** Ngọc swings (J / F). Returns the number of monsters hit. */
   attack() {
     const { player, profile } = this.api, p = profile(); if (!this.root.visible || this.cool > 0 || !p) return 0;
@@ -110,7 +118,7 @@ export class Wild {
   update(dt, frozen) {
     if (!this.root.visible) return;
     const { player, profile } = this.api, p = profile(); if (!p) return;
-    this.t += dt; this.cool = Math.max(0, this.cool - dt);
+    this.t += dt; this.cool = Math.max(0, this.cool - dt); this.rollCool = Math.max(0, (this.rollCool || 0) - dt); this.iframes = Math.max(0, (this.iframes || 0) - dt);
     if (this.slash.visible) { this.slashT -= dt; this.slash.material.opacity = Math.max(0, this.slashT / 0.16); if (this.slashT <= 0) this.slash.visible = false; }
     const hpMax = maxHp(p); if (p.stats.hp === undefined || p.stats.hp > hpMax) p.stats.hp = hpMax;
     let fighting = false;
@@ -129,7 +137,7 @@ export class Wild {
       if (m.shieldOn) m.shield.rotation.y += dt * 1.5;
       m.bar.scale.x = Math.max(0.001, m.hp / m.def.hp); const show = m.hp < m.def.hp || d < 9; m.bar.visible = m.back.visible = show;
       m.hitCool = Math.max(0, m.hitCool - dt);
-      if (!frozen && d < 0.95 + m.def.size * 0.35 && m.hitCool <= 0) {
+      if (!frozen && !this.iframes && d < 0.95 + m.def.size * 0.35 && m.hitCool <= 0) {
         m.hitCool = 1.1; p.stats.hp -= hurt(m.def.atk, p); this.api.sfx('wrong'); this.api.onChange();
         if (p.stats.hp <= 0) { p.stats.hp = hpMax; this.api.save(); this.api.respawn(); return; }
       }

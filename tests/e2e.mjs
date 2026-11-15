@@ -270,6 +270,29 @@ await ev(() => { const m = __eq.wild.boss; m.broken = 3; m.hp = 5; __eq.wild.coo
 check(await ev(() => __eq.wild.boss.dead > 0 && __eq.profile.flags.boss1 === true) && (await page.textContent('#dialog')).includes('Slime King'), 'Slime King defeated: big reward, flag saved');
 for (let k = 0; k < 3 && await page.isVisible('#dialog'); k++) { await page.keyboard.press('KeyE'); await wait(200); }
 await ev(() => __eq.wild.mobs.forEach((m) => { if (!m.boss) m.dead = 0.1; }));
+// dodge roll (K) and the owl's knowledge gate at level 5
+await ev(() => { __eq.teleport(36, -16); __eq.player.yaw = 0; __eq.wild.rollCool = 0; }); await wait(300);
+const r0 = await ev(() => __eq.player.pos.z); await page.keyboard.press('KeyK'); await wait(250);
+check(await ev((z) => __eq.player.pos.z - z > 1.5, r0), 'K rolls Ngọc forward out of danger');
+await ev(async () => { const S = await import('./src/core/save.js'); const p = __eq.profile; p.gates = {}; p.stats.level = 4; p.stats.exp = 0; S.addExp(p, 900); });
+check(await ev(() => __eq.profile.stats.level === 5), 'EXP stops at level 5 until the review');
+await ev(() => __eq.teleport(2.9, 15.6)); await wait(450);
+check((await page.textContent('#prompt')).includes('Cú Mèo: ôn tập') && (await page.textContent('#hud')).includes('ôn tập'), 'HUD and prompt send the child to the owl');
+await page.keyboard.press('KeyE'); await wait(250); await page.keyboard.press('KeyE'); await wait(300);
+for (let n = 0; n < 5; n++) {
+  const oi = await ev(() => { const en = document.querySelector('#dialog .en').textContent, vi = ((document.querySelector('#dialog .vi') || {}).textContent || '').trim(), cards = __eq.chests.api.cards(), m = /"(.+)" mean/.exec(en);
+    if (m) return __eq.ui.options.indexOf(cards.find((x) => x.word === m[1]).vi); return __eq.ui.options.indexOf(cards.find((x) => x.vi === vi).word); });
+  await page.keyboard.press('Digit' + (oi + 1)); await wait(300);
+}
+check(await ev(() => __eq.profile.stats.level === 6 && __eq.profile.gates[5]) && (await page.textContent('#dialog')).includes('Wonderful'), 'Five owl questions answered: level 6');
+for (let k = 0; k < 3 && await page.isVisible('#dialog'); k++) { await page.keyboard.press('KeyE'); await wait(200); }
+// pumpkin cart race: hold the arrow key to steer
+await ev(() => __eq.teleport(10.6, 28.6)); await wait(450); await page.keyboard.press('KeyE'); await wait(600);
+const cx0 = await ev(() => __eq.arcade.game.x); await page.keyboard.down('ArrowRight'); await wait(1200); await page.keyboard.up('ArrowRight');
+check(await ev((x) => __eq.arcade.game.title.includes('Race') && __eq.arcade.game.x > x + 40, cx0), 'Cart Race: holding → steers the cart');
+await snap('03l_cart_race'); await ev(() => { __eq.arcade.game.time = 0; }); await page.waitForFunction(() => !__eq.arcade.open, null, { timeout: 60000 });
+check(await ev(() => __eq.mini.data.best.race2 > 0), 'Race ends: score saved');
+for (let k = 0; k < 3 && await page.isVisible('#dialog'); k++) { await page.keyboard.press('KeyE'); await wait(200); }
 await ev(() => __eq.teleport(0, 13)); await wait(300);
 await view(-8, 26, 0.6, 0.5, 16); await wait(1500); await snap('03_village_market_side');
 await view(14, 14, -2.2, 0.4, 14); await wait(1500); await snap('04_village_bridge_dock');
