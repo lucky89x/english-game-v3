@@ -243,6 +243,33 @@ check(await ev((id) => __eq.profile.chests[1] > 0 && !!__eq.profile.words[id] &&
 for (let k = 0; k < 3 && await page.isVisible('#dialog'); k++) { await page.keyboard.press('KeyE'); await wait(200); }
 check((await page.textContent('#prompt')).includes('Mai quay lại'), 'An opened chest stays shut until tomorrow');
 await ev(() => __eq.wild.mobs.forEach((m) => { m.dead = 0.1; }));
+// hunting quest from the board, then the Slime King with its word shields
+await ev(() => __eq.teleport(29.6, -13.2)); await wait(450);
+check((await page.textContent('#prompt')).includes('Bảng nhiệm vụ'), 'Prompt at the quest board');
+await page.keyboard.press('KeyE'); await wait(300);
+check(/slimes/.test(await page.textContent('#dialog .en')) && !/[àáảãạăâđêôơư]/i.test(await page.textContent('#dialog .en')), 'The board gives the job in English');
+await page.keyboard.press('KeyE'); await wait(300);
+check(await ev(() => __eq.profile.hunt.active) && (await page.textContent('#hud')).includes('⚔ 0/3'), 'Hunt accepted: progress shows on the HUD');
+for (let n = 0; n < 3; n++) await ev(() => __eq.wild.kill(__eq.wild.mobs.find((m) => m.kind === 'slime' && !m.dead), __eq.profile));
+await ev(() => __eq.teleport(29.6, -13.2)); await wait(400); await page.keyboard.press('KeyE'); await wait(300);
+check(await ev(() => !__eq.profile.hunt.active && __eq.profile.hunt.done === 1) && (await page.textContent('#dialog')).includes('Thank you'), 'Three slimes later the board pays and offers the next job');
+await page.keyboard.press('KeyE'); await wait(200);
+await ev(() => { __eq.profile.stats.level = Math.max(6, __eq.profile.stats.level); __eq.wild.mobs.forEach((m) => { if (!m.boss) { m.dead = 120; m.g.visible = false; } }); }); await wait(600);
+check(await ev(() => __eq.wild.boss.g.visible), 'At level 6 the Slime King appears in the meadow');
+await ev(() => { const m = __eq.wild.boss; m.hp = 460; __eq.teleport(m.x, m.z - 2.4); __eq.player.yaw = 0; __eq.profile.stats.hp = 999; }); await wait(250);
+await page.keyboard.press('KeyJ'); await wait(500);
+check(await ev(() => __eq.wild.boss.shieldOn && __eq.wild.boss.broken === 0), 'Below 75% health the boss raises a word shield');
+const hp0 = await ev(() => __eq.wild.boss.hp); await ev(() => { __eq.wild.cool = 0; }); await page.keyboard.press('KeyJ'); await wait(400);
+check(await ev((h) => __eq.wild.boss.hp === h, hp0), 'The shield blocks the sword');
+await ev(() => { const m = __eq.wild.boss; __eq.teleport(m.x, m.z - 2.4); }); await wait(300); await page.keyboard.press('KeyE'); await wait(350);
+await snap('03k_word_shield');
+const qi = await ev(() => { const vi = document.querySelector('#dialog .vi').textContent; const card = __eq.chests.api.cards().find((c) => vi.includes('"' + c.vi + '"')); return __eq.ui.options.indexOf(card.word); });
+await page.keyboard.press('Digit' + (qi + 1)); await wait(400);
+check(await ev(() => !__eq.wild.boss.shieldOn && __eq.wild.boss.broken === 1), 'Choosing the right English word breaks the shield');
+await ev(() => { const m = __eq.wild.boss; m.broken = 3; m.hp = 5; __eq.wild.cool = 0; __eq.teleport(m.x, m.z - 2.4); __eq.player.yaw = 0; }); await wait(250); await page.keyboard.press('KeyJ'); await wait(500);
+check(await ev(() => __eq.wild.boss.dead > 0 && __eq.profile.flags.boss1 === true) && (await page.textContent('#dialog')).includes('Slime King'), 'Slime King defeated: big reward, flag saved');
+for (let k = 0; k < 3 && await page.isVisible('#dialog'); k++) { await page.keyboard.press('KeyE'); await wait(200); }
+await ev(() => __eq.wild.mobs.forEach((m) => { if (!m.boss) m.dead = 0.1; }));
 await ev(() => __eq.teleport(0, 13)); await wait(300);
 await view(-8, 26, 0.6, 0.5, 16); await wait(1500); await snap('03_village_market_side');
 await view(14, 14, -2.2, 0.4, 14); await wait(1500); await snap('04_village_bridge_dock');

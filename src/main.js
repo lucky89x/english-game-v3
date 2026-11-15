@@ -116,7 +116,7 @@ function refresh() {
     else ui.clue(null, 0, '', 'The forest remembers its words again. You can explore!');
     crystals.show(quest.crystalIds());
   } else {
-    ui.hud(profile, 'Làng Khởi Đầu', mini ? `★ ${mini.data.stars.length}/${STARS.length}` : '', learned, bag(profile).food);
+    ui.hud(profile, 'Làng Khởi Đầu', [mini ? `★ ${mini.data.stars.length}/${STARS.length}` : '', wild ? wild.huntNote() : ''].filter(Boolean).join('  '), learned, bag(profile).food);
     const c = story.customer;
     if (c) ui.clue({ who: `Traveller ${c.index + 1}/${c.total}`, text: c.said || `A jar of "${c.target.word}", please!`, key: c.target.word, hints: false, tip: 'Đi tới hũ có nghĩa đúng rồi nhấn E' }, c.said ? 1 : 0, '');
     else if (mini && mini.note) ui.clue(null, 0, '', mini.note);
@@ -247,6 +247,7 @@ function interactTarget() {
   }
   { const m = mini && mini.interact(player.pos); if (m) return m; }
   { const c = chests && chests.interact(player.pos); if (c) return c; }
+  { const w = wild && wild.interact(player.pos); if (w) return w; }
   if (letterProp.visible && near(letterProp.position.x, letterProp.position.z, 2.2)) return { text: 'E · Nhặt bức thư', run: () => { player.emote('Interact'); story.readLetter(); } };
   for (const [id, m] of Object.entries(itemProps)) if (m.visible && near(m.position.x, m.position.z, 2.0)) return { text: 'E · Nhặt vật này', run: () => { player.emote('Interact'); if (story.pick(id)) player.emote('Celebrate'); } };
   if (near(tom.x, tom.z, 3)) return { text: 'E · Nói chuyện với Tom', run: () => story.talkTom() };
@@ -314,6 +315,16 @@ async function boot() {
       arcade.start(g);
     } });
   wild = new Wild({ scene, player, ui, sfx, profile: () => profile, save, onChange: refresh,
+    quiz: (done) => {       // word shield: pick the English word for the Vietnamese meaning (unit vocabulary, due words first)
+      const pool = unitCards.filter((c) => c.word.length <= 18); if (pool.length < 4) { done(true); return; }
+      const due = Review.dueIds(profile.words).map((id) => pool.find((c) => c.id === id)).filter(Boolean), card = (due.length ? due : pool)[Math.floor(Math.random() * (due.length || pool.length))];
+      const opts = [card, ...pool.filter((c) => c.id !== card.id && c.vi !== card.vi).sort(() => Math.random() - 0.5).slice(0, 3)].sort(() => Math.random() - 0.5), started = Date.now();
+      ui.choose({ who: 'Slime King', en: 'Say the magic word to break my shield!', vi: `"${card.vi}" trong tiếng Anh là gì?` }, opts.map((o) => o.word), (i) => {
+        const ok = opts[i].id === card.id; Review.record(profile.words, card.id, { correct: ok, hints: 0, ms: Date.now() - started }); Save.recordSkill(profile, 'vocabulary', ok, 0); save();
+        if (!ok) ui.dialogue([{ who: 'Slime King', en: 'Ha ha! Wrong word!', vi: `${card.word} = ${card.vi}. Đánh tiếp rồi thử lại nhé.` }]);
+        done(ok);
+      });
+    },
     respawn: () => { game.teleport(L.SPAWN.x, L.SPAWN.z); ui.dialogue([{ who: 'Tom', en: 'You fainted, so I carried you home. Rest, then try again!', vi: 'Con hết máu nên được đưa về làng. Máu đã đầy lại. Mua trang bị tốt hơn rồi quay lại nhé.' }]); } });
   mini = new MiniGames({ scene, player, ui, sfx, profile: () => profile, save, onNote: refresh, board: (id) => arcade.start(({ candy: candyGame, blocks: blocksGame, sling: slingGame })[id]()) });
   minimap = new Minimap($('minimap'), (path) => { player.route = path.slice(1); });

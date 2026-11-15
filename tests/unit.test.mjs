@@ -353,3 +353,16 @@ test('spell: tiles hold every letter plus decoys, only the next letter is accept
   assert.ok(SP.spellable('school bag') && !SP.spellable('a') && !SP.spellable('extraordinarily long words'));
   assert.deepEqual(SP.chestReward(0), { gold: 15, exp: 20 }); assert.deepEqual(SP.chestReward(9), { gold: 6, exp: 8 });
 });
+
+// ---------------------------------------------------------------- hunts and boss
+import { HUNTS, hunt, countKill, huntLine, BOSS, SHIELDS, shieldDue } from '../src/core/rules.js';
+test('hunts: only the asked monster counts, only while active, finishing returns true once; English lines by grade', () => {
+  const p = S.newProfile('An', 6), h = hunt(p);
+  assert.equal(countKill(p, 'slime'), false, 'not active yet'); h.active = true;
+  assert.equal(countKill(p, 'red'), false); assert.equal(h.got, 0);
+  assert.equal(countKill(p, 'slime'), false); assert.equal(countKill(p, 'slime'), false); assert.equal(countKill(p, 'slime'), true); assert.equal(countKill(p, 'slime'), false);
+  assert.ok(huntLine(HUNTS[0], 6).length < huntLine(HUNTS[0], 9).length);
+  for (const q of HUNTS) for (const t of Object.values(q.en)) assert.ok(!/[àáảãạăâđêôơư]/i.test(t), 'English only');
+  assert.ok(shieldDue(450, 600, 0) && !shieldDue(460, 600, 0) && !shieldDue(100, 600, 3) && shieldDue(100, 600, 2));
+  assert.equal(SHIELDS.length, 3); assert.ok(BOSS.hp > 0);
+});

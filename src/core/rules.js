@@ -54,3 +54,24 @@ export function eat(profile, hpMax) {
   b.food -= 1; const after = Math.min(hpMax, hp + ITEMS.bread.heal); profile.stats.hp = after; return after - hp;
 }
 export const shopList = (seller) => Object.entries(ITEMS).filter(([, it]) => it.seller === seller).map(([id]) => id);
+
+// ---------------------------------------------------------------- hunting quests and the boss
+/** English lines are original and short; grades 8-9 get longer sentences with the same job. */
+export const HUNTS = [
+  { kind: 'slime', need: 3, gold: 20, exp: 40, en: { easy: 'Please defeat three green slimes. They are eating my carrots!', hard: "Could you get rid of three green slimes? They've been eating my carrots all week." } },
+  { kind: 'red', need: 2, gold: 35, exp: 70, en: { easy: 'Two red slimes are near the river. Please stop them!', hard: "Two red slimes have been seen near the river. Would you mind stopping them?" } },
+  { kind: 'slime', need: 5, gold: 35, exp: 70, en: { easy: 'Five green slimes are in the meadow. Can you help?', hard: 'The meadow is full of green slimes again. Could you defeat five of them?' } },
+  { kind: 'golem', need: 1, gold: 60, exp: 120, en: { easy: 'A big stone golem is by the farm. Be careful!', hard: "A stone golem is standing near the farm. It's dangerous, so please be careful!" } },
+];
+export const huntLine = (h, grade) => h.en[grade >= 8 ? 'hard' : 'easy'];
+export const hunt = (profile) => profile.hunt || (profile.hunt = { i: 0, got: 0, active: false, done: 0 });
+/** Counts a defeated monster for the active hunt. Returns true when this kill finished it. */
+export function countKill(profile, kind) {
+  const h = hunt(profile), q = HUNTS[h.i % HUNTS.length];
+  if (!h.active || q.kind !== kind || h.got >= q.need) return false;
+  h.got += 1; return h.got >= q.need;
+}
+export const BOSS = { name: 'Slime King', level: 6, hp: 600, atk: 16, exp: 400, gold: 150, speed: 1.4, color: 0x5fd0ff, size: 2.6 };
+/** The boss raises a word shield each time its health drops past one of these fractions. */
+export const SHIELDS = [0.75, 0.5, 0.25];
+export const shieldDue = (hp, max, broken) => broken < SHIELDS.length && hp / max <= SHIELDS[broken];
