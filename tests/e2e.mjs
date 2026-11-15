@@ -158,9 +158,9 @@ await page.keyboard.press('KeyE'); await wait(250);
 await ev(() => __eq.teleport(20.4, 19.8)); await wait(450); await page.keyboard.press('KeyE'); await wait(300);
 check(await ev(() => __eq.mini.active && __eq.mini.active.id === 'fish') && (await page.textContent('#clue')).includes('◆'), 'Fishing starts: moving marker on the bar');
 for (let c = 0; c < 5; c++) {
-  await page.waitForFunction(() => { const a = __eq.mini.active; if (a) a.speed = 0.1; return !a || (a.wait <= 0 && Math.abs(a.pos - a.centre) < a.width * 0.3); }, null, { timeout: 180000, polling: 30 });   // software GL runs ~1 fps: slow the marker, still a real E press
+  await page.waitForFunction(() => { const a = __eq.mini.active; return !a || (a.wait <= 0 && Math.abs(a.pos - a.centre) < a.width * 0.3); }, null, { timeout: 180000, polling: 30 });   // software GL runs ~1 fps and game time is capped per frame, so allow a long wait
   if (c === 0) await snap('03c_fishing');
-  await page.keyboard.press('KeyE'); await wait(1300);
+  await page.keyboard.press('KeyE'); await page.waitForFunction(() => { const a = __eq.mini.active; return !a || a.wait <= 0; }, null, { timeout: 180000 });
 }
 check(await ev(() => !__eq.mini.active && __eq.mini.data.best.fish >= 1), 'Five casts with real E: fish caught, best score saved');
 for (let k = 0; k < 3 && await page.isVisible('#dialog'); k++) { await page.keyboard.press('KeyE'); await wait(200); }

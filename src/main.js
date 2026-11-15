@@ -285,8 +285,8 @@ function frame() {
   for (const f of friends) if (f.npc.root.visible) f.npc.update(dt, player.pos, talkingTo === f.who);
   if (pip.root.visible) pip.update(dt, t, player, started && L.NAME === 'forest' && quest && quest.step !== 'intro');
   crystals.update(t); if (world) world.update(t);
-  if (mini && started && !switching && !ui.modal) mini.update(dt, player.pos);
-  if (wild && started && !switching) wild.update(dt, !!ui.modal);
+  if (mini && started && !switching && !ui.modal) mini.update(real, player.pos);      // real time, so timers stay honest on slow machines
+  if (wild && started && !switching) wild.update(real, !!ui.modal);
   if (letterProp.visible) { letterProp.rotation.y = t * 1.5; letterProp.position.y += Math.sin(t * 2.2) * 0.002; }
   sun.position.copy(player.pos).addScaledVector(sunDir, 90); sun.target.position.copy(player.pos);
   sky.position.copy(camera.position);
