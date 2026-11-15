@@ -1304,6 +1304,26 @@ export_kwargs = dict(
     export_anim_single_armature=True, export_reset_pose_bones=True, export_optimize_animation_size=False,
 )
 import inspect
+
+def _decimate(ob):
+    """Optional triangle reduction for weak machines: CHIBI_DECIMATE=0.5 keeps half the triangles (weights and UVs survive)."""
+    import os as _os
+    r = float(_os.environ.get('CHIBI_DECIMATE', '1'))
+    if r >= 1:
+        return
+    bpy.context.view_layer.objects.active = ob
+    for o in bpy.context.selected_objects:
+        o.select_set(False)
+    ob.select_set(True)
+    m = ob.modifiers.new('Decimate', 'DECIMATE')
+    m.ratio = r
+    m.use_collapse_triangulate = True
+    while ob.modifiers[0] != m:
+        bpy.ops.object.modifier_move_up(modifier=m.name)
+    bpy.ops.object.modifier_apply(modifier=m.name)
+    print('decimated to', sum(len(p.vertices) - 2 for p in ob.data.polygons), 'triangles')
+
+_decimate(body)
 props = bpy.ops.export_scene.gltf.get_rna_type().properties.keys()
 bpy.ops.export_scene.gltf(**{k: v for k, v in export_kwargs.items() if k in props})
 print('exported', GLB, 'triangles', tri_count)

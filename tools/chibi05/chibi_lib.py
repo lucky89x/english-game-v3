@@ -640,9 +640,29 @@ def make_action(name, frames, fn, loop=True):
     return act
 
 
+
+def _decimate(ob):
+    """Optional triangle reduction for weak machines: CHIBI_DECIMATE=0.5 keeps half the triangles (weights and UVs survive)."""
+    import os as _os
+    r = float(_os.environ.get('CHIBI_DECIMATE', '1'))
+    if r >= 1:
+        return
+    bpy.context.view_layer.objects.active = ob
+    for o in bpy.context.selected_objects:
+        o.select_set(False)
+    ob.select_set(True)
+    m = ob.modifiers.new('Decimate', 'DECIMATE')
+    m.ratio = r
+    m.use_collapse_triangulate = True
+    while ob.modifiers[0] != m:
+        bpy.ops.object.modifier_move_up(modifier=m.name)
+    bpy.ops.object.modifier_apply(modifier=m.name)
+    print('decimated to', sum(len(p.vertices) - 2 for p in ob.data.polygons), 'triangles')
+
 def export(glb_path, blend_path, objects=None):
     rig = STATE.get('rig')
     body = STATE['body']
+    _decimate(body)
     if rig and STATE.get('actions'):
         rig.animation_data.action = STATE['actions'].get('Idle')
         bpy.context.scene.frame_set(0)

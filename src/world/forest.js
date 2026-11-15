@@ -248,7 +248,7 @@ function buildTrees() {
     const list = L.TREES.filter((t) => look(t) === kind);
     const place = (t, p, e, s) => { p.set(t.x, L.groundHeight(t.x, t.z) - 0.08, t.z); e.set(0, t.rot, 0); s.setScalar(t.s * (kind === 'pine' ? 1.25 : 1.15)); };
     g.add(instanced(K.core, windy(std(), K.wind), list, place));
-    if (K.cards) g.add(instanced(K.cards, leafMat(K.wind), list, place));
+    if (K.cards) g.add(instanced(K.cards, leafMat(K.wind), list, place, false));     // leaves do not cast shadows: the dark core does, at a fraction of the cost
   }
   return g;
 }
@@ -699,7 +699,7 @@ function orchard(list) {
   const g = new THREE.Group(), geo = leafyGeo(0x7a4a26, [0x3a8a2c, 0x4f9e36, 0x62ae40], { h: 2.2, r: 2.3, clumps: 8, trunkR: 0.3, seed: 6 }), apple = new THREE.MeshStandardMaterial({ color: 0xe23a2a, roughness: 0.5 }), lemon = new THREE.MeshStandardMaterial({ color: 0xf6c62e, roughness: 0.5 });
   list.forEach(([x, z], k) => {
     const t = new THREE.Mesh(geo, windy(std(), 0.012)); t.castShadow = true; t.position.set(x, L.groundHeight(x, z) - 0.05, z); t.rotation.y = k * 1.3; g.add(t);
-    const lc = new THREE.Mesh(cards, cardMat); lc.castShadow = true; lc.position.copy(t.position); lc.rotation.y = t.rotation.y; g.add(lc);
+    const lc = new THREE.Mesh(cards, cardMat); lc.position.copy(t.position); lc.rotation.y = t.rotation.y; g.add(lc);
     for (let i = 0; i < 10; i++) { const a = i * 2.399 + k, f = new THREE.Mesh(new THREE.SphereGeometry(0.17, 8, 6), k % 3 === 2 ? lemon : apple); f.position.set(x + Math.cos(a) * 1.7, L.groundHeight(x, z) + 2.6 + (i % 4) * 0.45, z + Math.sin(a) * 1.7); g.add(f); }
   });
   return g;

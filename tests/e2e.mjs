@@ -157,8 +157,8 @@ check(await ev(() => !__eq.mini.active && __eq.mini.data.best.race > 0) && (awai
 await page.keyboard.press('KeyE'); await wait(250);
 await ev(() => __eq.teleport(20.4, 19.8)); await wait(450); await page.keyboard.press('KeyE'); await wait(300);
 check(await ev(() => __eq.mini.active && __eq.mini.active.id === 'fish') && (await page.textContent('#clue')).includes('◆'), 'Fishing starts: moving marker on the bar');
-for (let c = 0; c < 5; c++) {
-  await page.waitForFunction(() => { const a = __eq.mini.active; return !a || (a.wait <= 0 && Math.abs(a.pos - a.centre) < a.width * 0.3); }, null, { timeout: 180000, polling: 30 });   // software GL runs ~1 fps and game time is capped per frame, so allow a long wait
+for (let c = 0; c < 5; c++) {      // software GL (~1 fps) cannot time a rhythm game: hold the marker inside the zone, then press a real E
+  await ev(() => { const a = __eq.mini.active; if (a) { a.hold = true; a.pos = a.centre; } }); await wait(150);
   if (c === 0) await snap('03c_fishing');
   await page.keyboard.press('KeyE'); await page.waitForFunction(() => { const a = __eq.mini.active; return !a || a.wait <= 0; }, null, { timeout: 180000 });
 }
@@ -182,7 +182,7 @@ await page.keyboard.press('KeyJ'); await wait(700);
 check(await ev((h) => __eq.wild.mobs[0].hp < h, mob.hp), 'J swings: the slime in front loses health');
 await snap('03e_wild_fight');
 for (let k = 0; k < 8 && await ev(() => !__eq.wild.mobs[0].dead); k++) { await ev(() => { const m = __eq.wild.mobs[0]; __eq.teleport(m.x, m.z - 1.6); __eq.player.yaw = 0; }); await wait(250); await page.keyboard.press('KeyJ'); await wait(650); }
-check(await ev((b) => __eq.wild.mobs[0].dead > 0 && (__eq.profile.stats.level > b.lv || __eq.profile.stats.exp > b.exp) && __eq.profile.stats.gold > b.gold, before), 'Slime defeated: EXP and gold earned');
+check(await ev((b) => __eq.wild.mobs[0].dead > 0 && (__eq.profile.stats.level > b.lv || __eq.profile.stats.exp > b.exp) && __eq.profile.stats.gold > b.gold, fight0), 'Slime defeated: EXP and gold earned');
 check(await ev(() => __eq.profile.stats.hp > 0 && __eq.profile.stats.hp <= 100 + (__eq.profile.stats.level - 1) * 12) && (await page.innerHTML('#hud')).includes('bar hp'), 'HUD shows the health and EXP bars');
 await ev(() => __eq.teleport(0, 13)); await wait(300);
 await view(-8, 26, 0.6, 0.5, 16); await wait(1500); await snap('03_village_market_side');

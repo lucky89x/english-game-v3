@@ -62,7 +62,7 @@ export class MiniGames {
     if (id === 'apple') this.active = { id, s, time: 30, score: 0, next: 0.5 };
     if (id === 'race') { this.active = { id, s, i: 0, time: 0 }; this.rings.forEach((r, k) => { r.m.visible = k === 0; }); }
   }
-  newCast() { const a = this.active; a.cast += 1; a.centre = 0.2 + Math.random() * 0.6; a.width = Math.max(0.12, 0.28 - a.cast * 0.03); a.speed = 1.5 + a.cast * 0.35; a.wait = 0; }
+  newCast() { const a = this.active; a.cast += 1; a.centre = 0.2 + Math.random() * 0.6; a.width = Math.max(0.12, 0.28 - a.cast * 0.03); a.speed = 1.5 + a.cast * 0.35; a.wait = 0; a.hold = false; }
   pull() {
     const a = this.active; if (!a || a.id !== 'fish' || a.wait > 0) return;
     const ok = fishHit(a.pos, a.centre, a.width); if (ok) a.caught += 1;
@@ -86,7 +86,7 @@ export class MiniGames {
     if (Math.hypot(pos.x - a.s.x, pos.z - a.s.z) > (a.id === 'race' ? 90 : a.id === 'apple' ? 22 : 5)) { this.stop(); return; }
     if (a.id === 'fish') {
       if (a.wait > 0) { a.wait -= dt; if (a.wait <= 0) { if (a.cast >= 5) return this.finish(fishGold(a.caught), `I caught ${a.caught} fish!`, 'fish', a.caught); this.newCast(); } }
-      else a.pos = 0.5 + 0.5 * Math.sin(this.t * a.speed * 2);
+      else if (!a.hold) a.pos = 0.5 + 0.5 * Math.sin(this.t * a.speed * 2);      // hold: test hook, freezes the marker
       this.say(`🎣 ${a.cast}/5 · 🐟 ${a.caught}   ${a.wait > 0 ? a.msg : fishBar(a.pos, a.centre, a.width)}   (E)`);
     } else if (a.id === 'apple') {
       a.time -= dt; a.next -= dt;

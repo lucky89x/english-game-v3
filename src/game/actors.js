@@ -121,6 +121,7 @@ export class Npc {
   play(n) { if (!this.actions[n] || this.cur === n) return; const a = this.actions[n]; a.reset().play(); if (this.actions[this.cur]) this.actions[this.cur].crossFadeTo(a, 0.2, false); this.cur = n; }
   update(dt, player, talking) {
     const d = Math.hypot(player.x - this.x, player.z - this.z);
+    this.root.visible = d < 55; if (!this.root.visible) return d;        // far away: not drawn, not animated (weak machines)
     const want = d < 6 ? Math.atan2(player.x - this.x, player.z - this.z) : this.home;
     let diff = want - this.root.rotation.y; diff = Math.atan2(Math.sin(diff), Math.cos(diff)); this.root.rotation.y += diff * Math.min(1, dt * 5);
     this.play(talking ? 'Talk' : 'Idle');

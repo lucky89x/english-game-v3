@@ -87,7 +87,7 @@ function renderGear() {
   const g = $('gear'); if (!profile) return; g.classList.remove('hidden');
   g.innerHTML = `Đồ họa: <select id="gq">${Object.entries(QUALITY).map(([k, v]) => `<option value="${k}" ${k === quality ? 'selected' : ''}>${v.label}</option>`).join('')}</select>
     <button id="gs">Âm thanh: ${soundOn() ? 'bật' : 'tắt'}</button><button id="ge">Xuất hồ sơ</button><button id="gp">Đổi người chơi</button><span style="color:#9a8060">F3: hiệu năng</span>`;
-  $('gq').onchange = (e) => setQuality(e.target.value);
+  $('gq').onchange = (e) => { localStorage.setItem('eq-quality-manual', '1'); setQuality(e.target.value); };
   $('gs').onclick = () => { setSound(!soundOn()); renderGear(); };
   $('ge').onclick = () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([Save.exportProfile(profile)], { type: 'application/json' })); a.download = `english-quest-${profile.name}.json`; a.click(); };
   $('gp').onclick = () => { save(); ui.showMenu(store, chooseProfile); };
@@ -268,7 +268,8 @@ async function boot() {
   renderer.setAnimationLoop(frame);
 }
 
-let last = performance.now(), acc = 0, frames = 0, autosave = 0;
+let last = performance.now(), acc = 0, frames = 0, autosave = 0, slow = 0;
+const AUTO = !navigator.webdriver && !localStorage.getItem('eq-quality-manual');     // step the graphics down by itself until the child picks a level
 function frame() {
   const now = performance.now(), raw = (now - last) / 1000, real = Math.min(0.25, raw); last = now;
   const dt = Math.min(0.05, real); TIME.value += real; const t = TIME.value;
@@ -282,7 +283,7 @@ function frame() {
   cam.update(dt, player.pos);
   const talkingTo = ui.busy && ui.pages ? ui.pages[0].who : '';
   tom.update(dt, player.pos, talkingTo === 'Tom'); sam.update(dt, player.pos, talkingTo === 'Sam'); ben.update(dt, player.pos, talkingTo === 'Ben');
-  for (const f of friends) if (f.npc.root.visible) f.npc.update(dt, player.pos, talkingTo === f.who);
+  for (const f of friends) f.npc.update(dt, player.pos, talkingTo === f.who);
   if (pip.root.visible) pip.update(dt, t, player, started && L.NAME === 'forest' && quest && quest.step !== 'intro');
   crystals.update(t); if (world) world.update(t);
   if (mini && started && !switching && !ui.modal) mini.update(real, player.pos);      // real time, so timers stay honest on slow machines
@@ -319,6 +320,10 @@ function frame() {
   acc += raw; frames++;
   if (acc >= 0.5) { game.stats = { fps: +(frames / acc).toFixed(1), ms: +(acc / frames * 1000).toFixed(1), calls: renderer.info.render.calls, tris: renderer.info.render.triangles };
     if (perfOn) $('perf').textContent = `FPS ${game.stats.fps}  (${game.stats.ms} ms)\ndraw calls ${game.stats.calls}\ntriangles ${game.stats.tris.toLocaleString()}\nquality ${quality} · ${renderer.domElement.width}x${renderer.domElement.height}`;
+    if (AUTO && started && !switching && !document.hidden && quality !== 'low' && !localStorage.getItem('eq-quality-manual')) {
+      slow = game.stats.fps < 26 ? slow + 1 : 0;
+      if (slow >= 6) { slow = 0; setQuality(quality === 'high' ? 'medium' : 'low'); ui.toast('Đã hạ đồ họa cho mượt hơn'); }
+    }
     acc = 0; frames = 0; }
 }
 boot().catch((e) => { errors.push(String(e && e.stack || e)); $('loadtext').textContent = 'Lỗi khi tải game: ' + e.message; console.error(e); });
