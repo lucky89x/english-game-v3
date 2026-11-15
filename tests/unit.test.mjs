@@ -366,3 +366,10 @@ test('hunts: only the asked monster counts, only while active, finishing returns
   assert.ok(shieldDue(450, 600, 0) && !shieldDue(460, 600, 0) && !shieldDue(100, 600, 3) && shieldDue(100, 600, 2));
   assert.equal(SHIELDS.length, 3); assert.ok(BOSS.hp > 0);
 });
+
+test('knowledge gates: level 5 waits for the owl review, extra EXP is capped, passing lets the level go up', () => {
+  const p = S.newProfile('An', 6); p.stats.level = 4;
+  S.addExp(p, 150 + 500); assert.equal(p.stats.level, 5); assert.equal(S.gateWaiting(p), 5); assert.equal(p.stats.exp, S.expNeed(5), 'bar full, rest not stored');
+  S.addExp(p, 999); assert.equal(p.stats.level, 5);
+  assert.equal(S.passGate(p, 5), 1); assert.equal(p.stats.level, 6); assert.equal(S.gateWaiting(p), 0); assert.equal(p.stats.exp, 0);
+});

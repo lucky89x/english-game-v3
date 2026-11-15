@@ -55,9 +55,14 @@ export function recordSkill(profile, skill, correct, hints) {
 export const expNeed = (level) => 60 + (level - 1) * 30;
 /** Hit points grow with the level; equipment adds on top (profile.gear, later). */
 export const maxHp = (profile) => 100 + (profile.stats.level - 1) * 12 + ((profile.gear && profile.gear.hp) || 0);
+/** Knowledge gates: at these levels the bar fills but the next level waits for a short word review (the owl). */
+export const GATES = [5, 10, 15, 20];
+export const gateWaiting = (profile) => { const L = profile.stats.level; return GATES.includes(L) && !(profile.gates && profile.gates[L]) ? L : 0; };
+export function passGate(profile, level) { (profile.gates || (profile.gates = {}))[level] = true; return addExp(profile, 0); }
 export function addExp(profile, amount) {
   const s = profile.stats; s.exp += amount;
   let need = 60 + (s.level - 1) * 30, ups = 0;
-  while (s.exp >= need) { s.exp -= need; s.level += 1; ups += 1; need = 60 + (s.level - 1) * 30; }
+  while (s.exp >= need && !gateWaiting(profile)) { s.exp -= need; s.level += 1; ups += 1; need = 60 + (s.level - 1) * 30; }
+  if (gateWaiting(profile)) s.exp = Math.min(s.exp, need);        // full bar, nothing wasted beyond it
   return ups;
 }

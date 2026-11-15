@@ -634,7 +634,7 @@ function creatures() {
     const tailD = B(new THREE.SphereGeometry(0.11, 8, 6), cream, 0, 0.5, -0.45); tailD.userData.live = true;
     B(new THREE.TorusGeometry(0.2, 0.045, 6, 14), new THREE.MeshStandardMaterial({ color: 0xd23b30 }), 0, 0.5, 0.3).rotation.x = 1.2;
     face(dog, 0.68, 0.62, 0.1);
-    compact(dog); g.add(dog); list.push({ o: dog, dog: true, tail: tailD, x: 0, z: 4, r: 4.2, ph: 1, sp: 0.35 });
+    compact(dog); g.add(dog); list.push({ o: dog, dog: true, tail: tailD, x: 6, z: 12, r: 2.3, ph: 1, sp: 0.5 });      // open grass east of the path: no fence to run through
     const owl = new THREE.Group(), brown = new THREE.MeshStandardMaterial({ color: 0x9a6a3c, roughness: 0.95 });
     const O = (geo, m, x, y, z, sx = 1, sy = 1, sz = 1) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.scale.set(sx, sy, sz); owl.add(o); return o; };
     O(new THREE.SphereGeometry(0.2, 12, 10), brown, 0, 0.2, 0, 1, 1.15, 0.9); O(new THREE.SphereGeometry(0.15, 10, 8), cream, 0, 0.16, 0.08, 0.9, 1, 0.7);

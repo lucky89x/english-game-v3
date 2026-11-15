@@ -65,7 +65,7 @@ const staticModel = async (name) => (await gltf(name)).scene.clone(true);
 const faceTex = async (name) => { const t = await texLoader.loadAsync(`./assets/tex/ngoc_face_${name}.png`); t.flipY = false; t.colorSpace = THREE.SRGBColorSpace; return t; };
 
 const ui = new UI(), store = Save.load();
-let profile = null, quest = null, story = null, world = null, player = null, cam = null, tom = null, sam = null, ben = null, pip = null, crystals = null, minimap = null, letterProp = null, itemProps = {}, friends = [], mini = null, wild = null, arcade = null, chests = null, unitCards = [];
+let profile = null, quest = null, story = null, world = null, player = null, cam = null, tom = null, sam = null, ben = null, pip = null, crystals = null, minimap = null, letterProp = null, itemProps = {}, friends = [], mini = null, wild = null, arcade = null, chests = null, unitCards = [], cardOfFn = () => null;
 let quality = localStorage.getItem('eq-quality') || 'medium', perfOn = false, started = false, switching = false, wordIds = {}, jarKey = '';
 const keys = new Set();
 const game = { errors, get profile() { return profile; }, get quest() { return quest; }, get story() { return story; }, get player() { return player; }, get cam() { return cam; }, get minimap() { return minimap; }, ui, L, stats: { fps: 0, ms: 0, calls: 0, tris: 0 },
@@ -104,6 +104,7 @@ const NOTES = {      // short English objectives for the village chain
 let shownLevel = 0;
 function refresh() {
   if (!profile) return;
+  const gate = Save.gateWaiting(profile); if (gate && profile.toldGate !== gate) { profile.toldGate = gate; ui.toast('Gặp Cú Mèo để lên cấp!'); }
   if (shownLevel && profile.stats.level > shownLevel) { profile.stats.hp = Save.maxHp(profile); ui.toast(`LEVEL UP!  Lv ${profile.stats.level}`); sfx('fanfare'); }
   shownLevel = profile.stats.level;
   const learned = Review.learned(profile.words);
@@ -116,7 +117,7 @@ function refresh() {
     else ui.clue(null, 0, '', 'The forest remembers its words again. You can explore!');
     crystals.show(quest.crystalIds());
   } else {
-    ui.hud(profile, 'Làng Khởi Đầu', [mini ? `★ ${mini.data.stars.length}/${STARS.length}` : '', wild ? wild.huntNote() : ''].filter(Boolean).join('  '), learned, bag(profile).food);
+    ui.hud(profile, 'Làng Khởi Đầu', [mini ? `★ ${mini.data.stars.length}/${STARS.length}` : '', wild ? wild.huntNote() : '', Save.gateWaiting(profile) ? '🦉 ôn tập' : ''].filter(Boolean).join('  '), learned, bag(profile).food);
     const c = story.customer;
     if (c) ui.clue({ who: `Traveller ${c.index + 1}/${c.total}`, text: c.said || `A jar of "${c.target.word}", please!`, key: c.target.word, hints: false, tip: 'Đi tới hũ có nghĩa đúng rồi nhấn E' }, c.said ? 1 : 0, '');
     else if (mini && mini.note) ui.clue(null, 0, '', mini.note);
@@ -187,7 +188,7 @@ async function chooseProfile(p) {
     bridge: BRIDGE[p.grade] || null, onBridgeFixed: applyBridge });
   if (story.step === 'jars_play') story.q.step = 'jars';
   if (mini) { mini.stop(); mini.syncStars(); }
-  unitCards = cards; if (chests) chests.sync();
+  unitCards = cards; cardOfFn = cardOf; if (chests) chests.sync();
   wear(profile); setSword();
   if ((story.step === 'open' || story.step === 'done') && !p.flags.bridge_fixed) p.flags.bridge_fixed = true;   // saves from before the bridge quest
   applyBridge();
@@ -224,6 +225,33 @@ function setSword() {
   g.traverse((o) => { if (o.isMesh) o.castShadow = true; });
   g.rotation.set(Math.PI / 2, 0, 0); g.position.set(0, 0.05, 0.03); hand.add(g); swordMesh = g;
 }
+/** The owl's review: five quick questions on learned and unit words, both directions. 4 of 5 opens the gate. */
+const OWL = { x: 2.9, z: 14.5 };
+function owlReview() {
+  const L0 = Save.gateWaiting(profile);
+  if (!L0) { const next = Save.GATES.find((g) => g > profile.stats.level); ui.dialogue([{ who: 'Owl', en: 'Hoo-hoo! Keep training, little hero.', vi: next ? `Đến cấp ${next}, cú sẽ ôn tập với con để mở cấp tiếp theo.` : 'Con đã qua hết các cổng ôn tập của làng.' }]); return; }
+  const seen = Object.keys(profile.words).map((id) => cardOfFn(id)).filter(Boolean), pool = [...seen, ...unitCards.filter((c) => !seen.some((x) => x.id === c.id))].filter((c) => c.word.length <= 22);
+  if (pool.length < 4) { Save.passGate(profile, L0); save(); refresh(); ui.dialogue([{ who: 'Owl', en: 'Hoo! No words to review yet. Go on!', vi: `Từ vựng Unit ${profile.unit} lớp ${profile.grade} chưa có, cổng tự mở.` }]); return; }
+  const due = new Set(Review.dueIds(profile.words)), order = [...pool].sort((a, b) => (due.has(b.id) ? 1 : 0) - (due.has(a.id) ? 1 : 0) || Math.random() - 0.5).slice(0, 5);
+  let right = 0;
+  const ask = (n) => {
+    if (n >= order.length) {
+      const pass = right >= Math.min(4, order.length - 1);
+      if (pass) { Save.passGate(profile, L0); sfx('fanfare'); }
+      save(); refresh();
+      ui.dialogue([{ who: 'Owl', en: pass ? `Wonderful! ${right} of ${order.length}. You may grow stronger now!` : `${right} of ${order.length}. Let's try again soon!`, vi: pass ? 'Cổng ôn tập đã mở, con lên cấp rồi!' : 'Cần đúng 4/5 câu. Ôn lại các từ rồi gặp cú lần nữa nhé.' }]);
+      return;
+    }
+    const c = order[n], toEn = n % 2 === 0, others = pool.filter((x) => x.id !== c.id && x.vi !== c.vi && x.word !== c.word).sort(() => Math.random() - 0.5).slice(0, 3);
+    const opts = [c, ...others].sort(() => Math.random() - 0.5), started = Date.now();
+    ui.choose({ who: `Owl · ${n + 1}/${order.length}`, en: toEn ? 'Which English word is it?' : `What does "${c.word}" mean?`, vi: toEn ? c.vi : undefined }, opts.map((o) => (toEn ? o.word : o.vi)), (i) => {
+      const ok = opts[i].id === c.id; if (ok) right += 1;
+      Review.record(profile.words, c.id, { correct: ok, hints: 0, ms: Date.now() - started }); Save.recordSkill(profile, 'vocabulary', ok, 0); sfx(ok ? 'correct' : 'wrong');
+      if (ok) ask(n + 1); else ui.dialogue([{ who: 'Owl', en: 'Hoo… not that one.', vi: `${c.word} = ${c.vi}` }], () => ask(n + 1));
+    });
+  };
+  ui.dialogue([{ who: 'Owl', en: 'Hoo-hoo! Answer my questions and you can grow stronger.', vi: `Ôn 5 câu, đúng 4 câu thì lên được cấp ${L0 + 1}.` }], () => ask(0));
+}
 const near = (x, z, r) => Math.hypot(player.pos.x - x, player.pos.z - z) < r;
 function interactTarget() {
   const p = player.pos;
@@ -248,6 +276,7 @@ function interactTarget() {
   { const m = mini && mini.interact(player.pos); if (m) return m; }
   { const c = chests && chests.interact(player.pos); if (c) return c; }
   { const w = wild && wild.interact(player.pos); if (w) return w; }
+  if (L.NAME === 'village' && near(OWL.x, OWL.z, 2.2)) return { text: Save.gateWaiting(profile) ? 'E · Cú Mèo: ôn tập để lên cấp' : 'E · Nói chuyện với Cú Mèo', run: owlReview };
   if (letterProp.visible && near(letterProp.position.x, letterProp.position.z, 2.2)) return { text: 'E · Nhặt bức thư', run: () => { player.emote('Interact'); story.readLetter(); } };
   for (const [id, m] of Object.entries(itemProps)) if (m.visible && near(m.position.x, m.position.z, 2.0)) return { text: 'E · Nhặt vật này', run: () => { player.emote('Interact'); if (story.pick(id)) player.emote('Celebrate'); } };
   if (near(tom.x, tom.z, 3)) return { text: 'E · Nói chuyện với Tom', run: () => story.talkTom() };
@@ -381,6 +410,7 @@ function frame() {
       if (story.market && Math.hypot(player.pos.x + 7, player.pos.z - 19.5) > 15) story.leaveMarket();
       if (!story.market) markers.push(...mini.markers());
       markers.push(...wild.markers(), ...chests.markers());
+      if (Save.gateWaiting(profile)) markers.push({ x: OWL.x, z: OWL.z, text: '🦉', color: '#ffe28a' });
     }
     minimap.draw(player.pos, player.yaw, markers);
     autosave += dt; if (autosave > 20) { autosave = 0; save(); }
