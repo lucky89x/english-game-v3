@@ -268,7 +268,7 @@ test('village: no vocabulary for the unit -> Ben says so and the story is not bl
 test('mini games: stars, race rings and start signs are on reachable ground', async () => {
   const STARS = [[-46, -6], [-38, -34], [-12, -38], [30, -30], [48, -12], [52, 20], [44, 38], [10, 50], [-22, 50], [-48, 30], [-30, 14], [8, -36]];
   const RACE = [[-20, 2], [-32, 4], [-42, 14], [-40, 28], [-34, 42], [-18, 46], [-6, 44], [-8, 30], [-20, 2]];
-  const STARTS = [[19.8, 19.2], [33.5, 6], [-22, 4], [-4.4, -8.5]];
+  const STARTS = [[19.8, 19.2], [33.5, 6], [-22, 4], [-4.4, -8.5], [-20, -4], [-26, -2]];
   const src = (await import('node:fs')).readFileSync(new URL('../src/game/minigames.js', import.meta.url), 'utf8');
   assert.ok(src.includes(JSON.stringify(STARS).replace(/,/g, ', ').replace(/\], \[/g, '], [')), 'test list matches the game list');
   L.setRegion('village');
@@ -324,4 +324,17 @@ test('match-3: fresh boards have no match but always a move; a good swap clears,
   assert.equal(M3.move(flat, 0, 2, rnd).ok, false, 'not neighbours'); assert.deepEqual(flat, copy);
   assert.ok(!M3.adjacent(6, 7), 'row ends are not neighbours');
   assert.deepEqual(M3.candyReward(600), { gold: 10, exp: 15 }); assert.deepEqual(M3.candyReward(99999), { gold: 30, exp: 40 });
+});
+
+// ---------------------------------------------------------------- falling blocks rules
+import * as B from '../src/core/blocks.js';
+test('blocks: pieces stay inside walls, rotate with kicks, a full row clears and the rest falls', () => {
+  const b = B.empty();
+  for (let k = 0; k < 7; k++) { const p = B.spawn(k); assert.ok(B.fits(b, p)); for (let r = 0; r < 4; r++) assert.equal(B.cells({ ...p, r }).length, 4); }
+  let p = B.spawn(1); for (let i = 0; i < 12; i++) p = B.shift(b, p, -1, 0); assert.equal(Math.min(...B.cells(p).map((c) => c[0])), 0, 'stops at the left wall');
+  const i0 = { k: 0, r: 1, x: 8, y: 5 }; assert.ok(B.fits(b, B.shift(b, i0, 0, 0, 1)), 'kicked off the right wall when turning');
+  for (let x = 0; x < 8; x++) b[19 * B.W + x] = 3;
+  const o = B.drop(b, { k: 1, r: 0, x: 8, y: 0 }); assert.equal(o.y, 18);
+  assert.equal(B.lock(b, o), 1); assert.equal(b[19 * B.W + 8], 2, 'top half of the O fell into the bottom row'); assert.equal(b.filter(Boolean).length, 2);
+  assert.deepEqual(B.blocksReward(800), { gold: 10, exp: 16 });
 });

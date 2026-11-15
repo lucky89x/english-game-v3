@@ -210,6 +210,23 @@ check(await ev(() => __eq.arcade.open && __eq.arcade.game.score >= 30 && __eq.ar
 await snap('03g_candy'); await ev(() => { __eq.arcade.game.moves = 0; }); await wait(1800);
 check(await ev(() => !__eq.arcade.open && __eq.mini.data.best.candy >= 30) && (await page.textContent('#dialog')).includes('Candy Match'), 'Board ends: gold and EXP paid, record saved');
 for (let k = 0; k < 3 && await page.isVisible('#dialog'); k++) { await page.keyboard.press('KeyE'); await wait(200); }
+// slingshot: drag back from the sling with the real mouse and let go
+await ev(() => __eq.teleport(-20.6, -3.4)); await wait(450); await page.keyboard.press('KeyE'); await wait(800);
+const sbox = await page.locator('#arccv').boundingBox(), sk = sbox.width / 560;
+await page.mouse.move(sbox.x + 280 * sk, sbox.y + 470 * sk); await page.mouse.down(); await page.mouse.move(sbox.x + 300 * sk, sbox.y + 560 * sk, { steps: 4 }); await page.mouse.up(); await wait(300);
+check(await ev(() => __eq.arcade.game.title.includes('Slingshot') && __eq.arcade.game.shots === 11), 'Slingshot: a real drag-and-release fires a pebble');
+await snap('03h_slingshot'); await page.keyboard.press('Escape'); await wait(300);
+check(await ev(() => !__eq.arcade.open && __eq.mini.data.best.sling === undefined), 'Esc quits a board game with no reward');
+// falling blocks: real arrow keys
+await ev(() => __eq.teleport(-26.6, -1.4)); await wait(450); await page.keyboard.press('KeyE'); await wait(800);
+const bk0 = await ev(() => JSON.stringify(__eq.arcade.game.piece));
+await page.keyboard.press('ArrowLeft'); await wait(200); await page.keyboard.press('ArrowUp'); await wait(200);
+check(await ev((p0) => JSON.stringify(__eq.arcade.game.piece) !== p0, bk0), 'Falling Blocks: arrow keys move and turn the piece');
+await page.keyboard.press('Space'); await wait(300);
+check(await ev(() => __eq.arcade.game.board.filter(Boolean).length === 4 && __eq.arcade.game.score >= 7), 'Space drops the piece to the bottom');
+await snap('03i_blocks'); await ev(() => { __eq.arcade.game.over = true; }); await page.waitForFunction(() => !__eq.arcade.open, null, { timeout: 60000 });
+check(await ev(() => __eq.mini.data.best.blocks >= 7), 'Blocks round ends: score saved');
+for (let k = 0; k < 3 && await page.isVisible('#dialog'); k++) { await page.keyboard.press('KeyE'); await wait(200); }
 await ev(() => __eq.teleport(0, 13)); await wait(300);
 await view(-8, 26, 0.6, 0.5, 16); await wait(1500); await snap('03_village_market_side');
 await view(14, 14, -2.2, 0.4, 14); await wait(1500); await snap('04_village_bridge_dock');

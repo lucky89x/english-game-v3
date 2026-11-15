@@ -11,7 +11,7 @@ import { ForestQuest, landmark } from './game/quest.js';
 import { VillageStory } from './game/village.js';
 import { MiniGames, STARS } from './game/minigames.js';
 import { Wild } from './game/combat.js';
-import { Arcade, candyGame } from './ui/arcade.js';
+import { Arcade, candyGame, blocksGame, slingGame } from './ui/arcade.js';
 import { ITEMS, bag, wear, buy, eat, shopList } from './core/rules.js';
 import { SAM_LINES, BRIDGE, BRIDGE_SPOTS, FRIENDS } from './game/content.js';
 import { UI } from './ui/ui.js';
@@ -300,7 +300,7 @@ async function boot() {
   });
   wild = new Wild({ scene, player, ui, sfx, profile: () => profile, save, onChange: refresh,
     respawn: () => { game.teleport(L.SPAWN.x, L.SPAWN.z); ui.dialogue([{ who: 'Tom', en: 'You fainted, so I carried you home. Rest, then try again!', vi: 'Con hết máu nên được đưa về làng. Máu đã đầy lại. Mua trang bị tốt hơn rồi quay lại nhé.' }]); } });
-  mini = new MiniGames({ scene, player, ui, sfx, profile: () => profile, save, onNote: refresh, board: (id) => { if (id === 'candy') arcade.start(candyGame()); } });
+  mini = new MiniGames({ scene, player, ui, sfx, profile: () => profile, save, onNote: refresh, board: (id) => arcade.start(({ candy: candyGame, blocks: blocksGame, sling: slingGame })[id]()) });
   minimap = new Minimap($('minimap'), (path) => { player.route = path.slice(1); });
   placeActors(); player.place(L.SPAWN.x, L.SPAWN.z);
   setQuality(quality);

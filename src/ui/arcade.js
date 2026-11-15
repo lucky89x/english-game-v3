@@ -1,6 +1,7 @@
 // Arcade overlay: a canvas board over the 3D world for the skill games that are not played with Ngọc's body.
 // Each game is { title, help, start(api), draw(ctx, w, h, t), click(x, y), key(code), done() -> result | null }.
 import { N, KINDS, idx, newBoard, move, hasMove, candyReward } from '../core/match3.js';
+import * as BL from '../core/blocks.js';
 
 export class Arcade {
   constructor(onFinish) {
@@ -8,7 +9,11 @@ export class Arcade {
     const el = document.createElement('div'); el.id = 'arcade'; el.className = 'hidden';
     el.innerHTML = '<div class="card box"><div class="head"><b id="arctitle"></b><span id="arcinfo"></span><button id="arcquit">Thoát ✕</button></div><canvas id="arccv" width="560" height="560"></canvas><div class="help" id="archelp"></div></div>';
     document.body.appendChild(el); this.el = el; this.cv = el.querySelector('#arccv'); this.ctx = this.cv.getContext('2d');
-    this.cv.addEventListener('click', (e) => { if (!this.game) return; const r = this.cv.getBoundingClientRect(); this.game.click((e.clientX - r.left) * this.cv.width / r.width, (e.clientY - r.top) * this.cv.height / r.height); });
+    const at = (e) => { const r = this.cv.getBoundingClientRect(); return [(e.clientX - r.left) * this.cv.width / r.width, (e.clientY - r.top) * this.cv.height / r.height]; };
+    this.cv.addEventListener('click', (e) => { if (this.game && this.game.click) this.game.click(...at(e)); });
+    this.cv.addEventListener('pointerdown', (e) => { if (this.game && this.game.down) { this.cv.setPointerCapture(e.pointerId); this.game.down(...at(e)); } });
+    this.cv.addEventListener('pointermove', (e) => { if (this.game && this.game.drag) this.game.drag(...at(e)); });
+    this.cv.addEventListener('pointerup', (e) => { if (this.game && this.game.up) this.game.up(...at(e)); });
     el.querySelector('#arcquit').addEventListener('click', () => this.close(null));
   }
   get open() { return !!this.game; }
@@ -48,6 +53,88 @@ export function candyGame(rnd = Math.random) {
       c.fillStyle = 'rgba(255,255,255,.92)'; c.font = `800 ${Math.round(cell * 0.34)}px sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(sym, x + cell / 2, y + cell / 2 + 2 + bob);
     }
     for (const p of g.pop) { c.globalAlpha = Math.min(1, p.t * 2); c.fillStyle = '#4a2a10'; c.font = '800 30px sans-serif'; c.textAlign = 'center'; c.fillText(p.text, p.x, p.y - (0.9 - p.t) * 60); c.globalAlpha = 1; }
+  };
+  return g;
+}
+
+const BCOL = ['#f0f0f0', '#4fc8e8', '#f6c62e', '#b684e8', '#5fb84a', '#e8443a', '#3d6fc6', '#f08a2c'];
+/** Falling Blocks: arrows or WASD move, up/W turns, down/S drops faster, Space drops at once. Ends when the stack reaches the top. */
+export function blocksGame(rnd = Math.random) {
+  const bag = []; const next = () => { if (!bag.length) { const ks = [0, 1, 2, 3, 4, 5, 6]; for (let i = 6; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [ks[i], ks[j]] = [ks[j], ks[i]]; } bag.push(...ks); } return bag.shift(); };
+  const g = { title: '🧱 Falling Blocks', help: 'Phím ← → (hoặc A D) di chuyển · ↑ (W) xoay · ↓ (S) rơi nhanh · Space thả ngay. Xếp kín một hàng để xóa hàng.',
+    board: BL.empty(), piece: BL.spawn(next()), nextK: next(), score: 0, lines: 0, timer: 0, over: false, endT: 0, flash: 0 };
+  const speed = () => Math.max(0.12, 0.8 - Math.floor(g.lines / 5) * 0.08);
+  const land = () => {
+    const n = BL.lock(g.board, g.piece); g.lines += n; g.score += BL.LINE_SCORE[n] + 5; if (n) g.flash = 0.25;
+    g.piece = BL.spawn(g.nextK); g.nextK = next(); if (!BL.fits(g.board, g.piece)) g.over = true;
+  };
+  g.info = () => `Điểm ${g.score} · Hàng ${g.lines}`;
+  g.key = (code) => {
+    if (g.over) return; const p = g.piece;
+    if (code === 'ArrowLeft' || code === 'KeyA') g.piece = BL.shift(g.board, p, -1, 0);
+    else if (code === 'ArrowRight' || code === 'KeyD') g.piece = BL.shift(g.board, p, 1, 0);
+    else if (code === 'ArrowUp' || code === 'KeyW') g.piece = BL.shift(g.board, p, 0, 0, 1);
+    else if (code === 'ArrowDown' || code === 'KeyS') { const q = BL.shift(g.board, p, 0, 1); if (q === p) land(); else { g.piece = q; g.score += 1; } g.timer = 0; }
+    else if (code === 'Space') { g.piece = BL.drop(g.board, p); g.score += 2; land(); g.timer = 0; }
+  };
+  g.update = (dt) => {
+    g.flash = Math.max(0, g.flash - dt); if (g.over) { g.endT += dt; return; }
+    g.timer += dt; if (g.timer >= speed()) { g.timer = 0; const q = BL.shift(g.board, g.piece, 0, 1); if (q === g.piece) land(); else g.piece = q; }
+  };
+  g.done = () => (g.over && g.endT > 0.7 ? { id: 'blocks', score: g.score, ...BL.blocksReward(g.score), text: `Falling Blocks: ${g.score} points, ${g.lines} lines!` } : null);
+  g.draw = (c, w, h) => {
+    const cs = 26, ox = 70, oy = 20;
+    c.fillStyle = '#fff4dc'; c.fillRect(0, 0, w, h);
+    c.fillStyle = g.flash ? '#fff8c8' : '#3a2a1e'; c.fillRect(ox - 4, oy - 4, BL.W * cs + 8, BL.H * cs + 8);
+    const sq = (x, y, k, a = 1) => { c.globalAlpha = a; c.fillStyle = BCOL[k]; c.fillRect(ox + x * cs + 1, oy + y * cs + 1, cs - 2, cs - 2); c.fillStyle = 'rgba(255,255,255,.35)'; c.fillRect(ox + x * cs + 3, oy + y * cs + 3, cs - 6, 5); c.globalAlpha = 1; };
+    for (let y = 0; y < BL.H; y++) for (let x = 0; x < BL.W; x++) { const k = g.board[y * BL.W + x]; if (k) sq(x, y, k); else { c.fillStyle = (x + y) % 2 ? '#47362a' : '#4d3b2e'; c.fillRect(ox + x * cs, oy + y * cs, cs, cs); } }
+    if (!g.over) { for (const [x, y] of BL.cells(BL.drop(g.board, g.piece))) if (y >= 0) sq(x, y, g.piece.k + 1, 0.25); for (const [x, y] of BL.cells(g.piece)) if (y >= 0) sq(x, y, g.piece.k + 1); }
+    c.fillStyle = '#4a2a10'; c.font = '800 20px sans-serif'; c.textAlign = 'left'; c.fillText('Next', 370, 50);
+    for (const [x, y] of BL.cells({ k: g.nextK, r: 0, x: 0, y: 0 })) { c.fillStyle = BCOL[g.nextK + 1]; c.fillRect(372 + x * 26, 66 + y * 26, 24, 24); }
+    c.fillStyle = '#4a2a10'; c.fillText(`Score ${g.score}`, 370, 190); c.fillText(`Lines ${g.lines}`, 370, 222); c.fillText(`Speed ${Math.floor(g.lines / 5) + 1}`, 370, 254);
+    if (g.over) { c.fillStyle = 'rgba(255,244,220,.9)'; c.fillRect(ox, 230, BL.W * cs, 80); c.fillStyle = '#c8352e'; c.font = '800 30px sans-serif'; c.textAlign = 'center'; c.fillText('Game over!', ox + BL.W * cs / 2, 280); }
+  };
+  return g;
+}
+
+/** Slingshot: drag back from the sling and let go; the pebble flies in an arc. 12 pebbles, moving slimes and balloons. */
+export function slingGame(rnd = Math.random) {
+  const SX = 280, SY = 470, G = 520;
+  const g = { title: '🎯 Slingshot', help: 'Nhấn giữ chuột ở ná, kéo ngược về sau rồi thả. Kéo càng xa bay càng mạnh. Bắn trúng slime và bóng bay. 12 viên.',
+    shots: 12, score: 0, hits: 0, aim: null, rock: null, pop: [], t: 0, endT: 0, targets: [] };
+  const add = () => { const row = Math.floor(rnd() * 3), slime = rnd() < 0.6, dir = rnd() < 0.5 ? 1 : -1;
+    g.targets.push({ x: dir > 0 ? -30 : 590, y: 90 + row * 85 + rnd() * 20, vx: dir * (50 + rnd() * 70 + row * 15), r: slime ? 24 : 19, slime, col: slime ? ['#7fd86a', '#ff7a6a', '#6fc8ff'][Math.floor(rnd() * 3)] : ['#f6c62e', '#ff8fc0', '#b684e8'][Math.floor(rnd() * 3)], ph: rnd() * 6 }); };
+  for (let i = 0; i < 5; i++) { add(); g.targets[i].x = 60 + i * 100; }
+  g.info = () => `Điểm ${g.score} · Còn ${g.shots + (g.rock ? 1 : 0)} viên`;
+  g.down = (x, y) => { if (!g.rock && g.shots > 0 && Math.hypot(x - SX, y - SY) < 90) g.aim = { x, y }; };
+  g.drag = (x, y) => { if (g.aim) { const dx = x - SX, dy = y - SY, d = Math.hypot(dx, dy), m = Math.min(d, 120) / (d || 1); g.aim = { x: SX + dx * m, y: SY + dy * m }; } };
+  g.up = () => { if (!g.aim) return; const dx = SX - g.aim.x, dy = SY - g.aim.y; g.aim = null; if (Math.hypot(dx, dy) < 15) return; g.rock = { x: SX, y: SY, vx: dx * 6.2, vy: dy * 6.2 }; g.shots -= 1; };
+  g.update = (dt) => {
+    g.t += dt; g.pop = g.pop.filter((p) => (p.t -= dt) > 0);
+    for (const tg of g.targets) { tg.x += tg.vx * dt; tg.yy = tg.y + Math.sin(g.t * 3 + tg.ph) * 8; }
+    g.targets = g.targets.filter((tg) => tg.x > -60 && tg.x < 620 && !tg.dead); while (g.targets.length < 5) add();
+    const r = g.rock; if (r) {
+      r.vy += G * dt; r.x += r.vx * dt; r.y += r.vy * dt;
+      for (const tg of g.targets) if (!tg.dead && Math.hypot(r.x - tg.x, r.y - tg.yy) < tg.r + 7) { tg.dead = true; const pts = Math.round(10 + Math.abs(tg.vx) / 6); g.score += pts; g.hits += 1; g.pop.push({ x: tg.x, y: tg.yy, t: 0.8, text: '+' + pts }); }
+      if (r.y > 600 || r.x < -40 || r.x > 600) g.rock = null;
+    }
+    if (g.shots <= 0 && !g.rock) g.endT += dt;
+  };
+  g.done = () => (g.endT > 0.8 ? { id: 'sling', score: g.score, gold: Math.min(30, Math.floor(g.score / 12)), exp: Math.min(40, Math.floor(g.score / 8)), text: `Slingshot: ${g.hits} hits, ${g.score} points!` } : null);
+  g.draw = (c, w, h) => {
+    const sky = c.createLinearGradient(0, 0, 0, h); sky.addColorStop(0, '#9fd8ff'); sky.addColorStop(1, '#e8f6ff'); c.fillStyle = sky; c.fillRect(0, 0, w, h);
+    c.fillStyle = '#7fcf5a'; c.fillRect(0, 500, w, 60); c.fillStyle = '#5fae3c'; for (let x = 0; x < w; x += 40) { c.beginPath(); c.arc(x + 20, 500, 22, Math.PI, 0); c.fill(); }
+    for (const tg of g.targets) {
+      if (tg.slime) { c.fillStyle = tg.col; c.beginPath(); c.ellipse(tg.x, tg.yy, tg.r, tg.r * 0.8, 0, 0, 7); c.fill(); c.fillStyle = '#24140c'; for (const s of [-1, 1]) { c.beginPath(); c.arc(tg.x + s * 8, tg.yy - 3, 3.5, 0, 7); c.fill(); } }
+      else { c.strokeStyle = '#8a6a48'; c.lineWidth = 1.5; c.beginPath(); c.moveTo(tg.x, tg.yy + tg.r); c.lineTo(tg.x + 4, tg.yy + tg.r + 30); c.stroke(); c.fillStyle = tg.col; c.beginPath(); c.ellipse(tg.x, tg.yy, tg.r * 0.85, tg.r, 0, 0, 7); c.fill(); c.fillStyle = 'rgba(255,255,255,.55)'; c.beginPath(); c.arc(tg.x - 6, tg.yy - 7, 4, 0, 7); c.fill(); }
+    }
+    c.strokeStyle = '#7a4a26'; c.lineWidth = 10; c.lineCap = 'round'; c.beginPath(); c.moveTo(SX, 560); c.lineTo(SX, SY + 25); c.lineTo(SX - 28, SY - 18); c.moveTo(SX, SY + 25); c.lineTo(SX + 28, SY - 18); c.stroke();
+    const pull = g.aim || { x: SX, y: SY };
+    c.strokeStyle = '#4a2a10'; c.lineWidth = 3; c.beginPath(); c.moveTo(SX - 28, SY - 18); c.lineTo(pull.x, pull.y); c.lineTo(SX + 28, SY - 18); c.stroke();
+    if (g.aim) { let x = SX, y = SY, vx = (SX - g.aim.x) * 6.2, vy = (SY - g.aim.y) * 6.2; c.fillStyle = 'rgba(74,42,16,.35)'; for (let i = 0; i < 14; i++) { for (let k = 0; k < 4; k++) { vy += G / 120; x += vx / 120; y += vy / 120; } c.beginPath(); c.arc(x, y, 3, 0, 7); c.fill(); } }
+    if (!g.rock && g.shots > 0) { c.fillStyle = '#8f8a84'; c.beginPath(); c.arc(pull.x, pull.y, 8, 0, 7); c.fill(); }
+    if (g.rock) { c.fillStyle = '#8f8a84'; c.beginPath(); c.arc(g.rock.x, g.rock.y, 8, 0, 7); c.fill(); }
+    for (const p of g.pop) { c.globalAlpha = Math.min(1, p.t * 2); c.fillStyle = '#4a2a10'; c.font = '800 26px sans-serif'; c.textAlign = 'center'; c.fillText(p.text, p.x, p.y - (0.8 - p.t) * 50); c.globalAlpha = 1; }
   };
   return g;
 }

@@ -10,6 +10,8 @@ export const STARTS = [
   { id: 'apple', x: 33.5, z: 6, text: 'E · Hứng táo (trò chơi)', sign: '🍎 Apple catch' },
   { id: 'race', x: -22, z: 4, text: 'E · Chạy vòng (trò chơi)', sign: '🏁 Ring race' },
   { id: 'candy', x: -4.4, z: -8.5, text: 'E · Xếp kẹo (trò chơi)', sign: '🍬 Candy Match', board: true },
+  { id: 'sling', x: -20, z: -4, text: 'E · Bắn súng cao su (trò chơi)', sign: '🎯 Slingshot', board: true },
+  { id: 'blocks', x: -26, z: -2, text: 'E · Xếp hình (trò chơi)', sign: '🧱 Blocks', board: true },
 ];
 export const ORCHARD = { x: 40, z: 11, r: 8 };
 
