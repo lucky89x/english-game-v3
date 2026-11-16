@@ -2,7 +2,7 @@
 // the region's own landmarks (village.js or forest.js). Returns handles for detail level, bridges and jar labels.
 import * as THREE from 'three';
 import * as L from '../core/layout.js';
-import { label, buildTerrain, buildCobbles, buildWater, buildTrees, buildRocks, buildGrass, buildFlowers, buildFences, mountains, critters, fallRocks, riverside, bushes, creatures } from './common.js';
+import { paint, PAINT, label, buildTerrain, buildCobbles, buildWater, buildTrees, buildRocks, buildGrass, buildFlowers, buildFences, mountains, critters, fallRocks, riverside, bushes, creatures } from './common.js';
 import { MARKET_JARS, villageExtras, brokenBits } from './village.js';
 import { forestExtras } from './forest.js';
 
@@ -12,7 +12,8 @@ export async function buildWorld(scene, loadModel) {
   add(buildTerrain());
   const detail = { cobbles: add(buildCobbles()), grass: add(buildGrass()), flowers: add(buildFlowers()), far: add(mountains()), critters: add(critters()) };
   add(buildWater()); add(buildTrees()); add(buildRocks()); add(buildFences()); add(riverside()); add(bushes()); add(creatures()); if (L.WATERFALL) add(fallRocks());
-  const shadowed = (o) => { o.traverse((c) => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } }); return o; };
+  // models from files (houses, bridge, gate) get the same painted surface as the generated scenery
+  const shadowed = (o) => { o.traverse((c) => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; for (const m of [].concat(c.material)) if (m.isMeshStandardMaterial && !m.userData.painted) { m.userData.painted = true; paint(m); } } }); return o; };
   const bridges = {};
   for (const b of L.BRIDGES) {
     const m = shadowed(await loadModel('prop_bridge_curved_v02'));
@@ -55,5 +56,5 @@ export async function buildWorld(scene, loadModel) {
   };
 }
 
-export { TIME, compact, label } from './common.js';
+export { TIME, compact, label, PAINT } from './common.js';
 export { bridgeItem, MARKET_JARS } from './village.js';

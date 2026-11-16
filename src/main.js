@@ -6,7 +6,7 @@ import * as Save from './core/save.js';
 import * as Review from './core/review.js';
 import { loadGrade } from './core/catalog.js';
 import { grammarFor, GRAMMAR_GATES } from './core/grammar.js';
-import { buildWorld, bridgeItem, TIME, MARKET_JARS } from './world/index.js';
+import { buildWorld, bridgeItem, TIME, MARKET_JARS, PAINT } from './world/index.js';
 import { Player, OrbitCamera, Npc, Pip, Crystals } from './game/actors.js';
 import { ForestQuest, landmark } from './game/quest.js';
 import { VillageStory } from './game/village.js';
@@ -18,15 +18,16 @@ import { ITEMS, bag, wear, buy, eat, shopList, pay, map2Ready } from './core/rul
 import { payNote } from './game/minigames.js';
 import { SAM_LINES, BRIDGE, BRIDGE_SPOTS, FRIENDS } from './game/content.js';
 import { UI } from './ui/ui.js';
+import { Post } from './render/post.js';
 import { Minimap } from './ui/minimap.js';
 import { initTouch, touchWanted } from './ui/touch.js';
 import { sfx, setSound, soundOn, unlock } from './audio.js';
 
 const $ = (id) => document.getElementById(id);
 const QUALITY = {
-  low: { label: 'Thấp', ratio: 0.6, shadow: 0, shadowDist: 0, density: 0.22, particles: false, far: false },
-  medium: { label: 'Vừa', ratio: 1.0, shadow: 2048, shadowDist: 55, density: 0.6, particles: true, far: true },
-  high: { label: 'Cao', ratio: 1.5, shadow: 4096, shadowDist: 85, density: 1.0, particles: true, far: true },
+  low: { label: 'Thấp', ratio: 0.6, shadow: 0, shadowDist: 0, density: 0.22, particles: false, far: false, post: false, samples: 0 },
+  medium: { label: 'Vừa', ratio: 1.0, shadow: 2048, shadowDist: 55, density: 0.6, particles: true, far: true, post: true, samples: 2 },
+  high: { label: 'Cao', ratio: 1.5, shadow: 4096, shadowDist: 85, density: 1.0, particles: true, far: true, post: true, samples: 4 },
 };
 const errors = [];
 addEventListener('error', (e) => errors.push(String(e.message)));
@@ -36,6 +37,8 @@ const canvas = $('view');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
 renderer.outputColorSpace = THREE.SRGBColorSpace; renderer.toneMapping = THREE.NeutralToneMapping; renderer.toneMappingExposure = 1.0;
 renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap; renderer.localClippingEnabled = true;   // broken bridge gap
+renderer.info.autoReset = false;            // several passes per frame: counted together, reset once a frame
+const post = new Post(renderer);
 const scene = new THREE.Scene(); scene.fog = new THREE.Fog(0xbfe4ff, 70, 330);
 const camera = new THREE.PerspectiveCamera(52, 1, 0.3, 700);
 
@@ -59,9 +62,12 @@ const sky = new THREE.Mesh(new THREE.SphereGeometry(600, 32, 16), new THREE.Shad
 sky.frustumCulled = false; scene.add(sky);
 // Soft, warm light as in the reference paintings: a strong sky/ground fill so nothing goes black, a gentler sun so
 // skin and cream cloth do not burn out, and a cool back light that draws a rim round characters and roofs.
-scene.add(new THREE.HemisphereLight(0xdcefff, 0xc8b88a, 1.55));
+scene.add(new THREE.HemisphereLight(0xdcefff, 0xc8b88a, 1.05));
+{ // the sky also lights the scene as an environment map: soft coloured fill and reflections on metal and glass
+  const pm = new THREE.PMREMGenerator(renderer), envScene = new THREE.Scene(), dome = sky.clone(); dome.scale.setScalar(0.1); envScene.add(dome);
+  scene.environment = pm.fromScene(envScene, 0, 0.1, 100).texture; scene.environmentIntensity = 0.22; pm.dispose(); }
 const rim = new THREE.DirectionalLight(0xcfe2ff, 0.75); rim.position.set(0.5, 0.55, -0.7); scene.add(rim);
-const sun = new THREE.DirectionalLight(0xffeccc, 1.95); sun.castShadow = true; sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.04; scene.add(sun, sun.target);
+const sun = new THREE.DirectionalLight(0xffe6bc, 1.9); sun.castShadow = true; sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.04; scene.add(sun, sun.target);
 
 const manager = new THREE.LoadingManager();
 manager.onProgress = (_u, done, total) => { $('loadbar').style.width = Math.round((done / total) * 100) + '%'; };
@@ -75,7 +81,7 @@ let profile = null, quest = null, story = null, world = null, player = null, cam
 let touch = null, quality = localStorage.getItem('eq-quality') || 'medium', perfOn = false, started = false, switching = false, wordIds = {}, jarKey = '';
 const keys = new Set();
 const game = { errors, get profile() { return profile; }, get quest() { return quest; }, get story() { return story; }, get player() { return player; }, get cam() { return cam; }, get minimap() { return minimap; }, ui, L, stats: { fps: 0, ms: 0, calls: 0, tris: 0 },
-  teleport(x, z) { player.place(x, z); cam.target.set(x, player.pos.y + 1.25, z); }, setQuality, key: (code) => onKey({ code, preventDefault() {} }), get started() { return started && !switching; }, get region() { return L.NAME; }, chooseProfile, enterRegion, MARKET_JARS, BRIDGE_SPOTS, get mini() { return mini; }, get wild() { return wild; }, get scene() { return scene; }, openShop, get sword() { return swordMesh; }, get arcade() { return arcade; }, get chests() { return chests; }, get friends() { return friends; }, refresh: () => refresh() };
+  teleport(x, z) { player.place(x, z); cam.target.set(x, player.pos.y + 1.25, z); }, setQuality, key: (code) => onKey({ code, preventDefault() {} }), get started() { return started && !switching; }, get region() { return L.NAME; }, chooseProfile, enterRegion, MARKET_JARS, BRIDGE_SPOTS, get mini() { return mini; }, get wild() { return wild; }, get scene() { return scene; }, openShop, get sword() { return swordMesh; }, get arcade() { return arcade; }, get chests() { return chests; }, get friends() { return friends; }, post, refresh: () => refresh() };
 globalThis.__eq = game;
 
 function resize() { const w = innerWidth, h = innerHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
@@ -88,6 +94,8 @@ function setQuality(name) {
   if (q.shadow) { sun.shadow.mapSize.set(q.shadow, q.shadow); if (sun.shadow.map) { sun.shadow.map.dispose(); sun.shadow.map = null; }
     const c = sun.shadow.camera, d = q.shadowDist / 2; c.left = -d; c.right = d; c.top = d; c.bottom = -d; c.near = 1; c.far = 220; c.updateProjectionMatrix(); }
   scene.traverse((o) => { if (o.material) [].concat(o.material).forEach((m) => (m.needsUpdate = true)); });
+  post.set(q.post, q.samples);
+  PAINT.on = q.post;                 // painted surfaces follow the same switch (materials are recompiled just below)
   if (world) world.setDetail(q.density, q.particles, q.far);
   resize(); renderGear();
 }
@@ -444,7 +452,7 @@ function frame() {
     minimap.draw(player.pos, player.yaw, markers);
     autosave += dt; if (autosave > 20) { autosave = 0; save(); }
   }
-  renderer.render(scene, camera);
+  renderer.info.reset(); post.render(scene, camera);
   acc += raw; frames++;
   if (acc >= 0.5) { game.stats = { fps: +(frames / acc).toFixed(1), ms: +(acc / frames * 1000).toFixed(1), calls: renderer.info.render.calls, tris: renderer.info.render.triangles };
     if (perfOn) $('perf').textContent = `FPS ${game.stats.fps}  (${game.stats.ms} ms)\ndraw calls ${game.stats.calls}\ntriangles ${game.stats.tris.toLocaleString()}\nquality ${quality} · ${renderer.domElement.width}x${renderer.domElement.height}`;

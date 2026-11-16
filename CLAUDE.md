@@ -39,12 +39,13 @@ PY=<python có bpy 4.2> tools/chibi05/build_all.sh   # dựng lại model, ~1 ph
 - Biển trò chơi đặt sát NPC làm phím E mở nhầm; giữ khoảng cách trên 4 m.
 - Tải Blender bản đầy đủ bị chặn; dùng `pip install bpy==4.2.0` với Python 3.11 (máy này: `/workspace/.bpyenv/bin/python`).
 - Lily, Rose, Anna xuất không có hoạt ảnh (`CHIBI_NO_ANIM=1`) và mượn clip của Ngọc lúc chạy; đổi xương của Ngọc thì phải dựng lại cả 4.
+- Shader chèn thêm (paint, windy) phải nối chuỗi `onBeforeCompile` và có `customProgramCacheKey`; GLSL chèn đầu shader phải kết thúc bằng xuống dòng (nếu không dính vào `#define`).
 - Test trang thứ hai (máy tính bảng) trong cùng trình duyệt chạy chậm: đặt `setDefaultTimeout(120000)`.
 
 ## Tiến độ (cập nhật cuối mỗi lượt làm việc, trước khi commit)
 Cập nhật mục này mỗi khi xong việc, để phiên/hội thoại mới đọc là nắm được ngay.
 
-**Lần cập nhật:** 2026-11-16 (lượt 2) · nhánh `fable/web-rebuild` · e2e 121/122 (bước trượt là lỗi của test, đã sửa và kiểm riêng) · quick 29/29 · unit 36/36 · tải 11,45 MB
+**Lần cập nhật:** 2026-11-16 (lượt 2) · nhánh `fable/web-rebuild` · e2e 121/122 (bước trượt là lỗi của test, đã sửa và kiểm riêng) · quick 29/29 (sau gói đồ họa) · unit 36/36 · tải 11,45 MB · e2e chưa chạy lại sau gói đồ họa
 
 **Đã có (Map 1 + Rừng):**
 - Truyện: Bức thư, Hũ chữ của Ben, Sửa cây cầu cho cả lớp 6–9 (lớp 8 dùng ngữ pháp Unit 1: động từ sở thích + V-ing), pha lê Rừng Ký Ức.
@@ -53,9 +54,10 @@ Cập nhật mục này mỗi khi xong việc, để phiên/hội thoại mới 
 - Trò chơi không tiếng Anh (8 trò): thưởng đầy đủ 3 lượt đầu mỗi trò mỗi ngày, sau đó 20%.
 - Máy tính bảng: cần ảo + nút chạm (chưa thử máy thật).
 - Mỹ thuật: tóc lọn cong thuôn nhọn (M1) cho Ngọc, Lily, Rose, Anna; bóng khe nướng vào màu đỉnh; lá cây dạng thẻ.
+- Đồ họa kiểu saltline (học từ realskyrin/fps3ademo-saltline, chỉ đọc): `src/render/post.js` hậu kỳ tự viết (bloom 2 tầng, tone map, chỉnh màu ấm, tối viền) + bề mặt vẽ tay bằng shader (`paint()` trong common.js: loang màu, hạt, vệt cỏ) + bầu trời làm ánh sáng môi trường + lấp lánh mặt nước. Chỉ bật ở mức Vừa/Cao; mức Thấp như cũ.
 
 **Còn lại Map 1:** màn hình túi đồ, giáp hiện trên người, lấp đất trống phía Nam (D1), quái/boss riêng cho Map 2.
 
-**Báo cáo rà soát 16/11 (anh đã duyệt hết):** xong N2 N3 N4 N5 T1 T2 T3 T4 K1 K2 K3 K4 K5 K6 M1. N1: đã có bảng `docs/DOI_CHIEU_NOI_DUNG.html`, chờ giáo viên tick rồi gửi dòng mã. Chưa làm: M2 (texture vẽ tay, lượt sau). Anh tự làm: Q1/Q4 xóa nhánh trên GitHub (em không có quyền xóa nhánh), Q2 tắt skill trong Cài đặt, Q5 gõ /compact thành dòng riêng, Q6 dùng /caveman lite. Q3 giữ nguyên. M3/M4 (dịch vụ AI 3D, thuê họa sĩ) cần anh làm/chi tiền, em tích hợp khi có file.
+**Báo cáo rà soát 16/11 (anh đã duyệt hết):** xong N2 N3 N4 N5 T1 T2 T3 T4 K1 K2 K3 K4 K5 K6 M1. N1: đã có bảng `docs/DOI_CHIEU_NOI_DUNG.html`, chờ giáo viên tick rồi gửi dòng mã. M2 thay bằng shader vẽ tay (không cần file ảnh). Anh đã bỏ Tripo (M3). Anh tự làm: Q1/Q4 xóa nhánh trên GitHub (em không có quyền xóa nhánh), Q2 tắt skill trong Cài đặt, Q5 gõ /compact thành dòng riêng, Q6 dùng /caveman lite. Q3 giữ nguyên. M3/M4 (dịch vụ AI 3D, thuê họa sĩ) cần anh làm/chi tiền, em tích hợp khi có file.
 
 **Chưa xác nhận:** FPS trên máy thật không card đồ họa; nút chạm trên máy tính bảng thật; ngữ pháp Unit 1 lớp 6 (hiện tại đơn + tiếp diễn hay + trạng từ tần suất).

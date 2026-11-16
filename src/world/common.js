@@ -32,9 +32,46 @@ export function lumpy(geo, amount, seed = 1, smoothShade = true) {
   geo.computeVertexNormals();
   return geo;
 }
-export const std = (o = {}) => new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.9, metalness: 0, ...o });
+/** Hand-painted look without texture files: every surface gets soft colour blotches and a fine grain computed from
+ *  its world position (so it never repeats or swims), the ground also gets blade-like streaks and sun-bleached
+ *  patches. PAINT.on is false on the "low" quality level: the shader is then left untouched. */
+export const PAINT = { on: true };
+const PAINT_GLSL = `
+  varying vec3 vPaintPos;
+  float pH(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+  float pN(vec2 p){ vec2 i = floor(p), f = fract(p); f = f*f*(3.0-2.0*f); return mix(mix(pH(i), pH(i+vec2(1,0)), f.x), mix(pH(i+vec2(0,1)), pH(i+vec2(1,1)), f.x), f.y); }`;
+export function paint(mat, mode = 'wall') {
+  const prev = mat.onBeforeCompile;
+  mat.onBeforeCompile = (sh, r) => {
+    if (prev) prev(sh, r);
+    if (!PAINT.on) return;
+    sh.vertexShader = 'varying vec3 vPaintPos;\n' + sh.vertexShader.replace('#include <project_vertex>', `
+      vec4 paintW = vec4(transformed, 1.0);
+      #ifdef USE_INSTANCING
+        paintW = instanceMatrix * paintW;
+      #endif
+      vPaintPos = (modelMatrix * paintW).xyz;
+      #include <project_vertex>`);
+    const body = mode === 'ground' ? `
+      float pa = pN(vPaintPos.xz * 0.16), pb = pN(vPaintPos.xz * 1.9 + 7.0), pc = pN(vec2(vPaintPos.x * 9.0 + vPaintPos.z * 2.0, vPaintPos.z * 7.0 - vPaintPos.x * 1.5));
+      diffuseColor.rgb *= 0.70 + 0.30 * pa + 0.14 * pb + 0.18 * pc;
+      diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb * vec3(1.12, 1.06, 0.78), smoothstep(0.55, 0.85, pN(vPaintPos.xz * 0.07 + 3.0)) * 0.55);` : `
+      vec2 pq = vPaintPos.xz + vPaintPos.y * vec2(0.37, 0.61);
+      float pa = pN(pq * 0.55), pb = pN(pq * 4.3 + 11.0);
+      diffuseColor.rgb *= 0.80 + 0.22 * pa + 0.14 * pb;
+      diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb * vec3(1.06, 1.0, 0.90), pa * 0.5);`;
+    sh.fragmentShader = PAINT_GLSL + '\n' + sh.fragmentShader.replace('#include <color_fragment>', '#include <color_fragment>' + body);
+  };
+  const key = mat.customProgramCacheKey ? mat.customProgramCacheKey.bind(mat) : () => '';
+  mat.customProgramCacheKey = () => key() + '|paint:' + mode + (PAINT.on ? 1 : 0);
+  return mat;
+}
+export const std = (o = {}) => paint(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.9, metalness: 0, ...o }));
 export function windy(mat, strength) {
-  mat.onBeforeCompile = (sh) => {
+  const prev = mat.onBeforeCompile, key = mat.customProgramCacheKey ? mat.customProgramCacheKey.bind(mat) : () => '';
+  mat.customProgramCacheKey = () => key() + '|wind' + strength;
+  mat.onBeforeCompile = (sh, r) => {
+    if (prev) prev(sh, r);
     sh.uniforms.uTime = TIME;
     sh.vertexShader = 'uniform float uTime;\n' + sh.vertexShader.replace('#include <begin_vertex>', `#include <begin_vertex>
       #ifdef USE_INSTANCING
@@ -116,7 +153,7 @@ export function buildTerrain() {
   }
   geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
   geo.computeVertexNormals();
-  const mesh = new THREE.Mesh(geo, std({ roughness: 1 }));
+  const mesh = new THREE.Mesh(geo, paint(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, metalness: 0 }), 'ground'));
   mesh.receiveShadow = true;
   return mesh;
 }
@@ -166,6 +203,8 @@ export function waterMaterial(fall) {
         col += lines * 0.35;
         float foam = smoothstep(0.62, 0.74, edge + 0.07 * sin(vW.z * 1.3 + uTime * 1.8) + 0.05 * n(p * 3.0));
         col = mix(col, vec3(1.0), foam * 0.85);
+        float glint = smoothstep(0.80, 0.96, n(vW.xz * 3.6 + vec2(uTime * 0.7, -uTime * 0.9))) * smoothstep(0.55, 0.9, n(vW.xz * 0.9 - uTime * 0.2));
+        col += vec3(1.6, 1.5, 1.2) * glint * (1.0 - foam);            // sun sparkles: bright enough to glow
         gl_FragColor = vec4(col, 0.86 + 0.14 * foam);
       }`,
   });
