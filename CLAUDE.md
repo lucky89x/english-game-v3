@@ -4,6 +4,7 @@ Game học tiếng Anh lớp 6–9 bằng Three.js, JavaScript thuần, không b
 
 ## Quy tắc làm việc
 - Trả lời tiếng Việt, ngắn. Cuối mỗi lượt báo checklist: đã làm · còn lại · đề xuất.
+- Xong mỗi lượt: cập nhật mục **Tiến độ** cuối file này rồi mới commit (người dùng hay chuyển sang hội thoại mới).
 - Chỉ push khi người dùng nói "đẩy đi" (mỗi lần nói chỉ áp dụng cho phần việc lúc đó). Đẩy lên `fable/web-rebuild`. Không tạo pull request.
 - Không dùng `git add -A`, `reset --hard`, `clean`, force push. Luôn `git add` từng đường dẫn.
 - Nội dung có bản quyền (sách, đề thi): chỉ lấy khung từ vựng, ngữ pháp. Bài đọc, câu hỏi, lời thoại phải tự viết.
@@ -35,3 +36,21 @@ PY=<python có bpy 4.2> tools/chibi05/build_all.sh   # dựng lại model, ~1 ph
 - Bóng khe (AO) nướng vào màu đỉnh: nhân vật 0.6, nhà 0.3 (tường phẳng ít đỉnh sẽ bị xám nếu mạnh hơn); không nướng lên mặt.
 - Biển trò chơi đặt sát NPC làm phím E mở nhầm; giữ khoảng cách trên 4 m.
 - Tải Blender bản đầy đủ bị chặn; dùng `pip install bpy==4.2.0` với Python 3.11.
+
+## Tiến độ (cập nhật cuối mỗi lượt làm việc, trước khi commit)
+Cập nhật mục này mỗi khi xong việc, để phiên/hội thoại mới đọc là nắm được ngay.
+
+**Lần cập nhật:** 2026-11-16 · nhánh `fable/web-rebuild` · e2e 122/122 · unit 32/32 · tải 12,53 MB
+
+**Đã có (Map 1 + Rừng):**
+- Truyện: Bức thư, Hũ chữ của Ben, Sửa cây cầu (lớp 6, 8), pha lê Rừng Ký Ức.
+- Nhập vai: cấp, máu, J/F đánh, K né, Q ăn bánh; Đồng Hoang (slime, golem), Vua Slime cấp 6 với 3 khiên chữ; cửa hàng Bram và Rose; kiếm hiện trên tay.
+- Tiếng Anh trong vòng chơi: 5 rương khóa chữ (1 lần/ngày), bảng nhiệm vụ săn quái, Cú Mèo ôn 5 câu ở cấp 5/10/15/20.
+- Trò chơi không tiếng Anh: câu cá, hứng táo, chạy vòng, 12 sao, xếp kẹo, súng cao su, xếp hình, đua xe.
+- Mỹ thuật: Ngọc v03, Lily/Rose/Anna (biến thể Ngọc), Tom/Sam/Ben/Bram, nhà mái ngói, bóng khe nướng vào màu đỉnh, lá cây dạng thẻ.
+
+**Còn lại Map 1:** cổng sang Map 2 ở cấp 20, màn hình túi đồ, giáp hiện trên người, lấp đất trống phía Nam.
+
+**Chờ người dùng duyệt:** báo cáo `docs/RA_SOAT_2026-11-16.html` (21 đề xuất N/T/K/Q + 4 hướng mỹ thuật M1–M4; em đề xuất M1 rồi M2). Ưu tiên cao: N1 đối chiếu từ vựng, N2 ngữ pháp Sửa cây cầu lớp 8, N3 hồ sơ kẹt ở Unit 1, T1 mini game cho vàng vô hạn, T2 độ dài Map 1.
+
+**Chưa xác nhận:** FPS trên máy thật không card đồ họa; lỗi lăn chuột trên bản đồ nhỏ (không tái hiện được, đã thêm nút +/−).
