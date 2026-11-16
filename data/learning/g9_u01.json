@@ -138,11 +138,28 @@
       "source": "vietjack"
     }
   ],
-  "grammar": [],
-  "activities": {},
+  "grammar": [
+    "question words before to-infinitive: I don't know where to find it. / Can you tell me how to get there?",
+    "phrasal verbs: pass down, run out of, look around, get on with, cut down on (chưa đối chiếu sách)"
+  ],
+  "activities": {
+    "lost_letter": {
+      "skill": "reading",
+      "difficulty": "advanced",
+      "letter": "Dear Mr Tom,\n\nOur village is famous for its pottery, and the skills have been passed down from my grandparents. Lately, though, we have run out of good clay, and fewer tourists come to look around the craft village.\n\nI don't know where to find new clay or how to bring visitors back. Could you call a meeting so that the whole community can share ideas?\n\nBest regards,\nBen",
+      "question": "What does Ben ask Mr Tom to do?",
+      "choices": [
+        "Call a meeting for the community",
+        "Sell his pottery to tourists",
+        "Find new clay by himself"
+      ],
+      "answer": 0,
+      "hint": "Tìm câu nhờ vả ở cuối thư: \"Could you call a ...?\""
+    }
+  },
   "version": 1,
   "vocabulary_checked": false,
   "grammar_checked": false,
-  "source_note": "Từ vựng theo danh sách VietJack (Global Success), chỉ từ và nghĩa. Ngữ pháp và hoạt động chưa có.",
-  "status": "vocab"
+  "source_note": "Từ vựng theo danh sách VietJack (Global Success), chỉ từ và nghĩa. Ngữ pháp và hoạt động chưa có. Thư Unit 1 do English Quest tự viết (2026-11-16); ngữ pháp CHƯA đối chiếu sách.",
+  "status": "playable"
 }

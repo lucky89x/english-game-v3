@@ -68,7 +68,7 @@ export const SAM_LINES = [
   { who: 'Sam', en: 'Long ago, every tree here had a name. Now the words are gone.' },
 ];
 
-// "Fix the Bridge" (Chapter I, after Ben's market). Original texts. Only grades 6 and 8 are written so far;
+// "Fix the Bridge" (Chapter I, after Ben's market). Original texts for grades 6-9;
 // another grade is told the plan is not written yet and the bridge opens by itself (nothing borrowed).
 // need: what Sam asks for. items: the right object and its look-alike decoy, with the line Sam says when the
 // decoy is picked. plan: Pip reads it, then asks the steps in order (options never carry First/Next words).
@@ -92,6 +92,26 @@ export const BRIDGE = {
     ask: ['What do we do first?', 'What do we do next?', 'And then?', 'What do we do last?'],
     hint: 'Đọc lại lời Pip: First → Next → Then → Finally.',
   },
+  // Grade 7, Unit 1 Hobbies: present simple for habits, liking verbs + V-ing (not yet checked against the book)
+  7: {
+    need: [
+      { who: 'Sam', en: 'Oh no! The storm broke the south bridge. People cannot go to the market now.' },
+      { who: 'Sam', en: 'We need three things to fix it: a rope, a log and an axe.' },
+      { who: 'Sam', en: 'The rope and the log are near the path. Ben has an axe at his stall.', vi: 'Tìm sợi dây thừng và khúc gỗ gần đường đi, xin Ben cái rìu.' },
+    ],
+    items: {
+      rope: { en: 'rope', vi: 'dây thừng', decoy: 'chain', wrong: 'That is a chain. It is too heavy to tie. We need a rope.', wrongVi: 'chain = dây xích. Rope = dây thừng (mềm, bằng sợi).' },
+      log: { en: 'log', vi: 'khúc gỗ', decoy: 'boulder', wrong: 'That is a big rock. Nobody can cut a rock! We need a log.', wrongVi: 'rock / boulder = tảng đá. Log = khúc gỗ.' },
+    },
+    plan: [
+      { who: 'Pip', en: 'I can read the plan! Sam enjoys chopping wood, so first, he cuts the log with the axe.' },
+      { who: 'Pip', en: 'Next, we put the log across the river. Then, I tie it with the rope. I love tying knots!' },
+      { who: 'Pip', en: 'Finally, everybody walks across slowly. Now, tell me the steps!' },
+    ],
+    steps: ['Cut the log with the axe.', 'Put the log across the river.', 'Tie the log with the rope.', 'Walk across slowly.'],
+    ask: ['What do we do first?', 'What do we do next?', 'And then?', 'What do we do last?'],
+    hint: 'Đọc lại lời Pip: First → Next → Then → Finally. (enjoy / love + V-ing: chopping, tying)',
+  },
   8: {
     need: [
       { who: 'Sam', en: "I'm afraid last night's storm has broken the south bridge." },
@@ -112,6 +132,26 @@ export const BRIDGE = {
     steps: ['Cut the log to the right length.', 'Put the log across the river.', 'Tie the log to the posts.', 'Test the bridge carefully.'],
     ask: ['Which step comes first?', 'What happens after that?', 'And then?', 'What do we do last?'],
     hint: 'Đọc lại lời Pip: First → Next → Then → Finally. (love / enjoy / don\'t mind / fancy + V-ing: chopping, carrying, tying, falling)',
+  },
+  // Grade 9, Unit 1 Local community: question words + to-infinitive, phrasal verbs (not yet checked against the book)
+  9: {
+    need: [
+      { who: 'Sam', en: "Last night's storm has broken the south bridge, so the villagers can't get to the market." },
+      { who: 'Sam', en: "I know how to repair it, but we've run out of materials. We need a strong rope, a long log and a sharp axe." },
+      { who: 'Sam', en: 'Look around near the path for the rope and the log. Ben will hand over his axe if you help him first.', vi: 'Tìm dây thừng và khúc gỗ gần đường đi; giúp Ben thì Ben đưa rìu.' },
+    ],
+    items: {
+      rope: { en: 'rope', vi: 'dây thừng', decoy: 'chain', wrong: "That's a metal chain. It's far too heavy to tie a log with.", wrongVi: 'chain = dây xích kim loại. Rope = dây thừng.' },
+      log: { en: 'log', vi: 'khúc gỗ', decoy: 'boulder', wrong: "That's a boulder, not a log. Nobody knows how to build a bridge out of a rock!", wrongVi: 'boulder = tảng đá lớn. Log = khúc gỗ.' },
+    },
+    plan: [
+      { who: 'Pip', en: "I've found the builders' old plan! It tells us what to do first: cut the log to the right length with the axe." },
+      { who: 'Pip', en: "Next, we put the log across the river. Then, the plan shows where to tie it: to the two posts, with the rope." },
+      { who: 'Pip', en: "Finally, we must decide when to let people cross: only after we have tested it carefully. Can you put the steps in order?" },
+    ],
+    steps: ['Cut the log to the right length.', 'Put the log across the river.', 'Tie the log to the posts.', 'Test the bridge carefully.'],
+    ask: ['What should we do first?', 'What comes after that?', 'And then?', 'What must we do before anyone crosses?'],
+    hint: 'Đọc lại lời Pip: first → next → then → finally. (what / where / when + to V: what to do, where to tie, when to let)',
   },
 };
 /** Where the bridge things lie in the Starter Village (x, z). Decoys sit next to the path too. */

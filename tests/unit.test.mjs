@@ -159,8 +159,8 @@ test('village: bridge things and Sam / Pip spots are on dry, reachable ground', 
   try { for (const [id, [x, z]] of Object.entries(BRIDGE_SPOTS)) assert.ok(L.walkable(x, z, 0.9) && findPath(L.SPAWN.x, L.SPAWN.z, x, z), id); }
   finally { L.setRegion('forest'); }
 });
-test('content: bridge quest is written for grades 6 and 8 only, English lines carry no Vietnamese', () => {
-  assert.deepEqual(Object.keys(BRIDGE).map(Number), [6, 8]);
+test('content: bridge quest is written for grades 6-9, English lines carry no Vietnamese', () => {
+  assert.deepEqual(Object.keys(BRIDGE).map(Number), [6, 7, 8, 9]);
   const vi = /[àáảãạăằắẳẵặâầấẩẫậđèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵ]/i;
   for (const b of Object.values(BRIDGE)) {
     assert.equal(b.steps.length, 4); assert.equal(b.ask.length, 4); assert.equal(new Set(b.steps).size, 4);
@@ -173,12 +173,12 @@ test('content: bridge quest is written for grades 6 and 8 only, English lines ca
 // ---------------------------------------------------------------- village story (no browser)
 import { VillageStory, CUSTOMERS } from '../src/game/village.js';
 import { BRIDGE, BRIDGE_SPOTS } from '../src/game/content.js';
-function villageHarness({ grade = 6, letter = { letter: 'Dear Tom,\n\nPlease give it to the librarian.', question: 'Who gets it?', choices: ['The librarian', 'Nam', 'Mai'], answer: 0, hint: 'đọc lại' }, n = 8 } = {}) {
+function villageHarness({ noBridge = false, grade = 6, letter = { letter: 'Dear Tom,\n\nPlease give it to the librarian.', question: 'Who gets it?', choices: ['The librarian', 'Nam', 'Mai'], answer: 0, hint: 'đọc lại' }, n = 8 } = {}) {
   const profile = S.newProfile('An', grade), log = [];
   const cards = Array.from({ length: n }, (_, i) => ({ id: `g${grade}_u01:w${i}`, word: 'w' + i, vi: 'nghĩa ' + i }));
   const ui = { dialogue: (pages, done) => { log.push(pages); if (done) done(); }, choose: (page, options, pick) => { ui.pending = { page, options, pick }; } };
   const fixed = { n: 0 };
-  const story = new VillageStory({ profile, save() {}, ui, sfx() {}, onChange() {}, letter, cards, cardOf: (id) => cards.find((c) => c.id === id), bridge: BRIDGE[grade] || null, onBridgeFixed: () => fixed.n++ });
+  const story = new VillageStory({ profile, save() {}, ui, sfx() {}, onChange() {}, letter, cards, cardOf: (id) => cards.find((c) => c.id === id), bridge: noBridge ? null : BRIDGE[grade] || null, onBridgeFixed: () => fixed.n++ });
   return { profile, story, ui, log, cards, fixed };
 }
 test('village: letter read with a wrong then a right answer, hint only after the mistake, reward once', () => {
@@ -249,8 +249,8 @@ test('village: Fix the Bridge — Sam names the things, decoys teach, Ben trades
   assert.equal(story.q.orderWrong, 1);
   story.talkTom(); assert.equal(story.step, 'done'); assert.equal(profile.flags.forest_open, true);
 });
-test('village: grade 7 has no bridge plan — Sam says so and the bridge opens by itself', () => {
-  const { profile, story, log, fixed } = villageHarness({ grade: 7, letter: null });
+test('village: a grade with no bridge plan — Sam says so and the bridge opens by itself', () => {
+  const { profile, story, log, fixed } = villageHarness({ grade: 7, letter: null, noBridge: true });
   story.q.step = 'bridge'; story.talkSam();
   assert.ok(log.at(-1)[0].vi.includes('lớp 7 chưa được soạn'));
   assert.equal(story.step, 'open'); assert.ok(profile.flags.bridge_fixed); assert.equal(fixed.n, 1);
@@ -399,7 +399,7 @@ test('grammar gate items: valid answers, English-only sentences with one blank, 
     assert.ok(g.a >= 0 && g.a < g.options.length && new Set(g.options).size === g.options.length);
     assert.ok(!/[àáảãạăâđêôơư]/i.test(g.q + g.options.join('')), g.q); assert.ok(g.why.length > 3);
   }
-  assert.equal(grammarFor(6, 1).length, 2); assert.deepEqual(grammarFor(7, 1), []); assert.deepEqual(grammarFor(8, 2), []);
+  assert.equal(grammarFor(6, 1).length, 2); assert.equal(grammarFor(9, 1).length, 2); assert.deepEqual(grammarFor(7, 2), []); assert.deepEqual(grammarFor(8, 2), []);
 });
 test('old saves (v1 and v2 before bag, hunts, chests, gates) load and play on (K5)', () => {
   const v1 = S.migrate({ version: 1, name: 'Bé', grade: 8, quests: { village: { step: 'done' } }, flags: { forest_open: true }, words: { 'g8_u01:hobby': { box: 2, due: 1 } }, stats: { gold: 12 } });

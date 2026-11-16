@@ -118,11 +118,28 @@
       "source": "vietjack"
     }
   ],
-  "grammar": [],
-  "activities": {},
+  "grammar": [
+    "present simple (habits, hobbies): I usually go jogging on Sundays. / She doesn't like yoga.",
+    "verbs of liking + V-ing: enjoy / love / like / hate + V-ing (chưa đối chiếu sách)"
+  ],
+  "activities": {
+    "lost_letter": {
+      "skill": "reading",
+      "difficulty": "basic",
+      "letter": "Dear Mr Tom,\n\nI am Lily. I look after the flowers in the village. My hobby is gardening, and on Sundays I usually go jogging by the river. My friend Anna enjoys making models from cardboard and glue.\n\nThis week Anna is ill, so she cannot finish her model house. Could you please ask Ben to bring her some glue?\n\nThank you,\nLily",
+      "question": "What does Lily want Mr Tom to do?",
+      "choices": [
+        "Ask Ben to bring Anna some glue",
+        "Help her with the gardening",
+        "Go jogging with Anna"
+      ],
+      "answer": 0,
+      "hint": "Tìm câu nhờ vả ở cuối thư: \"Could you please ask Ben to ...?\""
+    }
+  },
   "version": 1,
   "vocabulary_checked": false,
   "grammar_checked": false,
-  "source_note": "Từ vựng theo danh sách VietJack (Global Success), chỉ từ và nghĩa. Ngữ pháp và hoạt động chưa có.",
-  "status": "vocab"
+  "source_note": "Từ vựng theo danh sách VietJack (Global Success), chỉ từ và nghĩa. Ngữ pháp và hoạt động chưa có. Thư Unit 1 do English Quest tự viết (2026-11-16); ngữ pháp CHƯA đối chiếu sách.",
+  "status": "playable"
 }

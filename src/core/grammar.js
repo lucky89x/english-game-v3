@@ -10,6 +10,14 @@ export const GRAMMAR = {
     { q: 'She usually ___ her homework after dinner.', options: ['do', 'does', 'is doing'], a: 1, why: 'usually → hiện tại đơn; she + does.' },
     { q: 'I ___ a letter to my pen friend now.', options: ['write', 'writes', 'am writing'], a: 2, why: 'now → hiện tại tiếp diễn: I am + V-ing.' },
   ],
+  g7_u01: [            // present simple for habits, liking verbs + V-ing (data file: not yet checked against the book)
+    { q: 'Lily ___ the flowers every morning.', options: ['waters', 'water', 'is watering'], a: 0, why: 'every morning → hiện tại đơn; Lily (she) + -s.' },
+    { q: 'My brothers ___ horse riding at weekends.', options: ['goes', 'go', 'going'], a: 1, why: 'thói quen; my brothers (they) + go.' },
+    { q: "Anna ___ like yoga. She thinks it's boring.", options: ["don't", 'isn\'t', "doesn't"], a: 2, why: 'phủ định hiện tại đơn với she: doesn\'t + V.' },
+    { q: 'I enjoy ___ models from cardboard.', options: ['making', 'make', 'to making'], a: 0, why: 'enjoy + V-ing.' },
+    { q: 'Do you like ___ insects in the garden?', options: ['watch', 'watching', 'watches'], a: 1, why: 'like + V-ing (sở thích).' },
+    { q: 'How often ___ your sister go jogging?', options: ['do', 'is', 'does'], a: 2, why: 'câu hỏi hiện tại đơn với she: does + V.' },
+  ],
   g8_u01: [
     { q: 'My sister enjoys ___ comics in her free time.', options: ['reading', 'to read', 'read'], a: 0, why: 'enjoy + V-ing.' },
     { q: "I don't mind ___ the dishes after dinner.", options: ['to wash', 'washing', 'wash'], a: 1, why: "don't mind + V-ing." },
@@ -17,6 +25,14 @@ export const GRAMMAR = {
     { q: 'He detests ___ up early at weekends.', options: ['getting', 'to get', 'gets'], a: 0, why: 'detest + V-ing.' },
     { q: 'Nam is keen ___ making models of ships.', options: ['in', 'on', 'at'], a: 1, why: 'be keen on + V-ing.' },
     { q: 'My parents are interested ___ growing vegetables.', options: ['in', 'on', 'with'], a: 0, why: 'be interested in + V-ing.' },
+  ],
+  g9_u01: [            // question words + to-infinitive, phrasal verbs (data file: not yet checked against the book)
+    { q: "I don't know where ___ good clay for my pots.", options: ['to find', 'finding', 'find'], a: 0, why: 'where + to V: where to find.' },
+    { q: 'Can you tell me how ___ to the craft village?', options: ['getting', 'to get', 'get'], a: 1, why: 'how + to V: how to get.' },
+    { q: 'We have run ___ of milk, so I must go to the shop.', options: ['up', 'off', 'out'], a: 2, why: 'run out of = hết, cạn.' },
+    { q: 'These skills are passed ___ from parents to children.', options: ['down', 'over', 'on to'], a: 0, why: 'pass down = truyền lại (cho đời sau).' },
+    { q: 'Let\'s look ___ the old town before lunch.', options: ['after', 'around', 'up'], a: 1, why: 'look around = đi xem quanh.' },
+    { q: 'She asked us what ___ for the community fair.', options: ['bringing', 'bring', 'to bring'], a: 2, why: 'what + to V: what to bring.' },
   ],
 };
 /** Levels whose owl gate also asks two grammar questions. */
