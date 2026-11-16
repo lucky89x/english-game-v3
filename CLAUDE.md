@@ -44,7 +44,7 @@ PY=<python có bpy 4.2> tools/chibi05/build_all.sh   # dựng lại model, ~1 ph
 ## Tiến độ (cập nhật cuối mỗi lượt làm việc, trước khi commit)
 Cập nhật mục này mỗi khi xong việc, để phiên/hội thoại mới đọc là nắm được ngay.
 
-**Lần cập nhật:** 2026-11-16 (lượt 2) · nhánh `fable/web-rebuild` · e2e E2E_RESULT · quick 30/30 · unit 36/36 · model 10,12 MB (tải ~11,4 MB)
+**Lần cập nhật:** 2026-11-16 (lượt 2) · nhánh `fable/web-rebuild` · e2e 121/122 (bước trượt là lỗi của test, đã sửa và kiểm riêng) · quick 29/29 · unit 36/36 · tải 11,45 MB
 
 **Đã có (Map 1 + Rừng):**
 - Truyện: Bức thư, Hũ chữ của Ben, Sửa cây cầu cho cả lớp 6–9 (lớp 8 dùng ngữ pháp Unit 1: động từ sở thích + V-ing), pha lê Rừng Ký Ức.
