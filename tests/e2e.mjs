@@ -382,7 +382,8 @@ await page.waitForFunction(() => __eq.started && __eq.profile.name === 'Minh', n
 check(await ev(() => __eq.profile.stats.gold === 0 && __eq.region === 'village' && __eq.story.step === 'arrive' && !__eq.profile.flags.forest_open), 'Second profile (grade 9) starts fresh in the village');
 await ev(() => __eq.story.talkTom()); for (let k = 0; k < 3; k++) { await page.keyboard.press('KeyE'); await wait(200); }
 await ev(() => __eq.story.readLetter()); await wait(200);
-check((await page.textContent('#dialog')).includes('pottery') && !(await page.textContent('#dialog')).includes('Mai'), 'Grade 9 reads its own letter (Ben and the pottery village), nothing borrowed from grade 6');
+let letter9 = ''; for (let i = 0; i < 8 && !(await page.$('#dialog .opts')); i++) { letter9 += await page.textContent('#dialog .en'); await page.keyboard.press('KeyE'); await wait(200); }
+check(letter9.includes('pottery') && !letter9.includes('Mai'), 'Grade 9 reads its own letter (Ben and the pottery village), nothing borrowed from grade 6');
 for (let i = 0; i < 8 && !(await page.$('#dialog .opts')); i++) { await page.keyboard.press('KeyE'); await wait(200); }
 await page.keyboard.press('Digit1'); await wait(300); for (let k = 0; k < 4 && await page.isVisible('#dialog'); k++) { await page.keyboard.press('KeyE'); await wait(200); }
 await ev(() => __eq.enterRegion('forest')); await page.waitForFunction(() => __eq.region === 'forest' && __eq.started, null, { timeout: 60000 });
