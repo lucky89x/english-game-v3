@@ -7,8 +7,16 @@ Target: the warm chibi fantasy paintings supplied by the owner (forest map: wate
 - Shapes: rounded canopies (smooth-shaded lumpy spheres), stacked-cone pines, faceted rocks, big readable landmarks.
 - Motion: wind on trees and grass, flowing water, waterfall with mist, flickering campfire, floating crystals, butterflies/fireflies, drifting clouds.
 
+## How models are made (tools/chibi05)
+1. A Python script builds each model from rounded primitives and swept curves (no sculpting), colours come from a 16x16 palette texture, faces are painted textures.
+2. `CHIBI_DECIMATE` halves the triangles (hero 60 %, others 45–50 %).
+3. `bake_ao.py` bakes contact shadows into vertex colours with Cycles: creases go towards a warm plum, open surfaces stay clean. Characters use strength 0.6, houses 0.3 (flat walls have too few vertices for more), painted faces are left untouched.
+4. `build_all.sh` runs everything, copies into `assets/models`, and fails if a character lost its skin or clips.
+Lessons kept: hair must be a few large locks in one tone (many small beads in three browns read as grapes); a strong sun burns out skin, so the scene uses a high sky/ground fill, a gentler sun and a cool rim light.
+
 ## Honest gap to the reference
-- Procedural low-poly, not painted detail: no leaf cards, no roof tiles, no ivy, no cliff strata.
-- Ngọc is the existing chibi model: no red neck scarf, potion or scroll as in the new turnaround sheet.
-- No bloom, no ambient occlusion, no reflections.
-Next art batch: Blender-built hero props (ancient tree, cottage variants, cliff pieces) exported as Meshopt GLB under 300 KB each; Ngọc v03 per the turnaround sheet.
+- Shapes come from primitives: no sculpted cheeks, fingers, cloth folds or hair strands. The paintings have all of these.
+- Flat palette colours: no painted gradients, roof moss or wood grain. Vertex-colour shadows help but are per-vertex.
+- No bloom, no reflections, no screen-space ambient occlusion (kept off for machines without a graphics card).
+- Friends are Ngọc's body with other colours and props, not their own outfits.
+Next art steps, in order of value: sculpt-quality hero mesh made by an artist or an image-to-3D service then retopologised; painted texture atlas instead of the palette; per-character outfits.

@@ -3,7 +3,8 @@
 // right without a hint -> up one box (longer interval); repeated mastery -> up to 30 days.
 export const INTERVAL_DAYS = [0, 1, 2, 4, 7, 15, 30];
 export const MAX_BOX = INTERVAL_DAYS.length - 1;
-export const today = () => Math.floor(Date.now() / 86400000);
+/** Day number in the player's own time zone, so "tomorrow" starts at local midnight (UTC would flip at 07:00 in Vietnam). */
+export const today = () => Math.floor((Date.now() - new Date().getTimezoneOffset() * 60000) / 86400000);
 
 /** result: {correct, hints, ms}. Returns the updated row. */
 export function record(words, id, result, day = today()) {
@@ -22,5 +23,4 @@ export function record(words, id, result, day = today()) {
 export function dueIds(words, day = today()) {
   return Object.keys(words).filter((id) => words[id].due <= day).sort((a, b) => words[a].box - words[b].box);
 }
-export function mastered(words) { return Object.values(words).filter((r) => r.box >= 3).length; }
 export function learned(words) { return Object.values(words).filter((r) => r.right > 0).length; }

@@ -67,16 +67,6 @@ export const SAM_LINES = [
   { who: 'Sam', en: 'Hello! I am cooking fish soup. The forest is quiet today.' },
   { who: 'Sam', en: 'Long ago, every tree here had a name. Now the words are gone.' },
 ];
-export const OUTLINE = [
-  'I. The Starter Village — lost letter, word jars, fixing the broken south bridge.',
-  'II. Forest of Memories — the forest forgot its words; memory crystals, the ancient tree, the first compass piece.',
-  'III. Golden Wind Desert — traders speak in riddles; directions, numbers and bargaining across the oasis.',
-  'IV. Echo Mountains — echoes repeat only what is said clearly; listening and pronunciation trials.',
-  'V. Ocean Harbor — letters from overseas; reading schedules, writing replies, helping sailors.',
-  'VI. Academy of Knowledge — the library is out of order; grammar as magic that repairs sentences.',
-  'VII. Future City — machines misunderstand people; giving precise instructions and explanations.',
-  'VIII. Star Island and the Crystal Tower — all pieces join; a final adventure using every skill.',
-];
 
 // "Fix the Bridge" (Chapter I, after Ben's market). Original texts. Only grades 6 and 8 are written so far;
 // another grade is told the plan is not written yet and the bridge opens by itself (nothing borrowed).

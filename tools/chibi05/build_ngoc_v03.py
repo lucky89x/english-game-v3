@@ -1,9 +1,9 @@
 """Build chr_ngoc_adventurer_v02 — an original stylised chibi hero for EnglishQuestV3.
 
 Run from the repository root with Blender 4.2+/5.x:
-    blender --background --python tools/chibi05/build_ngoc_chibi.py
+    blender --background --python tools/chibi05/build_ngoc_v03.py
 or with the `bpy` Python module:
-    python tools/chibi05/build_ngoc_chibi.py
+    python tools/chibi05/build_ngoc_v03.py        (normally through tools/chibi05/build_all.sh)
 
 Design reference: REF_01_FEMALE_HERO.png (curly chestnut updo, brass goggles over a red
 bandana, red neck scarf, cream shirt, khaki shorts, leather harness, gloves, lace-up boots,
@@ -38,7 +38,7 @@ scene.render.fps = 24
 # --------------------------------------------------------------------------------------
 PALETTE = {  # name: (sRGB hex, roughness, metallic)
     'skin': ('f6c8a6', .62, 0), 'skin_dark': ('e8ae8c', .65, 0),
-    'hair': ('7b3f1e', .55, 0), 'hair_light': ('9c5730', .5, 0), 'hair_dark': ('5a2b14', .6, 0),
+    'hair': ('8c4a22', .5, 0), 'hair_light': ('a85c2e', .45, 0), 'hair_dark': ('6a3418', .55, 0),
     'bandana': ('c9322c', .7, 0), 'bandana_dark': ('9a2420', .75, 0),
     'scarf': ('d23b30', .72, 0), 'scarf_dark': ('a52b24', .75, 0),
     'brass': ('d39a42', .32, .75), 'brass_dark': ('9c6a2a', .4, .7), 'lens': ('3f7a8c', .08, .25),
@@ -73,6 +73,11 @@ if VARIANT in VARIANTS:
         PALETTE[_k] = (_v,) + PALETTE[_k][1:]
     GLB = OUT_DIR / f'{_name}.glb'
     BLEND = SRC_DIR / f'{_name}.blend'
+# Hair reads as one soft mass: the light and dark tones stay close to the base (contact shadows separate the locks).
+def _mix(a, b, t):
+    return ''.join(f'{round(int(a[i:i + 2], 16) * (1 - t) + int(b[i:i + 2], 16) * t):02x}' for i in (0, 2, 4))
+for _k in ('hair_light', 'hair_dark'):
+    PALETTE[_k] = (_mix(PALETTE['hair'][0], PALETTE[_k][0], .38),) + PALETTE[_k][1:]
 CELL = 16
 GRID = 16
 NAMES = list(PALETTE)
@@ -748,18 +753,18 @@ for k, az in enumerate((-.62, -.22, .22, .62)):
 import random as _rnd
 _rnd.seed(7)
 _k = 0
-for el_deg, count, size in ((74, 6, .074), (58, 10, .078), (40, 12, .082), (22, 12, .086), (4, 11, .084), (-12, 9, .076)):
+for el_deg, count, size in ((72, 5, .104), (52, 8, .112), (30, 9, .118), (9, 9, .116), (-11, 8, .102)):      # few big soft locks, not many small beads
     for i in range(count):
         az = (i + .5 * (_k % 2)) / count * 2 * math.pi - math.pi
         if abs(az) < math.radians(62) and el_deg < 50:
             continue                                  # keep the face and the bandana front clear
         if abs(az) < math.radians(40) and el_deg < 66:
             continue                                  # goggles sit here
-        p = on_hair(az + _rnd.uniform(-.08, .08), math.radians(el_deg + _rnd.uniform(-5, 5)), .004)
+        p = on_hair(az + _rnd.uniform(-.06, .06), math.radians(el_deg + _rnd.uniform(-4, 4)), -.012)
         r = size * _rnd.uniform(.85, 1.15)
-        tuft = ellipsoid(f'Ngoc_Tuft_{_k}', p, (r, r * .92, r * .80), seg=12, rings=8,
+        tuft = ellipsoid(f'Ngoc_Tuft_{_k}', p, (r, r * .94, r * .70), seg=18, rings=11,
                          rot=Vector((0, 0, 1)).rotation_difference((p - HAIR_C).normalized()))
-        finish(tuft, HAIR_COLS[_k % 3], ['head'])
+        finish(tuft, 'hair_light' if el_deg > 60 and _k % 2 else 'hair', ['head'])
         _k += 1
 
 # fringe: chunky hooked curls tumbling out under the bandana onto the forehead
@@ -1303,7 +1308,7 @@ export_kwargs = dict(
     export_animations=True, export_animation_mode='ACTIONS', export_nla_strips=True,
     export_force_sampling=True, export_frame_step=1, export_def_bones=True, export_skins=True,
     export_morph=False, export_yup=True, export_texcoords=True, export_normals=True,
-    export_image_format='AUTO', export_materials='EXPORT', export_extras=False,
+    export_image_format='AUTO', export_materials='EXPORT', export_extras=False, export_vertex_color='ACTIVE', export_all_vertex_colors=False,
     export_anim_single_armature=True, export_reset_pose_bones=True, export_optimize_animation_size=False,
 )
 import inspect
@@ -1328,6 +1333,8 @@ def _decimate(ob):
     print('decimated to', sum(len(p.vertices) - 2 for p in ob.data.polygons), 'triangles')
 
 _decimate(body)
+from bake_ao import bake_ao
+bake_ao(body)
 for o in bpy.context.view_layer.objects:      # select rig + body again: the exporter writes the skin only for selected objects
     o.select_set(o in (rig, body))
 bpy.context.view_layer.objects.active = rig

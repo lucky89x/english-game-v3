@@ -1,4 +1,4 @@
-// node --test web-rebuild/tests/unit.test.mjs
+// node --test tests/unit.test.mjs
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as L from '../src/core/layout.js';

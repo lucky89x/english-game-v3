@@ -9,7 +9,6 @@ export const SPAWNS = [
   ['slime', 36, -14], ['slime', 32, -24], ['slime', 38, -30], ['slime', 34, -8], ['slime', 48, -26],
   ['red', 44, -36], ['red', 50, -16], ['red', 30, -38], ['golem', 52, 30], ['golem', 38, 48],
 ];
-export const WILD = { x: 40, z: -24, r: 20, label: 'Wild Meadow' };
 /** Ngọc's attack: grows with the level, weapon adds on top. */
 export const playerAtk = (profile) => 10 + (profile.stats.level - 1) * 2 + ((profile.gear && profile.gear.atk) || 0);
 /** Damage a monster deals after armour (never below 1). */

@@ -21,5 +21,11 @@ Optional: Sam at the camp tells a short story.
 ## Controls
 WASD, Shift, Space, E, H (hint), left-drag orbit 360°, wheel zoom, minimap click-to-travel (A*, WASD cancels), F3 perf.
 
+## Implemented: play loop of Map 1 (see MAP1_PLAN.md for status)
+- **Level, health, gear**: EXP from everything; levels 5/10/15/20 wait for the owl's five-question word review. Bram sells swords and armour, Rose sells a charm and honey bread (Q). The worn sword shows in Ngọc's hand.
+- **Wild Meadow** (north-east): green and red slimes, stone golems; J/F attack, K dodge roll; fainting returns to the square with no loss. Quest board gives hunting jobs in English. From level 6 the Slime King appears; its three word shields break only when the child picks the right English word.
+- **Word chests**: spell a unit word from letter tiles; once a day each; feeds spaced review.
+- **Games with no English**: fishing, apple catch, ring race, twelve stars, Candy Match, Slingshot, Falling Blocks, Pumpkin Cart Race. Small gold and EXP, best scores per child.
+
 ## Not implemented yet
-Rest of Chapter I (secret word chests, footprints, language symbol, festival, chapter review); interiors; a traveller model at the market; Lily, Rose, Anna; NPC schedules; collectibles; listening and speaking tasks. Chapters III–VIII exist as one-line outlines in `src/game/content.js`.
+Unit progression (every profile studies Unit 1), gate to Map 2 at level 20, inventory screen, armour visible on the body, interiors, listening and speaking tasks, touch controls, maps 3–10 (see the ten-map table in MAP1_PLAN.md).

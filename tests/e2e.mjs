@@ -401,6 +401,7 @@ await page.setViewportSize({ width: 1280, height: 720 });
 const noise = logs.filter((l) => !l.includes('ReadPixels') && !l.includes('GPU stall'));
 check((await ev(() => __eq.errors.length)) === 0 && noise.filter((l) => l.startsWith('error') || l.startsWith('pageerror')).length === 0, 'No console errors during the whole run' + (noise.length ? ' — ' + noise[0].slice(0, 160) : ''));
 const total = Object.values(sizes).reduce((a, b) => a + b, 0);
-fs.writeFileSync(path.join(path.dirname(new URL(import.meta.url).pathname), '..', 'docs', 'measurements.json'), JSON.stringify({ date: new Date().toISOString().slice(0, 10), renderer: 'Chromium headless + SwiftShader (software GL, no GPU)', downloadBytes: total, files: Object.fromEntries(Object.entries(sizes).sort((a, b) => b[1] - a[1])), perf, checks: results.length, failed }, null, 1));
+if (shots) fs.writeFileSync(path.join(path.dirname(new URL(import.meta.url).pathname), '..', 'docs', 'measurements.json'),      // only when the picture set is refreshed too: a plain test run leaves the repo untouched
+  JSON.stringify({ date: new Date().toISOString().slice(0, 10), renderer: 'Chromium headless + SwiftShader (software GL, no GPU)', downloadBytes: total, files: Object.fromEntries(Object.entries(sizes).sort((a, b) => b[1] - a[1])), perf, checks: results.length, failed }, null, 1));
 console.log(`\n${results.length - failed}/${results.length} passed · download ${(total / 1048576).toFixed(2)} MB · perf ${JSON.stringify(perf)}`);
 await browser.close(); server.close(); process.exit(failed ? 1 : 0);

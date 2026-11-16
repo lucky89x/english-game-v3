@@ -31,7 +31,7 @@ addEventListener('unhandledrejection', (e) => errors.push(String(e.reason)));
 
 const canvas = $('view');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
-renderer.outputColorSpace = THREE.SRGBColorSpace; renderer.toneMapping = THREE.NeutralToneMapping; renderer.toneMappingExposure = 1.08;
+renderer.outputColorSpace = THREE.SRGBColorSpace; renderer.toneMapping = THREE.NeutralToneMapping; renderer.toneMappingExposure = 1.0;
 renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap; renderer.localClippingEnabled = true;   // broken bridge gap
 const scene = new THREE.Scene(); scene.fog = new THREE.Fog(0xbfe4ff, 70, 330);
 const camera = new THREE.PerspectiveCamera(52, 1, 0.3, 700);
@@ -54,8 +54,11 @@ const sky = new THREE.Mesh(new THREE.SphereGeometry(600, 32, 16), new THREE.Shad
       gl_FragColor = vec4(col, 1.0);
     }` }));
 sky.frustumCulled = false; scene.add(sky);
-scene.add(new THREE.HemisphereLight(0xcfe9ff, 0x7fae5a, 1.15));
-const sun = new THREE.DirectionalLight(0xfff1d6, 2.6); sun.castShadow = true; sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.04; scene.add(sun, sun.target);
+// Soft, warm light as in the reference paintings: a strong sky/ground fill so nothing goes black, a gentler sun so
+// skin and cream cloth do not burn out, and a cool back light that draws a rim round characters and roofs.
+scene.add(new THREE.HemisphereLight(0xdcefff, 0xc8b88a, 1.55));
+const rim = new THREE.DirectionalLight(0xcfe2ff, 0.75); rim.position.set(0.5, 0.55, -0.7); scene.add(rim);
+const sun = new THREE.DirectionalLight(0xffeccc, 1.95); sun.castShadow = true; sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.04; scene.add(sun, sun.target);
 
 const manager = new THREE.LoadingManager();
 manager.onProgress = (_u, done, total) => { $('loadbar').style.width = Math.round((done / total) * 100) + '%'; };

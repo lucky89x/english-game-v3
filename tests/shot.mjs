@@ -1,4 +1,4 @@
-// Quick look: node tests/shot.mjs <out.png> [x z yaw pitch dist] — serves web-rebuild/ and screenshots.
+// Quick look: node tests/shot.mjs <out.png> [x z yaw pitch dist] — serves the repo root and takes a screenshot.
 import { chromium } from 'playwright';
 import http from 'node:http'; import fs from 'node:fs'; import path from 'node:path'; import { fileURLToPath } from 'node:url';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');

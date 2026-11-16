@@ -667,6 +667,8 @@ def export(glb_path, blend_path, objects=None):
     rig = STATE.get('rig')
     body = STATE['body']
     _decimate(body)
+    from bake_ao import bake_ao
+    bake_ao(body)
     if rig and STATE.get('actions'):
         rig.animation_data.action = STATE['actions'].get('Idle')
         bpy.context.scene.frame_set(0)
@@ -675,6 +677,7 @@ def export(glb_path, blend_path, objects=None):
     for o in bpy.context.view_layer.objects:
         o.select_set(o in sel)
     kw = dict(filepath=str(glb_path), export_format='GLB', use_selection=True, export_apply=False,
+              export_vertex_color='ACTIVE', export_all_vertex_colors=False,
               export_animations=bool(rig), export_animation_mode='ACTIONS', export_nla_strips=True,
               export_force_sampling=True, export_frame_step=1, export_def_bones=True, export_skins=True,
               export_morph=False, export_yup=True, export_texcoords=True, export_normals=True,

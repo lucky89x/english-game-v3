@@ -31,5 +31,3 @@ export const inWater = (x, z) => cur.inWater(x, z);
 export const solidsNear = (x, z) => cur.solidsNear(x, z);
 export const walkable = (x, z, r) => cur.walkable(x, z, r);
 export const canStep = (ax, az, bx, bz, r) => cur.canStep(ax, az, bx, bz, r);
-/** Landmark by id across all regions (quests refer to forest places while the player is elsewhere). */
-export function landmarkOf(id) { for (const r of Object.values(REGIONS)) { const l = r.LANDMARKS.find((x) => x.id === id); if (l) return l; } return null; }

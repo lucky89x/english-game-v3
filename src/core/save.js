@@ -61,8 +61,8 @@ export const gateWaiting = (profile) => { const L = profile.stats.level; return 
 export function passGate(profile, level) { (profile.gates || (profile.gates = {}))[level] = true; return addExp(profile, 0); }
 export function addExp(profile, amount) {
   const s = profile.stats; s.exp += amount;
-  let need = 60 + (s.level - 1) * 30, ups = 0;
-  while (s.exp >= need && !gateWaiting(profile)) { s.exp -= need; s.level += 1; ups += 1; need = 60 + (s.level - 1) * 30; }
+  let need = expNeed(s.level), ups = 0;
+  while (s.exp >= need && !gateWaiting(profile)) { s.exp -= need; s.level += 1; ups += 1; need = expNeed(s.level); }
   if (gateWaiting(profile)) s.exp = Math.min(s.exp, need);        // full bar, nothing wasted beyond it
   return ups;
 }
