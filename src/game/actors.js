@@ -119,9 +119,11 @@ export class OrbitCamera {
 }
 
 export class Npc {
-  constructor(gltf, x, z, yaw) {
-    this.root = gltf.scene; this.mixer = gltf.animations.length ? new THREE.AnimationMixer(this.root) : null; this.actions = {}; this.cur = '';
-    for (const c of gltf.animations) this.actions[c.name] = this.mixer.clipAction(c);
+  /** clips: animations to use when the file has none (Lily, Rose and Anna share Ngọc's skeleton and clips). */
+  constructor(gltf, x, z, yaw, clips) {
+    const anims = gltf.animations.length ? gltf.animations : clips || [];
+    this.root = gltf.scene; this.mixer = anims.length ? new THREE.AnimationMixer(this.root) : null; this.actions = {}; this.cur = '';
+    for (const c of anims) this.actions[c.name] = this.mixer.clipAction(c);
     this.root.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.frustumCulled = false; } });
     this.move(x, z, yaw); this.play('Idle');
   }

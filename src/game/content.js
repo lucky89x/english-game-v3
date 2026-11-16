@@ -102,14 +102,16 @@ export const BRIDGE = {
       rope: { en: 'rope', vi: 'dây thừng', decoy: 'chain', wrong: "That's a metal chain. It's far too heavy to tie a log with.", wrongVi: 'chain = dây xích kim loại. Rope = dây thừng.' },
       log: { en: 'log', vi: 'khúc gỗ', decoy: 'boulder', wrong: "That's a boulder, not a log. You can't build a bridge with a rock you can't even lift!", wrongVi: 'boulder = tảng đá lớn. Log = khúc gỗ.' },
     },
+    // Unit 1 grade 8 grammar: verbs of liking + V-ing (love, enjoy, fancy, don't mind, hate…). The order of the
+    // steps still comes from First / Next / Then / Finally; the liking verbs say who does which job.
     plan: [
-      { who: 'Pip', en: "Before we put the log across the river, we have to cut it to the right length with the axe." },
-      { who: 'Pip', en: "Once the log is in place, tie it tightly to the posts with the rope." },
-      { who: 'Pip', en: "Nobody should cross until we have tested it carefully. Can you put the steps in order?" },
+      { who: 'Pip', en: "I can read the plan! Sam loves chopping wood, so first, he'll cut the log to the right length." },
+      { who: 'Pip', en: "You don't mind carrying heavy things, so next, you'll put the log across the river. I enjoy tying knots, so then I'll tie the log to the posts." },
+      { who: 'Pip', en: "Nobody fancies falling into the river! Finally, we'll test the bridge carefully. Can you put the steps in order?" },
     ],
     steps: ['Cut the log to the right length.', 'Put the log across the river.', 'Tie the log to the posts.', 'Test the bridge carefully.'],
-    ask: ['Which step comes first?', 'What happens after that?', 'And after the log is in place?', 'What must we do before anyone crosses?'],
-    hint: 'Before A, B = làm B trước. Once A, B = xong A rồi mới B. Until = cho đến khi.',
+    ask: ['Which step comes first?', 'What happens after that?', 'And then?', 'What do we do last?'],
+    hint: 'Đọc lại lời Pip: First → Next → Then → Finally. (love / enjoy / don\'t mind / fancy + V-ing: chopping, carrying, tying, falling)',
   },
 };
 /** Where the bridge things lie in the Starter Village (x, z). Decoys sit next to the path too. */

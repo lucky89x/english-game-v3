@@ -10,7 +10,9 @@ if (shots) fs.mkdirSync(shots, { recursive: true });
 const { server, url, sizes } = await serve(); const { browser, page, logs } = await open(url);
 const ev = (f, a) => page.evaluate(f, a);
 const wait = (ms) => page.waitForTimeout(ms);
-const snap = async (name) => { if (shots) await page.screenshot({ path: path.join(shots, name + '.jpg'), type: 'jpeg', quality: 80 }); };
+// K4: only these shots are kept in the repo (screenshots/); --all-shots writes every one (for a local look, do not commit).
+const KEEP = ['01_village_square', '03e_wild_fight', '03g_candy', '03k_word_shield', '04d_fixed_bridge', '07_forest_gate', '11_ancient_tree', '12_cave'], allShots = process.argv.includes('--all-shots');
+const snap = async (name) => { if (shots && (allShots || KEEP.includes(name))) await page.screenshot({ path: path.join(shots, name + '.jpg'), type: 'jpeg', quality: 80 }); };
 const view = (x, z, yaw, pitch, dist) => ev(([x, z, yaw, pitch, dist]) => { const g = __eq; g.teleport(x, z); g.player.yaw = yaw + Math.PI; g.cam.yaw = g.cam.tYaw = yaw; g.cam.pitch = g.cam.tPitch = pitch; g.cam.dist = g.cam.tDist = g.cam.cur = dist; }, [x, z, yaw, pitch, dist]);
 
 check(await ev(() => __eq.errors.length === 0), 'Boot: no script errors');
@@ -254,8 +256,8 @@ for (let n = 0; n < 3; n++) await ev(() => __eq.wild.kill(__eq.wild.mobs.find((m
 await ev(() => __eq.teleport(29.6, -13.2)); await wait(400); await page.keyboard.press('KeyE'); await wait(300);
 check(await ev(() => !__eq.profile.hunt.active && __eq.profile.hunt.done === 1) && (await page.textContent('#dialog')).includes('Thank you'), 'Three slimes later the board pays and offers the next job');
 await page.keyboard.press('KeyE'); await wait(200);
-await ev(() => { __eq.profile.stats.level = Math.max(6, __eq.profile.stats.level); __eq.wild.mobs.forEach((m) => { if (!m.boss) { m.dead = 120; m.g.visible = false; } }); }); await wait(600);
-check(await ev(() => __eq.wild.boss.g.visible), 'At level 6 the Slime King appears in the meadow');
+await ev(() => { __eq.profile.stats.level = Math.max(8, __eq.profile.stats.level); __eq.wild.mobs.forEach((m) => { if (!m.boss) { m.dead = 120; m.g.visible = false; } }); }); await wait(600);
+check(await ev(() => __eq.wild.boss.g.visible), 'At level 8 the Slime King appears in the meadow');
 await ev(() => { const m = __eq.wild.boss; m.hp = 460; __eq.teleport(m.x, m.z - 2.4); __eq.player.yaw = 0; __eq.profile.stats.hp = 999; }); await wait(250);
 await page.keyboard.press('KeyJ'); await wait(500);
 check(await ev(() => __eq.wild.boss.shieldOn && __eq.wild.boss.broken === 0), 'Below 75% health the boss raises a word shield');

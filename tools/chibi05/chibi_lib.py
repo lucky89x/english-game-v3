@@ -678,7 +678,7 @@ def export(glb_path, blend_path, objects=None):
         o.select_set(o in sel)
     kw = dict(filepath=str(glb_path), export_format='GLB', use_selection=True, export_apply=False,
               export_vertex_color='ACTIVE', export_all_vertex_colors=False,
-              export_animations=bool(rig), export_animation_mode='ACTIONS', export_nla_strips=True,
+              export_animations=bool(rig) and os.environ.get('CHIBI_NO_ANIM') != '1', export_animation_mode='ACTIONS', export_nla_strips=True,
               export_force_sampling=True, export_frame_step=1, export_def_bones=True, export_skins=True,
               export_morph=False, export_yup=True, export_texcoords=True, export_normals=True,
               export_image_format='AUTO', export_materials='EXPORT', export_extras=False,

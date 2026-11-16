@@ -51,8 +51,13 @@ export function recordSkill(profile, skill, correct, hints) {
   row.attempts += 1; row.hints += hints || 0;
   if (correct) { row.correct += 1; if (!hints) row.firstTry += 1; }
 }
-/** EXP needed to go from `level` to the next one. */
-export const expNeed = (level) => 60 + (level - 1) * 30;
+/** EXP needed to go from `level` to the next one. Map 1 (levels 1-20) needs 9,405 EXP in all: about 8-10 hours of
+ *  mixed play at roughly 1,000 EXP an hour (fights, hunts, chests, a few mini games). Change this line to retune. */
+export const expNeed = (level) => 90 + (level - 1) * 45;
+/** Total EXP from level 1 to `level`. */
+export const expTo = (level) => { let t = 0; for (let l = 1; l < level; l++) t += expNeed(l); return t; };
+/** Unit being studied: the one a parent picked, otherwise the unit of the map reached (Map 1 = Unit 1, Map 2 = Unit 2). */
+export const unitOf = (profile) => profile.unitPick || (profile.flags && profile.flags.map2 ? 2 : 1);
 /** Hit points grow with the level; equipment adds on top (profile.gear, later). */
 export const maxHp = (profile) => 100 + (profile.stats.level - 1) * 12 + ((profile.gear && profile.gear.hp) || 0);
 /** Knowledge gates: at these levels the bar fills but the next level waits for a short word review (the owl). */

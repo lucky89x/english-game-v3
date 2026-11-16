@@ -73,7 +73,7 @@ test('save: skill counters separate first-try from hinted answers; exp levels up
   const p = S.newProfile('An', 6);
   S.recordSkill(p, 'reading', true, 0); S.recordSkill(p, 'reading', true, 2); S.recordSkill(p, 'reading', false, 1);
   assert.deepEqual(p.skills.reading, { attempts: 3, correct: 2, firstTry: 1, hints: 3 });
-  assert.equal(S.addExp(p, 70), 1); assert.equal(p.stats.level, 2);
+  assert.equal(S.addExp(p, S.expNeed(1) + 10), 1); assert.equal(p.stats.level, 2);
 });
 
 // ---------------------------------------------------------------- quest logic (no browser)
@@ -369,7 +369,43 @@ test('hunts: only the asked monster counts, only while active, finishing returns
 
 test('knowledge gates: level 5 waits for the owl review, extra EXP is capped, passing lets the level go up', () => {
   const p = S.newProfile('An', 6); p.stats.level = 4;
-  S.addExp(p, 150 + 500); assert.equal(p.stats.level, 5); assert.equal(S.gateWaiting(p), 5); assert.equal(p.stats.exp, S.expNeed(5), 'bar full, rest not stored');
+  S.addExp(p, S.expTo(5) + 500); assert.equal(p.stats.level, 5); assert.equal(S.gateWaiting(p), 5); assert.equal(p.stats.exp, S.expNeed(5), 'bar full, rest not stored');
   S.addExp(p, 999); assert.equal(p.stats.level, 5);
   assert.equal(S.passGate(p, 5), 1); assert.equal(p.stats.level, 6); assert.equal(S.gateWaiting(p), 0); assert.equal(p.stats.exp, 0);
+});
+
+// ---------------------------------------------------------------- review round: pay limits, Map 2, units, grammar, old saves
+import { pay, FULL_PLAYS, map2Ready, BOSSES } from '../src/core/rules.js';
+import { GRAMMAR, grammarFor } from '../src/core/grammar.js';
+test('mini games: full pay for the first plays of the day, 20% after, a new day resets', () => {
+  const p = S.newProfile('An', 6);
+  for (let i = 0; i < FULL_PLAYS; i++) assert.deepEqual([pay(p, 'candy', 100, 30, 40).gold], [30]);
+  const later = pay(p, 'candy', 100, 30, 40); assert.equal(later.gold, 6); assert.equal(later.exp, 8); assert.equal(later.full, false);
+  assert.equal(pay(p, 'race2', 100, 30).gold, 30, 'each game counts on its own');
+  assert.equal(pay(p, 'candy', 101, 30).gold, 30, 'next day pays in full again');
+  assert.equal(pay(p, 'fish', 101, 1).gold, 1); for (let i = 0; i < 5; i++) assert.ok(pay(p, 'fish', 101, 1).gold >= 1, 'never rounds to zero');
+});
+test('Map 2 opens after the Ancient Golem at level 20; the unit follows the map unless a parent picks one', () => {
+  const p = S.newProfile('An', 8);
+  assert.equal(S.unitOf(p), 1); assert.equal(BOSSES[0].level, 8); assert.ok(BOSSES[1].level >= 18);
+  p.flags.boss2 = true; p.stats.level = 19; assert.equal(map2Ready(p), false);
+  p.stats.level = 20; assert.equal(map2Ready(p), true); p.flags.map2 = true; assert.equal(S.unitOf(p), 2);
+  p.unitPick = 5; assert.equal(S.unitOf(p), 5);
+  assert.equal(S.expTo(20), 9405, 'Map 1 length (T2): retune expNeed if this changes');
+});
+test('grammar gate items: valid answers, English-only sentences with one blank, only written units', () => {
+  for (const [id, list] of Object.entries(GRAMMAR)) for (const g of list) {
+    assert.ok(/^g[6-9]_u\d\d$/.test(id)); assert.equal(g.q.split('___').length, 2, g.q);
+    assert.ok(g.a >= 0 && g.a < g.options.length && new Set(g.options).size === g.options.length);
+    assert.ok(!/[àáảãạăâđêôơư]/i.test(g.q + g.options.join('')), g.q); assert.ok(g.why.length > 3);
+  }
+  assert.equal(grammarFor(6, 1).length, 2); assert.deepEqual(grammarFor(7, 1), []); assert.deepEqual(grammarFor(8, 2), []);
+});
+test('old saves (v1 and v2 before bag, hunts, chests, gates) load and play on (K5)', () => {
+  const v1 = S.migrate({ version: 1, name: 'Bé', grade: 8, quests: { village: { step: 'done' } }, flags: { forest_open: true }, words: { 'g8_u01:hobby': { box: 2, due: 1 } }, stats: { gold: 12 } });
+  const p = v1.profiles[0]; assert.equal(p.grade, 8); assert.equal(p.stats.gold, 12); assert.equal(p.stats.level, 1); assert.equal(S.unitOf(p), 1);
+  const v2 = S.migrate({ version: 2, last: 'a', profiles: [{ id: 'a', name: 'An', grade: 6, unit: 1, quests: {}, flags: {}, words: {}, skills: {}, stats: { gold: 5, exp: 3, level: 4 } }] }), q = v2.profiles[0];
+  assert.deepEqual(bag(q), { owned: [], weapon: '', armor: '', charm: '', food: 0 }); assert.deepEqual(wear(q), { atk: 0, def: 0, hp: 0 });
+  assert.equal(hunt(q).active, false); assert.equal(S.gateWaiting(q), 0); assert.equal(S.addExp(q, S.expNeed(4)), 1); assert.equal(S.gateWaiting(q), 5);
+  assert.equal(pay(q, 'candy', 1, 10).gold, 10); assert.equal(map2Ready(q), false);
 });

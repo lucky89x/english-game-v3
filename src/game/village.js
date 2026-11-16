@@ -2,6 +2,7 @@
 // (Sam names the things, Ngọc picks the rope and log among look-alikes, earns Ben's axe, puts Pip's plan
 // in order) -> the forest gate opens. Texts are original; the letter itself comes from the grade's own curriculum file
 // (activities.lost_letter). A grade without that activity is told so and moves on, nothing is borrowed.
+import { unitOf } from '../core/save.js';
 import { mulberry32 } from '../core/regionkit.js';
 import * as Review from '../core/review.js';
 import { recordSkill, addExp } from '../core/save.js';
@@ -71,7 +72,7 @@ export class VillageStory {
     if (s === 'arrive' || s === 'letter_find' || s === 'letter_return') { ui.dialogue([{ who: 'Ben', en: 'Hello! Come back later. I am busy now.' }]); return; }
     const wantsAxe = s === 'gather' && !this.q.items.includes('axe');
     if (cards.length < JARS) {
-      ui.dialogue([{ who: 'Ben', en: wantsAxe ? 'I have no jars today, but here is my axe!' : 'Sorry, I have no jars today.', vi: `Từ vựng Unit ${this.api.profile.unit} lớp ${this.api.profile.grade} chưa có.` }], () => {
+      ui.dialogue([{ who: 'Ben', en: wantsAxe ? 'I have no jars today, but here is my axe!' : 'Sorry, I have no jars today.', vi: `Từ vựng Unit ${unitOf(this.api.profile)} lớp ${this.api.profile.grade} chưa có.` }], () => {
         if (s === 'jars') this.set('tom_bridge'); else if (wantsAxe) this.take('axe'); });
       return;
     }

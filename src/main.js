@@ -5,6 +5,7 @@ import * as L from './core/layout.js';
 import * as Save from './core/save.js';
 import * as Review from './core/review.js';
 import { loadGrade } from './core/catalog.js';
+import { grammarFor, GRAMMAR_GATES } from './core/grammar.js';
 import { buildWorld, bridgeItem, TIME, MARKET_JARS } from './world/forest.js';
 import { Player, OrbitCamera, Npc, Pip, Crystals } from './game/actors.js';
 import { ForestQuest, landmark } from './game/quest.js';
@@ -13,7 +14,8 @@ import { MiniGames, STARS } from './game/minigames.js';
 import { Wild } from './game/combat.js';
 import { Arcade, candyGame, blocksGame, slingGame, spellGame, raceGame } from './ui/arcade.js';
 import { Chests } from './game/chests.js';
-import { ITEMS, bag, wear, buy, eat, shopList } from './core/rules.js';
+import { ITEMS, bag, wear, buy, eat, shopList, pay, map2Ready } from './core/rules.js';
+import { payNote } from './game/minigames.js';
 import { SAM_LINES, BRIDGE, BRIDGE_SPOTS, FRIENDS } from './game/content.js';
 import { UI } from './ui/ui.js';
 import { Minimap } from './ui/minimap.js';
@@ -72,7 +74,7 @@ let profile = null, quest = null, story = null, world = null, player = null, cam
 let quality = localStorage.getItem('eq-quality') || 'medium', perfOn = false, started = false, switching = false, wordIds = {}, jarKey = '';
 const keys = new Set();
 const game = { errors, get profile() { return profile; }, get quest() { return quest; }, get story() { return story; }, get player() { return player; }, get cam() { return cam; }, get minimap() { return minimap; }, ui, L, stats: { fps: 0, ms: 0, calls: 0, tris: 0 },
-  teleport(x, z) { player.place(x, z); cam.target.set(x, player.pos.y + 1.25, z); }, setQuality, key: (code) => onKey({ code, preventDefault() {} }), get started() { return started && !switching; }, get region() { return L.NAME; }, chooseProfile, enterRegion, MARKET_JARS, BRIDGE_SPOTS, get mini() { return mini; }, get wild() { return wild; }, get scene() { return scene; }, openShop, get sword() { return swordMesh; }, get arcade() { return arcade; }, get chests() { return chests; }, refresh: () => refresh() };
+  teleport(x, z) { player.place(x, z); cam.target.set(x, player.pos.y + 1.25, z); }, setQuality, key: (code) => onKey({ code, preventDefault() {} }), get started() { return started && !switching; }, get region() { return L.NAME; }, chooseProfile, enterRegion, MARKET_JARS, BRIDGE_SPOTS, get mini() { return mini; }, get wild() { return wild; }, get scene() { return scene; }, openShop, get sword() { return swordMesh; }, get arcade() { return arcade; }, get chests() { return chests; }, get friends() { return friends; }, refresh: () => refresh() };
 globalThis.__eq = game;
 
 function resize() { const w = innerWidth, h = innerHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
@@ -91,8 +93,10 @@ function setQuality(name) {
 function renderGear() {
   const g = $('gear'); if (!profile) return; g.classList.remove('hidden');
   g.innerHTML = `Đồ họa: <select id="gq">${Object.entries(QUALITY).map(([k, v]) => `<option value="${k}" ${k === quality ? 'selected' : ''}>${v.label}</option>`).join('')}</select>
+    <span title="Phụ huynh chọn Unit con đang học ở trường; để 'theo map' thì Unit đi theo map đã mở">Unit: <select id="gu"><option value="0">theo map (${Save.unitOf({ flags: profile.flags })})</option>${Array.from({ length: 12 }, (_, i) => `<option value="${i + 1}" ${profile.unitPick === i + 1 ? 'selected' : ''}>${i + 1}</option>`).join('')}</select></span>
     <button id="gs">Âm thanh: ${soundOn() ? 'bật' : 'tắt'}</button><button id="ge">Xuất hồ sơ</button><button id="gp">Đổi người chơi</button><span style="color:#9a8060">F3: hiệu năng</span>`;
   $('gq').onchange = (e) => { localStorage.setItem('eq-quality-manual', '1'); setQuality(e.target.value); };
+  $('gu').onchange = (e) => { const v = Number(e.target.value); if (v) profile.unitPick = v; else delete profile.unitPick; reloadUnit().then(() => ui.toast(`Đang học Unit ${Save.unitOf(profile)}`)); };
   $('gs').onclick = () => { setSound(!soundOn()); renderGear(); };
   $('ge').onclick = () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([Save.exportProfile(profile)], { type: 'application/json' })); a.download = `english-quest-${profile.name}.json`; a.click(); };
   $('gp').onclick = () => { save(); ui.showMenu(store, chooseProfile); };
@@ -110,6 +114,10 @@ function refresh() {
   const gate = Save.gateWaiting(profile); if (gate && profile.toldGate !== gate) { profile.toldGate = gate; ui.toast('Gặp Cú Mèo để lên cấp!'); }
   if (shownLevel && profile.stats.level > shownLevel) { profile.stats.hp = Save.maxHp(profile); ui.toast(`LEVEL UP!  Lv ${profile.stats.level}`); sfx('fanfare'); }
   shownLevel = profile.stats.level;
+  if (map2Ready(profile) && !profile.flags.map2) {      // T3: Ancient Golem beaten at level 20 -> Map 2 and Unit 2 words
+    profile.flags.map2 = true; save(); sfx('fanfare');
+    ui.dialogue([{ who: 'Tom', en: 'You have grown so strong! The road to the Memory Forest is yours now.', vi: `Đã mở Map 2 · Rừng Ký Ức. Từ giờ rương, boss, Cú Mèo hỏi từ Unit ${Save.unitOf(profile)}.` }], () => reloadUnit());
+  }
   const learned = Review.learned(profile.words);
   if (L.NAME === 'forest') {
     ui.hud(profile, 'Rừng Ký Ức', `Pha lê ${quest.q.found.length}/5`, learned);
@@ -178,12 +186,11 @@ async function enterRegion(name, at) {
   if (quest && quest.step === 'seek') quest.clueStart = performance.now();
   switching = false; save(); refresh();
 }
-async function chooseProfile(p) {
-  unlock(); profile = p; store.last = p.id; started = false; shownLevel = 0;
-  const units = await loadGrade(p.grade);                                   // this grade only
+/** Words, story and quest for the profile's grade and current unit (Save.unitOf). Called again when the unit changes. */
+function learning(p, units) {
   const forestMarks = L.REGIONS.forest.LANDMARKS, find = (w) => { for (let n = 0; n < 12; n++) { const u = units[n]; if (u && (u.vocabulary || []).some((v) => v.word.toLowerCase() === w)) return `g${p.grade}_u${String(n + 1).padStart(2, '0')}:${w}`; } return null; };
   wordIds = {}; forestMarks.forEach((l) => { wordIds[l.en] = find(l.en) || 'forest:' + l.en; });
-  const unit = units[(p.unit || 1) - 1], uid = `g${p.grade}_u${String(p.unit || 1).padStart(2, '0')}`;
+  const un = Save.unitOf(p), unit = units[un - 1], uid = `g${p.grade}_u${String(un).padStart(2, '0')}`;
   const cards = ((unit && unit.vocabulary) || []).filter((w) => w.word.length <= 22 && w.vi.length <= 34).map((w) => ({ id: `${uid}:${w.word.toLowerCase()}`, word: w.word, vi: w.vi }));
   const cardOf = (id) => { const [u, w] = id.split(':'), m = /^g(\d)_u(\d\d)$/.exec(u); if (!m || Number(m[1]) !== p.grade) return null; const src = units[Number(m[2]) - 1], hit = src && (src.vocabulary || []).find((v) => v.word.toLowerCase() === w); return hit ? { id, word: hit.word, vi: hit.vi } : null; };
   quest = new ForestQuest({ profile, save, ui, sfx, wordId: (w) => wordIds[w] || 'forest:' + w, onChange: refresh });
@@ -192,6 +199,11 @@ async function chooseProfile(p) {
   if (story.step === 'jars_play') story.q.step = 'jars';
   if (mini) { mini.stop(); mini.syncStars(); }
   unitCards = cards; cardOfFn = cardOf; if (chests) chests.sync();
+}
+async function reloadUnit() { learning(profile, await loadGrade(profile.grade)); save(); refresh(); }
+async function chooseProfile(p) {
+  unlock(); profile = p; store.last = p.id; started = false; shownLevel = 0;
+  learning(p, await loadGrade(p.grade));                                   // this grade only
   wear(profile); setSword();
   if ((story.step === 'open' || story.step === 'done') && !p.flags.bridge_fixed) p.flags.bridge_fixed = true;   // saves from before the bridge quest
   applyBridge();
@@ -234,26 +246,35 @@ function owlReview() {
   const L0 = Save.gateWaiting(profile);
   if (!L0) { const next = Save.GATES.find((g) => g > profile.stats.level); ui.dialogue([{ who: 'Owl', en: 'Hoo-hoo! Keep training, little hero.', vi: next ? `Đến cấp ${next}, cú sẽ ôn tập với con để mở cấp tiếp theo.` : 'Con đã qua hết các cổng ôn tập của làng.' }]); return; }
   const seen = Object.keys(profile.words).map((id) => cardOfFn(id)).filter(Boolean), pool = [...seen, ...unitCards.filter((c) => !seen.some((x) => x.id === c.id))].filter((c) => c.word.length <= 22);
-  if (pool.length < 4) { Save.passGate(profile, L0); save(); refresh(); ui.dialogue([{ who: 'Owl', en: 'Hoo! No words to review yet. Go on!', vi: `Từ vựng Unit ${profile.unit} lớp ${profile.grade} chưa có, cổng tự mở.` }]); return; }
+  if (pool.length < 4) { Save.passGate(profile, L0); save(); refresh(); ui.dialogue([{ who: 'Owl', en: 'Hoo! No words to review yet. Go on!', vi: `Từ vựng Unit ${Save.unitOf(profile)} lớp ${profile.grade} chưa có, cổng tự mở.` }]); return; }
   const due = new Set(Review.dueIds(profile.words)), order = [...pool].sort((a, b) => (due.has(b.id) ? 1 : 0) - (due.has(a.id) ? 1 : 0) || Math.random() - 0.5).slice(0, 5);
+  const gram = GRAMMAR_GATES.includes(L0) ? grammarFor(profile.grade, Save.unitOf(profile)) : [], total = order.length + gram.length;
   let right = 0;
   const ask = (n) => {
-    if (n >= order.length) {
-      const pass = right >= Math.min(4, order.length - 1);
+    if (n >= total) {
+      const pass = right >= total - 1;
       if (pass) { Save.passGate(profile, L0); sfx('fanfare'); }
       save(); refresh();
-      ui.dialogue([{ who: 'Owl', en: pass ? `Wonderful! ${right} of ${order.length}. You may grow stronger now!` : `${right} of ${order.length}. Let's try again soon!`, vi: pass ? 'Cổng ôn tập đã mở, con lên cấp rồi!' : 'Cần đúng 4/5 câu. Ôn lại các từ rồi gặp cú lần nữa nhé.' }]);
+      ui.dialogue([{ who: 'Owl', en: pass ? `Wonderful! ${right} of ${total}. You may grow stronger now!` : `${right} of ${total}. Let's try again soon!`, vi: pass ? 'Cổng ôn tập đã mở, con lên cấp rồi!' : `Cần đúng ${total - 1}/${total} câu. Ôn lại rồi gặp cú lần nữa nhé.` }]);
+      return;
+    }
+    if (n >= order.length) {          // grammar: choose the right form (N5)
+      const g = gram[n - order.length], idx = g.options.map((_, i) => i).sort(() => Math.random() - 0.5);
+      ui.choose({ who: `Owl · ${n + 1}/${total}`, en: g.q, vi: 'Chọn dạng đúng điền vào chỗ trống.' }, idx.map((i) => g.options[i]), (k) => {
+        const ok = idx[k] === g.a; if (ok) right += 1; Save.recordSkill(profile, 'grammar', ok, 0); sfx(ok ? 'correct' : 'wrong');
+        if (ok) ask(n + 1); else ui.dialogue([{ who: 'Owl', en: g.q.replace('___', g.options[g.a]), vi: g.why }], () => ask(n + 1));
+      });
       return;
     }
     const c = order[n], toEn = n % 2 === 0, others = pool.filter((x) => x.id !== c.id && x.vi !== c.vi && x.word !== c.word).sort(() => Math.random() - 0.5).slice(0, 3);
     const opts = [c, ...others].sort(() => Math.random() - 0.5), started = Date.now();
-    ui.choose({ who: `Owl · ${n + 1}/${order.length}`, en: toEn ? 'Which English word is it?' : `What does "${c.word}" mean?`, vi: toEn ? c.vi : undefined }, opts.map((o) => (toEn ? o.word : o.vi)), (i) => {
+    ui.choose({ who: `Owl · ${n + 1}/${total}`, en: toEn ? 'Which English word is it?' : `What does "${c.word}" mean?`, vi: toEn ? c.vi : undefined }, opts.map((o) => (toEn ? o.word : o.vi)), (i) => {
       const ok = opts[i].id === c.id; if (ok) right += 1;
       Review.record(profile.words, c.id, { correct: ok, hints: 0, ms: Date.now() - started }); Save.recordSkill(profile, 'vocabulary', ok, 0); sfx(ok ? 'correct' : 'wrong');
       if (ok) ask(n + 1); else ui.dialogue([{ who: 'Owl', en: 'Hoo… not that one.', vi: `${c.word} = ${c.vi}` }], () => ask(n + 1));
     });
   };
-  ui.dialogue([{ who: 'Owl', en: 'Hoo-hoo! Answer my questions and you can grow stronger.', vi: `Ôn 5 câu, đúng 4 câu thì lên được cấp ${L0 + 1}.` }], () => ask(0));
+  ui.dialogue([{ who: 'Owl', en: 'Hoo-hoo! Answer my questions and you can grow stronger.', vi: `Ôn ${total} câu${gram.length ? ` (có ${gram.length} câu ngữ pháp)` : ''}, đúng ${total - 1} câu thì lên được cấp ${L0 + 1}.` }], () => ask(0));
 }
 const near = (x, z, r) => Math.hypot(player.pos.x - x, player.pos.z - z) < r;
 function interactTarget() {
@@ -319,7 +340,7 @@ async function boot() {
   player = new Player(ngoc, { blink, talk, joy }); scene.add(player.root);
   tom = new Npc(tomG, 2.6, 7.6, -0.4); sam = new Npc(samG, 14, 17, 1.2); ben = new Npc(benG, -9.9, 19.5, Math.PI / 2); scene.add(tom.root, sam.root, ben.root);
   pip = new Pip(pipG.scene); scene.add(pip.root);
-  for (const f of Object.values(FRIENDS)) { const npc = new Npc(await gltf(f.file), ...f.at); scene.add(npc.root); friends.push({ ...f, npc }); }
+  for (const f of Object.values(FRIENDS)) { const npc = new Npc(await gltf(f.file), ...f.at, ngoc.animations); scene.add(npc.root); friends.push({ ...f, npc }); }
   const F = L.REGIONS.forest;
   crystals = new Crystals(scene, F.LANDMARKS.filter((l) => l.id !== 'tree'), F.walkHeight);
   const hall = L.REGIONS.village.LANDMARKS.find((l) => l.id === 'hall').spot;
@@ -333,12 +354,13 @@ async function boot() {
     if (!res) return;
     if (g.onResult) return g.onResult(res);
     const best = mini.data.best, record = best[res.id] === undefined || res.score > best[res.id]; if (record) best[res.id] = res.score;
-    profile.stats.gold += res.gold; Save.addExp(profile, res.exp); sfx('fanfare'); save(); refresh();
-    ui.dialogue([{ who: 'Ngọc', en: `${res.text} (+${res.gold} gold, +${res.exp} EXP)`, vi: record ? 'Kỷ lục mới của con!' : undefined }]);
+    const r = pay(profile, res.id, Review.today(), res.gold, res.exp);
+    profile.stats.gold += r.gold; Save.addExp(profile, r.exp); sfx('fanfare'); save(); refresh();
+    ui.dialogue([{ who: 'Ngọc', en: `${res.text} (+${r.gold} gold, +${r.exp} EXP)`, vi: [record ? 'Kỷ lục mới của con!' : '', payNote(r)].filter(Boolean).join(' ') || undefined }]);
   });
   chests = new Chests({ scene, profile: () => profile, cards: () => unitCards, dueIds: () => Review.dueIds(profile.words),
     open: (c, card) => {
-      if (!card) { ui.dialogue([{ who: 'Ngọc', en: 'This lock has no letters…', vi: `Từ vựng Unit ${profile.unit} lớp ${profile.grade} chưa có, rương tự mở.` }], () => { chests.opened(c); save(); }); return; }
+      if (!card) { ui.dialogue([{ who: 'Ngọc', en: 'This lock has no letters…', vi: `Từ vựng Unit ${Save.unitOf(profile)} lớp ${profile.grade} chưa có, rương tự mở.` }], () => { chests.opened(c); save(); }); return; }
       const g = spellGame(card); const started = Date.now();
       g.onResult = (res) => {
         Review.record(profile.words, card.id, { correct: res.wrong === 0, hints: res.wrong ? 1 : 0, ms: Date.now() - started }); Save.recordSkill(profile, 'spelling', res.wrong === 0, res.wrong ? 1 : 0);
@@ -348,13 +370,13 @@ async function boot() {
       arcade.start(g);
     } });
   wild = new Wild({ scene, player, ui, sfx, profile: () => profile, save, onChange: refresh,
-    quiz: (done) => {       // word shield: pick the English word for the Vietnamese meaning (unit vocabulary, due words first)
+    quiz: (bossName, done) => {       // word shield: pick the English word for the Vietnamese meaning (unit vocabulary, due words first)
       const pool = unitCards.filter((c) => c.word.length <= 18); if (pool.length < 4) { done(true); return; }
       const due = Review.dueIds(profile.words).map((id) => pool.find((c) => c.id === id)).filter(Boolean), card = (due.length ? due : pool)[Math.floor(Math.random() * (due.length || pool.length))];
       const opts = [card, ...pool.filter((c) => c.id !== card.id && c.vi !== card.vi).sort(() => Math.random() - 0.5).slice(0, 3)].sort(() => Math.random() - 0.5), started = Date.now();
-      ui.choose({ who: 'Slime King', en: 'Say the magic word to break my shield!', vi: `"${card.vi}" trong tiếng Anh là gì?` }, opts.map((o) => o.word), (i) => {
+      ui.choose({ who: bossName, en: 'Say the magic word to break my shield!', vi: `"${card.vi}" trong tiếng Anh là gì?` }, opts.map((o) => o.word), (i) => {
         const ok = opts[i].id === card.id; Review.record(profile.words, card.id, { correct: ok, hints: 0, ms: Date.now() - started }); Save.recordSkill(profile, 'vocabulary', ok, 0); save();
-        if (!ok) ui.dialogue([{ who: 'Slime King', en: 'Ha ha! Wrong word!', vi: `${card.word} = ${card.vi}. Đánh tiếp rồi thử lại nhé.` }]);
+        if (!ok) ui.dialogue([{ who: bossName, en: 'Ha ha! Wrong word!', vi: `${card.word} = ${card.vi}. Đánh tiếp rồi thử lại nhé.` }]);
         done(ok);
       });
     },

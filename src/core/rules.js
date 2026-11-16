@@ -70,7 +70,27 @@ export function countKill(profile, kind) {
   if (!h.active || q.kind !== kind || h.got >= q.need) return false;
   h.got += 1; return h.got >= q.need;
 }
-export const BOSS = { name: 'Slime King', level: 6, hp: 600, atk: 16, exp: 400, gold: 150, speed: 1.4, color: 0x5fd0ff, size: 2.6 };
+export const BOSS = { id: 'king', flag: 'boss1', name: 'Slime King', level: 8, hp: 600, atk: 16, exp: 400, gold: 150, speed: 1.4, color: 0x5fd0ff, size: 2.6 };
+/** Map 1's last boss in the golem fields. Beating it at level 20 opens Map 2. */
+export const BOSS2 = { id: 'ancient', flag: 'boss2', name: 'Ancient Golem', level: 18, hp: 1600, atk: 30, exp: 900, gold: 300, speed: 1.2, color: 0x9a8f7a, size: 3.0 };
+export const BOSSES = [BOSS, BOSS2];
+/** Map 2 opens once the Ancient Golem is beaten and the hero has reached level 20 (owl gate passed or waiting). */
+export const map2Ready = (profile) => !!(profile.flags.boss2 && profile.stats.level >= 20);
+
+// ---------------------------------------------------------------- mini game pay
+/** Each skill game pays in full for its first FULL_PLAYS games of the day, then LATER_PAY of it, so gold and EXP
+ *  come mostly from training and quests. Returns the factor and counts this play. */
+export const FULL_PLAYS = 3, LATER_PAY = 0.2;
+export function payFactor(profile, game, day) {
+  const r = profile.plays && profile.plays.day === day ? profile.plays : (profile.plays = { day, n: {} });
+  r.n[game] = (r.n[game] || 0) + 1;
+  return r.n[game] <= FULL_PLAYS ? 1 : LATER_PAY;
+}
+/** Applies payFactor to a reward {gold, exp}; rounds down but never to zero for a non-zero reward. */
+export function pay(profile, game, day, gold, exp = 0) {
+  const k = payFactor(profile, game, day), f = (v) => (v > 0 ? Math.max(1, Math.floor(v * k)) : 0);
+  return { gold: f(gold), exp: f(exp), full: k === 1, left: Math.max(0, FULL_PLAYS - profile.plays.n[game]) };
+}
 /** The boss raises a word shield each time its health drops past one of these fractions. */
 export const SHIELDS = [0.75, 0.5, 0.25];
 export const shieldDue = (hp, max, broken) => broken < SHIELDS.length && hp / max <= SHIELDS[broken];

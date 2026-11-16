@@ -2,6 +2,10 @@
 // the west meadow and twelve hidden stars. They exist so the village is fun between lessons; rewards are small.
 import * as THREE from 'three';
 import * as L from '../core/layout.js';
+import { pay, FULL_PLAYS } from '../core/rules.js';
+import { today } from '../core/review.js';
+/** Tells the child when today's full pay for this game is used up (T1: skill games are for fun, not for farming gold). */
+export const payNote = (r) => (!r.full ? `Hôm nay trò này chỉ còn thưởng 20%. Đi đánh quái, làm nhiệm vụ để được nhiều hơn!` : r.left === 0 ? `Đã hết ${FULL_PLAYS} lượt thưởng đầy đủ hôm nay của trò này.` : '');
 
 export const STARS = [[-46, -6], [-38, -34], [-12, -38], [30, -30], [48, -12], [52, 20], [44, 38], [10, 50], [-22, 50], [-48, 30], [-30, 14], [8, -36]];
 export const RACE = [[-20, 2], [-32, 4], [-42, 14], [-40, 28], [-34, 42], [-18, 46], [-6, 44], [-8, 30], [-20, 2]];
@@ -76,8 +80,9 @@ export class MiniGames {
   finish(gold, text, key, score, lowerIsBetter) {
     const p = this.api.profile(), best = this.data.best, old = best[key];
     const record = old === undefined || (lowerIsBetter ? score < old : score > old); if (record) best[key] = score;
-    p.stats.gold += gold; this.stop(); this.api.sfx('fanfare'); this.api.save();
-    this.api.ui.dialogue([{ who: 'Ngọc', en: `${text} (+${gold} gold)`, vi: record ? 'Kỷ lục mới của con!' : undefined }]);
+    const r = pay(p, key, today(), gold);
+    p.stats.gold += r.gold; this.stop(); this.api.sfx('fanfare'); this.api.save();
+    this.api.ui.dialogue([{ who: 'Ngọc', en: `${text} (+${r.gold} gold)`, vi: [record ? 'Kỷ lục mới của con!' : '', payNote(r)].filter(Boolean).join(' ') || undefined }]);
   }
 
   update(dt, pos) {

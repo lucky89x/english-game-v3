@@ -3,14 +3,14 @@
 // village square with full health and no loss, so young players are never punished hard.
 import * as THREE from 'three';
 import * as L from '../core/layout.js';
-import { MONSTERS, SPAWNS, playerAtk, hurt, inArc, HUNTS, hunt, countKill, huntLine, BOSS, shieldDue } from '../core/rules.js';
+import { MONSTERS, SPAWNS, playerAtk, hurt, inArc, HUNTS, hunt, countKill, huntLine, BOSSES, shieldDue } from '../core/rules.js';
 
-export const BOARD = { x: 29, z: -14 }, BOSS_AT = { x: 40, z: -26 };
+export const BOARD = { x: 29, z: -14 }, BOSS_AT = { x: 40, z: -26 }, BOSS2_AT = { x: 46, z: 40 };
 import { addExp, maxHp } from '../core/save.js';
 import { compact } from '../world/forest.js';
 
 export class Wild {
-  /** api: { scene, player, ui, sfx(name), profile() -> profile, save(), onChange(), respawn(), quiz(done(ok)) } */
+  /** api: { scene, player, ui, sfx(name), profile() -> profile, save(), onChange(), respawn(), quiz(bossName, done(ok)) } */
   constructor(api) {
     this.api = api; this.root = new THREE.Group(); api.scene.add(this.root); this.cool = 0; this.t = 0; this.regen = 0;
     const eye = new THREE.MeshBasicMaterial({ color: 0x24140c }), white = new THREE.MeshBasicMaterial({ color: 0xffffff });
@@ -29,22 +29,9 @@ export class Wild {
       g.scale.setScalar(def.size); this.root.add(g);
       return { i, kind, def, g, body, bar, back, home: { x, z }, x, z, hp: def.hp, dead: 0, hitCool: 0, flash: 0, ph: i * 1.3 };
     });
-    // the Slime King: a big crowned slime that wakes up once Ngọc reaches its level
-    {
-      const def = BOSS, g = new THREE.Group(), mat = new THREE.MeshStandardMaterial({ color: def.color, roughness: 0.15, transparent: true, opacity: 0.9, emissive: def.color, emissiveIntensity: 0.12 });
-      const body = new THREE.Mesh(new THREE.SphereGeometry(0.5, 20, 14), mat); body.scale.set(1, 0.8, 1); body.position.y = 0.4; body.castShadow = true; body.userData.live = true; g.add(body);
-      const gold = new THREE.MeshStandardMaterial({ color: 0xffd23c, metalness: 0.8, roughness: 0.3, emissive: 0xb08010, emissiveIntensity: 0.4 });
-      const crown = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.24, 0.14, 10, 1, true), gold); crown.position.y = 0.86; g.add(crown);
-      for (let k = 0; k < 5; k++) { const a = k * 1.257, sp = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.14, 5), gold); sp.position.set(Math.cos(a) * 0.22, 1.0, Math.sin(a) * 0.22); g.add(sp); }
-      for (const sx of [-1, 1]) { const e = new THREE.Mesh(new THREE.SphereGeometry(0.075, 8, 6), eye); e.position.set(sx * 0.15, 0.48, 0.44); g.add(e); const brow = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.04, 0.04), eye); brow.position.set(sx * 0.15, 0.6, 0.46); brow.rotation.z = -sx * 0.5; g.add(brow); }
-      compact(g);
-      const shield = new THREE.Mesh(new THREE.IcosahedronGeometry(0.75, 1), new THREE.MeshBasicMaterial({ color: 0xffe28a, transparent: true, opacity: 0.3, wireframe: true, depthWrite: false })); shield.position.y = 0.45; shield.visible = false; g.add(shield);
-      const bar = new THREE.Sprite(new THREE.SpriteMaterial({ color: 0xe23a2a, depthTest: false })); bar.center.set(0, 0.5); bar.scale.set(1, 0.07, 1); bar.position.set(-0.5, 1.25, 0); bar.renderOrder = 6; g.add(bar);
-      const back = new THREE.Sprite(new THREE.SpriteMaterial({ color: 0x3a2410, depthTest: false })); back.center.set(0, 0.5); back.scale.set(1.04, 0.1, 1); back.position.set(-0.52, 1.25, 0); back.renderOrder = 5; g.add(back);
-      g.scale.setScalar(def.size); this.root.add(g);
-      this.boss = { i: this.mobs.length, kind: 'king', boss: true, def, g, body, bar, back, shield, home: { ...BOSS_AT }, x: BOSS_AT.x, z: BOSS_AT.z, hp: def.hp, dead: 0, hitCool: 0, flash: 0, ph: 0, broken: 0, shieldOn: false };
-      this.mobs.push(this.boss);
-    }
+    // Map 1's bosses wake up once Ngọc reaches their level: the Slime King in the meadow, the Ancient Golem in the golem fields
+    this.bosses = BOSSES.map((def, k) => this.makeBoss(def, k ? BOSS2_AT : BOSS_AT, eye));
+    this.boss = this.bosses[0];
     // quest board at the edge of the meadow
     {
       const wood = new THREE.MeshStandardMaterial({ color: 0x8a5a30, roughness: 0.85 }), g = new THREE.Group();
@@ -58,6 +45,30 @@ export class Wild {
     // sword slash arc shown for a moment in front of Ngọc
     this.slash = new THREE.Mesh(new THREE.TorusGeometry(1.5, 0.09, 6, 20, Math.PI * 0.9), new THREE.MeshBasicMaterial({ color: 0xfff2a0, transparent: true, opacity: 0.9, depthWrite: false })); this.slash.rotation.x = Math.PI / 2; this.slash.visible = false; api.scene.add(this.slash);
     this.setRegion(L.NAME);
+  }
+  makeBoss(def, at, eye) {
+    const g = new THREE.Group(), stone = def.id === 'ancient';
+    const mat = new THREE.MeshStandardMaterial({ color: def.color, roughness: stone ? 0.95 : 0.15, transparent: !stone, opacity: stone ? 1 : 0.9, emissive: def.color, emissiveIntensity: 0.12, flatShading: stone });
+    const body = new THREE.Mesh(stone ? new THREE.IcosahedronGeometry(0.5, 1) : new THREE.SphereGeometry(0.5, 20, 14), mat); body.scale.set(1, stone ? 1.15 : 0.8, 1); body.position.y = stone ? 0.55 : 0.4; body.castShadow = true; body.userData.live = true; g.add(body);
+    const gold = new THREE.MeshStandardMaterial({ color: 0xffd23c, metalness: 0.8, roughness: 0.3, emissive: 0xb08010, emissiveIntensity: 0.4 });
+    if (stone) {        // moss cap, glowing runes and big fists
+      const moss = new THREE.Mesh(new THREE.SphereGeometry(0.34, 10, 6), new THREE.MeshStandardMaterial({ color: 0x5fa040 })); moss.scale.y = 0.45; moss.position.y = 1.08; g.add(moss);
+      for (const sx of [-1, 1]) { const arm = new THREE.Mesh(new THREE.IcosahedronGeometry(0.24, 0), mat); arm.position.set(sx * 0.62, 0.42, 0.1); arm.castShadow = true; g.add(arm); }
+      const rune = new THREE.MeshBasicMaterial({ color: 0x8fe8ff });
+      for (const [x, y] of [[-0.2, 0.3], [0.22, 0.42], [0, 0.18]]) { const r = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 0.02), rune); r.position.set(x, y, 0.47); r.rotation.z = 0.78; g.add(r); }
+    } else {
+      const crown = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.24, 0.14, 10, 1, true), gold); crown.position.y = 0.86; g.add(crown);
+      for (let k = 0; k < 5; k++) { const a = k * 1.257, sp = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.14, 5), gold); sp.position.set(Math.cos(a) * 0.22, 1.0, Math.sin(a) * 0.22); g.add(sp); }
+    }
+    for (const sx of [-1, 1]) { const e = new THREE.Mesh(new THREE.SphereGeometry(0.075, 8, 6), stone ? new THREE.MeshBasicMaterial({ color: 0x8fe8ff }) : eye); e.position.set(sx * 0.15, stone ? 0.7 : 0.48, 0.44); g.add(e); const brow = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.04, 0.04), eye); brow.position.set(sx * 0.15, stone ? 0.82 : 0.6, 0.46); brow.rotation.z = -sx * 0.5; g.add(brow); }
+    compact(g);
+    const shield = new THREE.Mesh(new THREE.IcosahedronGeometry(0.75, 1), new THREE.MeshBasicMaterial({ color: 0xffe28a, transparent: true, opacity: 0.3, wireframe: true, depthWrite: false })); shield.position.y = 0.45; shield.visible = false; g.add(shield);
+    const top = stone ? 1.45 : 1.25;
+    const bar = new THREE.Sprite(new THREE.SpriteMaterial({ color: 0xe23a2a, depthTest: false })); bar.center.set(0, 0.5); bar.scale.set(1, 0.07, 1); bar.position.set(-0.5, top, 0); bar.renderOrder = 6; g.add(bar);
+    const back = new THREE.Sprite(new THREE.SpriteMaterial({ color: 0x3a2410, depthTest: false })); back.center.set(0, 0.5); back.scale.set(1.04, 0.1, 1); back.position.set(-0.52, top, 0); back.renderOrder = 5; g.add(back);
+    g.scale.setScalar(def.size); this.root.add(g);
+    const m = { i: this.mobs.length, kind: def.id, boss: true, def, g, body, bar, back, shield, home: { ...at }, x: at.x, z: at.z, hp: def.hp, dead: 0, hitCool: 0, flash: 0, ph: 0, broken: 0, shieldOn: false };
+    this.mobs.push(m); return m;
   }
   setRegion(name) { this.root.visible = name === 'village'; for (const m of this.mobs) this.place(m); }
   place(m) { m.g.position.set(m.x, L.groundHeight(m.x, m.z), m.z); }
@@ -87,21 +98,21 @@ export class Wild {
   }
   kill(m, p) {
     m.dead = m.boss ? 300 : m.kind === 'golem' ? 40 : 14; m.g.visible = false;
-    const first = m.boss && !p.flags.boss1, k = m.boss && !first ? 0.25 : 1, gold = Math.round(m.def.gold * k), exp = Math.round(m.def.exp * k);
+    const first = m.boss && !p.flags[m.def.flag], k = m.boss && !first ? 0.25 : 1, gold = Math.round(m.def.gold * k), exp = Math.round(m.def.exp * k);
     p.stats.gold += gold; addExp(p, exp); p.kills = (p.kills || 0) + 1;
-    if (m.boss) { m.broken = 0; m.shieldOn = false; m.shield.visible = false; p.flags.boss1 = true; }
+    if (m.boss) { m.broken = 0; m.shieldOn = false; m.shield.visible = false; p.flags[m.def.flag] = true; }
     if (countKill(p, m.kind)) this.api.ui.toast('Quest done! Go back to the board');
     else this.api.ui.toast(`+${exp} EXP   +${gold} ●`);
-    if (first) this.api.ui.dialogue([{ who: 'Ngọc', en: `I defeated the Slime King! (+${gold} gold, +${exp} EXP)`, vi: 'Con đã thắng Vua Slime của Đồng Hoang! Vua Slime sẽ quay lại sau, nhưng ít thưởng hơn.' }]);
+    if (first && m.def.flag === 'boss1') this.api.ui.dialogue([{ who: 'Ngọc', en: `I defeated the Slime King! (+${gold} gold, +${exp} EXP)`, vi: 'Con đã thắng Vua Slime! Ở cấp 18, Golem Cổ sẽ thức dậy ở cánh đồng đá phía Đông Nam.' }]);
+    if (first && m.def.flag === 'boss2') this.api.ui.dialogue([{ who: 'Ngọc', en: `I defeated the Ancient Golem! (+${gold} gold, +${exp} EXP)`, vi: p.stats.level >= 20 ? 'Cổng Map 2 đã mở!' : 'Đạt cấp 20 (qua cổng Cú Mèo) là mở được Map 2.' }]);
     this.api.save(); this.api.onChange();
   }
   /** E near the board, or near the shielded boss. */
   interact(pos) {
     if (!this.root.visible) return null;
-    const b = this.boss;
-    if (b.g.visible && b.shieldOn && Math.hypot(pos.x - b.x, pos.z - b.z) < 2.2 + b.def.size * 0.5) return { text: 'E · Phá khiên chữ của Vua Slime', run: () => this.api.quiz((ok) => {
+    for (const b of this.bosses) if (b.g.visible && b.shieldOn && Math.hypot(pos.x - b.x, pos.z - b.z) < 2.2 + b.def.size * 0.5) return { text: 'E · Phá khiên chữ của ' + (b.def.flag === 'boss1' ? 'Vua Slime' : 'Golem Cổ'), run: () => this.api.quiz(b.def.name, (ok) => {
       if (ok) { b.shieldOn = false; b.shield.visible = false; b.broken += 1; this.api.sfx('fanfare'); this.api.ui.toast('Shield broken!'); }
-      else { b.hp = Math.min(b.def.hp * [1, 0.75, 0.5][b.broken], b.hp + 40); this.api.sfx('wrong'); }
+      else { b.hp = Math.min(b.def.hp * [1, 0.75, 0.5][b.broken], b.hp + b.def.hp * 0.07); this.api.sfx('wrong'); }
       this.api.onChange(); }) };
     if (Math.hypot(pos.x - BOARD.x, pos.z - BOARD.z) < 2.2) return { text: 'E · Bảng nhiệm vụ săn quái', run: () => this.board() };
     return null;
@@ -123,7 +134,7 @@ export class Wild {
     const hpMax = maxHp(p); if (p.stats.hp === undefined || p.stats.hp > hpMax) p.stats.hp = hpMax;
     let fighting = false;
     for (const m of this.mobs) {
-      if (m.boss && p.stats.level < BOSS.level) { m.g.visible = false; continue; }
+      if (m.boss && p.stats.level < m.def.level) { m.g.visible = false; continue; }
       if (m.boss && !m.dead && !m.g.visible) { m.g.visible = true; this.place(m); }
       if (m.dead) { m.dead -= dt; if (m.dead <= 0) { m.dead = 0; m.hp = m.def.hp; if (m.boss) { m.broken = 0; m.shieldOn = false; m.shield.visible = false; } m.x = m.home.x; m.z = m.home.z; m.g.visible = true; this.place(m); } continue; }
       const dx = player.pos.x - m.x, dz = player.pos.z - m.z, d = Math.hypot(dx, dz), far = Math.hypot(m.x - m.home.x, m.z - m.home.z);
@@ -148,7 +159,7 @@ export class Wild {
     if (!this.root.visible) return [];
     const p = this.api.profile(), h = p && p.hunt, q = h && HUNTS[h.i % HUNTS.length], out = [];
     if (!h || !h.active || h.got >= q.need) out.push({ x: BOARD.x, z: BOARD.z, text: '!', color: '#ffd23c' });
-    if (this.boss.g.visible && !this.boss.dead) out.push({ x: this.boss.x, z: this.boss.z, text: '♛', color: '#8fd8ff' });
+    for (const b of this.bosses) if (b.g.visible && !b.dead) out.push({ x: b.x, z: b.z, text: '♛', color: b.def.flag === 'boss1' ? '#8fd8ff' : '#e0c890' });
     return out.concat(this.mobs.filter((m) => !m.dead && !m.boss).map((m) => ({ x: m.x, z: m.z, text: '', color: m.kind === 'golem' ? '#8a8490' : m.kind === 'red' ? '#ff6a5a' : '#6ad05a', small: true })));
   }
 }
