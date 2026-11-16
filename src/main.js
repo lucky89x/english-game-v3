@@ -6,7 +6,7 @@ import * as Save from './core/save.js';
 import * as Review from './core/review.js';
 import { loadGrade } from './core/catalog.js';
 import { grammarFor, GRAMMAR_GATES } from './core/grammar.js';
-import { buildWorld, bridgeItem, TIME, MARKET_JARS } from './world/forest.js';
+import { buildWorld, bridgeItem, TIME, MARKET_JARS } from './world/index.js';
 import { Player, OrbitCamera, Npc, Pip, Crystals } from './game/actors.js';
 import { ForestQuest, landmark } from './game/quest.js';
 import { VillageStory } from './game/village.js';
@@ -19,6 +19,7 @@ import { payNote } from './game/minigames.js';
 import { SAM_LINES, BRIDGE, BRIDGE_SPOTS, FRIENDS } from './game/content.js';
 import { UI } from './ui/ui.js';
 import { Minimap } from './ui/minimap.js';
+import { initTouch, touchWanted } from './ui/touch.js';
 import { sfx, setSound, soundOn, unlock } from './audio.js';
 
 const $ = (id) => document.getElementById(id);
@@ -71,7 +72,7 @@ const faceTex = async (name) => { const t = await texLoader.loadAsync(`./assets/
 
 const ui = new UI(), store = Save.load();
 let profile = null, quest = null, story = null, world = null, player = null, cam = null, tom = null, sam = null, ben = null, pip = null, crystals = null, minimap = null, letterProp = null, itemProps = {}, friends = [], mini = null, wild = null, arcade = null, chests = null, unitCards = [], cardOfFn = () => null;
-let quality = localStorage.getItem('eq-quality') || 'medium', perfOn = false, started = false, switching = false, wordIds = {}, jarKey = '';
+let touch = null, quality = localStorage.getItem('eq-quality') || 'medium', perfOn = false, started = false, switching = false, wordIds = {}, jarKey = '';
 const keys = new Set();
 const game = { errors, get profile() { return profile; }, get quest() { return quest; }, get story() { return story; }, get player() { return player; }, get cam() { return cam; }, get minimap() { return minimap; }, ui, L, stats: { fps: 0, ms: 0, calls: 0, tris: 0 },
   teleport(x, z) { player.place(x, z); cam.target.set(x, player.pos.y + 1.25, z); }, setQuality, key: (code) => onKey({ code, preventDefault() {} }), get started() { return started && !switching; }, get region() { return L.NAME; }, chooseProfile, enterRegion, MARKET_JARS, BRIDGE_SPOTS, get mini() { return mini; }, get wild() { return wild; }, get scene() { return scene; }, openShop, get sword() { return swordMesh; }, get arcade() { return arcade; }, get chests() { return chests; }, get friends() { return friends; }, refresh: () => refresh() };
@@ -350,6 +351,7 @@ async function boot() {
   letterProp.position.set(hall[0] + 1.2, L.REGIONS.village.groundHeight(hall[0] + 1.2, hall[1]) + 0.5, hall[1]); letterProp.visible = false; scene.add(letterProp);
   for (const id of ['rope', 'chain', 'log', 'boulder']) { const [x, z] = BRIDGE_SPOTS[id], m = bridgeItem(id); m.position.set(x, L.REGIONS.village.groundHeight(x, z), z); m.visible = false; scene.add(m); itemProps[id] = m; }
   cam = new OrbitCamera(camera, canvas);
+  if (touchWanted()) touch = initTouch({ keys, press: (code) => onKey({ code, preventDefault() {} }), cam, canvas, state: () => ({ playing: started && !switching, arcade: !!(arcade && arcade.open) }) });
   arcade = new Arcade((g, res) => {       // a finished board game pays gold and EXP; quitting pays nothing
     if (!res) return;
     if (g.onResult) return g.onResult(res);
@@ -397,6 +399,7 @@ function frame() {
   const dt = Math.min(0.05, real); TIME.value += real; const t = TIME.value;
   const frozen = ui.modal || !started || (arcade && arcade.open);
   if (arcade) arcade.update(real, keys);
+  if (touch) touch.update();
   const input = { x: (keys.has('KeyD') || keys.has('ArrowRight') ? 1 : 0) - (keys.has('KeyA') || keys.has('ArrowLeft') ? 1 : 0), z: (keys.has('KeyW') || keys.has('ArrowUp') ? 1 : 0) - (keys.has('KeyS') || keys.has('ArrowDown') ? 1 : 0), run: keys.has('ShiftLeft') || keys.has('ShiftRight'), jump: keys.has('Space') };
   if (frozen) { input.x = input.z = 0; input.jump = false; }
   const hadRoute = !!player.route;

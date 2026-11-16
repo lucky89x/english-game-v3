@@ -97,6 +97,31 @@ await run('forest', async () => {
   check(await ev(() => __eq.errors.length === 0 && !__eq.wild.root.visible), 'Forest loads, no monsters from the meadow there');
 });
 
+await run('touch', async () => {         // T4: a tablet page (?touch=1) with the joystick and buttons
+  const tp = await browser.newPage({ viewport: { width: 1024, height: 700 } }); await tp.goto(url + '?touch=1');
+  await tp.waitForFunction(() => globalThis.__eq && document.getElementById('loading').classList.contains('hidden') && !document.getElementById('menu').classList.contains('hidden'), null, { timeout: 180000 });
+  tp.setDefaultTimeout(120000); await tp.click('#mnew'); await tp.fill('#mname', 'Tab'); await tp.click('[data-g="6"]'); await tp.click('#mgo');
+  await tp.waitForFunction(() => __eq.started, null, { timeout: 90000 }); await tp.waitForTimeout(500);
+  check(await tp.isVisible('#touch .stick') && await tp.isVisible('#touch [data-k="KeyE"]'), 'Tablet: joystick and buttons shown');
+  const p0 = await tp.evaluate(() => ({ x: __eq.player.pos.x, z: __eq.player.pos.z }));
+  const box = await tp.locator('#touch .stick').boundingBox(), cx = box.x + box.width / 2, cy = box.y + box.height / 2;
+  await tp.mouse.move(cx, cy); await tp.mouse.down(); await tp.mouse.move(cx, cy - 40, { steps: 4 }); await tp.waitForTimeout(1500);
+  const p1 = await tp.evaluate(() => ({ x: __eq.player.pos.x, z: __eq.player.pos.z }));
+  await tp.mouse.up(); await tp.waitForTimeout(300);
+  check(Math.hypot(p1.x - p0.x, p1.z - p0.z) > 1.2, 'Pushing the joystick walks Ngọc');
+  await tp.evaluate(() => __eq.teleport(1.6, 9.2)); await tp.waitForTimeout(500);
+  await tp.locator('#touch [data-k="KeyE"]').dispatchEvent('pointerdown'); await tp.locator('#touch [data-k="KeyE"]').dispatchEvent('pointerup'); await tp.waitForTimeout(300);
+  check((await tp.textContent('#dialog')).includes('Welcome'), 'The E button talks to Tom');
+  for (let k = 0; k < 6 && await tp.isVisible('#dialog'); k++) { await tp.click('#dialog'); await tp.waitForTimeout(200); }
+  await tp.evaluate(async () => { const A = await import('./src/ui/arcade.js'); __eq.arcade.start(A.blocksGame()); }); await tp.waitForTimeout(400);
+  const y0 = await tp.evaluate(() => __eq.arcade.game.piece.x);
+  await tp.locator('#touch [data-k="ArrowLeft"]').dispatchEvent('pointerdown'); await tp.locator('#touch [data-k="ArrowLeft"]').dispatchEvent('pointerup'); await tp.waitForTimeout(200);
+  check(y0 !== await tp.evaluate(() => __eq.arcade.game.piece.x), 'The ◀ button moves the falling block');
+  check(await tp.isVisible('#touch .dpad') && !(await tp.isVisible('#touch .stick')), 'Board game open: the direction pad replaces the joystick');
+  check(await tp.evaluate(() => __eq.errors.length === 0), 'Tablet page: no script errors ' + await tp.evaluate(() => __eq.errors.join(' | ').slice(0, 300)));
+  await tp.close();
+});
+
 check(await ev(() => __eq.errors.length === 0), 'No script errors at the end');
 console.log(failed ? `${failed} FAILED` : 'ALL PASS', logs.filter((l) => !/ReadPixels|GPU stall/.test(l)).slice(0, 5));
 await browser.close(); server.close(); process.exit(failed ? 1 : 0);

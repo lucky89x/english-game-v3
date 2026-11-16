@@ -7,7 +7,7 @@ import { MONSTERS, SPAWNS, playerAtk, hurt, inArc, HUNTS, hunt, countKill, huntL
 
 export const BOARD = { x: 29, z: -14 }, BOSS_AT = { x: 40, z: -26 }, BOSS2_AT = { x: 46, z: 40 };
 import { addExp, maxHp } from '../core/save.js';
-import { compact } from '../world/forest.js';
+import { compact } from '../world/common.js';
 
 export class Wild {
   /** api: { scene, player, ui, sfx(name), profile() -> profile, save(), onChange(), respawn(), quiz(bossName, done(ok)) } */
