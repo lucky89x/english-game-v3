@@ -14,19 +14,21 @@ Game học tiếng Anh lớp 6–9 bằng Three.js, JavaScript thuần, không b
 ## Lệnh
 ```bash
 node --test tests/unit.test.mjs        # vài giây; chạy sau mọi thay đổi
-node tests/e2e.mjs                     # 20–25 phút trên máy không GPU; chạy nền, một lần cho mỗi cụm thay đổi
-node tests/look.mjs <tiền tố>          # ảnh duyệt mỹ thuật trong game
+node tests/quick.mjs --only combat,owl # nhóm: boot combat unit owl arcade touch forest; 2–6 phút, dùng cho lượt sửa nhỏ
+node tests/e2e.mjs                     # cả cốt truyện, 20–25 phút trên máy không GPU; chạy nền, một lần cho mỗi cụm thay đổi
+node tests/look.mjs <tiền tố> [village|forest] [quality] [tên,…]   # ảnh duyệt mỹ thuật trong game (ngoc_close, ngoc_side…)
+python3 tools/review_sheet.py          # tạo lại bảng đối chiếu nội dung docs/DOI_CHIEU_NOI_DUNG.html
 node tests/profile.mjs                 # tam giác và lệnh vẽ theo vật thể
 PY=<python có bpy 4.2> tools/chibi05/build_all.sh   # dựng lại model, ~1 phút
 ```
 - e2e cần `playwright` phân giải được từ thư mục cha (`node_modules/playwright`).
-- Chỉ thêm `--shots screenshots` ở mốc lớn: mỗi lần ghi đè khoảng 3 MB ảnh vào lịch sử git.
+- Chỉ thêm `--shots screenshots` ở mốc lớn: chỉ ghi 8 ảnh tiêu biểu (danh sách KEEP trong e2e).
 - Không sửa file trong lúc e2e đang chạy (bước tải lại trang sẽ lấy file dở dang).
 
 ## Cấu trúc
-- `src/core/`: luật thuần, test được bằng node (bản đồ `regionkit`/`layout`, `nav` A*, `save`, `review`, `rules` chiến đấu–cửa hàng–nhiệm vụ, `match3`, `blocks`, `spell`).
+- `src/core/`: luật thuần, test được bằng node (bản đồ `regionkit`/`layout`, `nav` A*, `save` (EXP, cổng, `unitOf`), `review`, `rules` chiến đấu–cửa hàng–nhiệm vụ–boss–giới hạn thưởng, `grammar` câu ngữ pháp cổng Cú Mèo, `match3`, `blocks`, `spell`).
 - `src/game/`: truyện làng (`village`), rừng (`quest`), quái (`combat`), mini game (`minigames`), rương (`chests`), lời thoại (`content`).
-- `src/world/forest.js`: dựng cảnh cho CẢ làng và rừng (tên file cũ). `src/ui/`: HUD, hộp thoại, bản đồ nhỏ, bàn chơi `arcade`.
+- `src/world/`: `index.js` (buildWorld), `common.js` (đất, nước, cây, cỏ, đèn, biển, `bake`/`compact`, `rnd` có seed: giữ thứ tự gọi để cảnh không đổi), `village.js`, `forest.js`. `src/ui/`: HUD, hộp thoại, bản đồ nhỏ, bàn chơi `arcade`, nút chạm `touch` (?touch=1 để thử).
 - `data/learning/g<lớp>_u<unit>.json`: từ vựng; trường `status`, `vocabulary_checked` cho biết đã đối chiếu chưa.
 - `docs/MAP1_PLAN.md`: kế hoạch và trạng thái; cập nhật cột Trạng thái khi xong một hạng mục.
 
@@ -35,22 +37,25 @@ PY=<python có bpy 4.2> tools/chibi05/build_all.sh   # dựng lại model, ~1 ph
 - Giảm tam giác trong Blender làm mất skin nếu không chọn lại rig + mesh trước khi xuất; `build_all.sh` kiểm tra việc này.
 - Bóng khe (AO) nướng vào màu đỉnh: nhân vật 0.6, nhà 0.3 (tường phẳng ít đỉnh sẽ bị xám nếu mạnh hơn); không nướng lên mặt.
 - Biển trò chơi đặt sát NPC làm phím E mở nhầm; giữ khoảng cách trên 4 m.
-- Tải Blender bản đầy đủ bị chặn; dùng `pip install bpy==4.2.0` với Python 3.11.
+- Tải Blender bản đầy đủ bị chặn; dùng `pip install bpy==4.2.0` với Python 3.11 (máy này: `/workspace/.bpyenv/bin/python`).
+- Lily, Rose, Anna xuất không có hoạt ảnh (`CHIBI_NO_ANIM=1`) và mượn clip của Ngọc lúc chạy; đổi xương của Ngọc thì phải dựng lại cả 4.
+- Test trang thứ hai (máy tính bảng) trong cùng trình duyệt chạy chậm: đặt `setDefaultTimeout(120000)`.
 
 ## Tiến độ (cập nhật cuối mỗi lượt làm việc, trước khi commit)
 Cập nhật mục này mỗi khi xong việc, để phiên/hội thoại mới đọc là nắm được ngay.
 
-**Lần cập nhật:** 2026-11-16 · nhánh `fable/web-rebuild` · e2e 122/122 · unit 32/32 · tải 12,53 MB
+**Lần cập nhật:** 2026-11-16 (lượt 2) · nhánh `fable/web-rebuild` · e2e E2E_RESULT · quick 30/30 · unit 36/36 · model 10,12 MB (tải ~11,4 MB)
 
 **Đã có (Map 1 + Rừng):**
-- Truyện: Bức thư, Hũ chữ của Ben, Sửa cây cầu (lớp 6, 8), pha lê Rừng Ký Ức.
-- Nhập vai: cấp, máu, J/F đánh, K né, Q ăn bánh; Đồng Hoang (slime, golem), Vua Slime cấp 6 với 3 khiên chữ; cửa hàng Bram và Rose; kiếm hiện trên tay.
-- Tiếng Anh trong vòng chơi: 5 rương khóa chữ (1 lần/ngày), bảng nhiệm vụ săn quái, Cú Mèo ôn 5 câu ở cấp 5/10/15/20.
-- Trò chơi không tiếng Anh: câu cá, hứng táo, chạy vòng, 12 sao, xếp kẹo, súng cao su, xếp hình, đua xe.
-- Mỹ thuật: Ngọc v03, Lily/Rose/Anna (biến thể Ngọc), Tom/Sam/Ben/Bram, nhà mái ngói, bóng khe nướng vào màu đỉnh, lá cây dạng thẻ.
+- Truyện: Bức thư, Hũ chữ của Ben, Sửa cây cầu cho cả lớp 6–9 (lớp 8 dùng ngữ pháp Unit 1: động từ sở thích + V-ing), pha lê Rừng Ký Ức.
+- Nhập vai: cấp 1–20 (9.405 EXP ≈ 8–10 giờ), J/F đánh, K né, Q ăn bánh; Đồng Hoang; Vua Slime cấp 8, Golem Cổ cấp 18 (Đông Nam); thắng Golem Cổ ở cấp 20 mở Map 2 (Rừng Ký Ức, từ Unit 2); cửa hàng Bram, Rose.
+- Tiếng Anh trong vòng chơi: rương khóa chữ, bảng nhiệm vụ, khiên chữ của 2 boss, Cú Mèo cấp 5/10/15/20 (10/15/20 thêm 2 câu ngữ pháp, có cho Unit 1 cả 4 lớp). Unit theo map; phụ huynh chọn Unit ở thanh cài đặt.
+- Trò chơi không tiếng Anh (8 trò): thưởng đầy đủ 3 lượt đầu mỗi trò mỗi ngày, sau đó 20%.
+- Máy tính bảng: cần ảo + nút chạm (chưa thử máy thật).
+- Mỹ thuật: tóc lọn cong thuôn nhọn (M1) cho Ngọc, Lily, Rose, Anna; bóng khe nướng vào màu đỉnh; lá cây dạng thẻ.
 
-**Còn lại Map 1:** cổng sang Map 2 ở cấp 20, màn hình túi đồ, giáp hiện trên người, lấp đất trống phía Nam.
+**Còn lại Map 1:** màn hình túi đồ, giáp hiện trên người, lấp đất trống phía Nam (D1), quái/boss riêng cho Map 2.
 
-**Chờ người dùng duyệt:** báo cáo `docs/RA_SOAT_2026-11-16.html` (21 đề xuất N/T/K/Q + 4 hướng mỹ thuật M1–M4; em đề xuất M1 rồi M2). Ưu tiên cao: N1 đối chiếu từ vựng, N2 ngữ pháp Sửa cây cầu lớp 8, N3 hồ sơ kẹt ở Unit 1, T1 mini game cho vàng vô hạn, T2 độ dài Map 1.
+**Báo cáo rà soát 16/11 (anh đã duyệt hết):** xong N2 N3 N4 N5 T1 T2 T3 T4 K1 K2 K3 K4 K5 K6 M1. N1: đã có bảng `docs/DOI_CHIEU_NOI_DUNG.html`, chờ giáo viên tick rồi gửi dòng mã. Chưa làm: M2 (texture vẽ tay, lượt sau). Anh tự làm: Q1/Q4 xóa nhánh trên GitHub (em không có quyền xóa nhánh), Q2 tắt skill trong Cài đặt, Q5 gõ /compact thành dòng riêng, Q6 dùng /caveman lite. Q3 giữ nguyên. M3/M4 (dịch vụ AI 3D, thuê họa sĩ) cần anh làm/chi tiền, em tích hợp khi có file.
 
-**Chưa xác nhận:** FPS trên máy thật không card đồ họa; lỗi lăn chuột trên bản đồ nhỏ (không tái hiện được, đã thêm nút +/−).
+**Chưa xác nhận:** FPS trên máy thật không card đồ họa; nút chạm trên máy tính bảng thật; ngữ pháp Unit 1 lớp 6 (hiện tại đơn + tiếp diễn hay + trạng từ tần suất).

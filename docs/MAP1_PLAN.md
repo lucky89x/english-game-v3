@@ -5,7 +5,7 @@ Mục tiêu: trẻ muốn chơi tiếp vì trò chơi vui. Tiếng Anh nằm tro
 ## Nguyên tắc
 - 70% thời gian là chơi (hành động, mini game, khám phá). 30% là tiếng Anh, chia nhỏ, có lý do trong truyện.
 - Mọi hoạt động đều cho EXP và vàng. Vàng mua trang bị. Trang bị giúp đánh quái và mở khu mới.
-- Map 1 có 20 cấp. Lên cấp bằng EXP. Cổng sang map 2 mở khi đạt cấp 20 và thắng boss.
+- Map 1 có 20 cấp (9.405 EXP, khoảng 8–10 giờ chơi). Lên cấp bằng EXP. Cổng sang map 2 mở khi đạt cấp 20 và thắng Golem Cổ.
 - Nội dung học theo lớp của hồ sơ (6–9). Lớp chưa soạn thì game nói rõ, không mượn lớp khác.
 
 ## Cấp và Unit
@@ -30,21 +30,25 @@ Mỗi 5 cấp có một "cổng kiến thức" (ôn từ đến hạn) mới lê
 | # | Hạng mục | Nội dung | Trạng thái |
 |---|---|---|---|
 | A1 | HUD nhân vật | Khung chân dung, cấp, thanh máu, thanh EXP, vàng, sao | xong |
-| A2 | Cấp 1–20 | Đường cong EXP, hiệu ứng lên cấp, chỉ số tăng theo cấp | một phần (có EXP, cấp) |
+| A2 | Cấp 1–20 | Đường cong EXP (9.405 EXP ≈ 8–10 giờ), hiệu ứng lên cấp, chỉ số tăng theo cấp | xong |
 | A3 | Chiến đấu | Đánh (J/F), né lăn (K), máu, đẩy lùi, hồi sinh ở làng | xong |
 | A4 | Đồng Hoang | Đông Bắc làng: slime xanh, slime đỏ, golem đá | xong (chưa có dơi) |
 | A5 | Cửa hàng + trang bị | Bram bán kiếm và giáp, Rose bán bùa và bánh hồi máu (phím Q) | xong |
 | A6 | Túi đồ | Kiếm hiện trên tay Ngọc; chưa có màn hình túi đồ riêng, giáp chưa đổi hình | một phần |
-| A7 | Boss map 1 | Vua Slime (cấp 6+), 3 khiên chữ phá bằng cách chọn đúng từ tiếng Anh | xong |
+| A7 | Boss map 1 | Vua Slime (cấp 8+), Golem Cổ (cấp 18+, cánh đồng đá Đông Nam); 3 khiên chữ phá bằng từ tiếng Anh | xong |
+| A8 | Cổng Map 2 | Thắng Golem Cổ và đạt cấp 20 → mở Map 2 (Rừng Ký Ức), từ vựng chuyển sang Unit 2 | xong (quái riêng Map 2 chưa có) |
 | B1 | Xếp kẹo (match-3) | Biển phía Tây quảng trường, 25 lượt, có combo | xong |
 | B2 | Đua xe | Xe bí ngô, giữ phím để lái, né đá và bùn, nhặt xu | xong |
 | B3 | Bắn súng cao su | Kéo thả ná, đạn bay vòng cung, slime và bóng bay | xong |
 | B4 | Xếp hình (khối rơi) | Bãi chơi phía Tây, phím mũi tên | xong |
 | B5 | Câu cá, hứng táo, chạy vòng, 12 sao | Đã có | xong |
-| C1 | Tiếng Anh trong truyện | Thư, Hũ chữ, Sửa cầu | xong (lớp 6, 8) |
+| C1 | Tiếng Anh trong truyện | Thư, Hũ chữ, Sửa cầu | xong (lớp 6–9; lớp 7, 9 chờ giáo viên đối chiếu) |
 | C2 | Rương khóa chữ | 5 rương ở Đồng Hoang, ghép từ Unit theo nghĩa, 1 lần/ngày, vào ôn tập | xong |
 | C3 | Nhiệm vụ săn quái có lời thoại tiếng Anh | Bảng nhiệm vụ ở Đồng Hoang, 4 việc xoay vòng, câu ngắn cho lớp 6–7 | xong |
-| C4 | Cổng kiến thức mỗi 5 cấp | Cú Mèo hỏi 5 câu (Anh↔Việt), đúng 4 mới lên cấp | xong |
+| C4 | Cổng kiến thức mỗi 5 cấp | Cú Mèo hỏi 5 câu (Anh↔Việt); cấp 10/15/20 thêm 2 câu ngữ pháp; sai tối đa 1 câu | xong |
+| C5 | Unit theo map | Map 1 = Unit 1, Map 2 = Unit 2; phụ huynh chọn Unit trên lớp ở thanh cài đặt | xong |
+| B6 | Giới hạn thưởng mini game | 3 lượt đầu mỗi trò mỗi ngày thưởng đầy đủ, sau đó 20% | xong |
+| E1 | Máy tính bảng | Cần ảo, nút chạm, phím mũi tên khi chơi bàn, kéo xoay, chụm zoom | xong (chưa thử trên máy thật) |
 | D1 | Lấp đất trống | Bãi tập, đường đua, trại, ao, cối xay | chưa |
 | D2 | Nhẹ máy | Tải 17.7 → 10.9 MB; 723 → 210 vật thể vẽ; tự hạ đồ họa | xong, chờ đo FPS máy thật |
 
