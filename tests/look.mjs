@@ -4,7 +4,7 @@
 import { serve, open } from './shot.mjs';
 const [out = 'look', where = 'village', quality = 'medium', only] = process.argv.slice(2);
 // village: [x, z, face, yaw, pitch, dist]; forest: [x, z, yaw, pitch, dist] (Ngọc faces the camera)
-const VILLAGE = { ngoc_front: [0.6, 15.5, 0.5, 0.5, 0.12, 3.0], ngoc_back: [0.6, 15.5, 0.5 + Math.PI, 0.5, 0.2, 3.4], tom: [2.2, 9.6, 2.9, 2.9, 0.1, 3.2], house: [-7.5, -3.5, 2.0, 0.9, 0.22, 12], square: [1.5, 15, 3.1, 0.2, 0.4, 15] };
+const VILLAGE = { ngoc_front: [0.6, 15.5, 0.5, 0.5, 0.12, 3.0], ngoc_close: [0.6, 15.5, 0.5, 0.5, 0.05, 1.7], ngoc_side: [0.6, 15.5, 0.5 + 1.9, 0.5, 0.1, 1.9], ngoc_back: [0.6, 15.5, 0.5 + Math.PI, 0.5, 0.2, 3.4], tom: [2.2, 9.6, 2.9, 2.9, 0.1, 3.2], house: [-7.5, -3.5, 2.0, 0.9, 0.22, 12], square: [1.5, 15, 3.1, 0.2, 0.4, 15] };
 const FOREST = { gate: [-30, 49, 0.25, 0.38, 9], riverside: [-10, 30, 1.9, 0.42, 13], bridge: [-27, 36, -1.3, 0.3, 10], tree: [22, -14, -0.3, 0.2, 16], waterfall: [10.5, -42, 2.4, 0.16, 12],
   cave: [47, 3, -1.75, 0.22, 9], mushrooms: [35, 22, -1.4, 0.3, 9], camp: [28, 42, -0.9, 0.34, 10], ruins: [-39, -33, 0.9, 0.3, 10], tower: [43, -36, -0.75, 0.2, 13], cottage: [-34, 12, 1.2, 0.3, 11], closeup: [-30, 49, 2.9, 0.12, 3.2] };
 const { server, url } = await serve(); const { browser, page, logs } = await open(url, { width: 1280, height: 720 });

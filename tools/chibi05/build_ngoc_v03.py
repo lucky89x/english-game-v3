@@ -749,22 +749,39 @@ for k, az in enumerate((-.62, -.22, .22, .62)):
                      rot=Vector((0, 0, 1)).rotation_difference((p - HAIR_C).normalized()))
     finish(puff, HAIR_COLS[k % 2], ['head'])
 
-# v03: curly volume — rounded tufts all over the crown, sides and back so the hair reads as curls, not a cap
+# M1 (2026-11-16): the volume is made of swept curls, not round tufts. Each curl starts flat on the hair cap,
+# bulges out as it falls, then hooks sideways and back towards the head with a pointed tip, as in the painted
+# reference. Alternate curls swirl left and right; rings lower on the head are longer and fuller.
 import random as _rnd
 _rnd.seed(7)
+
+
+def curl_pts(az0, el0, span, swirl, bulge, n=16):
+    """points of one swept curl over the hair proxy: span = degrees it falls, swirl = radians it hooks sideways"""
+    pts = []
+    for i in range(n):
+        t = i / (n - 1)
+        e = el0 - span * math.sin(t * math.pi * .62) / math.sin(math.pi * .62)     # falls, then lifts a little at the tip
+        a = az0 + swirl * math.sin(t * math.pi * .55) ** 1.6
+        o = -.010 + bulge * math.sin(math.pi * min(1.0, t * 1.05) * .82)
+        pts.append(on_hair(a, math.radians(e), o))
+    return pts
+
+
 _k = 0
-for el_deg, count, size in ((72, 5, .104), (52, 8, .112), (30, 9, .118), (9, 9, .116), (-11, 8, .102)):      # few big soft locks, not many small beads
+for el_deg, count, span, r0, bulge in ((74, 6, 24, .066, .022), (54, 9, 28, .074, .026), (32, 10, 30, .080, .030),
+                                        (10, 10, 28, .078, .030), (-10, 9, 24, .070, .026)):
     for i in range(count):
         az = (i + .5 * (_k % 2)) / count * 2 * math.pi - math.pi
         if abs(az) < math.radians(62) and el_deg < 50:
             continue                                  # keep the face and the bandana front clear
-        if abs(az) < math.radians(40) and el_deg < 66:
+        if abs(az) < math.radians(40) and el_deg < 70:
             continue                                  # goggles sit here
-        p = on_hair(az + _rnd.uniform(-.06, .06), math.radians(el_deg + _rnd.uniform(-4, 4)), -.012)
-        r = size * _rnd.uniform(.85, 1.15)
-        tuft = ellipsoid(f'Ngoc_Tuft_{_k}', p, (r, r * .94, r * .70), seg=18, rings=11,
-                         rot=Vector((0, 0, 1)).rotation_difference((p - HAIR_C).normalized()))
-        finish(tuft, 'hair_light' if el_deg > 60 and _k % 2 else 'hair', ['head'])
+        az += _rnd.uniform(-.06, .06)
+        side = 1 if (_k % 2) else -1
+        pts = curl_pts(az, el_deg + _rnd.uniform(-3, 3), span * _rnd.uniform(.9, 1.1), side * _rnd.uniform(.16, .24), bulge)
+        lock(f'Ngoc_Curl_{_k}', pts, r0 * _rnd.uniform(.92, 1.08), r0 * .22, color='hair_light' if el_deg > 60 and _k % 2 else 'hair',
+             res=2, pw=1.6)
         _k += 1
 
 # fringe: chunky hooked curls tumbling out under the bandana onto the forehead
