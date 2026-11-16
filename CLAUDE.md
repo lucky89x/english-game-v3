@@ -54,7 +54,7 @@ Cập nhật mục này mỗi khi xong việc, để phiên/hội thoại mới 
 - Trò chơi không tiếng Anh (8 trò): thưởng đầy đủ 3 lượt đầu mỗi trò mỗi ngày, sau đó 20%.
 - Máy tính bảng: cần ảo + nút chạm (chưa thử máy thật).
 - Mỹ thuật: tóc lọn cong thuôn nhọn (M1) cho Ngọc, Lily, Rose, Anna; bóng khe nướng vào màu đỉnh; lá cây dạng thẻ.
-- Đồ họa kiểu saltline (học từ realskyrin/fps3ademo-saltline, chỉ đọc): `src/render/post.js` hậu kỳ tự viết (bloom 2 tầng, tone map, chỉnh màu ấm, tối viền) + bề mặt vẽ tay bằng shader (`paint()` trong common.js: loang màu, hạt, vệt cỏ) + bầu trời làm ánh sáng môi trường + lấp lánh mặt nước. Chỉ bật ở mức Vừa/Cao; mức Thấp như cũ.
+- Đồ họa kiểu saltline (học từ realskyrin/fps3ademo-saltline, chỉ đọc): `src/render/post.js` hậu kỳ tự viết (bloom 2 tầng, tone map, chỉnh màu ấm, tối viền) + bề mặt vẽ tay bằng shader (`paint()` trong common.js: loang màu, hạt, vệt cỏ) + bầu trời làm ánh sáng môi trường + lấp lánh mặt nước + viền hoạt hình quanh nhân vật (`src/render/outline.js`, inverted hull dùng chung xương). Chỉ bật ở mức Vừa/Cao; tia nắng (radial blur về phía mặt trời) chỉ ở mức Cao vì mặt trời cao nên ít khi thấy. Mức Thấp như cũ.
 
 **Còn lại Map 1:** màn hình túi đồ, giáp hiện trên người, lấp đất trống phía Nam (D1), quái/boss riêng cho Map 2.
 
