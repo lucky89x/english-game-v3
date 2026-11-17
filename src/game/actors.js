@@ -78,21 +78,23 @@ export class Player {
   }
 }
 
-// Fixed diagonal "2.5D" camera (feedback 17/11): high, narrow lens, looking down at about 54 degrees like a toy
-// diorama. Dragging only turns the view round (no tilting), the wheel or a pinch zooms between near and far.
-export const CAM = { fov: 32, pitch: 0.95, dist: 26, min: 16, max: 44 };
+// Third-person camera behind Ngọc (the fixed diagonal view was tried on 17/11 and dropped: "hard to see").
+// Drag turns and tilts, the wheel or a pinch zooms. Slightly higher and further than before so more of the
+// village is in view.
+export const CAM = { fov: 50, pitch: 0.5, dist: 9.5, min: 3.5, max: 18 };
 export class OrbitCamera {
   constructor(camera, dom) {
     this.camera = camera; this.yaw = 0; this.pitch = CAM.pitch; this.dist = CAM.dist; this.tYaw = 0; this.tPitch = CAM.pitch; this.tDist = CAM.dist; this.cur = CAM.dist;
     camera.fov = CAM.fov; camera.updateProjectionMatrix();
-    this.target = new THREE.Vector3(); let drag = false, lx = 0;
-    dom.addEventListener('mousedown', (e) => { if (e.button === 0 || e.button === 2) { drag = true; lx = e.clientX; } });
+    this.target = new THREE.Vector3(); let drag = false, lx = 0, ly = 0;
+    dom.addEventListener('mousedown', (e) => { if (e.button === 0 || e.button === 2) { drag = true; lx = e.clientX; ly = e.clientY; } });
     addEventListener('mouseup', () => (drag = false));
-    addEventListener('mousemove', (e) => { if (!drag) return; this.tYaw -= (e.clientX - lx) * 0.006; lx = e.clientX; });
-    dom.addEventListener('wheel', (e) => { e.preventDefault(); this.zoom(e.deltaY > 0 ? 1.1 : 1 / 1.1); }, { passive: false });
+    addEventListener('mousemove', (e) => { if (!drag) return; this.tYaw -= (e.clientX - lx) * 0.006; this.tilt((e.clientY - ly) * 0.005); lx = e.clientX; ly = e.clientY; });
+    dom.addEventListener('wheel', (e) => { e.preventDefault(); this.zoom(e.deltaY > 0 ? 1.12 : 1 / 1.12); }, { passive: false });
     dom.addEventListener('contextmenu', (e) => e.preventDefault());
   }
   zoom(f) { this.tDist = Math.min(CAM.max, Math.max(CAM.min, this.tDist * f)); }
+  tilt(d) { this.tPitch = Math.min(1.25, Math.max(0.05, this.tPitch + d)); }
   /** Shortest unobstructed distance from the target towards the wanted camera spot: only the ground and big solids
    *  (houses, cliffs) pull the camera in. Tree crowns no longer do: the constant zooming in and out among trees made
    *  children dizzy (feedback 17/11). */

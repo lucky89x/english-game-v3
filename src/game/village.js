@@ -78,7 +78,8 @@ export class VillageStory {
   startMarket(seed = Date.now() & 0xffff) {
     const { cards, profile, cardOf } = this.api, rnd = mulberry32(seed);
     const due = Review.dueIds(profile.words).map(cardOf).filter(Boolean).slice(0, 2);          // spaced review first
-    const fresh = cards.filter((c) => !due.some((d) => d.id === c.id)).sort((a, b) => (profile.words[a.id] ? 1 : 0) - (profile.words[b.id] ? 1 : 0) || rnd() - 0.5);
+    const met = (c) => (profile.words[c.id] ? 2 : profile.seen && profile.seen[c.id] ? 0 : 1);      // words just learned from the bubbles first, then new ones, then answered ones
+    const fresh = cards.filter((c) => !due.some((d) => d.id === c.id)).sort((a, b) => met(a) - met(b) || rnd() - 0.5);
     this.market = { rnd, queue: [...due, ...fresh].slice(0, CUSTOMERS), index: 0, tries: 0, firstTry: 0, gold: 0, missed: [], options: [], started: Date.now() };
     if (this.step === 'jars') this.q.step = 'jars_play';
     this.nextCustomer();

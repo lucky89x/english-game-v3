@@ -27,6 +27,8 @@ import { Minimap } from './ui/minimap.js';
 import { initTouch, touchWanted } from './ui/touch.js';
 import { sfx, setSound, soundOn, unlock } from './audio.js';
 import { voiceOn, setVoice } from './ui/speech.js';
+import { QuestMarks } from './game/marks.js';
+import { WordSpots } from './game/wordspots.js';
 
 const $ = (id) => document.getElementById(id);
 const QUALITY = {
@@ -86,11 +88,11 @@ const staticModel = async (name) => (await gltf(name)).scene.clone(true);
 const faceTex = async (name) => { const t = await texLoader.loadAsync(`./assets/tex/ngoc_face_${name}.png`); t.flipY = false; t.colorSpace = THREE.SRGBColorSpace; return t; };
 
 const ui = new UI(), store = Save.load();
-let profile = null, quest = null, story = null, world = null, player = null, cam = null, tom = null, sam = null, ben = null, pip = null, crystals = null, minimap = null, letterProp = null, itemProps = {}, friends = [], mini = null, wild = null, arcade = null, chests = null, unitCards = [], cardOfFn = () => null;
+let profile = null, quest = null, story = null, world = null, player = null, cam = null, tom = null, sam = null, ben = null, pip = null, crystals = null, minimap = null, letterProp = null, itemProps = {}, friends = [], mini = null, wild = null, arcade = null, chests = null, spots = null, unitCards = [], cardOfFn = () => null;
 let shopWin = null, walkers = null, talkW = -1, touch = null, quality = localStorage.getItem('eq-quality') || 'medium', perfOn = false, started = false, switching = false, wordIds = {}, jarKey = '';
 const keys = new Set();
 const game = { errors, get profile() { return profile; }, get quest() { return quest; }, get story() { return story; }, get player() { return player; }, get cam() { return cam; }, get minimap() { return minimap; }, ui, L, stats: { fps: 0, ms: 0, calls: 0, tris: 0 },
-  teleport(x, z) { player.place(x, z); cam.target.set(x, player.pos.y + 1.25, z); }, setQuality, key: (code) => onKey({ code, preventDefault() {} }), get started() { return started && !switching; }, get region() { return L.NAME; }, chooseProfile, enterRegion, MARKET_JARS, BRIDGE_SPOTS, get mini() { return mini; }, get wild() { return wild; }, get scene() { return scene; }, openShop, get sword() { return swordMesh; }, get armor() { return armorShown; }, setWear, openBag: () => openBag(), get arcade() { return arcade; }, get chests() { return chests; }, get friends() { return friends; }, get walkers() { return walkers; }, get shopWin() { return shopWin; }, get intro() { return intro; }, cardOf: (id) => cardOfFn(id), pause: (on) => renderer.setAnimationLoop(on ? null : frame),      // tests: stop drawing while another page is checked
+  teleport(x, z) { player.place(x, z); cam.target.set(x, player.pos.y + 1.25, z); }, setQuality, key: (code) => onKey({ code, preventDefault() {} }), get started() { return started && !switching; }, get region() { return L.NAME; }, chooseProfile, enterRegion, MARKET_JARS, BRIDGE_SPOTS, get mini() { return mini; }, get wild() { return wild; }, get scene() { return scene; }, openShop, get sword() { return swordMesh; }, get armor() { return armorShown; }, setWear, openBag: () => openBag(), get arcade() { return arcade; }, get chests() { return chests; }, get spots() { return spots; }, get friends() { return friends; }, get walkers() { return walkers; }, get shopWin() { return shopWin; }, get intro() { return intro; }, cardOf: (id) => cardOfFn(id), pause: (on) => renderer.setAnimationLoop(on ? null : frame),      // tests: stop drawing while another page is checked
   post, refresh: () => refresh() };
 globalThis.__eq = game;
 
@@ -183,8 +185,12 @@ function haloTexture() {
   g.addColorStop(0, 'rgba(255,240,170,1)'); g.addColorStop(0.45, 'rgba(255,210,60,0.55)'); g.addColorStop(1, 'rgba(255,200,40,0)'); c.fillStyle = g; c.fillRect(0, 0, 128, 128);
   return (HALO = new THREE.CanvasTexture(cv));
 }
+let marks3d = null;
 function questMarks(list) {
-  const want = list.filter((m) => MARKS[m.text]);
+  // quest givers: the solid spinning "!" / "?" with a light beam (game/marks.js); the owl's review counts as a job
+  marks3d = marks3d || new QuestMarks(scene);
+  marks3d.set(list.filter((m) => m.text === '!' || m.text === '?' || m.text === '🦉').map((m) => { const g = L.walkHeight(m.x, m.z); return { x: m.x, z: m.z, text: m.text === '?' ? '?' : '!', ground: g, head: g + 2.15 }; }));
+  const want = list.filter((m) => m.text === '✉');          // the lost letter keeps its small bobbing badge
   while (markPool.length < want.length) {
     const sp = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true })); sp.scale.setScalar(0.8); sp.renderOrder = 5;
     const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: haloTexture(), color: 0xffd23c, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); halo.scale.setScalar(1.7); halo.renderOrder = 4;
@@ -193,7 +199,7 @@ function questMarks(list) {
   markPool.forEach((sp, i) => {
     const m = want[i]; sp.visible = sp.userData.halo.visible = !!m; if (!m) return;
     if (sp.material.map !== markTexture(m.text)) { sp.material.map = markTexture(m.text); sp.material.needsUpdate = true; }
-    sp.position.x = m.x; sp.position.z = m.z; sp.userData.y = L.walkHeight(m.x, m.z) + (m.text === '✉' ? 1.3 : 2.35);      // just above a head (feedback 17/11: was too high)
+    sp.position.x = m.x; sp.position.z = m.z; sp.userData.y = L.walkHeight(m.x, m.z) + 1.3;
   });
 }
 /** Sam waits at the broken bridge during "Fix the Bridge"; Pip joins him to read the plan. */
@@ -233,7 +239,7 @@ async function enterRegion(name, at) {
   const q = QUALITY[quality]; world.setDetail(q.density, q.particles, q.far);
   scene.traverse((o) => { if (o.material) [].concat(o.material).forEach((m) => (m.needsUpdate = true)); });
   try { await renderer.compileAsync(scene, camera); } catch { /* older browsers: shaders compile on first sight */ }      // no hitch when new things come into view
-  minimap.rebuild(); placeActors(); if (walkers) walkers.setRegion(name); if (mini) mini.setRegion(name); if (wild) wild.setRegion(name); if (chests) chests.setRegion(name);
+  minimap.rebuild(); placeActors(); if (walkers) walkers.setRegion(name); if (mini) mini.setRegion(name); if (wild) wild.setRegion(name); if (chests) chests.setRegion(name); if (spots) spots.setRegion(name);
   const [x, z] = at || [L.SPAWN.x, L.SPAWN.z];
   game.teleport(x, z); player.yaw = Math.PI; cam.tYaw = cam.yaw = 0.25;
   if (quest && quest.step === 'seek') quest.clueStart = performance.now();
@@ -263,6 +269,13 @@ function teach(list, then, most = 5) {
   if (!fresh.length) { if (then) then(); return; }
   for (const c of fresh) seen[c.id] = Review.today(); save();
   ui.dialogue(fresh.map((c, i) => ({ who: `Từ mới ${i + 1}/${fresh.length}`, card: c })), then);
+}
+/** A word sparkle was touched: teach one word (a new one first, else one met before), with a small reward. */
+function learnWord(card, isNew) {
+  if (!card) { ui.dialogue([{ who: 'Pip', en: 'This bubble is empty…', vi: `Từ vựng Unit ${Save.unitOf(profile)} lớp ${profile.grade} chưa có.` }]); save(); return; }
+  (profile.seen || (profile.seen = {}))[card.id] = Review.today();
+  const exp = isNew ? 6 : 3, gold = isNew ? 2 : 1; profile.stats.gold += gold; Save.addExp(profile, exp); sfx('correct'); save(); refresh();
+  ui.dialogue([{ who: isNew ? '✨ Từ mới' : '🔁 Ôn lại', card, vi: `${isNew ? 'Nghe, đọc theo rồi nhớ nghĩa nhé.' : 'Con nhớ từ này chứ? Nghe và đọc lại nhé.'} (+${exp} EXP, +${gold} vàng)` }]);
 }
 /** Word book (B key, 📖 button): every word of the unit as a card, read aloud; Esc closes it. */
 function wordBook() {
@@ -425,6 +438,7 @@ function interactTarget() {
   }
   { const m = mini && mini.interact(player.pos); if (m) return m; }
   { const c = chests && chests.interact(player.pos); if (c) return c; }
+  { const c = spots && spots.interact(player.pos); if (c) return c; }
   { const w = wild && wild.interact(player.pos); if (w) return w; }
   if (L.NAME === 'village' && near(OWL.x, OWL.z, 2.2)) return { text: Save.gateWaiting(profile) ? 'E · Cú Mèo: ôn tập để lên cấp' : 'E · Nói chuyện với Cú Mèo', run: owlReview };
   if (letterProp.visible && near(letterProp.position.x, letterProp.position.z, 2.2)) return { text: 'E · Nhặt bức thư', run: () => { player.emote('Interact'); story.readLetter(); } };
@@ -494,6 +508,7 @@ async function boot() {
     profile.stats.gold += r.gold; Save.addExp(profile, r.exp); sfx('fanfare'); save(); refresh();
     ui.dialogue([{ who: 'Ngọc', en: `${res.text} (+${r.gold} gold, +${r.exp} EXP)`, vi: [record ? 'Kỷ lục mới của con!' : '', payNote(r)].filter(Boolean).join(' ') || undefined }]);
   });
+  spots = new WordSpots({ scene, profile: () => profile, cards: () => unitCards, learn: learnWord });
   chests = new Chests({ scene, profile: () => profile, cards: () => unitCards, dueIds: () => Review.dueIds(profile.words),
     open: (c, card) => {
       if (!card) { ui.dialogue([{ who: 'Ngọc', en: 'This lock has no letters…', vi: `Từ vựng Unit ${Save.unitOf(profile)} lớp ${profile.grade} chưa có, rương tự mở.` }], () => { chests.opened(c); save(); }); return; }
@@ -551,7 +566,9 @@ function frame() {
   crystals.update(t); if (world) world.update(t);
   if (mini && started && !switching && !ui.modal && !arcade.open) mini.update(real, player.pos);      // real time, so timers stay honest on slow machines
   if (chests && started) chests.update(real);
+  if (spots && started) spots.update(real);
   if (wild && started && !switching) wild.update(real, !!ui.modal || arcade.open);
+  if (marks3d) marks3d.update(real);
   for (const sp of markPool) if (sp.visible) {      // bob, pulse and glow so the eye finds them (feedback 17/11)
     const k = 0.5 + 0.5 * Math.sin(t * 5 + sp.position.x), h = sp.userData.halo;
     sp.position.y = sp.userData.y + Math.sin(t * 3 + sp.position.x) * 0.1; sp.scale.setScalar(0.74 + 0.14 * k);
@@ -582,7 +599,7 @@ function frame() {
       if (st === 'done' && quest.step !== 'done') markers.push({ x: L.EXITS[0].x, z: L.EXITS[0].z, text: '★' });
       if (story.market && Math.hypot(player.pos.x + 7, player.pos.z - 19.5) > 15) story.leaveMarket();
       if (!story.market) markers.push(...mini.markers());
-      markers.push(...wild.markers(), ...chests.markers());
+      markers.push(...wild.markers(), ...chests.markers(), ...spots.markers());
       if (Save.gateWaiting(profile)) markers.push({ x: OWL.x, z: OWL.z, text: '🦉', color: '#ffe28a' });
     }
     minimap.draw(player.pos, player.yaw, markers); questMarks(markers); }

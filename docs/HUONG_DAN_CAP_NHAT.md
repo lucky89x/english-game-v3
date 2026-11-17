@@ -60,7 +60,10 @@ py -m http.server 8000
 - Dân làng đi lại trên đường; đến gần bấm E để chào.
 
 ## Có gì mới (17/11, lượt 2)
-- Camera nhìn chéo từ trên xuống như mô hình đồ chơi; lăn chuột để gần/xa, kéo chuột để xoay.
+- Camera trở lại kiểu cũ (sau lưng Ngọc), nhìn rộng hơn một chút.
+- Người giao nhiệm vụ có dấu **!** vàng 3D to, xoay, nhấp nháy, có cột sáng lên trời nhìn từ xa; **?** xanh nhạt là chỗ cần quay lại báo.
+- Biển gỗ treo trên cửa: VILLAGE SHOP, VILLAGE HALL, LILY'S HOUSE, ANNA'S HOUSE. Đường làng rộng hơn.
+- **Bong bóng chữ "Abc"** dọc đường: chạy tới bấm E để học một từ mới (nghe, xem nghĩa, được EXP và vàng). Ben sẽ hỏi lại đúng những từ con vừa học.
 - Từ mới được **dạy trước** khi hỏi: thẻ chữ to, đọc to, có nghĩa tiếng Việt.
 - Máy **đọc to** lời thoại tiếng Anh (nút "Đọc to" để tắt). Bấm vào từ gạch chân để nghe và xem nghĩa. Nút 🔊 nghe lại.
 - Lời thoại ngắn hơn; nút **Bỏ qua ⏭** (hoặc Esc) nhảy tới câu tiếng Việt "việc cần làm".

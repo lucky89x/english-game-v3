@@ -1,5 +1,6 @@
 // Starter Village landmarks: market, dock, farm, orchard, houses, props and the broken-bridge pieces.
 import * as THREE from 'three';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import * as L from '../core/layout.js';
 import { ORCHARD_TREES, GATE, SOUTH } from '../core/regions/village.js';
 import { at, std, windy, label, bake, leafyGeo, lampPost, prop, bunting, smoke, signs } from './common.js';
@@ -101,6 +102,37 @@ export function orchard(list) {
   list.forEach(([x, z], k) => { const sx = x - 1.6, sz = z + 1.3, b = label(`${FRUITS[k % FRUITS.length].en} tree`, { size: 26, scale: 0.7 }); b.position.set(sx, L.groundHeight(sx, sz) + 1.35, sz); g.add(b); });
   return g;
 }
+/** x, height above the ground, z, which way the board faces, name, small line. */
+export const HOUSE_SIGNS = [
+  [7.0, 3.5, -8, -Math.PI / 2, 'VILLAGE SHOP', 'Weapons · Armour · Bread'],
+  [0, 4.0, -18.2, 0, 'VILLAGE HALL', "Mr Tom's office"],
+  [-10.2, 3.3, -8, Math.PI / 2, "LILY'S HOUSE", 'Herbs and flowers'],
+  [-10.7, 3.3, 9, Math.PI / 2, "ANNA'S HOUSE", 'Music and songs'],
+];
+/** A wooden board hanging on two chains from an iron arm fixed to the wall behind it; painted on both sides. */
+export function hangSign(name, sub, x, y, z, yaw) {
+  const cv = document.createElement('canvas'); cv.width = 512; cv.height = 192; const c = cv.getContext('2d');
+  const wood = c.createLinearGradient(0, 0, 0, 192); wood.addColorStop(0, '#a8642c'); wood.addColorStop(1, '#7c451a');
+  c.fillStyle = wood; c.beginPath(); c.roundRect(4, 4, 504, 184, 26); c.fill();
+  c.strokeStyle = '#4a250a'; c.lineWidth = 8; c.stroke(); c.strokeStyle = 'rgba(255,220,150,0.35)'; c.lineWidth = 3; c.beginPath(); c.roundRect(18, 18, 476, 156, 18); c.stroke();
+  c.textAlign = 'center'; c.textBaseline = 'middle'; c.font = '900 64px "Nunito", "Trebuchet MS", sans-serif';
+  c.lineWidth = 8; c.strokeStyle = '#3a1a04'; c.strokeText(name, 256, 78, 470); c.fillStyle = '#ffe9a8'; c.fillText(name, 256, 78, 470);
+  c.font = '700 32px "Nunito", "Trebuchet MS", sans-serif'; c.fillStyle = '#fff4dc'; c.fillText(sub, 256, 140, 460);
+  const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4;
+  const g = new THREE.Group(), W = 2.7, H = W * 192 / 512;
+  const face = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.75 }), edge = new THREE.MeshStandardMaterial({ color: 0x5a3010, roughness: 0.85 });
+  const by = -0.55 - H / 2, board = new THREE.Mesh(new THREE.BoxGeometry(W, H, 0.07), edge); board.position.y = by; g.add(board);
+  const front = new THREE.PlaneGeometry(W, H); front.translate(0, 0, 0.04); const back = new THREE.PlaneGeometry(W, H); back.rotateY(Math.PI); back.translate(0, 0, -0.04);
+  const faces = new THREE.Mesh(mergeGeometries([front, back]), face); faces.position.y = by; g.add(faces);      // painted on both sides, readable from either
+  const iron = new THREE.MeshStandardMaterial({ color: 0x2c2620, roughness: 0.5, metalness: 0.6 });
+  const arm = new THREE.Mesh(new THREE.BoxGeometry(W + 0.5, 0.08, 0.08), iron); g.add(arm);
+  for (const sx of [-1, 1]) {
+    const chain = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.55, 5), iron); chain.position.set(sx * (W / 2 - 0.25), -0.27, 0); g.add(chain);
+    const brace = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.07, 0.9), iron); brace.position.set(sx * (W / 2 + 0.2), 0, -0.45); g.add(brace);     // back to the wall
+  }
+  g.position.set(x, y, z); g.rotation.y = yaw;
+  return g;
+}
 export async function villageExtras(add, loadModel, shadowed) {
   const place = async (name, x, z, rot, scale) => { const m = shadowed(await loadModel(name)); m.position.set(x, L.groundHeight(x, z) - 0.05, z); m.rotation.y = rot; m.scale.setScalar(scale); add(m); return m; };
   await place('bld_hall_blue_v02', 0, -25.5, 0, 1.35);
@@ -116,8 +148,9 @@ export async function villageExtras(add, loadModel, shadowed) {
   signs(add, [[2.9, 14.5, '← Market\nFarm ↓'], [3.2, 1.2, 'Bridge →\n← Forest'], [30.5, 9.5, 'Orchard']]);
   for (const [kind, x, z, rot, sc] of VILLAGE_PROPS) still.add(prop(kind, x, z, rot, sc));
   add(bake(still));
-  // shop and hall signboards: what is inside (feedback 17/11)
-  for (const [x, z, y, text] of [[7.4, -8, 4.3, '🏪 VILLAGE SHOP\nWeapons · Armour · Bread · Charms'], [0, -17.6, 6.2, "🏛 VILLAGE HALL\nMr Tom's office"]]) { const b = label(text, { size: 30, bg: 'rgba(255,233,176,0.96)', scale: 1.05 }); b.position.set(x, L.groundHeight(x, z) + y, z); add(b); }
+  // hanging signboards over the doors (feedback 17/11): the name of each house in big letters, what is inside below
+  const boards = new THREE.Group(); for (const [x, y, z, yaw, name, sub] of HOUSE_SIGNS) boards.add(hangSign(name, sub, x, L.groundHeight(x, z) + y, z, yaw));
+  add(bake(boards));          // wood and iron merged into one mesh; only the painted faces stay apart
   add(windmill()); add(pond()); add(dummies()); add(campsite());           // D1: the south fields
   signs(add, [[-2.5, 37.5, '← Windmill · Campsite\nTraining Yard →']]);
   add(bunting(-5.2, -3.2, 5.2, -3.2)); add(bunting(-6.5, 10.5, -6.5, 15.2, 3.0)); add(bunting(5.4, 9.6, 5.4, 2.2, 3.0));

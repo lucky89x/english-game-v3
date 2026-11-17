@@ -39,7 +39,7 @@ export default makeRegion({
     P(2.2, [0, -4], [8, -6]),
     P(2.2, [-10, -1], [-10, 8]),
   ]; },
-  pathWiden: 1.45,
+  pathWiden: 1.7,
   lateRiverHalf: () => 4.6,   // wider river (feedback 17/11); the 11.5 m bridges still reach both banks
   thinTrees: 0.4,             // 40% fewer trees inside the village (feedback 17/11: too many trees)          // roomier streets with people walking on them (feedback 17/11)
   latePaths: () => [P(2.4, [-2, 34], [-8, 42], [-16, 46], [-27, 44]), P(2.2, [-2, 34], [3, 41], [9, 44])],

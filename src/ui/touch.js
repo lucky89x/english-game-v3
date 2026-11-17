@@ -57,8 +57,8 @@ export function initTouch(opts) {
   canvas.style.touchAction = 'none';
   canvas.addEventListener('pointerdown', (e) => { if (e.pointerType !== 'touch') return; pts.set(e.pointerId, [e.clientX, e.clientY]); capture(canvas, e.pointerId); pinch = 0; });
   canvas.addEventListener('pointermove', (e) => {
-    if (!pts.has(e.pointerId)) return; const [lx] = pts.get(e.pointerId); pts.set(e.pointerId, [e.clientX, e.clientY]);
-    if (pts.size === 1) { cam.tYaw -= (e.clientX - lx) * 0.008; return; }
+    if (!pts.has(e.pointerId)) return; const [lx, ly] = pts.get(e.pointerId); pts.set(e.pointerId, [e.clientX, e.clientY]);
+    if (pts.size === 1) { cam.tYaw -= (e.clientX - lx) * 0.008; cam.tilt((e.clientY - ly) * 0.006); return; }
     const [a, b] = [...pts.values()], d = Math.hypot(a[0] - b[0], a[1] - b[1]);
     if (pinch) cam.zoom(pinch / d); pinch = d;
   });

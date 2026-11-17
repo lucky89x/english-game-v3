@@ -15,7 +15,7 @@ export function serve(port = 0) {
 }
 export async function open(url, size = { width: 1280, height: 720 }) {
   const browser = await chromium.launch({ args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--enable-webgl'] });
-  const page = await browser.newPage({ viewport: size }); const logs = [];
+  const page = await browser.newPage({ viewport: size }); page.setDefaultTimeout(120000); const logs = [];
   page.on('console', (m) => { if (m.type() === 'error' || m.type() === 'warning') logs.push(m.type() + ': ' + m.text()); });
   page.on('pageerror', (e) => logs.push('pageerror: ' + e.message));
   await page.goto(url);
