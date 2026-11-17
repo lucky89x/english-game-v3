@@ -8,6 +8,7 @@ const check = (ok, name) => { results.push((ok ? 'PASS: ' : 'FAIL: ') + name); i
 const shots = process.argv.includes('--shots') ? process.argv[process.argv.indexOf('--shots') + 1] : null;
 if (shots) fs.mkdirSync(shots, { recursive: true });
 const { server, url, sizes } = await serve(); const { browser, page, logs } = await open(url);
+page.setDefaultTimeout(120000);           // medium quality with post-processing: ~2.5 s a frame on a machine without GPU
 const ev = (f, a) => page.evaluate(f, a);
 const wait = (ms) => page.waitForTimeout(ms);
 // K4: only these shots are kept in the repo (screenshots/); --all-shots writes every one (for a local look, do not commit).
