@@ -463,6 +463,7 @@ function frame() {
       if (quest.step === 'intro') markers.push({ x: tom.x, z: tom.z, text: '!' });
       if (quest.step === 'tree') { const s = landmark('tree').spot; markers.push({ x: s[0], z: s[1], text: '★' }); }
       if (quest.step === 'seek' && quest.q.hint >= 3) { const s = landmark(quest.targetId).spot; markers.push({ x: s[0], z: s[1], text: '★' }); }
+      markers.push(...wild.markers());
     } else {
       const st = story.step;
       if (st === 'arrive' || st === 'letter_return' || st === 'open') markers.push({ x: tom.x, z: tom.z, text: st === 'arrive' ? '!' : '?' });

@@ -1,7 +1,7 @@
 // Starter Village landmarks: well, market, dock, farm, orchard, houses, props and the broken-bridge pieces.
 import * as THREE from 'three';
 import * as L from '../core/layout.js';
-import { ORCHARD_TREES, GATE } from '../core/regions/village.js';
+import { ORCHARD_TREES, GATE, SOUTH } from '../core/regions/village.js';
 import { at, std, windy, label, bake, leafyGeo, leafCards, leafMat, lampPost, prop, bunting, smoke, signs } from './common.js';
 
 // ------------------------------------------------------------------ village landmarks
@@ -89,6 +89,8 @@ export async function villageExtras(add, loadModel, shadowed) {
   signs(add, [[2.9, 14.5, '← Market\nFarm ↓'], [3.2, 1.2, 'Bridge →\n← Forest'], [30.5, 9.5, 'Orchard']]);
   for (const [kind, x, z, rot, sc] of VILLAGE_PROPS) still.add(prop(kind, x, z, rot, sc));
   add(bake(still));
+  add(windmill()); add(pond()); add(dummies()); add(campsite());           // D1: the south fields
+  signs(add, [[-2.5, 37.5, '← Windmill · Campsite\nTraining Yard →']]);
   add(bunting(-5.2, -3.2, 5.2, -3.2)); add(bunting(-6.5, 10.5, -6.5, 15.2, 3.0)); add(bunting(5.4, 9.6, 5.4, 2.2, 3.0));
   for (const [x, y, z] of [[4.0, 14.2, -24.3], [14.6, 9.3, -4.6], [-16.5, 7.4, -4.9], [-17.3, 10.6, 12.2]]) add(smoke(x, L.groundHeight(x, z) + y, z));
 }
@@ -128,3 +130,85 @@ export function bridgeItem(kind) {
 }
 
 /** Builds the active region (core/layout.js). `loadModel(name)` resolves a cloned GLB scene. */
+
+// ------------------------------------------------------------------ D1: the south fields
+const M = (color, o = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.85, ...o });
+/** Windmill on a stone base; the sails turn slowly in the wind. */
+export function windmill() {
+  const [x, z] = SOUTH.mill, y = L.groundHeight(x, z), g = new THREE.Group(), still = new THREE.Group();
+  const tower = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 2.1, 5.2, 12), M(0xf1e2c4)); tower.position.y = 2.6; still.add(tower);
+  const base = new THREE.Mesh(new THREE.CylinderGeometry(2.2, 2.35, 0.7, 12), M(0xa8a3b0)); base.position.y = 0.35; still.add(base);
+  const roof = new THREE.Mesh(new THREE.ConeGeometry(1.85, 1.9, 12), M(0xc8452e)); roof.position.y = 6.15; still.add(roof);
+  const door = new THREE.Mesh(new THREE.BoxGeometry(0.9, 1.5, 0.2), M(0x7a4a24)); door.position.set(0, 0.95, 2.0); still.add(door);
+  const win = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.6, 0.2), M(0xffd98a, { emissive: 0xffc860, emissiveIntensity: 0.6 })); win.position.set(0, 3.4, 1.72); still.add(win);
+  g.add(bake(still));
+  const hub = new THREE.Group(); hub.position.set(0, 4.6, 1.95);
+  const wood = M(0x8a5a30), cloth = M(0xfff6e6, { side: THREE.DoubleSide });
+  for (let k = 0; k < 4; k++) {
+    const arm = new THREE.Group(); arm.rotation.z = k * Math.PI / 2;
+    const spar = new THREE.Mesh(new THREE.BoxGeometry(0.16, 3.6, 0.12), wood); spar.position.y = 1.8; arm.add(spar);
+    const sail = new THREE.Mesh(new THREE.PlaneGeometry(0.95, 2.7), cloth); sail.position.set(0.55, 2.1, 0.02); arm.add(sail);
+    hub.add(arm);
+  }
+  const cap = new THREE.Mesh(new THREE.SphereGeometry(0.28, 10, 8), wood); hub.add(cap);
+  g.add(hub); g.traverse((o) => { if (o.isMesh) o.castShadow = true; });
+  g.userData.update = (t) => { hub.rotation.z = t * 0.6; };
+  g.position.set(x, y, z); g.rotation.y = 0.9; return g;
+}
+/** Small round pond with lily pads, reeds and a stepping-stone rim. */
+export function pond() {
+  const [x, z] = SOUTH.pond, y = L.groundHeight(x, z), g = new THREE.Group(), still = new THREE.Group();
+  const water = new THREE.Mesh(new THREE.CircleGeometry(3.4, 32), new THREE.MeshStandardMaterial({ color: 0x3fb6d8, roughness: 0.15, metalness: 0.1, transparent: true, opacity: 0.88 }));
+  water.rotation.x = -Math.PI / 2; water.position.y = 0.06; g.add(water);
+  const rimMat = M(0xb8b2c0, { flatShading: true });
+  for (let k = 0; k < 18; k++) { const a = k / 18 * Math.PI * 2, r = new THREE.Mesh(new THREE.IcosahedronGeometry(0.42 + (k % 3) * 0.08, 0), rimMat); r.position.set(Math.cos(a) * 3.65, 0.12, Math.sin(a) * 3.65); r.scale.y = 0.55; still.add(r); }
+  const pad = M(0x5fae4a);
+  for (const [px, pz, s] of [[-1.2, 0.8, 1], [1.4, -0.6, 0.8], [0.3, 1.9, 0.7], [-0.6, -1.7, 0.9]]) { const p = new THREE.Mesh(new THREE.CylinderGeometry(0.42 * s, 0.42 * s, 0.03, 12), pad); p.position.set(px, 0.09, pz); still.add(p); }
+  const flower = new THREE.Mesh(new THREE.SphereGeometry(0.13, 8, 6), M(0xffb8d0)); flower.position.set(-1.2, 0.16, 0.8); still.add(flower);
+  const reed = M(0x6a9a3a), top = M(0x7a4a24);
+  for (const [a, h] of [[0.4, 1.4], [0.55, 1.1], [2.5, 1.3], [2.65, 1.0], [4.4, 1.2]]) { const rx = Math.cos(a) * 3.2, rz = Math.sin(a) * 3.2;
+    const st = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.04, h, 5), reed); st.position.set(rx, h / 2, rz); still.add(st);
+    const tp = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.32, 6), top); tp.position.set(rx, h + 0.1, rz); still.add(tp); }
+  g.add(bake(still)); g.position.set(x, y, z); return g;
+}
+/** Straw training dummies with red targets: the place to practise J / K before the Wild Meadow. */
+export function dummies() {
+  const g = new THREE.Group(), wood = M(0x8a5a30), straw = M(0xe8c45a), red = M(0xd8342a), white = M(0xfff6e6);
+  for (const [x, z] of SOUTH.dummies) {
+    const d = new THREE.Group(), y = L.groundHeight(x, z);
+    const post = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.1, 1.7, 6), wood); post.position.y = 0.85; d.add(post);
+    const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 1.2, 6), wood); arm.rotation.z = Math.PI / 2; arm.position.y = 1.25; d.add(arm);
+    const body = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.36, 0.8, 10), straw); body.position.y = 1.15; d.add(body);
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.26, 10, 8), straw); head.position.y = 1.78; d.add(head);
+    for (const [r, m] of [[0.22, red], [0.14, white], [0.07, red]]) { const t = new THREE.Mesh(new THREE.CylinderGeometry(r, r, 0.02, 14), m); t.rotation.x = Math.PI / 2; t.position.set(0, 1.18, 0.34 + (0.22 - r) * 0.1); d.add(t); }
+    d.position.set(x, y, z); d.rotation.y = Math.atan2(-x, 40 - z); g.add(d);
+  }
+  const fence = new THREE.Group();
+  for (let k = 0; k < 7; k++) { const p = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.08, 0.9, 6), wood); const a = -0.3 + k * 0.42; p.position.set(11.5 + Math.cos(a) * 5.5, L.groundHeight(11.5 + Math.cos(a) * 5.5, 48.5 + Math.sin(a) * 5.5) + 0.45, 48.5 + Math.sin(a) * 5.5); fence.add(p); }
+  g.add(fence);
+  return bake(g);
+}
+/** Campsite: striped tent, log seats and a crackling fire that glows at night-ish hours and makes sparks. */
+export function campsite() {
+  const [tx, tz] = SOUTH.tent, [fx, fz] = SOUTH.fire, g = new THREE.Group(), still = new THREE.Group();
+  const tent = new THREE.Mesh(new THREE.ConeGeometry(1.9, 2.4, 4, 1, true), M(0xf0a03c, { side: THREE.DoubleSide })); tent.rotation.y = Math.PI / 4; tent.position.set(tx, L.groundHeight(tx, tz) + 1.2, tz); still.add(tent);
+  const flap = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 1.4), M(0x7a3a1a, { side: THREE.DoubleSide })); flap.position.set(tx, L.groundHeight(tx, tz) + 0.7, tz + 1.3); flap.rotation.x = -0.5; still.add(flap);
+  const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.6, 5), M(0x5f3519)); pole.position.set(tx, L.groundHeight(tx, tz) + 2.6, tz); still.add(pole);
+  const fy = L.groundHeight(fx, fz), wood = M(0x6a4020), stone = M(0x9b99a8, { flatShading: true });
+  for (let k = 0; k < 8; k++) { const a = k / 8 * Math.PI * 2, r = new THREE.Mesh(new THREE.IcosahedronGeometry(0.16, 0), stone); r.position.set(fx + Math.cos(a) * 0.55, fy + 0.08, fz + Math.sin(a) * 0.55); still.add(r); }
+  for (let k = 0; k < 3; k++) { const l = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.8, 6), wood); l.rotation.z = Math.PI / 2; l.rotation.y = k * 1.05; l.position.set(fx, fy + 0.12, fz); still.add(l); }
+  for (const [dx, dz, ry] of [[1.7, 0.3, 0.2], [-0.4, 1.7, 1.6]]) { const seat = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 1.3, 8), wood); seat.rotation.z = Math.PI / 2; seat.rotation.y = ry; seat.position.set(fx + dx, fy + 0.22, fz + dz); still.add(seat); }
+  g.add(bake(still));
+  const flame = new THREE.Mesh(new THREE.ConeGeometry(0.28, 0.75, 8), new THREE.MeshStandardMaterial({ color: 0xffb030, emissive: 0xff7a10, emissiveIntensity: 2.6, transparent: true, opacity: 0.92 }));
+  flame.position.set(fx, fy + 0.5, fz); g.add(flame);
+  const inner = new THREE.Mesh(new THREE.ConeGeometry(0.15, 0.45, 6), new THREE.MeshStandardMaterial({ color: 0xfff0a0, emissive: 0xffe060, emissiveIntensity: 3 })); inner.position.set(fx, fy + 0.4, fz); g.add(inner);
+  const sparkGeo = new THREE.BufferGeometry(), N = 24, pos = new Float32Array(N * 3), seed = Array.from({ length: N }, (_, i) => i * 0.37);
+  sparkGeo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  const sparks = new THREE.Points(sparkGeo, new THREE.PointsMaterial({ color: 0xffb040, size: 0.09, transparent: true, opacity: 0.9, depthWrite: false })); sparks.userData.particles = true; sparks.frustumCulled = false; g.add(sparks);
+  g.userData.update = (t) => {
+    const f = 1 + 0.12 * Math.sin(t * 13) + 0.08 * Math.sin(t * 21); flame.scale.set(1 / f, f, 1 / f); flame.material.emissiveIntensity = 2.2 + 0.6 * Math.sin(t * 17);
+    for (let i = 0; i < N; i++) { const k = (t * 0.6 + seed[i]) % 1; pos[i * 3] = fx + Math.sin(seed[i] * 7 + t) * 0.25 * k; pos[i * 3 + 1] = fy + 0.5 + k * 2.2; pos[i * 3 + 2] = fz + Math.cos(seed[i] * 5 + t) * 0.25 * k; }
+    sparkGeo.attributes.position.needsUpdate = true;
+  };
+  return g;
+}

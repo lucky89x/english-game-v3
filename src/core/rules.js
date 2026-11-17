@@ -3,7 +3,15 @@ export const MONSTERS = {
   slime: { name: 'Green Slime', level: 1, hp: 30, atk: 6, exp: 12, gold: 3, speed: 2.0, color: 0x7fd86a, size: 1.0 },
   red: { name: 'Red Slime', level: 4, hp: 70, atk: 11, exp: 26, gold: 7, speed: 2.5, color: 0xff7a6a, size: 1.25 },
   golem: { name: 'Stone Golem', level: 8, hp: 180, atk: 18, exp: 75, gold: 20, speed: 1.6, color: 0xa49aa6, size: 1.7 },
+  // Map 2 (Memory Forest, levels 21-40): they appear only once Map 2 is open
+  bat: { name: 'Shadow Bat', level: 21, hp: 260, atk: 32, exp: 120, gold: 22, speed: 3.2, color: 0x6a4a9a, size: 1.0, fly: true },
+  shroom: { name: 'Angry Mushroom', level: 26, hp: 420, atk: 40, exp: 170, gold: 30, speed: 1.8, color: 0xe2483e, size: 1.3 },
 };
+/** Map 2 monsters in the Memory Forest: [kind, x, z] (open ground away from crystals, paths and the gate). */
+export const FOREST_SPAWNS = [
+  ['bat', -25, -43], ['bat', 35, -34], ['bat', -16, -31], ['bat', 38, -19], ['bat', -46, -4],
+  ['shroom', 14, -7], ['shroom', -19, 14], ['shroom', 17, 26], ['shroom', -40, 26], ['shroom', 2, 20],
+];
 /** Where monsters live in the Starter Village region: [kind, x, z]. The Wild Meadow is north-east, golems guard the south-east. */
 export const SPAWNS = [
   ['slime', 36, -14], ['slime', 32, -24], ['slime', 38, -30], ['slime', 34, -8], ['slime', 48, -26],

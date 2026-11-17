@@ -4,6 +4,8 @@ import { makeRegion, P, gauss, smooth, BRIDGE_LEN } from '../regionkit.js';
 const riverX = (z) => 22 + 3 * Math.sin(z * 0.08);
 const bw = (b) => [b.x - BRIDGE_LEN / 2 - 0.8, b.z], be = (b) => [b.x + BRIDGE_LEN / 2 + 0.8, b.z];
 export const GATE = { x: -30, z: -44 };
+/** D1: things that fill the empty south fields (windmill, pond, training dummies, campsite). */
+export const SOUTH = { mill: [-30, 41], pond: [-6, 50], dummies: [[13, 45], [15, 48], [6, 52]], tent: [-15, 53], fire: [-11.5, 50] };
 export default makeRegion({
   name: 'village', title: 'Starter Village', size: 140, playRadius: 62, seed: 4242, trees: 230, rocks: 40, roughness: 0.3, treeMix: [0.3, 0.85],
   riverX, riverHalf: () => 3.4, riverStart: -52, waterfall: true,
@@ -18,6 +20,11 @@ export default makeRegion({
     { id: 'orchard', en: 'orchard', vi: 'vườn cây ăn quả', label: 'Orchard', x: 40, z: 8 },
     { id: 'wild', en: 'wild meadow', vi: 'đồng hoang', label: 'Wild Meadow ⚔', x: 40, z: -24 },
     { id: 'gate', en: 'forest gate', vi: 'cổng rừng', label: 'Forest Gate', x: GATE.x, z: GATE.z },
+    // D1: the south fields
+    { id: 'mill', en: 'windmill', vi: 'cối xay gió', label: 'Windmill', x: SOUTH.mill[0], z: SOUTH.mill[1] },
+    { id: 'pond', en: 'pond', vi: 'cái ao', label: 'Pond', x: SOUTH.pond[0], z: SOUTH.pond[1] },
+    { id: 'yard', en: 'training yard', vi: 'bãi tập', label: 'Training Yard', x: 12, z: 49 },
+    { id: 'tent', en: 'campsite', vi: 'khu trại', label: 'Campsite', x: SOUTH.tent[0], z: SOUTH.tent[1] },
   ],
   entrance: GATE, spawn: { x: 0, z: 13 },
   exits: [{ x: GATE.x, z: GATE.z + 2.6, r: 2.6, to: 'forest', label: 'Vào Rừng Ký Ức', flag: 'forest_open' }],
@@ -32,6 +39,8 @@ export default makeRegion({
     P(2.2, [0, -4], [8, -6]),
     P(2.2, [-10, -1], [-10, 8]),
   ]; },
+  latePaths: () => [P(2.4, [-2, 34], [-8, 42], [-16, 46], [-27, 44]), P(2.2, [-2, 34], [3, 41], [9, 44])],
+  lateClear: (x, z) => x > -36 && x < 16 && z > 37 && z < 57,
   hills: (x, z, h) => h + 3.2 * gauss(Math.hypot(x + 44, z + 20), 12) + 2.4 * gauss(Math.hypot(x - 46, z + 30), 11)
     + 8.5 * (1 - smooth(-57.5, -52.5, z)) * smooth(-4, 8, x),      // north-east cliff with the waterfall
   treeFree: (x, z) => (Math.abs(x) < 20 && z > -34 && z < 26) || (x < -12 && x > -36 && z > 22 && z < 40) || (x > 30 && x < 52 && z > -4 && z < 26),
@@ -43,6 +52,8 @@ export default makeRegion({
     { x: GATE.x - 3.4, z: GATE.z, r: 0.9 }, { x: GATE.x + 3.4, z: GATE.z, r: 0.9 },
     ...[[36, 0], [42, 3], [46, 9], [38, 20], [45, 18], [34, 13]].map(([x, z]) => ({ x, z, r: 0.6 })),   // orchard trees
     { x: -27, z: 27, r: 1.0 },                                                // scarecrow
+    { x: SOUTH.mill[0], z: SOUTH.mill[1], r: 2.4 }, { x: SOUTH.pond[0], z: SOUTH.pond[1], r: 3.6 }, { x: SOUTH.tent[0], z: SOUTH.tent[1], r: 1.7 },
+    { x: SOUTH.fire[0], z: SOUTH.fire[1], r: 0.6 }, ...SOUTH.dummies.map(([x, z]) => ({ x, z, r: 0.45 })),
   ],
 });
 export const ORCHARD_TREES = [[36, 0], [42, 3], [46, 9], [38, 20], [45, 18], [34, 13]];

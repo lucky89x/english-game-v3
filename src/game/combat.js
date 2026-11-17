@@ -3,7 +3,7 @@
 // village square with full health and no loss, so young players are never punished hard.
 import * as THREE from 'three';
 import * as L from '../core/layout.js';
-import { MONSTERS, SPAWNS, playerAtk, hurt, inArc, HUNTS, hunt, countKill, huntLine, BOSSES, shieldDue } from '../core/rules.js';
+import { MONSTERS, SPAWNS, FOREST_SPAWNS, playerAtk, hurt, inArc, HUNTS, hunt, countKill, huntLine, BOSSES, shieldDue } from '../core/rules.js';
 
 export const BOARD = { x: 29, z: -14 }, BOSS_AT = { x: 40, z: -26 }, BOSS2_AT = { x: 46, z: 40 };
 import { addExp, maxHp } from '../core/save.js';
@@ -14,9 +14,22 @@ export class Wild {
   constructor(api) {
     this.api = api; this.root = new THREE.Group(); api.scene.add(this.root); this.cool = 0; this.t = 0; this.regen = 0;
     const eye = new THREE.MeshBasicMaterial({ color: 0x24140c }), white = new THREE.MeshBasicMaterial({ color: 0xffffff });
-    this.mobs = SPAWNS.map(([kind, x, z], i) => {
+    this.mobs = [...SPAWNS.map((r) => [...r, 'village']), ...FOREST_SPAWNS.map((r) => [...r, 'forest'])].map(([kind, x, z, region], i) => {
       const def = MONSTERS[kind], g = new THREE.Group(), mat = new THREE.MeshStandardMaterial({ color: def.color, roughness: kind === 'golem' ? 0.95 : 0.2, transparent: kind !== 'golem', opacity: kind === 'golem' ? 1 : 0.9, emissive: def.color, emissiveIntensity: 0.12, flatShading: kind === 'golem' });
-      const body = new THREE.Mesh(kind === 'golem' ? new THREE.IcosahedronGeometry(0.55, 1) : new THREE.SphereGeometry(0.5, 16, 12), mat); body.scale.set(1, kind === 'golem' ? 1.1 : 0.8, 1); body.position.y = kind === 'golem' ? 0.6 : 0.4; body.castShadow = true; body.userData.live = true; g.add(body);
+      const body = new THREE.Mesh(kind === 'golem' ? new THREE.IcosahedronGeometry(0.55, 1) : new THREE.SphereGeometry(kind === 'bat' ? 0.34 : 0.5, 16, 12), mat);
+      body.scale.set(1, kind === 'golem' ? 1.1 : kind === 'shroom' ? 0.75 : 0.8, 1); body.position.y = kind === 'golem' ? 0.6 : kind === 'bat' ? 1.3 : kind === 'shroom' ? 0.38 : 0.4; body.castShadow = true; body.userData.live = true; g.add(body);
+      if (kind === 'shroom') {      // a red spotted cap on a pale stem body
+        mat.color.set(0xf2e6cc); mat.emissive.set(0x403020); mat.transparent = false; mat.opacity = 1;
+        const cap = new THREE.Mesh(new THREE.SphereGeometry(0.62, 18, 10, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.MeshStandardMaterial({ color: def.color, roughness: 0.6 })); cap.scale.y = 0.75; cap.position.y = 0.62; cap.castShadow = true; g.add(cap);
+        for (let k = 0; k < 6; k++) { const a = k * 1.05, sp = new THREE.Mesh(new THREE.SphereGeometry(0.08, 6, 4), white); sp.position.set(Math.cos(a) * 0.38, 0.86, Math.sin(a) * 0.38); sp.scale.y = 0.4; g.add(sp); }
+      }
+      if (kind === 'bat') {         // two wings that flap (rebuilt each frame by rotation in update)
+        mat.transparent = false; mat.opacity = 1;
+        const wingGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, 0), new THREE.Vector3(0.75, 0.2, -0.1), new THREE.Vector3(0.6, -0.15, 0.05), new THREE.Vector3(0, 0, 0), new THREE.Vector3(0.6, -0.15, 0.05), new THREE.Vector3(0.3, -0.2, 0.1)]);
+        wingGeo.computeVertexNormals();
+        const wm = new THREE.MeshStandardMaterial({ color: 0x3a2a5a, side: THREE.DoubleSide, roughness: 0.8 });
+        for (const sx of [-1, 1]) { const w = new THREE.Mesh(wingGeo, wm); w.scale.x = sx; w.position.set(sx * 0.2, 1.32, 0); g.add(w); (g.userData.wings || (g.userData.wings = [])).push(w); }
+      }
       if (kind === 'golem') { for (const sx of [-1, 1]) { const arm = new THREE.Mesh(new THREE.IcosahedronGeometry(0.26, 0), mat); arm.position.set(sx * 0.66, 0.5, 0.1); arm.castShadow = true; g.add(arm); } const moss = new THREE.Mesh(new THREE.SphereGeometry(0.34, 8, 6), new THREE.MeshStandardMaterial({ color: 0x74b84a })); moss.scale.y = 0.4; moss.position.y = 1.12; g.add(moss); }
       for (const sx of [-1, 1]) {         // angry eyes: big dark eye, white glint, slanted brow
         const e = new THREE.Mesh(new THREE.SphereGeometry(0.085, 8, 6), kind === 'golem' ? new THREE.MeshBasicMaterial({ color: 0xffd23c }) : eye); e.position.set(sx * 0.17, body.position.y + 0.06, 0.44); g.add(e);
@@ -24,10 +37,10 @@ export class Wild {
         const brow = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.045, 0.04), eye); brow.position.set(sx * 0.17, body.position.y + 0.19, 0.47); brow.rotation.z = -sx * 0.45; g.add(brow);
       }
       compact(g);        // eyes, brows, arms and moss become one mesh; the body stays separate because it flashes when hit
-      const bar = new THREE.Sprite(new THREE.SpriteMaterial({ color: 0xe23a2a, depthTest: false })); bar.center.set(0, 0.5); bar.scale.set(1, 0.12, 1); bar.position.set(-0.5, kind === 'golem' ? 1.75 : 1.2, 0); bar.renderOrder = 6; g.add(bar);
+      const bar = new THREE.Sprite(new THREE.SpriteMaterial({ color: 0xe23a2a, depthTest: false })); bar.center.set(0, 0.5); bar.scale.set(1, 0.12, 1); bar.position.set(-0.5, ({ golem: 1.75, bat: 1.95, shroom: 1.3 })[kind] || 1.2, 0); bar.renderOrder = 6; g.add(bar);
       const back = new THREE.Sprite(new THREE.SpriteMaterial({ color: 0x3a2410, depthTest: false })); back.center.set(0, 0.5); back.scale.set(1.04, 0.16, 1); back.position.set(-0.52, bar.position.y, 0); back.renderOrder = 5; g.add(back);
       g.scale.setScalar(def.size); this.root.add(g);
-      return { i, kind, def, g, body, bar, back, home: { x, z }, x, z, hp: def.hp, dead: 0, hitCool: 0, flash: 0, ph: i * 1.3 };
+      return { i, kind, def, region, g, body, bar, back, home: { x, z }, x, z, hp: def.hp, dead: 0, hitCool: 0, flash: 0, ph: i * 1.3 };
     });
     // Map 1's bosses wake up once Ngọc reaches their level: the Slime King in the meadow, the Ancient Golem in the golem fields
     this.bosses = BOSSES.map((def, k) => this.makeBoss(def, k ? BOSS2_AT : BOSS_AT, eye));
@@ -40,7 +53,7 @@ export class Wild {
       for (const [x, y, c] of [[-0.45, 1.7, 0xfff4dc], [0.15, 1.55, 0xfff4dc], [0.55, 1.75, 0xffd8a0]]) { const n = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.45, 0.02), new THREE.MeshStandardMaterial({ color: c })); n.position.set(x, y, 0.06); n.rotation.z = (x * 3) % 0.2; g.add(n); }
       const roof = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.1, 0.5), wood); roof.position.y = 2.2; g.add(roof);
       compact(g); g.traverse((o) => { if (o.isMesh) o.castShadow = true; });
-      g.position.set(BOARD.x, L.REGIONS.village.groundHeight(BOARD.x, BOARD.z), BOARD.z); g.rotation.y = -2.2; this.root.add(g);
+      g.position.set(BOARD.x, L.REGIONS.village.groundHeight(BOARD.x, BOARD.z), BOARD.z); g.rotation.y = -2.2; this.root.add(g); this.boardMesh = g;
     }
     // sword slash arc shown for a moment in front of Ngọc
     this.slash = new THREE.Mesh(new THREE.TorusGeometry(1.5, 0.09, 6, 20, Math.PI * 0.9), new THREE.MeshBasicMaterial({ color: 0xfff2a0, transparent: true, opacity: 0.9, depthWrite: false })); this.slash.rotation.x = Math.PI / 2; this.slash.visible = false; api.scene.add(this.slash);
@@ -67,10 +80,16 @@ export class Wild {
     const bar = new THREE.Sprite(new THREE.SpriteMaterial({ color: 0xe23a2a, depthTest: false })); bar.center.set(0, 0.5); bar.scale.set(1, 0.07, 1); bar.position.set(-0.5, top, 0); bar.renderOrder = 6; g.add(bar);
     const back = new THREE.Sprite(new THREE.SpriteMaterial({ color: 0x3a2410, depthTest: false })); back.center.set(0, 0.5); back.scale.set(1.04, 0.1, 1); back.position.set(-0.52, top, 0); back.renderOrder = 5; g.add(back);
     g.scale.setScalar(def.size); this.root.add(g);
-    const m = { i: this.mobs.length, kind: def.id, boss: true, def, g, body, bar, back, shield, home: { ...at }, x: at.x, z: at.z, hp: def.hp, dead: 0, hitCool: 0, flash: 0, ph: 0, broken: 0, shieldOn: false };
+    const m = { i: this.mobs.length, kind: def.id, boss: true, region: 'village', def, g, body, bar, back, shield, home: { ...at }, x: at.x, z: at.z, hp: def.hp, dead: 0, hitCool: 0, flash: 0, ph: 0, broken: 0, shieldOn: false };
     this.mobs.push(m); return m;
   }
-  setRegion(name) { this.root.visible = name === 'village'; for (const m of this.mobs) this.place(m); }
+  /** Village: meadow monsters, bosses and the board. Forest: Map 2 monsters, only once Map 2 is open. */
+  setRegion(name) {
+    this.region = name; this.root.visible = name === 'village' || name === 'forest'; if (this.boardMesh) this.boardMesh.visible = name === 'village';
+    for (const m of this.mobs) { if (m.region === name) this.place(m); else m.g.visible = false; }
+  }
+  /** A monster takes part when it lives in this region (forest ones wait for Map 2). */
+  here(m, p) { return m.region === this.region && (m.region !== 'forest' || !!(p && p.flags.map2)); }
   place(m) { m.g.position.set(m.x, L.groundHeight(m.x, m.z), m.z); }
   /** K: a quick roll forward. Monsters cannot hurt Ngọc for half a second. */
   dodge() {
@@ -86,7 +105,7 @@ export class Wild {
     this.cool = 0.42; player.emote('Interact'); this.api.sfx('tick');
     this.slash.visible = true; this.slashT = 0.16; this.slash.position.set(player.pos.x, player.pos.y + 0.9, player.pos.z); this.slash.rotation.z = -player.yaw + Math.PI * 0.05;
     let hits = 0; const atk = playerAtk(p);
-    for (const m of this.mobs) if (!m.dead && inArc(player.pos.x, player.pos.z, player.yaw, m.x, m.z, 2.4 + m.def.size * 0.3)) {
+    for (const m of this.mobs) if (!m.dead && this.here(m, p) && inArc(player.pos.x, player.pos.z, player.yaw, m.x, m.z, 2.4 + m.def.size * 0.3)) {
       if (m.shieldOn) { hits += 1; m.flash = 0.1; if (!this.shieldTold) { this.shieldTold = true; this.api.ui.toast('Word shield! Press E'); } continue; }
       hits += 1; m.hp -= atk; m.flash = 0.18;
       if (m.boss && shieldDue(m.hp, m.def.hp, m.broken)) { m.shieldOn = true; m.shield.visible = true; this.shieldTold = false; this.api.ui.toast('Word shield! Press E'); this.api.sfx('wrong'); }
@@ -110,6 +129,7 @@ export class Wild {
   /** E near the board, or near the shielded boss. */
   interact(pos) {
     if (!this.root.visible) return null;
+    if (this.region !== 'village') return null;
     for (const b of this.bosses) if (b.g.visible && b.shieldOn && Math.hypot(pos.x - b.x, pos.z - b.z) < 2.2 + b.def.size * 0.5) return { text: 'E · Phá khiên chữ của ' + (b.def.flag === 'boss1' ? 'Vua Slime' : 'Golem Cổ'), run: () => this.api.quiz(b.def.name, (ok) => {
       if (ok) { b.shieldOn = false; b.shield.visible = false; b.broken += 1; this.api.sfx('fanfare'); this.api.ui.toast('Shield broken!'); }
       else { b.hp = Math.min(b.def.hp * [1, 0.75, 0.5][b.broken], b.hp + b.def.hp * 0.07); this.api.sfx('wrong'); }
@@ -134,6 +154,8 @@ export class Wild {
     const hpMax = maxHp(p); if (p.stats.hp === undefined || p.stats.hp > hpMax) p.stats.hp = hpMax;
     let fighting = false;
     for (const m of this.mobs) {
+      if (!this.here(m, p)) { if (m.g.visible) m.g.visible = false; continue; }
+      if (!m.boss && !m.dead && !m.g.visible) { m.g.visible = true; this.place(m); }
       if (m.boss && p.stats.level < m.def.level) { m.g.visible = false; continue; }
       if (m.boss && !m.dead && !m.g.visible) { m.g.visible = true; this.place(m); }
       if (m.dead) { m.dead -= dt; if (m.dead <= 0) { m.dead = 0; m.hp = m.def.hp; if (m.boss) { m.broken = 0; m.shieldOn = false; m.shield.visible = false; } m.x = m.home.x; m.z = m.home.z; m.g.visible = true; this.place(m); } continue; }
@@ -144,6 +166,7 @@ export class Wild {
       const nx = m.x + vx * m.def.speed * dt, nz = m.z + vz * m.def.speed * dt; if ((vx || vz) && L.walkable(nx, nz, 0.45)) { m.x = nx; m.z = nz; }
       const hop = Math.abs(Math.sin(this.t * (m.kind === 'golem' ? 3 : 5) + m.ph)) * (vx || vz ? 0.22 : 0.08);
       m.g.position.set(m.x, L.groundHeight(m.x, m.z) + hop, m.z); if (vx || vz) m.g.rotation.y = Math.atan2(vx, vz);
+      if (m.g.userData.wings) for (const [k, w] of m.g.userData.wings.entries()) w.rotation.z = (k ? -1 : 1) * Math.sin(this.t * 14 + m.ph) * 0.6;   // bats flap
       m.flash = Math.max(0, m.flash - dt); m.body.material.emissiveIntensity = m.flash > 0 ? 1.4 : 0.12;
       if (m.shieldOn) m.shield.rotation.y += dt * 1.5;
       m.bar.scale.x = Math.max(0.001, m.hp / m.def.hp); const show = m.hp < m.def.hp || d < 9; m.bar.visible = m.back.visible = show;
@@ -158,8 +181,8 @@ export class Wild {
   markers() {
     if (!this.root.visible) return [];
     const p = this.api.profile(), h = p && p.hunt, q = h && HUNTS[h.i % HUNTS.length], out = [];
-    if (!h || !h.active || h.got >= q.need) out.push({ x: BOARD.x, z: BOARD.z, text: '!', color: '#ffd23c' });
+    if (this.region === 'village' && (!h || !h.active || h.got >= q.need)) out.push({ x: BOARD.x, z: BOARD.z, text: '!', color: '#ffd23c' });
     for (const b of this.bosses) if (b.g.visible && !b.dead) out.push({ x: b.x, z: b.z, text: '♛', color: b.def.flag === 'boss1' ? '#8fd8ff' : '#e0c890' });
-    return out.concat(this.mobs.filter((m) => !m.dead && !m.boss).map((m) => ({ x: m.x, z: m.z, text: '', color: m.kind === 'golem' ? '#8a8490' : m.kind === 'red' ? '#ff6a5a' : '#6ad05a', small: true })));
+    return out.concat(this.mobs.filter((m) => !m.dead && !m.boss && this.here(m, p)).map((m) => ({ x: m.x, z: m.z, text: '', color: ({ golem: '#8a8490', red: '#ff6a5a', bat: '#9a7ad0', shroom: '#e2483e' })[m.kind] || '#6ad05a', small: true })));
   }
 }

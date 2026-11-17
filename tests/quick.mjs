@@ -92,6 +92,18 @@ await run('arcade', async () => {
   check(paid[0] > 0 && paid[0] === paid[2] && paid[3] < paid[0] && paid[3] >= 1, `Cart race pays in full three times, then less (${paid.join(', ')}; start ${g0})`);
 });
 
+await run('map2', async () => {        // Map 2 monsters in the forest, only once Map 2 is open
+  await ev(() => { const p = __eq.profile; p.flags.forest_open = true; p.flags.map2 = false; __eq.enterRegion('forest'); }); await page.waitForFunction(() => __eq.region === 'forest' && __eq.started, null, { timeout: 120000 }); await wait(600);
+  check(await ev(() => __eq.wild.mobs.every((m) => !m.g.visible)), 'Forest before Map 2: no monsters');
+  await ev(() => { const p = __eq.profile; p.flags.map2 = true; p.stats.level = 22; p.stats.hp = 9999; __eq.wild.mobs.forEach((m) => { if (m.region === 'forest') m.dead = 0; }); });   // the setup at the top parks every monster await page.waitForFunction(() => __eq.wild.mobs.filter((m) => m.g.visible).length >= 10, null, { timeout: 60000 }).catch(() => {});
+  check(await ev(() => __eq.wild.mobs.filter((m) => m.g.visible).every((m) => m.region === 'forest') && __eq.wild.mobs.filter((m) => m.g.visible).length === 10), 'Map 2 open: 10 forest monsters, none from the meadow ' + await ev(() => __eq.wild.mobs.filter((m) => m.g.visible).map((m) => m.kind).join(',')));
+  const r = await ev(() => { const w = __eq.wild, m = w.mobs.find((m) => m.kind === 'bat' && !m.dead), e0 = __eq.profile.stats.exp, l0 = __eq.profile.stats.level; w.kill(m, __eq.profile); return { exp: __eq.profile.stats.exp !== e0 || __eq.profile.stats.level !== l0, dead: m.dead > 0 }; });
+  check(r.exp && r.dead, 'Defeating a Shadow Bat pays EXP');
+  await ev(() => __eq.enterRegion('village')); await page.waitForFunction(() => __eq.region === 'village' && __eq.started, null, { timeout: 120000 }); await wait(600);
+  check(await ev(() => __eq.wild.mobs.filter((m) => m.g.visible).every((m) => m.region === 'village')), 'Back in the village: only meadow monsters');
+  await closeDialogs();
+});
+
 await run('forest', async () => {
   await ev(() => __eq.enterRegion('forest')); await page.waitForFunction(() => __eq.region === 'forest' && __eq.started, null, { timeout: 90000 });
   check(await ev(() => __eq.errors.length === 0 && !__eq.wild.root.visible), 'Forest loads, no monsters from the meadow there');
