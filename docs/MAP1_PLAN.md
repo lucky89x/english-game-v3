@@ -36,7 +36,8 @@ Mỗi 5 cấp có một "cổng kiến thức" (ôn từ đến hạn) mới lê
 | A5 | Cửa hàng + trang bị | Bram bán kiếm và giáp, Rose bán bùa và bánh hồi máu (phím Q) | xong |
 | A6 | Túi đồ | Phím I / nút 🎒: xem chỉ số, mặc/cởi đồ; kiếm trên tay, giáp da/giáp sắt trên ngực, cỏ bốn lá bên hông | xong |
 | A7 | Boss map 1 | Vua Slime (cấp 8+), Golem Cổ (cấp 18+, cánh đồng đá Đông Nam); 3 khiên chữ phá bằng từ tiếng Anh | xong |
-| A8 | Cổng Map 2 | Thắng Golem Cổ và đạt cấp 20 → mở Map 2 (Rừng Ký Ức), từ vựng chuyển sang Unit 2 | xong (quái riêng Map 2 chưa có) |
+| A8 | Cổng Map 2 | Thắng Golem Cổ và đạt cấp 20 → mở Map 2 (Rừng Ký Ức), từ vựng chuyển sang Unit 2 | xong |
+| M2-1 | Quái Map 2 | Rừng Ký Ức: 5 Dơi Bóng Tối (cấp 21), 5 Nấm Giận Dữ (cấp 26); chỉ hiện khi đã mở Map 2 | xong (boss Map 2 chưa có) |
 | B1 | Xếp kẹo (match-3) | Biển phía Tây quảng trường, 25 lượt, có combo | xong |
 | B2 | Đua xe | Xe bí ngô, giữ phím để lái, né đá và bùn, nhặt xu | xong |
 | B3 | Bắn súng cao su | Kéo thả ná, đạn bay vòng cung, slime và bóng bay | xong |
@@ -49,7 +50,7 @@ Mỗi 5 cấp có một "cổng kiến thức" (ôn từ đến hạn) mới lê
 | C5 | Unit theo map | Map 1 = Unit 1, Map 2 = Unit 2; phụ huynh chọn Unit trên lớp ở thanh cài đặt | xong |
 | B6 | Giới hạn thưởng mini game | 3 lượt đầu mỗi trò mỗi ngày thưởng đầy đủ, sau đó 20% | xong |
 | E1 | Máy tính bảng | Cần ảo, nút chạm, phím mũi tên khi chơi bàn, kéo xoay, chụm zoom | xong (chưa thử trên máy thật) |
-| D1 | Lấp đất trống | Bãi tập, đường đua, trại, ao, cối xay | chưa |
+| D1 | Lấp đất trống | Phía Nam: cối xay gió, ao sen, bãi tập (hình nộm), khu trại có lửa trại; đường mới và biển chỉ đường | xong |
 | D2 | Nhẹ máy | Tải 17.7 → 10.9 MB; 723 → 210 vật thể vẽ; tự hạ đồ họa | xong, chờ đo FPS máy thật |
 
 ## Thứ tự làm

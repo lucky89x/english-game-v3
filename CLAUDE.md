@@ -14,7 +14,7 @@ Game học tiếng Anh lớp 6–9 bằng Three.js, JavaScript thuần, không b
 ## Lệnh
 ```bash
 node --test tests/unit.test.mjs        # vài giây; chạy sau mọi thay đổi
-node tests/quick.mjs --only combat,owl # nhóm: boot combat unit owl arcade bag touch forest; 2–6 phút, dùng cho lượt sửa nhỏ
+node tests/quick.mjs --only combat,owl # nhóm: boot combat unit owl arcade bag map2 touch forest; 2–6 phút, dùng cho lượt sửa nhỏ
 node tests/e2e.mjs                     # cả cốt truyện, 20–25 phút trên máy không GPU; chạy nền, một lần cho mỗi cụm thay đổi
 node tests/look.mjs <tiền tố> [village|forest] [quality] [tên,…]   # ảnh duyệt mỹ thuật trong game (ngoc_close, ngoc_side…)
 python3 tools/review_sheet.py          # tạo lại bảng đối chiếu nội dung docs/DOI_CHIEU_NOI_DUNG.html
@@ -41,6 +41,7 @@ PY=<python có bpy 4.2> tools/chibi05/build_all.sh   # dựng lại model, ~1 ph
 - Lily, Rose, Anna xuất không có hoạt ảnh (`CHIBI_NO_ANIM=1`) và mượn clip của Ngọc lúc chạy; đổi xương của Ngọc thì phải dựng lại cả 4.
 - Shader chèn thêm (paint, windy) phải nối chuỗi `onBeforeCompile` và có `customProgramCacheKey`; GLSL chèn đầu shader phải kết thúc bằng xuống dòng (nếu không dính vào `#define`).
 - Hậu kỳ làm khung hình trên máy không GPU ~3 s (mức Thấp ~1 s): test cần chờ lâu (e2e `setDefaultTimeout(120000)`, giữ phím W 5 s). Không phản ánh máy thật có card đồ họa.
+- Thêm địa điểm vào bản đồ: dùng `latePaths`/`lateClear` (regionkit) để không xáo trộn cây đã sinh theo seed; đổi `treeFree`/`paths` sẽ làm cây mọc lại chỗ khác và hỏng test vị trí.
 - Test trang thứ hai (máy tính bảng) trong cùng trình duyệt chạy chậm: đặt `setDefaultTimeout(120000)`.
 
 ## Tiến độ (cập nhật cuối mỗi lượt làm việc, trước khi commit)
@@ -54,11 +55,14 @@ Cập nhật mục này mỗi khi xong việc, để phiên/hội thoại mới 
 - Tiếng Anh trong vòng chơi: rương khóa chữ, bảng nhiệm vụ, khiên chữ của 2 boss, Cú Mèo cấp 5/10/15/20 (10/15/20 thêm 2 câu ngữ pháp, có cho Unit 1 cả 4 lớp). Unit theo map; phụ huynh chọn Unit ở thanh cài đặt.
 - Trò chơi không tiếng Anh (8 trò): thưởng đầy đủ 3 lượt đầu mỗi trò mỗi ngày, sau đó 20%.
 - Túi đồ (phím I, nút 🎒): mặc/cởi; giáp và cỏ bốn lá hiện trên người (`src/game/gear.js`, gắn xương chest/hips).
+- Phía Nam làng (D1): cối xay gió, ao, bãi tập, khu trại (`src/world/village.js`, vị trí `SOUTH` trong `core/regions/village.js`).
+- Map 2: Dơi Bóng Tối, Nấm Giận Dữ trong rừng (`FOREST_SPAWNS` trong rules.js), chỉ khi `flags.map2`.
 - Máy tính bảng: cần ảo + nút chạm (chưa thử máy thật).
+- Hướng dẫn cập nhật máy test: `docs/HUONG_DAN_CAP_NHAT.md`.
 - Mỹ thuật: tóc lọn cong thuôn nhọn (M1) cho Ngọc, Lily, Rose, Anna; bóng khe nướng vào màu đỉnh; lá cây dạng thẻ.
 - Đồ họa kiểu saltline (học từ realskyrin/fps3ademo-saltline, chỉ đọc): `src/render/post.js` hậu kỳ tự viết (bloom 2 tầng, tone map, chỉnh màu ấm, tối viền) + bề mặt vẽ tay bằng shader (`paint()` trong common.js: loang màu, hạt, vệt cỏ) + bầu trời làm ánh sáng môi trường + lấp lánh mặt nước + viền hoạt hình quanh nhân vật (`src/render/outline.js`, inverted hull dùng chung xương). Chỉ bật ở mức Vừa/Cao; tia nắng (radial blur về phía mặt trời) chỉ ở mức Cao vì mặt trời cao nên ít khi thấy. Mức Thấp như cũ.
 
-**Còn lại Map 1:** lấp đất trống phía Nam (D1), quái/boss riêng cho Map 2.
+**Còn lại:** boss Map 2 và nhiệm vụ/rương riêng của Rừng Ký Ức cho Map 2; Map 3 (Sa mạc Gió Vàng).
 
 **Báo cáo rà soát 16/11 (anh đã duyệt hết):** xong N2 N3 N4 N5 T1 T2 T3 T4 K1 K2 K3 K4 K5 K6 M1. N1: đã có bảng `docs/DOI_CHIEU_NOI_DUNG.html`, chờ giáo viên tick rồi gửi dòng mã. M2 thay bằng shader vẽ tay (không cần file ảnh). Anh đã bỏ Tripo (M3). Anh tự làm: Q1/Q4 xóa nhánh trên GitHub (em không có quyền xóa nhánh), Q2 tắt skill trong Cài đặt, Q5 gõ /compact thành dòng riêng, Q6 dùng /caveman lite. Q3 giữ nguyên. M3/M4 (dịch vụ AI 3D, thuê họa sĩ) cần anh làm/chi tiền, em tích hợp khi có file.
 
