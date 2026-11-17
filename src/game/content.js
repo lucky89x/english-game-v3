@@ -162,5 +162,5 @@ export const FRIENDS = {
   forge: { who: 'Bram', file: 'npc_forge_blacksmith_v01', at: [6.2, -13.4, -0.5], shop: 'forge', lines: ['Clang, clang! I am Bram, the blacksmith. What would you like?'] },
   lily: { who: 'Lily', file: 'npc_lily_druid_v01', at: [-12.5, 26.5, 1.2], lines: ['Hi! I am Lily. I look after the plants.', 'The flowers are happy today. Can you smell them?'] },
   rose: { who: 'Rose', file: 'npc_rose_baker_v01', at: [5.8, -8.6, 0.6], shop: 'rose', lines: ['Hello! I am Rose. My bread is warm and soft. What would you like?'] },
-  anna: { who: 'Anna', file: 'npc_anna_bard_v01', at: [-3.6, 7.6, 0.9], lines: ['Hi, I am Anna! I love singing by the well.', 'Listen… the river sings too. La la la!'] },
+  anna: { who: 'Anna', file: 'npc_anna_bard_v01', at: [-3.6, 7.6, 0.9], lines: ['Hi, I am Anna! I love singing in the square.', 'Listen… the river sings too. La la la!'] },
 };

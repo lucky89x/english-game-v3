@@ -111,8 +111,9 @@ export function makeRegion(cfg) {
   }
   // Later additions (latePaths, lateClear) are applied after the seeded trees and rocks, so adding a place to a map
   // only removes the trees standing on it and never reshuffles the rest of the forest.
+  if (cfg.pathWiden) for (const p of R.PATHS) p.w *= cfg.pathWiden;          // wider roads, trees on them are removed below
   if (cfg.latePaths) R.PATHS.push(...cfg.latePaths(R));
-  if (cfg.latePaths || cfg.lateClear) {
+  if (cfg.latePaths || cfg.lateClear || cfg.pathWiden) {
     const gone = (x, z, pad) => (cfg.lateClear && cfg.lateClear(x, z)) || R.pathDistance(x, z) < pad;
     R.TREES = R.TREES.filter((t) => !gone(t.x, t.z, 3.6)); R.ROCKS = R.ROCKS.filter((r) => !gone(r.x, r.z, 1.6));
   }

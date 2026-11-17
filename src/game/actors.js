@@ -88,31 +88,27 @@ export class OrbitCamera {
     dom.addEventListener('wheel', (e) => { e.preventDefault(); this.tDist = Math.min(18, Math.max(3, this.tDist * (e.deltaY > 0 ? 1.12 : 1 / 1.12))); }, { passive: false });
     dom.addEventListener('contextmenu', (e) => e.preventDefault());
   }
-  /** Shortest unobstructed distance from the target towards the wanted camera spot. */
-  /** Tree crowns near the player as spheres {x, y, z, r}: the camera must not sit inside the leaves. */
-  crowns() {
-    if (this.crownRegion !== L.NAME) { this.crownRegion = L.NAME; this.allCrowns = L.TREES.map((t) => { const sc = t.s * (t.kind === 'pine' ? 1.25 : 1.15), h = t.kind === 'birch' ? 3.2 : 2.6, r = t.kind === 'birch' ? 1.6 : 2.1;
-      return t.kind === 'pine' ? { x: t.x, z: t.z, y: L.groundHeight(t.x, t.z) + 3.4 * sc, r: 1.5 * sc } : { x: t.x, z: t.z, y: L.groundHeight(t.x, t.z) + (h + r * 0.55) * sc, r: r * sc * 1.05 }; }); }
-    const tx = this.target.x, tz = this.target.z;
-    return this.allCrowns.filter((c) => Math.abs(c.x - tx) < 22 && Math.abs(c.z - tz) < 22);
-  }
+  /** Shortest unobstructed distance from the target towards the wanted camera spot: only the ground and big solids
+   *  (houses, cliffs) pull the camera in. Tree crowns no longer do: the constant zooming in and out among trees made
+   *  children dizzy (feedback 17/11). */
   clearDistance(dir, want) {
-    const crowns = this.crowns();
     for (let d = 1.0; d <= want; d += 0.35) {
       const x = this.target.x + dir.x * d, y = this.target.y + dir.y * d, z = this.target.z + dir.z * d;
-      if (y < L.groundHeight(x, z) + 0.35) return Math.max(1.2, d - 0.4);
-      if (y < 4.5) for (const s of L.solidsNear(x, z)) if (s.r > 0.9 && Math.hypot(x - s.x, z - s.z) < s.r + 0.2) return Math.max(1.2, d - 0.4);
-      for (const c of crowns) if ((x - c.x) ** 2 + (y - c.y) ** 2 + (z - c.z) ** 2 < c.r * c.r) return Math.max(1.2, d - 0.4);
+      if (y < L.groundHeight(x, z) + 0.35) return Math.max(1.6, d - 0.4);
+      if (y < 4.5) for (const s of L.solidsNear(x, z)) if (s.r > 2.0 && Math.hypot(x - s.x, z - s.z) < s.r + 0.2) return Math.max(1.6, d - 0.4);
     }
     return want;
   }
   update(dt, focus) {
-    const k = Math.min(1, dt * 10);
+    // frame-rate independent smoothing: the same feel at 15 or 60 frames a second
+    const k = 1 - Math.exp(-dt * 10);
     this.yaw += (this.tYaw - this.yaw) * k; this.pitch += (this.tPitch - this.pitch) * k; this.dist += (this.tDist - this.dist) * k;
-    this.target.lerp(new THREE.Vector3(focus.x, focus.y + 1.25, focus.z), Math.min(1, dt * 12));
+    this.goal = (this.goal || new THREE.Vector3()).set(focus.x, focus.y + 1.25, focus.z);
+    if (this.target.distanceTo(this.goal) > 6) this.target.copy(this.goal);           // teleport: no long swoop
+    else { this.target.x += (this.goal.x - this.target.x) * (1 - Math.exp(-dt * 14)); this.target.z += (this.goal.z - this.target.z) * (1 - Math.exp(-dt * 14)); this.target.y += (this.goal.y - this.target.y) * (1 - Math.exp(-dt * 5)); }   // gentle vertical follow: jumps and bumps do not shake the view
     const dir = new THREE.Vector3(Math.sin(this.yaw) * Math.cos(this.pitch), Math.sin(this.pitch), Math.cos(this.yaw) * Math.cos(this.pitch));
     const free = this.clearDistance(dir, this.dist);
-    this.cur = free < this.cur ? free : this.cur + (free - this.cur) * Math.min(1, dt * 4);      // snap in, ease out
+    this.cur += (free - this.cur) * (1 - Math.exp(-dt * (free < this.cur ? 9 : 2.5)));      // ease in quickly, out slowly; never snap
     this.camera.position.copy(this.target).addScaledVector(dir, this.cur);
     this.camera.lookAt(this.target);
   }

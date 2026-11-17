@@ -1,4 +1,4 @@
-// Starter Village (Chapter I): square with a well, Tom's hall, shop, cottages, Ben's market,
+// Starter Village (Chapter I): open square, Tom's hall, shop, cottages, Ben's market,
 // river with the curved bridge and the south bridge, dock, farm, orchard and the forest gate.
 import { makeRegion, P, gauss, smooth, BRIDGE_LEN } from '../regionkit.js';
 const riverX = (z) => 22 + 3 * Math.sin(z * 0.08);
@@ -39,6 +39,7 @@ export default makeRegion({
     P(2.2, [0, -4], [8, -6]),
     P(2.2, [-10, -1], [-10, 8]),
   ]; },
+  pathWiden: 1.45,          // roomier streets with people walking on them (feedback 17/11)
   latePaths: () => [P(2.4, [-2, 34], [-8, 42], [-16, 46], [-27, 44]), P(2.2, [-2, 34], [3, 41], [9, 44])],
   lateClear: (x, z) => x > -36 && x < 16 && z > 37 && z < 57,
   hills: (x, z, h) => h + 3.2 * gauss(Math.hypot(x + 44, z + 20), 12) + 2.4 * gauss(Math.hypot(x - 46, z + 30), 11)
@@ -47,7 +48,6 @@ export default makeRegion({
   keepClear: [{ x: 0, z: 4, r: 9 }, { x: 16, z: 18, r: 5 }],
   solids: [
     { x: 0, z: -25.5, r: 7.2 }, { x: 12.5, z: -8, r: 4.6 }, { x: -14.5, z: -8, r: 4.4 }, { x: -15, z: 9, r: 4.6 },
-    { x: 0, z: 4, r: 1.35 },                                                  // well
     { x: -8.6, z: 18.2, r: 1.5 }, { x: -8.6, z: 20.8, r: 1.5 },               // Ben's stall
     { x: GATE.x - 3.4, z: GATE.z, r: 0.9 }, { x: GATE.x + 3.4, z: GATE.z, r: 0.9 },
     ...[[36, 0], [42, 3], [46, 9], [38, 20], [45, 18], [34, 13]].map(([x, z]) => ({ x, z, r: 0.6 })),   // orchard trees

@@ -1,8 +1,8 @@
-// Starter Village landmarks: well, market, dock, farm, orchard, houses, props and the broken-bridge pieces.
+// Starter Village landmarks: market, dock, farm, orchard, houses, props and the broken-bridge pieces.
 import * as THREE from 'three';
 import * as L from '../core/layout.js';
 import { ORCHARD_TREES, GATE, SOUTH } from '../core/regions/village.js';
-import { at, std, windy, label, bake, leafyGeo, leafCards, leafMat, lampPost, prop, bunting, smoke, signs } from './common.js';
+import { at, std, windy, label, bake, leafyGeo, lampPost, prop, bunting, smoke, signs } from './common.js';
 
 // ------------------------------------------------------------------ village landmarks
 export const MARKET_JARS = [[-6.4, 17.2], [-6.4, 18.75], [-6.4, 20.3], [-6.4, 21.85]];
@@ -64,11 +64,9 @@ export function farm() {
   return g;
 }
 export function orchard(list) {
-  const cards = leafCards([0x4faa3a, 0x77c948, 0xb4e45c], { h: 2.2, r: 2.3, seed: 6 }), cardMat = leafMat(0.012);
-  const g = new THREE.Group(), geo = leafyGeo(0x7a4a26, [0x3a8a2c, 0x4f9e36, 0x62ae40], { h: 2.2, r: 2.3, clumps: 8, trunkR: 0.3, seed: 6 }), apple = new THREE.MeshStandardMaterial({ color: 0xe23a2a, roughness: 0.5 }), lemon = new THREE.MeshStandardMaterial({ color: 0xf6c62e, roughness: 0.5 });
+  const g = new THREE.Group(), geo = leafyGeo(0x7a4a26, [0x4faa3a, 0x77c948, 0xa9dd55], { h: 2.2, r: 2.3, clumps: 10, trunkR: 0.3, seed: 6 }), apple = new THREE.MeshStandardMaterial({ color: 0xe23a2a, roughness: 0.5 }), lemon = new THREE.MeshStandardMaterial({ color: 0xf6c62e, roughness: 0.5 });
   list.forEach(([x, z], k) => {
     const t = new THREE.Mesh(geo, windy(std(), 0.012)); t.castShadow = true; t.position.set(x, L.groundHeight(x, z) - 0.05, z); t.rotation.y = k * 1.3; g.add(t);
-    const lc = new THREE.Mesh(cards, cardMat); lc.position.copy(t.position); lc.rotation.y = t.rotation.y; g.add(lc);
     for (let i = 0; i < 10; i++) { const a = i * 2.399 + k, f = new THREE.Mesh(new THREE.SphereGeometry(0.17, 8, 6), k % 3 === 2 ? lemon : apple); f.position.set(x + Math.cos(a) * 1.7, L.groundHeight(x, z) + 2.6 + (i % 4) * 0.45, z + Math.sin(a) * 1.7); g.add(f); }
   });
   return g;
@@ -82,10 +80,10 @@ export async function villageExtras(add, loadModel, shadowed) {
   await place('bld_house_blue_v02', -15, 9, Math.PI / 2, 1.3);
   const gate = await place('prop_forest_gate_v02', GATE.x, GATE.z, 0, 1); gate.position.y += 0.05;
   const title = label('Forest of Memories\nRừng Ký Ức', { size: 28 }); title.position.set(GATE.x, L.groundHeight(GATE.x, GATE.z) + 4.4, GATE.z); add(title);
-  const still = new THREE.Group(); for (const g of [well(), marketStall(), dock(), farm()]) still.add(g);
+  const still = new THREE.Group(); for (const g of [marketStall(), dock(), farm()]) still.add(g);      // the well in the square was removed (17/11): it blocked the main road
   add(jarRow()); add(bake(orchard(ORCHARD_TREES)));
   const stallName = label("Ben's Word Jars", { size: 28, scale: 0.8 }); stallName.position.set(-8.4, L.groundHeight(-8.6, 19.5) + 3.5, 19.5); add(stallName);
-  for (const [x, z] of [[2.6, -12], [-2.6, -2], [2.8, 10], [-3, 16], [1.5, 27], [6, 8.2], [-8, 1.5], [-20, -10], [-26, -26], [32, 9], [42.6, 22], [8, 38]]) still.add(lampPost(x, z));
+  for (const [x, z] of [[3.6, -12], [-3.6, -2], [3.8, 10], [-4, 16], [2.6, 27], [6, 8.2], [-8, 1.5], [-20, -10], [-26, -26], [32, 9], [42.6, 22], [8, 38]]) still.add(lampPost(x, z));
   signs(add, [[2.9, 14.5, '← Market\nFarm ↓'], [3.2, 1.2, 'Bridge →\n← Forest'], [30.5, 9.5, 'Orchard']]);
   for (const [kind, x, z, rot, sc] of VILLAGE_PROPS) still.add(prop(kind, x, z, rot, sc));
   add(bake(still));

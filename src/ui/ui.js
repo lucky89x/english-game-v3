@@ -60,7 +60,7 @@ export class UI {
       (level >= 2 ? `<div class="vi">${esc(meaning)}</div>` : '') + (level >= 3 ? '<div class="vi">Chỗ cần tới đã hiện dấu ★ trên bản đồ nhỏ.</div>' : '') +
       (canHint ? `<div class="tip">${level < 3 ? 'H: xin gợi ý' + (level ? ' thêm' : '') : 'Đã dùng hết gợi ý'}</div>` : (clue.tip ? `<div class="tip">${esc(clue.tip)}</div>` : ''));
   }
-  prompt(text) { const el = $('prompt'); if (!text || this.busy) el.classList.add('hidden'); else { el.textContent = text; el.classList.remove('hidden'); } }
+  prompt(text) { const want = !text || this.busy ? '' : text; if (want === this.lastPrompt) return; this.lastPrompt = want; const el = $('prompt'); if (!want) el.classList.add('hidden'); else { el.textContent = want; el.classList.remove('hidden'); } }   // only touch the page when the text changes
 
   // ---------------------------------------------------------------- dialogue
   dialogue(pages, done) { this.pages = pages.slice(); this.onDone = done || null; this.onPick = null; this.busy = true; this.render(); }

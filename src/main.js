@@ -15,6 +15,7 @@ import { Wild } from './game/combat.js';
 import { Arcade, candyGame, blocksGame, slingGame, spellGame, raceGame } from './ui/arcade.js';
 import { Chests } from './game/chests.js';
 import { armorMesh, charmMesh } from './game/gear.js';
+import { Walkers } from './game/walkers.js';
 import { ITEMS, bag, wear, buy, eat, shopList, pay, map2Ready, playerAtk } from './core/rules.js';
 import { payNote } from './game/minigames.js';
 import { SAM_LINES, BRIDGE, BRIDGE_SPOTS, FRIENDS } from './game/content.js';
@@ -80,10 +81,10 @@ const faceTex = async (name) => { const t = await texLoader.loadAsync(`./assets/
 
 const ui = new UI(), store = Save.load();
 let profile = null, quest = null, story = null, world = null, player = null, cam = null, tom = null, sam = null, ben = null, pip = null, crystals = null, minimap = null, letterProp = null, itemProps = {}, friends = [], mini = null, wild = null, arcade = null, chests = null, unitCards = [], cardOfFn = () => null;
-let touch = null, quality = localStorage.getItem('eq-quality') || 'medium', perfOn = false, started = false, switching = false, wordIds = {}, jarKey = '';
+let walkers = null, talkW = -1, touch = null, quality = localStorage.getItem('eq-quality') || 'medium', perfOn = false, started = false, switching = false, wordIds = {}, jarKey = '';
 const keys = new Set();
 const game = { errors, get profile() { return profile; }, get quest() { return quest; }, get story() { return story; }, get player() { return player; }, get cam() { return cam; }, get minimap() { return minimap; }, ui, L, stats: { fps: 0, ms: 0, calls: 0, tris: 0 },
-  teleport(x, z) { player.place(x, z); cam.target.set(x, player.pos.y + 1.25, z); }, setQuality, key: (code) => onKey({ code, preventDefault() {} }), get started() { return started && !switching; }, get region() { return L.NAME; }, chooseProfile, enterRegion, MARKET_JARS, BRIDGE_SPOTS, get mini() { return mini; }, get wild() { return wild; }, get scene() { return scene; }, openShop, get sword() { return swordMesh; }, get armor() { return armorShown; }, setWear, openBag: () => openBag(), get arcade() { return arcade; }, get chests() { return chests; }, get friends() { return friends; }, post, refresh: () => refresh() };
+  teleport(x, z) { player.place(x, z); cam.target.set(x, player.pos.y + 1.25, z); }, setQuality, key: (code) => onKey({ code, preventDefault() {} }), get started() { return started && !switching; }, get region() { return L.NAME; }, chooseProfile, enterRegion, MARKET_JARS, BRIDGE_SPOTS, get mini() { return mini; }, get wild() { return wild; }, get scene() { return scene; }, openShop, get sword() { return swordMesh; }, get armor() { return armorShown; }, setWear, openBag: () => openBag(), get arcade() { return arcade; }, get chests() { return chests; }, get friends() { return friends; }, get walkers() { return walkers; }, post, refresh: () => refresh() };
 globalThis.__eq = game;
 
 function resize() { const w = innerWidth, h = innerHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
@@ -156,6 +157,25 @@ function refresh() {
   for (const [id, m] of Object.entries(itemProps)) m.visible = ground.includes(id);
   if (L.NAME === 'village') placeVillageHelpers();
 }
+/** Big bobbing "!" / "?" above whoever has a job for the child (same markers as the minimap), so quest givers are
+ *  easy to find in the 3D view (feedback 17/11). */
+const markTex = {}, markPool = [], MARKS = { '!': '#ffd23c', '?': '#ffe9a0', '✉': '#fff4dc', '🦉': '#ffe28a' };
+function markTexture(ch) {
+  if (markTex[ch]) return markTex[ch];
+  const cv = document.createElement('canvas'); cv.width = cv.height = 128; const c = cv.getContext('2d');
+  c.beginPath(); c.arc(64, 64, 52, 0, 7); c.fillStyle = MARKS[ch]; c.fill(); c.lineWidth = 9; c.strokeStyle = '#7a4a1a'; c.stroke();
+  c.fillStyle = '#5a2e0a'; c.font = `900 ${ch.length > 1 ? 58 : 78}px system-ui, sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(ch, 64, 70);
+  const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; return (markTex[ch] = t);
+}
+function questMarks(list) {
+  const want = list.filter((m) => MARKS[m.text]);
+  while (markPool.length < want.length) { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true })); sp.scale.setScalar(0.95); sp.renderOrder = 4; scene.add(sp); markPool.push(sp); }
+  markPool.forEach((sp, i) => {
+    const m = want[i]; sp.visible = !!m; if (!m) return;
+    if (sp.material.map !== markTexture(m.text)) { sp.material.map = markTexture(m.text); sp.material.needsUpdate = true; }
+    sp.position.x = m.x; sp.position.z = m.z; sp.userData.y = L.walkHeight(m.x, m.z) + (m.text === '✉' ? 1.5 : 3.0);
+  });
+}
 /** Sam waits at the broken bridge during "Fix the Bridge"; Pip joins him to read the plan. */
 function placeVillageHelpers() {
   const st = story.step, atBridge = st === 'bridge' || st === 'gather' || st === 'plan';
@@ -192,7 +212,7 @@ async function enterRegion(name, at) {
   world = await buildWorld(scene, staticModel);
   const q = QUALITY[quality]; world.setDetail(q.density, q.particles, q.far);
   scene.traverse((o) => { if (o.material) [].concat(o.material).forEach((m) => (m.needsUpdate = true)); });
-  minimap.rebuild(); placeActors(); if (mini) mini.setRegion(name); if (wild) wild.setRegion(name); if (chests) chests.setRegion(name);
+  minimap.rebuild(); placeActors(); if (walkers) walkers.setRegion(name); if (mini) mini.setRegion(name); if (wild) wild.setRegion(name); if (chests) chests.setRegion(name);
   const [x, z] = at || [L.SPAWN.x, L.SPAWN.z];
   game.teleport(x, z); player.yaw = Math.PI; cam.tYaw = cam.yaw = 0.25;
   if (quest && quest.step === 'seek') quest.clueStart = performance.now();
@@ -343,6 +363,7 @@ function interactTarget() {
   if (near(tom.x, tom.z, 3)) return { text: 'E · Nói chuyện với Tom', run: () => story.talkTom() };
   if (near(ben.x, ben.z, 3.6)) return { text: 'E · Nói chuyện với Ben', run: () => story.talkBen() };
   if (near(sam.x, sam.z, 3)) return { text: 'E · Nói chuyện với Sam', run: () => story.talkSam() };
+  { const wi = walkers ? walkers.near(p) : -1; if (wi >= 0) return { text: 'E · Chào dân làng', run: () => { talkW = wi; ui.dialogue([{ who: 'Villager', en: walkers.greet(wi) }]); } }; }
   for (const f of friends) if (near(f.npc.x, f.npc.z, 2.6)) {
     if (f.shop) return { text: 'E · Cửa hàng của ' + f.who, run: () => openShop(f.who, f.shop, f.lines[0]) };
     return { text: 'E · Nói chuyện với ' + f.who, run: () => ui.dialogue(f.lines.map((en) => ({ who: f.who, en }))) };
@@ -379,6 +400,7 @@ async function boot() {
   tom = new Npc(tomG, 2.6, 7.6, -0.4); sam = new Npc(samG, 14, 17, 1.2); ben = new Npc(benG, -9.9, 19.5, Math.PI / 2); scene.add(tom.root, sam.root, ben.root);
   pip = new Pip(pipG.scene); scene.add(pip.root);
   for (const f of Object.values(FRIENDS)) { const npc = new Npc(await gltf(f.file), ...f.at, ngoc.animations); scene.add(npc.root); friends.push({ ...f, npc }); }
+  walkers = new Walkers(scene, (name) => loader.loadAsync(`./assets/models/${name}.glb`)); await walkers.init();      // villagers on the roads
   for (const a of [player, tom, sam, ben, ...friends.map((f) => f.npc)]) addOutline(a.root);     // cartoon outlines (medium/high)
   const F = L.REGIONS.forest;
   crystals = new Crystals(scene, F.LANDMARKS.filter((l) => l.id !== 'tree'), F.walkHeight);
@@ -430,7 +452,7 @@ async function boot() {
   renderer.setAnimationLoop(frame);
 }
 
-let last = performance.now(), acc = 0, frames = 0, autosave = 0, slow = 0;
+let mapT = 1, last = performance.now(), acc = 0, frames = 0, autosave = 0, slow = 0;
 const AUTO = !navigator.webdriver && !localStorage.getItem('eq-quality-manual');     // step the graphics down by itself until the child picks a level
 function frame() {
   const now = performance.now(), raw = (now - last) / 1000, real = Math.min(0.25, raw); last = now;
@@ -444,21 +466,24 @@ function frame() {
   // slow machines: several fixed physics steps per frame so the game never runs in slow motion
   for (let left = real; left > 1e-4; left -= 0.05) player.update(Math.min(0.05, left), input, cam.yaw, frozen, sfx);
   if (hadRoute && !player.route) minimap.clearRoute();
-  cam.update(dt, player.pos);
+  cam.update(real, player.pos);
   const talkingTo = ui.busy && ui.pages ? ui.pages[0].who : '';
   tom.update(dt, player.pos, talkingTo === 'Tom'); sam.update(dt, player.pos, talkingTo === 'Sam'); ben.update(dt, player.pos, talkingTo === 'Ben');
   for (const f of friends) f.npc.update(dt, player.pos, talkingTo === f.who);
+  if (walkers && started) walkers.update(real, player.pos, ui.busy ? talkW : -1);
   if (pip.root.visible) pip.update(dt, t, player, started && L.NAME === 'forest' && quest && quest.step !== 'intro');
   crystals.update(t); if (world) world.update(t);
   if (mini && started && !switching && !ui.modal && !arcade.open) mini.update(real, player.pos);      // real time, so timers stay honest on slow machines
   if (chests && started) chests.update(real);
   if (wild && started && !switching) wild.update(real, !!ui.modal || arcade.open);
+  for (const sp of markPool) if (sp.visible) sp.position.y = sp.userData.y + Math.sin(t * 3 + sp.position.x) * 0.12;
   if (letterProp.visible) { letterProp.rotation.y = t * 1.5; letterProp.position.y += Math.sin(t * 2.2) * 0.002; }
   sun.position.copy(player.pos).addScaledVector(sunDir, 90); sun.target.position.copy(player.pos);
   sky.position.copy(camera.position);
   if (started && !switching) {
     const it = ui.modal ? null : interactTarget(); ui.prompt(it ? it.text : '');
-    const markers = [];
+    mapT += real; const markers = [];
+    if (mapT >= 0.08) { mapT = 0;            // minimap and markers 12 times a second, not every frame
     if (L.NAME === 'forest') {
       if (quest.step === 'intro') markers.push({ x: tom.x, z: tom.z, text: '!' });
       if (quest.step === 'tree') { const s = landmark('tree').spot; markers.push({ x: s[0], z: s[1], text: '★' }); }
@@ -480,7 +505,7 @@ function frame() {
       markers.push(...wild.markers(), ...chests.markers());
       if (Save.gateWaiting(profile)) markers.push({ x: OWL.x, z: OWL.z, text: '🦉', color: '#ffe28a' });
     }
-    minimap.draw(player.pos, player.yaw, markers);
+    minimap.draw(player.pos, player.yaw, markers); questMarks(markers); }
     autosave += dt; if (autosave > 20) { autosave = 0; save(); }
   }
   renderer.info.reset(); post.setSun(camera, sunDir); post.render(scene, camera);
