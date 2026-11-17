@@ -47,10 +47,11 @@ check(Math.abs((await ev(() => __eq.cam.tYaw)) - yaw0) > Math.PI * 2, 'Left-drag
 const d0 = await ev(() => __eq.cam.tDist); await page.mouse.move(640, 400); await page.mouse.wheel(0, 400);
 check((await ev(() => __eq.cam.tDist)) > d0, 'Wheel zooms the camera');
 // ---------------------------------------------------------------- Chapter I in the village
+const passCards = async () => { for (let k = 0; k < 8 && await page.isVisible('#dialog .card-w'); k++) { await page.keyboard.press('KeyE'); await wait(220); } };   // "new word" cards come before a question
 await ev(() => __eq.teleport(1.6, 9.2)); await wait(500);
 await page.keyboard.press('KeyE'); await wait(300);
 check((await page.textContent('#dialog')).includes('I am Tom'), 'E on Tom: village welcome in English');
-for (let i = 0; i < 3; i++) { await page.keyboard.press('KeyE'); await wait(200); }
+for (let i = 0; i < 2; i++) { await page.keyboard.press('KeyE'); await wait(200); }
 check(await ev(() => __eq.story.step === 'letter_find'), 'Lost Letter quest started');
 await ev(() => __eq.teleport(0.6, -15.6)); await wait(500);
 check((await page.textContent('#prompt')).includes('thư'), 'Prompt at the letter');
@@ -62,7 +63,7 @@ await page.keyboard.press('Digit2'); await wait(300);
 check(await page.isVisible('#dialog .vi'), 'Wrong answer: Vietnamese hint appears');
 await page.keyboard.press('Digit1'); await wait(300); await page.keyboard.press('KeyE'); await wait(200);
 check(await ev(() => __eq.story.step === 'letter_return'), 'Letter understood → return to Tom');
-await ev(() => __eq.teleport(1.6, 9.2)); await wait(400); await page.keyboard.press('KeyE'); await wait(250); await page.keyboard.press('KeyE'); await wait(200); await page.keyboard.press('KeyE'); await wait(200);
+await ev(() => __eq.teleport(1.6, 9.2)); await wait(400); await page.keyboard.press('KeyE'); await wait(250); await page.keyboard.press('KeyE'); await wait(200);
 check(await ev(() => __eq.story.step === 'jars' && __eq.profile.stats.gold >= 23), 'Tom rewards and sends Ngọc to Ben');
 await ev(() => __eq.teleport(-6.6, 19.6)); await wait(500);
 await page.keyboard.press('KeyE'); await wait(250); await page.keyboard.press('KeyE'); await wait(400); await passCards();
@@ -84,13 +85,10 @@ const gate = await ev(() => ({ x: __eq.L.EXITS[0].x, z: __eq.L.EXITS[0].z }));
 await ev((g) => __eq.teleport(g.x, g.z + 1.2), gate); await wait(450);
 check((await page.textContent('#prompt')).includes('còn khóa'), 'Forest gate is locked before Tom opens it');
 // ---------------------------------------------------------------- Fix the Bridge
-const passCards = async () => { for (let k = 0; k < 8 && await page.isVisible('#dialog .card-w'); k++) { await page.keyboard.press('KeyE'); await wait(220); } };   // "new word" cards come before a question
 const closeDialog = async () => { for (let k = 0; k < 14 && await page.isVisible('#dialog') && !(await page.$('#dialog .opts')); k++) { await page.keyboard.press('KeyE'); await wait(200); } };
 check(await ev(() => __eq.story.step === 'tom_bridge'), 'After the market Tom has news');
 await ev(() => __eq.teleport(1.6, 9.2)); await wait(400); await page.keyboard.press('KeyE'); await wait(250);
-check((await page.textContent('#dialog')).includes('bad news'), 'Tom thanks Ngọc and has bad news');
-await page.keyboard.press('KeyE'); await wait(250);
-check((await page.textContent('#dialog')).includes('south bridge'), 'Tom: the storm broke the south bridge');
+check((await page.textContent('#dialog')).includes('storm broke the bridge'), 'Tom: the storm broke the bridge (one short line)');
 await closeDialog();
 check(await ev(() => __eq.story.step === 'bridge'), 'Bridge quest starts');
 const sb = await ev(() => { const b = __eq.L.BRIDGES.find((x) => x.id === 'south'); return { x: b.x, z: b.z, open: b.open }; });
@@ -144,7 +142,7 @@ let topB = 0, arrivedB = false;
 for (let i = 0; i < 60 && !arrivedB; i++) { await wait(250); const s = await ev(() => ({ x: __eq.player.pos.x, y: __eq.player.pos.y, r: !!__eq.player.route })); topB = Math.max(topB, s.y); arrivedB = !s.r && s.x > sb.x + 5; }
 check(arrivedB, 'Ngọc walks across the fixed south bridge');
 await view(sb.x - 9, sb.z + 6, -2.3, 0.35, 14); await wait(1500); await snap('04d_fixed_bridge');
-await ev(() => __eq.teleport(1.6, 9.2)); await wait(400); for (let k = 0; k < 3; k++) { await page.keyboard.press('KeyE'); await wait(220); }
+await ev(() => __eq.teleport(1.6, 9.2)); await wait(400); await page.keyboard.press('KeyE'); await wait(220); for (let k = 0; k < 3 && await page.isVisible('#dialog'); k++) { await page.keyboard.press('KeyE'); await wait(220); }
 check(await ev(() => __eq.story.step === 'done' && __eq.profile.flags.forest_open === true), 'Tom opens the forest gate');
 // ---------------------------------------------------------------- mini games (no English in them)
 const MG = await ev(() => ({ stars: __eq.mini.stars.map((s) => [s.x, s.z]), rings: __eq.mini.rings.map((r) => [r.x, r.z]) }));
@@ -314,9 +312,9 @@ check(await ev(() => __eq.cam.cur < 13 && __eq.cam.camera.position.y > __eq.L.gr
 // Tom's intro with real E key, then the quest
 await ev(() => __eq.teleport(__eq.L.ENTRANCE.x + 1.2, __eq.L.ENTRANCE.z - 11)); await wait(600);
 await page.keyboard.press('KeyE'); await wait(300);
-check(await page.isVisible('#dialog') && (await page.textContent('#dialog')).includes('Forest of Memories'), 'E on Tom opens the English intro');
+check(await page.isVisible('#dialog') && (await page.textContent('#dialog')).includes('Welcome to the forest'), 'E on Tom opens the English intro');
 check(!(await page.textContent('#dialog .en')).match(/[àáảãạăâđêôơư]/i), 'English line has no Vietnamese mixed in');
-for (let i = 0; i < 4; i++) { await page.keyboard.press('KeyE'); await wait(200); }
+for (let i = 0; i < 4 && await page.isVisible('#dialog'); i++) { await page.keyboard.press('KeyE'); await wait(200); }
 check(await ev(() => __eq.quest.step === 'seek' && __eq.quest.q.order.length === 5), 'Quest starts with 5 targets');
 const clue1 = await page.textContent('#clue .en');
 check(clue1.length > 10 && !(await page.isVisible('#clue .vi')), 'Clue card shows English only (no translation yet)');
