@@ -59,6 +59,14 @@ py -m http.server 8000
 - Dấu **!** vàng nổi trên đầu người đang có việc cho con; **?** là chỗ cần quay lại báo.
 - Dân làng đi lại trên đường; đến gần bấm E để chào.
 
+## Có gì mới (17/11, lượt 2)
+- Camera nhìn chéo từ trên xuống như mô hình đồ chơi; lăn chuột để gần/xa, kéo chuột để xoay.
+- Từ mới được **dạy trước** khi hỏi: thẻ chữ to, đọc to, có nghĩa tiếng Việt.
+- Máy **đọc to** lời thoại tiếng Anh (nút "Đọc to" để tắt). Bấm vào từ gạch chân để nghe và xem nghĩa. Nút 🔊 nghe lại.
+- Lời thoại ngắn hơn; nút **Bỏ qua ⏭** (hoặc Esc) nhảy tới câu tiếng Việt "việc cần làm".
+- **📖 Học từ** (phím B): xem lại tất cả từ của Unit đang học.
+- Lần đầu dùng đọc to trên Windows: nếu không nghe tiếng, vào Cài đặt Windows → Thời gian và ngôn ngữ → Giọng nói, thêm giọng tiếng Anh (Mỹ).
+
 ## Phím chơi
-WASD đi · Shift chạy · Space nhảy · E nói chuyện/nhặt · J đánh · K né · Q ăn bánh · I túi đồ · H gợi ý · chuột trái kéo để xoay · lăn chuột để zoom · bấm bản đồ nhỏ để tự đi.
+WASD đi · Shift chạy · Space nhảy · E nói chuyện/nhặt · J đánh · K né · Q ăn bánh · I túi đồ · B sổ từ · Esc bỏ qua thoại · H gợi ý · chuột trái kéo để xoay · lăn chuột để zoom · bấm bản đồ nhỏ để tự đi.
 Phụ huynh: ô **Unit** ở góc dưới trái để chọn Unit con đang học trên lớp.

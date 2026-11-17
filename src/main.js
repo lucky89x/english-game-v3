@@ -26,6 +26,7 @@ import { addOutline, showOutlines } from './render/outline.js';
 import { Minimap } from './ui/minimap.js';
 import { initTouch, touchWanted } from './ui/touch.js';
 import { sfx, setSound, soundOn, unlock } from './audio.js';
+import { voiceOn, setVoice } from './ui/speech.js';
 
 const $ = (id) => document.getElementById(id);
 const QUALITY = {
@@ -113,10 +114,12 @@ function renderGear() {
   const g = $('gear'); if (!profile) return; g.classList.remove('hidden');
   g.innerHTML = `Đồ họa: <select id="gq">${Object.entries(QUALITY).map(([k, v]) => `<option value="${k}" ${k === quality ? 'selected' : ''}>${v.label}</option>`).join('')}</select>
     <span title="Phụ huynh chọn Unit con đang học ở trường; để 'theo map' thì Unit đi theo map đã mở">Unit: <select id="gu"><option value="0">theo map (${Save.unitOf({ flags: profile.flags })})</option>${Array.from({ length: 12 }, (_, i) => `<option value="${i + 1}" ${profile.unitPick === i + 1 ? 'selected' : ''}>${i + 1}</option>`).join('')}</select></span>
-    <button id="gs">Âm thanh: ${soundOn() ? 'bật' : 'tắt'}</button><button id="ge">Xuất hồ sơ</button><button id="gp">Đổi người chơi</button><span style="color:#9a8060">F3: hiệu năng</span>`;
+    <button id="gs">Âm thanh: ${soundOn() ? 'bật' : 'tắt'}</button><button id="gv" title="Đọc to lời thoại tiếng Anh">Đọc to: ${voiceOn() ? 'bật' : 'tắt'}</button><button id="gb" title="Học từ mới của Unit (phím B)">📖 Học từ</button><button id="ge">Xuất hồ sơ</button><button id="gp">Đổi người chơi</button><span style="color:#9a8060">F3: hiệu năng</span>`;
   $('gq').onchange = (e) => { localStorage.setItem('eq-quality-manual', '1'); setQuality(e.target.value); };
   $('gu').onchange = (e) => { const v = Number(e.target.value); if (v) profile.unitPick = v; else delete profile.unitPick; reloadUnit().then(() => ui.toast(`Đang học Unit ${Save.unitOf(profile)}`)); };
   $('gs').onclick = () => { setSound(!soundOn()); renderGear(); };
+  $('gv').onclick = () => { setVoice(!voiceOn()); renderGear(); };
+  $('gb').onclick = () => wordBook();
   $('ge').onclick = () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([Save.exportProfile(profile)], { type: 'application/json' })); a.download = `english-quest-${profile.name}.json`; a.click(); };
   $('gp').onclick = () => { save(); ui.showMenu(store, chooseProfile); };
 }
@@ -244,11 +247,28 @@ function learning(p, units) {
   const cards = ((unit && unit.vocabulary) || []).filter((w) => w.word.length <= 22 && w.vi.length <= 34).map((w) => ({ id: `${uid}:${w.word.toLowerCase()}`, word: w.word, vi: w.vi }));
   const cardOf = (id) => { const [u, w] = id.split(':'), m = /^g(\d)_u(\d\d)$/.exec(u); if (!m || Number(m[1]) !== p.grade) return null; const src = units[Number(m[2]) - 1], hit = src && (src.vocabulary || []).find((v) => v.word.toLowerCase() === w); return hit ? { id, word: hit.word, vi: hit.vi } : null; };
   quest = new ForestQuest({ profile, save, ui, sfx, wordId: (w) => wordIds[w] || 'forest:' + w, onChange: refresh });
-  story = new VillageStory({ profile, save, ui, sfx, onChange: refresh, letter: (unit && unit.activities && unit.activities.lost_letter) || null, cards, cardOf,
+  story = new VillageStory({ profile, save, ui, sfx, teach: (list) => teach(list, null), onChange: refresh, letter: (unit && unit.activities && unit.activities.lost_letter) || null, cards, cardOf,
     bridge: BRIDGE[p.grade] || null, onBridgeFixed: applyBridge });
   if (story.step === 'jars_play') story.q.step = 'jars';
   if (mini) { mini.stop(); mini.syncStars(); }
   unitCards = cards; cardOfFn = cardOf; if (chests) chests.sync();
+  ui.gloss = new Map();                       // tap-a-word meanings in dialogue: every unit of this grade, plus the bridge things
+  for (const u of units) for (const v of (u && u.vocabulary) || []) if (v.word.split(/\s+/).length <= 3 && v.word.length > 2) ui.gloss.set(v.word.toLowerCase(), v.vi);
+  for (const it of Object.values((BRIDGE[p.grade] || {}).items || {})) ui.gloss.set(it.en, it.vi);
+}
+/** Teach before testing (feedback 17/11): words the child has never met are shown first as big "new word" cards,
+ *  read aloud with their meaning, then the question or game starts. Shown once per word. */
+function teach(list, then, most = 5) {
+  const seen = profile.seen || (profile.seen = {}), fresh = list.filter((c) => c && !seen[c.id] && !profile.words[c.id]).slice(0, most);
+  if (!fresh.length) { if (then) then(); return; }
+  for (const c of fresh) seen[c.id] = Review.today(); save();
+  ui.dialogue(fresh.map((c, i) => ({ who: `Từ mới ${i + 1}/${fresh.length}`, card: c })), then);
+}
+/** Word book (B key, 📖 button): every word of the unit as a card, read aloud; Esc closes it. */
+function wordBook() {
+  if (ui.busy || !unitCards.length) { if (!unitCards.length) ui.toast(`Unit ${Save.unitOf(profile)} chưa có từ vựng`); return; }
+  const seen = profile.seen || (profile.seen = {}); for (const c of unitCards) seen[c.id] = seen[c.id] || Review.today(); save();
+  ui.dialogue(unitCards.map((c, i) => ({ who: `📖 Unit ${Save.unitOf(profile)} · ${i + 1}/${unitCards.length}`, card: c, book: true, vi: profile.words[c.id] ? '✔ Con đã trả lời đúng từ này. Bấm 🔊 để nghe lại.' : 'Nghe, đọc theo rồi nhớ nghĩa nhé. Esc: đóng sổ.' })));
 }
 async function reloadUnit() { learning(profile, await loadGrade(profile.grade)); save(); refresh(); }
 async function chooseProfile(p) {
@@ -380,7 +400,7 @@ function owlReview() {
       if (ok) ask(n + 1); else ui.dialogue([{ who: 'Owl', en: 'Hoo… not that one.', vi: `${c.word} = ${c.vi}` }], () => ask(n + 1));
     });
   };
-  ui.dialogue([{ who: 'Owl', en: 'Hoo-hoo! Answer my questions and you can grow stronger.', vi: `Ôn ${total} câu${gram.length ? ` (có ${gram.length} câu ngữ pháp)` : ''}, đúng ${total - 1} câu thì lên được cấp ${L0 + 1}.` }], () => ask(0));
+  ui.dialogue([{ who: 'Owl', en: 'Hoo-hoo! Answer my questions and you can grow stronger.', vi: `Ôn ${total} câu${gram.length ? ` (có ${gram.length} câu ngữ pháp)` : ''}, đúng ${total - 1} câu thì lên được cấp ${L0 + 1}.` }], () => teach(order, () => ask(0)));
 }
 const near = (x, z, r) => Math.hypot(player.pos.x - x, player.pos.z - z) < r;
 function interactTarget() {
@@ -431,6 +451,7 @@ function onKey(e) {
   if (e.code === 'KeyE') { const t = interactTarget(); if (t) t.run(); }
   if (e.code === 'KeyH') quest.hint();
   if (e.code === 'KeyI' && profile) openBag();
+  if (e.code === 'KeyB' && profile) wordBook();
   if (e.code === 'KeyQ' && profile) { const got = eat(profile, Save.maxHp(profile)); if (got) { sfx('correct'); ui.toast(`+${got} HP`); save(); refresh(); } }
   if (e.code === 'KeyK' && wild && !(mini && mini.active)) wild.dodge();
   if ((e.code === 'KeyJ' || e.code === 'KeyF') && wild && !(mini && mini.active)) wild.attack();
@@ -482,18 +503,18 @@ async function boot() {
         chests.opened(c); profile.stats.gold += res.gold; Save.addExp(profile, res.exp); sfx('fanfare'); save(); refresh();
         ui.dialogue([{ who: 'Ngọc', en: `${res.text} (+${res.gold} gold, +${res.exp} EXP)`, vi: `${card.word} = ${card.vi}` }]);
       };
-      arcade.start(g);
+      teach([card], () => arcade.start(g));
     } });
   wild = new Wild({ scene, player, ui, sfx, profile: () => profile, save, onChange: refresh,
     quiz: (bossName, done) => {       // word shield: pick the English word for the Vietnamese meaning (unit vocabulary, due words first)
       const pool = unitCards.filter((c) => c.word.length <= 18); if (pool.length < 4) { done(true); return; }
       const due = Review.dueIds(profile.words).map((id) => pool.find((c) => c.id === id)).filter(Boolean), card = (due.length ? due : pool)[Math.floor(Math.random() * (due.length || pool.length))];
       const opts = [card, ...pool.filter((c) => c.id !== card.id && c.vi !== card.vi).sort(() => Math.random() - 0.5).slice(0, 3)].sort(() => Math.random() - 0.5), started = Date.now();
-      ui.choose({ who: bossName, en: 'Say the magic word to break my shield!', vi: `"${card.vi}" trong tiếng Anh là gì?` }, opts.map((o) => o.word), (i) => {
+      teach([card], () => ui.choose({ who: bossName, en: 'Say the magic word to break my shield!', vi: `"${card.vi}" trong tiếng Anh là gì?` }, opts.map((o) => o.word), (i) => {
         const ok = opts[i].id === card.id; Review.record(profile.words, card.id, { correct: ok, hints: 0, ms: Date.now() - started }); Save.recordSkill(profile, 'vocabulary', ok, 0); save();
         if (!ok) ui.dialogue([{ who: bossName, en: 'Ha ha! Wrong word!', vi: `${card.word} = ${card.vi}. Đánh tiếp rồi thử lại nhé.` }]);
         done(ok);
-      });
+      }));
     },
     respawn: () => { game.teleport(L.SPAWN.x, L.SPAWN.z); ui.dialogue([{ who: 'Tom', en: 'You fainted, so I carried you home. Rest, then try again!', vi: 'Con hết máu nên được đưa về làng. Máu đã đầy lại. Mua trang bị tốt hơn rồi quay lại nhé.' }]); } });
   mini = new MiniGames({ scene, player, ui, sfx, profile: () => profile, save, onNote: refresh, board: (id) => arcade.start(({ candy: candyGame, blocks: blocksGame, sling: slingGame, race2: raceGame })[id]()) });

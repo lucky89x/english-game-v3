@@ -1,11 +1,17 @@
 // DOM interface: profile menu, HUD, clue card with progressive hints, dialogue with choices, prompt.
 import * as Save from '../core/save.js';
+import { speak, stop } from './speech.js';
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
 export class UI {
   constructor() { this.busy = false; this.pages = null; this.onPick = null; this.onDone = null;
-    $('dialog').addEventListener('click', (e) => { if (!e.target.closest('button')) this.advance(); }); }
+    this.gloss = new Map();      // lower-case word or phrase -> Vietnamese (the grade's vocabulary), set by main
+    $('dialog').addEventListener('click', (e) => {
+      const w = e.target.closest('.w'); if (w) { this.showGloss(w.dataset.w); return; }
+      if (e.target.closest('[data-act="say"]')) { const p = this.pages && this.pages[0]; if (p) speak(p.card ? p.card.word : p.en, true); return; }
+      if (e.target.closest('[data-act="skip"]')) { this.skip(); return; }
+      if (!e.target.closest('button')) this.advance(); }); }
   get modal() { return this.busy || !$('menu').classList.contains('hidden'); }
 
   // ---------------------------------------------------------------- profiles
@@ -65,12 +71,39 @@ export class UI {
   // ---------------------------------------------------------------- dialogue
   dialogue(pages, done) { this.pages = pages.slice(); this.onDone = done || null; this.onPick = null; this.busy = true; this.render(); }
   choose(page, options, pick) { this.pages = [page]; this.options = options; this.onPick = pick; this.onDone = null; this.busy = true; this.render(); }
+  /** Wraps the words of a line that are in the grade's word list: tapping one shows its meaning and reads it. */
+  marked(text) {
+    const parts = String(text).split(/(\s+)/), out = [];
+    for (let i = 0; i < parts.length; i++) {
+      let hit = 0;
+      for (let n = 3; n >= 1 && !hit; n--) {          // longest phrase first ("pencil case" before "case")
+        const span = parts.slice(i, i + n * 2 - 1); if (span.length < n * 2 - 1) continue;
+        const key = span.join('').toLowerCase().replace(/^[^a-z]+|[^a-z]+$/g, '');
+        if (key && this.gloss.has(key)) hit = n * 2 - 1;
+      }
+      if (!hit) { out.push(esc(parts[i])); continue; }
+      const raw = parts.slice(i, i + hit).join(''), m = /^([^A-Za-z]*)(.*?)([^A-Za-z]*)$/.exec(raw);
+      out.push(`${esc(m[1])}<span class="w" data-w="${esc(m[2].toLowerCase())}">${esc(m[2])}</span>${esc(m[3])}`); i += hit - 1;
+    }
+    return out.join('');
+  }
+  showGloss(w) { const vi = this.gloss.get(w), el = $('dialog').querySelector('.gl'); speak(w, true, 0.75); if (el) { el.innerHTML = `<b>${esc(w)}</b> = ${esc(vi || '')}`; el.classList.remove('hidden'); } }
   render() {
-    const p = this.pages[0], el = $('dialog'); el.classList.remove('hidden'); $('prompt').classList.add('hidden');
-    el.innerHTML = `<div class="who">${esc(p.who)}</div><div class="en">${esc(p.en)}</div>${p.vi ? `<div class="vi">${esc(p.vi)}</div>` : ''}` +
-      (this.onPick ? `<div class="opts">${this.options.map((o, i) => `<button data-i="${i}">${i + 1}. ${esc(o)}</button>`).join('')}</div>` : '<div class="next">E / Space / bấm chuột ▸</div>');
+    const p = this.pages[0], el = $('dialog'), more = !this.onPick && (this.pages.length > 1 || p.book); el.classList.remove('hidden'); $('prompt').classList.add('hidden');
+    const tools = `<span class="tools"><button data-act="say" title="Nghe lại">🔊</button>${more ? (p.book ? '<button data-act="skip" title="Đóng sổ (Esc)">Đóng ✕</button>' : '<button data-act="skip" title="Bỏ qua lời thoại (Esc)">Bỏ qua ⏭</button>') : ''}</span>`;
+    if (p.card) {          // "new word" card: taught before the child is asked about it
+      el.innerHTML = `<div class="who">${esc(p.who || 'Từ mới')}</div>${tools}<div class="card-w"><span class="big">${esc(p.card.word)}</span><span class="mean">= ${esc(p.card.vi)}</span></div>` +
+        `<div class="vi">${esc(p.vi || 'Nghe, đọc theo rồi nhớ nghĩa nhé.')}</div><div class="next">Đã nhớ · E / Space ▸</div>`;
+      speak(p.card.word, true, 0.75);
+    } else {
+      el.innerHTML = `<div class="who">${esc(p.who)}</div>${tools}<div class="en">${this.onPick ? esc(p.en) : this.marked(p.en)}</div>${p.vi ? `<div class="vi">${esc(p.vi)}</div>` : ''}<div class="gl hidden"></div>` +
+        (this.onPick ? `<div class="opts">${this.options.map((o, i) => `<button data-i="${i}">${i + 1}. ${esc(o)}</button>`).join('')}</div>` : '<div class="next">E / Space / bấm chuột ▸</div>');
+      speak(p.en);
+    }
     el.querySelectorAll('[data-i]').forEach((b) => (b.onclick = () => this.pick(Number(b.dataset.i))));
   }
+  /** Jumps to the last page of a long talk (it carries the Vietnamese "what to do now" line). */
+  skip() { if (this.busy && this.pages && this.pages[0].book) { this.close(); return; } if (!this.busy || this.onPick || !this.pages || this.pages.length < 2) return; const last = this.pages.length - 1; this.pages.splice(0, last); this.render(); }
   pick(i) { if (!this.onPick || i < 0 || i >= this.options.length) return; const f = this.onPick; this.close(); f(i); }
   advance() {
     if (!this.busy || this.onPick) return;
@@ -78,11 +111,12 @@ export class UI {
     if (this.pages.length) return this.render();
     const done = this.onDone; this.close(); if (done) done();
   }
-  close() { this.busy = false; this.pages = null; this.onPick = null; this.onDone = null; $('dialog').classList.add('hidden'); }
+  close() { stop(); this.busy = false; this.pages = null; this.onPick = null; this.onDone = null; $('dialog').classList.add('hidden'); }
   key(e) {
     if (!this.busy) return false;
     if (this.onPick) { const i = e.code.startsWith('Digit') ? Number(e.code.slice(5)) - 1 : -1; if (i >= 0) this.pick(i); return true; }
     if (e.code === 'KeyE' || e.code === 'Space' || e.code === 'Enter') { this.advance(); return true; }
+    if (e.code === 'Escape' || e.code === 'Tab') { this.skip(); return true; }
     return true;
   }
 }

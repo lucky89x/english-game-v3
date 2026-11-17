@@ -15,7 +15,7 @@ const CSS = `
 #touch.arcade .stick, #touch.arcade .pad { display:none; }
 #touch.hide { display:none; }
 `;
-const ACTIONS = [['KeyE', 'E<br><small>nói</small>', 'big'], ['KeyJ', '⚔'], ['Space', '⤒'], ['KeyQ', '🍞'], ['KeyI', '🎒'], ['KeyK', '↷<br><small>né</small>'], ['ShiftLeft', '»<br><small>chạy</small>', 'hold']];
+const ACTIONS = [['KeyE', 'E<br><small>nói</small>', 'big'], ['KeyJ', '⚔'], ['Space', '⤒'], ['KeyQ', '🍞'], ['KeyI', '🎒'], ['KeyB', '📖'], ['KeyK', '↷<br><small>né</small>'], ['ShiftLeft', '»<br><small>chạy</small>', 'hold']];
 const DPAD = [['ArrowLeft', '◀'], ['ArrowUp', '▲'], ['ArrowDown', '▼'], ['ArrowRight', '▶']];
 
 export const touchWanted = () => /[?&]touch=1/.test(location.search) || (matchMedia('(pointer: coarse)').matches && 'ontouchstart' in window);
@@ -57,10 +57,10 @@ export function initTouch(opts) {
   canvas.style.touchAction = 'none';
   canvas.addEventListener('pointerdown', (e) => { if (e.pointerType !== 'touch') return; pts.set(e.pointerId, [e.clientX, e.clientY]); capture(canvas, e.pointerId); pinch = 0; });
   canvas.addEventListener('pointermove', (e) => {
-    if (!pts.has(e.pointerId)) return; const [lx, ly] = pts.get(e.pointerId); pts.set(e.pointerId, [e.clientX, e.clientY]);
-    if (pts.size === 1) { cam.tYaw -= (e.clientX - lx) * 0.008; cam.tPitch = Math.min(1.25, Math.max(0.05, cam.tPitch + (e.clientY - ly) * 0.006)); return; }
+    if (!pts.has(e.pointerId)) return; const [lx] = pts.get(e.pointerId); pts.set(e.pointerId, [e.clientX, e.clientY]);
+    if (pts.size === 1) { cam.tYaw -= (e.clientX - lx) * 0.008; return; }
     const [a, b] = [...pts.values()], d = Math.hypot(a[0] - b[0], a[1] - b[1]);
-    if (pinch) cam.tDist = Math.min(18, Math.max(3, cam.tDist * pinch / d)); pinch = d;
+    if (pinch) cam.zoom(pinch / d); pinch = d;
   });
   const lift = (e) => { pts.delete(e.pointerId); pinch = 0; };
   canvas.addEventListener('pointerup', lift); canvas.addEventListener('pointercancel', lift);

@@ -78,16 +78,21 @@ export class Player {
   }
 }
 
+// Fixed diagonal "2.5D" camera (feedback 17/11): high, narrow lens, looking down at about 54 degrees like a toy
+// diorama. Dragging only turns the view round (no tilting), the wheel or a pinch zooms between near and far.
+export const CAM = { fov: 32, pitch: 0.95, dist: 26, min: 16, max: 44 };
 export class OrbitCamera {
   constructor(camera, dom) {
-    this.camera = camera; this.yaw = 0; this.pitch = 0.52; this.dist = 8.5; this.tYaw = 0; this.tPitch = 0.52; this.tDist = 8.5; this.cur = 8.5;
-    this.target = new THREE.Vector3(); let drag = false, lx = 0, ly = 0;
-    dom.addEventListener('mousedown', (e) => { if (e.button === 0 || e.button === 2) { drag = true; lx = e.clientX; ly = e.clientY; } });
+    this.camera = camera; this.yaw = 0; this.pitch = CAM.pitch; this.dist = CAM.dist; this.tYaw = 0; this.tPitch = CAM.pitch; this.tDist = CAM.dist; this.cur = CAM.dist;
+    camera.fov = CAM.fov; camera.updateProjectionMatrix();
+    this.target = new THREE.Vector3(); let drag = false, lx = 0;
+    dom.addEventListener('mousedown', (e) => { if (e.button === 0 || e.button === 2) { drag = true; lx = e.clientX; } });
     addEventListener('mouseup', () => (drag = false));
-    addEventListener('mousemove', (e) => { if (!drag) return; this.tYaw -= (e.clientX - lx) * 0.006; this.tPitch = Math.min(1.25, Math.max(0.05, this.tPitch + (e.clientY - ly) * 0.005)); lx = e.clientX; ly = e.clientY; });
-    dom.addEventListener('wheel', (e) => { e.preventDefault(); this.tDist = Math.min(18, Math.max(3, this.tDist * (e.deltaY > 0 ? 1.12 : 1 / 1.12))); }, { passive: false });
+    addEventListener('mousemove', (e) => { if (!drag) return; this.tYaw -= (e.clientX - lx) * 0.006; lx = e.clientX; });
+    dom.addEventListener('wheel', (e) => { e.preventDefault(); this.zoom(e.deltaY > 0 ? 1.1 : 1 / 1.1); }, { passive: false });
     dom.addEventListener('contextmenu', (e) => e.preventDefault());
   }
+  zoom(f) { this.tDist = Math.min(CAM.max, Math.max(CAM.min, this.tDist * f)); }
   /** Shortest unobstructed distance from the target towards the wanted camera spot: only the ground and big solids
    *  (houses, cliffs) pull the camera in. Tree crowns no longer do: the constant zooming in and out among trees made
    *  children dizzy (feedback 17/11). */

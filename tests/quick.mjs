@@ -7,7 +7,8 @@ let failed = 0;
 const check = (ok, name) => { if (!ok) failed++; console.log((ok ? 'PASS: ' : 'FAIL: ') + name); };
 const { server, url } = await serve(); const { browser, page, logs } = await open(url);
 const ev = (f, a) => page.evaluate(f, a), wait = (ms) => page.waitForTimeout(ms);
-const closeDialogs = async () => { for (let k = 0; k < 6 && await page.isVisible('#dialog'); k++) { await page.keyboard.press('KeyE'); await wait(180); } };
+const passCards = async () => { for (let k = 0; k < 8 && await page.isVisible('#dialog .card-w'); k++) { await page.keyboard.press('KeyE'); await wait(220); } };   // "new word" cards come before a question
+const closeDialogs = async () => { for (let k = 0; k < 14 && await page.isVisible('#dialog'); k++) { await page.keyboard.press('KeyE'); await wait(180); } };
 const run = async (name, fn) => { if (only && !only.includes(name)) return; const t = Date.now(); await fn(); console.log(`  [${name}] ${((Date.now() - t) / 1000).toFixed(0)} s`); };
 
 await page.click('#mnew'); await page.fill('#mname', 'Quick'); await page.click('[data-g="8"]'); await page.click('#mgo');
@@ -34,7 +35,7 @@ await run('combat', async () => {
   check(await ev(() => __eq.wild.bosses[1].shieldOn), 'The golem raises a word shield too');
   await ev(() => { const m = __eq.wild.bosses[1]; __eq.teleport(m.x, m.z - 2.8); }); await wait(300);
   check((await page.textContent('#prompt')).includes('Golem Cổ'), 'Prompt names the Ancient Golem');
-  await page.keyboard.press('KeyE'); await wait(350);
+  await page.keyboard.press('KeyE'); await wait(350); await passCards();
   const qi = await ev(() => { const vi = document.querySelector('#dialog .vi').textContent; const card = __eq.chests.api.cards().find((c) => vi.includes('"' + c.vi + '"')); return __eq.ui.options.indexOf(card.word); });
   check((await page.textContent('#dialog')).includes('Ancient Golem'), 'The shield question is asked by the golem');
   await page.keyboard.press('Digit' + (qi + 1)); await wait(400);
@@ -65,6 +66,7 @@ await run('owl', async () => {
   await page.keyboard.press('KeyE'); await wait(300);
   let grammar = 0;
   for (let n = 0; n < 7; n++) {
+    await passCards();
     const pick = await ev(async () => {
       const en = document.querySelector('#dialog .en').textContent, vi = ((document.querySelector('#dialog .vi') || {}).textContent || '').trim(), cards = [...__eq.chests.api.cards(), ...Object.keys(__eq.profile.words).map(__eq.cardOf).filter(Boolean)], m = /"(.+)" mean/.exec(en);
       if (en.includes('___')) { const G = await import('./src/core/grammar.js'); const g = G.GRAMMAR.g8_u01.find((x) => x.q === en); return { i: __eq.ui.options.indexOf(g.options[g.a]), g: 1 }; }
@@ -163,7 +165,7 @@ await run('touch', async () => {         // T4: a tablet page (?touch=1) with th
   check(Math.hypot(p1.x - p0.x, p1.z - p0.z) > 1.2, 'Pushing the joystick walks Ngọc');
   await tp.evaluate(() => __eq.teleport(1.6, 9.2)); await tp.waitForTimeout(500);
   await tp.locator('#touch [data-k="KeyE"]').dispatchEvent('pointerdown'); await tp.locator('#touch [data-k="KeyE"]').dispatchEvent('pointerup'); await tp.waitForTimeout(300);
-  check((await tp.textContent('#dialog')).includes('Welcome'), 'The E button talks to Tom');
+  check((await tp.textContent('#dialog')).includes('I am Tom'), 'The E button talks to Tom');
   for (let k = 0; k < 6 && await tp.isVisible('#dialog'); k++) { await tp.click('#dialog'); await tp.waitForTimeout(200); }
   await tp.evaluate(async () => { const A = await import('./src/ui/arcade.js'); __eq.arcade.start(A.blocksGame()); }); await tp.waitForTimeout(400);
   const y0 = await tp.evaluate(() => __eq.arcade.game.piece.x);

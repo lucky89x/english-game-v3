@@ -58,14 +58,11 @@ export const DEFINITIONS = {
   cottage: 'a small house in the countryside', ruins: 'broken parts of very old buildings',
 };
 export const TOM_INTRO = (name) => [
-  { who: 'Tom', en: `Welcome to the Forest of Memories, ${name}!` },
-  { who: 'Tom', en: 'The forest has lost its words. Five memory crystals are hiding here.' },
-  { who: 'Tom', en: 'This is Pip. Pip will tell you where to look. Read carefully!' },
-  { who: 'Pip', en: "Hi! I'm Pip. Follow my clues and find the crystals!", vi: 'Đi tới viên pha lê Pip nhắc đến rồi nhấn E. Nhấn H khi cần gợi ý. Bấm vào bản đồ nhỏ để tự đi.' },
+  { who: 'Tom', en: `Welcome to the forest, ${name}! Five crystals are hiding here.` },
+  { who: 'Pip', en: "Hi! I'm Pip. Follow my clues and find them!", vi: 'Đi tới viên pha lê Pip nhắc đến rồi nhấn E. Nhấn H khi cần gợi ý. Bấm vào bản đồ nhỏ để tự đi.' },
 ];
 export const SAM_LINES = [
-  { who: 'Sam', en: 'Hello! I am cooking fish soup. The forest is quiet today.' },
-  { who: 'Sam', en: 'Long ago, every tree here had a name. Now the words are gone.' },
+  { who: 'Sam', en: 'Hello! I am cooking fish soup.' },
 ];
 
 // "Fix the Bridge" (Chapter I, after Ben's market). Original texts for grades 6-9;
@@ -75,9 +72,8 @@ export const SAM_LINES = [
 export const BRIDGE = {
   6: {
     need: [
-      { who: 'Sam', en: 'Oh no! The storm broke the south bridge.' },
-      { who: 'Sam', en: 'We need three things to fix it: a rope, a log and an axe.' },
-      { who: 'Sam', en: 'The rope and the log are near the path. Ben has an axe.', vi: 'Tìm sợi dây thừng và khúc gỗ gần đường đi, xin Ben cái rìu.' },
+      { who: 'Sam', en: 'Oh no! The storm broke the bridge.' },
+      { who: 'Sam', en: 'We need a rope, a log and an axe. Ben has an axe.', vi: 'Tìm sợi dây thừng và khúc gỗ gần đường đi, xin Ben cái rìu.' },
     ],
     items: {
       rope: { en: 'rope', vi: 'dây thừng', decoy: 'chain', wrong: 'That is a chain. It is too heavy. We need a rope.', wrongVi: 'chain = dây xích. Rope = dây thừng (mềm, bằng sợi).' },
@@ -95,9 +91,8 @@ export const BRIDGE = {
   // Grade 7, Unit 1 Hobbies: present simple for habits, liking verbs + V-ing (not yet checked against the book)
   7: {
     need: [
-      { who: 'Sam', en: 'Oh no! The storm broke the south bridge. People cannot go to the market now.' },
-      { who: 'Sam', en: 'We need three things to fix it: a rope, a log and an axe.' },
-      { who: 'Sam', en: 'The rope and the log are near the path. Ben has an axe at his stall.', vi: 'Tìm sợi dây thừng và khúc gỗ gần đường đi, xin Ben cái rìu.' },
+      { who: 'Sam', en: 'Oh no! The storm broke the bridge. People cannot go to the market now.' },
+      { who: 'Sam', en: 'We need a rope, a log and an axe. Ben has an axe at his stall.', vi: 'Tìm sợi dây thừng và khúc gỗ gần đường đi, xin Ben cái rìu.' },
     ],
     items: {
       rope: { en: 'rope', vi: 'dây thừng', decoy: 'chain', wrong: 'That is a chain. It is too heavy to tie. We need a rope.', wrongVi: 'chain = dây xích. Rope = dây thừng (mềm, bằng sợi).' },
@@ -114,9 +109,8 @@ export const BRIDGE = {
   },
   8: {
     need: [
-      { who: 'Sam', en: "I'm afraid last night's storm has broken the south bridge." },
-      { who: 'Sam', en: "To repair it, we'll need a strong rope, a long log and a sharp axe." },
-      { who: 'Sam', en: "You'll find the rope and the log somewhere near the path. Ben keeps an axe at his market.", vi: 'Tìm dây thừng và khúc gỗ gần đường đi; rìu ở chỗ Ben.' },
+      { who: 'Sam', en: "I'm afraid the storm has broken the bridge." },
+      { who: 'Sam', en: "We'll need a strong rope, a long log and a sharp axe. Ben keeps an axe at his market.", vi: 'Tìm dây thừng và khúc gỗ gần đường đi; rìu ở chỗ Ben.' },
     ],
     items: {
       rope: { en: 'rope', vi: 'dây thừng', decoy: 'chain', wrong: "That's a metal chain. It's far too heavy to tie a log with.", wrongVi: 'chain = dây xích kim loại. Rope = dây thừng.' },
@@ -136,9 +130,8 @@ export const BRIDGE = {
   // Grade 9, Unit 1 Local community: question words + to-infinitive, phrasal verbs (not yet checked against the book)
   9: {
     need: [
-      { who: 'Sam', en: "Last night's storm has broken the south bridge, so the villagers can't get to the market." },
-      { who: 'Sam', en: "I know how to repair it, but we've run out of materials. We need a strong rope, a long log and a sharp axe." },
-      { who: 'Sam', en: 'Look around near the path for the rope and the log. Ben will hand over his axe if you help him first.', vi: 'Tìm dây thừng và khúc gỗ gần đường đi; giúp Ben thì Ben đưa rìu.' },
+      { who: 'Sam', en: "The storm has broken the bridge, so the villagers can't get to the market." },
+      { who: 'Sam', en: "We've run out of materials: we need a rope, a log and an axe. Ben will hand over his axe if you help him.", vi: 'Tìm dây thừng và khúc gỗ gần đường đi; giúp Ben thì Ben đưa rìu.' },
     ],
     items: {
       rope: { en: 'rope', vi: 'dây thừng', decoy: 'chain', wrong: "That's a metal chain. It's far too heavy to tie a log with.", wrongVi: 'chain = dây xích kim loại. Rope = dây thừng.' },

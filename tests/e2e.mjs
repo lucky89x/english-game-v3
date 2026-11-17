@@ -49,7 +49,7 @@ check((await ev(() => __eq.cam.tDist)) > d0, 'Wheel zooms the camera');
 // ---------------------------------------------------------------- Chapter I in the village
 await ev(() => __eq.teleport(1.6, 9.2)); await wait(500);
 await page.keyboard.press('KeyE'); await wait(300);
-check((await page.textContent('#dialog')).includes('Welcome to our village'), 'E on Tom: village welcome in English');
+check((await page.textContent('#dialog')).includes('I am Tom'), 'E on Tom: village welcome in English');
 for (let i = 0; i < 3; i++) { await page.keyboard.press('KeyE'); await wait(200); }
 check(await ev(() => __eq.story.step === 'letter_find'), 'Lost Letter quest started');
 await ev(() => __eq.teleport(0.6, -15.6)); await wait(500);
@@ -65,7 +65,7 @@ check(await ev(() => __eq.story.step === 'letter_return'), 'Letter understood �
 await ev(() => __eq.teleport(1.6, 9.2)); await wait(400); await page.keyboard.press('KeyE'); await wait(250); await page.keyboard.press('KeyE'); await wait(200); await page.keyboard.press('KeyE'); await wait(200);
 check(await ev(() => __eq.story.step === 'jars' && __eq.profile.stats.gold >= 23), 'Tom rewards and sends Ngọc to Ben');
 await ev(() => __eq.teleport(-6.6, 19.6)); await wait(500);
-await page.keyboard.press('KeyE'); await wait(250); await page.keyboard.press('KeyE'); await wait(400);
+await page.keyboard.press('KeyE'); await wait(250); await page.keyboard.press('KeyE'); await wait(400); await passCards();
 check(await ev(() => !!__eq.story.market) && (await page.textContent('#clue .en')).includes('A jar of'), "Ben's market: traveller asks in English on the request card");
 await snap('02_market');
 const firstWrong = await ev(() => { const c = __eq.story.customer; return c.options.findIndex((o) => o.id !== c.target.id); });
@@ -84,7 +84,8 @@ const gate = await ev(() => ({ x: __eq.L.EXITS[0].x, z: __eq.L.EXITS[0].z }));
 await ev((g) => __eq.teleport(g.x, g.z + 1.2), gate); await wait(450);
 check((await page.textContent('#prompt')).includes('còn khóa'), 'Forest gate is locked before Tom opens it');
 // ---------------------------------------------------------------- Fix the Bridge
-const closeDialog = async () => { for (let k = 0; k < 8 && await page.isVisible('#dialog') && !(await page.$('#dialog .opts')); k++) { await page.keyboard.press('KeyE'); await wait(200); } };
+const passCards = async () => { for (let k = 0; k < 8 && await page.isVisible('#dialog .card-w'); k++) { await page.keyboard.press('KeyE'); await wait(220); } };   // "new word" cards come before a question
+const closeDialog = async () => { for (let k = 0; k < 14 && await page.isVisible('#dialog') && !(await page.$('#dialog .opts')); k++) { await page.keyboard.press('KeyE'); await wait(200); } };
 check(await ev(() => __eq.story.step === 'tom_bridge'), 'After the market Tom has news');
 await ev(() => __eq.teleport(1.6, 9.2)); await wait(400); await page.keyboard.press('KeyE'); await wait(250);
 check((await page.textContent('#dialog')).includes('bad news'), 'Tom thanks Ngọc and has bad news');
@@ -115,7 +116,7 @@ for (const id of ['rope', 'log']) { await ev((p) => __eq.teleport(p[0] + 1.2, p[
 check(await ev(() => __eq.story.items.includes('rope') && __eq.story.items.includes('log')), 'Rope and log picked up with real E');
 await ev(() => __eq.teleport(-6.6, 19.6)); await wait(500); await page.keyboard.press('KeyE'); await wait(250);
 check((await page.textContent('#dialog')).includes('axe'), 'Ben: help the travellers first, then the axe');
-await page.keyboard.press('KeyE'); await wait(400);
+await page.keyboard.press('KeyE'); await wait(400); await passCards();
 for (let n = 0; n < 8; n++) {
   const i = await ev(() => { const c = __eq.story.customer; return c ? c.options.findIndex((o) => o.id === c.target.id) : -1; });
   if (i < 0) break;
@@ -233,7 +234,7 @@ for (let k = 0; k < 3 && await page.isVisible('#dialog'); k++) { await page.keyb
 // word chest: rebuild the English word from letter tiles (real mouse), one mistake allowed
 await ev(() => { const c = __eq.chests.list[1]; __eq.teleport(c.x, c.z - 1.3); __eq.wild.mobs.forEach((m) => { m.dead = 60; m.g.visible = false; }); }); await wait(500);
 check((await page.textContent('#prompt')).includes('rương khóa chữ'), 'Prompt at a word chest in the Wild Meadow');
-await page.keyboard.press('KeyE'); await wait(800);
+await page.keyboard.press('KeyE'); await wait(800); await passCards(); await wait(600);
 const chestPlan = await ev(() => { const g = __eq.arcade.game, used = new Set(), out = [], ls = [...g.card.word.toLowerCase()].filter((c) => /[a-z]/.test(c));
   out.push(g.tileAt(g.tiles.findIndex((t) => t.ch !== ls[0]))); for (const ch of ls) { const i = g.tiles.findIndex((t, j) => !used.has(j) && t.ch === ch); used.add(i); out.push(g.tileAt(i)); } return { out, size: g.size, word: g.card.word, id: g.card.id }; });
 check(/[^a-z]/i.test(await ev(() => __eq.arcade.game.card.vi)) || true, 'Chest shows the Vietnamese meaning of a unit word: ' + chestPlan.word);
@@ -264,7 +265,7 @@ await page.keyboard.press('KeyJ'); await wait(500);
 check(await ev(() => __eq.wild.boss.shieldOn && __eq.wild.boss.broken === 0), 'Below 75% health the boss raises a word shield');
 const hp0 = await ev(() => __eq.wild.boss.hp); await ev(() => { __eq.wild.cool = 0; }); await page.keyboard.press('KeyJ'); await wait(400);
 check(await ev((h) => __eq.wild.boss.hp === h, hp0), 'The shield blocks the sword');
-await ev(() => { const m = __eq.wild.boss; __eq.teleport(m.x, m.z - 2.4); }); await wait(300); await page.keyboard.press('KeyE'); await wait(350);
+await ev(() => { const m = __eq.wild.boss; __eq.teleport(m.x, m.z - 2.4); }); await wait(300); await page.keyboard.press('KeyE'); await wait(350); await passCards();
 await snap('03k_word_shield');
 const qi = await ev(() => { const vi = document.querySelector('#dialog .vi').textContent; const card = __eq.chests.api.cards().find((c) => vi.includes('"' + c.vi + '"')); return __eq.ui.options.indexOf(card.word); });
 await page.keyboard.press('Digit' + (qi + 1)); await wait(400);
@@ -283,6 +284,7 @@ await ev(() => __eq.teleport(2.9, 15.6)); await wait(450);
 check((await page.textContent('#prompt')).includes('Cú Mèo: ôn tập') && (await page.textContent('#hud')).includes('ôn tập'), 'HUD and prompt send the child to the owl');
 await page.keyboard.press('KeyE'); await wait(250); await page.keyboard.press('KeyE'); await wait(300);
 for (let n = 0; n < 5; n++) {
+  await passCards();
   const oi = await ev(() => { const en = document.querySelector('#dialog .en').textContent, vi = ((document.querySelector('#dialog .vi') || {}).textContent || '').trim(), cards = __eq.chests.api.cards(), m = /"(.+)" mean/.exec(en);
     if (m) return __eq.ui.options.indexOf(cards.find((x) => x.word === m[1]).vi); return __eq.ui.options.indexOf(cards.find((x) => x.vi === vi).word); });
   await page.keyboard.press('Digit' + (oi + 1)); await wait(300);
