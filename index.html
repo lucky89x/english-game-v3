@@ -11,18 +11,41 @@
   html, body { margin:0; height:100%; overflow:hidden; background:#7ec3f5; font-family:"Nunito","Trebuchet MS","Segoe UI",sans-serif; color:var(--ink); }
   canvas#view { position:fixed; inset:0; width:100%; height:100%; display:block; }
   .card { background:var(--paper); border:3px solid var(--line); border-radius:16px; box-shadow:0 4px 0 rgba(74,42,16,.25); }
-  #hud { position:fixed; left:14px; top:14px; padding:10px 14px; min-width:210px; }
-  #hud b { font-size:18px; } #hud .row { font-size:14px; margin-top:4px; }
+  #hud { position:fixed; left:14px; top:14px; padding:9px 12px 9px 10px; width:262px; background:linear-gradient(180deg,#fff8e6,#fbe9c4); border:2.5px solid #b07a3c; box-shadow:0 4px 0 #8a5a2a, 0 8px 18px rgba(60,30,0,.28); }
+  #hud .top { display:flex; gap:10px; align-items:center; }
+  #hud .portrait { position:relative; width:64px; height:64px; flex:none; border-radius:50%; background:radial-gradient(circle at 50% 38%, #9c5730 0 62%, #5a2b14 100%); border:3px solid #e2b04a; box-shadow:0 0 0 2px #8a5a2a, inset 0 -6px 10px rgba(0,0,0,.25); }
+  #hud .portrait i { position:absolute; inset:5px; border-radius:50%; background:#f6c8a6 url(./assets/tex/ngoc_face_joy.png) 50% 44% / 150% no-repeat; }
+  #hud .portrait::before { content:''; position:absolute; left:3px; right:3px; top:9px; height:11px; border-radius:8px; background:#c9322c; z-index:1; box-shadow:0 2px 0 rgba(0,0,0,.18); }
+  #hud .lv { position:absolute; right:-7px; bottom:-6px; z-index:2; min-width:26px; height:26px; padding:0 4px; border-radius:13px; background:linear-gradient(180deg,#ffd95a,#e89a1c); border:2px solid #8a5a2a; color:#4a2a10; font-weight:800; font-size:14px; line-height:22px; text-align:center; }
+  #hud .who { flex:1; min-width:0; } #hud .who b { font-size:17px; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; } #hud .who small { font-size:11.5px; color:#8a6a48; display:block; margin:-1px 0 4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  #hud .bar { position:relative; height:13px; border-radius:7px; background:#6b4a2e; border:1.5px solid #5a3a1e; overflow:hidden; margin-top:3px; }
+  #hud .bar u { position:absolute; left:0; top:0; bottom:0; border-radius:6px; text-decoration:none; transition:width .35s; }
+  #hud .bar.hp u { background:linear-gradient(180deg,#ff8a7a,#e23a2a 60%,#b82418); } #hud .bar.xp u { background:linear-gradient(180deg,#9be0ff,#3da0e8 60%,#2478c0); }
+  #hud .bar em { position:absolute; inset:0; font-style:normal; font-size:9.5px; font-weight:800; color:#fff; text-align:center; line-height:11px; text-shadow:0 1px 1px rgba(0,0,0,.7); }
+  #hud .chips { display:flex; gap:6px; margin-top:8px; } #hud .chip { flex:1; display:flex; align-items:center; justify-content:center; gap:4px; height:24px; border-radius:12px; background:#fff; border:1.5px solid #d8b888; font-weight:800; font-size:13px; white-space:nowrap; }
+  #hud .chip i { font-style:normal; } #hud .chip.gold i { color:#e8a01c; text-shadow:0 0 0 #8a5a2a; } #hud .chip.word i { color:#3d8fd6; }
+  #arcade { position:fixed; inset:0; z-index:25; display:flex; align-items:center; justify-content:center; background:rgba(40,24,8,.45); } #arcade.hidden { display:none; }
+  #arcade .box { padding:12px 14px; max-width:calc(100vw - 20px); } #arcade canvas { display:block; width:min(560px, calc(100vw - 48px), calc(100vh - 150px)); height:auto; aspect-ratio:1; border-radius:12px; border:2px solid #b98a52; cursor:pointer; }
+  #arcade .head { display:flex; align-items:center; gap:12px; margin-bottom:8px; } #arcade .head b { font-size:19px; } #arcade .head span { flex:1; font-weight:700; color:#6a4a2a; } #arcade .head button { border:1.5px solid #b98a52; background:#fff4dc; border-radius:10px; padding:4px 10px; font-weight:700; cursor:pointer; color:#4a2a10; }
+  #arcade .help { font-size:13px; color:#8a6a48; margin-top:8px; max-width:560px; }
+  #toast { position:fixed; left:50%; top:30%; transform:translate(-50%,-50%) scale(.6); padding:14px 34px; border-radius:18px; background:linear-gradient(180deg,#ffe98a,#f0a82a); border:3px solid #8a5a2a; color:#4a2a10; font-weight:800; font-size:30px; opacity:0; pointer-events:none; z-index:30; box-shadow:0 6px 0 #8a5a2a, 0 14px 30px rgba(0,0,0,.3); }
+  #toast.show { animation:toast 2.2s ease-out forwards; } @keyframes toast { 0% { opacity:0; transform:translate(-50%,-50%) scale(.6); } 12% { opacity:1; transform:translate(-50%,-50%) scale(1.08); } 20% { transform:translate(-50%,-50%) scale(1); } 80% { opacity:1; } 100% { opacity:0; transform:translate(-50%,-70%) scale(1); } }
   #clue { position:fixed; left:50%; top:14px; transform:translateX(-50%); width:min(560px, calc(100vw - 560px)); min-width:300px; padding:10px 16px; text-align:center; }
   #clue .who { font-size:13px; color:#9a6a35; } #clue .en { font-size:21px; font-weight:800; line-height:1.3; }
   #clue .en mark { background:#ffe27a; border-radius:6px; padding:0 4px; color:inherit; }
   #clue .vi { font-size:14px; margin-top:4px; color:#6b4a26; } #clue .tip { font-size:12px; color:#9a8060; margin-top:3px; }
   #mapbox { position:fixed; right:14px; top:14px; padding:6px; } #mapbox canvas { display:block; border-radius:10px; cursor:pointer; }
-  #mapbox .cap { font-size:11px; text-align:center; color:#9a8060; margin-top:2px; }
+  #mapbox .cap { font-size:11px; text-align:center; color:#9a8060; margin-top:2px; } #mapbox .cap button { width:22px; height:22px; border-radius:11px; border:1.5px solid #b98a52; background:#fff4dc; color:#4a2a10; font-weight:800; cursor:pointer; padding:0; line-height:1; }
   #prompt { position:fixed; left:50%; bottom:150px; transform:translateX(-50%); padding:6px 14px; font-weight:700; font-size:15px; }
-  #dialog { position:fixed; left:50%; bottom:18px; transform:translateX(-50%); width:min(760px, calc(100vw - 32px)); padding:12px 18px; }
+  #dialog { position:fixed; left:50%; bottom:18px; transform:translateX(-50%); width:min(760px, calc(100vw - 32px)); padding:12px 18px; z-index:20; }
   #dialog .who { font-weight:800; color:#b0661a; font-size:15px; } #dialog .en { font-size:19px; font-weight:700; margin:2px 0; line-height:1.35; }
   #dialog .vi { font-size:14px; color:#6b4a26; } #dialog .next { text-align:right; font-size:12px; color:#9a8060; }
+  #dialog .tools { position:absolute; right:12px; top:8px; display:flex; gap:6px; }
+  #dialog .tools button { font:inherit; font-size:13px; font-weight:800; border:2px solid #c9a46a; border-radius:8px; background:#fff3d6; padding:2px 8px; cursor:pointer; }
+  #dialog .w { border-bottom:3px dotted #e0902a; cursor:pointer; color:#7a3e00; } #dialog .w:hover { background:#ffe9b0; }
+  #dialog .gl { margin-top:4px; display:inline-block; background:#fff3d6; border:2px solid #e0b060; border-radius:8px; padding:2px 10px; font-size:16px; }
+  #dialog .card-w { display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; margin:6px 0; } #dialog .card-w .big { font-size:40px; font-weight:900; color:#2a5a9a; } #dialog .card-w .mean { font-size:24px; font-weight:800; color:#7a3e00; }
+  #dialog .hidden { display:none; }
   #dialog .opts { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
   button { font:inherit; font-weight:800; color:var(--ink); background:#ffe9b0; border:3px solid var(--line); border-radius:12px; padding:8px 14px; cursor:pointer; }
   button:hover, button:focus-visible { background:#ffd97a; outline:none; } button.on { background:var(--gold); color:#fff; }
@@ -33,6 +56,7 @@
   #menu .list button { display:block; width:100%; margin:6px 0; font-size:18px; } #menu .grades { display:flex; gap:8px; justify-content:center; margin:6px 0 14px; }
   #menu .small { font-size:13px; margin-top:10px; } #menu .small button { font-size:13px; padding:4px 10px; border-width:2px; }
   #gear { position:fixed; left:14px; bottom:14px; padding:8px 10px; font-size:13px; display:flex; gap:6px; align-items:center; flex-wrap:wrap; max-width:420px; }
+  #gear.closed { padding:4px; } #gear.closed button { font-size:20px; padding:2px 8px; }
   #gear button, #gear select { font:inherit; font-size:13px; padding:3px 8px; border:2px solid var(--line); border-radius:8px; background:#ffe9b0; }
   #perf { position:fixed; right:14px; bottom:14px; padding:6px 10px; font:12px/1.35 ui-monospace,Consolas,monospace; background:rgba(20,30,40,.78); color:#d7ffe0; border-radius:8px; white-space:pre; }
   #loading { position:fixed; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; background:linear-gradient(#7ec3f5,#c9ecff); font-weight:800; font-size:20px; gap:12px; }
@@ -44,8 +68,9 @@
 <body>
 <canvas id="view"></canvas>
 <div id="hud" class="card hidden"></div>
+<div id="toast"></div>
 <div id="clue" class="card hidden"></div>
-<div id="mapbox" class="card hidden"><canvas id="minimap" width="220" height="220"></canvas><div class="cap">Bấm để tự đi · lăn chuột để phóng</div></div>
+<div id="mapbox" class="card hidden"><canvas id="minimap" width="220" height="220"></canvas><div class="cap"><button id="mapout" title="Thu nhỏ">−</button> Bấm để tự đi · lăn chuột để phóng <button id="mapin" title="Phóng to">+</button></div></div>
 <div id="prompt" class="card hidden"></div>
 <div id="dialog" class="card hidden"></div>
 <div id="gear" class="card hidden"></div>

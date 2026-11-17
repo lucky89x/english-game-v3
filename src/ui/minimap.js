@@ -8,10 +8,13 @@ export class Minimap {
   constructor(canvas, onTravel) {
     this.cv = canvas; this.ctx = canvas.getContext('2d'); this.zoom = 1.6; this.route = null; this.onTravel = onTravel; this.markers = [];
     this.bg = this.renderBase();
-    canvas.addEventListener('wheel', (e) => { e.preventDefault(); e.stopPropagation(); this.zoom = Math.min(4, Math.max(0.75, this.zoom * (e.deltaY < 0 ? 1.2 : 1 / 1.2))); }, { passive: false });
+    const box = canvas.parentElement || canvas;       // wheel anywhere on the map card zooms the map, never the camera
+    box.addEventListener('wheel', (e) => { e.preventDefault(); e.stopPropagation(); this.zoomBy(e.deltaY < 0 ? 1.25 : 1 / 1.25); }, { passive: false });
+    for (const [id, k] of [['mapin', 1.4], ['mapout', 1 / 1.4]]) { const b = document.getElementById(id); if (b) { b.addEventListener('click', (e) => { e.stopPropagation(); this.zoomBy(k); }); b.addEventListener('mousedown', (e) => e.stopPropagation()); } }
     canvas.addEventListener('mousedown', (e) => e.stopPropagation());
     canvas.addEventListener('click', (e) => { const r = canvas.getBoundingClientRect(); this.travelTo(...this.toWorld((e.clientX - r.left) * canvas.width / r.width, (e.clientY - r.top) * canvas.height / r.height)); });
   }
+  zoomBy(k) { this.zoom = Math.min(6, Math.max(0.6, this.zoom * k)); }
   rebuild() { this.bg = this.renderBase(); this.route = null; }
   renderBase() {
     const n = L.SIZE * BASE, cv = document.createElement('canvas'); cv.width = cv.height = n;
@@ -53,6 +56,7 @@ export class Minimap {
     ctx.font = '700 10px sans-serif'; ctx.textAlign = 'center';
     for (const l of L.LANDMARKS) { const [mx, my] = this.toMap(l.x, l.z); if (mx < -30 || my < -10 || mx > w + 30 || my > h + 10) continue; ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.strokeText(l.label, mx, my + 3); ctx.fillStyle = '#3a2410'; ctx.fillText(l.label, mx, my + 3); }
     for (const m of markers) {
+      if (m.small) { const [sx, sy] = this.toMap(m.x, m.z); if (sx < 0 || sy < 0 || sx > w || sy > h) continue; ctx.fillStyle = m.color; ctx.strokeStyle = '#3a2410'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(sx, sy, 3.2, 0, 7); ctx.fill(); ctx.stroke(); continue; }
       let [mx, my] = this.toMap(m.x, m.z); mx = Math.min(w - 9, Math.max(9, mx)); my = Math.min(h - 9, Math.max(9, my));
       ctx.fillStyle = m.color || '#ffd23c'; ctx.strokeStyle = '#4a2a10'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(mx, my, 7.5, 0, 7); ctx.fill(); ctx.stroke();
       ctx.fillStyle = '#4a2a10'; ctx.font = '800 11px sans-serif'; ctx.fillText(m.text, mx, my + 4);

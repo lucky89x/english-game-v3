@@ -51,9 +51,23 @@ export function recordSkill(profile, skill, correct, hints) {
   row.attempts += 1; row.hints += hints || 0;
   if (correct) { row.correct += 1; if (!hints) row.firstTry += 1; }
 }
+/** EXP needed to go from `level` to the next one. Map 1 (levels 1-20) needs 9,405 EXP in all: about 8-10 hours of
+ *  mixed play at roughly 1,000 EXP an hour (fights, hunts, chests, a few mini games). Change this line to retune. */
+export const expNeed = (level) => 90 + (level - 1) * 45;
+/** Total EXP from level 1 to `level`. */
+export const expTo = (level) => { let t = 0; for (let l = 1; l < level; l++) t += expNeed(l); return t; };
+/** Unit being studied: the one a parent picked, otherwise the unit of the map reached (Map 1 = Unit 1, Map 2 = Unit 2). */
+export const unitOf = (profile) => profile.unitPick || (profile.flags && profile.flags.map2 ? 2 : 1);
+/** Hit points grow with the level; equipment adds on top (profile.gear, later). */
+export const maxHp = (profile) => 100 + (profile.stats.level - 1) * 12 + ((profile.gear && profile.gear.hp) || 0);
+/** Knowledge gates: at these levels the bar fills but the next level waits for a short word review (the owl). */
+export const GATES = [5, 10, 15, 20];
+export const gateWaiting = (profile) => { const L = profile.stats.level; return GATES.includes(L) && !(profile.gates && profile.gates[L]) ? L : 0; };
+export function passGate(profile, level) { (profile.gates || (profile.gates = {}))[level] = true; return addExp(profile, 0); }
 export function addExp(profile, amount) {
   const s = profile.stats; s.exp += amount;
-  let need = 60 + (s.level - 1) * 30, ups = 0;
-  while (s.exp >= need) { s.exp -= need; s.level += 1; ups += 1; need = 60 + (s.level - 1) * 30; }
+  let need = expNeed(s.level), ups = 0;
+  while (s.exp >= need && !gateWaiting(profile)) { s.exp -= need; s.level += 1; ups += 1; need = expNeed(s.level); }
+  if (gateWaiting(profile)) s.exp = Math.min(s.exp, need);        // full bar, nothing wasted beyond it
   return ups;
 }

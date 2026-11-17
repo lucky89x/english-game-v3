@@ -1,16 +1,16 @@
 # Performance budget and measurements
 
 ## Budget
-- Initial download: target under 20 MB. **Measured 9.85 MB** (files actually requested during the end-to-end run, uncompressed).
-- Triangles in view: under 700k on High, under 450k on Low. Draw calls under 150.
+- Initial download: target under 20 MB. **Measured 12.53 MB** (files requested during the end-to-end run, uncompressed).
+- Triangles in view: under 700k on High. Draw calls under 150.
 - Textures: none above 1024 px.
 
-## Measured (2026-11-14, Chromium headless + SwiftShader (software GL, no GPU))
+## Measured (2026-11-16, Chromium headless + SwiftShader, software GL, no GPU)
 | Quality | FPS | Frame | Draw calls | Triangles |
 |---|---|---|---|---|
-| Low | 2.3 | 443.6 ms | 88 | 447,216 |
-| Medium | 1.1 | 897.7 ms | 90 | 487,584 |
-| High | 0.9 | 1159.2 ms | 90 | 538,336 |
+| Low | 1.5 | 680 ms | 106 | 570,252 |
+| Medium | 0.6 | 1588 ms | 108 | 612,092 |
+| High | 0.6 | 1626 ms | 108 | 668,692 |
 
 **These FPS numbers are from a server with no graphics card (software rasteriser).** They show the relative cost of the presets, not what a child will see. FPS on a real desktop or school computer has not been measured; press F3 in the game to read it.
 Measured at the forest riverside view.

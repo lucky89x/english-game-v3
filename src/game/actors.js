@@ -78,41 +78,62 @@ export class Player {
   }
 }
 
+// Third-person camera behind Ngọc (the fixed diagonal view was tried on 17/11 and dropped: "hard to see").
+// Drag turns and tilts, the wheel or a pinch zooms. Slightly higher and further than before so more of the
+// village is in view.
+export const CAM = { fov: 50, pitch: 0.5, dist: 9.5, min: 3.5, max: 18 };
 export class OrbitCamera {
   constructor(camera, dom) {
-    this.camera = camera; this.yaw = 0; this.pitch = 0.52; this.dist = 8.5; this.tYaw = 0; this.tPitch = 0.52; this.tDist = 8.5; this.cur = 8.5;
+    this.camera = camera; this.yaw = 0; this.pitch = CAM.pitch; this.dist = CAM.dist; this.tYaw = 0; this.tPitch = CAM.pitch; this.tDist = CAM.dist; this.cur = CAM.dist;
+    camera.fov = CAM.fov; camera.updateProjectionMatrix();
     this.target = new THREE.Vector3(); let drag = false, lx = 0, ly = 0;
     dom.addEventListener('mousedown', (e) => { if (e.button === 0 || e.button === 2) { drag = true; lx = e.clientX; ly = e.clientY; } });
     addEventListener('mouseup', () => (drag = false));
-    addEventListener('mousemove', (e) => { if (!drag) return; this.tYaw -= (e.clientX - lx) * 0.006; this.tPitch = Math.min(1.25, Math.max(0.05, this.tPitch + (e.clientY - ly) * 0.005)); lx = e.clientX; ly = e.clientY; });
-    dom.addEventListener('wheel', (e) => { e.preventDefault(); this.tDist = Math.min(18, Math.max(3, this.tDist * (e.deltaY > 0 ? 1.12 : 1 / 1.12))); }, { passive: false });
+    addEventListener('mousemove', (e) => { if (!drag) return; this.tYaw -= (e.clientX - lx) * 0.006; this.tilt((e.clientY - ly) * 0.005); lx = e.clientX; ly = e.clientY; });
+    dom.addEventListener('wheel', (e) => { e.preventDefault(); this.zoom(e.deltaY > 0 ? 1.12 : 1 / 1.12); }, { passive: false });
     dom.addEventListener('contextmenu', (e) => e.preventDefault());
   }
-  /** Shortest unobstructed distance from the target towards the wanted camera spot. */
+  zoom(f) { this.tDist = Math.min(CAM.max, Math.max(CAM.min, this.tDist * f)); }
+  tilt(d) { this.tPitch = Math.min(1.25, Math.max(0.05, this.tPitch + d)); }
+  /** Shortest unobstructed distance from the target towards the wanted camera spot: only the ground and big solids
+   *  (houses, cliffs) pull the camera in. Tree crowns no longer do: the constant zooming in and out among trees made
+   *  children dizzy (feedback 17/11). */
   clearDistance(dir, want) {
     for (let d = 1.0; d <= want; d += 0.35) {
       const x = this.target.x + dir.x * d, y = this.target.y + dir.y * d, z = this.target.z + dir.z * d;
-      if (y < L.groundHeight(x, z) + 0.35) return Math.max(1.2, d - 0.4);
-      if (y < 4.5) for (const s of L.solidsNear(x, z)) if (s.r > 0.9 && Math.hypot(x - s.x, z - s.z) < s.r + 0.2) return Math.max(1.2, d - 0.4);
+      if (y < L.groundHeight(x, z) + 0.35) return Math.max(3.0, d - 0.4);
+      if (y < 4.5) for (const s of L.solidsNear(x, z)) if (s.r > 2.0 && Math.hypot(x - s.x, z - s.z) < s.r + 0.2) return Math.max(3.0, d - 0.4);
     }
     return want;
   }
   update(dt, focus) {
-    const k = Math.min(1, dt * 10);
+    // frame-rate independent smoothing: the same feel at 15 or 60 frames a second; a long stall does not jump
+    dt = Math.min(dt, 0.12);
+    const k = 1 - Math.exp(-dt * 10);
     this.yaw += (this.tYaw - this.yaw) * k; this.pitch += (this.tPitch - this.pitch) * k; this.dist += (this.tDist - this.dist) * k;
-    this.target.lerp(new THREE.Vector3(focus.x, focus.y + 1.25, focus.z), Math.min(1, dt * 12));
-    const dir = new THREE.Vector3(Math.sin(this.yaw) * Math.cos(this.pitch), Math.sin(this.pitch), Math.cos(this.yaw) * Math.cos(this.pitch));
-    const free = this.clearDistance(dir, this.dist);
-    this.cur = free < this.cur ? free : this.cur + (free - this.cur) * Math.min(1, dt * 4);      // snap in, ease out
+    this.goal = (this.goal || new THREE.Vector3()).set(focus.x, focus.y + 1.25, focus.z);
+    if (this.target.distanceTo(this.goal) > 6) this.target.copy(this.goal);           // teleport: no long swoop
+    else { const f = 1 - Math.exp(-dt * 11); this.target.x += (this.goal.x - this.target.x) * f; this.target.z += (this.goal.z - this.target.z) * f; this.target.y += (this.goal.y - this.target.y) * (1 - Math.exp(-dt * 4)); }   // gentle vertical follow: jumps and bumps do not shake the view
+    // Behind a house or a hill the camera rises over it instead of zooming in and out (feedback 17/11: dizzy when
+    // walking). Only when rising is not enough does it come closer, slowly.
+    const at = (p) => new THREE.Vector3(Math.sin(this.yaw) * Math.cos(p), Math.sin(p), Math.cos(this.yaw) * Math.cos(p));
+    let want = 0, free = this.dist;
+    for (const up of [0, 0.15, 0.3, 0.45]) { const f = this.clearDistance(at(Math.min(1.3, this.pitch + up)), this.dist); want = up; free = f; if (f >= this.dist - 0.01) break; }
+    this.lift = (this.lift || 0) + (want - (this.lift || 0)) * (1 - Math.exp(-dt * 2.2));
+    const dir = at(Math.min(1.3, this.pitch + this.lift));
+    if (free >= this.dist - 0.01) free = this.clearDistance(dir, this.dist);
+    this.cur += (free - this.cur) * (1 - Math.exp(-dt * (free < this.cur ? 3.5 : 1.6)));
     this.camera.position.copy(this.target).addScaledVector(dir, this.cur);
     this.camera.lookAt(this.target);
   }
 }
 
 export class Npc {
-  constructor(gltf, x, z, yaw) {
-    this.root = gltf.scene; this.mixer = gltf.animations.length ? new THREE.AnimationMixer(this.root) : null; this.actions = {}; this.cur = '';
-    for (const c of gltf.animations) this.actions[c.name] = this.mixer.clipAction(c);
+  /** clips: animations to use when the file has none (Lily, Rose and Anna share Ngọc's skeleton and clips). */
+  constructor(gltf, x, z, yaw, clips) {
+    const anims = gltf.animations.length ? gltf.animations : clips || [];
+    this.root = gltf.scene; this.mixer = anims.length ? new THREE.AnimationMixer(this.root) : null; this.actions = {}; this.cur = '';
+    for (const c of anims) this.actions[c.name] = this.mixer.clipAction(c);
     this.root.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.frustumCulled = false; } });
     this.move(x, z, yaw); this.play('Idle');
   }
@@ -121,6 +142,7 @@ export class Npc {
   play(n) { if (!this.actions[n] || this.cur === n) return; const a = this.actions[n]; a.reset().play(); if (this.actions[this.cur]) this.actions[this.cur].crossFadeTo(a, 0.2, false); this.cur = n; }
   update(dt, player, talking) {
     const d = Math.hypot(player.x - this.x, player.z - this.z);
+    this.root.visible = d < 55; if (!this.root.visible) return d;        // far away: not drawn, not animated (weak machines)
     const want = d < 6 ? Math.atan2(player.x - this.x, player.z - this.z) : this.home;
     let diff = want - this.root.rotation.y; diff = Math.atan2(Math.sin(diff), Math.cos(diff)); this.root.rotation.y += diff * Math.min(1, dt * 5);
     this.play(talking ? 'Talk' : 'Idle');

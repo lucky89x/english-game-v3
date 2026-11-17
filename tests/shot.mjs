@@ -1,4 +1,4 @@
-// Quick look: node tests/shot.mjs <out.png> [x z yaw pitch dist] — serves web-rebuild/ and screenshots.
+// Quick look: node tests/shot.mjs <out.png> [x z yaw pitch dist] — serves the repo root and takes a screenshot.
 import { chromium } from 'playwright';
 import http from 'node:http'; import fs from 'node:fs'; import path from 'node:path'; import { fileURLToPath } from 'node:url';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -15,7 +15,7 @@ export function serve(port = 0) {
 }
 export async function open(url, size = { width: 1280, height: 720 }) {
   const browser = await chromium.launch({ args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--enable-webgl'] });
-  const page = await browser.newPage({ viewport: size }); const logs = [];
+  const page = await browser.newPage({ viewport: size }); page.setDefaultTimeout(120000); const logs = [];
   page.on('console', (m) => { if (m.type() === 'error' || m.type() === 'warning') logs.push(m.type() + ': ' + m.text()); });
   page.on('pageerror', (e) => logs.push('pageerror: ' + e.message));
   await page.goto(url);

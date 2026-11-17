@@ -1,4 +1,4 @@
-// node --test web-rebuild/tests/unit.test.mjs
+// node --test tests/unit.test.mjs
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as L from '../src/core/layout.js';
@@ -73,7 +73,7 @@ test('save: skill counters separate first-try from hinted answers; exp levels up
   const p = S.newProfile('An', 6);
   S.recordSkill(p, 'reading', true, 0); S.recordSkill(p, 'reading', true, 2); S.recordSkill(p, 'reading', false, 1);
   assert.deepEqual(p.skills.reading, { attempts: 3, correct: 2, firstTry: 1, hints: 3 });
-  assert.equal(S.addExp(p, 70), 1); assert.equal(p.stats.level, 2);
+  assert.equal(S.addExp(p, S.expNeed(1) + 10), 1); assert.equal(p.stats.level, 2);
 });
 
 // ---------------------------------------------------------------- quest logic (no browser)
@@ -159,8 +159,8 @@ test('village: bridge things and Sam / Pip spots are on dry, reachable ground', 
   try { for (const [id, [x, z]] of Object.entries(BRIDGE_SPOTS)) assert.ok(L.walkable(x, z, 0.9) && findPath(L.SPAWN.x, L.SPAWN.z, x, z), id); }
   finally { L.setRegion('forest'); }
 });
-test('content: bridge quest is written for grades 6 and 8 only, English lines carry no Vietnamese', () => {
-  assert.deepEqual(Object.keys(BRIDGE).map(Number), [6, 8]);
+test('content: bridge quest is written for grades 6-9, English lines carry no Vietnamese', () => {
+  assert.deepEqual(Object.keys(BRIDGE).map(Number), [6, 7, 8, 9]);
   const vi = /[àáảãạăằắẳẵặâầấẩẫậđèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵ]/i;
   for (const b of Object.values(BRIDGE)) {
     assert.equal(b.steps.length, 4); assert.equal(b.ask.length, 4); assert.equal(new Set(b.steps).size, 4);
@@ -173,12 +173,12 @@ test('content: bridge quest is written for grades 6 and 8 only, English lines ca
 // ---------------------------------------------------------------- village story (no browser)
 import { VillageStory, CUSTOMERS } from '../src/game/village.js';
 import { BRIDGE, BRIDGE_SPOTS } from '../src/game/content.js';
-function villageHarness({ grade = 6, letter = { letter: 'Dear Tom,\n\nPlease give it to the librarian.', question: 'Who gets it?', choices: ['The librarian', 'Nam', 'Mai'], answer: 0, hint: 'đọc lại' }, n = 8 } = {}) {
+function villageHarness({ noBridge = false, grade = 6, letter = { letter: 'Dear Tom,\n\nPlease give it to the librarian.', question: 'Who gets it?', choices: ['The librarian', 'Nam', 'Mai'], answer: 0, hint: 'đọc lại' }, n = 8 } = {}) {
   const profile = S.newProfile('An', grade), log = [];
   const cards = Array.from({ length: n }, (_, i) => ({ id: `g${grade}_u01:w${i}`, word: 'w' + i, vi: 'nghĩa ' + i }));
   const ui = { dialogue: (pages, done) => { log.push(pages); if (done) done(); }, choose: (page, options, pick) => { ui.pending = { page, options, pick }; } };
   const fixed = { n: 0 };
-  const story = new VillageStory({ profile, save() {}, ui, sfx() {}, onChange() {}, letter, cards, cardOf: (id) => cards.find((c) => c.id === id), bridge: BRIDGE[grade] || null, onBridgeFixed: () => fixed.n++ });
+  const story = new VillageStory({ profile, save() {}, ui, sfx() {}, onChange() {}, letter, cards, cardOf: (id) => cards.find((c) => c.id === id), bridge: noBridge ? null : BRIDGE[grade] || null, onBridgeFixed: () => fixed.n++ });
   return { profile, story, ui, log, cards, fixed };
 }
 test('village: letter read with a wrong then a right answer, hint only after the mistake, reward once', () => {
@@ -249,8 +249,8 @@ test('village: Fix the Bridge — Sam names the things, decoys teach, Ben trades
   assert.equal(story.q.orderWrong, 1);
   story.talkTom(); assert.equal(story.step, 'done'); assert.equal(profile.flags.forest_open, true);
 });
-test('village: grade 7 has no bridge plan — Sam says so and the bridge opens by itself', () => {
-  const { profile, story, log, fixed } = villageHarness({ grade: 7, letter: null });
+test('village: a grade with no bridge plan — Sam says so and the bridge opens by itself', () => {
+  const { profile, story, log, fixed } = villageHarness({ grade: 7, letter: null, noBridge: true });
   story.q.step = 'bridge'; story.talkSam();
   assert.ok(log.at(-1)[0].vi.includes('lớp 7 chưa được soạn'));
   assert.equal(story.step, 'open'); assert.ok(profile.flags.bridge_fixed); assert.equal(fixed.n, 1);
@@ -262,4 +262,182 @@ test('village: no vocabulary for the unit -> Ben says so and the story is not bl
   assert.ok(log.at(-1)[0].vi.includes('chưa có')); assert.equal(story.step, 'tom_bridge');
   story.q.step = 'gather'; story.q.items = []; story.talkBen();
   assert.ok(story.items.includes('axe'), 'no jars: Ben still hands over the axe');
+});
+
+// ---------------------------------------------------------------- mini games (rules and places)
+test('mini games: stars, race rings and start signs are on reachable ground', async () => {
+  const STARS = [[-46, -6], [-38, -34], [-12, -38], [30, -30], [48, -12], [52, 20], [44, 38], [10, 50], [-22, 50], [-48, 30], [-30, 14], [8, -36]];
+  const RACE = [[-20, 2], [-32, 4], [-42, 14], [-40, 28], [-34, 42], [-18, 46], [-6, 44], [-8, 30], [-20, 2]];
+  const STARTS = [[18.4, 19.2], [33.5, 6], [-22, 4], [-4.4, -8.5], [-20, -4], [-26, -2], [10, 28]];
+  const src = (await import('node:fs')).readFileSync(new URL('../src/game/minigames.js', import.meta.url), 'utf8');
+  assert.ok(src.includes(JSON.stringify(STARS).replace(/,/g, ', ').replace(/\], \[/g, '], [')), 'test list matches the game list');
+  L.setRegion('village');
+  try { for (const [x, z] of [...STARS, ...RACE, ...STARTS]) assert.ok(L.walkable(x, z, 0.9) && findPath(L.SPAWN.x, L.SPAWN.z, x, z), x + ',' + z); }
+  finally { L.setRegion('forest'); }
+});
+
+// ---------------------------------------------------------------- combat rules
+import { MONSTERS, SPAWNS, playerAtk, hurt, inArc } from '../src/core/rules.js';
+test('combat: attack grows with level and weapon, armour never blocks everything, the arc is in front only', () => {
+  const p = S.newProfile('An', 6);
+  assert.equal(playerAtk(p), 10); p.stats.level = 5; p.gear = { atk: 6, def: 4 };
+  assert.equal(playerAtk(p), 24); assert.equal(hurt(11, p), 7); assert.equal(hurt(2, p), 1);
+  assert.ok(inArc(0, 0, 0, 0, 2)); assert.ok(!inArc(0, 0, 0, 0, -2), 'behind'); assert.ok(!inArc(0, 0, 0, 0, 3), 'too far'); assert.ok(inArc(0, 0, Math.PI / 2, 2, 0));
+  assert.ok(Math.ceil(MONSTERS.slime.hp / 10) <= 3, 'a level 1 child beats a slime in 3 hits');
+  assert.equal(S.maxHp(S.newProfile('x', 6)), 100);
+});
+test('combat: every monster spawn is on reachable ground east of the river', () => {
+  L.setRegion('village');
+  try { for (const [kind, x, z] of SPAWNS) { assert.ok(MONSTERS[kind]); assert.ok(L.walkable(x, z, 1) && findPath(L.SPAWN.x, L.SPAWN.z, x, z), kind + ' ' + x + ',' + z); assert.ok(Math.hypot(x, z - 4) > 25, 'not in the village square'); } }
+  finally { L.setRegion('forest'); }
+});
+
+// ---------------------------------------------------------------- shop
+import { ITEMS, bag, wear, buy, eat, shopList } from '../src/core/rules.js';
+test('shop: buying needs gold and level, puts the item on, owned items are free to wear again, bread heals', () => {
+  const p = S.newProfile('An', 6);
+  assert.deepEqual(buy(p, 'wood_sword'), { ok: false, why: 'gold' });
+  p.stats.gold = 500;
+  assert.equal(buy(p, 'iron_sword').why, 'level');
+  assert.ok(buy(p, 'wood_sword').ok); assert.equal(p.stats.gold, 460); assert.equal(bag(p).weapon, 'wood_sword'); assert.equal(playerAtk(p), 15);
+  p.stats.level = 5; assert.ok(buy(p, 'iron_sword').ok); assert.equal(playerAtk(p), 10 + 8 + 12);
+  const g = p.stats.gold; assert.equal(buy(p, 'wood_sword').why, 'owned'); assert.equal(p.stats.gold, g, 'no second payment'); assert.equal(bag(p).weapon, 'wood_sword');
+  assert.ok(buy(p, 'leather_vest').ok); assert.equal(S.maxHp(p), 100 + 4 * 12 + 20); assert.equal(hurt(6, p), 4);
+  assert.ok(buy(p, 'bread').ok && buy(p, 'bread').ok); assert.equal(bag(p).food, 2);
+  p.stats.hp = 30; assert.equal(eat(p, S.maxHp(p)), 50); assert.equal(p.stats.hp, 80); assert.equal(bag(p).food, 1);
+  p.stats.hp = S.maxHp(p); assert.equal(eat(p, S.maxHp(p)), 0, 'not wasted at full health'); assert.equal(bag(p).food, 1);
+  assert.deepEqual(shopList('rose'), ['clover', 'bread']); assert.equal(shopList('forge').length, 5);
+  for (const it of Object.values(ITEMS)) assert.ok(it.en && it.vi && it.cost > 0);
+});
+
+// ---------------------------------------------------------------- match-3 rules
+import * as M3 from '../src/core/match3.js';
+test('match-3: fresh boards have no match but always a move; a good swap clears, falls and refills; a bad swap is undone', () => {
+  const rnd = L.mulberry32(5);
+  for (let k = 0; k < 20; k++) { const b = M3.newBoard(rnd); assert.equal(M3.matches(b).size, 0); assert.equal(b.length, 49); assert.ok(b.every((g) => g >= 0 && g < M3.KINDS)); }
+  const b = M3.newBoard(L.mulberry32(9)); let found = null;
+  for (let i = 0; i < 49 && !found; i++) for (const j of [i + 1, i + 7]) { if (j >= 49 || !M3.adjacent(i, j)) continue; const c = [...b]; if (M3.move(c, i, j, L.mulberry32(1)).ok) { found = [i, j]; break; } }
+  assert.ok(found, 'a move exists'); assert.ok(M3.hasMove(b));
+  const r = M3.move(b, found[0], found[1], L.mulberry32(1));
+  assert.ok(r.ok && r.cleared >= 3 && r.score >= 30 && r.combo >= 1); assert.ok(b.every((g) => g >= 0), 'refilled'); assert.equal(M3.matches(b).size, 0, 'cascades resolved');
+  const flat = Array.from({ length: 49 }, (_, i) => (i + Math.floor(i / 7)) % 6), copy = [...flat];
+  assert.equal(M3.move(flat, 0, 2, rnd).ok, false, 'not neighbours'); assert.deepEqual(flat, copy);
+  assert.ok(!M3.adjacent(6, 7), 'row ends are not neighbours');
+  assert.deepEqual(M3.candyReward(600), { gold: 10, exp: 15 }); assert.deepEqual(M3.candyReward(99999), { gold: 30, exp: 40 });
+});
+
+// ---------------------------------------------------------------- falling blocks rules
+import * as B from '../src/core/blocks.js';
+test('blocks: pieces stay inside walls, rotate with kicks, a full row clears and the rest falls', () => {
+  const b = B.empty();
+  for (let k = 0; k < 7; k++) { const p = B.spawn(k); assert.ok(B.fits(b, p)); for (let r = 0; r < 4; r++) assert.equal(B.cells({ ...p, r }).length, 4); }
+  let p = B.spawn(1); for (let i = 0; i < 12; i++) p = B.shift(b, p, -1, 0); assert.equal(Math.min(...B.cells(p).map((c) => c[0])), 0, 'stops at the left wall');
+  const i0 = { k: 0, r: 1, x: 8, y: 5 }; assert.ok(B.fits(b, B.shift(b, i0, 0, 0, 1)), 'kicked off the right wall when turning');
+  for (let x = 0; x < 8; x++) b[19 * B.W + x] = 3;
+  const o = B.drop(b, { k: 1, r: 0, x: 8, y: 0 }); assert.equal(o.y, 18);
+  assert.equal(B.lock(b, o), 1); assert.equal(b[19 * B.W + 8], 2, 'top half of the O fell into the bottom row'); assert.equal(b.filter(Boolean).length, 2);
+  assert.deepEqual(B.blocksReward(800), { gold: 10, exp: 16 });
+});
+
+// ---------------------------------------------------------------- word chests (letter lock)
+import * as SP from '../src/core/spell.js';
+test('spell: tiles hold every letter plus decoys, only the next letter is accepted, spaces are kept in the hint', () => {
+  const rnd = L.mulberry32(3), word = 'pencil case', tl = SP.tiles(word, rnd);
+  assert.equal(tl.length, 10 + 2);
+  const st = { word, typed: '', wrong: 0 };
+  assert.equal(SP.shown(st), '______ ____');
+  const wrongI = tl.findIndex((t) => t.ch !== 'p'); assert.equal(SP.press(st, tl, wrongI), 'wrong'); assert.equal(st.wrong, 1);
+  let last = '';
+  for (const ch of SP.letters(word)) { const i = tl.findIndex((t) => !t.used && t.ch === ch); last = SP.press(st, tl, i); }
+  assert.equal(last, 'done'); assert.equal(SP.shown(st), 'pencil case');
+  assert.ok(SP.spellable('school bag') && !SP.spellable('a') && !SP.spellable('extraordinarily long words'));
+  assert.deepEqual(SP.chestReward(0), { gold: 15, exp: 20 }); assert.deepEqual(SP.chestReward(9), { gold: 6, exp: 8 });
+});
+
+// ---------------------------------------------------------------- hunts and boss
+import { HUNTS, hunt, countKill, huntLine, BOSS, SHIELDS, shieldDue } from '../src/core/rules.js';
+test('hunts: only the asked monster counts, only while active, finishing returns true once; English lines by grade', () => {
+  const p = S.newProfile('An', 6), h = hunt(p);
+  assert.equal(countKill(p, 'slime'), false, 'not active yet'); h.active = true;
+  assert.equal(countKill(p, 'red'), false); assert.equal(h.got, 0);
+  assert.equal(countKill(p, 'slime'), false); assert.equal(countKill(p, 'slime'), false); assert.equal(countKill(p, 'slime'), true); assert.equal(countKill(p, 'slime'), false);
+  assert.ok(huntLine(HUNTS[0], 6).length < huntLine(HUNTS[0], 9).length);
+  for (const q of HUNTS) for (const t of Object.values(q.en)) assert.ok(!/[àáảãạăâđêôơư]/i.test(t), 'English only');
+  assert.ok(shieldDue(450, 600, 0) && !shieldDue(460, 600, 0) && !shieldDue(100, 600, 3) && shieldDue(100, 600, 2));
+  assert.equal(SHIELDS.length, 3); assert.ok(BOSS.hp > 0);
+});
+
+test('knowledge gates: level 5 waits for the owl review, extra EXP is capped, passing lets the level go up', () => {
+  const p = S.newProfile('An', 6); p.stats.level = 4;
+  S.addExp(p, S.expTo(5) + 500); assert.equal(p.stats.level, 5); assert.equal(S.gateWaiting(p), 5); assert.equal(p.stats.exp, S.expNeed(5), 'bar full, rest not stored');
+  S.addExp(p, 999); assert.equal(p.stats.level, 5);
+  assert.equal(S.passGate(p, 5), 1); assert.equal(p.stats.level, 6); assert.equal(S.gateWaiting(p), 0); assert.equal(p.stats.exp, 0);
+});
+
+// ---------------------------------------------------------------- review round: pay limits, Map 2, units, grammar, old saves
+import { pay, FULL_PLAYS, map2Ready, BOSSES } from '../src/core/rules.js';
+import { GRAMMAR, grammarFor } from '../src/core/grammar.js';
+test('mini games: full pay for the first plays of the day, 20% after, a new day resets', () => {
+  const p = S.newProfile('An', 6);
+  for (let i = 0; i < FULL_PLAYS; i++) assert.deepEqual([pay(p, 'candy', 100, 30, 40).gold], [30]);
+  const later = pay(p, 'candy', 100, 30, 40); assert.equal(later.gold, 6); assert.equal(later.exp, 8); assert.equal(later.full, false);
+  assert.equal(pay(p, 'race2', 100, 30).gold, 30, 'each game counts on its own');
+  assert.equal(pay(p, 'candy', 101, 30).gold, 30, 'next day pays in full again');
+  assert.equal(pay(p, 'fish', 101, 1).gold, 1); for (let i = 0; i < 5; i++) assert.ok(pay(p, 'fish', 101, 1).gold >= 1, 'never rounds to zero');
+});
+test('Map 2 opens after the Ancient Golem at level 20; the unit follows the map unless a parent picks one', () => {
+  const p = S.newProfile('An', 8);
+  assert.equal(S.unitOf(p), 1); assert.equal(BOSSES[0].level, 8); assert.ok(BOSSES[1].level >= 18);
+  p.flags.boss2 = true; p.stats.level = 19; assert.equal(map2Ready(p), false);
+  p.stats.level = 20; assert.equal(map2Ready(p), true); p.flags.map2 = true; assert.equal(S.unitOf(p), 2);
+  p.unitPick = 5; assert.equal(S.unitOf(p), 5);
+  assert.equal(S.expTo(20), 9405, 'Map 1 length (T2): retune expNeed if this changes');
+});
+test('grammar gate items: valid answers, English-only sentences with one blank, only written units', () => {
+  for (const [id, list] of Object.entries(GRAMMAR)) for (const g of list) {
+    assert.ok(/^g[6-9]_u\d\d$/.test(id)); assert.equal(g.q.split('___').length, 2, g.q);
+    assert.ok(g.a >= 0 && g.a < g.options.length && new Set(g.options).size === g.options.length);
+    assert.ok(!/[àáảãạăâđêôơư]/i.test(g.q + g.options.join('')), g.q); assert.ok(g.why.length > 3);
+  }
+  assert.equal(grammarFor(6, 1).length, 2); assert.equal(grammarFor(9, 1).length, 2); assert.deepEqual(grammarFor(7, 2), []); assert.deepEqual(grammarFor(8, 2), []);
+});
+test('old saves (v1 and v2 before bag, hunts, chests, gates) load and play on (K5)', () => {
+  const v1 = S.migrate({ version: 1, name: 'Bé', grade: 8, quests: { village: { step: 'done' } }, flags: { forest_open: true }, words: { 'g8_u01:hobby': { box: 2, due: 1 } }, stats: { gold: 12 } });
+  const p = v1.profiles[0]; assert.equal(p.grade, 8); assert.equal(p.stats.gold, 12); assert.equal(p.stats.level, 1); assert.equal(S.unitOf(p), 1);
+  const v2 = S.migrate({ version: 2, last: 'a', profiles: [{ id: 'a', name: 'An', grade: 6, unit: 1, quests: {}, flags: {}, words: {}, skills: {}, stats: { gold: 5, exp: 3, level: 4 } }] }), q = v2.profiles[0];
+  assert.deepEqual(bag(q), { owned: [], weapon: '', armor: '', charm: '', food: 0 }); assert.deepEqual(wear(q), { atk: 0, def: 0, hp: 0 });
+  assert.equal(hunt(q).active, false); assert.equal(S.gateWaiting(q), 0); assert.equal(S.addExp(q, S.expNeed(4)), 1); assert.equal(S.gateWaiting(q), 5);
+  assert.equal(pay(q, 'candy', 1, 10).gold, 10); assert.equal(map2Ready(q), false);
+});
+
+import { sell, sellPrice } from '../src/core/rules.js';
+test('shop: selling pays half, takes the item off, bread one by one, nothing for what is not owned', () => {
+  const p = S.newProfile('An', 6); p.stats.level = 8; p.stats.gold = 1000;
+  assert.ok(buy(p, 'iron_armor').ok); assert.equal(p.gear.def, 5);
+  assert.equal(sell(p, 'iron_armor'), sellPrice('iron_armor')); assert.equal(p.inv.armor, ''); assert.equal(p.gear.def, 0); assert.ok(!p.inv.owned.includes('iron_armor'));
+  assert.equal(sell(p, 'iron_armor'), 0, 'already sold');
+  buy(p, 'bread'); buy(p, 'bread'); const g = p.stats.gold; assert.equal(sell(p, 'bread'), 4); assert.equal(p.inv.food, 1); assert.equal(p.stats.gold, g + 4);
+});
+
+import { spawnSync } from 'node:child_process';
+import { readdirSync, readFileSync, statSync } from 'node:fs';
+test('every source file parses (catches a stray brace or comment before the browser does)', () => {
+  const walk = (d) => readdirSync(d).flatMap((f) => { const p = d + '/' + f; return statSync(p).isDirectory() ? walk(p) : p.endsWith('.js') ? [p] : []; });
+  for (const f of walk(new URL('../src', import.meta.url).pathname)) {
+    const r = spawnSync(process.execPath, ['--input-type=module', '--check'], { input: readFileSync(f) });
+    assert.equal(r.status, 0, f + ': ' + String(r.stderr).split('\n').slice(0, 4).join(' '));
+  }
+});
+
+test('keys: Vietnamese input method letters still walk and act (Unikey / Telex on)', async () => {
+  const { keyCode } = await import('../src/core/keys.js');
+  assert.equal(keyCode({ code: 'KeyW', key: 'w' }), 'KeyW');
+  assert.equal(keyCode({ code: '', key: 'ư' }), 'KeyW');
+  assert.equal(keyCode({ code: '', key: 'Ư' }), 'KeyW');
+  assert.equal(keyCode({ code: '', key: 'á' }), 'KeyS');
+  assert.equal(keyCode({ code: '', key: 'đ' }), 'KeyD');
+  assert.equal(keyCode({ code: '', key: 'a' }), 'KeyA');
+  assert.equal(keyCode({ code: 'Unidentified', key: 'e' }), 'KeyE');
+  assert.equal(keyCode({ code: '', key: ' ' }), 'Space');
+  assert.equal(keyCode({ code: '', key: 'Backspace' }), '');
 });
