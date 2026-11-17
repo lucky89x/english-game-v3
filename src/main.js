@@ -43,6 +43,10 @@ renderer.outputColorSpace = THREE.SRGBColorSpace; renderer.toneMapping = THREE.N
 renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap; renderer.localClippingEnabled = true;   // broken bridge gap
 renderer.info.autoReset = false;            // several passes per frame: counted together, reset once a frame
 const post = new Post(renderer);
+/** Which GPU the browser really draws with. "SwiftShader", "llvmpipe" or "Basic Render" means the CPU draws (hardware
+ *  acceleration is off or blocked): the game then stutters even on a strong graphics card. */
+const GPU = (() => { try { const gl = renderer.getContext(), ext = gl.getExtension('WEBGL_debug_renderer_info'); return String(ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER)); } catch { return '?'; } })();
+const SOFTWARE_GL = /swiftshader|llvmpipe|software|basic render|microsoft basic/i.test(GPU);
 const scene = new THREE.Scene(); scene.fog = new THREE.Fog(0xbfe4ff, 70, 330);
 const camera = new THREE.PerspectiveCamera(52, 1, 0.3, 700);
 
@@ -214,6 +218,7 @@ async function enterRegion(name, at) {
   world = await buildWorld(scene, staticModel);
   const q = QUALITY[quality]; world.setDetail(q.density, q.particles, q.far);
   scene.traverse((o) => { if (o.material) [].concat(o.material).forEach((m) => (m.needsUpdate = true)); });
+  try { await renderer.compileAsync(scene, camera); } catch { /* older browsers: shaders compile on first sight */ }      // no hitch when new things come into view
   minimap.rebuild(); placeActors(); if (walkers) walkers.setRegion(name); if (mini) mini.setRegion(name); if (wild) wild.setRegion(name); if (chests) chests.setRegion(name);
   const [x, z] = at || [L.SPAWN.x, L.SPAWN.z];
   game.teleport(x, z); player.yaw = Math.PI; cam.tYaw = cam.yaw = 0.25;
@@ -486,10 +491,11 @@ async function boot() {
   setQuality(quality);
   $('loading').classList.add('hidden');
   ui.showMenu(store, chooseProfile);
+  if (SOFTWARE_GL && !navigator.webdriver) setTimeout(() => ui.toast('Trình duyệt đang vẽ bằng CPU, game sẽ giật. Bật "Tăng tốc phần cứng" trong Cài đặt trình duyệt.'), 1500);
   renderer.setAnimationLoop(frame);
 }
 
-let mapT = 1, last = performance.now(), acc = 0, frames = 0, autosave = 0, slow = 0;
+let worst = 0, worstNow = 0, mapT = 1, last = performance.now(), acc = 0, frames = 0, autosave = 0, slow = 0;
 const AUTO = !navigator.webdriver && !localStorage.getItem('eq-quality-manual');     // step the graphics down by itself until the child picks a level
 function frame() {
   const now = performance.now(), raw = (now - last) / 1000, real = Math.min(0.25, raw); last = now;
@@ -547,13 +553,13 @@ function frame() {
     autosave += dt; if (autosave > 20) { autosave = 0; save(); }
   }
   renderer.info.reset(); post.setSun(camera, sunDir); post.render(scene, camera);
-  acc += raw; frames++;
-  if (acc >= 0.5) { game.stats = { fps: +(frames / acc).toFixed(1), ms: +(acc / frames * 1000).toFixed(1), calls: renderer.info.render.calls, tris: renderer.info.render.triangles };
-    if (perfOn) $('perf').textContent = `FPS ${game.stats.fps}  (${game.stats.ms} ms)\ndraw calls ${game.stats.calls}\ntriangles ${game.stats.tris.toLocaleString()}\nquality ${quality} · ${renderer.domElement.width}x${renderer.domElement.height}`;
+  acc += raw; frames++; worstNow = Math.max(worstNow, raw * 1000);
+  if (acc >= 0.5) { game.stats = { gpu: GPU, software: SOFTWARE_GL, worst: Math.round(worstNow), fps: +(frames / acc).toFixed(1), ms: +(acc / frames * 1000).toFixed(1), calls: renderer.info.render.calls, tris: renderer.info.render.triangles };
+    if (perfOn) $('perf').textContent = `FPS ${game.stats.fps}  (${game.stats.ms} ms, chậm nhất ${worst.toFixed(0)} ms)\nGPU: ${GPU.slice(0, 60)}${SOFTWARE_GL ? '  ⚠ ĐANG VẼ BẰNG CPU' : ''}\ndraw calls ${game.stats.calls}\ntriangles ${game.stats.tris.toLocaleString()}\nquality ${quality} · ${renderer.domElement.width}x${renderer.domElement.height}`;
     if (AUTO && started && !switching && !document.hidden && quality !== 'low' && !localStorage.getItem('eq-quality-manual')) {
       slow = game.stats.fps < 26 ? slow + 1 : 0;
       if (slow >= 6) { slow = 0; setQuality(quality === 'high' ? 'medium' : 'low'); ui.toast('Đã hạ đồ họa cho mượt hơn'); }
     }
-    acc = 0; frames = 0; }
+    acc = 0; frames = 0; worst = worstNow; worstNow = 0; }
 }
 boot().catch((e) => { errors.push(String(e && e.stack || e)); $('loadtext').textContent = 'Lỗi khi tải game: ' + e.message; console.error(e); });

@@ -33,6 +33,7 @@ PY=<python có bpy 4.2> tools/chibi05/build_all.sh   # dựng lại model, ~1 ph
 - `docs/MAP1_PLAN.md`: kế hoạch và trạng thái; cập nhật cột Trạng thái khi xong một hạng mục.
 
 ## Bẫy đã gặp
+- F3 hiện tên GPU trình duyệt dùng; chữ SwiftShader/llvmpipe/Basic Render = vẽ bằng CPU (tăng tốc phần cứng tắt) → giật dù card mạnh. Game tự báo khi mở. Shader được biên dịch trước (`compileAsync`) khi vào vùng để không khựng.
 - Máy chủ đám mây không có GPU: FPS đo được (1–2) không phản ánh máy thật; thời gian trong game dùng thời gian thật.
 - Giảm tam giác trong Blender làm mất skin nếu không chọn lại rig + mesh trước khi xuất; `build_all.sh` kiểm tra việc này.
 - Bóng khe (AO) nướng vào màu đỉnh: nhân vật 0.6, nhà 0.3 (tường phẳng ít đỉnh sẽ bị xám nếu mạnh hơn); không nướng lên mặt.
