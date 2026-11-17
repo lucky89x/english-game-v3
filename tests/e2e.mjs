@@ -378,7 +378,7 @@ await page.click('[data-profile]'); await page.waitForFunction(() => __eq.starte
 check(await ev((b) => __eq.region === 'forest' && __eq.quest.step === 'done' && __eq.profile.stats.gold === b.gold && Object.keys(__eq.profile.words).length === b.words, before), 'Progress, gold and review words survive a reload');
 const saved = await ev(() => JSON.parse(localStorage.getItem('english-quest-web')));
 check(saved.version === 2 && saved.profiles.length === 1, 'Save is versioned JSON in localStorage');
-await page.click('#gp'); await page.click('#mnew'); await page.fill('#mname', 'Minh'); await page.click('[data-g="9"]'); await page.click('#mgo');
+await page.click('#gopen'); await page.click('#gp'); await page.click('#mnew'); await page.fill('#mname', 'Minh'); await page.click('[data-g="9"]'); await page.click('#mgo');
 await page.waitForFunction(() => __eq.started && __eq.profile.name === 'Minh', null, { timeout: 60000 });
 check(await ev(() => __eq.profile.stats.gold === 0 && __eq.region === 'village' && __eq.story.step === 'arrive' && !__eq.profile.flags.forest_open), 'Second profile (grade 9) starts fresh in the village');
 await ev(() => __eq.story.talkTom()); for (let k = 0; k < 3; k++) { await page.keyboard.press('KeyE'); await wait(200); }

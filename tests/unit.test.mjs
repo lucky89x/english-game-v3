@@ -428,3 +428,16 @@ test('every source file parses (catches a stray brace or comment before the brow
     assert.equal(r.status, 0, f + ': ' + String(r.stderr).split('\n').slice(0, 4).join(' '));
   }
 });
+
+test('keys: Vietnamese input method letters still walk and act (Unikey / Telex on)', async () => {
+  const { keyCode } = await import('../src/core/keys.js');
+  assert.equal(keyCode({ code: 'KeyW', key: 'w' }), 'KeyW');
+  assert.equal(keyCode({ code: '', key: 'ư' }), 'KeyW');
+  assert.equal(keyCode({ code: '', key: 'Ư' }), 'KeyW');
+  assert.equal(keyCode({ code: '', key: 'á' }), 'KeyS');
+  assert.equal(keyCode({ code: '', key: 'đ' }), 'KeyD');
+  assert.equal(keyCode({ code: '', key: 'a' }), 'KeyA');
+  assert.equal(keyCode({ code: 'Unidentified', key: 'e' }), 'KeyE');
+  assert.equal(keyCode({ code: '', key: ' ' }), 'Space');
+  assert.equal(keyCode({ code: '', key: 'Backspace' }), '');
+});

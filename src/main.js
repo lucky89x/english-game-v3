@@ -28,6 +28,7 @@ import { initTouch, touchWanted } from './ui/touch.js';
 import { sfx, setSound, soundOn, unlock } from './audio.js';
 import { voiceOn, setVoice } from './ui/speech.js';
 import { QuestMarks } from './game/marks.js';
+import { keyCode } from './core/keys.js';
 import { WordSpots } from './game/wordspots.js';
 
 const $ = (id) => document.getElementById(id);
@@ -112,18 +113,26 @@ function setQuality(name) {
   if (world) world.setDetail(q.density, q.particles, q.far);
   resize(); renderGear();
 }
+let gearOpen = false;
+/** Settings: a small ⚙ button in the corner; the panel opens only when a grown-up clicks it (feedback 17/11). */
 function renderGear() {
   const g = $('gear'); if (!profile) return; g.classList.remove('hidden');
-  g.innerHTML = `Đồ họa: <select id="gq">${Object.entries(QUALITY).map(([k, v]) => `<option value="${k}" ${k === quality ? 'selected' : ''}>${v.label}</option>`).join('')}</select>
-    <span title="Phụ huynh chọn Unit con đang học ở trường; để 'theo map' thì Unit đi theo map đã mở">Unit: <select id="gu"><option value="0">theo map (${Save.unitOf({ flags: profile.flags })})</option>${Array.from({ length: 12 }, (_, i) => `<option value="${i + 1}" ${profile.unitPick === i + 1 ? 'selected' : ''}>${i + 1}</option>`).join('')}</select></span>
-    <button id="gs">Âm thanh: ${soundOn() ? 'bật' : 'tắt'}</button><button id="gv" title="Đọc to lời thoại tiếng Anh">Đọc to: ${voiceOn() ? 'bật' : 'tắt'}</button><button id="gb" title="Học từ mới của Unit (phím B)">📖 Học từ</button><button id="ge">Xuất hồ sơ</button><button id="gp">Đổi người chơi</button><span style="color:#9a8060">F3: hiệu năng</span>`;
-  $('gq').onchange = (e) => { localStorage.setItem('eq-quality-manual', '1'); setQuality(e.target.value); };
-  $('gu').onchange = (e) => { const v = Number(e.target.value); if (v) profile.unitPick = v; else delete profile.unitPick; reloadUnit().then(() => ui.toast(`Đang học Unit ${Save.unitOf(profile)}`)); };
+  if (!gearOpen) { g.className = 'card closed'; g.innerHTML = '<button id="gopen" title="Cài đặt">⚙</button>'; $('gopen').onclick = () => { gearOpen = true; renderGear(); }; return; }
+  g.className = 'card';
+  g.innerHTML = `<b style="flex-basis:100%">Cài đặt <button id="gclose" style="float:right">✕</button></b>
+    Đồ họa: <select id="gq">${Object.entries(QUALITY).map(([k, v]) => `<option value="${k}" ${k === quality ? 'selected' : ''}>${v.label}</option>`).join('')}</select>
+    <button id="gs">Âm thanh: ${soundOn() ? 'bật' : 'tắt'}</button><button id="gv" title="Đọc to lời thoại tiếng Anh">Đọc to: ${voiceOn() ? 'bật' : 'tắt'}</button><button id="gb" title="Xem lại các từ đã gặp (phím B)">📖 Sổ từ</button>
+    <span style="flex-basis:100%;color:#9a8060" title="Để 'theo map' thì Unit đi theo map con đã mở">Phụ huynh · Unit con đang học trên lớp: <select id="gu"><option value="0">theo map (${Save.unitOf({ flags: profile.flags })})</option>${Array.from({ length: 12 }, (_, i) => `<option value="${i + 1}" ${profile.unitPick === i + 1 ? 'selected' : ''}>${i + 1}</option>`).join('')}</select></span>
+    <button id="ge">Xuất hồ sơ</button><button id="gp">Đổi người chơi</button><span style="color:#9a8060">F3: hiệu năng</span>`;
+  const done = (e) => { if (e && e.target) e.target.blur(); };          // a focused list would eat W/S and the arrows
+  $('gclose').onclick = () => { gearOpen = false; renderGear(); };
+  $('gq').onchange = (e) => { done(e); localStorage.setItem('eq-quality-manual', '1'); setQuality(e.target.value); };
+  $('gu').onchange = (e) => { done(e); const v = Number(e.target.value); if (v) profile.unitPick = v; else delete profile.unitPick; reloadUnit().then(() => ui.toast(`Đang học Unit ${Save.unitOf(profile)}`)); };
   $('gs').onclick = () => { setSound(!soundOn()); renderGear(); };
   $('gv').onclick = () => { setVoice(!voiceOn()); renderGear(); };
-  $('gb').onclick = () => wordBook();
+  $('gb').onclick = () => { gearOpen = false; renderGear(); wordBook(); };
   $('ge').onclick = () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([Save.exportProfile(profile)], { type: 'application/json' })); a.download = `english-quest-${profile.name}.json`; a.click(); };
-  $('gp').onclick = () => { save(); ui.showMenu(store, chooseProfile); };
+  $('gp').onclick = () => { gearOpen = false; save(); ui.showMenu(store, chooseProfile); renderGear(); };
 }
 function save() { if (!profile) return; store.last = profile.id; profile.region = L.NAME; try { Save.persist(store); } catch (e) { console.warn('save failed', e); } }
 
@@ -471,9 +480,20 @@ function onKey(e) {
   if ((e.code === 'KeyJ' || e.code === 'KeyF') && wild && !(mini && mini.active)) wild.attack();
   if (e.code === 'Space') e.preventDefault();
 }
-addEventListener('keydown', (e) => { if (e.target.tagName === 'INPUT') return; if (!e.repeat) onKey(e); keys.add(e.code); });
-addEventListener('keyup', (e) => keys.delete(e.code));
-addEventListener('blur', () => keys.clear());
+// Keys typed through a Vietnamese input method arrive as letters with no key code and an instant key-up: they are
+// held for a moment instead (renewed by the key repeat), so walking works with Unikey or Windows Telex switched on.
+const softKeys = new Map(); let imeTold = false;
+addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT') return;
+  const code = keyCode(e); if (!code) return;
+  if (code === e.code) { if (!e.repeat) onKey(e); keys.add(code); return; }
+  if (!softKeys.has(code)) onKey({ code, repeat: false, target: e.target, preventDefault: () => e.preventDefault() });
+  softKeys.set(code, performance.now() + 560); keys.add(code);
+  if (!imeTold && started) { imeTold = true; ui.toast('Bộ gõ tiếng Việt đang bật: nên tắt khi chơi (Ctrl+Shift hoặc Alt+Z)'); }
+});
+addEventListener('keyup', (e) => { const code = keyCode(e); if (code === e.code) keys.delete(code); });
+addEventListener('blur', () => { keys.clear(); softKeys.clear(); });
+function releaseSoftKeys() { const now = performance.now(); for (const [k, until] of softKeys) if (now > until) { softKeys.delete(k); keys.delete(k); } }
 addEventListener('resize', resize);
 
 async function boot() {
@@ -550,6 +570,7 @@ function frame() {
   const frozen = ui.modal || !started || (arcade && arcade.open) || (shopWin && shopWin.open);
   if (arcade) arcade.update(real, keys);
   if (touch) touch.update();
+  releaseSoftKeys();
   const input = { x: (keys.has('KeyD') || keys.has('ArrowRight') ? 1 : 0) - (keys.has('KeyA') || keys.has('ArrowLeft') ? 1 : 0), z: (keys.has('KeyW') || keys.has('ArrowUp') ? 1 : 0) - (keys.has('KeyS') || keys.has('ArrowDown') ? 1 : 0), run: keys.has('ShiftLeft') || keys.has('ShiftRight'), jump: keys.has('Space') };
   if (frozen) { input.x = input.z = 0; input.jump = false; }
   const hadRoute = !!player.route;

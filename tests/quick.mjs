@@ -17,7 +17,11 @@ await ev(() => { const p = __eq.profile; p.flags.forest_open = true; p.flags.bri
 
 await run('boot', async () => {
   check(await ev(() => __eq.errors.length === 0 && __eq.region === 'village'), 'Boot: no script errors, grade 8 profile in the village');
-  check(await page.isVisible('#gu'), 'Settings bar has the parent Unit picker');
+  check(!(await page.isVisible('#gu')) && await page.isVisible('#gopen'), 'Settings folded into a ⚙ button');
+  await page.click('#gopen'); check(await page.isVisible('#gu'), 'The ⚙ panel has the parent Unit picker'); await page.click('#gclose');
+  const k0 = await ev(() => { __eq.teleport(0, 4); return { x: __eq.player.pos.x, z: __eq.player.pos.z }; }); await wait(400);
+  await ev(() => { for (let i = 0; i < 30; i++) setTimeout(() => { dispatchEvent(new KeyboardEvent('keydown', { key: 'ư' })); dispatchEvent(new KeyboardEvent('keyup', { key: 'ư' })); }, i * 40); }); await wait(3000);
+  check(await ev((k) => Math.hypot(__eq.player.pos.x - k.x, __eq.player.pos.z - k.z) > 0.8, k0), 'Vietnamese input method on: "ư" from the W key still walks');
   check(await ev(() => __eq.friends.every((f) => f.npc.actions.Idle && f.npc.actions.Talk)), 'Lily, Rose and Anna play Ngọc\'s shared clips (K3)');
   await ev(() => { const a = __eq.friends.find((f) => f.who === 'Anna').npc; __eq.teleport(a.x + 1.5, a.z + 1.5); }); await wait(1200);
   check(await ev(() => { const a = __eq.friends.find((f) => f.who === 'Anna').npc; let moved = false; a.root.traverse((o) => { if (o.isBone && /spine|chest/i.test(o.name) && Math.abs(o.quaternion.x) + Math.abs(o.quaternion.z) > 1e-4) moved = true; }); return moved; }), 'Anna\'s bones move (idle animation runs)');
@@ -51,10 +55,12 @@ await run('combat', async () => {
 });
 
 await run('unit', async () => {
+  if (!(await page.isVisible('#gu'))) await page.click('#gopen');
   await ev(() => { const s = document.getElementById('gu'); s.value = '3'; s.dispatchEvent(new Event('change')); }); await wait(1200);
   check(await ev(() => __eq.profile.unitPick === 3 && __eq.chests.api.cards().every((c) => c.id.startsWith('g8_u03:'))), 'Parent picks Unit 3: words follow');
   await ev(() => { const s = document.getElementById('gu'); s.value = '0'; s.dispatchEvent(new Event('change')); }); await wait(1200);
   check(await ev(() => !__eq.profile.unitPick), '"Theo map" clears the pick');
+  await page.click('#gclose');
 });
 
 await run('owl', async () => {

@@ -102,15 +102,15 @@ export function orchard(list) {
   list.forEach(([x, z], k) => { const sx = x - 1.6, sz = z + 1.3, b = label(`${FRUITS[k % FRUITS.length].en} tree`, { size: 26, scale: 0.7 }); b.position.set(sx, L.groundHeight(sx, sz) + 1.35, sz); g.add(b); });
   return g;
 }
-/** x, height above the ground, z, which way the board faces, name, small line. */
+/** x, height above the ground, z, which way the board faces, name, small line, size (1 = 2.7 m wide). */
 export const HOUSE_SIGNS = [
-  [7.0, 3.5, -8, -Math.PI / 2, 'VILLAGE SHOP', 'Weapons · Armour · Bread'],
-  [0, 4.0, -18.2, 0, 'VILLAGE HALL', "Mr Tom's office"],
-  [-10.2, 3.3, -8, Math.PI / 2, "LILY'S HOUSE", 'Herbs and flowers'],
-  [-10.7, 3.3, 9, Math.PI / 2, "ANNA'S HOUSE", 'Music and songs'],
+  [7.0, 4.9, -8, -Math.PI / 2, 'VILLAGE SHOP', 'Weapons · Armour · Bread'],
+  [0, 6.3, -18.2, 0, 'VILLAGE HALL', "Mr Tom's office", 1.5],
+  [-10.2, 4.7, -8, Math.PI / 2, "LILY'S HOUSE", 'Herbs and flowers'],
+  [-10.7, 4.7, 9, Math.PI / 2, "ANNA'S HOUSE", 'Music and songs'],
 ];
 /** A wooden board hanging on two chains from an iron arm fixed to the wall behind it; painted on both sides. */
-export function hangSign(name, sub, x, y, z, yaw) {
+export function hangSign(name, sub, x, y, z, yaw, size = 1) {
   const cv = document.createElement('canvas'); cv.width = 512; cv.height = 192; const c = cv.getContext('2d');
   const wood = c.createLinearGradient(0, 0, 0, 192); wood.addColorStop(0, '#a8642c'); wood.addColorStop(1, '#7c451a');
   c.fillStyle = wood; c.beginPath(); c.roundRect(4, 4, 504, 184, 26); c.fill();
@@ -130,7 +130,7 @@ export function hangSign(name, sub, x, y, z, yaw) {
     const chain = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.55, 5), iron); chain.position.set(sx * (W / 2 - 0.25), -0.27, 0); g.add(chain);
     const brace = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.07, 0.9), iron); brace.position.set(sx * (W / 2 + 0.2), 0, -0.45); g.add(brace);     // back to the wall
   }
-  g.position.set(x, y, z); g.rotation.y = yaw;
+  g.position.set(x, y, z); g.rotation.y = yaw; g.scale.setScalar(size);
   return g;
 }
 export async function villageExtras(add, loadModel, shadowed) {
@@ -149,7 +149,7 @@ export async function villageExtras(add, loadModel, shadowed) {
   for (const [kind, x, z, rot, sc] of VILLAGE_PROPS) still.add(prop(kind, x, z, rot, sc));
   add(bake(still));
   // hanging signboards over the doors (feedback 17/11): the name of each house in big letters, what is inside below
-  const boards = new THREE.Group(); for (const [x, y, z, yaw, name, sub] of HOUSE_SIGNS) boards.add(hangSign(name, sub, x, L.groundHeight(x, z) + y, z, yaw));
+  const boards = new THREE.Group(); for (const [x, y, z, yaw, name, sub, size] of HOUSE_SIGNS) boards.add(hangSign(name, sub, x, L.groundHeight(x, z) + y, z, yaw, size));
   add(bake(boards));          // wood and iron merged into one mesh; only the painted faces stay apart
   add(windmill()); add(pond()); add(dummies()); add(campsite());           // D1: the south fields
   signs(add, [[-2.5, 37.5, '← Windmill · Campsite\nTraining Yard →']]);

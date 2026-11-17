@@ -44,7 +44,7 @@ py -m http.server 8000
 
 ## Kiểm tra độ mượt (máy không card đồ họa)
 1. Vào game, bấm **F3**: góc màn hình hiện `FPS`.
-2. Ô **Đồ họa** ở góc dưới trái: thử **Vừa**, đi quanh làng 1 phút, xem FPS.
+2. Bấm nút **⚙** góc dưới trái, ô **Đồ họa**: thử **Vừa**, đi quanh làng 1 phút, xem FPS.
    - FPS **từ 30 trở lên**: mượt, giữ mức Vừa (có hiệu ứng ánh sáng, viền nhân vật).
    - FPS **dưới 25**: chọn **Thấp** (không có hiệu ứng mới, nhẹ như trước).
 3. Gửi lại cho Claude: tên máy/CPU, mức đồ họa, số FPS ở làng và ở rừng.
@@ -62,6 +62,8 @@ py -m http.server 8000
 ## Có gì mới (17/11, lượt 2)
 - Camera trở lại kiểu cũ (sau lưng Ngọc), nhìn rộng hơn một chút.
 - Người giao nhiệm vụ có dấu **!** vàng 3D to, xoay, nhấp nháy, có cột sáng lên trời nhìn từ xa; **?** xanh nhạt là chỗ cần quay lại báo.
+- Bảng cài đặt gập vào nút **⚙** góc dưới trái (Đồ họa, Âm thanh, Đọc to, Sổ từ, Unit cho phụ huynh).
+- Bật bộ gõ tiếng Việt (Unikey) vẫn đi được bằng WASD; tốt nhất vẫn tắt bộ gõ khi chơi (Ctrl+Shift hoặc Alt+Z).
 - Biển gỗ treo trên cửa: VILLAGE SHOP, VILLAGE HALL, LILY'S HOUSE, ANNA'S HOUSE. Đường làng rộng hơn.
 - **Bong bóng chữ "Abc"** dọc đường: chạy tới bấm E để học một từ mới (nghe, xem nghĩa, được EXP và vàng). Ben sẽ hỏi lại đúng những từ con vừa học.
 - Từ mới được **dạy trước** khi hỏi: thẻ chữ to, đọc to, có nghĩa tiếng Việt.
@@ -72,4 +74,4 @@ py -m http.server 8000
 
 ## Phím chơi
 WASD đi · Shift chạy · Space nhảy · E nói chuyện/nhặt · J đánh · K né · Q ăn bánh · I túi đồ · B sổ từ · Esc bỏ qua thoại · H gợi ý · chuột trái kéo để xoay · lăn chuột để zoom · bấm bản đồ nhỏ để tự đi.
-Phụ huynh: ô **Unit** ở góc dưới trái để chọn Unit con đang học trên lớp.
+Phụ huynh: nút **⚙** góc dưới trái → ô **Unit** để chọn Unit con đang học trên lớp.
