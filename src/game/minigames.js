@@ -33,9 +33,21 @@ export class MiniGames {
     this.api = api; this.active = null; this.note = ''; this.t = 0; this.root = new THREE.Group(); api.scene.add(this.root);
     const V = L.REGIONS.village, glow = (hex, k = 1.6) => new THREE.MeshStandardMaterial({ color: hex, emissive: hex, emissiveIntensity: k, roughness: 0.4 });
     // hidden stars
-    const shape = new THREE.Shape(); for (let i = 0; i < 10; i++) { const a = i * Math.PI / 5 - Math.PI / 2, r = i % 2 ? 0.2 : 0.46; shape[i ? 'lineTo' : 'moveTo'](Math.cos(a) * r, -Math.sin(a) * r); }
-    const sg = new THREE.ExtrudeGeometry(shape, { depth: 0.14, bevelEnabled: true, bevelSize: 0.04, bevelThickness: 0.04, bevelSegments: 1 }); sg.translate(0, 0, -0.07);
-    this.stars = STARS.map(([x, z], i) => { const m = new THREE.Mesh(sg, glow(0xffd23c)); m.position.set(x, V.groundHeight(x, z) + 1.0, z); m.castShadow = true; this.root.add(m); return { m, x, z, i }; });
+    // hidden stars (17/11: sharper): a bevelled gold star with a dark rim, a soft halo and a ring on the ground
+    const shape = new THREE.Shape(); for (let i = 0; i < 10; i++) { const a = i * Math.PI / 5 - Math.PI / 2, r = i % 2 ? 0.27 : 0.6; shape[i ? 'lineTo' : 'moveTo'](Math.cos(a) * r, -Math.sin(a) * r); }
+    const sg = new THREE.ExtrudeGeometry(shape, { depth: 0.12, bevelEnabled: true, bevelSize: 0.06, bevelThickness: 0.07, bevelSegments: 3 }); sg.translate(0, 0, -0.06); sg.computeVertexNormals();
+    const starGold = new THREE.MeshStandardMaterial({ color: 0xffc928, emissive: 0xff9a00, emissiveIntensity: 0.35, metalness: 0.55, roughness: 0.28 });
+    const rim = new THREE.MeshBasicMaterial({ color: 0x7a4300, side: THREE.BackSide });
+    const cv = document.createElement('canvas'); cv.width = cv.height = 64; const c = cv.getContext('2d'), gr = c.createRadialGradient(32, 32, 2, 32, 32, 32);
+    gr.addColorStop(0, 'rgba(255,240,170,0.9)'); gr.addColorStop(0.5, 'rgba(255,200,60,0.3)'); gr.addColorStop(1, 'rgba(255,200,60,0)'); c.fillStyle = gr; c.fillRect(0, 0, 64, 64);
+    const halo = new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(cv), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
+    const ringG = new THREE.RingGeometry(0.5, 0.62, 28), ringM = new THREE.MeshBasicMaterial({ color: 0xffd23c, transparent: true, opacity: 0.5, depthWrite: false, side: THREE.DoubleSide });
+    this.stars = STARS.map(([x, z], i) => {
+      const m = new THREE.Group(), star = new THREE.Mesh(sg, starGold), edge = new THREE.Mesh(sg, rim); edge.scale.setScalar(1.08); star.castShadow = true; m.add(star, edge);
+      const h = new THREE.Sprite(halo); h.scale.setScalar(1.8); m.add(h);
+      const ring = new THREE.Mesh(ringG, ringM); ring.rotation.x = -Math.PI / 2; ring.position.set(x, V.groundHeight(x, z) + 0.05, z); this.root.add(ring);
+      m.position.set(x, V.groundHeight(x, z) + 1.2, z); this.root.add(m); return { m, x, z, i, ring, spin: star, edge };
+    });
     // race rings
     const rg = new THREE.TorusGeometry(1.25, 0.11, 8, 28);
     this.rings = RACE.slice(1).map(([x, z], i) => { const m = new THREE.Mesh(rg, glow(0x58c8ff, 1.2)); const [px, pz] = RACE[i]; m.position.set(x, V.groundHeight(x, z) + 1.45, z); m.rotation.y = Math.atan2(x - px, z - pz); m.visible = false; this.root.add(m); return { m, x, z }; });
@@ -52,7 +64,7 @@ export class MiniGames {
   }
   get data() { const p = this.api.profile(); if (!p) return { stars: [], best: {} }; return p.mini || (p.mini = { stars: [], best: {} }); }
   setRegion(name) { this.root.visible = name === 'village'; if (name !== 'village') this.stop(); this.syncStars(); }
-  syncStars() { const got = this.data.stars; for (const s of this.stars) s.m.visible = !got.includes(s.i); }
+  syncStars() { const got = this.data.stars; for (const s of this.stars) s.m.visible = s.ring.visible = !got.includes(s.i); }
   say(text) { if (text !== this.note) { this.note = text; this.api.onNote(); } }
   stop() { if (!this.active) return; this.active = null; for (const r of this.rings) r.m.visible = false; for (const a of this.apples) { a.live = false; a.m.visible = false; } this.say(''); }
 
@@ -89,7 +101,7 @@ export class MiniGames {
     if (!this.root.visible) return;
     this.t += dt;
     for (const s of this.stars) if (s.m.visible) {
-      s.m.rotation.y = this.t * 1.8 + s.i; s.m.position.y += Math.sin(this.t * 2.4 + s.i) * 0.003;
+      s.spin.rotation.y = s.edge.rotation.y = this.t * 1.8 + s.i; s.m.position.y += Math.sin(this.t * 2.4 + s.i) * 0.003;
       if (Math.hypot(pos.x - s.x, pos.z - s.z) < 1.3) this.takeStar(s);
     }
     const a = this.active; if (!a) return;
@@ -117,7 +129,8 @@ export class MiniGames {
   }
   takeStar(s) {
     const d = this.data; if (d.stars.includes(s.i)) return;
-    d.stars.push(s.i); s.m.visible = false; const p = this.api.profile(); p.stats.gold += 3; this.api.sfx('correct');
+    d.stars.push(s.i); s.m.visible = s.ring.visible = false; const p = this.api.profile(); p.stats.gold += 3; this.api.sfx('correct');
+    if (d.stars.length < STARS.length && this.api.ui.toast) this.api.ui.toast(`★ ${d.stars.length}/${STARS.length} · +3 vàng · đủ ${STARS.length} sao thưởng thêm 20 vàng`);
     if (d.stars.length === STARS.length) { p.stats.gold += 20; this.api.sfx('fanfare'); this.api.ui.dialogue([{ who: 'Ngọc', en: 'I found all twelve stars! (+20 gold)' }]); }
     this.api.save(); this.api.onNote();
   }

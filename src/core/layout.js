@@ -20,6 +20,7 @@ export function setRegion(name) {
   for (const f of listeners) f(name);
 }
 setRegion('forest');
+export const treeScale = () => cur.TREE_SCALE || 1;
 export const riverX = (z) => cur.riverX(z);
 export const riverHalf = (z) => cur.riverHalf(z);
 export const riverDistance = (x, z) => cur.riverDistance(x, z);

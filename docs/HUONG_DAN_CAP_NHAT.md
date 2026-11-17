@@ -72,6 +72,12 @@ py -m http.server 8000
 - **📖 Học từ** (phím B): xem lại tất cả từ của Unit đang học.
 - Lần đầu dùng đọc to trên Windows: nếu không nghe tiếng, vào Cài đặt Windows → Thời gian và ngôn ngữ → Giọng nói, thêm giọng tiếng Anh (Mỹ).
 
+## Có gì mới (17/11, lượt 3)
+- **Quảng trường Nhiệm vụ** giữa làng có đài phun nước; Tom và **bảng nhiệm vụ săn quái** ở đây, biển chỉ đường ra từng khu. Thêm nhiều đường đi mới.
+- Cây cao hơn, ít hơn. Dấu **!** vừa cỡ, sáng dịu.
+- **Ngôi sao vàng**: có 12 ngôi sao giấu quanh làng; chạm vào được 3 vàng, đủ 12 sao thưởng thêm 20 vàng (đếm ở ô ★ trên góc trái).
+- Camera bớt chóng mặt: gặp nhà che thì camera nâng lên, không thụt vào thụt ra.
+
 ## Phím chơi
 WASD đi · Shift chạy · Space nhảy · E nói chuyện/nhặt · J đánh · K né · Q ăn bánh · I túi đồ · B sổ từ · Esc bỏ qua thoại · H gợi ý · chuột trái kéo để xoay · lăn chuột để zoom · bấm bản đồ nhỏ để tự đi.
 Phụ huynh: nút **⚙** góc dưới trái → ô **Unit** để chọn Unit con đang học trên lớp.

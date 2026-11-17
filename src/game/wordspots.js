@@ -7,7 +7,7 @@ import * as THREE from 'three';
 import * as L from '../core/layout.js';
 import { today } from '../core/review.js';
 
-export const SPOTS = [[-2.2, -6], [3.4, 4.5], [-6.5, 12], [9, 7.2], [1.5, 22], [-6, 30.5], [27, 6], [-12, -2.5], [12.5, -2.5], [-2, 41]];
+export const SPOTS = [[-2.2, -6], [6.5, 0.5], [-6.5, 12], [9, 7.2], [1.5, 22], [-6, 30.5], [27, 6], [-12, -2.5], [12.5, -2.5], [-2, 41]];
 
 function bubbleTexture() {
   const cv = document.createElement('canvas'); cv.width = cv.height = 128; const c = cv.getContext('2d'), g = c.createRadialGradient(64, 64, 8, 64, 64, 62);

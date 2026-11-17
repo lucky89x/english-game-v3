@@ -272,7 +272,7 @@ export function buildTrees() {
   const look = (t) => { if (t.kind !== 'oak') return t.kind; const k = Math.abs(Math.sin(t.x * 12.9898 + t.z * 78.233) * 43758.5453) % 1; return k < 0.14 ? 'gold' : k < 0.24 ? 'blossom' : k < 0.31 ? 'maple' : 'oak'; };
   for (const [kind, [geo, wind]] of Object.entries(kinds)) {
     const list = L.TREES.filter((t) => look(t) === kind);
-    g.add(instanced(geo, windy(std(), wind), list, (t, p, e, s) => { p.set(t.x, L.groundHeight(t.x, t.z) - 0.08, t.z); e.set(0, t.rot, 0); s.setScalar(t.s * (kind === 'pine' ? 1.25 : 1.15)); }));
+    g.add(instanced(geo, windy(std(), wind), list, (t, p, e, s) => { p.set(t.x, L.groundHeight(t.x, t.z) - 0.08, t.z); e.set(0, t.rot, 0); const k = t.s * (kind === 'pine' ? 1.25 : 1.15) * L.treeScale(); s.set(k, k * (kind === 'pine' ? 1.05 : 1.12), k); }));      // treeScale: taller trees (village 17/11)
   }
   return g;
 }

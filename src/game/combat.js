@@ -5,7 +5,8 @@ import * as THREE from 'three';
 import * as L from '../core/layout.js';
 import { MONSTERS, SPAWNS, FOREST_SPAWNS, playerAtk, hurt, inArc, HUNTS, hunt, countKill, huntLine, BOSSES, shieldDue } from '../core/rules.js';
 
-export const BOARD = { x: 29, z: -14 }, BOSS_AT = { x: 40, z: -26 }, BOSS2_AT = { x: 46, z: 40 };
+// BOARD: on the Quest Square since 17/11 (was out at 29, -14), facing the fountain
+export const BOARD = { x: -6.2, z: 0.6 }, BOSS_AT = { x: 40, z: -26 }, BOSS2_AT = { x: 46, z: 40 };
 import { addExp, maxHp } from '../core/save.js';
 import { compact } from '../world/common.js';
 
@@ -53,7 +54,7 @@ export class Wild {
       for (const [x, y, c] of [[-0.45, 1.7, 0xfff4dc], [0.15, 1.55, 0xfff4dc], [0.55, 1.75, 0xffd8a0]]) { const n = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.45, 0.02), new THREE.MeshStandardMaterial({ color: c })); n.position.set(x, y, 0.06); n.rotation.z = (x * 3) % 0.2; g.add(n); }
       const roof = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.1, 0.5), wood); roof.position.y = 2.2; g.add(roof);
       compact(g); g.traverse((o) => { if (o.isMesh) o.castShadow = true; });
-      g.position.set(BOARD.x, L.REGIONS.village.groundHeight(BOARD.x, BOARD.z), BOARD.z); g.rotation.y = -2.2; this.root.add(g); this.boardMesh = g;
+      g.position.set(BOARD.x, L.REGIONS.village.groundHeight(BOARD.x, BOARD.z), BOARD.z); g.rotation.y = Math.atan2(-BOARD.x, 4 - BOARD.z); g.scale.setScalar(1.25); this.root.add(g); this.boardMesh = g;
     }
     // sword slash arc shown for a moment in front of Ngọc
     this.slash = new THREE.Mesh(new THREE.TorusGeometry(1.5, 0.09, 6, 20, Math.PI * 0.9), new THREE.MeshBasicMaterial({ color: 0xfff2a0, transparent: true, opacity: 0.9, depthWrite: false })); this.slash.rotation.x = Math.PI / 2; this.slash.visible = false; api.scene.add(this.slash);

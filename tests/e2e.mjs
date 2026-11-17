@@ -246,14 +246,14 @@ for (let k = 0; k < 3 && await page.isVisible('#dialog'); k++) { await page.keyb
 check((await page.textContent('#prompt')).includes('Mai quay lại'), 'An opened chest stays shut until tomorrow');
 await ev(() => __eq.wild.mobs.forEach((m) => { m.dead = 0.1; }));
 // hunting quest from the board, then the Slime King with its word shields
-await ev(() => __eq.teleport(29.6, -13.2)); await wait(450);
+await ev(() => __eq.teleport(-5.0, 1.6)); await wait(450);
 check((await page.textContent('#prompt')).includes('Bảng nhiệm vụ'), 'Prompt at the quest board');
 await page.keyboard.press('KeyE'); await wait(300);
 check(/slimes/.test(await page.textContent('#dialog .en')) && !/[àáảãạăâđêôơư]/i.test(await page.textContent('#dialog .en')), 'The board gives the job in English');
 await page.keyboard.press('KeyE'); await wait(300);
 check(await ev(() => __eq.profile.hunt.active) && (await page.textContent('#hud')).includes('⚔ 0/3'), 'Hunt accepted: progress shows on the HUD');
 for (let n = 0; n < 3; n++) await ev(() => __eq.wild.kill(__eq.wild.mobs.find((m) => m.kind === 'slime' && !m.dead), __eq.profile));
-await ev(() => __eq.teleport(29.6, -13.2)); await wait(400); await page.keyboard.press('KeyE'); await wait(300);
+await ev(() => __eq.teleport(-5.0, 1.6)); await wait(400); await page.keyboard.press('KeyE'); await wait(300);
 check(await ev(() => !__eq.profile.hunt.active && __eq.profile.hunt.done === 1) && (await page.textContent('#dialog')).includes('Thank you'), 'Three slimes later the board pays and offers the next job');
 await page.keyboard.press('KeyE'); await wait(200);
 await ev(() => { __eq.profile.stats.level = Math.max(8, __eq.profile.stats.level); __eq.wild.mobs.forEach((m) => { if (!m.boss) { m.dead = 120; m.g.visible = false; } }); }); await wait(600);

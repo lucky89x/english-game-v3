@@ -194,11 +194,11 @@ function haloTexture() {
   g.addColorStop(0, 'rgba(255,240,170,1)'); g.addColorStop(0.45, 'rgba(255,210,60,0.55)'); g.addColorStop(1, 'rgba(255,200,40,0)'); c.fillStyle = g; c.fillRect(0, 0, 128, 128);
   return (HALO = new THREE.CanvasTexture(cv));
 }
-let marks3d = null;
+let marks3d = null; const shadowAt = new THREE.Vector3();
 function questMarks(list) {
   // quest givers: the solid spinning "!" / "?" with a light beam (game/marks.js); the owl's review counts as a job
   marks3d = marks3d || new QuestMarks(scene);
-  marks3d.set(list.filter((m) => m.text === '!' || m.text === '?' || m.text === '🦉').map((m) => { const g = L.walkHeight(m.x, m.z); return { x: m.x, z: m.z, text: m.text === '?' ? '?' : '!', ground: g, head: g + 2.15 }; }));
+  marks3d.set(list.filter((m) => m.text === '!' || m.text === '?' || m.text === '🦉').map((m) => { const g = L.walkHeight(m.x, m.z); return { x: m.x, z: m.z, text: m.text === '?' ? '?' : '!', ground: g, head: g + 2.05 }; }));
   const want = list.filter((m) => m.text === '✉');          // the lost letter keeps its small bobbing badge
   while (markPool.length < want.length) {
     const sp = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true })); sp.scale.setScalar(0.8); sp.renderOrder = 5;
@@ -596,7 +596,9 @@ function frame() {
     h.position.copy(sp.position); h.material.opacity = 0.35 + 0.65 * k; h.scale.setScalar(1.4 + 0.6 * k);
   }
   if (letterProp.visible) { letterProp.rotation.y = t * 1.5; letterProp.position.y += Math.sin(t * 2.2) * 0.002; }
-  sun.position.copy(player.pos).addScaledVector(sunDir, 90); sun.target.position.copy(player.pos);
+  { // shadows follow Ngọc in whole shadow-map texels, so their edges do not crawl and shimmer as she walks
+    const c = sun.shadow.camera, step = (c.right - c.left) / sun.shadow.mapSize.x, snap = (v) => Math.round(v / step) * step;
+    shadowAt.set(snap(player.pos.x), player.pos.y, snap(player.pos.z)); sun.position.copy(shadowAt).addScaledVector(sunDir, 90); sun.target.position.copy(shadowAt); }
   sky.position.copy(camera.position);
   if (started && !switching) {
     const it = ui.modal ? null : interactTarget(); ui.prompt(it ? it.text : '');

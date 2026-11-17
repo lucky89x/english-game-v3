@@ -101,21 +101,28 @@ export class OrbitCamera {
   clearDistance(dir, want) {
     for (let d = 1.0; d <= want; d += 0.35) {
       const x = this.target.x + dir.x * d, y = this.target.y + dir.y * d, z = this.target.z + dir.z * d;
-      if (y < L.groundHeight(x, z) + 0.35) return Math.max(1.6, d - 0.4);
-      if (y < 4.5) for (const s of L.solidsNear(x, z)) if (s.r > 2.0 && Math.hypot(x - s.x, z - s.z) < s.r + 0.2) return Math.max(1.6, d - 0.4);
+      if (y < L.groundHeight(x, z) + 0.35) return Math.max(3.0, d - 0.4);
+      if (y < 4.5) for (const s of L.solidsNear(x, z)) if (s.r > 2.0 && Math.hypot(x - s.x, z - s.z) < s.r + 0.2) return Math.max(3.0, d - 0.4);
     }
     return want;
   }
   update(dt, focus) {
-    // frame-rate independent smoothing: the same feel at 15 or 60 frames a second
+    // frame-rate independent smoothing: the same feel at 15 or 60 frames a second; a long stall does not jump
+    dt = Math.min(dt, 0.12);
     const k = 1 - Math.exp(-dt * 10);
     this.yaw += (this.tYaw - this.yaw) * k; this.pitch += (this.tPitch - this.pitch) * k; this.dist += (this.tDist - this.dist) * k;
     this.goal = (this.goal || new THREE.Vector3()).set(focus.x, focus.y + 1.25, focus.z);
     if (this.target.distanceTo(this.goal) > 6) this.target.copy(this.goal);           // teleport: no long swoop
-    else { this.target.x += (this.goal.x - this.target.x) * (1 - Math.exp(-dt * 14)); this.target.z += (this.goal.z - this.target.z) * (1 - Math.exp(-dt * 14)); this.target.y += (this.goal.y - this.target.y) * (1 - Math.exp(-dt * 5)); }   // gentle vertical follow: jumps and bumps do not shake the view
-    const dir = new THREE.Vector3(Math.sin(this.yaw) * Math.cos(this.pitch), Math.sin(this.pitch), Math.cos(this.yaw) * Math.cos(this.pitch));
-    const free = this.clearDistance(dir, this.dist);
-    this.cur += (free - this.cur) * (1 - Math.exp(-dt * (free < this.cur ? 9 : 2.5)));      // ease in quickly, out slowly; never snap
+    else { const f = 1 - Math.exp(-dt * 11); this.target.x += (this.goal.x - this.target.x) * f; this.target.z += (this.goal.z - this.target.z) * f; this.target.y += (this.goal.y - this.target.y) * (1 - Math.exp(-dt * 4)); }   // gentle vertical follow: jumps and bumps do not shake the view
+    // Behind a house or a hill the camera rises over it instead of zooming in and out (feedback 17/11: dizzy when
+    // walking). Only when rising is not enough does it come closer, slowly.
+    const at = (p) => new THREE.Vector3(Math.sin(this.yaw) * Math.cos(p), Math.sin(p), Math.cos(this.yaw) * Math.cos(p));
+    let want = 0, free = this.dist;
+    for (const up of [0, 0.15, 0.3, 0.45]) { const f = this.clearDistance(at(Math.min(1.3, this.pitch + up)), this.dist); want = up; free = f; if (f >= this.dist - 0.01) break; }
+    this.lift = (this.lift || 0) + (want - (this.lift || 0)) * (1 - Math.exp(-dt * 2.2));
+    const dir = at(Math.min(1.3, this.pitch + this.lift));
+    if (free >= this.dist - 0.01) free = this.clearDistance(dir, this.dist);
+    this.cur += (free - this.cur) * (1 - Math.exp(-dt * (free < this.cur ? 3.5 : 1.6)));
     this.camera.position.copy(this.target).addScaledVector(dir, this.cur);
     this.camera.lookAt(this.target);
   }

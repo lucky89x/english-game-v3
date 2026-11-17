@@ -1,4 +1,4 @@
-// Quest markers (feedback 17/11, second time: "the glowing ! is still hard to tell apart"). Every quest giver gets
+// Quest markers (feedback 17/11: easy to spot, then "too big, too bright": now head-sized with a soft glow). Every quest giver gets
 // a solid golden "!" (a new job) or "?" (come back and report) that spins slowly and bobs above the head, with a
 // pulsing glow behind it, a beam of light up into the sky that can be seen across the village, and a bright ring on
 // the ground. The materials ignore lighting, so they look the same at every graphics level, with or without bloom.
@@ -38,8 +38,8 @@ function glyph(kind, fill, rim) {
 export class QuestMarks {
   constructor(scene) {
     this.scene = scene; this.pool = []; this.t = 0;
-    this.fill = new THREE.MeshBasicMaterial({ color: GOLD.clone().multiplyScalar(1.15), toneMapped: false, transparent: true });
-    this.fillQ = new THREE.MeshBasicMaterial({ color: new THREE.Color(0.75, 0.92, 1.0).multiplyScalar(1.1), toneMapped: false, transparent: true });
+    this.fill = new THREE.MeshBasicMaterial({ color: GOLD, transparent: true });
+    this.fillQ = new THREE.MeshBasicMaterial({ color: new THREE.Color(0.75, 0.92, 1.0), transparent: true });
     this.rim = new THREE.MeshBasicMaterial({ color: DEEP, side: THREE.BackSide, transparent: true });
     this.glowTex = glowTexture(); this.beamTex = beamTexture();
   }
@@ -48,7 +48,7 @@ export class QuestMarks {
     const bang = add(glyph('!', this.fill, this.rim)), ask = add(glyph('?', this.fillQ, this.rim));
     const glow = add(new THREE.Sprite(new THREE.SpriteMaterial({ map: this.glowTex, color: 0xffd23c, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false })));
     glow.renderOrder = 5;
-    const beam = add(new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.55, 14, 16, 1, true), new THREE.MeshBasicMaterial({ map: this.beamTex, transparent: true, depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, toneMapped: false })));
+    const beam = add(new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.3, 8, 12, 1, true), new THREE.MeshBasicMaterial({ map: this.beamTex, transparent: true, depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, toneMapped: false })));
     const ring = add(new THREE.Mesh(new THREE.RingGeometry(0.55, 0.85, 32), new THREE.MeshBasicMaterial({ color: 0xffd23c, transparent: true, depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, toneMapped: false })));
     ring.rotation.x = -Math.PI / 2;
     this.scene.add(root);
@@ -68,10 +68,10 @@ export class QuestMarks {
     this.t += dt;
     for (const m of this.pool) if (m.root.visible) {
       const t = this.t + m.phase, k = 0.5 + 0.5 * Math.sin(t * 4.5), y = m.y + Math.sin(t * 2.6) * 0.14;
-      for (const g of [m.bang, m.ask]) { g.position.y = y; g.rotation.y = t * 1.6; g.scale.setScalar(1.5 + 0.15 * k); }
-      m.glow.position.y = y + 0.55; m.glow.scale.setScalar(1.8 + 0.6 * k); m.glow.material.opacity = 0.25 + 0.35 * k;
-      m.beam.position.y = m.ground + 7; m.beam.material.opacity = 0.35 + 0.35 * k;
-      m.ring.position.y = m.ground + 0.06; m.ring.scale.setScalar(1 + 0.35 * k); m.ring.material.opacity = 0.9 - 0.6 * k;
+      for (const g of [m.bang, m.ask]) { g.position.y = y; g.rotation.y = t * 1.6; g.scale.setScalar(0.95 + 0.08 * k); }
+      m.glow.position.y = y + 0.36; m.glow.scale.setScalar(1.0 + 0.3 * k); m.glow.material.opacity = 0.12 + 0.2 * k;
+      m.beam.position.y = m.ground + 4; m.beam.material.opacity = 0.08 + 0.1 * k;
+      m.ring.position.y = m.ground + 0.06; m.ring.scale.setScalar(1 + 0.25 * k); m.ring.material.opacity = 0.45 - 0.3 * k;
     }
   }
 }

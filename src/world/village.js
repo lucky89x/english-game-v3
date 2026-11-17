@@ -102,6 +102,20 @@ export function orchard(list) {
   list.forEach(([x, z], k) => { const sx = x - 1.6, sz = z + 1.3, b = label(`${FRUITS[k % FRUITS.length].en} tree`, { size: 26, scale: 0.7 }); b.position.set(sx, L.groundHeight(sx, sz) + 1.35, sz); g.add(b); });
   return g;
 }
+/** The fountain in the middle of the Quest Square: stone basin, a pillar with a bowl, water. */
+export function fountain(x, z) {
+  const g = new THREE.Group(), stone = new THREE.MeshStandardMaterial({ color: 0xc9c2b4, roughness: 0.9 }), dark = new THREE.MeshStandardMaterial({ color: 0xa79f90, roughness: 0.9 });
+  const water = new THREE.MeshStandardMaterial({ color: 0x58c4ee, roughness: 0.12, metalness: 0.1, emissive: 0x1a5a80, emissiveIntensity: 0.25 });
+  const basin = new THREE.Mesh(new THREE.CylinderGeometry(1.85, 2.0, 0.62, 28), stone); basin.position.y = 0.31; g.add(basin);
+  const rim = new THREE.Mesh(new THREE.TorusGeometry(1.82, 0.13, 8, 32), dark); rim.rotation.x = Math.PI / 2; rim.position.y = 0.64; g.add(rim);
+  const pool = new THREE.Mesh(new THREE.CircleGeometry(1.7, 28), water); pool.rotation.x = -Math.PI / 2; pool.position.y = 0.6; g.add(pool);
+  const pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.34, 1.5, 12), stone); pillar.position.y = 1.2; g.add(pillar);
+  const bowl = new THREE.Mesh(new THREE.CylinderGeometry(0.85, 0.35, 0.3, 20), dark); bowl.position.y = 1.95; g.add(bowl);
+  const top = new THREE.Mesh(new THREE.CircleGeometry(0.76, 20), water); top.rotation.x = -Math.PI / 2; top.position.y = 2.11; g.add(top);
+  const spout = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.12, 0.7, 8), new THREE.MeshStandardMaterial({ color: 0xbfeaff, transparent: true, opacity: 0.7, roughness: 0.1 })); spout.position.y = 2.45; g.add(spout);
+  g.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+  g.position.set(x, L.groundHeight(x, z), z); return g;
+}
 /** x, height above the ground, z, which way the board faces, name, small line, size (1 = 2.7 m wide). */
 export const HOUSE_SIGNS = [
   [7.0, 4.9, -8, -Math.PI / 2, 'VILLAGE SHOP', 'Weapons · Armour · Bread'],
@@ -145,7 +159,11 @@ export async function villageExtras(add, loadModel, shadowed) {
   add(jarRow()); add(orchard(ORCHARD_TREES));
   const stallName = label("Ben's Word Jars", { size: 28, scale: 0.8 }); stallName.position.set(-8.4, L.groundHeight(-8.6, 19.5) + 3.5, 19.5); add(stallName);
   for (const [x, z] of [[3.6, -12], [-3.6, -2], [3.8, 10], [-4, 16], [2.6, 27], [6, 8.2], [-8, 1.5], [-20, -10], [-26, -26], [32, 9], [42.6, 22], [8, 38]]) still.add(lampPost(x, z));
-  signs(add, [[2.9, 14.5, '← Market\nFarm ↓'], [3.2, 1.2, 'Bridge →\n← Forest'], [30.5, 9.5, 'Orchard']]);
+  signs(add, [[2.9, 14.5, '← Market\nFarm ↓'], [30.5, 9.5, 'Orchard']]);
+  // Quest Square: fountain in the middle, a signpost where each road leaves (17/11)
+  add(fountain(0, 4));
+  signs(add, [[-3.2, -4.6, '↑ Village Hall · Shop'], [8.6, 8.8, 'Bridge · Dock →\nOrchard · Wild Meadow ⚔'], [-9.6, -4.2, '← Forest Gate'], [-9.4, 9.6, "← Anna's · Lily's houses\nFarm ↓"]]);
+  const sq = label('QUEST SQUARE', { size: 30, scale: 0.9 }); sq.position.set(0, L.groundHeight(0, 4) + 3.3, 4); add(sq);
   for (const [kind, x, z, rot, sc] of VILLAGE_PROPS) still.add(prop(kind, x, z, rot, sc));
   add(bake(still));
   // hanging signboards over the doors (feedback 17/11): the name of each house in big letters, what is inside below

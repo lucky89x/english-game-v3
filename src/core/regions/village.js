@@ -41,8 +41,20 @@ export default makeRegion({
   ]; },
   pathWiden: 1.7,
   lateRiverHalf: () => 4.6,   // wider river (feedback 17/11); the 11.5 m bridges still reach both banks
-  thinTrees: 0.4,             // 40% fewer trees inside the village (feedback 17/11: too many trees)          // roomier streets with people walking on them (feedback 17/11)
-  latePaths: () => [P(2.4, [-2, 34], [-8, 42], [-16, 46], [-27, 44]), P(2.2, [-2, 34], [3, 41], [9, 44])],
+  thinTrees: 0.55,            // fewer trees inside the village (feedback 17/11, twice: too many trees)
+  thinOuter: 0.35,            // and in the scenery ring around it
+  treeScale: 1.45,            // taller trees, in proportion with the people (feedback 17/11: "the trees are too low")
+  // Quest Square (feedback 17/11): a round paved square with a fountain in the middle, where Tom, Anna and the quest
+  // board stand; roads leave it towards every part of the village.
+  latePaths: () => [P(2.4, [-2, 34], [-8, 42], [-16, 46], [-27, 44]), P(2.2, [-2, 34], [3, 41], [9, 44]),
+    P(17, [0, 3.6], [0, 4.4]),                                               // the square itself
+    P(2.6, [33.5, 6], [33, -4], [30, -12], [36, -20], [40, -24]),            // across the bridge to the Wild Meadow
+    P(2.4, [0, -17], [-10, -19], [-20, -14]),                                // hall to the forest road
+    P(2.4, [-10, 8], [-13, 18], [-16, 30]),                                  // west houses to the farm
+    P(2.4, [0, -17], [8, -13], [8, -6]),                                     // hall to the shop
+    P(2.2, [-10, -1], [-14, -16], [-12, -30], [-4, -36]),                    // west lane past the hall to the hill
+  ],
+  lateSolids: [{ x: 0, z: 4, r: 1.9 }],                                      // the fountain
   lateClear: (x, z) => x > -36 && x < 16 && z > 37 && z < 57,
   hills: (x, z, h) => h + 3.2 * gauss(Math.hypot(x + 44, z + 20), 12) + 2.4 * gauss(Math.hypot(x - 46, z + 30), 11)
     + 8.5 * (1 - smooth(-57.5, -52.5, z)) * smooth(-4, 8, x),      // north-east cliff with the waterfall
