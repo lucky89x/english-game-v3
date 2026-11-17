@@ -66,7 +66,7 @@ await run('owl', async () => {
   let grammar = 0;
   for (let n = 0; n < 7; n++) {
     const pick = await ev(async () => {
-      const en = document.querySelector('#dialog .en').textContent, vi = ((document.querySelector('#dialog .vi') || {}).textContent || '').trim(), cards = __eq.chests.api.cards(), m = /"(.+)" mean/.exec(en);
+      const en = document.querySelector('#dialog .en').textContent, vi = ((document.querySelector('#dialog .vi') || {}).textContent || '').trim(), cards = [...__eq.chests.api.cards(), ...Object.keys(__eq.profile.words).map(__eq.cardOf).filter(Boolean)], m = /"(.+)" mean/.exec(en);
       if (en.includes('___')) { const G = await import('./src/core/grammar.js'); const g = G.GRAMMAR.g8_u01.find((x) => x.q === en); return { i: __eq.ui.options.indexOf(g.options[g.a]), g: 1 }; }
       if (m) return { i: __eq.ui.options.indexOf(cards.find((x) => x.word === m[1]).vi), g: 0 };
       return { i: __eq.ui.options.indexOf(cards.find((x) => x.vi === vi).word), g: 0 };
