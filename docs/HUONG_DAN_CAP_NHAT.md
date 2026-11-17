@@ -53,6 +53,12 @@ py -m http.server 8000
 - Nút **Xuất hồ sơ** (góc dưới trái) tải file `.json` về máy: giữ làm bản sao.
 - Ở màn hình chọn người chơi có **Nhập hồ sơ (JSON)** để đưa hồ sơ sang máy khác.
 
+## Có gì mới (17/11)
+- Hồ sơ mới: Ngọc ngồi thuyền xuôi sông tới bến làng (bấm E để bỏ qua).
+- Cửa hàng: đứng trước cửa nhà mái cam có biển **VILLAGE SHOP**, bấm E để vào xem hàng, mua, mặc, bán lại lấy nửa giá.
+- Dấu **!** vàng nổi trên đầu người đang có việc cho con; **?** là chỗ cần quay lại báo.
+- Dân làng đi lại trên đường; đến gần bấm E để chào.
+
 ## Phím chơi
 WASD đi · Shift chạy · Space nhảy · E nói chuyện/nhặt · J đánh · K né · Q ăn bánh · I túi đồ · H gợi ý · chuột trái kéo để xoay · lăn chuột để zoom · bấm bản đồ nhỏ để tự đi.
 Phụ huynh: ô **Unit** ở góc dưới trái để chọn Unit con đang học trên lớp.

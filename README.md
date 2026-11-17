@@ -5,6 +5,7 @@ Game học tiếng Anh lớp 6–9 chạy trên trình duyệt, không cần cà
 Hiện có **Map 1 – Làng Khởi Đầu + Đồng Hoang** và **Rừng Ký Ức**:
 - Truyện có tiếng Anh: Bức thư thất lạc, Hũ chữ của Ben, Sửa cây cầu, pha lê ký ức.
 - Chơi không tiếng Anh: câu cá, hứng táo, chạy vòng, 12 sao ẩn, xếp kẹo, súng cao su, xếp hình, đua xe.
+- Làng: đường rộng, dân làng đi lại, cối xay gió, ao, bãi tập, khu trại; cửa hàng có biển hiệu, vào trong xem hàng, mua và bán đồ.
 - Nhập vai: cấp 1–20 (khoảng 8–10 giờ), máu, đánh quái (slime, golem, Vua Slime cấp 8, Golem Cổ cấp 18), cửa hàng, trang bị; thắng Golem Cổ ở cấp 20 mở Map 2.
 - Tiếng Anh gắn vào vòng chơi: rương khóa chữ, khiên chữ của boss, bảng nhiệm vụ, Cú Mèo ôn tập mỗi 5 cấp (cấp 10/15/20 có thêm 2 câu ngữ pháp), ôn cách quãng. Unit đi theo map; phụ huynh chọn được Unit ở thanh cài đặt.
 - Mini game thưởng đầy đủ 3 lượt đầu mỗi ngày, sau đó 20%.

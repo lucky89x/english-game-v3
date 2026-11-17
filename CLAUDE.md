@@ -14,7 +14,7 @@ Game học tiếng Anh lớp 6–9 bằng Three.js, JavaScript thuần, không b
 ## Lệnh
 ```bash
 node --test tests/unit.test.mjs        # vài giây; chạy sau mọi thay đổi
-node tests/quick.mjs --only combat,owl # nhóm: boot combat unit owl arcade bag map2 touch forest; 2–6 phút, dùng cho lượt sửa nhỏ
+node tests/quick.mjs --only combat,owl # nhóm: boot combat unit owl arcade map2 forest bag shop intro touch; 2–6 phút, dùng cho lượt sửa nhỏ
 node tests/e2e.mjs                     # cả cốt truyện, 20–25 phút trên máy không GPU; chạy nền, một lần cho mỗi cụm thay đổi
 node tests/look.mjs <tiền tố> [village|forest] [quality] [tên,…]   # ảnh duyệt mỹ thuật trong game (ngoc_close, ngoc_side…)
 python3 tools/review_sheet.py          # tạo lại bảng đối chiếu nội dung docs/DOI_CHIEU_NOI_DUNG.html
@@ -41,13 +41,14 @@ PY=<python có bpy 4.2> tools/chibi05/build_all.sh   # dựng lại model, ~1 ph
 - Lily, Rose, Anna xuất không có hoạt ảnh (`CHIBI_NO_ANIM=1`) và mượn clip của Ngọc lúc chạy; đổi xương của Ngọc thì phải dựng lại cả 4.
 - Shader chèn thêm (paint, windy) phải nối chuỗi `onBeforeCompile` và có `customProgramCacheKey`; GLSL chèn đầu shader phải kết thúc bằng xuống dòng (nếu không dính vào `#define`).
 - Hậu kỳ làm khung hình trên máy không GPU ~3 s (mức Thấp ~1 s): test cần chờ lâu (e2e `setDefaultTimeout(120000)`, giữ phím W 5 s). Không phản ánh máy thật có card đồ họa.
-- Thêm địa điểm vào bản đồ: dùng `latePaths`/`lateClear` (regionkit) để không xáo trộn cây đã sinh theo seed; đổi `treeFree`/`paths` sẽ làm cây mọc lại chỗ khác và hỏng test vị trí.
-- Test trang thứ hai (máy tính bảng) trong cùng trình duyệt chạy chậm: đặt `setDefaultTimeout(120000)`.
+- Thêm địa điểm/đổi bản đồ: dùng `latePaths`/`lateClear`/`pathWiden`/`lateRiverHalf`/`thinTrees` (regionkit, áp dụng SAU khi sinh cây) để không xáo trộn cây đã sinh theo seed; đổi `treeFree`/`paths` sẽ làm cây mọc lại chỗ khác và hỏng test vị trí.
+- Test trang thứ hai trong cùng trình duyệt chạy chậm: `__eq.pause(true)` dừng vẽ trang chính, `setDefaultTimeout(120000)`.
+- Sửa code bằng script dễ nuốt mất dòng (chú thích `//` chèn giữa dòng): unit test cuối kiểm cú pháp mọi file `src/`.
 
 ## Tiến độ (cập nhật cuối mỗi lượt làm việc, trước khi commit)
 Cập nhật mục này mỗi khi xong việc, để phiên/hội thoại mới đọc là nắm được ngay.
 
-**Lần cập nhật:** 2026-11-17 · nhánh `fable/web-rebuild` · e2e 121/122 sau gói đồ họa + túi đồ (bước trượt "W đi được" do test giữ phím quá ngắn trên máy không GPU; đã sửa test và kiểm riêng) · quick đạt · unit 36/36 · tải 11,46 MB
+**Lần cập nhật:** 2026-11-17 (lượt 3, góp ý chơi thử) · nhánh `fable/web-rebuild` · unit 38/38 · quick + e2e: QUICK_E2E
 
 **Đã có (Map 1 + Rừng):**
 - Truyện: Bức thư, Hũ chữ của Ben, Sửa cây cầu cho cả lớp 6–9 (lớp 8 dùng ngữ pháp Unit 1: động từ sở thích + V-ing), pha lê Rừng Ký Ức.
@@ -59,7 +60,8 @@ Cập nhật mục này mỗi khi xong việc, để phiên/hội thoại mới 
 - Map 2: Dơi Bóng Tối, Nấm Giận Dữ trong rừng (`FOREST_SPAWNS` trong rules.js), chỉ khi `flags.map2`.
 - Máy tính bảng: cần ảo + nút chạm (chưa thử máy thật).
 - Hướng dẫn cập nhật máy test: `docs/HUONG_DAN_CAP_NHAT.md`.
-- Mỹ thuật: tóc lọn cong thuôn nhọn (M1) cho Ngọc, Lily, Rose, Anna; bóng khe nướng vào màu đỉnh; lá cây dạng thẻ.
+- Mỹ thuật: tóc lọn cong thuôn nhọn (M1) cho Ngọc, Lily, Rose, Anna; bóng khe nướng vào màu đỉnh; cây tán tròn (lá dạng thẻ đã BỎ theo ý anh 17/11: "xấu hơn trước").
+- Góp ý chơi thử 17/11 đã làm: camera không còn tự thu/phóng khi qua tán cây (chóng mặt), mượt theo thời gian thật; bỏ giếng giữa quảng trường; dấu !/? vàng nổi trên đầu NPC giao việc; đường làng rộng ×1,45; 5 dân làng đi lại (`src/game/walkers.js`, E để chào); câu cá chậm hơn; mở đầu ngồi thuyền xuôi sông tới bến (E bỏ qua; test cần `?intro=1`); sông rộng 9,2 m; bớt 40% cây trong làng; biển hiệu cửa hàng/nhà trưởng làng; cửa hàng bấm E ở cửa (7.6, −8) mở cảnh bên trong: mua, mặc, bán nửa giá (`src/ui/shop.js`, `sell()` trong rules).
 - Đồ họa kiểu saltline (học từ realskyrin/fps3ademo-saltline, chỉ đọc): `src/render/post.js` hậu kỳ tự viết (bloom 2 tầng, tone map, chỉnh màu ấm, tối viền) + bề mặt vẽ tay bằng shader (`paint()` trong common.js: loang màu, hạt, vệt cỏ) + bầu trời làm ánh sáng môi trường + lấp lánh mặt nước + viền hoạt hình quanh nhân vật (`src/render/outline.js`, inverted hull dùng chung xương). Chỉ bật ở mức Vừa/Cao; tia nắng (radial blur về phía mặt trời) chỉ ở mức Cao vì mặt trời cao nên ít khi thấy. Mức Thấp như cũ.
 
 **Còn lại:** boss Map 2 và nhiệm vụ/rương riêng của Rừng Ký Ức cho Map 2; Map 3 (Sa mạc Gió Vàng).
