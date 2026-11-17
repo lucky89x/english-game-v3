@@ -63,15 +63,44 @@ export function farm() {
   const hat = new THREE.Mesh(new THREE.ConeGeometry(0.5, 0.4, 10), new THREE.MeshStandardMaterial({ color: 0xd9b25a })); hat.position.set(-27, sy + 2.55, 27); g.add(hat);
   return g;
 }
-export function orchard(list) {
-  const g = new THREE.Group(), geo = leafyGeo(0x7a4a26, [0x4faa3a, 0x77c948, 0xa9dd55], { h: 2.2, r: 2.3, clumps: 10, trunkR: 0.3, seed: 6 }), apple = new THREE.MeshStandardMaterial({ color: 0xe23a2a, roughness: 0.5 }), lemon = new THREE.MeshStandardMaterial({ color: 0xf6c62e, roughness: 0.5 });
-  list.forEach(([x, z], k) => {
-    const t = new THREE.Mesh(geo, windy(std(), 0.012)); t.castShadow = true; t.position.set(x, L.groundHeight(x, z) - 0.05, z); t.rotation.y = k * 1.3; g.add(t);
-    for (let i = 0; i < 10; i++) { const a = i * 2.399 + k, f = new THREE.Mesh(new THREE.SphereGeometry(0.17, 8, 6), k % 3 === 2 ? lemon : apple); f.position.set(x + Math.cos(a) * 1.7, L.groundHeight(x, z) + 2.6 + (i % 4) * 0.45, z + Math.sin(a) * 1.7); g.add(f); }
-  });
+/** Orchard (redone 17/11: "trees too low, cannot tell the fruit"): tall round fruit trees, each with one kind of big,
+ *  clearly shaped fruit (apple, orange, pear, lemon, peach, plum), a little name board and a crate of the same fruit. */
+export const FRUITS = [
+  { en: 'Apple', color: 0xe02a2a, shape: 'apple' }, { en: 'Orange', color: 0xff8a1a, shape: 'round' }, { en: 'Pear', color: 0xb8d43a, shape: 'pear' },
+  { en: 'Lemon', color: 0xffe03a, shape: 'lemon' }, { en: 'Peach', color: 0xffa07a, shape: 'round' }, { en: 'Plum', color: 0x7a3a9a, shape: 'round' },
+];
+function fruitMesh(f, s = 1) {
+  const g = new THREE.Group(), m = new THREE.MeshStandardMaterial({ color: f.color, roughness: 0.45 }), stemM = new THREE.MeshStandardMaterial({ color: 0x5a3a1a }), leafM = new THREE.MeshStandardMaterial({ color: 0x3f9a3a });
+  const body = new THREE.Mesh(new THREE.SphereGeometry(0.22 * s, 12, 9), m);
+  if (f.shape === 'apple') body.scale.set(1.05, 0.92, 1.05);
+  if (f.shape === 'lemon') body.scale.set(0.82, 0.82, 1.2);
+  g.add(body);
+  if (f.shape === 'pear') { body.position.y = -0.06 * s; const top = new THREE.Mesh(new THREE.SphereGeometry(0.14 * s, 10, 8), m); top.position.y = 0.14 * s; g.add(top); }
+  const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.015 * s, 0.02 * s, 0.12 * s, 5), stemM); stem.position.y = (f.shape === 'pear' ? 0.28 : 0.22) * s; g.add(stem);
+  const leaf = new THREE.Mesh(new THREE.SphereGeometry(0.07 * s, 6, 4), leafM); leaf.scale.set(1.4, 0.3, 0.7); leaf.position.set(0.07 * s, (f.shape === 'pear' ? 0.29 : 0.24) * s, 0); leaf.rotation.z = -0.4; g.add(leaf);
   return g;
 }
-
+export function orchard(list) {
+  const g = new THREE.Group(), still = new THREE.Group(), H = 3.3, R = 2.25;
+  const geo = leafyGeo(0x7a4a26, [0x3f9a3a, 0x5fbe3f, 0x8fd04a], { h: H, r: R, clumps: 12, trunkR: 0.32, seed: 6 }), mat = windy(std(), 0.008);
+  const wood = new THREE.MeshStandardMaterial({ color: 0xa8743f, roughness: 0.9 });
+  list.forEach(([x, z], k) => {
+    const f = FRUITS[k % FRUITS.length], y = L.groundHeight(x, z);
+    const t = new THREE.Mesh(geo, mat); t.castShadow = true; t.position.set(x, y - 0.05, z); t.rotation.y = k * 1.3; g.add(t);
+    const cy = y + H + R * 0.55;
+    for (let i = 0; i < 16; i++) {           // fruit hanging all round the lower half of the crown, big enough to read from afar
+      const a = i * 2.399 + k, e = -0.15 - 0.5 * ((i * 7) % 5) / 5, rr = R * 0.92;
+      const fr = fruitMesh(f, 1.15); fr.position.set(x + Math.cos(a) * rr * Math.cos(e), cy + Math.sin(e) * rr, z + Math.sin(a) * rr * Math.cos(e)); fr.rotation.y = a; still.add(fr);
+    }
+    for (let i = 0; i < 3; i++) { const fr = fruitMesh(f); const a = k + i * 2.1; fr.position.set(x + Math.cos(a) * 1.4, y + 0.2, z + Math.sin(a) * 1.4); fr.rotation.z = 1.2; still.add(fr); }   // fallen fruit
+    // crate of the same fruit, by the trunk on the side of the path
+    const cx = x - 1.6, cz = z + 1.3, crate = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.5, 0.7), wood); crate.position.set(cx, L.groundHeight(cx, cz) + 0.25, cz); still.add(crate);
+    for (let i = 0; i < 6; i++) { const fr = fruitMesh(f, 0.9); fr.position.set(cx - 0.3 + (i % 3) * 0.3, L.groundHeight(cx, cz) + 0.55, cz - 0.15 + Math.floor(i / 3) * 0.3); still.add(fr); }
+  });
+  g.add(bake(still));
+  list.forEach(([x, z], k) => { const sx = x - 1.6, sz = z + 1.3, b = label(`${FRUITS[k % FRUITS.length].en} tree`, { size: 26, scale: 0.7 }); b.position.set(sx, L.groundHeight(sx, sz) + 1.35, sz); g.add(b); });
+  return g;
+}
 export async function villageExtras(add, loadModel, shadowed) {
   const place = async (name, x, z, rot, scale) => { const m = shadowed(await loadModel(name)); m.position.set(x, L.groundHeight(x, z) - 0.05, z); m.rotation.y = rot; m.scale.setScalar(scale); add(m); return m; };
   await place('bld_hall_blue_v02', 0, -25.5, 0, 1.35);
@@ -81,7 +110,7 @@ export async function villageExtras(add, loadModel, shadowed) {
   const gate = await place('prop_forest_gate_v02', GATE.x, GATE.z, 0, 1); gate.position.y += 0.05;
   const title = label('Forest of Memories\nRừng Ký Ức', { size: 28 }); title.position.set(GATE.x, L.groundHeight(GATE.x, GATE.z) + 4.4, GATE.z); add(title);
   const still = new THREE.Group(); for (const g of [marketStall(), dock(), farm()]) still.add(g);      // the well in the square was removed (17/11): it blocked the main road
-  add(jarRow()); add(bake(orchard(ORCHARD_TREES)));
+  add(jarRow()); add(orchard(ORCHARD_TREES));
   const stallName = label("Ben's Word Jars", { size: 28, scale: 0.8 }); stallName.position.set(-8.4, L.groundHeight(-8.6, 19.5) + 3.5, 19.5); add(stallName);
   for (const [x, z] of [[3.6, -12], [-3.6, -2], [3.8, 10], [-4, 16], [2.6, 27], [6, 8.2], [-8, 1.5], [-20, -10], [-26, -26], [32, 9], [42.6, 22], [8, 38]]) still.add(lampPost(x, z));
   signs(add, [[2.9, 14.5, '← Market\nFarm ↓'], [3.2, 1.2, 'Bridge →\n← Forest'], [30.5, 9.5, 'Orchard']]);

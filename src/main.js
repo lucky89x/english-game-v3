@@ -173,13 +173,24 @@ function markTexture(ch) {
   c.fillStyle = '#5a2e0a'; c.font = `900 ${ch.length > 1 ? 58 : 78}px system-ui, sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(ch, 64, 70);
   const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; return (markTex[ch] = t);
 }
+let HALO = null;
+function haloTexture() {
+  if (HALO) return HALO;
+  const cv = document.createElement('canvas'); cv.width = cv.height = 128; const c = cv.getContext('2d'), g = c.createRadialGradient(64, 64, 6, 64, 64, 64);
+  g.addColorStop(0, 'rgba(255,240,170,1)'); g.addColorStop(0.45, 'rgba(255,210,60,0.55)'); g.addColorStop(1, 'rgba(255,200,40,0)'); c.fillStyle = g; c.fillRect(0, 0, 128, 128);
+  return (HALO = new THREE.CanvasTexture(cv));
+}
 function questMarks(list) {
   const want = list.filter((m) => MARKS[m.text]);
-  while (markPool.length < want.length) { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true })); sp.scale.setScalar(0.95); sp.renderOrder = 4; scene.add(sp); markPool.push(sp); }
+  while (markPool.length < want.length) {
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true })); sp.scale.setScalar(0.8); sp.renderOrder = 5;
+    const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: haloTexture(), color: 0xffd23c, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); halo.scale.setScalar(1.7); halo.renderOrder = 4;
+    sp.userData.halo = halo; scene.add(sp, halo); markPool.push(sp);
+  }
   markPool.forEach((sp, i) => {
-    const m = want[i]; sp.visible = !!m; if (!m) return;
+    const m = want[i]; sp.visible = sp.userData.halo.visible = !!m; if (!m) return;
     if (sp.material.map !== markTexture(m.text)) { sp.material.map = markTexture(m.text); sp.material.needsUpdate = true; }
-    sp.position.x = m.x; sp.position.z = m.z; sp.userData.y = L.walkHeight(m.x, m.z) + (m.text === '✉' ? 1.5 : 3.0);
+    sp.position.x = m.x; sp.position.z = m.z; sp.userData.y = L.walkHeight(m.x, m.z) + (m.text === '✉' ? 1.3 : 2.35);      // just above a head (feedback 17/11: was too high)
   });
 }
 /** Sam waits at the broken bridge during "Fix the Bridge"; Pip joins him to read the plan. */
@@ -520,7 +531,11 @@ function frame() {
   if (mini && started && !switching && !ui.modal && !arcade.open) mini.update(real, player.pos);      // real time, so timers stay honest on slow machines
   if (chests && started) chests.update(real);
   if (wild && started && !switching) wild.update(real, !!ui.modal || arcade.open);
-  for (const sp of markPool) if (sp.visible) sp.position.y = sp.userData.y + Math.sin(t * 3 + sp.position.x) * 0.12;
+  for (const sp of markPool) if (sp.visible) {      // bob, pulse and glow so the eye finds them (feedback 17/11)
+    const k = 0.5 + 0.5 * Math.sin(t * 5 + sp.position.x), h = sp.userData.halo;
+    sp.position.y = sp.userData.y + Math.sin(t * 3 + sp.position.x) * 0.1; sp.scale.setScalar(0.74 + 0.14 * k);
+    h.position.copy(sp.position); h.material.opacity = 0.35 + 0.65 * k; h.scale.setScalar(1.4 + 0.6 * k);
+  }
   if (letterProp.visible) { letterProp.rotation.y = t * 1.5; letterProp.position.y += Math.sin(t * 2.2) * 0.002; }
   sun.position.copy(player.pos).addScaledVector(sunDir, 90); sun.target.position.copy(player.pos);
   sky.position.copy(camera.position);
