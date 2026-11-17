@@ -49,7 +49,7 @@ PY=<python có bpy 4.2> tools/chibi05/build_all.sh   # dựng lại model, ~1 ph
 ## Tiến độ (cập nhật cuối mỗi lượt làm việc, trước khi commit)
 Cập nhật mục này mỗi khi xong việc, để phiên/hội thoại mới đọc là nắm được ngay.
 
-**Lần cập nhật:** 2026-11-17 (lượt 7: quảng trường nhiệm vụ, cây cao, chống chóng mặt) · nhánh `fable/web-rebuild` · unit 38/38 · quick đạt cả 11 nhóm · e2e đang chạy lại
+**Lần cập nhật:** 2026-11-17 (lượt 7: quảng trường nhiệm vụ, cây cao, chống chóng mặt) · nhánh `fable/web-rebuild` · unit 38/38 · quick 47/47 · e2e 121/121 · tải 11,52 MB
 
 **Đã có (Map 1 + Rừng):**
 - Truyện: Bức thư, Hũ chữ của Ben, Sửa cây cầu cho cả lớp 6–9 (lớp 8 dùng ngữ pháp Unit 1: động từ sở thích + V-ing), pha lê Rừng Ký Ức.
