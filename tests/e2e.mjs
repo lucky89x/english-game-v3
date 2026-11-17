@@ -26,7 +26,7 @@ await wait(1500); await snap('01_village_square');
 
 // movement with real keys
 const p0 = await ev(() => ({ x: __eq.player.pos.x, z: __eq.player.pos.z }));
-await page.keyboard.down('KeyW'); await wait(1500); await page.keyboard.up('KeyW');
+await page.keyboard.down('KeyW'); await wait(5000); await page.keyboard.up('KeyW');      // long hold: ~3 s a frame without GPU
 const p1 = await ev(() => ({ x: __eq.player.pos.x, z: __eq.player.pos.z, anim: __eq.player.current }));
 check(Math.hypot(p1.x - p0.x, p1.z - p0.z) > 1.5, 'W moves Ngọc (real key)');
 await page.keyboard.down('ShiftLeft'); await page.keyboard.down('KeyW'); await wait(800);

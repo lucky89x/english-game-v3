@@ -40,12 +40,13 @@ PY=<python có bpy 4.2> tools/chibi05/build_all.sh   # dựng lại model, ~1 ph
 - Tải Blender bản đầy đủ bị chặn; dùng `pip install bpy==4.2.0` với Python 3.11 (máy này: `/workspace/.bpyenv/bin/python`).
 - Lily, Rose, Anna xuất không có hoạt ảnh (`CHIBI_NO_ANIM=1`) và mượn clip của Ngọc lúc chạy; đổi xương của Ngọc thì phải dựng lại cả 4.
 - Shader chèn thêm (paint, windy) phải nối chuỗi `onBeforeCompile` và có `customProgramCacheKey`; GLSL chèn đầu shader phải kết thúc bằng xuống dòng (nếu không dính vào `#define`).
+- Hậu kỳ làm khung hình trên máy không GPU ~3 s (mức Thấp ~1 s): test cần chờ lâu (e2e `setDefaultTimeout(120000)`, giữ phím W 5 s). Không phản ánh máy thật có card đồ họa.
 - Test trang thứ hai (máy tính bảng) trong cùng trình duyệt chạy chậm: đặt `setDefaultTimeout(120000)`.
 
 ## Tiến độ (cập nhật cuối mỗi lượt làm việc, trước khi commit)
 Cập nhật mục này mỗi khi xong việc, để phiên/hội thoại mới đọc là nắm được ngay.
 
-**Lần cập nhật:** 2026-11-16 (lượt 2) · nhánh `fable/web-rebuild` · e2e 121/122 (bước trượt là lỗi của test, đã sửa và kiểm riêng) · quick 29/29 (sau gói đồ họa) · unit 36/36 · tải 11,45 MB · e2e chưa chạy lại sau gói đồ họa
+**Lần cập nhật:** 2026-11-17 · nhánh `fable/web-rebuild` · e2e 121/122 sau gói đồ họa + túi đồ (bước trượt "W đi được" do test giữ phím quá ngắn trên máy không GPU; đã sửa test và kiểm riêng) · quick đạt · unit 36/36 · tải 11,46 MB
 
 **Đã có (Map 1 + Rừng):**
 - Truyện: Bức thư, Hũ chữ của Ben, Sửa cây cầu cho cả lớp 6–9 (lớp 8 dùng ngữ pháp Unit 1: động từ sở thích + V-ing), pha lê Rừng Ký Ức.
