@@ -441,3 +441,15 @@ test('keys: Vietnamese input method letters still walk and act (Unikey / Telex o
   assert.equal(keyCode({ code: '', key: ' ' }), 'Space');
   assert.equal(keyCode({ code: '', key: 'Backspace' }), '');
 });
+
+test('Map 2: forest board has its own hunts, the Mushroom Queen waits at level 30, owl gates at 25 and 30', async () => {
+  const R = await import('../src/core/rules.js');
+  const p = S.newProfile('An', 8), hv = R.hunt(p), hf = R.hunt(p, 'forest');
+  assert.notEqual(hv, hf, 'two separate hunts'); assert.ok(p.hunt2);
+  hf.active = true; assert.equal(R.FOREST_HUNTS[0].kind, 'bat');
+  assert.equal(R.countKill(p, 'bat'), false); assert.equal(R.countKill(p, 'bat'), false); assert.equal(R.countKill(p, 'bat'), true);
+  assert.equal(hv.got, 0, 'village hunt untouched');
+  for (const q of R.FOREST_HUNTS) for (const t of Object.values(q.en)) assert.ok(!/[àáảãạăâđêôơư]/i.test(t), 'English only');
+  const q3 = R.BOSSES.find((b) => b.flag === 'boss3'); assert.equal(q3.region, 'forest'); assert.equal(q3.level, 30);
+  assert.ok(S.GATES.includes(25) && S.GATES.includes(30));
+});

@@ -79,18 +79,33 @@ export const HUNTS = [
   { kind: 'slime', need: 5, gold: 35, exp: 70, en: { easy: 'Five green slimes are in the meadow. Can you help?', hard: 'The meadow is full of green slimes again. Could you defeat five of them?' } },
   { kind: 'golem', need: 1, gold: 60, exp: 120, en: { easy: 'A big stone golem is by the farm. Be careful!', hard: "A stone golem is standing near the farm. It's dangerous, so please be careful!" } },
 ];
+/** Map 2 (Forest of Memories) has its own board by the forest entrance, with its own jobs (17/11). */
+export const FOREST_HUNTS = [
+  { kind: 'bat', need: 3, gold: 60, exp: 300, en: { easy: 'Shadow bats are flying over the path. Please chase away three of them!', hard: "Three shadow bats keep scaring travellers on the path. Could you chase them away?" } },
+  { kind: 'shroom', need: 2, gold: 80, exp: 380, en: { easy: 'Two angry mushrooms are near the camp. Please stop them!', hard: "Two angry mushrooms have been stamping around the camp. Would you mind stopping them?" } },
+  { kind: 'bat', need: 5, gold: 90, exp: 450, en: { easy: 'More bats are here tonight. Can you defeat five?', hard: "The bats have come back in a big group. Could you defeat five of them?" } },
+  { kind: 'shroom', need: 4, gold: 120, exp: 600, en: { easy: 'Four angry mushrooms are in the forest. Be brave!', hard: "Four angry mushrooms are hiding among the trees. You'll need to be brave!" } },
+];
+export const huntsOf = (region) => (region === 'forest' ? FOREST_HUNTS : HUNTS);
 export const huntLine = (h, grade) => h.en[grade >= 8 ? 'hard' : 'easy'];
-export const hunt = (profile) => profile.hunt || (profile.hunt = { i: 0, got: 0, active: false, done: 0 });
-/** Counts a defeated monster for the active hunt. Returns true when this kill finished it. */
+/** The hunt in progress for a board: profile.hunt (village) or profile.hunt2 (forest). */
+export const hunt = (profile, region = 'village') => { const k = region === 'forest' ? 'hunt2' : 'hunt'; return profile[k] || (profile[k] = { i: 0, got: 0, active: false, done: 0 }); };
+/** Counts a defeated monster for the active hunt on either board. Returns true when this kill finished one. */
 export function countKill(profile, kind) {
-  const h = hunt(profile), q = HUNTS[h.i % HUNTS.length];
-  if (!h.active || q.kind !== kind || h.got >= q.need) return false;
-  h.got += 1; return h.got >= q.need;
+  let done = false;
+  for (const region of ['village', 'forest']) {
+    const h = hunt(profile, region), list = huntsOf(region), q = list[h.i % list.length];
+    if (!h.active || q.kind !== kind || h.got >= q.need) continue;
+    h.got += 1; if (h.got >= q.need) done = true;
+  }
+  return done;
 }
 export const BOSS = { id: 'king', flag: 'boss1', name: 'Slime King', level: 8, hp: 600, atk: 16, exp: 400, gold: 150, speed: 1.4, color: 0x5fd0ff, size: 2.6 };
 /** Map 1's last boss in the golem fields. Beating it at level 20 opens Map 2. */
 export const BOSS2 = { id: 'ancient', flag: 'boss2', name: 'Ancient Golem', level: 18, hp: 1600, atk: 30, exp: 900, gold: 300, speed: 1.2, color: 0x9a8f7a, size: 3.0 };
-export const BOSSES = [BOSS, BOSS2];
+/** Map 2's boss: the Mushroom Queen, deep in the west of the Forest of Memories near the old ruins. */
+export const BOSS3 = { id: 'queen', flag: 'boss3', name: 'Mushroom Queen', level: 30, hp: 2600, atk: 46, exp: 1600, gold: 450, speed: 1.3, color: 0xc0397a, size: 3.0, region: 'forest' };
+export const BOSSES = [BOSS, BOSS2, BOSS3];
 /** Map 2 opens once the Ancient Golem is beaten and the hero has reached level 20 (owl gate passed or waiting). */
 export const map2Ready = (profile) => !!(profile.flags.boss2 && profile.stats.level >= 20);
 

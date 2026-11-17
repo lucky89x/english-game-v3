@@ -8,6 +8,8 @@ import * as L from '../core/layout.js';
 import { today } from '../core/review.js';
 
 export const SPOTS = [[-2.2, -6], [6.5, 0.5], [-6.5, 12], [9, 7.2], [1.5, 22], [-6, 30.5], [27, 6], [-12, -2.5], [12.5, -2.5], [-2, 41]];
+/** Map 2: bubbles along the forest paths (they teach the unit being studied there, Unit 2 once Map 2 is open). */
+export const FOREST_SPOTS = [[-30, 44], [-36, 18], [-34, 2], [-22, -11], [-8, -13], [16, -23], [30, -15], [38, 12], [20, 44], [12, 6]];
 
 function bubbleTexture() {
   const cv = document.createElement('canvas'); cv.width = cv.height = 128; const c = cv.getContext('2d'), g = c.createRadialGradient(64, 64, 8, 64, 64, 62);
@@ -21,18 +23,18 @@ export class WordSpots {
   /** api: { scene, profile(), cards() -> [{id, word, vi}], learn(card, isNew) } */
   constructor(api) {
     this.api = api; this.t = 0; this.root = new THREE.Group(); api.scene.add(this.root);
-    const tex = bubbleTexture(), V = L.REGIONS.village;
-    this.list = SPOTS.map(([x, z], i) => {
+    const tex = bubbleTexture();
+    this.list = [...SPOTS.map((p) => [...p, 'village']), ...FOREST_SPOTS.map((p) => [...p, 'forest'])].map(([x, z, region], i) => {
       const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false, toneMapped: false })); sp.scale.setScalar(1.0); sp.renderOrder = 4;
-      const y = V.walkHeight(x, z) + 1.25; sp.position.set(x, y, z); this.root.add(sp);
-      return { i, x, z, y, sp };
+      const y = L.REGIONS[region].walkHeight(x, z) + 1.25; sp.position.set(x, y, z); this.root.add(sp);
+      return { i, x, z, y, sp, region };
     });
     this.setRegion(L.NAME);
   }
   get data() { const p = this.api.profile(); return p ? (p.spots || (p.spots = {})) : {}; }
   used(s) { return this.data[s.i] === today(); }
-  setRegion(name) { this.root.visible = name === 'village'; this.sync(); }
-  sync() { for (const s of this.list) s.sp.visible = !this.used(s); }
+  setRegion(name) { this.region = name; this.root.visible = name === 'village' || name === 'forest'; this.sync(); }
+  sync() { for (const s of this.list) s.sp.visible = s.region === this.region && !this.used(s); }
   /** The word a sparkle teaches: the first unit word never met, else the one met longest ago. */
   pick() {
     const p = this.api.profile(), seen = p.seen || {}, cards = this.api.cards(); if (!cards.length) return null;
@@ -41,7 +43,7 @@ export class WordSpots {
   }
   interact(pos) {
     if (!this.root.visible) return null;
-    for (const s of this.list) if (!this.used(s) && Math.hypot(pos.x - s.x, pos.z - s.z) < 1.8) {
+    for (const s of this.list) if (s.region === this.region && !this.used(s) && Math.hypot(pos.x - s.x, pos.z - s.z) < 1.8) {
       return { text: 'E · Học từ mới (bong bóng chữ)', run: () => { const w = this.pick(); this.data[s.i] = today(); this.sync(); this.api.learn(w && w.card, w ? w.isNew : false); } };
     }
     return null;
@@ -50,5 +52,5 @@ export class WordSpots {
     if (!this.root.visible) return; this.t += dt;
     for (const s of this.list) if (s.sp.visible) { const k = Math.sin(this.t * 2.2 + s.i); s.sp.position.y = s.y + k * 0.18; s.sp.scale.setScalar(0.95 + 0.1 * Math.sin(this.t * 3.1 + s.i)); }
   }
-  markers() { return this.root.visible ? this.list.filter((s) => !this.used(s)).map((s) => ({ x: s.x, z: s.z, text: '•', color: '#7fd0ff' })) : []; }
+  markers() { return this.root.visible ? this.list.filter((s) => s.region === this.region && !this.used(s)).map((s) => ({ x: s.x, z: s.z, text: '•', color: '#7fd0ff' })) : []; }
 }

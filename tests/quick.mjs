@@ -107,6 +107,18 @@ await run('map2', async () => {        // Map 2 monsters in the forest, only onc
   check(await ev(() => __eq.wild.mobs.filter((m) => m.g.visible).every((m) => m.region === 'forest') && __eq.wild.mobs.filter((m) => m.g.visible).length === 10), 'Map 2 open: 10 forest monsters, none from the meadow ' + await ev(() => __eq.wild.mobs.filter((m) => m.g.visible).map((m) => m.kind).join(',')));
   const r = await ev(() => { const w = __eq.wild, m = w.mobs.find((m) => m.kind === 'bat' && !m.dead), e0 = __eq.profile.stats.exp, l0 = __eq.profile.stats.level; w.kill(m, __eq.profile); return { exp: __eq.profile.stats.exp !== e0 || __eq.profile.stats.level !== l0, dead: m.dead > 0 }; });
   check(r.exp && r.dead, 'Defeating a Shadow Bat pays EXP');
+  await closeDialogs();
+  await ev(() => { __eq.teleport(-32.4, 46.6); __eq.wild.mobs.forEach((m) => { if (!m.boss) { m.dead = 999; m.g.visible = false; } }); }); await wait(500);
+  check((await page.textContent('#prompt')).includes('Bảng nhiệm vụ'), 'Forest quest board by the entrance path');
+  await page.keyboard.press('KeyE'); await wait(400);
+  check(/bats/i.test(await page.textContent('#dialog .en')), 'The forest board asks for Shadow Bats in English');
+  await closeDialogs();
+  check(await ev(() => __eq.profile.hunt2 && __eq.profile.hunt2.active && !(__eq.profile.hunt && __eq.profile.hunt.active && __eq.profile.hunt.i > 99)), 'Forest hunt accepted (its own record)');
+  check(await ev(() => __eq.chests.list.filter((c) => c.region === 'forest').every((c) => c.g.visible) && __eq.chests.list.filter((c) => c.region === 'village').every((c) => !c.g.visible)), 'Five word chests in the forest');
+  check(await ev(() => __eq.spots.list.filter((s) => s.region === 'forest' && s.sp.visible).length === 10), 'Ten word bubbles along the forest paths');
+  check(await ev(() => !__eq.wild.bosses[2].g.visible), 'Mushroom Queen sleeps below level 30');
+  await ev(() => { __eq.profile.stats.level = 30; }); await wait(800);
+  check(await ev(() => __eq.wild.bosses[2].g.visible && __eq.wild.markers().some((m) => m.text === '♛')), 'Level 30: the Mushroom Queen wakes in the west glade');
   await ev(() => __eq.enterRegion('village')); await page.waitForFunction(() => __eq.region === 'village' && __eq.started, null, { timeout: 120000 }); await wait(600);
   check(await ev(() => __eq.wild.mobs.filter((m) => m.g.visible).every((m) => m.region === 'village')), 'Back in the village: only meadow monsters');
   await closeDialogs();

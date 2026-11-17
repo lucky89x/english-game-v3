@@ -3,10 +3,13 @@
 // village square with full health and no loss, so young players are never punished hard.
 import * as THREE from 'three';
 import * as L from '../core/layout.js';
-import { MONSTERS, SPAWNS, FOREST_SPAWNS, playerAtk, hurt, inArc, HUNTS, hunt, countKill, huntLine, BOSSES, shieldDue } from '../core/rules.js';
+import { MONSTERS, SPAWNS, FOREST_SPAWNS, playerAtk, hurt, inArc, huntsOf, hunt, countKill, huntLine, BOSSES, shieldDue } from '../core/rules.js';
 
 // BOARD: on the Quest Square since 17/11 (was out at 29, -14), facing the fountain
 export const BOARD = { x: -6.2, z: 0.6 }, BOSS_AT = { x: 40, z: -26 }, BOSS2_AT = { x: 46, z: 40 };
+/** Map 2: the forest board by the entrance path, the Mushroom Queen's glade west of the old ruins (17/11). */
+export const FOREST_BOARD = { x: -33.5, z: 46 }, BOSS3_AT = { x: -46, z: -24 };
+const BOSS_NAMES = { boss1: 'Vua Slime', boss2: 'Golem Cổ', boss3: 'Nữ hoàng Nấm' };
 import { addExp, maxHp } from '../core/save.js';
 import { compact } from '../world/common.js';
 
@@ -44,28 +47,41 @@ export class Wild {
       return { i, kind, def, region, g, body, bar, back, home: { x, z }, x, z, hp: def.hp, dead: 0, hitCool: 0, flash: 0, ph: i * 1.3 };
     });
     // Map 1's bosses wake up once Ngọc reaches their level: the Slime King in the meadow, the Ancient Golem in the golem fields
-    this.bosses = BOSSES.map((def, k) => this.makeBoss(def, k ? BOSS2_AT : BOSS_AT, eye));
+    this.bosses = BOSSES.map((def, k) => this.makeBoss(def, [BOSS_AT, BOSS2_AT, BOSS3_AT][k], eye));
     this.boss = this.bosses[0];
-    // quest board at the edge of the meadow
-    {
+    // quest boards: the Quest Square in the village, the entrance path in the forest
+    this.boards = [];
+    for (const [at, region] of [[BOARD, 'village'], [FOREST_BOARD, 'forest']]) {
       const wood = new THREE.MeshStandardMaterial({ color: 0x8a5a30, roughness: 0.85 }), g = new THREE.Group();
       for (const sx of [-0.7, 0.7]) { const p = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.08, 2.2, 6), wood); p.position.set(sx, 1.1, 0); g.add(p); }
       const b = new THREE.Mesh(new THREE.BoxGeometry(1.7, 1.0, 0.1), new THREE.MeshStandardMaterial({ color: 0xc89a5a, roughness: 0.9 })); b.position.y = 1.6; g.add(b);
       for (const [x, y, c] of [[-0.45, 1.7, 0xfff4dc], [0.15, 1.55, 0xfff4dc], [0.55, 1.75, 0xffd8a0]]) { const n = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.45, 0.02), new THREE.MeshStandardMaterial({ color: c })); n.position.set(x, y, 0.06); n.rotation.z = (x * 3) % 0.2; g.add(n); }
       const roof = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.1, 0.5), wood); roof.position.y = 2.2; g.add(roof);
       compact(g); g.traverse((o) => { if (o.isMesh) o.castShadow = true; });
-      g.position.set(BOARD.x, L.REGIONS.village.groundHeight(BOARD.x, BOARD.z), BOARD.z); g.rotation.y = Math.atan2(-BOARD.x, 4 - BOARD.z); g.scale.setScalar(1.25); this.root.add(g); this.boardMesh = g;
+      g.position.set(at.x, L.REGIONS[region].groundHeight(at.x, at.z), at.z); g.rotation.y = region === 'village' ? Math.atan2(-at.x, 4 - at.z) : Math.PI / 2; g.scale.setScalar(1.25); this.root.add(g);
+      this.boards.push({ at, region, g }); if (region === 'village') this.boardMesh = g;
     }
     // sword slash arc shown for a moment in front of Ngọc
     this.slash = new THREE.Mesh(new THREE.TorusGeometry(1.5, 0.09, 6, 20, Math.PI * 0.9), new THREE.MeshBasicMaterial({ color: 0xfff2a0, transparent: true, opacity: 0.9, depthWrite: false })); this.slash.rotation.x = Math.PI / 2; this.slash.visible = false; api.scene.add(this.slash);
     this.setRegion(L.NAME);
   }
   makeBoss(def, at, eye) {
-    const g = new THREE.Group(), stone = def.id === 'ancient';
-    const mat = new THREE.MeshStandardMaterial({ color: def.color, roughness: stone ? 0.95 : 0.15, transparent: !stone, opacity: stone ? 1 : 0.9, emissive: def.color, emissiveIntensity: 0.12, flatShading: stone });
+    const g = new THREE.Group(), stone = def.id === 'ancient', queen = def.id === 'queen';
+    const mat = new THREE.MeshStandardMaterial({ color: queen ? 0xf3e4c8 : def.color, roughness: stone ? 0.95 : 0.15, transparent: !stone, opacity: stone ? 1 : 0.9, emissive: def.color, emissiveIntensity: 0.12, flatShading: stone });
     const body = new THREE.Mesh(stone ? new THREE.IcosahedronGeometry(0.5, 1) : new THREE.SphereGeometry(0.5, 20, 14), mat); body.scale.set(1, stone ? 1.15 : 0.8, 1); body.position.y = stone ? 0.55 : 0.4; body.castShadow = true; body.userData.live = true; g.add(body);
     const gold = new THREE.MeshStandardMaterial({ color: 0xffd23c, metalness: 0.8, roughness: 0.3, emissive: 0xb08010, emissiveIntensity: 0.4 });
-    if (stone) {        // moss cap, glowing runes and big fists
+    if (queen) {        // the Mushroom Queen: a wide spotted cap over a pale body, a golden crown, little leaf arms
+      body.scale.set(0.8, 1.0, 0.8);
+      const capMat = new THREE.MeshStandardMaterial({ color: def.color, roughness: 0.45, emissive: def.color, emissiveIntensity: 0.1 });
+      const cap = new THREE.Mesh(new THREE.SphereGeometry(0.62, 20, 12, 0, Math.PI * 2, 0, Math.PI / 2), capMat); cap.scale.y = 0.6; cap.position.y = 0.72; cap.castShadow = true; g.add(cap);
+      const rimC = new THREE.Mesh(new THREE.TorusGeometry(0.6, 0.05, 6, 24), capMat); rimC.rotation.x = Math.PI / 2; rimC.position.y = 0.72; g.add(rimC);
+      const dot = new THREE.MeshStandardMaterial({ color: 0xfff6ea, roughness: 0.6 });
+      for (let k = 0; k < 7; k++) { const a = k * 0.9, r = k % 2 ? 0.42 : 0.28, sp = new THREE.Mesh(new THREE.SphereGeometry(0.075, 8, 6), dot); sp.position.set(Math.cos(a) * r, 0.72 + Math.sqrt(Math.max(0, 0.36 - r * r)) * 0.6, Math.sin(a) * r); sp.scale.y = 0.5; g.add(sp); }
+      const crown = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.17, 0.1, 10, 1, true), gold); crown.position.y = 1.12; g.add(crown);
+      for (let k = 0; k < 5; k++) { const a = k * 1.257, sp = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.12, 5), gold); sp.position.set(Math.cos(a) * 0.15, 1.22, Math.sin(a) * 0.15); g.add(sp); }
+      const leaf = new THREE.MeshStandardMaterial({ color: 0x5fae48, roughness: 0.7 });
+      for (const sx of [-1, 1]) { const arm = new THREE.Mesh(new THREE.SphereGeometry(0.14, 8, 6), leaf); arm.scale.set(1.6, 0.5, 0.9); arm.position.set(sx * 0.42, 0.35, 0.05); arm.rotation.z = sx * 0.5; g.add(arm); }
+    } else if (stone) {        // moss cap, glowing runes and big fists
       const moss = new THREE.Mesh(new THREE.SphereGeometry(0.34, 10, 6), new THREE.MeshStandardMaterial({ color: 0x5fa040 })); moss.scale.y = 0.45; moss.position.y = 1.08; g.add(moss);
       for (const sx of [-1, 1]) { const arm = new THREE.Mesh(new THREE.IcosahedronGeometry(0.24, 0), mat); arm.position.set(sx * 0.62, 0.42, 0.1); arm.castShadow = true; g.add(arm); }
       const rune = new THREE.MeshBasicMaterial({ color: 0x8fe8ff });
@@ -74,19 +90,19 @@ export class Wild {
       const crown = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.24, 0.14, 10, 1, true), gold); crown.position.y = 0.86; g.add(crown);
       for (let k = 0; k < 5; k++) { const a = k * 1.257, sp = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.14, 5), gold); sp.position.set(Math.cos(a) * 0.22, 1.0, Math.sin(a) * 0.22); g.add(sp); }
     }
-    for (const sx of [-1, 1]) { const e = new THREE.Mesh(new THREE.SphereGeometry(0.075, 8, 6), stone ? new THREE.MeshBasicMaterial({ color: 0x8fe8ff }) : eye); e.position.set(sx * 0.15, stone ? 0.7 : 0.48, 0.44); g.add(e); const brow = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.04, 0.04), eye); brow.position.set(sx * 0.15, stone ? 0.82 : 0.6, 0.46); brow.rotation.z = -sx * 0.5; g.add(brow); }
+    for (const sx of [-1, 1]) { const e = new THREE.Mesh(new THREE.SphereGeometry(0.075, 8, 6), stone ? new THREE.MeshBasicMaterial({ color: 0x8fe8ff }) : eye); e.position.set(sx * 0.15, stone ? 0.7 : queen ? 0.42 : 0.48, queen ? 0.38 : 0.44); g.add(e); const brow = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.04, 0.04), eye); brow.position.set(sx * 0.15, stone ? 0.82 : queen ? 0.53 : 0.6, queen ? 0.4 : 0.46); brow.rotation.z = -sx * 0.5; g.add(brow); }
     compact(g);
     const shield = new THREE.Mesh(new THREE.IcosahedronGeometry(0.75, 1), new THREE.MeshBasicMaterial({ color: 0xffe28a, transparent: true, opacity: 0.3, wireframe: true, depthWrite: false })); shield.position.y = 0.45; shield.visible = false; g.add(shield);
-    const top = stone ? 1.45 : 1.25;
+    const top = stone ? 1.45 : queen ? 1.45 : 1.25;
     const bar = new THREE.Sprite(new THREE.SpriteMaterial({ color: 0xe23a2a, depthTest: false })); bar.center.set(0, 0.5); bar.scale.set(1, 0.07, 1); bar.position.set(-0.5, top, 0); bar.renderOrder = 6; g.add(bar);
     const back = new THREE.Sprite(new THREE.SpriteMaterial({ color: 0x3a2410, depthTest: false })); back.center.set(0, 0.5); back.scale.set(1.04, 0.1, 1); back.position.set(-0.52, top, 0); back.renderOrder = 5; g.add(back);
     g.scale.setScalar(def.size); this.root.add(g);
-    const m = { i: this.mobs.length, kind: def.id, boss: true, region: 'village', def, g, body, bar, back, shield, home: { ...at }, x: at.x, z: at.z, hp: def.hp, dead: 0, hitCool: 0, flash: 0, ph: 0, broken: 0, shieldOn: false };
+    const m = { i: this.mobs.length, kind: def.id, boss: true, region: def.region || 'village', def, g, body, bar, back, shield, home: { ...at }, x: at.x, z: at.z, hp: def.hp, dead: 0, hitCool: 0, flash: 0, ph: 0, broken: 0, shieldOn: false };
     this.mobs.push(m); return m;
   }
   /** Village: meadow monsters, bosses and the board. Forest: Map 2 monsters, only once Map 2 is open. */
   setRegion(name) {
-    this.region = name; this.root.visible = name === 'village' || name === 'forest'; if (this.boardMesh) this.boardMesh.visible = name === 'village';
+    this.region = name; this.root.visible = name === 'village' || name === 'forest'; for (const b of this.boards || []) b.g.visible = b.region === name;
     for (const m of this.mobs) { if (m.region === name) this.place(m); else m.g.visible = false; }
   }
   /** A monster takes part when it lives in this region (forest ones wait for Map 2). */
@@ -124,29 +140,33 @@ export class Wild {
     if (countKill(p, m.kind)) this.api.ui.toast('Quest done! Go back to the board');
     else this.api.ui.toast(`+${exp} EXP   +${gold} ●`);
     if (first && m.def.flag === 'boss1') this.api.ui.dialogue([{ who: 'Ngọc', en: `I defeated the Slime King! (+${gold} gold, +${exp} EXP)`, vi: 'Con đã thắng Vua Slime! Ở cấp 18, Golem Cổ sẽ thức dậy ở cánh đồng đá phía Đông Nam.' }]);
+    if (first && m.def.flag === 'boss3') this.api.ui.dialogue([{ who: 'Ngọc', en: `I defeated the Mushroom Queen! The forest remembers its words again! (+${gold} gold, +${exp} EXP)`, vi: 'Con đã thắng Nữ hoàng Nấm, trùm của Rừng Ký Ức!' }]);
     if (first && m.def.flag === 'boss2') this.api.ui.dialogue([{ who: 'Ngọc', en: `I defeated the Ancient Golem! (+${gold} gold, +${exp} EXP)`, vi: p.stats.level >= 20 ? 'Cổng Map 2 đã mở!' : 'Đạt cấp 20 (qua cổng Cú Mèo) là mở được Map 2.' }]);
     this.api.save(); this.api.onChange();
   }
   /** E near the board, or near the shielded boss. */
   interact(pos) {
     if (!this.root.visible) return null;
-    if (this.region !== 'village') return null;
-    for (const b of this.bosses) if (b.g.visible && b.shieldOn && Math.hypot(pos.x - b.x, pos.z - b.z) < 2.2 + b.def.size * 0.5) return { text: 'E · Phá khiên chữ của ' + (b.def.flag === 'boss1' ? 'Vua Slime' : 'Golem Cổ'), run: () => this.api.quiz(b.def.name, (ok) => {
+    const p = this.api.profile();
+    for (const b of this.bosses) if (b.g.visible && b.shieldOn && this.here(b, p) && Math.hypot(pos.x - b.x, pos.z - b.z) < 2.2 + b.def.size * 0.5) return { text: 'E · Phá khiên chữ của ' + BOSS_NAMES[b.def.flag], run: () => this.api.quiz(b.def.name, (ok) => {
       if (ok) { b.shieldOn = false; b.shield.visible = false; b.broken += 1; this.api.sfx('fanfare'); this.api.ui.toast('Shield broken!'); }
       else { b.hp = Math.min(b.def.hp * [1, 0.75, 0.5][b.broken], b.hp + b.def.hp * 0.07); this.api.sfx('wrong'); }
       this.api.onChange(); }) };
-    if (Math.hypot(pos.x - BOARD.x, pos.z - BOARD.z) < 2.2) return { text: 'E · Bảng nhiệm vụ săn quái', run: () => this.board() };
+    for (const bd of this.boards) if (bd.region === this.region && Math.hypot(pos.x - bd.at.x, pos.z - bd.at.z) < 2.2) {
+      if (bd.region === 'forest' && !(p && p.flags.map2)) return { text: 'Bảng nhiệm vụ rừng: mở khi tới Map 2', run() {} };
+      return { text: 'E · Bảng nhiệm vụ săn quái', run: () => this.board() };
+    }
     return null;
   }
   board() {
-    const { ui, profile } = this.api, p = profile(), h = hunt(p), q = HUNTS[h.i % HUNTS.length], name = MONSTERS[q.kind].name;
+    const { ui, profile } = this.api, p = profile(), list = huntsOf(this.region), h = hunt(p, this.region), q = list[h.i % list.length], name = MONSTERS[q.kind].name;
     if (!h.active) { ui.dialogue([{ who: 'Quest board', en: huntLine(q, p.grade), vi: `Nhiệm vụ: hạ ${q.need} ${name}. Thưởng ${q.gold} vàng, ${q.exp} EXP.` }], () => { h.active = true; h.got = 0; this.api.sfx('tick'); this.api.save(); this.api.onChange(); }); return; }
     if (h.got < q.need) { ui.dialogue([{ who: 'Quest board', en: `${name}: ${h.got} of ${q.need}. Keep going!` }]); return; }
     p.stats.gold += q.gold; addExp(p, q.exp); h.done += 1; h.i += 1; h.active = false; h.got = 0; this.api.sfx('fanfare');
     ui.dialogue([{ who: 'Quest board', en: `Thank you, hero! (+${q.gold} gold, +${q.exp} EXP)`, vi: 'Quay lại bảng để nhận nhiệm vụ mới.' }]); this.api.save(); this.api.onChange();
   }
-  /** Short text for the HUD while a hunt is running. */
-  huntNote() { const p = this.api.profile(); if (!p || !p.hunt || !p.hunt.active) return ''; const q = HUNTS[p.hunt.i % HUNTS.length]; return `⚔ ${Math.min(p.hunt.got, q.need)}/${q.need}`; }
+  /** Short text for the HUD while a hunt of this region's board is running. */
+  huntNote() { const p = this.api.profile(); if (!p) return ''; const k = this.region === 'forest' ? 'hunt2' : 'hunt', h = p[k]; if (!h || !h.active) return ''; const list = huntsOf(this.region), q = list[h.i % list.length]; return `⚔ ${Math.min(h.got, q.need)}/${q.need}`; }
   update(dt, frozen) {
     if (!this.root.visible) return;
     const { player, profile } = this.api, p = profile(); if (!p) return;
@@ -181,9 +201,12 @@ export class Wild {
   }
   markers() {
     if (!this.root.visible) return [];
-    const p = this.api.profile(), h = p && p.hunt, q = h && HUNTS[h.i % HUNTS.length], out = [];
-    if (this.region === 'village' && (!h || !h.active || h.got >= q.need)) out.push({ x: BOARD.x, z: BOARD.z, text: '!', color: '#ffd23c' });
-    for (const b of this.bosses) if (b.g.visible && !b.dead) out.push({ x: b.x, z: b.z, text: '♛', color: b.def.flag === 'boss1' ? '#8fd8ff' : '#e0c890' });
+    const p = this.api.profile(), out = [];
+    if (p && (this.region === 'village' || p.flags.map2)) {
+      const list = huntsOf(this.region), h = hunt(p, this.region), q = list[h.i % list.length], at = this.region === 'forest' ? FOREST_BOARD : BOARD;
+      if (!h.active || h.got >= q.need) out.push({ x: at.x, z: at.z, text: '!', color: '#ffd23c' });
+    }
+    for (const b of this.bosses) if (b.g.visible && !b.dead && this.here(b, p)) out.push({ x: b.x, z: b.z, text: '♛', color: ({ boss1: '#8fd8ff', boss2: '#e0c890', boss3: '#f08ac0' })[b.def.flag] });
     return out.concat(this.mobs.filter((m) => !m.dead && !m.boss && this.here(m, p)).map((m) => ({ x: m.x, z: m.z, text: '', color: ({ golem: '#8a8490', red: '#ff6a5a', bat: '#9a7ad0', shroom: '#e2483e' })[m.kind] || '#6ad05a', small: true })));
   }
 }

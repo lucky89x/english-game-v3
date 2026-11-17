@@ -78,6 +78,12 @@ py -m http.server 8000
 - **Ngôi sao vàng**: có 12 ngôi sao giấu quanh làng; chạm vào được 3 vàng, đủ 12 sao thưởng thêm 20 vàng (đếm ở ô ★ trên góc trái).
 - Camera bớt chóng mặt: gặp nhà che thì camera nâng lên, không thụt vào thụt ra.
 
+## Có gì mới (17/11, lượt 4): Map 2 Rừng Ký Ức đủ vòng chơi
+- Bảng nhiệm vụ săn quái riêng ở đường vào rừng (dơi, nấm).
+- 5 rương khóa chữ và 10 bong bóng chữ trong rừng (từ Unit 2).
+- Boss **Nữ hoàng Nấm** thức dậy ở cấp 30, bãi trống phía Tây tàn tích; phá 3 khiên chữ bằng từ tiếng Anh.
+- Cú Mèo ôn tập thêm ở cấp 25 và 30.
+
 ## Phím chơi
 WASD đi · Shift chạy · Space nhảy · E nói chuyện/nhặt · J đánh · K né · Q ăn bánh · I túi đồ · B sổ từ · Esc bỏ qua thoại · H gợi ý · chuột trái kéo để xoay · lăn chuột để zoom · bấm bản đồ nhỏ để tự đi.
 Phụ huynh: nút **⚙** góc dưới trái → ô **Unit** để chọn Unit con đang học trên lớp.

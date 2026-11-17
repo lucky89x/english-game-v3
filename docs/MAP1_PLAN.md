@@ -37,7 +37,11 @@ Mỗi 5 cấp có một "cổng kiến thức" (ôn từ đến hạn) mới lê
 | A6 | Túi đồ | Phím I / nút 🎒: xem chỉ số, mặc/cởi đồ; kiếm trên tay, giáp da/giáp sắt trên ngực, cỏ bốn lá bên hông | xong |
 | A7 | Boss map 1 | Vua Slime (cấp 8+), Golem Cổ (cấp 18+, cánh đồng đá Đông Nam); 3 khiên chữ phá bằng từ tiếng Anh | xong |
 | A8 | Cổng Map 2 | Thắng Golem Cổ và đạt cấp 20 → mở Map 2 (Rừng Ký Ức), từ vựng chuyển sang Unit 2 | xong |
-| M2-1 | Quái Map 2 | Rừng Ký Ức: 5 Dơi Bóng Tối (cấp 21), 5 Nấm Giận Dữ (cấp 26); chỉ hiện khi đã mở Map 2 | xong (boss Map 2 chưa có) |
+| M2-1 | Quái Map 2 | Rừng Ký Ức: 5 Dơi Bóng Tối (cấp 21), 5 Nấm Giận Dữ (cấp 26); chỉ hiện khi đã mở Map 2 | xong |
+| M2-2 | Boss Map 2 | Nữ hoàng Nấm cấp 30, bãi trống phía Tây tàn tích, 3 khiên chữ Unit 2 | xong |
+| M2-3 | Bảng nhiệm vụ rừng | Cạnh đường vào rừng, 4 việc săn dơi/nấm, lưu riêng | xong |
+| M2-4 | Rương + bong bóng chữ rừng | 5 rương khóa chữ, 10 bong bóng chữ dọc đường rừng (Unit 2) | xong |
+| M2-5 | Cổng Cú Mèo 25/30 | Ôn từ Unit 2; câu ngữ pháp Unit 2 chưa soạn | xong một phần |
 | B1 | Xếp kẹo (match-3) | Biển phía Tây quảng trường, 25 lượt, có combo | xong |
 | B2 | Đua xe | Xe bí ngô, giữ phím để lái, né đá và bùn, nhặt xu | xong |
 | B3 | Bắn súng cao su | Kéo thả ná, đạn bay vòng cung, slime và bóng bay | xong |

@@ -40,6 +40,8 @@ export default makeRegion({
     h += 8.0 * smooth(58, 64, x) * (1 - 0.6 * gauss(z - 2, 3.2) * (1 - smooth(60, 66, x)));  // east rock wall (cave)
     return h;
   },
+  lateClear: (x, z) => Math.hypot(x + 46, z - -24) < 9.5,      // the Mushroom Queen's glade (Map 2 boss, 17/11); applied after the seeded trees
+  latePaths: () => [P(2.2, [-41, -35], [-44, -29], [-46, -25])],            // a trail from the ruins into the glade
   keepClear: [{ x: 17, z: -30, r: 7.5 }, { x: -44, z: -40, r: 8 }, { x: -41, z: 7, r: 8.5 }, { x: 55, z: 2, r: 7 }, { x: 40, z: 21, r: 6.5 }, { x: 34, z: 47, r: 8 }, { x: 49, z: -44, r: 6.5 }, { x: -48, z: 48, r: 5 }],
   solids: [
     { x: 17, z: -30, r: 3.3 }, { x: -41, z: 7, r: 4.6 }, { x: -46.5, z: 11.5, r: 1.6 }, { x: 49, z: -44, r: 2.3 }, { x: 36.5, z: 49.5, r: 2.3 }, { x: 31.5, z: 47.5, r: 0.9 },

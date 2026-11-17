@@ -36,7 +36,7 @@ export const GRAMMAR = {
   ],
 };
 /** Levels whose owl gate also asks two grammar questions. */
-export const GRAMMAR_GATES = [10, 15, 20];
+export const GRAMMAR_GATES = [10, 15, 20, 25, 30];
 /** Picks n grammar items for a grade and unit (shuffled with rnd); [] when the unit has none written. */
 export function grammarFor(grade, unit, n = 2, rnd = Math.random) {
   const list = GRAMMAR[`g${grade}_u${String(unit).padStart(2, '0')}`] || [];

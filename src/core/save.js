@@ -61,7 +61,7 @@ export const unitOf = (profile) => profile.unitPick || (profile.flags && profile
 /** Hit points grow with the level; equipment adds on top (profile.gear, later). */
 export const maxHp = (profile) => 100 + (profile.stats.level - 1) * 12 + ((profile.gear && profile.gear.hp) || 0);
 /** Knowledge gates: at these levels the bar fills but the next level waits for a short word review (the owl). */
-export const GATES = [5, 10, 15, 20];
+export const GATES = [5, 10, 15, 20, 25, 30];          // 25 and 30: Map 2 (Unit 2 words)
 export const gateWaiting = (profile) => { const L = profile.stats.level; return GATES.includes(L) && !(profile.gates && profile.gates[L]) ? L : 0; };
 export function passGate(profile, level) { (profile.gates || (profile.gates = {}))[level] = true; return addExp(profile, 0); }
 export function addExp(profile, amount) {
