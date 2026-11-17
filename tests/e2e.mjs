@@ -158,7 +158,7 @@ await snap('03b_ring_race');
 for (const r of MG.rings) { await ev((p) => __eq.teleport(p[0], p[1]), r); await wait(350); }
 check(await ev(() => !__eq.mini.active && __eq.mini.data.best.race > 0) && (await page.textContent('#dialog')).includes('ring race'), 'All rings passed: time saved as the record, reward shown');
 await page.keyboard.press('KeyE'); await wait(250);
-await ev(() => __eq.teleport(20.4, 19.8)); await wait(450); await page.keyboard.press('KeyE'); await wait(300);
+await ev(() => __eq.teleport(18.6, 19.8)); await wait(450); await page.keyboard.press('KeyE'); await wait(300);
 check(await ev(() => __eq.mini.active && __eq.mini.active.id === 'fish') && (await page.textContent('#clue')).includes('◆'), 'Fishing starts: moving marker on the bar');
 for (let c = 0; c < 5; c++) {      // software GL (~1 fps) cannot time a rhythm game: hold the marker inside the zone, then press a real E
   await ev(() => { const a = __eq.mini.active; if (a) { a.hold = true; a.pos = a.centre; } }); await wait(150);

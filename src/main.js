@@ -16,6 +16,7 @@ import { Arcade, candyGame, blocksGame, slingGame, spellGame, raceGame } from '.
 import { Chests } from './game/chests.js';
 import { armorMesh, charmMesh } from './game/gear.js';
 import { Walkers } from './game/walkers.js';
+import { ShopWindow } from './ui/shop.js';
 import { ITEMS, bag, wear, buy, eat, shopList, pay, map2Ready, playerAtk } from './core/rules.js';
 import { payNote } from './game/minigames.js';
 import { SAM_LINES, BRIDGE, BRIDGE_SPOTS, FRIENDS } from './game/content.js';
@@ -81,10 +82,11 @@ const faceTex = async (name) => { const t = await texLoader.loadAsync(`./assets/
 
 const ui = new UI(), store = Save.load();
 let profile = null, quest = null, story = null, world = null, player = null, cam = null, tom = null, sam = null, ben = null, pip = null, crystals = null, minimap = null, letterProp = null, itemProps = {}, friends = [], mini = null, wild = null, arcade = null, chests = null, unitCards = [], cardOfFn = () => null;
-let walkers = null, talkW = -1, touch = null, quality = localStorage.getItem('eq-quality') || 'medium', perfOn = false, started = false, switching = false, wordIds = {}, jarKey = '';
+let shopWin = null, walkers = null, talkW = -1, touch = null, quality = localStorage.getItem('eq-quality') || 'medium', perfOn = false, started = false, switching = false, wordIds = {}, jarKey = '';
 const keys = new Set();
 const game = { errors, get profile() { return profile; }, get quest() { return quest; }, get story() { return story; }, get player() { return player; }, get cam() { return cam; }, get minimap() { return minimap; }, ui, L, stats: { fps: 0, ms: 0, calls: 0, tris: 0 },
-  teleport(x, z) { player.place(x, z); cam.target.set(x, player.pos.y + 1.25, z); }, setQuality, key: (code) => onKey({ code, preventDefault() {} }), get started() { return started && !switching; }, get region() { return L.NAME; }, chooseProfile, enterRegion, MARKET_JARS, BRIDGE_SPOTS, get mini() { return mini; }, get wild() { return wild; }, get scene() { return scene; }, openShop, get sword() { return swordMesh; }, get armor() { return armorShown; }, setWear, openBag: () => openBag(), get arcade() { return arcade; }, get chests() { return chests; }, get friends() { return friends; }, get walkers() { return walkers; }, post, refresh: () => refresh() };
+  teleport(x, z) { player.place(x, z); cam.target.set(x, player.pos.y + 1.25, z); }, setQuality, key: (code) => onKey({ code, preventDefault() {} }), get started() { return started && !switching; }, get region() { return L.NAME; }, chooseProfile, enterRegion, MARKET_JARS, BRIDGE_SPOTS, get mini() { return mini; }, get wild() { return wild; }, get scene() { return scene; }, openShop, get sword() { return swordMesh; }, get armor() { return armorShown; }, setWear, openBag: () => openBag(), get arcade() { return arcade; }, get chests() { return chests; }, get friends() { return friends; }, get walkers() { return walkers; }, get shopWin() { return shopWin; }, get intro() { return intro; }, pause: (on) => renderer.setAnimationLoop(on ? null : frame),      // tests: stop drawing while another page is checked
+  post, refresh: () => refresh() };
 globalThis.__eq = game;
 
 function resize() { const w = innerWidth, h = innerHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
@@ -242,6 +244,7 @@ async function chooseProfile(p) {
   $('mapbox').classList.remove('hidden');
   await enterRegion(p.region === 'forest' && p.flags.forest_open ? 'forest' : 'village');
   started = true; renderGear();
+  if (L.NAME === 'village' && story.step === 'arrive' && !p.flags.arrived) startIntro();
 }
 
 /** Shop: a choice list. Buying puts the item on at once; owned items can be put on again for free. */
@@ -256,6 +259,36 @@ function openShop(who, seller, hello) {
     if (r.ok) { sfx('correct'); setSword(); setWear(); save(); refresh(); return openShop(who, seller, r.why === 'owned' ? `You are wearing the ${it.en} now.` : `Here is your ${it.en}! Anything else?`); }
     sfx('wrong'); openShop(who, seller, r.why === 'gold' ? `Sorry, the ${it.en} costs ${it.cost} gold.` : `The ${it.en} is for level ${it.level} heroes. Train a little more!`);
   });
+}
+/** Opening scene (feedback 17/11): a new child arrives by boat down the river and steps onto the village dock.
+ *  E / Space skips it. Not shown to automated tests unless the address has ?intro=1. */
+let intro = null;
+function makeBoat() {
+  const g = new THREE.Group(), wood = new THREE.MeshStandardMaterial({ color: 0x9a5a30, roughness: 0.8, side: THREE.DoubleSide }), light = new THREE.MeshStandardMaterial({ color: 0xc89058, roughness: 0.85 });
+  const hull = new THREE.Mesh(new THREE.SphereGeometry(1, 16, 8, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), wood); hull.scale.set(0.85, 0.5, 1.9); g.add(hull);
+  const deck = new THREE.Mesh(new THREE.CircleGeometry(1, 20), light); deck.rotation.x = -Math.PI / 2; deck.scale.set(0.8, 1.8, 1); deck.position.y = -0.3; g.add(deck);
+  const rim = new THREE.Mesh(new THREE.TorusGeometry(1, 0.06, 6, 24), light); rim.rotation.x = Math.PI / 2; rim.scale.set(0.85, 1.9, 1); g.add(rim);
+  for (const z of [-0.9, 0.7]) { const seat = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.08, 0.32), light); seat.position.set(0, -0.12, z); g.add(seat); }
+  const oar = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 2.4, 6), light); oar.rotation.z = 1.1; oar.position.set(0.9, 0.1, 0.1); g.add(oar);
+  g.traverse((o) => { if (o.isMesh) o.castShadow = true; }); return g;
+}
+function startIntro() {
+  if (navigator.webdriver && !/[?&]intro=1/.test(location.search)) { profile.flags.arrived = true; return; }
+  if (!intro) { intro = { boat: makeBoat(), t: 0, len: 9 }; scene.add(intro.boat); }
+  intro.t = 0; intro.boat.visible = true; intro.active = true;
+  ui.toast('Ngọc đang tới làng bằng thuyền… (E: bỏ qua)');
+}
+function introStep(dt) {
+  const k = Math.min(1, (intro.t += dt) / intro.len), e = k * k * (3 - 2 * k), z = 38 - e * 17.5, x = L.riverX(z) + 0.6 * Math.sin(k * 6);
+  const y = L.WATER_LEVEL + 0.42 + Math.sin(intro.t * 2.2) * 0.04, ahead = L.riverX(z - 0.5) - L.riverX(z);
+  intro.boat.position.set(x, y, z); intro.boat.rotation.y = Math.atan2(ahead, -0.5) + Math.PI; intro.boat.rotation.z = Math.sin(intro.t * 1.7) * 0.04;
+  player.pos.set(x, y - 0.22, z - 0.1); player.yaw = intro.boat.rotation.y + Math.PI; player.sync(); player.mixer.update(dt);
+  if (k >= 1) endIntro();
+}
+function endIntro() {
+  intro.active = false; intro.boat.visible = false; profile.flags.arrived = true;
+  game.teleport(18.2, 18.6); player.yaw = -Math.PI / 2; save(); sfx('fanfare');
+  ui.toast('Chào mừng tới Làng Khởi Đầu!');
 }
 /** Bag screen (I key or the 🎒 button): lists owned gear with its numbers; picking an item puts it on or takes it off. */
 function openBag() {
@@ -298,7 +331,7 @@ function setWear() {
   if (b.charm && hips) { const c = charmMesh(); c.position.set(0.13, 0.02, 0.08); hips.add(c); charmShown = c; }
 }
 /** The owl's review: five quick questions on learned and unit words, both directions. 4 of 5 opens the gate. */
-const OWL = { x: 2.9, z: 14.5 };
+const OWL = { x: 2.9, z: 14.5 }, SHOP_DOOR = { x: 7.6, z: -8 };      // the orange shop's door (west side)
 function owlReview() {
   const L0 = Save.gateWaiting(profile);
   if (!L0) { const next = Save.GATES.find((g) => g > profile.stats.level); ui.dialogue([{ who: 'Owl', en: 'Hoo-hoo! Keep training, little hero.', vi: next ? `Đến cấp ${next}, cú sẽ ôn tập với con để mở cấp tiếp theo.` : 'Con đã qua hết các cổng ôn tập của làng.' }]); return; }
@@ -363,6 +396,7 @@ function interactTarget() {
   if (near(tom.x, tom.z, 3)) return { text: 'E · Nói chuyện với Tom', run: () => story.talkTom() };
   if (near(ben.x, ben.z, 3.6)) return { text: 'E · Nói chuyện với Ben', run: () => story.talkBen() };
   if (near(sam.x, sam.z, 3)) return { text: 'E · Nói chuyện với Sam', run: () => story.talkSam() };
+  if (near(SHOP_DOOR.x, SHOP_DOOR.z, 1.7)) return { text: 'E · Vào cửa hàng (xem và mua bán đồ)', run: () => shopWin.show('Village Shop') };
   { const wi = walkers ? walkers.near(p) : -1; if (wi >= 0) return { text: 'E · Chào dân làng', run: () => { talkW = wi; ui.dialogue([{ who: 'Villager', en: walkers.greet(wi) }]); } }; }
   for (const f of friends) if (near(f.npc.x, f.npc.z, 2.6)) {
     if (f.shop) return { text: 'E · Cửa hàng của ' + f.who, run: () => openShop(f.who, f.shop, f.lines[0]) };
@@ -373,6 +407,8 @@ function interactTarget() {
 function onKey(e) {
   if (!started) return;
   if (arcade && arcade.key(e.code)) { e.preventDefault(); return; }
+  if (shopWin && shopWin.key(e.code)) { e.preventDefault(); return; }
+  if (intro && intro.active) { if (e.code === 'KeyE' || e.code === 'Space' || e.code === 'Escape') endIntro(); e.preventDefault(); return; }
   if (e.code === 'F3') { perfOn = !perfOn; $('perf').classList.toggle('hidden', !perfOn); e.preventDefault(); return; }
   if (ui.key(e)) { e.preventDefault(); return; }
   if (ui.modal) return;
@@ -400,6 +436,7 @@ async function boot() {
   tom = new Npc(tomG, 2.6, 7.6, -0.4); sam = new Npc(samG, 14, 17, 1.2); ben = new Npc(benG, -9.9, 19.5, Math.PI / 2); scene.add(tom.root, sam.root, ben.root);
   pip = new Pip(pipG.scene); scene.add(pip.root);
   for (const f of Object.values(FRIENDS)) { const npc = new Npc(await gltf(f.file), ...f.at, ngoc.animations); scene.add(npc.root); friends.push({ ...f, npc }); }
+  shopWin = new ShopWindow({ profile: () => profile, sfx, changed: () => { setSword(); setWear(); save(); refresh(); } });
   walkers = new Walkers(scene, (name) => loader.loadAsync(`./assets/models/${name}.glb`)); await walkers.init();      // villagers on the roads
   for (const a of [player, tom, sam, ben, ...friends.map((f) => f.npc)]) addOutline(a.root);     // cartoon outlines (medium/high)
   const F = L.REGIONS.forest;
@@ -457,14 +494,15 @@ const AUTO = !navigator.webdriver && !localStorage.getItem('eq-quality-manual');
 function frame() {
   const now = performance.now(), raw = (now - last) / 1000, real = Math.min(0.25, raw); last = now;
   const dt = Math.min(0.05, real); TIME.value += real; const t = TIME.value;
-  const frozen = ui.modal || !started || (arcade && arcade.open);
+  const frozen = ui.modal || !started || (arcade && arcade.open) || (shopWin && shopWin.open);
   if (arcade) arcade.update(real, keys);
   if (touch) touch.update();
   const input = { x: (keys.has('KeyD') || keys.has('ArrowRight') ? 1 : 0) - (keys.has('KeyA') || keys.has('ArrowLeft') ? 1 : 0), z: (keys.has('KeyW') || keys.has('ArrowUp') ? 1 : 0) - (keys.has('KeyS') || keys.has('ArrowDown') ? 1 : 0), run: keys.has('ShiftLeft') || keys.has('ShiftRight'), jump: keys.has('Space') };
   if (frozen) { input.x = input.z = 0; input.jump = false; }
   const hadRoute = !!player.route;
   // slow machines: several fixed physics steps per frame so the game never runs in slow motion
-  for (let left = real; left > 1e-4; left -= 0.05) player.update(Math.min(0.05, left), input, cam.yaw, frozen, sfx);
+  if (intro && intro.active) introStep(real);
+  else for (let left = real; left > 1e-4; left -= 0.05) player.update(Math.min(0.05, left), input, cam.yaw, frozen, sfx);
   if (hadRoute && !player.route) minimap.clearRoute();
   cam.update(real, player.pos);
   const talkingTo = ui.busy && ui.pages ? ui.pages[0].who : '';

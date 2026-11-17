@@ -39,7 +39,9 @@ export default makeRegion({
     P(2.2, [0, -4], [8, -6]),
     P(2.2, [-10, -1], [-10, 8]),
   ]; },
-  pathWiden: 1.45,          // roomier streets with people walking on them (feedback 17/11)
+  pathWiden: 1.45,
+  lateRiverHalf: () => 4.6,   // wider river (feedback 17/11); the 11.5 m bridges still reach both banks
+  thinTrees: 0.4,             // 40% fewer trees inside the village (feedback 17/11: too many trees)          // roomier streets with people walking on them (feedback 17/11)
   latePaths: () => [P(2.4, [-2, 34], [-8, 42], [-16, 46], [-27, 44]), P(2.2, [-2, 34], [3, 41], [9, 44])],
   lateClear: (x, z) => x > -36 && x < 16 && z > 37 && z < 57,
   hills: (x, z, h) => h + 3.2 * gauss(Math.hypot(x + 44, z + 20), 12) + 2.4 * gauss(Math.hypot(x - 46, z + 30), 11)

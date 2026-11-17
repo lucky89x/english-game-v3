@@ -10,7 +10,7 @@ export const payNote = (r) => (!r.full ? `Hôm nay trò này chỉ còn thưởn
 export const STARS = [[-46, -6], [-38, -34], [-12, -38], [30, -30], [48, -12], [52, 20], [44, 38], [10, 50], [-22, 50], [-48, 30], [-30, 14], [8, -36]];
 export const RACE = [[-20, 2], [-32, 4], [-42, 14], [-40, 28], [-34, 42], [-18, 46], [-6, 44], [-8, 30], [-20, 2]];
 export const STARTS = [
-  { id: 'fish', x: 19.8, z: 19.2, text: 'E · Câu cá (trò chơi)', sign: '🎣 Fishing' },
+  { id: 'fish', x: 18.4, z: 19.2, text: 'E · Câu cá (trò chơi)', sign: '🎣 Fishing' },
   { id: 'apple', x: 33.5, z: 6, text: 'E · Hứng táo (trò chơi)', sign: '🍎 Apple catch' },
   { id: 'race', x: -22, z: 4, text: 'E · Chạy vòng (trò chơi)', sign: '🏁 Ring race' },
   { id: 'candy', x: -4.4, z: -8.5, text: 'E · Xếp kẹo (trò chơi)', sign: '🍬 Candy Match', board: true },
@@ -67,11 +67,11 @@ export class MiniGames {
   start(id) {
     const s = STARTS.find((x) => x.id === id); this.api.sfx('tick');
     if (s.board) return this.api.board(id);
-    if (id === 'fish') { this.active = { id, s, cast: 0, caught: 0, pos: 0, centre: 0.5, width: 0.26, speed: 1.6, wait: 0, msg: '' }; this.newCast(); }
+    if (id === 'fish') { this.active = { id, s, cast: 0, caught: 0, pos: 0, centre: 0.5, width: 0.3, speed: 0.6, wait: 0, msg: '' }; this.newCast(); }
     if (id === 'apple') this.active = { id, s, time: 30, score: 0, next: 0.5 };
     if (id === 'race') { this.active = { id, s, i: 0, time: 0 }; this.rings.forEach((r, k) => { r.m.visible = k === 0; }); }
   }
-  newCast() { const a = this.active; a.cast += 1; a.centre = 0.2 + Math.random() * 0.6; a.width = Math.max(0.12, 0.28 - a.cast * 0.03); a.speed = 1.5 + a.cast * 0.35; a.wait = 0; a.hold = false; }
+  newCast() { const a = this.active; a.cast += 1; a.centre = 0.2 + Math.random() * 0.6; a.width = Math.max(0.16, 0.32 - a.cast * 0.03); a.speed = 0.55 + a.cast * 0.12; a.wait = 0; a.hold = false; }     // slower marker (feedback 17/11: too fast)
   pull() {
     const a = this.active; if (!a || a.id !== 'fish' || a.wait > 0) return;
     const ok = fishHit(a.pos, a.centre, a.width); if (ok) a.caught += 1;

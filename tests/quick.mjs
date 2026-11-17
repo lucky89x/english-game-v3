@@ -106,7 +106,7 @@ await run('map2', async () => {        // Map 2 monsters in the forest, only onc
 
 await run('forest', async () => {
   await ev(() => __eq.enterRegion('forest')); await page.waitForFunction(() => __eq.region === 'forest' && __eq.started, null, { timeout: 90000 });
-  check(await ev(() => __eq.errors.length === 0 && !__eq.wild.root.visible), 'Forest loads, no monsters from the meadow there');
+  check(await ev(() => __eq.errors.length === 0 && __eq.wild.mobs.every((m) => m.region === 'forest' || !m.g.visible)), 'Forest loads, no monsters from the meadow there');
 });
 
 await run('bag', async () => {          // A6: bag screen and gear on the body
@@ -123,8 +123,34 @@ await run('bag', async () => {          // A6: bag screen and gear on the body
   for (let n = 0; n < 3 && await page.isVisible('#dialog'); n++) { const last = await ev(() => __eq.ui.options ? __eq.ui.options.length : 0); if (last) await page.keyboard.press('Digit' + last); await wait(200); }
 });
 
+await run('shop', async () => {         // the shop door opens the inside view: buy, wear, sell
+  if (await ev(() => __eq.region !== 'village')) { await ev(() => __eq.enterRegion('village')); await page.waitForFunction(() => __eq.region === 'village' && __eq.started, null, { timeout: 120000 }); }
+  await ev(() => { const p = __eq.profile; p.inv = { owned: [], weapon: '', armor: '', charm: '', food: 0 }; p.stats.gold = 300; p.stats.level = 6; __eq.setWear(); __eq.teleport(7.6, -8); }); await wait(600);
+  check((await page.textContent('#prompt')).includes('Vào cửa hàng'), 'Prompt at the shop door');
+  await page.keyboard.press('KeyE'); await wait(500);
+  check(await page.isVisible('#shopwin') && (await page.textContent('#shopwin')).includes('Iron Sword') && (await page.textContent('#shopwin')).includes('Honey Bread'), 'Inside the shop: both counters with their goods');
+  await page.click('#shopwin button[data-act="buy"][data-id="wood_sword"]'); await wait(400);
+  check(await ev(() => __eq.profile.inv.owned.includes('wood_sword') && __eq.profile.stats.gold === 260 && !!__eq.sword), 'Buy: gold paid, sword in her hand');
+  await page.click('#shopwin button[data-act="sell"][data-id="wood_sword"]'); await wait(400);
+  check(await ev(() => !__eq.profile.inv.owned.includes('wood_sword') && __eq.profile.stats.gold === 280 && !__eq.sword), 'Sell: half the price back, sword gone');
+  await page.keyboard.press('Escape'); await wait(300);
+  check(!(await page.isVisible('#shopwin')), 'Esc leaves the shop');
+});
+
+await run('intro', async () => {        // a new child arrives by boat (?intro=1 shows it to tests)
+  await ev(() => __eq.pause(true)); const tp = await browser.newPage({ viewport: { width: 1024, height: 700 } }); tp.setDefaultTimeout(120000); await tp.goto(url + '?intro=1');
+  await tp.waitForFunction(() => globalThis.__eq && document.getElementById('loading').classList.contains('hidden') && !document.getElementById('menu').classList.contains('hidden'), null, { timeout: 180000 });
+  await tp.click('#mnew'); await tp.fill('#mname', 'Boat'); await tp.click('[data-g="6"]'); await tp.click('#mgo');
+  await tp.waitForFunction(() => __eq.started, null, { timeout: 120000 }); await tp.waitForTimeout(1500);
+  check(await tp.evaluate(() => __eq.intro && __eq.intro.active && __eq.player.pos.y < 0.4), 'New child starts in a boat on the river');
+  await tp.keyboard.press('KeyE'); await tp.waitForTimeout(800);
+  check(await tp.evaluate(() => !__eq.intro.active && __eq.profile.flags.arrived && Math.hypot(__eq.player.pos.x - 18.2, __eq.player.pos.z - 18.6) < 1.5), 'E skips: Ngọc stands on the dock');
+  check(await tp.evaluate(() => __eq.errors.length === 0), 'Intro page: no script errors');
+  await tp.close(); await ev(() => __eq.pause(false));
+});
+
 await run('touch', async () => {         // T4: a tablet page (?touch=1) with the joystick and buttons
-  const tp = await browser.newPage({ viewport: { width: 1024, height: 700 } }); await tp.goto(url + '?touch=1');
+  await ev(() => __eq.pause(true)); const tp = await browser.newPage({ viewport: { width: 1024, height: 700 } }); await tp.goto(url + '?touch=1');
   await tp.waitForFunction(() => globalThis.__eq && document.getElementById('loading').classList.contains('hidden') && !document.getElementById('menu').classList.contains('hidden'), null, { timeout: 180000 });
   tp.setDefaultTimeout(120000); await tp.click('#mnew'); await tp.fill('#mname', 'Tab'); await tp.click('[data-g="6"]'); await tp.click('#mgo');
   await tp.waitForFunction(() => __eq.started, null, { timeout: 90000 }); await tp.waitForTimeout(500);
@@ -145,7 +171,7 @@ await run('touch', async () => {         // T4: a tablet page (?touch=1) with th
   check(y0 !== await tp.evaluate(() => __eq.arcade.game.piece.x), 'The ◀ button moves the falling block');
   check(await tp.isVisible('#touch .dpad') && !(await tp.isVisible('#touch .stick')), 'Board game open: the direction pad replaces the joystick');
   check(await tp.evaluate(() => __eq.errors.length === 0), 'Tablet page: no script errors ' + await tp.evaluate(() => __eq.errors.join(' | ').slice(0, 300)));
-  await tp.close();
+  await tp.close(); await ev(() => __eq.pause(false));
 });
 
 check(await ev(() => __eq.errors.length === 0), 'No script errors at the end');

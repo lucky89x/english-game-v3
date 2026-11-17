@@ -60,6 +60,15 @@ export function eat(profile, hpMax) {
   const b = bag(profile), hp = profile.stats.hp ?? hpMax; if (b.food <= 0 || hp >= hpMax) return 0;
   b.food -= 1; const after = Math.min(hpMax, hp + ITEMS.bread.heal); profile.stats.hp = after; return after - hp;
 }
+/** Selling back pays half the price (bread: half too, rounded down). Worn items are taken off first. */
+export const SELL_RATE = 0.5;
+export const sellPrice = (id) => Math.floor(ITEMS[id].cost * SELL_RATE);
+export function sell(profile, id) {
+  const it = ITEMS[id], b = bag(profile); if (!it) return 0;
+  if (it.slot === 'food') { if (b.food <= 0) return 0; b.food -= 1; }
+  else { const i = b.owned.indexOf(id); if (i < 0) return 0; b.owned.splice(i, 1); if (b[it.slot] === id) b[it.slot] = ''; wear(profile); }
+  const g = sellPrice(id); profile.stats.gold += g; return g;
+}
 export const shopList = (seller) => Object.entries(ITEMS).filter(([, it]) => it.seller === seller).map(([id]) => id);
 
 // ---------------------------------------------------------------- hunting quests and the boss

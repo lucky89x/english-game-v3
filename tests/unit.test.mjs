@@ -268,7 +268,7 @@ test('village: no vocabulary for the unit -> Ben says so and the story is not bl
 test('mini games: stars, race rings and start signs are on reachable ground', async () => {
   const STARS = [[-46, -6], [-38, -34], [-12, -38], [30, -30], [48, -12], [52, 20], [44, 38], [10, 50], [-22, 50], [-48, 30], [-30, 14], [8, -36]];
   const RACE = [[-20, 2], [-32, 4], [-42, 14], [-40, 28], [-34, 42], [-18, 46], [-6, 44], [-8, 30], [-20, 2]];
-  const STARTS = [[19.8, 19.2], [33.5, 6], [-22, 4], [-4.4, -8.5], [-20, -4], [-26, -2], [10, 28]];
+  const STARTS = [[18.4, 19.2], [33.5, 6], [-22, 4], [-4.4, -8.5], [-20, -4], [-26, -2], [10, 28]];
   const src = (await import('node:fs')).readFileSync(new URL('../src/game/minigames.js', import.meta.url), 'utf8');
   assert.ok(src.includes(JSON.stringify(STARS).replace(/,/g, ', ').replace(/\], \[/g, '], [')), 'test list matches the game list');
   L.setRegion('village');
@@ -408,4 +408,23 @@ test('old saves (v1 and v2 before bag, hunts, chests, gates) load and play on (K
   assert.deepEqual(bag(q), { owned: [], weapon: '', armor: '', charm: '', food: 0 }); assert.deepEqual(wear(q), { atk: 0, def: 0, hp: 0 });
   assert.equal(hunt(q).active, false); assert.equal(S.gateWaiting(q), 0); assert.equal(S.addExp(q, S.expNeed(4)), 1); assert.equal(S.gateWaiting(q), 5);
   assert.equal(pay(q, 'candy', 1, 10).gold, 10); assert.equal(map2Ready(q), false);
+});
+
+import { sell, sellPrice } from '../src/core/rules.js';
+test('shop: selling pays half, takes the item off, bread one by one, nothing for what is not owned', () => {
+  const p = S.newProfile('An', 6); p.stats.level = 8; p.stats.gold = 1000;
+  assert.ok(buy(p, 'iron_armor').ok); assert.equal(p.gear.def, 5);
+  assert.equal(sell(p, 'iron_armor'), sellPrice('iron_armor')); assert.equal(p.inv.armor, ''); assert.equal(p.gear.def, 0); assert.ok(!p.inv.owned.includes('iron_armor'));
+  assert.equal(sell(p, 'iron_armor'), 0, 'already sold');
+  buy(p, 'bread'); buy(p, 'bread'); const g = p.stats.gold; assert.equal(sell(p, 'bread'), 4); assert.equal(p.inv.food, 1); assert.equal(p.stats.gold, g + 4);
+});
+
+import { spawnSync } from 'node:child_process';
+import { readdirSync, readFileSync, statSync } from 'node:fs';
+test('every source file parses (catches a stray brace or comment before the browser does)', () => {
+  const walk = (d) => readdirSync(d).flatMap((f) => { const p = d + '/' + f; return statSync(p).isDirectory() ? walk(p) : p.endsWith('.js') ? [p] : []; });
+  for (const f of walk(new URL('../src', import.meta.url).pathname)) {
+    const r = spawnSync(process.execPath, ['--input-type=module', '--check'], { input: readFileSync(f) });
+    assert.equal(r.status, 0, f + ': ' + String(r.stderr).split('\n').slice(0, 4).join(' '));
+  }
 });

@@ -87,6 +87,8 @@ export async function villageExtras(add, loadModel, shadowed) {
   signs(add, [[2.9, 14.5, '← Market\nFarm ↓'], [3.2, 1.2, 'Bridge →\n← Forest'], [30.5, 9.5, 'Orchard']]);
   for (const [kind, x, z, rot, sc] of VILLAGE_PROPS) still.add(prop(kind, x, z, rot, sc));
   add(bake(still));
+  // shop and hall signboards: what is inside (feedback 17/11)
+  for (const [x, z, y, text] of [[7.4, -8, 4.3, '🏪 VILLAGE SHOP\nWeapons · Armour · Bread · Charms'], [0, -17.6, 6.2, "🏛 VILLAGE HALL\nMr Tom's office"]]) { const b = label(text, { size: 30, bg: 'rgba(255,233,176,0.96)', scale: 1.05 }); b.position.set(x, L.groundHeight(x, z) + y, z); add(b); }
   add(windmill()); add(pond()); add(dummies()); add(campsite());           // D1: the south fields
   signs(add, [[-2.5, 37.5, '← Windmill · Campsite\nTraining Yard →']]);
   add(bunting(-5.2, -3.2, 5.2, -3.2)); add(bunting(-6.5, 10.5, -6.5, 15.2, 3.0)); add(bunting(5.4, 9.6, 5.4, 2.2, 3.0));

@@ -111,11 +111,13 @@ export function makeRegion(cfg) {
   }
   // Later additions (latePaths, lateClear) are applied after the seeded trees and rocks, so adding a place to a map
   // only removes the trees standing on it and never reshuffles the rest of the forest.
+  if (cfg.lateRiverHalf) R.riverHalf = cfg.lateRiverHalf;                    // wider river carved after the trees were placed
   if (cfg.pathWiden) for (const p of R.PATHS) p.w *= cfg.pathWiden;          // wider roads, trees on them are removed below
   if (cfg.latePaths) R.PATHS.push(...cfg.latePaths(R));
-  if (cfg.latePaths || cfg.lateClear || cfg.pathWiden) {
-    const gone = (x, z, pad) => (cfg.lateClear && cfg.lateClear(x, z)) || R.pathDistance(x, z) < pad;
-    R.TREES = R.TREES.filter((t) => !gone(t.x, t.z, 3.6)); R.ROCKS = R.ROCKS.filter((r) => !gone(r.x, r.z, 1.6));
+  if (cfg.latePaths || cfg.lateClear || cfg.pathWiden || cfg.lateRiverHalf || cfg.thinTrees) {
+    const thin = (x, z) => cfg.thinTrees && Math.hypot(x, z) < R.PLAY_RADIUS && (Math.abs(Math.sin(x * 91.7 + z * 47.3) * 43758.5) % 1) < cfg.thinTrees;
+    const gone = (x, z, pad) => (cfg.lateClear && cfg.lateClear(x, z)) || R.pathDistance(x, z) < pad || R.riverDistance(x, z) < R.riverHalf(z) + pad * 0.5;
+    R.TREES = R.TREES.filter((t) => !gone(t.x, t.z, 3.6) && !thin(t.x, t.z)); R.ROCKS = R.ROCKS.filter((r) => !gone(r.x, r.z, 1.6));
   }
   for (const t of R.TREES) R.SOLIDS.push({ x: t.x, z: t.z, r: 0.45 * t.s + 0.15 });
   for (const r of R.ROCKS) if (r.s > 0.75) R.SOLIDS.push({ x: r.x, z: r.z, r: 0.75 * r.s });
