@@ -16,7 +16,7 @@ python3 -m http.server 8000     # chạy trong thư mục có index.html
 Mở http://localhost:8000. three.js nằm sẵn trong `vendor/`.
 
 ## Điều khiển
-WASD đi · Shift chạy · Space nhảy · E tương tác · J/F đánh · K né · Q ăn bánh · H gợi ý · Esc thoát bàn chơi · kéo chuột trái để xoay · lăn chuột để zoom · bấm bản đồ nhỏ để tự đi · F3 xem FPS.
+WASD đi · Shift chạy · Space nhảy · E tương tác · J/F đánh · K né · Q ăn bánh · I túi đồ · H gợi ý · Esc thoát bàn chơi · kéo chuột trái để xoay · lăn chuột để zoom · bấm bản đồ nhỏ để tự đi · F3 xem FPS.
 Máy tính bảng: cần ảo bên trái, nút E/⚔/né/nhảy/bánh/chạy bên phải, kéo một ngón để xoay, chụm hai ngón để zoom (thử trên máy tính: thêm `?touch=1` vào địa chỉ).
 
 ## Kiểm thử

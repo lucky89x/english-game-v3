@@ -34,7 +34,7 @@ Mỗi 5 cấp có một "cổng kiến thức" (ôn từ đến hạn) mới lê
 | A3 | Chiến đấu | Đánh (J/F), né lăn (K), máu, đẩy lùi, hồi sinh ở làng | xong |
 | A4 | Đồng Hoang | Đông Bắc làng: slime xanh, slime đỏ, golem đá | xong (chưa có dơi) |
 | A5 | Cửa hàng + trang bị | Bram bán kiếm và giáp, Rose bán bùa và bánh hồi máu (phím Q) | xong |
-| A6 | Túi đồ | Kiếm hiện trên tay Ngọc; chưa có màn hình túi đồ riêng, giáp chưa đổi hình | một phần |
+| A6 | Túi đồ | Phím I / nút 🎒: xem chỉ số, mặc/cởi đồ; kiếm trên tay, giáp da/giáp sắt trên ngực, cỏ bốn lá bên hông | xong |
 | A7 | Boss map 1 | Vua Slime (cấp 8+), Golem Cổ (cấp 18+, cánh đồng đá Đông Nam); 3 khiên chữ phá bằng từ tiếng Anh | xong |
 | A8 | Cổng Map 2 | Thắng Golem Cổ và đạt cấp 20 → mở Map 2 (Rừng Ký Ức), từ vựng chuyển sang Unit 2 | xong (quái riêng Map 2 chưa có) |
 | B1 | Xếp kẹo (match-3) | Biển phía Tây quảng trường, 25 lượt, có combo | xong |

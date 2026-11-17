@@ -97,6 +97,20 @@ await run('forest', async () => {
   check(await ev(() => __eq.errors.length === 0 && !__eq.wild.root.visible), 'Forest loads, no monsters from the meadow there');
 });
 
+await run('bag', async () => {          // A6: bag screen and gear on the body
+  await ev(() => { const p = __eq.profile; p.inv = { owned: ['wood_sword', 'iron_armor', 'clover'], weapon: 'wood_sword', armor: 'iron_armor', charm: 'clover', food: 2 }; __eq.setWear(); __eq.teleport(0, 13); }); await wait(300);
+  check(await ev(() => !!__eq.armor && __eq.armor.parent.name === 'chest'), 'Iron armour is shown on Ngọc\'s chest');
+  await page.keyboard.press('KeyI'); await wait(300);
+  check((await page.textContent('#dialog')).includes('Iron Armor') && (await page.textContent('#dialog')).includes('Phòng thủ 5'), 'I opens the bag with gear and numbers');
+  const k = await ev(() => __eq.ui.options.findIndex((o) => o.includes('Iron Armor')));
+  await page.keyboard.press('Digit' + (k + 1)); await wait(300);
+  check(await ev(() => !__eq.armor && __eq.profile.inv.armor === '' && __eq.profile.gear.def === 0), 'Picking the worn armour takes it off');
+  await page.keyboard.press('Digit' + (k + 1)); await wait(300);
+  check(await ev(() => !!__eq.armor && __eq.profile.gear.def === 5), 'Picking it again puts it back on');
+  await closeDialogs(); await page.keyboard.press('Escape'); await wait(200);
+  for (let n = 0; n < 3 && await page.isVisible('#dialog'); n++) { const last = await ev(() => __eq.ui.options ? __eq.ui.options.length : 0); if (last) await page.keyboard.press('Digit' + last); await wait(200); }
+});
+
 await run('touch', async () => {         // T4: a tablet page (?touch=1) with the joystick and buttons
   const tp = await browser.newPage({ viewport: { width: 1024, height: 700 } }); await tp.goto(url + '?touch=1');
   await tp.waitForFunction(() => globalThis.__eq && document.getElementById('loading').classList.contains('hidden') && !document.getElementById('menu').classList.contains('hidden'), null, { timeout: 180000 });

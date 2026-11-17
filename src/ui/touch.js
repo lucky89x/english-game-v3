@@ -6,7 +6,7 @@ const CSS = `
 #touch { position:fixed; inset:0; pointer-events:none; z-index:30; user-select:none; -webkit-user-select:none; touch-action:none; }
 #touch .stick { position:absolute; left:22px; bottom:96px; width:132px; height:132px; border-radius:50%; background:rgba(255,248,230,.35); border:3px solid rgba(90,60,30,.45); pointer-events:auto; touch-action:none; }
 #touch .knob { position:absolute; left:41px; top:41px; width:50px; height:50px; border-radius:50%; background:rgba(255,226,138,.9); border:3px solid #7a5530; }
-#touch .pad { position:absolute; right:18px; bottom:22px; display:grid; grid-template-columns:repeat(3,62px); grid-template-rows:repeat(2,62px); gap:10px; pointer-events:none; }
+#touch .pad { position:absolute; right:18px; bottom:22px; display:grid; grid-template-columns:repeat(3,62px); grid-template-rows:repeat(3,62px); gap:10px; pointer-events:none; }
 #touch button { pointer-events:auto; touch-action:none; width:62px; height:62px; border-radius:50%; border:3px solid #7a5530; background:rgba(255,233,176,.88); font:700 15px/1.05 system-ui, sans-serif; color:#4a2e14; padding:0; }
 #touch button.big { background:rgba(255,210,90,.95); font-size:22px; }
 #touch button:active, #touch button.on { transform:scale(.92); background:#ffd23c; }
@@ -15,7 +15,7 @@ const CSS = `
 #touch.arcade .stick, #touch.arcade .pad { display:none; }
 #touch.hide { display:none; }
 `;
-const ACTIONS = [['KeyE', 'E<br><small>nói</small>', 'big'], ['KeyJ', '⚔'], ['Space', '⤒'], ['KeyQ', '🍞'], ['KeyK', '↷<br><small>né</small>'], ['ShiftLeft', '»<br><small>chạy</small>', 'hold']];
+const ACTIONS = [['KeyE', 'E<br><small>nói</small>', 'big'], ['KeyJ', '⚔'], ['Space', '⤒'], ['KeyQ', '🍞'], ['KeyI', '🎒'], ['KeyK', '↷<br><small>né</small>'], ['ShiftLeft', '»<br><small>chạy</small>', 'hold']];
 const DPAD = [['ArrowLeft', '◀'], ['ArrowUp', '▲'], ['ArrowDown', '▼'], ['ArrowRight', '▶']];
 
 export const touchWanted = () => /[?&]touch=1/.test(location.search) || (matchMedia('(pointer: coarse)').matches && 'ontouchstart' in window);

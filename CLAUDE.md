@@ -14,7 +14,7 @@ Game học tiếng Anh lớp 6–9 bằng Three.js, JavaScript thuần, không b
 ## Lệnh
 ```bash
 node --test tests/unit.test.mjs        # vài giây; chạy sau mọi thay đổi
-node tests/quick.mjs --only combat,owl # nhóm: boot combat unit owl arcade touch forest; 2–6 phút, dùng cho lượt sửa nhỏ
+node tests/quick.mjs --only combat,owl # nhóm: boot combat unit owl arcade bag touch forest; 2–6 phút, dùng cho lượt sửa nhỏ
 node tests/e2e.mjs                     # cả cốt truyện, 20–25 phút trên máy không GPU; chạy nền, một lần cho mỗi cụm thay đổi
 node tests/look.mjs <tiền tố> [village|forest] [quality] [tên,…]   # ảnh duyệt mỹ thuật trong game (ngoc_close, ngoc_side…)
 python3 tools/review_sheet.py          # tạo lại bảng đối chiếu nội dung docs/DOI_CHIEU_NOI_DUNG.html
@@ -52,11 +52,12 @@ Cập nhật mục này mỗi khi xong việc, để phiên/hội thoại mới 
 - Nhập vai: cấp 1–20 (9.405 EXP ≈ 8–10 giờ), J/F đánh, K né, Q ăn bánh; Đồng Hoang; Vua Slime cấp 8, Golem Cổ cấp 18 (Đông Nam); thắng Golem Cổ ở cấp 20 mở Map 2 (Rừng Ký Ức, từ Unit 2); cửa hàng Bram, Rose.
 - Tiếng Anh trong vòng chơi: rương khóa chữ, bảng nhiệm vụ, khiên chữ của 2 boss, Cú Mèo cấp 5/10/15/20 (10/15/20 thêm 2 câu ngữ pháp, có cho Unit 1 cả 4 lớp). Unit theo map; phụ huynh chọn Unit ở thanh cài đặt.
 - Trò chơi không tiếng Anh (8 trò): thưởng đầy đủ 3 lượt đầu mỗi trò mỗi ngày, sau đó 20%.
+- Túi đồ (phím I, nút 🎒): mặc/cởi; giáp và cỏ bốn lá hiện trên người (`src/game/gear.js`, gắn xương chest/hips).
 - Máy tính bảng: cần ảo + nút chạm (chưa thử máy thật).
 - Mỹ thuật: tóc lọn cong thuôn nhọn (M1) cho Ngọc, Lily, Rose, Anna; bóng khe nướng vào màu đỉnh; lá cây dạng thẻ.
 - Đồ họa kiểu saltline (học từ realskyrin/fps3ademo-saltline, chỉ đọc): `src/render/post.js` hậu kỳ tự viết (bloom 2 tầng, tone map, chỉnh màu ấm, tối viền) + bề mặt vẽ tay bằng shader (`paint()` trong common.js: loang màu, hạt, vệt cỏ) + bầu trời làm ánh sáng môi trường + lấp lánh mặt nước + viền hoạt hình quanh nhân vật (`src/render/outline.js`, inverted hull dùng chung xương). Chỉ bật ở mức Vừa/Cao; tia nắng (radial blur về phía mặt trời) chỉ ở mức Cao vì mặt trời cao nên ít khi thấy. Mức Thấp như cũ.
 
-**Còn lại Map 1:** màn hình túi đồ, giáp hiện trên người, lấp đất trống phía Nam (D1), quái/boss riêng cho Map 2.
+**Còn lại Map 1:** lấp đất trống phía Nam (D1), quái/boss riêng cho Map 2.
 
 **Báo cáo rà soát 16/11 (anh đã duyệt hết):** xong N2 N3 N4 N5 T1 T2 T3 T4 K1 K2 K3 K4 K5 K6 M1. N1: đã có bảng `docs/DOI_CHIEU_NOI_DUNG.html`, chờ giáo viên tick rồi gửi dòng mã. M2 thay bằng shader vẽ tay (không cần file ảnh). Anh đã bỏ Tripo (M3). Anh tự làm: Q1/Q4 xóa nhánh trên GitHub (em không có quyền xóa nhánh), Q2 tắt skill trong Cài đặt, Q5 gõ /compact thành dòng riêng, Q6 dùng /caveman lite. Q3 giữ nguyên. M3/M4 (dịch vụ AI 3D, thuê họa sĩ) cần anh làm/chi tiền, em tích hợp khi có file.
 

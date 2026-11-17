@@ -14,7 +14,8 @@ import { MiniGames, STARS } from './game/minigames.js';
 import { Wild } from './game/combat.js';
 import { Arcade, candyGame, blocksGame, slingGame, spellGame, raceGame } from './ui/arcade.js';
 import { Chests } from './game/chests.js';
-import { ITEMS, bag, wear, buy, eat, shopList, pay, map2Ready } from './core/rules.js';
+import { armorMesh, charmMesh } from './game/gear.js';
+import { ITEMS, bag, wear, buy, eat, shopList, pay, map2Ready, playerAtk } from './core/rules.js';
 import { payNote } from './game/minigames.js';
 import { SAM_LINES, BRIDGE, BRIDGE_SPOTS, FRIENDS } from './game/content.js';
 import { UI } from './ui/ui.js';
@@ -82,7 +83,7 @@ let profile = null, quest = null, story = null, world = null, player = null, cam
 let touch = null, quality = localStorage.getItem('eq-quality') || 'medium', perfOn = false, started = false, switching = false, wordIds = {}, jarKey = '';
 const keys = new Set();
 const game = { errors, get profile() { return profile; }, get quest() { return quest; }, get story() { return story; }, get player() { return player; }, get cam() { return cam; }, get minimap() { return minimap; }, ui, L, stats: { fps: 0, ms: 0, calls: 0, tris: 0 },
-  teleport(x, z) { player.place(x, z); cam.target.set(x, player.pos.y + 1.25, z); }, setQuality, key: (code) => onKey({ code, preventDefault() {} }), get started() { return started && !switching; }, get region() { return L.NAME; }, chooseProfile, enterRegion, MARKET_JARS, BRIDGE_SPOTS, get mini() { return mini; }, get wild() { return wild; }, get scene() { return scene; }, openShop, get sword() { return swordMesh; }, get arcade() { return arcade; }, get chests() { return chests; }, get friends() { return friends; }, post, refresh: () => refresh() };
+  teleport(x, z) { player.place(x, z); cam.target.set(x, player.pos.y + 1.25, z); }, setQuality, key: (code) => onKey({ code, preventDefault() {} }), get started() { return started && !switching; }, get region() { return L.NAME; }, chooseProfile, enterRegion, MARKET_JARS, BRIDGE_SPOTS, get mini() { return mini; }, get wild() { return wild; }, get scene() { return scene; }, openShop, get sword() { return swordMesh; }, get armor() { return armorShown; }, setWear, openBag: () => openBag(), get arcade() { return arcade; }, get chests() { return chests; }, get friends() { return friends; }, post, refresh: () => refresh() };
 globalThis.__eq = game;
 
 function resize() { const w = innerWidth, h = innerHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
@@ -215,7 +216,7 @@ async function reloadUnit() { learning(profile, await loadGrade(profile.grade));
 async function chooseProfile(p) {
   unlock(); profile = p; store.last = p.id; started = false; shownLevel = 0;
   learning(p, await loadGrade(p.grade));                                   // this grade only
-  wear(profile); setSword();
+  wear(profile); setSword(); setWear();
   if ((story.step === 'open' || story.step === 'done') && !p.flags.bridge_fixed) p.flags.bridge_fixed = true;   // saves from before the bridge quest
   applyBridge();
   $('mapbox').classList.remove('hidden');
@@ -232,10 +233,24 @@ function openShop(who, seller, hello) {
   ui.choose({ who, en: hello, vi: `Vàng: ${profile.stats.gold} ● · Bánh trong túi: ${b.food}` }, [...ids.map(line), 'Goodbye!'], (i) => {
     if (i >= ids.length) return;
     const id = ids[i], it = ITEMS[id], r = buy(profile, id);
-    if (r.ok) { sfx('correct'); setSword(); save(); refresh(); return openShop(who, seller, r.why === 'owned' ? `You are wearing the ${it.en} now.` : `Here is your ${it.en}! Anything else?`); }
+    if (r.ok) { sfx('correct'); setSword(); setWear(); save(); refresh(); return openShop(who, seller, r.why === 'owned' ? `You are wearing the ${it.en} now.` : `Here is your ${it.en}! Anything else?`); }
     sfx('wrong'); openShop(who, seller, r.why === 'gold' ? `Sorry, the ${it.en} costs ${it.cost} gold.` : `The ${it.en} is for level ${it.level} heroes. Train a little more!`);
   });
 }
+/** Bag screen (I key or the 🎒 button): lists owned gear with its numbers; picking an item puts it on or takes it off. */
+function openBag() {
+  const b = bag(profile), ids = b.owned.filter((id) => ITEMS[id]), g = wear(profile);
+  const line = (id) => { const it = ITEMS[id], on = b[it.slot] === id, stat = [it.atk && `ATK +${it.atk}`, it.def && `DEF +${it.def}`, it.hp && `HP +${it.hp}`].filter(Boolean).join(', ');
+    return `${on ? '✔ ' : ''}${it.en} (${stat}) · ${on ? 'take off' : 'put on'}`; };
+  ui.choose({ who: 'Bag', en: ids.length ? 'What do you want to wear?' : 'Your bag is empty. Visit Bram and Rose to buy gear!',
+    vi: `Tấn công ${playerAtkOf()} · Phòng thủ ${g.def} · Máu tối đa ${Save.maxHp(profile)} · Vàng ${profile.stats.gold} ● · Bánh ${b.food} (phím Q)` },
+  [...ids.map(line), 'Close'], (i) => {
+    if (i >= ids.length) return;
+    const id = ids[i], it = ITEMS[id]; b[it.slot] = b[it.slot] === id ? '' : id;
+    wear(profile); setSword(); setWear(); sfx('tick'); save(); refresh(); openBag();
+  });
+}
+const playerAtkOf = () => playerAtk(profile);
 /** Shows the worn weapon in Ngọc's right hand. */
 let swordMesh = null;
 function setSword() {
@@ -250,6 +265,17 @@ function setSword() {
   const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.16, 8), mat(0x5f3519)); g.add(grip);
   g.traverse((o) => { if (o.isMesh) o.castShadow = true; });
   g.rotation.set(Math.PI / 2, 0, 0); g.position.set(0, 0.05, 0.03); hand.add(g); swordMesh = g;
+}
+/** Worn armour on the chest and the charm on the hip (A6). */
+let armorShown = null, charmShown = null;
+function setWear() {
+  if (!player || !profile) return;
+  const bone = (re) => { let b = null; player.root.traverse((o) => { if (!b && o.isBone && re.test(o.name)) b = o; }); return b; };
+  for (const m of [armorShown, charmShown]) if (m) m.removeFromParent();
+  armorShown = charmShown = null; const b = bag(profile);
+  const chest = bone(/^chest$/), hips = bone(/^hips$/);
+  const a = armorMesh(b.armor); if (a && chest) { chest.add(a); armorShown = a; }
+  if (b.charm && hips) { const c = charmMesh(); c.position.set(0.13, 0.02, 0.08); hips.add(c); charmShown = c; }
 }
 /** The owl's review: five quick questions on learned and unit words, both directions. 4 of 5 opens the gate. */
 const OWL = { x: 2.9, z: 14.5 };
@@ -331,6 +357,7 @@ function onKey(e) {
   if (ui.modal) return;
   if (e.code === 'KeyE') { const t = interactTarget(); if (t) t.run(); }
   if (e.code === 'KeyH') quest.hint();
+  if (e.code === 'KeyI' && profile) openBag();
   if (e.code === 'KeyQ' && profile) { const got = eat(profile, Save.maxHp(profile)); if (got) { sfx('correct'); ui.toast(`+${got} HP`); save(); refresh(); } }
   if (e.code === 'KeyK' && wild && !(mini && mini.active)) wild.dodge();
   if ((e.code === 'KeyJ' || e.code === 'KeyF') && wild && !(mini && mini.active)) wild.attack();
