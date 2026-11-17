@@ -41,9 +41,9 @@ export default makeRegion({
   ]; },
   pathWiden: 1.7,
   lateRiverHalf: () => 4.6,   // wider river (feedback 17/11); the 11.5 m bridges still reach both banks
-  thinTrees: 0.55,            // fewer trees inside the village (feedback 17/11, twice: too many trees)
-  thinOuter: 0.35,            // and in the scenery ring around it
-  treeScale: 1.45,            // taller trees, in proportion with the people (feedback 17/11: "the trees are too low")
+  thinTrees: 0.7,             // fewer trees inside the village (feedback 17/11, twice: too many trees)
+  thinOuter: 0.55,            // and in the scenery ring around it
+  treeScale: 1.85,            // taller trees, in proportion with the people (feedback 17/11: "the trees are too low")
   // Quest Square (feedback 17/11): a round paved square with a fountain in the middle, where Tom, Anna and the quest
   // board stand; roads leave it towards every part of the village.
   latePaths: () => [P(2.4, [-2, 34], [-8, 42], [-16, 46], [-27, 44]), P(2.2, [-2, 34], [3, 41], [9, 44]),
