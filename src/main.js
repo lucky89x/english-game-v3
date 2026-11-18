@@ -401,7 +401,7 @@ function freeSpot(region, x, z) {
 }
 async function adminGo(region, x, z) {
   const at = freeSpot(region, x, z);
-  if (region !== L.NAME) { if (region === 'forest') profile.flags.forest_open = true; await enterRegion(region, at); } else game.teleport(...at);
+  if (region !== L.NAME) { if (region === 'forest') profile.flags.forest_open = true; if (region === 'harbor') profile.flags.map2 = true; await enterRegion(region, at); } else game.teleport(...at);
   ui.toast('Đã tới nơi');
 }
 const STEP_ORDER = ['arrive', 'letter_find', 'letter_return', 'jars', 'jars_play', 'tom_bridge', 'bridge', 'gather', 'plan', 'open', 'done'];
@@ -469,6 +469,7 @@ function wordBook() {
 async function reloadUnit() { learning(profile, await loadGrade(profile.grade)); save(); refresh(); }
 async function chooseProfile(p) {
   unlock(); profile = p; store.last = p.id; started = false; shownLevel = 0;
+  if (p.admin) Object.assign(p.flags, { arrived: true, forest_open: true, map2: true });      // the admin may enter every map (18/11)
   learning(p, await loadGrade(p.grade));                                   // this grade only
   wear(profile); setSword(); setWear();
   if ((story.step === 'open' || story.step === 'done') && !p.flags.bridge_fixed) p.flags.bridge_fixed = true;   // saves from before the bridge quest
