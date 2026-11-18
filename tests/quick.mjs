@@ -119,7 +119,7 @@ await run('exam', async () => {        // map exam at level 20: 10 questions, 8 
   check(await ev(() => !__eq.profile.gates[20]), 'Studying the missed questions again does not open the gate by itself');
   await closeDialogs();
   const last1 = await ev(() => [...__eq.profile.exam.last]);
-  await askOwl(); await page.keyboard.press('KeyE'); await wait(300);
+  await askOwl(); await wait(400); await page.keyboard.press('KeyE'); await wait(500);
   await sit(0);          // 10 of 10 on a new paper
   const last2 = await ev(() => [...__eq.profile.exam.last].slice(0, 10));
   check((await page.textContent('#dialog')).includes('Wonderful') && await ev(() => __eq.profile.gates[20] && __eq.profile.exam.passed && __eq.profile.exam.tries === 2), '10 of 10 on the second paper opens the gate');
