@@ -17,7 +17,9 @@ export const HARBOR = {
   salon: { x: -12, z: -24, door: [-12, -19.4] },
   market: { x: 2, z: 16 },
   lighthouse: { x: 34, z: -40 },
-  ship: { x: 38, z: 17 },
+  ship: { x: 60, z: 14 },
+  yard: { x: 3, z: -8.5 },      // container yard north of the main pier, with the quay crane beside it
+  crane: { x: 14.5, z: -10 },
 };
 const onPier = (x, z) => PIERS.some((p) => Math.abs(z - p.z) < p.half && x > p.x0 - 2 && x < p.x1 + 1);
 
@@ -31,7 +33,7 @@ export default makeRegion({
     { id: 'pier', en: 'pier', vi: 'cầu tàu', label: 'Main Pier', x: 30, z: 2, spot: [26, 2] },
     { id: 'beach', en: 'beach', vi: 'bãi biển', label: 'Beach', x: 14, z: 40, spot: [12, 38] },
     { id: 'market', en: 'fish market', vi: 'chợ cá', label: 'Fish Market', x: 2, z: 16, spot: [2, 12] },
-    { id: 'ship', en: 'ship', vi: 'con tàu', label: 'Big Ship', x: 38, z: 17, spot: [26, 6] },
+    { id: 'ship', en: 'ship', vi: 'con tàu', label: 'Big Ship', x: 60, z: 14, spot: [47, 6] },
     { id: 'boutique', en: 'boutique', vi: 'cửa hàng thời trang', label: 'Style Boutique', x: -30, z: -8, spot: [-23, -8] },
     { id: 'cafe', en: 'café', vi: 'quán cà phê', label: 'Seaside Café', x: -30, z: 14, spot: [-23, 14] },
     { id: 'salon', en: 'salon', vi: 'tiệm làm đẹp', label: 'Beauty Salon', x: -12, z: -24, spot: [-12, -17] },
@@ -59,10 +61,12 @@ export default makeRegion({
     return h;
   },
   lateClear: (x, z) => onPier(x, z) || x > coastX(z) - 7,              // no trees on the piers or the sand
-  keepClear: [{ x: -12, z: 2, r: 10 }, { x: -30, z: -8, r: 7 }, { x: -30, z: 14, r: 7 }, { x: -12, z: -24, r: 7 }, { x: 2, z: 16, r: 6 }, { x: 34, z: -40, r: 6 }, { x: 14, z: 40, r: 9 }],
+  keepClear: [{ x: -12, z: 2, r: 10 }, { x: -30, z: -8, r: 7 }, { x: -30, z: 14, r: 7 }, { x: -12, z: -24, r: 7 }, { x: 2, z: 16, r: 6 }, { x: 34, z: -40, r: 6 }, { x: 5, z: -9, r: 9 }, { x: 14, z: 40, r: 9 }],
   solids: [
     { x: -30, z: -8, r: 4.6 }, { x: -30, z: 14, r: 4.6 }, { x: -12, z: -24, r: 4.6 },      // the three shops
-    { x: 34, z: -40, r: 2.4 },                                            // lighthouse tower
+    { x: 34, z: -40, r: 3.4 },                                            // lighthouse tower
+    { x: 0, z: -8.5, r: 3.4 }, { x: 6.5, z: -8.5, r: 3.4 }, { x: 12, z: -8.5, r: 2.4 },      // container yard
+    { x: 14.5, z: -15, r: 2.6 }, { x: 14.5, z: -5, r: 2.6 },              // quay crane legs
     { x: -1, z: 18, r: 1.6 }, { x: 5, z: 18, r: 1.6 },                    // fish market stalls
   ],
 });

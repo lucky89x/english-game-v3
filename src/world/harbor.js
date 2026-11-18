@@ -20,35 +20,25 @@ function piers(g) {
     for (let x = p.x0; x <= p.x1; x += 4) for (const s of [-1, 1]) mesh(g, new THREE.BoxGeometry(0.1, 0.75, 0.1), dark, x, 0.55, p.z + s * (p.half + 0.1));
   }
 }
-function lighthouse(add) {
-  const { x, z } = HARBOR.lighthouse, y = L.groundHeight(x, z) - 0.2, g = new THREE.Group(), still = new THREE.Group();
-  const red = M(0xd8342a, 0.6), white = M(0xf6f2ea, 0.6);
-  for (let i = 0; i < 6; i++) mesh(still, new THREE.CylinderGeometry(1.75 - (i + 1) * 0.14, 1.75 - i * 0.14, 1.6, 20), i % 2 ? red : white, x, y + 0.8 + i * 1.6, z);
-  mesh(still, new THREE.CylinderGeometry(1.35, 1.35, 0.25, 20), M(0x3a3a40, 0.5), x, y + 9.7, z);
-  for (let k = 0; k < 10; k++) { const a = k / 10 * Math.PI * 2; mesh(still, new THREE.BoxGeometry(0.06, 0.6, 0.06), M(0x3a3a40, 0.5), x + Math.cos(a) * 1.25, y + 10.1, z + Math.sin(a) * 1.25); }
-  mesh(still, new THREE.BoxGeometry(0.7, 1.2, 0.08), M(0x5a3416), x - 1.6, y + 0.6, z + 0.2).rotation.y = Math.PI / 2;      // door
-  g.add(bake(still));
-  const lamp = mesh(g, new THREE.SphereGeometry(0.55, 16, 12), M(0xfff2b0, 0.3, { emissive: 0xffd060, emissiveIntensity: 2.4 }), x, y + 10.4, z);
-  mesh(g, new THREE.ConeGeometry(1.1, 0.9, 20), red, x, y + 11.3, z);
+const tint = (m, f) => m.traverse((c) => { if (c.isMesh) f(c); });
+/** Blender lighthouse with the turning beam kept from the code version (the lamp sits near the top of the tower). */
+async function lighthouse(add, loadModel, shadowed) {
+  const { x, z } = HARBOR.lighthouse, y = L.groundHeight(x, z) - 0.2, g = new THREE.Group();
+  let m = null; try { m = shadowed(await loadModel('harbor_lighthouse_v01')); } catch { /* falls back to nothing: the beam alone */ }
+  if (m) { m.position.set(x, y, z); g.add(m); }
+  const lampY = y + 12.2;
+  const lamp = mesh(g, new THREE.SphereGeometry(0.01, 4, 3), M(0xfff2b0, 0.3, { emissive: 0xffd060, emissiveIntensity: 2.4 }), x, lampY, z);
   const beam = new THREE.Mesh(new THREE.ConeGeometry(2.2, 14, 20, 1, true), new THREE.MeshBasicMaterial({ color: 0xfff2b0, transparent: true, opacity: 0.18, depthWrite: false, side: THREE.DoubleSide }));
-  beam.geometry.translate(0, -7, 0); beam.geometry.rotateZ(Math.PI / 2); beam.position.set(x, y + 10.4, z); g.add(beam);
+  beam.geometry.translate(0, -7, 0); beam.geometry.rotateZ(Math.PI / 2); beam.position.set(x, lampY, z); g.add(beam);
   g.userData.update = (t) => { beam.rotation.y = t * 0.6; lamp.material.emissiveIntensity = 2.2 + Math.sin(t * 3) * 0.3; };
   add(g);
 }
-function ship(add) {
-  const { x, z } = HARBOR.ship, g = new THREE.Group(), y = L.WATER_LEVEL - 0.6;
-  const hull = M(0x7a3e1a, 0.7), trim = M(0xe8c060, 0.5), deck = M(0xc89058), sail = M(0xfff8ec, 0.9, { side: THREE.DoubleSide });
-  const shape = new THREE.Shape(); shape.moveTo(-8, 0); shape.lineTo(7, 0); shape.quadraticCurveTo(10, 0.3, 10.5, 1.8); shape.lineTo(-8.5, 1.8); shape.closePath();
-  const hg = new THREE.ExtrudeGeometry(shape, { depth: 4.2, bevelEnabled: true, bevelSize: 0.3, bevelThickness: 0.3, bevelSegments: 2 }); hg.translate(0, 0, -2.1);
-  mesh(g, hg, hull, 0, y, 0); mesh(g, new THREE.BoxGeometry(18, 0.12, 4.0), deck, 0.6, y + 1.85, 0); mesh(g, new THREE.BoxGeometry(18.8, 0.18, 4.4), trim, 0.6, y + 2.05, 0);
-  mesh(g, new THREE.BoxGeometry(3.4, 1.4, 4.0), hull, -6.6, y + 2.6, 0);      // cabin at the back
-  for (const [mx, h] of [[-2, 11], [4, 9]]) {
-    mesh(g, new THREE.CylinderGeometry(0.16, 0.2, h, 8), M(0x5a3416), mx, y + 1.8 + h / 2, 0);
-    for (const [sy, sw] of [[0.45, 1], [0.75, 0.75]]) { const s = new THREE.Mesh(new THREE.PlaneGeometry(4.2 * sw, h * 0.32, 6, 2), sail); const p = s.geometry.attributes.position; for (let i = 0; i < p.count; i++) p.setZ(i, Math.cos(p.getX(i) / (2.1 * sw) * Math.PI / 2) * 0.5); s.geometry.computeVertexNormals(); s.rotation.y = Math.PI / 2; s.position.set(mx + 0.4, y + 1.8 + h * sy, 0); g.add(s); }
-  }
-  const flag = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 0.8), M(0x2f6fd0, 0.8, { side: THREE.DoubleSide })); flag.position.set(-1.3, y + 13.2, 0); g.add(flag);
-  g.position.set(x, 0, z); g.rotation.y = Math.PI / 2 + 0.12;
-  g.userData.update = (t) => { g.rotation.z = Math.sin(t * 0.7) * 0.025; g.position.y = Math.sin(t * 0.9) * 0.08; flag.rotation.y = Math.sin(t * 3) * 0.3; };
+/** The big Blender cargo ship at anchor off the main pier (hull lies along z, bottom 2 m under the deck line). */
+async function ship(add, loadModel, shadowed) {
+  const { x, z } = HARBOR.ship; let m = null;
+  try { m = shadowed(await loadModel('harbor_cargo_ship_v01')); } catch { return; }
+  const g = new THREE.Group(); m.position.y = L.WATER_LEVEL + 0.9; g.add(m); g.position.set(x, 0, z); g.rotation.y = 0.06;
+  g.userData.update = (t) => { g.rotation.z = Math.sin(t * 0.6) * 0.01; g.position.y = Math.sin(t * 0.8) * 0.06; };
   add(g);
 }
 function palm(still, x, z, k) {
@@ -65,6 +55,39 @@ function umbrella(still, x, z, col) {
   mesh(still, new THREE.BoxGeometry(0.8, 0.04, 1.8), M(col, 0.9), x + 1.2, y + 0.04, z + 0.4);      // towel
 }
 
+
+/** Blender props: container yard + quay crane, pier furniture, mannequins at the boutique door, fish nets. */
+async function props(add, loadModel, shadowed) {
+  const got = {}, get = async (k) => { if (!(k in got)) { try { got[k] = await loadModel(`harbor_${k}_v01`); } catch { got[k] = null; } } return got[k]; };
+  const put = async (k, x, z, rot = 0, y = null, scale = 1, keep = null) => {
+    const src = await get(k); if (!src) return null; const m = shadowed(src.clone(true));
+    if (keep) m.children.forEach((c) => { if (c.name && c.name.startsWith('mannequin') && c.name !== keep) c.visible = false; });
+    m.position.set(x, y ?? L.groundHeight(x, z), z); m.rotation.y = rot; m.scale.setScalar(scale); add(m); return m;
+  };
+  const gh = (x, z) => L.groundHeight(x, z), Y = HARBOR.yard;
+  // container yard: two rows, two high in places
+  const cols = ['red', 'blue', 'green', 'orange'];
+  for (let r = 0; r < 2; r++) for (let c = 0; c < 3; c++) {
+    const x = Y.x - 3 + c * 6.4, z = Y.z - 1.4 + r * 2.9, base = gh(x, z);
+    await put(`container_${cols[(r * 3 + c) % 4]}`, x, z, 0, base);
+    if ((r + c) % 2 === 0) await put(`container_${cols[(r * 3 + c + 2) % 4]}`, x, z, 0, base + 2.6);
+  }
+  await put('container_blue', Y.x + 4, Y.z + 6.2, 0.25, gh(Y.x + 4, Y.z + 6.2));
+  await put('crane', HARBOR.crane.x, HARBOR.crane.z, 0, gh(HARBOR.crane.x, HARBOR.crane.z), 0.45);
+  // main pier: benches, lamps, bollards, crates (the pier deck top is y 0.22)
+  for (const [x, z, r] of [[22, 0.75, 0], [31, 0.75, 0], [27, 3.25, Math.PI]]) await put('pier_bench', x, z, r, 0.22);
+  for (const [x, z] of [[16, 4.05], [28, 4.05], [40, 4.05], [22, -0.05], [34, -0.05]]) await put('lamp_post', x, z, 0, 0.22);
+  for (const [x, z] of [[47, 0.15], [47, 3.85], [14, 0.15], [14, 3.85]]) await put('bollard', x, z, 0, 0.22);
+  for (const [x, z, r] of [[18.5, 3.2, Math.PI], [36, 3.2, Math.PI]]) await put('crate_stack', x, z, r, 0.22);
+  // fishing pier: nets, bench and a bollard
+  await put('fish_net', 24, 29.3, Math.PI, 0.22); await put('pier_bench', 30, 26.9, 0, 0.22); await put('bollard', 35, 29.2, 0, 0.22);
+  await put('crate_stack', 18, 26.9, 0, 0.22, 0.8);
+  // two mannequins flanking the boutique door (dress and coat), and a rack beside them
+  const bd = HARBOR.boutique.door;
+  await put('mannequin', bd[0] + 0.2, bd[1] - 3.4, Math.PI / 2, gh(bd[0], bd[1] - 3.4), 1, 'mannequin_dress');
+  await put('mannequin', bd[0] + 0.2, bd[1] + 3.4, Math.PI / 2, gh(bd[0], bd[1] + 3.4), 1, 'mannequin_coat');
+}
+
 export async function harborExtras(add, loadModel, shadowed) {
   // the open sea: one big water sheet; the land hides it where the ground is higher
   const seaGeo = new THREE.PlaneGeometry(320, 320, 1, 1); seaGeo.rotateX(-Math.PI / 2);
@@ -73,9 +96,10 @@ export async function harborExtras(add, loadModel, shadowed) {
   // the three shops with mini games: boutique (fashion), café (cooking), salon (beauty)
   const place = async (name, x, z, rot, tint) => { const m = shadowed(await loadModel(name)); m.position.set(x, L.groundHeight(x, z) - 0.05, z); m.rotation.y = rot; m.scale.setScalar(1.3); if (tint) m.traverse((c) => { if (c.isMesh) { c.material = c.material.clone(); c.material.color.multiply(new THREE.Color(...tint)); } }); add(m); return m; };
   const B = HARBOR;
-  await place('bld_shop_orange_v02', B.boutique.x, B.boutique.z, Math.PI / 2, [1.12, 0.86, 1.05]);
-  await place('bld_cottage_red_v02', B.cafe.x, B.cafe.z, Math.PI / 2, [1.0, 1.05, 1.1]);
-  await place('bld_house_blue_v02', B.salon.x, B.salon.z, 0, [1.08, 0.92, 1.15]);
+  const house = async (name, spot, rot) => { try { const m = shadowed(await loadModel(name)); m.position.set(spot.x, L.groundHeight(spot.x, spot.z) - 0.05, spot.z); m.rotation.y = rot; m.scale.setScalar(1.12); add(m); } catch { /* keep the shop door sign alone */ } };
+  await house('harbor_house_boutique_v01', B.boutique, Math.PI / 2);
+  await house('harbor_house_cafe_v01', B.cafe, Math.PI / 2);
+  await house('harbor_house_salon_v01', B.salon, 0);
   const gh = (x, z) => L.groundHeight(x, z);
   still.add(hangSign('STYLE BOUTIQUE', 'Clothes · Shoes · Hats', B.boutique.door[0] - 0.3, gh(...B.boutique.door) + 4.9, B.boutique.door[1], Math.PI / 2));
   still.add(hangSign('SEASIDE CAFÉ', 'Cakes · Drinks · Ice cream', B.cafe.door[0] - 0.3, gh(...B.cafe.door) + 4.7, B.cafe.door[1], Math.PI / 2));
@@ -86,11 +110,11 @@ export async function harborExtras(add, loadModel, shadowed) {
   // boats at the fishing pier
   for (const [bx, bz, r] of [[22, 31.2, 0.2], [30, 24.8, -0.3], [44, 5.6, 1.6]]) { try { const b = shadowed(await loadModel('prop_boat_v01')); b.position.set(bx, L.WATER_LEVEL - 0.25, bz); b.rotation.y = r; b.scale.setScalar(1.2); add(b); } catch { /* no boat model: the piers are enough */ } }
   // palms and umbrellas on the beach, crates and barrels on the main pier
-  [[10, 34], [16, 46], [4, 42], [14, 22], [8, -6], [12, -14], [-2, 30], [20, 52]].forEach(([x, z], k) => palm(still, x, z, k));
+  [[10, 34], [16, 46], [4, 42], [14, 22], [-2, 30], [20, 52]].forEach(([x, z], k) => palm(still, x, z, k));
   [[10, 40, 0xe2483e], [15, 34, 0x2f6fd0], [6, 47, 0xffb020], [18, 44, 0x2e9a5a]].forEach(([x, z, c]) => umbrella(still, x, z, c));
-  for (const [x, z] of [[18, 3.4], [19.2, 3.4], [26, 0.6], [34, 3.4]]) mesh(still, new THREE.BoxGeometry(0.9, 0.8, 0.9), M(0xa8743f), x, 0.62, z);
   for (const [x, z] of [[22, 0.5], [38, 0.6]]) mesh(still, new THREE.CylinderGeometry(0.4, 0.4, 0.95, 12), M(0x7a4a24), x, 0.7, z);
   add(bake(still));
-  lighthouse(add); ship(add);
+  await props(add, loadModel, shadowed);
+  await lighthouse(add, loadModel, shadowed); await ship(add, loadModel, shadowed);
   const sq = label('HARBOUR SQUARE', { size: 30, scale: 0.9 }); sq.position.set(B.square.x, gh(B.square.x, B.square.z) + 3.2, B.square.z); add(sq);
 }
