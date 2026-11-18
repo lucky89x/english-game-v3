@@ -15,6 +15,6 @@ Chó Shiba giữ 4 hoạt ảnh: Idle, Walk, Gallop, Eating. Thỏ và gà khôn
 
 ## Prop do tự dựng (không cần ghi công)
 
-10 file `prop_*_v01.glb` (vườn rau, cây tròn, cây thông, bụi cỏ, táo, cam, hồ, bãi lửa, thuyền, tháp nước) do dự án
+11 file `prop_*_v01.glb` (đài phun nước quảng trường, vườn rau, cây tròn, cây thông, bụi cỏ, táo, cam, hồ, bãi lửa, thuyền, tháp nước) do dự án
 tự dựng từ hình khối cơ bản trong Blender, không dùng mô hình ngoài. Dựng lại bằng:
 `OUT=<thư mục> blender -b -P tools/props/build_props.py` (tùy chọn `ONLY=tên,tên`).

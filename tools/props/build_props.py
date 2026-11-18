@@ -377,11 +377,116 @@ def water_tower():
     finish("prop_water_tower_v01")
 
 
+def ring_mesh(r_in, r_out, h, z0, m, seg=24, jit=0.0, seed=1):
+    r = random.Random(seed)
+    me = bpy.data.meshes.new("ring")
+    vs, fs = [], []
+    for i in range(seg):
+        a = i / seg * 2 * pi
+        c, s = math.cos(a), math.sin(a)
+        dz = r.uniform(0, jit)
+        vs += [(r_in * c, r_in * s, z0), (r_out * c, r_out * s, z0), (r_out * c, r_out * s, z0 + h + dz),
+               (r_in * c, r_in * s, z0 + h + dz)]
+    for i in range(seg):
+        a, b = i * 4, ((i + 1) % seg) * 4
+        fs += [(a + 3, a + 2, b + 2, b + 3), (a + 1, b + 1, b + 2, a + 2), (a + 0, a + 3, b + 3, b + 0),
+               (a + 0, b + 0, b + 1, a + 1)]
+    me.from_pydata(vs, [], fs)
+    me.update()
+    o = bpy.data.objects.new("ring", me)
+    bpy.context.collection.objects.link(o)
+    o.data.materials.append(m)
+    OBJS.append(o)
+    return o
+
+
+def plaza_fountain():
+    stone, stone2 = mat("stone", "#DCCFB2"), mat("stone_dark", "#B9AA8A")
+    gold, gold2 = mat("gold", "#E8B53C", rough=0.3), mat("gold_dark", "#B98A2A", rough=0.3)
+    water, spray = mat("water", "#4FA8D8", rough=0.2), mat("water_spray", "#CDEBF8", rough=0.2)
+    soil = mat("soil", "#5A3A24")
+    h1, h2 = mat("hedge", "#3F8A3A"), mat("hedge_light", "#56A446")
+    pink, pink2 = mat("flower_pink", "#E85A9B"), mat("flower_pink_light", "#F4A0C8")
+    purple, blue = mat("flower_purple", "#8E6BC8"), mat("flower_blue", "#6C8FE0")
+    yellow, pot = mat("flower_yellow", "#F2C94C"), mat("planter", "#B5603A")
+    bronze = mat("bronze", "#5B5148")
+    # --- outer wall, hedges, flower bed
+    ring_mesh(3.3, 3.6, 0.5, 0.0, stone)
+    ring_mesh(3.22, 3.68, 0.08, 0.5, stone2)
+    ring_mesh(2.2, 3.3, 0.42, 0.0, soil)
+    ring_mesh(2.95, 3.25, 0.7, 0.2, h1, 24, 0.12, 3)
+    ring_mesh(2.2, 2.45, 0.5, 0.2, h2, 24, 0.08, 4)
+    r = random.Random(8)
+    n = 44
+    for i in range(n):
+        a = i / n * 2 * pi
+        sector = (i * 4 // n)
+        cols = [(pink, pink2), (purple, blue), (pink2, pink), (blue, purple)][sector]
+        rad = 2.7
+        for k, off in enumerate((-0.12, 0.12)):
+            ball(0.17, ((rad + off) * math.cos(a + k * 0.07), (rad + off) * math.sin(a + k * 0.07),
+                        0.6 + r.uniform(0, 0.08)), cols[(i + k) % 2], 1, (1, 1, 0.85), jit=0.02, seed=i * 2 + k)
+    # --- pillars with busts / planters
+    for i in range(8):
+        a = i / 8 * 2 * pi + pi / 8
+        x, y = 3.45 * math.cos(a), 3.45 * math.sin(a)
+        box((0.42, 0.42, 1.2), (x, y, 0.6 + 0.0), stone, (0, 0, a))
+        box((0.52, 0.52, 0.09), (x, y, 1.24), stone2, (0, 0, a))
+        box((0.5, 0.5, 0.1), (x, y, 0.05), stone2, (0, 0, a))
+        if i % 2 == 0:
+            ball(0.12, (x, y, 1.6), bronze, 1, (1, 1, 1.1))
+            ball(0.2, (x, y, 1.42), bronze, 1, (1.15, 0.7, 0.8), (0, 0, a))
+        else:
+            cyl(0.17, 0.18, (x, y, 1.38), pot, 8, 0.13)
+            for kx, ky in ((0, 0), (0.08, 0.05), (-0.07, 0.06), (0.03, -0.08)):
+                ball(0.09, (x + kx, y + ky, 1.52), yellow, 1)
+    # --- inner stone basin and water
+    ring_mesh(1.85, 2.15, 0.75, 0.0, stone)
+    ring_mesh(1.8, 2.22, 0.08, 0.75, stone2)
+    cyl(1.9, 0.06, (0, 0, 0.55), water, 20)
+    # --- centre fountain
+    cyl(1.05, 0.9, (0, 0, 0.5 + 0.45), stone, 16)
+    cyl(1.15, 0.12, (0, 0, 0.5 + 0.96), stone2, 16)
+    for i in range(4):
+        a = i * pi / 2 + pi / 4
+        x, y = 1.03 * math.cos(a), 1.03 * math.sin(a)
+        box((0.34, 0.06, 0.42), (x, y, 1.0), stone2, (0, 0, a - pi / 2))
+        ball(0.1, (1.07 * math.cos(a), 1.07 * math.sin(a), 1.02), gold, 1, (1, 1, 1))
+    cyl(0.8, 0.4, (0, 0, 1.62 + 0.2), stone, 16, 1.5)
+    ring_mesh(1.3, 1.58, 0.16, 1.96, stone2, 16)
+    cyl(1.35, 0.04, (0, 0, 2.06), water, 16)
+    cyl(0.55, 1.0, (0, 0, 2.1 + 0.5), stone, 10, 0.38)
+    cyl(0.62, 0.1, (0, 0, 3.15), stone2, 10)
+    cyl(0.32, 0.3, (0, 0, 3.2 + 0.15), stone, 12, 0.85)
+    ring_mesh(0.7, 0.92, 0.12, 3.5, stone2, 12)
+    cyl(0.75, 0.04, (0, 0, 3.57), water, 12)
+    cyl(0.3, 0.32, (0, 0, 3.7), stone, 8)
+    # --- golden globe, tilted ring and continents
+    G = mathutils.Vector((0, 0, 4.85))
+    R = 0.95
+    ball(R, tuple(G), gold, 2, jit=0.012, seed=2)
+    rg = ring_mesh(R + 0.02, R + 0.1, 0.07, -0.035, gold2, 24)
+    rg.location = tuple(G)
+    rg.rotation_euler = (0.42, 0, 0)
+    for k, (az, el, sz) in enumerate(((20, 25, 0.36), (110, -15, 0.3), (200, 30, 0.38), (290, -5, 0.3), (60, 65, 0.22))):
+        d = mathutils.Vector((math.cos(radians(el)) * math.cos(radians(az)), math.cos(radians(el)) * math.sin(radians(az)),
+                              math.sin(radians(el))))
+        o = ball(sz, tuple(G + d * R * 0.97), gold2, 1, (1, 1, 0.3), jit=0.02, seed=k)
+        o.rotation_mode = 'QUATERNION'
+        o.rotation_quaternion = d.to_track_quat('Z', 'Y')
+    # --- water jets in the lower pool
+    for i in range(8):
+        a = i / 8 * 2 * pi
+        x, y = 1.5 * math.cos(a), 1.5 * math.sin(a)
+        cyl(0.045, 0.7, (x, y, 0.55 + 0.35), spray, 5, 0.01, (0.18 * math.sin(a), -0.18 * math.cos(a), 0))
+    finish("prop_plaza_fountain_v01")
+
+
 BUILDERS = {
     "prop_vegetable_garden_v01": vegetable_garden, "prop_tree_round_v01": tree_round,
     "prop_tree_pine_v01": tree_pine, "prop_grass_tuft_v01": grass_tuft, "prop_apple_v01": apple,
     "prop_orange_v01": orange, "prop_pond_v01": pond, "prop_campfire_v01": campfire,
-    "prop_boat_v01": boat, "prop_water_tower_v01": water_tower,
+    "prop_boat_v01": boat, "prop_plaza_fountain_v01": plaza_fountain, "prop_water_tower_v01": water_tower,
 }
 for n, f in BUILDERS.items():
     if ONLY and n not in ONLY:
