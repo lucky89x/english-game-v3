@@ -5,6 +5,7 @@ import * as L from '../core/layout.js';
 import { paint, PAINT, label, buildTerrain, buildCobbles, buildWater, buildTrees, buildRocks, buildGrass, buildFlowers, buildFences, mountains, critters, fallRocks, riverside, bushes, creatures } from './common.js';
 import { MARKET_JARS, villageExtras, brokenBits } from './village.js';
 import { forestExtras } from './forest.js';
+import { harborExtras } from './harbor.js';
 
 /** The three animals made in Blender; any that fails to load falls back to the animals drawn by code. */
 async function animalModels(loadModel, loadAnimated) {
@@ -39,7 +40,7 @@ export async function buildWorld(scene, loadModel, loadAnimated) {
     e.broken.visible = !open;
   };
   for (const b of L.BRIDGES) setBridgeOpen(b.id, b.open);
-  if (L.NAME === 'forest') await forestExtras(add, loadModel, shadowed); else await villageExtras(add, loadModel, shadowed);
+  if (L.NAME === 'forest') await forestExtras(add, loadModel, shadowed); else if (L.NAME === 'harbor') await harborExtras(add, loadModel, shadowed); else await villageExtras(add, loadModel, shadowed);
   // jar labels (village market): four pooled sprites, text swapped per customer
   const jarLabels = [];
   return {

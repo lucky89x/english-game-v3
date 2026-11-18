@@ -135,7 +135,7 @@ export function buildTerrain() {
   geo.rotateX(-Math.PI / 2);
   const p = geo.attributes.position, col = new Float32Array(p.count * 3);
   const gA = C(0x62b83a), gB = C(0x9ad852), gC = C(0x3f9a3a), path = C(0xc9b58c), dirt = C(0xa98a5a), sand = C(0xe9dca6),
-    rock = C(0x9b99a8), rockL = C(0xbcb8c6), bed = C(0x2f9aa8), tmp = new THREE.Color();
+    rock = C(0x9b99a8), rockL = C(0xbcb8c6), bed = C(0x2f9aa8), tmp = new THREE.Color(), lowSand = L.REGIONS[L.NAME].lowSand;      // the harbour beach (Map 2)
   for (let i = 0; i < p.count; i++) {
     const x = p.getX(i), z = p.getZ(i), h = L.groundHeight(x, z);
     p.setY(i, h);
@@ -146,7 +146,7 @@ export function buildTerrain() {
     const pd = L.pathDistance(x, z);
     if (pd < 0.9) tmp.lerp(dirt, 1 - Math.max(0, pd) / 0.9);
     if (pd < 0.1) tmp.lerp(path, 0.85);
-    if (h < 0.28 && z > L.RIVER_START - 2) tmp.lerp(sand, Math.min(1, (0.28 - h) / 0.3));
+    if (h < 0.28 && (z > L.RIVER_START - 2 || (lowSand && lowSand(x, z)))) tmp.lerp(sand, Math.min(1, (0.28 - h) / 0.3));
     if (h < L.WATER_LEVEL) tmp.lerp(bed, Math.min(1, (L.WATER_LEVEL - h) / 0.5));
     if (slope > 0.75) tmp.lerp(n > 0.5 ? rockL : rock, Math.min(1, (slope - 0.75) / 0.5));
     col[i * 3] = tmp.r; col[i * 3 + 1] = tmp.g; col[i * 3 + 2] = tmp.b;

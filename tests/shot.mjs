@@ -27,6 +27,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const { server, url } = await serve(); const { browser, page, logs } = await open(url);
   await page.click('#mnew'); await page.fill('#mname', 'An'); await page.click('[data-g="6"]'); await page.click('#mgo');
   await page.waitForFunction(() => globalThis.__eq.started);
+  if (process.env.REGION) { await page.evaluate((r) => { __eq.profile.flags.map2 = true; return __eq.enterRegion(r); }, process.env.REGION); await page.waitForTimeout(3000); }
   if (x !== undefined) await page.evaluate(([x, z, yaw, pitch, dist]) => { const g = __eq; g.teleport(+x, +z); g.cam.yaw = g.cam.tYaw = +yaw; g.cam.pitch = g.cam.tPitch = +pitch; g.cam.dist = g.cam.tDist = g.cam.cur = +dist; }, [x, z, yaw, pitch, dist]);
   await page.waitForTimeout(2500);
   await page.screenshot({ path: out });

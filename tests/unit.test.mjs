@@ -548,3 +548,19 @@ test('homes: furniture goes into the home once, fruit is eaten after bread, the 
   for (const s of ['home', 'garden', 'produce', 'music']) assert.ok(RH.shopList(s).length >= 4, s);
   assert.deepEqual(RH.owners([{ id: 'a', admin: true }, { id: 'b' }, { id: 'c' }, { id: 'd' }]).map((x) => x.id), ['b', 'c']);
 });
+
+// ---------------------------------------------------------------- Map 2: Sunny Harbor (18/11)
+import * as ST from '../src/ui/style.js';
+test('harbor: sea on the east, piers and every shop reachable from the boat', async () => {
+  const H = await import('../src/core/regions/harbor.js'), LH = H.default;
+  assert.ok(LH.inWater(50, 20) && !LH.inWater(-12, 2), 'sea east, town west');
+  for (const [x, z] of [[40, 2], [30, 28], [-23.5, -8], [-23.5, 14], [-12, -18], [2, 12], [12, 38], [28, -35]]) assert.ok(LH.walkable(x, z, 0.5), `${x},${z}`);
+});
+test('style studio: orders can be worn together, read well, and score the outfit', () => {
+  let seed = 3; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  for (let i = 0; i < 40; i++) { const o = ST.makeOrder(rnd, 4); assert.equal(o.length, 4); assert.ok(!(o.some((x) => x.item === 'dress') && o.some((x) => x.item === 'skirt' || x.item === 'T-shirt' || x.item === 'trousers'))); }
+  assert.equal(ST.orderText([{ item: 'hat', color: 'orange' }, { item: 'shoes', color: 'red' }]), "I'd like an orange hat and red shoes, please.");
+  const order = [{ item: 'hat', color: 'pink' }, { item: 'bag', color: 'blue' }];
+  assert.deepEqual(ST.scoreOutfit(order, { hat: 'pink', bag: 'blue' }), { right: 2, total: 2, points: 40 });
+  assert.equal(ST.scoreOutfit(order, { hat: 'pink', bag: 'red', shoes: 'black' }).points, 10);
+});

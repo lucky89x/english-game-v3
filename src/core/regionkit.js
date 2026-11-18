@@ -49,7 +49,7 @@ export function makeRegion(cfg) {
     h = cfg.hills(x, z, h);
     const pd = R.pathDistance(x, z);
     if (pd < 1.5) h = h * (0.75 + 0.25 * smooth(-0.5, 1.5, pd));
-    h += 7.0 * smooth(R.PLAY_RADIUS + 2, R.PLAY_RADIUS + 16, Math.hypot(x, z));      // rim hills hide the map edge
+    h += 7.0 * smooth(R.PLAY_RADIUS + 2, R.PLAY_RADIUS + 16, Math.hypot(x, z)) * (cfg.rim ? cfg.rim(x, z) : 1);      // rim hills hide the map edge (not over a sea)
     if (z > R.RIVER_START - 3 && z < R.RIVER_END + 3) {
       const d = Math.abs(x - R.riverX(z)), hw = R.riverHalf(z);
       const k = 1 - smooth(hw - 0.6, hw + 2.6, d);
