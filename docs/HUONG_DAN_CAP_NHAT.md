@@ -79,7 +79,7 @@ py -m http.server 8000
 - **Bong bóng chữ "Abc"** dọc đường: chạy tới bấm E để học một từ mới (nghe, xem nghĩa, được EXP và vàng). Ben sẽ hỏi lại đúng những từ con vừa học.
 - Từ mới được **dạy trước** khi hỏi: thẻ chữ to, đọc to, có nghĩa tiếng Việt.
 - Máy **đọc to** lời thoại tiếng Anh (nút "Đọc to" để tắt). Bấm vào từ gạch chân để nghe và xem nghĩa. Nút 🔊 nghe lại.
-- Lời thoại ngắn hơn; nút **Bỏ qua ⏭** (hoặc Esc) nhảy tới câu tiếng Việt "việc cần làm".
+- Lời thoại ngắn hơn.
 - **📖 Học từ** (phím B): xem lại tất cả từ của Unit đang học.
 - Lần đầu dùng đọc to trên Windows: nếu không nghe tiếng, vào Cài đặt Windows → Thời gian và ngôn ngữ → Giọng nói, thêm giọng tiếng Anh (Mỹ).
 
@@ -101,6 +101,14 @@ py -m http.server 8000
 - Xếp hình: rơi nhanh hơn, **bấm chuột để xoay**. Bắn ná: vẽ lại slime và bóng bay, bay chậm hơn.
 - Nhà Lily, nhà Anna dời ra xa hơn.
 
+## Có gì mới (18/11, lượt 2)
+- **Tài khoản quản trị**: ở màn hình chọn người chơi bấm **🔑 Quản trị**, mật khẩu **321**. Trong game bấm nút **🛠 Admin** (hoặc F2): đi tới mọi nơi, đặt cấp, thêm vàng, không mất máu, mở hết, chọn bước nhiệm vụ để kiểm tra.
+- **Bấm chuột xuống đất** là Ngọc tự đi tới đó (kéo chuột vẫn để xoay camera).
+- Hồ sơ mới có **phần mở đầu cốt truyện** trước chuyến thuyền. Lời thoại **không còn nút Bỏ qua**.
+- **Bắn ná** hết treo, mục tiêu là drone bia và đĩa bay. **Xếp hình** nhanh hơn, mỗi hàng xóa được tặng một từ tiếng Anh. **Đua xe** mới: đánh vần từ bằng xu chữ cái, có 3 xe đối thủ. Cuối trò, chủ trò hỏi lại vài từ.
+- **Cửa hàng** mới: kệ gỗ, mỗi món có biểu tượng, giá, cấp cần có; chủ quầy Bram và Rose có nút **Talk** và **📜 Word quest** (hỏi tên tiếng Anh các món, có thưởng).
+- **Nhà Anna = Phòng nhạc**: đứng trước cửa bấm E, nghe 4 bài hát kèm lời tiếng Anh và nghĩa tiếng Việt. Bài của BLACKPINK có bản quyền nên chỉ có nút mở kênh YouTube chính thức (cần mạng).
+
 ## Phím chơi
-WASD đi · Shift chạy · Space nhảy · E nói chuyện/nhặt · J đánh · K né · Q ăn bánh · I túi đồ · B sổ từ · Esc bỏ qua thoại · H gợi ý · chuột trái kéo để xoay · lăn chuột để zoom · bấm bản đồ nhỏ để tự đi.
+WASD đi · Shift chạy · Space nhảy · E nói chuyện/nhặt · J đánh · K né · Q ăn bánh · I túi đồ · B sổ từ · F2 admin · bấm chuột xuống đất để đi · H gợi ý · chuột trái kéo để xoay · lăn chuột để zoom · bấm bản đồ nhỏ để tự đi.
 Phụ huynh: nút **⚙** góc dưới trái → ô **Unit** để chọn Unit con đang học trên lớp.

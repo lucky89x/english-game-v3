@@ -10,16 +10,18 @@ import { buildWorld, bridgeItem, TIME, MARKET_JARS, PAINT } from './world/index.
 import { Player, OrbitCamera, Npc, Pip, Crystals } from './game/actors.js';
 import { ForestQuest, landmark } from './game/quest.js';
 import { VillageStory } from './game/village.js';
-import { MiniGames, STARS } from './game/minigames.js';
-import { Wild } from './game/combat.js';
+import { MiniGames, STARS, STARTS } from './game/minigames.js';
+import { AdminPanel } from './ui/admin.js';
+import { MusicRoom } from './ui/music.js';
+import { Wild, BOARD, BOSS_AT, BOSS2_AT, FOREST_BOARD, BOSS3_AT } from './game/combat.js';
 import { Arcade, candyGame, blocksGame, slingGame, spellGame, raceGame } from './ui/arcade.js';
-import { Chests } from './game/chests.js';
+import { Chests, CHEST_SPOTS, FOREST_CHESTS } from './game/chests.js';
 import { armorMesh, charmMesh } from './game/gear.js';
 import { Walkers } from './game/walkers.js';
 import { ShopWindow } from './ui/shop.js';
 import { ITEMS, bag, wear, buy, eat, shopList, pay, map2Ready, playerAtk } from './core/rules.js';
 import { payNote } from './game/minigames.js';
-import { SAM_LINES, BRIDGE, BRIDGE_SPOTS, FRIENDS } from './game/content.js';
+import { SAM_LINES, BRIDGE, BRIDGE_SPOTS, FRIENDS, OPENING } from './game/content.js';
 import { UI } from './ui/ui.js';
 import { Post } from './render/post.js';
 import { addOutline, showOutlines } from './render/outline.js';
@@ -93,7 +95,7 @@ let profile = null, quest = null, story = null, world = null, player = null, cam
 let shopWin = null, walkers = null, talkW = -1, touch = null, quality = localStorage.getItem('eq-quality') || 'medium', perfOn = false, started = false, switching = false, wordIds = {}, jarKey = '';
 const keys = new Set();
 const game = { errors, get profile() { return profile; }, get quest() { return quest; }, get story() { return story; }, get player() { return player; }, get cam() { return cam; }, get minimap() { return minimap; }, ui, L, stats: { fps: 0, ms: 0, calls: 0, tris: 0 },
-  teleport(x, z) { player.place(x, z); cam.target.set(x, player.pos.y + 1.25, z); }, setQuality, key: (code) => onKey({ code, preventDefault() {} }), get started() { return started && !switching; }, get region() { return L.NAME; }, chooseProfile, enterRegion, MARKET_JARS, BRIDGE_SPOTS, get mini() { return mini; }, get wild() { return wild; }, get scene() { return scene; }, openShop, get sword() { return swordMesh; }, get armor() { return armorShown; }, setWear, openBag: () => openBag(), get arcade() { return arcade; }, get chests() { return chests; }, get spots() { return spots; }, get friends() { return friends; }, get walkers() { return walkers; }, get shopWin() { return shopWin; }, get intro() { return intro; }, cardOf: (id) => cardOfFn(id), pause: (on) => renderer.setAnimationLoop(on ? null : frame),      // tests: stop drawing while another page is checked
+  teleport(x, z) { player.place(x, z); cam.target.set(x, player.pos.y + 1.25, z); }, setQuality, key: (code) => onKey({ code, preventDefault() {} }), get started() { return started && !switching; }, get region() { return L.NAME; }, chooseProfile, enterRegion, MARKET_JARS, BRIDGE_SPOTS, get mini() { return mini; }, get wild() { return wild; }, get scene() { return scene; }, openShop, get sword() { return swordMesh; }, get armor() { return armorShown; }, setWear, openBag: () => openBag(), get arcade() { return arcade; }, get chests() { return chests; }, get spots() { return spots; }, get admin() { return admin; }, get friends() { return friends; }, get walkers() { return walkers; }, get shopWin() { return shopWin; }, get music() { return music; }, get intro() { return intro; }, cardOf: (id) => cardOfFn(id), pause: (on) => renderer.setAnimationLoop(on ? null : frame),      // tests: stop drawing while another page is checked
   post, refresh: () => refresh() };
 globalThis.__eq = game;
 
@@ -290,6 +292,79 @@ function teach(list, then, most = 5) {
   for (const c of fresh) seen[c.id] = Review.today(); save();
   ui.dialogue(fresh.map((c, i) => ({ who: `Từ mới ${i + 1}/${fresh.length}`, card: c })), then);
 }
+// ---------------------------------------------------------------- click to walk (18/11)
+// A short click (no drag) on the ground plans a route there, the same way the minimap does; a drag still turns the
+// camera. The ray is marched against the height map (cheap, no mesh picking). A gold ring marks the spot.
+let clickAt = null, walkMark = null;
+canvas.addEventListener('pointerdown', (e) => { if (e.button === 0 && e.pointerType !== 'touch') clickAt = { x: e.clientX, y: e.clientY, t: performance.now() }; });
+canvas.addEventListener('pointerup', (e) => {
+  const c = clickAt; clickAt = null;
+  if (!c || e.button !== 0 || !started || switching || ui.modal || (arcade && arcade.open) || (shopWin && shopWin.open)) return;
+  if (Math.hypot(e.clientX - c.x, e.clientY - c.y) > 6) return;          // the mouse moved: that was a camera drag
+  const r = canvas.getBoundingClientRect(), ndc = new THREE.Vector2(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+  const ray = new THREE.Raycaster(); ray.setFromCamera(ndc, camera);
+  const o = ray.ray.origin, d = ray.ray.direction; let hit = null;
+  for (let k = 0.5; k < 160; k += 0.25) { const x = o.x + d.x * k, y = o.y + d.y * k, z = o.z + d.z * k; if (y <= L.walkHeight(x, z)) { hit = [x, z]; break; } }
+  if (!hit || !minimap.travelTo(hit[0], hit[1])) return;
+  if (!walkMark) { walkMark = new THREE.Mesh(new THREE.RingGeometry(0.35, 0.55, 24), new THREE.MeshBasicMaterial({ color: 0xffd23c, transparent: true, depthWrite: false, side: THREE.DoubleSide })); walkMark.rotation.x = -Math.PI / 2; scene.add(walkMark); }
+  walkMark.position.set(hit[0], L.walkHeight(hit[0], hit[1]) + 0.06, hit[1]); walkMark.visible = true; walkMark.userData.t = 0;
+});
+// ---------------------------------------------------------------- admin (password 321, see ui/admin.js)
+let admin = null, music = null;
+const ANNA_DOOR = { x: -17.4, z: 12.5 };      // Anna's music house (moved west on 18/11), door on the east side
+function adminPlaces() {
+  const out = [], add = (region, name, x, z) => out.push({ region, name, x, z });
+  for (const r of ['village', 'forest']) for (const l of L.REGIONS[r].LANDMARKS) add(r, l.label, ...(l.spot || [l.x, l.z]));
+  add('village', 'Tom', 2.6, 9.6); add('village', 'Cửa hàng', SHOP_DOOR.x - 1, SHOP_DOOR.z); add('village', 'Cú Mèo', OWL.x, OWL.z + 1.2); add('village', 'Bảng săn quái', BOARD.x + 1.2, BOARD.z + 1);
+  for (const st of STARTS) add('village', 'Trò: ' + st.sign.replace(/^\S+\s/, ''), st.x + 0.8, st.z + 0.8);
+  add('village', 'Vua Slime', BOSS_AT.x, BOSS_AT.z - 4); add('village', 'Golem Cổ', BOSS2_AT.x, BOSS2_AT.z - 4); add('village', 'Rương Đồng Hoang', CHEST_SPOTS[0][0], CHEST_SPOTS[0][1] - 1.5);
+  add('forest', 'Cổng vào rừng', L.REGIONS.forest.SPAWN.x, L.REGIONS.forest.SPAWN.z); add('forest', 'Bảng săn quái rừng', FOREST_BOARD.x + 1.2, FOREST_BOARD.z + 0.6);
+  add('forest', 'Nữ hoàng Nấm', BOSS3_AT.x + 6, BOSS3_AT.z); add('forest', 'Rương rừng', FOREST_CHESTS[0][0], FOREST_CHESTS[0][1] - 1.5);
+  return out;
+}
+/** Nearest free spot to (x, z) in a region: admins land beside a house or NPC, never inside it. */
+function freeSpot(region, x, z) {
+  const R = L.REGIONS[region];
+  for (let d = 0; d < 8; d += 0.5) for (let a = 0; a < 6.28; a += 0.5) { const px = x + Math.cos(a) * d, pz = z + Math.sin(a) * d; if (R.walkable(px, pz, 0.5)) return [px, pz]; if (!d) break; }
+  return [x, z];
+}
+async function adminGo(region, x, z) {
+  const at = freeSpot(region, x, z);
+  if (region !== L.NAME) { if (region === 'forest') profile.flags.forest_open = true; await enterRegion(region, at); } else game.teleport(...at);
+  ui.toast('Đã tới nơi');
+}
+const STEP_ORDER = ['arrive', 'letter_find', 'letter_return', 'jars', 'jars_play', 'tom_bridge', 'bridge', 'gather', 'plan', 'open', 'done'];
+function adminStep(step) {
+  const k = STEP_ORDER.indexOf(step); profile.flags.arrived = true;
+  profile.flags.bridge_fixed = k >= STEP_ORDER.indexOf('open'); profile.flags.forest_open = step === 'done';
+  if (story.market) story.leaveMarket();
+  story.set(step); applyBridge();
+}
+function adminUnlock() {
+  Object.assign(profile.flags, { arrived: true, forest_open: true, bridge_fixed: true, map2: true, boss1: true, boss2: true });
+  profile.gates = Object.fromEntries(Save.GATES.map((g) => [g, true]));
+  if (STEP_ORDER.indexOf(story.step) < STEP_ORDER.indexOf('done')) story.set('done');
+  applyBridge(); reloadUnit();
+}
+function adminLevel(n) {
+  const st = profile.stats; st.level = n; st.exp = 0; profile.gates = profile.gates || {};
+  for (const g of Save.GATES) if (g <= n) profile.gates[g] = true;
+  st.hp = Save.maxHp(profile);
+}
+/** After a word game, its host asks up to three of the words the child met in it (English → meaning, 3 options). */
+function hostQuiz(who, words) {
+  const pool = unitCards.length >= 4 ? unitCards : words, list = [...words].sort(() => Math.random() - 0.5).slice(0, 3); let right = 0;
+  const ask = (n) => {
+    if (n >= list.length) { const gold = right * 4; profile.stats.gold += gold; Save.addExp(profile, right * 5); save(); refresh(); sfx(right ? 'fanfare' : 'tick');
+      ui.dialogue([{ who, en: right === list.length ? 'Perfect! You remember every word!' : `You got ${right} of ${list.length}. Well done!`, vi: `+${gold} vàng, +${right * 5} EXP` }]); return; }
+    const c = list[n], opts = [c, ...pool.filter((x) => x.id !== c.id && x.vi !== c.vi).sort(() => Math.random() - 0.5).slice(0, 2)].sort(() => Math.random() - 0.5), t0 = Date.now();
+    ui.choose({ who: `${who} · ${n + 1}/${list.length}`, en: `What does "${c.word}" mean?`, vi: 'Từ con vừa gặp trong trò chơi.' }, opts.map((o) => o.vi), (i) => {
+      const ok = opts[i].id === c.id; if (ok) right += 1; Review.record(profile.words, c.id, { correct: ok, hints: 0, ms: Date.now() - t0 }); sfx(ok ? 'correct' : 'wrong');
+      if (ok) ask(n + 1); else ui.dialogue([{ who, en: `"${c.word}" means "${c.vi}".` }], () => ask(n + 1));
+    });
+  };
+  ui.dialogue([{ who, en: 'Before you go: do you remember the words from the game?', vi: `${who} hỏi lại ${list.length} từ con vừa gặp. Đúng mỗi từ +4 vàng.` }], () => ask(0));
+}
 /** A word sparkle was touched: teach one word (a new one first, else one met before), with a small reward. */
 function learnWord(card, isNew) {
   if (!card) { ui.dialogue([{ who: 'Pip', en: 'This bubble is empty…', vi: `Từ vựng Unit ${Save.unitOf(profile)} lớp ${profile.grade} chưa có.` }]); save(); return; }
@@ -312,7 +387,7 @@ async function chooseProfile(p) {
   applyBridge();
   $('mapbox').classList.remove('hidden');
   await enterRegion(p.region === 'forest' && p.flags.forest_open ? 'forest' : 'village');
-  started = true; renderGear();
+  started = true; renderGear(); if (admin) admin.sync();
   if (L.NAME === 'village' && story.step === 'arrive' && !p.flags.arrived) startIntro();
 }
 
@@ -343,9 +418,11 @@ function makeBoat() {
 }
 function startIntro() {
   if (navigator.webdriver && !/[?&]intro=1/.test(location.search)) { profile.flags.arrived = true; return; }
-  if (!intro) { intro = { boat: makeBoat(), t: 0, len: 9 }; scene.add(intro.boat); }
-  intro.t = 0; intro.boat.visible = true; intro.active = true;
-  ui.toast('Ngọc đang tới làng bằng thuyền… (E: bỏ qua)');
+  ui.dialogue(OPENING(profile.name), () => {          // the story first, then the boat ride (18/11)
+    if (!intro) { intro = { boat: makeBoat(), t: 0, len: 9 }; scene.add(intro.boat); }
+    intro.t = 0; intro.boat.visible = true; intro.active = true;
+    ui.toast('Ngọc đang tới làng bằng thuyền…');
+  });
 }
 function introStep(dt) {
   const k = Math.min(1, (intro.t += dt) / intro.len), e = k * k * (3 - 2 * k), z = 38 - e * 17.5, x = L.riverX(z) + 0.6 * Math.sin(k * 6);
@@ -468,6 +545,7 @@ function interactTarget() {
   if (near(ben.x, ben.z, 3.6)) return { text: 'E · Nói chuyện với Ben', run: () => story.talkBen() };
   if (near(sam.x, sam.z, 3)) return { text: 'E · Nói chuyện với Sam', run: () => story.talkSam() };
   if (near(SHOP_DOOR.x, SHOP_DOOR.z, 1.7)) return { text: 'E · Vào cửa hàng (xem và mua bán đồ)', run: () => shopWin.show('Village Shop') };
+  if (near(ANNA_DOOR.x, ANNA_DOOR.z, 1.9)) return { text: 'E · Vào phòng nhạc của Anna (nghe hát, học lời)', run: () => music.show() };
   { const wi = walkers ? walkers.near(p) : -1; if (wi >= 0) return { text: 'E · Chào dân làng', run: () => { talkW = wi; ui.dialogue([{ who: 'Villager', en: walkers.greet(wi) }]); } }; }
   for (const f of friends) if (near(f.npc.x, f.npc.z, 2.6)) {
     if (f.shop) return { text: 'E · Cửa hàng của ' + f.who, run: () => openShop(f.who, f.shop, f.lines[0]) };
@@ -479,8 +557,10 @@ function onKey(e) {
   if (!started) return;
   if (arcade && arcade.key(e.code)) { e.preventDefault(); return; }
   if (shopWin && shopWin.key(e.code)) { e.preventDefault(); return; }
+  if (music && music.key(e.code)) { e.preventDefault(); return; }
   if (intro && intro.active) { if (e.code === 'KeyE' || e.code === 'Space' || e.code === 'Escape') endIntro(); e.preventDefault(); return; }
   if (e.code === 'F3') { perfOn = !perfOn; $('perf').classList.toggle('hidden', !perfOn); e.preventDefault(); return; }
+  if (admin && admin.key(e.code)) { e.preventDefault(); return; }
   if (ui.key(e)) { e.preventDefault(); return; }
   if (ui.modal) return;
   if (e.code === 'KeyE') { const t = interactTarget(); if (t) t.run(); }
@@ -519,7 +599,8 @@ async function boot() {
   tom = new Npc(tomG, 2.6, 7.6, -0.4); sam = new Npc(samG, 14, 17, 1.2); ben = new Npc(benG, -9.9, 19.5, Math.PI / 2); scene.add(tom.root, sam.root, ben.root);
   pip = new Pip(pipG.scene); scene.add(pip.root);
   for (const f of Object.values(FRIENDS)) { const npc = new Npc(await gltf(f.file), ...f.at, ngoc.animations); scene.add(npc.root); friends.push({ ...f, npc }); }
-  shopWin = new ShopWindow({ profile: () => profile, sfx, changed: () => { setSword(); setWear(); save(); refresh(); } });
+  shopWin = new ShopWindow({ profile: () => profile, sfx, today: () => Review.today(), changed: () => { setSword(); setWear(); save(); refresh(); } });
+  music = new MusicRoom({ profile: () => profile, sfx, changed: () => { save(); refresh(); } });
   walkers = new Walkers(scene, (name) => loader.loadAsync(`./assets/models/${name}.glb`)); await walkers.init();      // villagers on the roads
   for (const a of [player, tom, sam, ben, ...friends.map((f) => f.npc)]) addOutline(a.root);     // cartoon outlines (medium/high)
   const F = L.REGIONS.forest;
@@ -538,7 +619,9 @@ async function boot() {
     const best = mini.data.best, record = best[res.id] === undefined || res.score > best[res.id]; if (record) best[res.id] = res.score;
     const r = pay(profile, res.id, Review.today(), res.gold, res.exp);
     profile.stats.gold += r.gold; Save.addExp(profile, r.exp); sfx('fanfare'); save(); refresh();
-    ui.dialogue([{ who: 'Ngọc', en: `${res.text} (+${r.gold} gold, +${r.exp} EXP)`, vi: [record ? 'Kỷ lục mới của con!' : '', payNote(r)].filter(Boolean).join(' ') || undefined }]);
+    for (const c of res.words || []) (profile.seen || (profile.seen = {}))[c.id] = Review.today();      // words met inside the game count as seen
+    ui.dialogue([{ who: 'Ngọc', en: `${res.text} (+${r.gold} gold, +${r.exp} EXP)`, vi: [record ? 'Kỷ lục mới của con!' : '', payNote(r)].filter(Boolean).join(' ') || undefined }],
+      () => { if (res.words && res.words.length >= 2) hostQuiz(res.id === 'blocks' ? 'Max' : 'Leo', res.words); });
   });
   spots = new WordSpots({ scene, profile: () => profile, cards: () => unitCards, learn: learnWord });
   chests = new Chests({ scene, profile: () => profile, cards: () => unitCards, dueIds: () => Review.dueIds(profile.words),
@@ -564,8 +647,11 @@ async function boot() {
       }));
     },
     respawn: () => { game.teleport(L.SPAWN.x, L.SPAWN.z); ui.dialogue([{ who: 'Tom', en: 'You fainted, so I carried you home. Rest, then try again!', vi: 'Con hết máu nên được đưa về làng. Máu đã đầy lại. Mua trang bị tốt hơn rồi quay lại nhé.' }]); } });
-  mini = new MiniGames({ scene, player, ui, sfx, profile: () => profile, save, onNote: refresh, board: (id) => arcade.start(({ candy: candyGame, blocks: blocksGame, sling: slingGame, race2: raceGame })[id]()) });
+  mini = new MiniGames({ scene, player, ui, sfx, profile: () => profile, save, onNote: refresh, board: (id) => arcade.start(({ candy: () => candyGame(), blocks: () => blocksGame(Math.random, unitCards), sling: () => slingGame(), race2: () => raceGame(Math.random, unitCards) })[id]()) });
   await mini.addHosts((name) => loader.loadAsync(`./assets/models/${name}.glb`));      // a host by each mini game
+  admin = new AdminPanel({ profile: () => profile, places: adminPlaces, go: adminGo, unlockAll: adminUnlock, setStep: adminStep,
+    resetForest: () => { delete profile.quests.forest; if (L.NAME === 'forest') enterRegion('forest'); }, setGrade: (g) => { profile.grade = g; save(); chooseProfile(profile); },
+    setLevel: adminLevel, addGold: (n) => { profile.stats.gold += n; }, changed: () => { save(); refresh(); setSword(); setWear(); }, toast: (t) => ui.toast(t) });
   minimap = new Minimap($('minimap'), (path) => { player.route = path.slice(1); });
   placeActors(); player.place(L.SPAWN.x, L.SPAWN.z);
   if (SOFTWARE_GL && !navigator.webdriver && !localStorage.getItem('eq-quality-manual')) quality = 'low';      // no graphics card: start light, the parent can raise it in the gear panel
@@ -581,7 +667,7 @@ const AUTO = !navigator.webdriver && !localStorage.getItem('eq-quality-manual');
 function frame() {
   const now = performance.now(), raw = (now - last) / 1000, real = Math.min(0.25, raw); last = now;
   const dt = Math.min(0.05, real); TIME.value += real; const t = TIME.value;
-  const frozen = ui.modal || !started || (arcade && arcade.open) || (shopWin && shopWin.open);
+  const frozen = ui.modal || !started || (arcade && arcade.open) || (shopWin && shopWin.open) || (music && music.open);
   if (arcade) arcade.update(real, keys);
   if (touch) touch.update();
   releaseSoftKeys();
@@ -592,6 +678,7 @@ function frame() {
   if (intro && intro.active) introStep(real);
   else for (let left = real; left > 1e-4; left -= 0.05) player.update(Math.min(0.05, left), input, cam.yaw, frozen, sfx);
   if (hadRoute && !player.route) minimap.clearRoute();
+  if (walkMark && walkMark.visible) { walkMark.userData.t += real; walkMark.scale.setScalar(1 + Math.sin(walkMark.userData.t * 6) * 0.15); if (!player.route) walkMark.visible = false; }
   cam.update(real, player.pos);
   const talkingTo = ui.busy && ui.pages ? ui.pages[0].who : '';
   tom.update(dt, player.pos, talkingTo === 'Tom'); sam.update(dt, player.pos, talkingTo === 'Sam'); ben.update(dt, player.pos, talkingTo === 'Ben');

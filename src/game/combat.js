@@ -193,7 +193,7 @@ export class Wild {
       m.bar.scale.x = Math.max(0.001, m.hp / m.def.hp); const show = m.hp < m.def.hp || d < 9; m.bar.visible = m.back.visible = show;
       m.hitCool = Math.max(0, m.hitCool - dt);
       if (!frozen && !this.iframes && d < 0.95 + m.def.size * 0.35 && m.hitCool <= 0) {
-        m.hitCool = 1.1; p.stats.hp -= hurt(m.def.atk, p); this.api.sfx('wrong'); this.api.onChange();
+        m.hitCool = 1.1; if (!p.god) p.stats.hp -= hurt(m.def.atk, p); this.api.sfx('wrong'); this.api.onChange();      // god: admin's no-damage switch
         if (p.stats.hp <= 0) { p.stats.hp = hpMax; this.api.save(); this.api.respawn(); return; }
       }
     }

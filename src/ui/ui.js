@@ -1,6 +1,7 @@
 // DOM interface: profile menu, HUD, clue card with progressive hints, dialogue with choices, prompt.
 import * as Save from '../core/save.js';
 import { speak, stop } from './speech.js';
+import { ADMIN_PASS } from './admin.js';
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
@@ -20,13 +21,26 @@ export class UI {
     const list = () => {
       card.innerHTML = `<h1>English Quest</h1><h2>${store.profiles.length ? 'Ai đang chơi?' : 'Chào mừng! Tạo hồ sơ cho con nhé.'}</h2><div class="list"></div>
         <button id="mnew">+ Thêm người chơi mới</button>
-        <div class="small"><button id="mimport">Nhập hồ sơ (JSON)</button> <input id="mfile" type="file" accept="application/json" class="hidden"></div>`;
+        <div class="small"><button id="mimport">Nhập hồ sơ (JSON)</button> <input id="mfile" type="file" accept="application/json" class="hidden"> <button id="madmin">🔑 Quản trị</button></div>`;
       const box = card.querySelector('.list');
       for (const p of store.profiles) { const b = document.createElement('button'); b.textContent = `${p.name} · Lớp ${p.grade}`; b.dataset.profile = p.id; b.onclick = () => { $('menu').classList.add('hidden'); onChoose(p); }; box.appendChild(b); }
       $('mnew').onclick = create;
+      $('madmin').onclick = adminLogin;
       $('mimport').onclick = () => $('mfile').click();
       $('mfile').onchange = async (e) => { try { Save.importProfile(store, await e.target.files[0].text()); Save.persist(store); list(); } catch (err) { alert(err.message); } };
       (box.querySelector('button') || $('mnew')).focus();
+    };
+    // admin: a password box; the admin profile is created once and kept with the others (ui/admin.js)
+    const adminLogin = () => {
+      card.innerHTML = `<h1>English Quest</h1><h2>🔑 Quản trị</h2><input id="mpass" type="password" maxlength="20" placeholder="Mật khẩu">
+        <div class="small" id="mpmsg"></div><button id="mpok">Vào</button> <button id="mback">Quay lại</button>`;
+      const go = () => {
+        if ($('mpass').value !== ADMIN_PASS) { $('mpmsg').textContent = 'Sai mật khẩu.'; return; }
+        let p = store.profiles.find((x) => x.admin);
+        if (!p) { p = Save.newProfile('Admin', 6); p.admin = true; p.flags.arrived = true; store.profiles.push(p); Save.persist(store); }
+        $('menu').classList.add('hidden'); onChoose(p);
+      };
+      $('mpok').onclick = go; $('mpass').onkeydown = (e) => { if (e.key === 'Enter') go(); }; $('mback').onclick = list; $('mpass').focus();
     };
     const create = () => {
       let grade = 0;
@@ -89,8 +103,9 @@ export class UI {
   }
   showGloss(w) { const vi = this.gloss.get(w), el = $('dialog').querySelector('.gl'); speak(w, true, 0.75); if (el) { el.innerHTML = `<b>${esc(w)}</b> = ${esc(vi || '')}`; el.classList.remove('hidden'); } }
   render() {
-    const p = this.pages[0], el = $('dialog'), more = !this.onPick && (this.pages.length > 1 || p.book); el.classList.remove('hidden'); $('prompt').classList.add('hidden');
-    const tools = `<span class="tools"><button data-act="say" title="Nghe lại">🔊</button>${more ? (p.book ? '<button data-act="skip" title="Đóng sổ (Esc)">Đóng ✕</button>' : '<button data-act="skip" title="Bỏ qua lời thoại (Esc)">Bỏ qua ⏭</button>') : ''}</span>`;
+    // no skip button in talks (18/11): children read and listen to every line; only the word book has a close button
+    const p = this.pages[0], el = $('dialog'), more = !this.onPick && !!p.book; el.classList.remove('hidden'); $('prompt').classList.add('hidden');
+    const tools = `<span class="tools"><button data-act="say" title="Nghe lại">🔊</button>${more ? (p.book ? '<button data-act="skip" title="Đóng sổ (Esc)">Đóng ✕</button>' : '') : ''}</span>`;
     if (p.card) {          // "new word" card: taught before the child is asked about it
       el.innerHTML = `<div class="who">${esc(p.who || 'Từ mới')}</div>${tools}<div class="card-w"><span class="big">${esc(p.card.word)}</span><span class="mean">= ${esc(p.card.vi)}</span></div>` +
         `<div class="vi">${esc(p.vi || 'Nghe, đọc theo rồi nhớ nghĩa nhé.')}</div><div class="next">Đã nhớ · E / Space ▸</div>`;
@@ -103,7 +118,7 @@ export class UI {
     el.querySelectorAll('[data-i]').forEach((b) => (b.onclick = () => this.pick(Number(b.dataset.i))));
   }
   /** Jumps to the last page of a long talk (it carries the Vietnamese "what to do now" line). */
-  skip() { if (this.busy && this.pages && this.pages[0].book) { this.close(); return; } if (!this.busy || this.onPick || !this.pages || this.pages.length < 2) return; const last = this.pages.length - 1; this.pages.splice(0, last); this.render(); }
+  skip() { if (this.busy && this.pages && this.pages[0].book) this.close(); }      // Esc closes only the word book; talks have no skip
   pick(i) { if (!this.onPick || i < 0 || i >= this.options.length) return; const f = this.onPick; this.close(); f(i); }
   advance() {
     if (!this.busy || this.onPick) return;

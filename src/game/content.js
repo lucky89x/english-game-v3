@@ -157,3 +157,13 @@ export const FRIENDS = {
   rose: { who: 'Rose', file: 'npc_rose_baker_v01', at: [5.8, -8.6, 0.6], shop: 'rose', lines: ['Hello! I am Rose. My bread is warm and soft. What would you like?'] },
   anna: { who: 'Anna', file: 'npc_anna_bard_v01', at: [-3.6, 7.6, 0.9], lines: ['Hi, I am Anna! I love singing in the square.', 'Listen… the river sings too. La la la!'] },
 };
+
+// Opening story (18/11: "a story introduction when a child first starts"). Original text; read aloud like every
+// talk, with one Vietnamese line per page so a new player understands why the adventure starts.
+export const OPENING = (name) => [
+  { who: '📜 The Kingdom of Words', en: 'Long ago, the Kingdom of Words was full of colour. Every tree, every river and every house had its own name.', vi: 'Ngày xưa, Vương quốc Ngôn Từ rực rỡ sắc màu. Mọi cái cây, dòng sông, ngôi nhà đều có tên riêng.' },
+  { who: '📜 The Kingdom of Words', en: 'Then one night, a dark wind came and blew the words away. People forgot the names of things, and the land began to fade.', vi: 'Một đêm, cơn gió đen thổi bay hết các từ. Mọi người quên tên mọi vật, vùng đất dần phai màu.' },
+  { who: '📜 The Kingdom of Words', en: 'Mr Tom, the old village leader, wrote to the bravest young explorer he knew: Ngọc!', vi: 'Ông Tom, trưởng làng, viết thư mời nhà thám hiểm trẻ dũng cảm nhất: Ngọc!' },
+  { who: '📜 The Kingdom of Words', en: `Now ${name} and Ngọc travel together. Learn the lost words, help the villagers, grow stronger, and bring the colours back to every land!`, vi: `Giờ ${name} cùng Ngọc lên đường: học lại các từ đã mất, giúp dân làng, mạnh lên từng ngày và mang màu sắc trở lại mọi vùng đất!` },
+  { who: '📜 The Kingdom of Words', en: "Ngọc's boat is going down the river to the Starter Village. The adventure begins!", vi: 'Thuyền của Ngọc đang xuôi dòng tới Làng Khởi Đầu. Cuộc phiêu lưu bắt đầu!' },
+];

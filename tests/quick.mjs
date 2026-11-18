@@ -162,10 +162,35 @@ await run('intro', async () => {        // a new child arrives by boat (?intro=1
   await tp.waitForFunction(() => globalThis.__eq && document.getElementById('loading').classList.contains('hidden') && !document.getElementById('menu').classList.contains('hidden'), null, { timeout: 180000 });
   await tp.click('#mnew'); await tp.fill('#mname', 'Boat'); await tp.click('[data-g="6"]'); await tp.click('#mgo');
   await tp.waitForFunction(() => __eq.started, null, { timeout: 120000 }); await tp.waitForTimeout(1500);
+  check((await tp.textContent('#dialog')).includes('Kingdom of Words') && !(await tp.isVisible('[data-act="skip"]')), 'Opening story first, with no skip button');
+  for (let k = 0; k < 6 && await tp.isVisible('#dialog'); k++) { await tp.keyboard.press('KeyE'); await tp.waitForTimeout(250); }
+  await tp.waitForTimeout(800);
   check(await tp.evaluate(() => __eq.intro && __eq.intro.active && __eq.player.pos.y < 0.4), 'New child starts in a boat on the river');
   await tp.keyboard.press('KeyE'); await tp.waitForTimeout(800);
   check(await tp.evaluate(() => !__eq.intro.active && __eq.profile.flags.arrived && Math.hypot(__eq.player.pos.x - 18.2, __eq.player.pos.z - 18.6) < 1.5), 'E skips: Ngọc stands on the dock');
   check(await tp.evaluate(() => __eq.errors.length === 0), 'Intro page: no script errors');
+  await tp.close(); await ev(() => __eq.pause(false));
+});
+
+await run('admin', async () => {        // admin account (password 321) and click-to-walk (18/11)
+  await closeDialogs(); await ev(() => __eq.teleport(0, 13)); await wait(600);
+  const box = await page.locator('#view').boundingBox();
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height * 0.8); await page.mouse.down(); await page.mouse.up(); await wait(400);
+  check(await ev(() => !!__eq.player.route && __eq.player.route.length > 0), 'A short click on the ground plans a walk there');
+  await ev(() => { __eq.player.route = null; });
+  await ev(() => __eq.pause(true)); const tp = await browser.newPage({ viewport: { width: 1280, height: 720 } }); tp.setDefaultTimeout(120000); await tp.goto(url);
+  await tp.waitForFunction(() => globalThis.__eq && document.getElementById('loading').classList.contains('hidden') && !document.getElementById('menu').classList.contains('hidden'), null, { timeout: 180000 });
+  await tp.click('#madmin'); await tp.fill('#mpass', '123'); await tp.click('#mpok');
+  check((await tp.textContent('#mpmsg')).includes('Sai'), 'Admin: a wrong password is refused');
+  await tp.fill('#mpass', '321'); await tp.click('#mpok'); await tp.waitForFunction(() => __eq.started, null, { timeout: 120000 }); await tp.waitForTimeout(800);
+  check(await tp.isVisible('#adminbtn'), 'Admin: the 🛠 button appears');
+  await tp.click('#adminbtn'); await tp.waitForTimeout(400);
+  check(await tp.isVisible('#admin') && (await tp.textContent('#admin')).includes('Nữ hoàng Nấm'), 'Admin panel lists places in every map');
+  await tp.click('#admin [data-a="unlock"]'); await tp.waitForTimeout(600);
+  check(await tp.evaluate(() => __eq.profile.flags.map2 && __eq.profile.flags.forest_open && __eq.profile.flags.bridge_fixed), 'Admin: unlock everything');
+  await tp.click('#admin [data-a="go"]:has-text("Nữ hoàng Nấm")'); await tp.waitForFunction(() => __eq.region === 'forest' && __eq.started, null, { timeout: 180000 }); await tp.waitForTimeout(600);
+  check(await tp.evaluate(() => Math.hypot(__eq.player.pos.x + 40, __eq.player.pos.z + 24) < 4), 'Admin: jump straight to the Map 2 boss');
+  check(await tp.evaluate(() => __eq.errors.length === 0), 'Admin page: no script errors');
   await tp.close(); await ev(() => __eq.pause(false));
 });
 
