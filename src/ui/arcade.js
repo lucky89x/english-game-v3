@@ -35,6 +35,9 @@ export class Arcade {
 
 const GEMS = [['#e8443a', '●'], ['#f6c62e', '◆'], ['#4fb85a', '▲'], ['#3d8fd6', '■'], ['#b684e8', '★'], ['#ff8fc0', '♥']];
 /** Candy Match: swap two neighbouring sweets to line up three. 25 moves. */
+/** Kart Race sprites rendered in Blender (tools/sprites/kart.py). */
+const RACE_IMG = typeof Image === 'undefined' ? {} : Object.fromEntries(['kart_red', 'kart_blue', 'kart_green', 'kart_purple', 'rock', 'cone', 'coin', 'mud', 'tree'].map((n) => [n.replace('kart_', 'k_'), Object.assign(new Image(), { src: `./assets/ui/race_${n}.png` })]));
+const KART_OF = { '#e8443a': 'k_red', '#2f6fd0': 'k_blue', '#2e9a5a': 'k_green', '#8a4ad0': 'k_purple' };
 /** Candy pieces rendered in Blender (tools/sprites/candy.py); the round gems stay as a fallback until they load. */
 const CANDY_IMG = typeof Image === 'undefined' ? [] : Array.from({ length: 6 }, (_, k) => Object.assign(new Image(), { src: `./assets/ui/candy_${k}.png` }));
 const CANDY_COL = ['#f0283a', '#ff8c14', '#ffd21a', '#3fcf4a', '#2f7dff', '#b048f0'];
@@ -295,7 +298,7 @@ export function raceGame(rnd = Math.random, cards = [], tier = 1) {
     }
     for (const t of g.things) {
       t.y += g.speed * dt; const tx = roadAt(t.y) + t.off;
-      if (!t.hit && Math.abs(t.y - 470) < 26 && Math.abs(tx - g.x) < 32) {
+      if (!t.hit && Math.abs(t.y - 470) < 24 && Math.abs(tx - g.x) < (t.kind === 'mud' ? 30 : 24)) {
         t.hit = true;
         if (t.kind === 'coin') { g.coins += 1; g.bonus += 6; }
         else if (t.kind === 'letter') {
@@ -312,6 +315,12 @@ export function raceGame(rnd = Math.random, cards = [], tier = 1) {
     text: g.hearts > 0 ? `Race over: place ${place()} of 4, ${g.coins} coins!` : `Crash! Place ${place()}, ${g.coins} coins.` } : null);
   // drawing: grass with flowers, a curbed road with lane marks, shaded rocks, mud with ripples, letter coins, top-down karts
   const kart = (c, x, y, col, num, tilt, ghost) => {
+    const img = RACE_IMG[KART_OF[col]];
+    if (img && img.complete && img.naturalWidth) {      // Blender sprite (18/11: "the kart is too big for the road")
+      c.save(); c.translate(x, y); c.rotate(tilt); if (ghost) c.globalAlpha = 0.5;
+      c.fillStyle = 'rgba(0,0,0,.22)'; c.beginPath(); c.ellipse(3, 5, 17, 25, 0, 0, 7); c.fill();
+      c.drawImage(img, -19, -29, 38, 57); c.restore(); return;
+    }
     c.save(); c.translate(x, y); c.rotate(tilt); if (ghost) c.globalAlpha = 0.5;
     c.fillStyle = 'rgba(0,0,0,.25)'; c.beginPath(); c.ellipse(4, 6, 26, 34, 0, 0, 7); c.fill();
     c.fillStyle = '#1c1c22'; for (const [wx, wy] of [[-24, -18], [24, -18], [-25, 18], [25, 18]]) { c.beginPath(); c.roundRect(wx - 7, wy - 10, 14, 20, 4); c.fill(); c.fillStyle = '#6a6a74'; c.fillRect(wx - 2, wy - 6, 4, 12); c.fillStyle = '#1c1c22'; }
@@ -326,6 +335,7 @@ export function raceGame(rnd = Math.random, cards = [], tier = 1) {
   };
   g.draw = (c, w, h, t) => {
     c.fillStyle = '#5fb03c'; c.fillRect(0, 0, w, h);
+    for (let y = -((g.dist) % 80) - 80; y < h; y += 80) { c.fillStyle = '#69bc45'; c.fillRect(0, y, w, 40); }      // mown grass stripes
     for (let i = 0; i < 40; i++) { const y = ((i * 53 + g.dist) % (h + 40)) - 20, x = (i * 137) % w; c.fillStyle = i % 3 ? '#6cc044' : '#f6e27a'; c.fillRect(x, y, 3, 3); }
     for (let y = -20; y < h + 20; y += 20) {
       const cx = roadAt(y), band = Math.floor((g.dist - y) / 40) % 2;
@@ -335,8 +345,13 @@ export function raceGame(rnd = Math.random, cards = [], tier = 1) {
     }
     for (let i = 0; i < 9; i++) { const y = ((i * 97 + g.dist) % (h + 80)) - 40, side = i % 2 ? 1 : -1, cx = roadAt(y) + side * (180 + (i % 3) * 25);
       c.fillStyle = 'rgba(0,0,0,.18)'; c.beginPath(); c.ellipse(cx + 8, y + 10, 24, 14, 0, 0, 7); c.fill();
-      const tr = c.createRadialGradient(cx - 8, y - 8, 3, cx, y, 26); tr.addColorStop(0, '#8fdc5a'); tr.addColorStop(1, '#2f8a34'); c.fillStyle = tr; c.beginPath(); c.arc(cx, y, 24, 0, 7); c.fill(); }
+      const ti = RACE_IMG.tree; if (ti && ti.complete && ti.naturalWidth) c.drawImage(ti, cx - 34, y - 34, 68, 68); else { const tr = c.createRadialGradient(cx - 8, y - 8, 3, cx, y, 26); tr.addColorStop(0, '#8fdc5a'); tr.addColorStop(1, '#2f8a34'); c.fillStyle = tr; c.beginPath(); c.arc(cx, y, 24, 0, 7); c.fill(); } }
     for (const tg of g.things) { const x = roadAt(tg.y) + tg.off, y = tg.y;
+      const spr = RACE_IMG[tg.kind];
+      if (spr && spr.complete && spr.naturalWidth && tg.kind !== 'letter') {
+        const sz = { coin: [30, 30, Math.abs(Math.cos(t * 4 + tg.off))], rock: [46, 46, 1], mud: [70, 52, 1] }[tg.kind];
+        c.drawImage(spr, x - sz[0] * sz[2] / 2, y - sz[1] / 2, sz[0] * sz[2], sz[1]); continue;
+      }
       if (tg.kind === 'coin' || tg.kind === 'letter') {
         const wob = Math.abs(Math.cos(t * 4 + tg.off));
         const coin = c.createRadialGradient(x - 5, y - 6, 2, x, y, 18); coin.addColorStop(0, '#fff6c0'); coin.addColorStop(1, '#e0a020'); c.fillStyle = coin;
