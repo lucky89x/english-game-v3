@@ -6,12 +6,19 @@ import { paint, PAINT, label, buildTerrain, buildCobbles, buildWater, buildTrees
 import { MARKET_JARS, villageExtras, brokenBits } from './village.js';
 import { forestExtras } from './forest.js';
 
-export async function buildWorld(scene, loadModel) {
+/** The three animals made in Blender; any that fails to load falls back to the animals drawn by code. */
+async function animalModels(loadModel, loadAnimated) {
+  const out = {}, get = async (key, fn) => { try { out[key] = await fn(); } catch (e) { console.warn('animal model', key, e); } };
+  await Promise.all([get('rabbit', () => loadModel('animal_rabbit_cream_v01')), get('chicken', () => loadModel('animal_chicken_white_v01')), loadAnimated && get('dog', () => loadAnimated('animal_dog_shiba_v01'))]);
+  return out;
+}
+
+export async function buildWorld(scene, loadModel, loadAnimated) {
   const root = new THREE.Group(); root.name = 'world:' + L.NAME; scene.add(root);
   const updaters = [], add = (o) => { root.add(o); if (o.userData.update) updaters.push(o.userData.update); return o; };
   add(buildTerrain());
   const detail = { cobbles: add(buildCobbles()), grass: add(buildGrass()), flowers: add(buildFlowers()), far: add(mountains()), critters: add(critters()) };
-  add(buildWater()); add(buildTrees()); add(buildRocks()); add(buildFences()); add(riverside()); add(bushes()); add(creatures()); if (L.WATERFALL) add(fallRocks());
+  add(buildWater()); add(buildTrees()); add(buildRocks()); add(buildFences()); add(riverside()); add(bushes()); add(creatures(await animalModels(loadModel, loadAnimated))); if (L.WATERFALL) add(fallRocks());
   // models from files (houses, bridge, gate) get the same painted surface as the generated scenery
   const shadowed = (o) => { o.traverse((c) => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; for (const m of [].concat(c.material)) if (m.isMeshStandardMaterial && !m.userData.painted) { m.userData.painted = true; paint(m); } } }); return o; };
   const bridges = {};

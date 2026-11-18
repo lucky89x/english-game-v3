@@ -1,6 +1,7 @@
 // English Quest (web) — boot, render loop, quality presets, perf panel and the debug API for tests.
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
 import * as L from './core/layout.js';
 import * as Save from './core/save.js';
 import * as Review from './core/review.js';
@@ -93,6 +94,7 @@ manager.onProgress = (_u, done, total) => { $('loadbar').style.width = Math.roun
 const loader = new GLTFLoader(manager), texLoader = new THREE.TextureLoader(manager), modelCache = new Map();
 const gltf = (name) => { if (!modelCache.has(name)) modelCache.set(name, loader.loadAsync(`./assets/models/${name}.glb`)); return modelCache.get(name); };
 const staticModel = async (name) => (await gltf(name)).scene.clone(true);
+const animatedModel = async (name) => { const g = await gltf(name); return { scene: SkeletonUtils.clone(g.scene), animations: g.animations }; };
 const faceTex = async (name) => { const t = await texLoader.loadAsync(`./assets/tex/ngoc_face_${name}.png`); t.flipY = false; t.colorSpace = THREE.SRGBColorSpace; return t; };
 
 const ui = new UI(), store = Save.load();
@@ -262,7 +264,7 @@ async function enterRegion(name, at) {
   L.setRegion(name);
   if (world) world.dispose();
   jarKey = '';
-  world = await buildWorld(scene, staticModel);
+  world = await buildWorld(scene, staticModel, animatedModel);
   const q = QUALITY[quality]; world.setDetail(q.density, q.particles, q.far);
   scene.traverse((o) => { if (o.material) [].concat(o.material).forEach((m) => (m.needsUpdate = true)); });
   try { await renderer.compileAsync(scene, camera); } catch { /* older browsers: shaders compile on first sight */ }      // no hitch when new things come into view
@@ -620,7 +622,7 @@ async function boot() {
   const [ngoc, tomG, samG, benG, pipG, blink, talk, joy] = await Promise.all([gltf('chr_ngoc_adventurer_v03'), gltf('npc_tom_elder_v02'), gltf('npc_sam_fisherman_v02'), gltf('npc_ben_merchant_v02'), gltf('npc_pip_spirit_v02'), faceTex('blink'), faceTex('talk'), faceTex('joy')]);
   $('loadtext').textContent = 'Đang dựng ngôi làng…';
   L.setRegion('village');
-  world = await buildWorld(scene, staticModel);
+  world = await buildWorld(scene, staticModel, animatedModel);
   player = new Player(ngoc, { blink, talk, joy }); scene.add(player.root);
   tom = new Npc(tomG, 2.6, 7.6, -0.4); sam = new Npc(samG, 14, 17, 1.2); ben = new Npc(benG, -9.9, 19.5, Math.PI / 2); scene.add(tom.root, sam.root, ben.root);
   pip = new Pip(pipG.scene); scene.add(pip.root);

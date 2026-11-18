@@ -545,21 +545,29 @@ export function corgi() {
 }
 
 /** Friendly creatures: bouncing slimes and hopping bunnies (decoration only, no collision). */
-export function creatures() {
+export function creatures(models = {}) {
   const g = new THREE.Group(), list = [];
   const spots = scatterGround(11, (x, z) => L.walkable(x, z, 1.5) && L.pathDistance(x, z) > 2.5 && L.pathDistance(x, z) < 14 && Math.hypot(x, z) < L.PLAY_RADIUS - 6);
   const eye = new THREE.MeshBasicMaterial({ color: 0x24140c }), white = new THREE.MeshBasicMaterial({ color: 0xffffff }), blush = new THREE.MeshBasicMaterial({ color: 0xff9fb0 });
   const face = (o, y, z, w) => { for (const sx of [-1, 1]) { const e = new THREE.Mesh(new THREE.SphereGeometry(0.07, 8, 6), eye); e.position.set(sx * w, y, z); o.add(e); const h = new THREE.Mesh(new THREE.SphereGeometry(0.025, 5, 4), white); h.position.set(sx * w + 0.02, y + 0.03, z + 0.05); o.add(h); const b = new THREE.Mesh(new THREE.SphereGeometry(0.05, 6, 4), blush); b.scale.set(1.3, 0.6, 0.4); b.position.set(sx * (w + 0.12), y - 0.08, z - 0.01); o.add(b); } };
   spots.forEach((sp, i) => {
     const slime = false, kind = i % 3;                  // rabbits and hens (the toy slimes were dropped 18/11)
-    const o = kind === 1 ? hen([0xfaf6ee, 0xd8a060, 0x8a5a3a][i % 3]) : rabbit([0xd9b48a, 0xfaf6ee, 0x9a8a80][i % 3]);
+    const glb = kind === 1 ? models.chicken : models.rabbit;      // models made in Blender (assets/models/animal_*.glb) when they loaded
+    let o;
+    if (glb) { o = new THREE.Group(); const m = glb.clone(true); m.scale.setScalar((kind === 1 ? 1.35 : 1.05) * (0.92 + (i % 3) * 0.06)); m.traverse((c) => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } }); o.add(m); }
+    else { o = kind === 1 ? hen([0xfaf6ee, 0xd8a060, 0x8a5a3a][i % 3]) : rabbit([0xd9b48a, 0xfaf6ee, 0x9a8a80][i % 3]); compact(o); }
     o.userData.hen = kind === 1;
-    compact(o); g.add(o); list.push({ o, slime, x: sp.x, z: sp.z, r: 0.8 + (i % 3) * 0.5, ph: i * 1.7, sp: (slime ? 0.25 : 0.45) * (i % 2 ? 1 : -1) });
+    g.add(o); list.push({ o, slime, x: sp.x, z: sp.z, r: 0.8 + (i % 3) * 0.5, ph: i * 1.7, sp: (slime ? 0.25 : 0.45) * (i % 2 ? 1 : -1) });
   });
   if (L.NAME === 'village') {      // a corgi trotting round the square and an owl on the market sign
-    const dog = corgi(), cream = new THREE.MeshStandardMaterial({ color: 0xfff4e2, roughness: 0.95 }), eye = new THREE.MeshBasicMaterial({ color: 0x24140c });
-    const tailD = new THREE.Mesh(new THREE.SphereGeometry(0.12, 14, 10), cream); tailD.position.set(0, 0.52, -0.5); tailD.userData.live = true; dog.add(tailD);
-    compact(dog); g.add(dog); list.push({ o: dog, dog: true, tail: tailD, x: 6, z: 12, r: 2.3, ph: 1, sp: 0.5 });      // open grass east of the path: no fence to run through
+    const cream = new THREE.MeshStandardMaterial({ color: 0xfff4e2, roughness: 0.95 }), eye = new THREE.MeshBasicMaterial({ color: 0x24140c });
+    let dog, tailD = null, mixer = null;
+    if (models.dog) {      // Shiba from Blender with its own walk clip
+      dog = new THREE.Group(); const m = models.dog.scene; m.scale.setScalar(0.85); m.traverse((c) => { if (c.isMesh) { c.castShadow = true; c.frustumCulled = false; } }); dog.add(m);
+      const clip = models.dog.animations.find((a) => a.name === 'Walk') || models.dog.animations[0];
+      if (clip) { mixer = new THREE.AnimationMixer(m); mixer.clipAction(clip).play(); }
+    } else { dog = corgi(); tailD = new THREE.Mesh(new THREE.SphereGeometry(0.12, 14, 10), cream); tailD.position.set(0, 0.52, -0.5); tailD.userData.live = true; dog.add(tailD); compact(dog); }
+    g.add(dog); list.push({ o: dog, dog: true, tail: tailD, mixer, x: 6, z: 12, r: 2.3, ph: 1, sp: 0.5 });      // open grass east of the path: no fence to run through
     const owl = new THREE.Group(), brown = new THREE.MeshStandardMaterial({ color: 0x9a6a3c, roughness: 0.95 });
     const O = (geo, m, x, y, z, sx = 1, sy = 1, sz = 1) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.scale.set(sx, sy, sz); owl.add(o); return o; };
     O(new THREE.SphereGeometry(0.2, 12, 10), brown, 0, 0.2, 0, 1, 1.15, 0.9); O(new THREE.SphereGeometry(0.15, 10, 8), cream, 0, 0.16, 0.08, 0.9, 1, 0.7);
@@ -570,7 +578,7 @@ export function creatures() {
   g.userData.update = (t) => {
     for (const c of list) {
       if (c.owl) { c.o.rotation.y = Math.sin(t * 0.5) * 1.1; c.o.scale.y = 1 + Math.sin(t * 2) * 0.03; continue; }
-      if (c.dog) { const a = c.ph + t * c.sp, x = c.x + Math.cos(a) * c.r, z = c.z + Math.sin(a) * c.r; c.o.position.set(x, L.groundHeight(x, z) + Math.abs(Math.sin(t * 9)) * 0.06, z); c.o.rotation.y = -a; c.tail.position.x = Math.sin(t * 14) * 0.06; continue; }
+      if (c.dog) { const a = c.ph + t * c.sp, x = c.x + Math.cos(a) * c.r, z = c.z + Math.sin(a) * c.r; c.o.position.set(x, L.groundHeight(x, z) + (c.mixer ? 0 : Math.abs(Math.sin(t * 9)) * 0.06), z); c.o.rotation.y = -a; if (c.tail) c.tail.position.x = Math.sin(t * 14) * 0.06; if (c.mixer) { c.mixer.update(Math.max(0, Math.min(0.1, t - (c.lastT ?? t)))); c.lastT = t; } continue; }
       const a = c.ph + t * c.sp, x = c.x + Math.cos(a) * c.r, z = c.z + Math.sin(a) * c.r, hop = Math.abs(Math.sin(t * (c.slime ? 2.4 : 5) + c.ph));
       if (!L.walkable(x, z, 0.4)) continue;
       c.o.position.set(x, L.groundHeight(x, z) + hop * (c.slime ? 0.22 : 0.3), z); c.o.rotation.y = -a + (c.sp > 0 ? 0 : Math.PI);
