@@ -1,11 +1,19 @@
 # Builds the Windows installer of the desktop app (desktop/) on GitHub's own Windows machine.
-# Run it from the Actions tab ("Run workflow"); the installer appears under the run's Artifacts.
+# Only ONE copy is kept (18/11: "delete the old version so it does not fill up"): the installer is attached to a
+# single release named "desktop-latest" and replaced on every build; old workflow runs are deleted, keeping the newest 2.
+# Download: repository page -> Releases -> "English Quest (bản mới nhất)" -> EnglishQuest-Setup-….exe
 name: Desktop app (Windows)
 on:
   workflow_dispatch:
   push:
     branches: [fable/web-rebuild]
     paths: ['desktop/**', 'src/**', 'assets/**', 'data/**', 'vendor/**', 'index.html']
+permissions:
+  contents: write
+  actions: write
+concurrency:
+  group: desktop-build
+  cancel-in-progress: true
 jobs:
   build:
     runs-on: windows-latest
@@ -21,8 +29,19 @@ jobs:
       - run: npm run dist:win
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false
-      - uses: actions/upload-artifact@v4
-        with:
-          name: EnglishQuest-Windows
-          path: desktop/dist/*.exe
-          retention-days: 30
+      - name: Replace the single release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete desktop-latest --cleanup-tag --yes --repo "$GITHUB_REPOSITORY" || true
+          gh release create desktop-latest dist/*.exe --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
+            --title "English Quest (bản mới nhất)" \
+            --notes "Bộ cài Windows, dựng tự động từ commit ${GITHUB_SHA::7}. Mỗi lần có bản mới, bản này bị thay thế (bản cũ không giữ lại). Tiến độ chơi nằm trong Documents/EnglishQuest, không bị mất khi cài đè."
+      - name: Delete old workflow runs (keep the newest 2)
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs?per_page=100" --jq '.workflow_runs[] | select(.status=="completed") | .id' \
+            | tail -n +3 | while read -r id; do gh api -X DELETE "repos/$GITHUB_REPOSITORY/actions/runs/$id" || true; done

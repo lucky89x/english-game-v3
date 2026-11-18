@@ -17,7 +17,7 @@
     "appId": "vn.englishquest.game",
     "productName": "English Quest",
     "directories": { "output": "dist" },
-    "files": ["main.js", "package.json"],
+    "files": ["main.js", "preload.js", "package.json"],
     "extraResources": [
       { "from": "../index.html", "to": "game/index.html" },
       { "from": "../src", "to": "game/src" },

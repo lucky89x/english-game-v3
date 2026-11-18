@@ -2,14 +2,15 @@
 
 Game nằm ở nhánh `fable/web-rebuild` của repo `lucky89x/english-game-v3`. Game chạy trong trình duyệt (Chrome hoặc Edge), cần một "máy chủ nhỏ" chạy trên chính máy đó, không cần Internet khi chơi.
 
-## Cách mới (khuyên dùng): bản cài đặt English Quest.exe
-Bản .exe tự dùng card đồ họa rời và tự giữ khung hình đều, không cần Python hay trình duyệt.
-1. Vào https://github.com/lucky89x/english-game-v3/actions , chọn **Desktop app (Windows)**, bấm lần chạy mới nhất có dấu ✔ xanh.
-2. Kéo xuống mục **Artifacts**, tải **EnglishQuest-Windows** (file .zip), giải nén ra **EnglishQuest-Setup-….exe**.
-3. Nháy đúp để cài (Windows có thể hỏi "Windows protected your PC": bấm **More info → Run anyway**, vì file chưa có chữ ký số).
-4. Mở **English Quest** trên màn hình Desktop. F11: toàn màn hình.
-- Tiến độ của bản .exe để riêng với bản trình duyệt: ở bản trình duyệt bấm ⚙ → **Xuất hồ sơ**, rồi trong bản .exe chọn **Nhập hồ sơ (JSON)** ở màn hình chọn người chơi.
-- Mỗi lần có bản mới: tải bộ cài mới ở bước 1–3 và cài đè.
+## Cách mới (khuyên dùng): bản cài đặt English Quest (.exe)
+Bản .exe tự dùng card đồ họa rời nếu máy có, không cần Python hay trình duyệt.
+1. Vào https://github.com/lucky89x/english-game-v3/releases , mở bản **English Quest (bản mới nhất)**.
+2. Tải **EnglishQuest-Setup-….exe** ở mục Assets, nháy đúp để cài. Windows có thể hỏi "Windows protected your PC": bấm **More info → Run anyway** (file chưa có chữ ký số).
+3. Mở **English Quest** trên màn hình Desktop. F11: toàn màn hình.
+- **Cập nhật:** mỗi lần có bản mới chỉ cần tải bộ cài mới và cài đè. Trên GitHub chỉ giữ **một** bản mới nhất (bản cũ tự bị xóa).
+- **Tiến độ không bị mất khi cập nhật:** mỗi lần lưu, game ghi thêm vào thư mục **Documents\EnglishQuest** (file `store.json`, kèm thư mục `backups` giữ 14 ngày gần nhất). Cài đè hay cài lại, game tự đọc lại từ đó.
+- Chuyển từ bản trình duyệt sang bản .exe: ở bản trình duyệt bấm ⚙ → **Xuất hồ sơ**, rồi ở bản .exe chọn **Nhập hồ sơ (JSON)** ở màn hình chọn người chơi.
+- Máy **không có card đồ họa**: bản .exe tự chọn đồ họa **Thấp**; bấm ⚙ để thử Vừa nếu máy đủ khỏe.
 
 ## Cách cũ: chạy trong trình duyệt
 ### Lần đầu: cài 2 thứ (một lần duy nhất)
@@ -31,7 +32,7 @@ Repo riêng tư thì Git sẽ hiện cửa sổ đăng nhập GitHub: đăng nh�
 cd %USERPROFILE%\Documents\english-quest
 git pull
 ```
-Thấy dòng `Already up to date.` là đã mới nhất. Lưu tiến độ của các bé **không mất** khi cập nhật (lưu trong trình duyệt).
+Thấy dòng `Already up to date.` là đã mới nhất. Lưu tiến độ của các bé **không mất** khi cập nhật (lưu trong trình duyệt), miễn là luôn mở đúng một địa chỉ và một trình duyệt (xem bên dưới).
 
 ## Chạy game
 ```bat
@@ -41,7 +42,7 @@ py -m http.server 8000
 Để nguyên cửa sổ đen đó (đóng là tắt game). Mở Chrome/Edge, vào: **http://localhost:8000**
 
 - Sau khi cập nhật, bấm **Ctrl + F5** trên trang game để trình duyệt lấy bản mới.
-- Luôn dùng đúng địa chỉ `http://localhost:8000` (cùng số 8000): tiến độ lưu theo địa chỉ này.
+- Luôn dùng đúng địa chỉ `http://localhost:8000` (cùng số 8000, cùng một trình duyệt, không dùng `127.0.0.1`, không bật chế độ ẩn danh): tiến độ lưu theo địa chỉ này. Tải game về một thư mục mới hay đổi số cổng thì sẽ như chơi lại từ đầu; khi đó bấm ⚙ → **Xuất hồ sơ** ở bản cũ rồi **Nhập hồ sơ** ở bản mới.
 - Tiện hơn: tạo file `ChoiGame.bat` trên màn hình Desktop với nội dung dưới, nháy đúp là chạy:
 
 ```bat

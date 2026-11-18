@@ -568,10 +568,11 @@ async function boot() {
   await mini.addHosts((name) => loader.loadAsync(`./assets/models/${name}.glb`));      // a host by each mini game
   minimap = new Minimap($('minimap'), (path) => { player.route = path.slice(1); });
   placeActors(); player.place(L.SPAWN.x, L.SPAWN.z);
+  if (SOFTWARE_GL && !navigator.webdriver && !localStorage.getItem('eq-quality-manual')) quality = 'low';      // no graphics card: start light, the parent can raise it in the gear panel
   setQuality(quality);
   $('loading').classList.add('hidden');
   ui.showMenu(store, chooseProfile);
-  if (SOFTWARE_GL && !navigator.webdriver) setTimeout(() => ui.toast('Trình duyệt đang vẽ bằng CPU, game sẽ giật. Bật "Tăng tốc phần cứng" trong Cài đặt trình duyệt.'), 1500);
+  if (SOFTWARE_GL && !navigator.webdriver) setTimeout(() => ui.toast(globalThis.eqDesktop ? 'Máy không có card đồ họa: game đã chọn đồ họa Thấp cho mượt.' : 'Trình duyệt đang vẽ bằng CPU, game sẽ giật. Bật "Tăng tốc phần cứng" trong Cài đặt trình duyệt.'), 1500);
   renderer.setAnimationLoop(frame);
 }
 

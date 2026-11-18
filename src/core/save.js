@@ -25,15 +25,21 @@ export function migrate(data) {
   data.profiles = (data.profiles || []).map((p) => ({ ...newProfile(p.name, p.grade, p.id), ...p, stats: { gold: 0, exp: 0, level: 1, ...(p.stats || {}) } }));
   return data;
 }
+/** The desktop app (desktop/preload.js) also keeps the save in a file; browsers have only the page storage. */
+const desk = () => (typeof globalThis.eqDesktop === 'object' && globalThis.eqDesktop) || null;
 export function load(storage = globalThis.localStorage) {
-  try { const raw = storage.getItem(KEY); return raw ? migrate(JSON.parse(raw)) : emptyStore(); }
-  catch (e) { console.warn('save: cannot load, starting fresh', e); return emptyStore(); }
+  try {
+    let raw = storage.getItem(KEY);
+    if (!raw && storage === globalThis.localStorage && desk()) { raw = desk().readSave(); if (raw) storage.setItem(KEY, raw); }      // empty page storage: restore from the file
+    return raw ? migrate(JSON.parse(raw)) : emptyStore();
+  } catch (e) { console.warn('save: cannot load, starting fresh', e); return emptyStore(); }
 }
 export function persist(store, storage = globalThis.localStorage) {
   const text = JSON.stringify(store);
   const old = storage.getItem(KEY);
   if (old) storage.setItem(KEY + '.bak', old);          // keep the last good save
   storage.setItem(KEY, text);
+  if (storage === globalThis.localStorage && desk()) desk().writeSave(text);
 }
 export function exportProfile(profile) { return JSON.stringify({ kind: 'english-quest-profile', version: SAVE_VERSION, profile }, null, 2); }
 export function importProfile(store, text) {

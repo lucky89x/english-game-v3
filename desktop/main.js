@@ -2,7 +2,8 @@
 // The same game files run inside Chromium (Electron), but here the app decides how the graphics card is used:
 // the dedicated GPU is requested, the GPU blocklist is ignored, background throttling is off, and frames are
 // paced by the screen's refresh. The files are served from an app:// address (ES modules do not load from file://).
-const { app, BrowserWindow, protocol, net, Menu, shell } = require('electron');
+const { app, BrowserWindow, protocol, net, Menu, shell, ipcMain } = require('electron');
+const fs = require('node:fs');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true';      // the page only loads its own files
@@ -20,10 +21,26 @@ protocol.registerSchemesAsPrivileged([{ scheme: 'app', privileges: { standard: t
 // Installed: the game sits in resources/game. While developing: the repository folder above this one.
 const ROOT = app.isPackaged ? path.join(process.resourcesPath, 'game') : path.join(__dirname, '..');
 
+// Save file: Documents/EnglishQuest/store.json (the newest save) and backups/store-YYYY-MM-DD.json (one per day,
+// the last 14 days kept). Updating or reinstalling the app never touches this folder.
+const saveDir = () => path.join(app.getPath('documents'), 'EnglishQuest');
+ipcMain.on('eq-save-folder', (e) => { e.returnValue = saveDir(); });
+ipcMain.on('eq-read-save', (e) => {
+  try { e.returnValue = fs.readFileSync(path.join(saveDir(), 'store.json'), 'utf8'); } catch { e.returnValue = ''; }
+});
+ipcMain.on('eq-write-save', (e, text) => {
+  try {
+    const dir = saveDir(), bk = path.join(dir, 'backups'); fs.mkdirSync(bk, { recursive: true });
+    const tmp = path.join(dir, 'store.json.tmp'); fs.writeFileSync(tmp, text); fs.renameSync(tmp, path.join(dir, 'store.json'));      // never leaves half a file
+    const day = new Date().toISOString().slice(0, 10); fs.writeFileSync(path.join(bk, `store-${day}.json`), text);
+    const old = fs.readdirSync(bk).filter((f) => /^store-.*\.json$/.test(f)).sort().slice(0, -14); for (const f of old) fs.unlinkSync(path.join(bk, f));
+  } catch (err) { console.warn('save file failed', err.message); }
+});
+
 function createWindow() {
   const win = new BrowserWindow({
     width: 1600, height: 900, minWidth: 960, minHeight: 600, backgroundColor: '#7ec3f5', title: 'English Quest', autoHideMenuBar: true,
-    webPreferences: { backgroundThrottling: false, spellcheck: false },
+    webPreferences: { backgroundThrottling: false, spellcheck: false, preload: path.join(__dirname, 'preload.js') },
   });
   Menu.setApplicationMenu(null);
   win.maximize();

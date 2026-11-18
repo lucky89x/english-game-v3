@@ -453,3 +453,16 @@ test('Map 2: forest board has its own hunts, the Mushroom Queen waits at level 3
   const q3 = R.BOSSES.find((b) => b.flag === 'boss3'); assert.equal(q3.region, 'forest'); assert.equal(q3.level, 30);
   assert.ok(S.GATES.includes(25) && S.GATES.includes(30));
 });
+
+test('desktop app: every save is mirrored to a file and an empty page storage is restored from it', async () => {
+  const { load, persist, KEY, newProfile } = await import('../src/core/save.js');
+  const mem2 = () => { const m = new Map(); return { getItem: (k) => (m.has(k) ? m.get(k) : null), setItem: (k, v) => m.set(k, String(v)) }; };
+  const files = []; globalThis.eqDesktop = { readSave: () => files[files.length - 1] || '', writeSave: (t) => files.push(t) };
+  const realLS = globalThis.localStorage; const ls = mem2(); Object.defineProperty(globalThis, 'localStorage', { value: ls, configurable: true });
+  try {
+    const store = load(); store.profiles.push(newProfile('An', 6)); store.profiles[0].stats.level = 9; persist(store);
+    assert.equal(files.length, 1, 'written to the file');
+    const fresh = mem2(); Object.defineProperty(globalThis, 'localStorage', { value: fresh, configurable: true });   // page storage wiped
+    const back = load(); assert.equal(back.profiles[0].stats.level, 9, 'restored from the file'); assert.ok(fresh.getItem(KEY), 'page storage refilled');
+  } finally { delete globalThis.eqDesktop; if (realLS) Object.defineProperty(globalThis, 'localStorage', { value: realLS, configurable: true }); else delete globalThis.localStorage; }
+});
