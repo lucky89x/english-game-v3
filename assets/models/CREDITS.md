@@ -12,3 +12,9 @@ Ba mô hình con vật lấy từ [Poly Pizza](https://poly.pizza), đã chỉnh
 Giấy phép CC-BY 3.0: https://creativecommons.org/licenses/by/3.0/ — bắt buộc ghi tên tác giả (như bảng trên) và nêu rõ đã chỉnh sửa.
 
 Chó Shiba giữ 4 hoạt ảnh: Idle, Walk, Gallop, Eating. Thỏ và gà không có hoạt ảnh.
+
+## Prop do tự dựng (không cần ghi công)
+
+10 file `prop_*_v01.glb` (vườn rau, cây tròn, cây thông, bụi cỏ, táo, cam, hồ, bãi lửa, thuyền, tháp nước) do dự án
+tự dựng từ hình khối cơ bản trong Blender, không dùng mô hình ngoài. Dựng lại bằng:
+`OUT=<thư mục> blender -b -P tools/props/build_props.py` (tùy chọn `ONLY=tên,tên`).
