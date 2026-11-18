@@ -50,7 +50,7 @@ PY=<python có bpy 4.2> tools/chibi05/build_all.sh   # dựng lại model, ~1 ph
 ## Tiến độ (cập nhật cuối mỗi lượt làm việc, trước khi commit)
 Cập nhật mục này mỗi khi xong việc, để phiên/hội thoại mới đọc là nắm được ngay.
 
-**Lần cập nhật:** 2026-11-18 (lượt 21: Map 2 đủ vòng chơi trong Cảng Mặt Trời, trò Café và Salon, cảng thành đảo giữa biển) · nhánh `fable/web-rebuild` · unit 54/54 · quick (xem dưới) · tải ~11,5 MB + model cảng nạp khi tới cảng
+**Lần cập nhật:** 2026-11-18 (lượt 21: Map 2 đủ vòng chơi trong Cảng Mặt Trời, trò Café và Salon, cảng thành đảo giữa biển) · nhánh `fable/web-rebuild` · unit 54/54 · quick 84/84 · e2e chưa chạy lại · tải ~11,5 MB + model cảng nạp khi tới cảng
 
 **Đã có (Map 1 + Rừng):**
 - Truyện: Bức thư, Hũ chữ của Ben, Sửa cây cầu cho cả lớp 6–9 (lớp 8 dùng ngữ pháp Unit 1: động từ sở thích + V-ing), pha lê Rừng Ký Ức.
