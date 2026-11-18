@@ -3,16 +3,27 @@
 // from the character sheets), a speech bubble, a Talk button and a daily word quest: the keeper asks the English
 // names of three things on the shelves. Goods stand on wooden shelves in framed cards: big icon, English name,
 // Vietnamese meaning, what it does, a price tag and a lock when the level is too low. Buy / Wear / Sell buttons.
-import { ITEMS, bag, buy, sell, sellPrice, shopList, wear } from '../core/rules.js';
+import { ITEMS, bag, buy, sell, sellPrice, shopList, wear, home, foodCount } from '../core/rules.js';
 import { speak } from './speech.js';
 
 const ICON = { wood_sword: '🗡️', iron_sword: '⚔️', crystal_blade: '🔷', leather_vest: '🦺', iron_armor: '🛡️', clover: '🍀', bread: '🍞',
-  oak_blade: '🪵', moon_sword: '🌙', ranger_cloak: '🧥', bark_armor: '🌳', owl_feather: '🪶', forest_stew: '🍲' };
+  oak_blade: '🪵', moon_sword: '🌙', ranger_cloak: '🧥', bark_armor: '🌳', owl_feather: '🪶', forest_stew: '🍲',
+  apple: '🍎', carrot: '🥕', banana: '🍌', corn: '🌽', watermelon: '🍉', bed: '🛏️', wardrobe: '🚪', mirror: '🪞', table: '🍽️', sofa: '🛋️', lamp: '💡', bookcase: '📚',
+  desk: '✏️', clock: '🕰️', picture: '🖼️', rug: '🟥', plant: '🪴', flowers: '🌷', veg_patch: '🥬', fruit_tree: '🌳', bench: '🪑', mailbox: '📮', garden_lamp: '🏮',
+  guitar: '🎸', piano: '🎹', drum: '🥁', violin: '🎻' };
 const KEEPERS = {
   forge: { name: 'Bram', img: 'assets/ui/keeper_bram.jpg', title: "⚒️ Bram's counter", sub: 'Weapons & Armour · vũ khí và giáp',
     talk: ['A good sword is a hero\'s best friend.', 'Iron is strong, but crystal is stronger!', 'Wear armour before you visit the Wild Meadow.', 'I make every blade by hand. Clang, clang!'] },
   rose: { name: 'Rose', img: 'assets/ui/keeper_rose.jpg', title: "🥖 Rose's counter", sub: 'Bread & Charms · bánh và bùa',
     talk: ['My honey bread makes you feel strong again.', 'A lucky clover keeps you safe on long trips.', 'I bake fresh bread every morning at six.', 'Press Q to eat bread when you are hurt!'] },
+  home: { name: 'Bram', img: 'assets/ui/keeper_bram.jpg', title: "🪑 Bram's furniture", sub: 'Furniture · đồ đạc cho nhà con',
+    talk: ['I make tables and beds as well as swords!', 'A bed and a lamp make any house feel like home.', 'Every chair is made of strong oak.', 'Your new home is waiting for you in the west fields.'] },
+  garden: { name: 'Lily', img: 'assets/ui/keeper_lily.jpg', title: "🌷 Lily's garden corner", sub: 'Garden · vườn tược',
+    talk: ['Flowers make a yard smile.', 'Water your vegetables every day.', 'A fruit tree grows slowly, but it gives you apples for years.', 'Sit on a bench and listen to the birds.'] },
+  produce: { name: 'Ben', img: 'assets/ui/keeper_ben.jpg', title: "🍎 Ben's fruit and vegetables", sub: 'Fruit & veg · rau, hoa quả (phím Q để ăn)',
+    talk: ['Fresh apples, fresh carrots! Come and buy!', 'A watermelon is big, sweet and full of water.', 'Eat your vegetables and you will be strong.', 'Bananas are yellow, carrots are orange, apples are red!'] },
+  music: { name: 'Anna', img: 'assets/ui/keeper_anna.jpg', title: "🎵 Anna's instruments", sub: 'Instruments · nhạc cụ cho nhà con',
+    talk: ['Music makes every room happy.', 'A guitar has six strings.', 'The piano has black keys and white keys.', 'Bang the drum slowly, then quickly!'] },
   forest: { name: 'Willow', img: 'assets/ui/keeper_willow.jpg', title: "🌿 Willow's camp shop", sub: 'Forest gear · đồ của rừng (Map 2)',
     talk: ['The forest is dark. Strong armour keeps you safe.', 'Moonlight makes my swords shine.', 'Owls are wise. Their feathers bring good health.', 'My stew is hot and full of mushrooms. Not angry ones!'] },
 };
@@ -92,20 +103,21 @@ export class ShopWindow {
     if (what === 'talk') { const lines = KEEPERS[k].talk; this.say[k] = lines[Math.floor(Math.random() * lines.length)]; speak(this.say[k]); this.quiz = null; }
     if (what === 'quest') this.startQuest(k);
     if (what === 'ans') { this.answer(Number(id)); this.render(); return; }
-    if (what === 'buy') { const r = buy(p, id); this.msg = r.ok ? `You bought the ${it.en}!` : r.why === 'gold' ? `Not enough gold: the ${it.en} costs ${it.cost} ●.` : `The ${it.en} is for level ${it.level} heroes.`; this.api.sfx(r.ok ? 'correct' : 'wrong'); }
+    if (what === 'buy') { const r = buy(p, id); this.msg = r.ok ? (it.slot === 'home' || it.slot === 'yard' ? `You bought the ${it.en}! It is in your home now.` : `You bought the ${it.en}!`) : r.why === 'have' ? `You already have a ${it.en} at home.` : r.why === 'gold' ? `Not enough gold: the ${it.en} costs ${it.cost} ●.` : `The ${it.en} is for level ${it.level} heroes.`; this.api.sfx(r.ok ? 'correct' : 'wrong'); }
     if (what === 'wear') { b[it.slot] = b[it.slot] === id ? '' : id; wear(p); this.msg = b[it.slot] === id ? `You are wearing the ${it.en}.` : `You took off the ${it.en}.`; this.api.sfx('tick'); }
     if (what === 'sell') { const g = sell(p, id); this.msg = g ? `You sold the ${it.en} for ${g} gold.` : ''; this.api.sfx(g ? 'correct' : 'wrong'); }
     this.api.changed(); this.render();
   }
   card(id) {
-    const p = this.api.profile(), it = ITEMS[id], b = bag(p), food = it.slot === 'food', own = !food && b.owned.includes(id), on = !food && b[it.slot] === id;
-    const stat = [it.atk && `ATK +${it.atk}`, it.def && `DEF +${it.def}`, it.hp && `HP +${it.hp}`, it.heal && `+${it.heal} HP (Q)`].filter(Boolean).join(' · ');
+    const p = this.api.profile(), it = ITEMS[id], b = bag(p), food = it.slot === 'food', placed = it.slot === 'home' || it.slot === 'yard';
+    const own = !food && (placed ? home(p).items.includes(id) : b.owned.includes(id)), on = !food && !placed && b[it.slot] === id, n = food ? foodCount(p, id) : 0;
+    const stat = [it.atk && `ATK +${it.atk}`, it.def && `DEF +${it.def}`, it.hp && `HP +${it.hp}`, it.heal && `+${it.heal} HP (Q)`, placed && (it.slot === 'yard' ? 'Đặt ở sân nhà con' : 'Đặt trong nhà con')].filter(Boolean).join(' · ');
     const canBuy = food || !own, lock = p.stats.level < it.level;
     return `<div class="card ${lock ? 'locked' : ''}"><span class="tag">${it.cost} ●</span><span class="ic">${ICON[id] || '📦'}</span><b>${it.en}</b><span class="vi">${it.vi}</span><span class="st">${stat}</span>
-      ${lock ? `<span class="lock">🔒 Cần cấp ${it.level}</span>` : ''}${food ? `<span class="vi">Trong túi: ${id === 'forest_stew' ? b.stew || 0 : b.food}</span>` : ''}
+      ${lock ? `<span class="lock">🔒 Cần cấp ${it.level}</span>` : ''}${food ? `<span class="vi">Trong túi: ${n}</span>` : ''}${placed && own ? '<span class="on">✔ Đã có ở nhà</span>' : ''}
       <div class="row">${canBuy ? `<button data-act="buy" data-id="${id}" ${lock || p.stats.gold < it.cost ? 'disabled' : ''}>Buy</button>` : ''}
-        ${own ? `<button data-act="wear" data-id="${id}">${on ? 'Take off' : 'Wear'}</button>` : ''}${on ? '<span class="on">✔ wearing</span>' : ''}
-        ${own || (food && (id === 'forest_stew' ? b.stew > 0 : b.food > 0)) ? `<button class="sell" data-act="sell" data-id="${id}">Sell ${sellPrice(id)} ●</button>` : ''}</div></div>`;
+        ${own && !placed ? `<button data-act="wear" data-id="${id}">${on ? 'Take off' : 'Wear'}</button>` : ''}${on ? '<span class="on">✔ wearing</span>' : ''}
+        ${own || n > 0 ? `<button class="sell" data-act="sell" data-id="${id}">Sell ${sellPrice(id)} ●</button>` : ''}</div></div>`;
   }
   counter(k) {
     const kp = KEEPERS[k], q = this.quiz && this.quiz.k === k ? this.quiz : null;

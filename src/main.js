@@ -16,6 +16,9 @@ import { AdminPanel } from './ui/admin.js';
 import { MusicRoom } from './ui/music.js';
 import { Journal } from './ui/journal.js';
 import { campStall } from './world/stall.js';
+import { Homes } from './game/homes.js';
+import { HomePanel } from './ui/home.js';
+import { HOMES, FURNITURE, STALLS } from './core/regions/village.js';
 import { buildRoom } from './world/interior.js';
 import { label } from './world/common.js';
 import * as Q from './core/quests.js';
@@ -298,7 +301,7 @@ async function enterRegion(name, at) {
   const q = QUALITY[quality]; world.setDetail(q.density, q.particles, q.far);
   scene.traverse((o) => { if (o.material) [].concat(o.material).forEach((m) => (m.needsUpdate = true)); });
   try { await renderer.compileAsync(scene, camera); } catch { /* older browsers: shaders compile on first sight */ }      // no hitch when new things come into view
-  minimap.rebuild(); placeActors(); if (walkers) walkers.setRegion(name); if (mini) mini.setRegion(name); if (wild) wild.setRegion(name); if (chests) chests.setRegion(name); if (spots) spots.setRegion(name); if (forestStall) forestStall.visible = name === 'forest';
+  minimap.rebuild(); placeActors(); if (walkers) walkers.setRegion(name); if (mini) mini.setRegion(name); if (wild) wild.setRegion(name); if (chests) chests.setRegion(name); if (spots) spots.setRegion(name); if (homes) homes.setRegion(name); if (forestStall) forestStall.visible = name === 'forest';
   const [x, z] = at || [L.SPAWN.x, L.SPAWN.z];
   game.teleport(x, z); player.yaw = Math.PI; cam.tYaw = cam.yaw = 0.25;
   if (quest && quest.step === 'seek') quest.clueStart = performance.now();
@@ -361,16 +364,19 @@ function claimReward(r, what) {
 }
 // Anna's music house (moved west on 18/11, door on the east side); Willow's stall at the forest camp (Map 2 gear)
 const ANNA_DOOR = { x: -17.4, z: 12.5 }, FOREST_SHOP = { x: -36.5, z: 39.5 };
-let forestStall = null, room = null;
+let forestStall = null, room = null, homes = null, homePanel = null;
 const HALL_DOOR = { x: 0, z: -16.4 }, LILY_DOOR = { x: -17.4, z: -4 };
 /** Inside a house: the room is drawn instead of the world, the window docks on the right (body.inroom). */
-function enterRoom(kind) { leaveRoom(); room = buildRoom(kind); document.body.classList.add('inroom'); sfx('tick'); }
+const homesItems = (p) => (p.home && p.home.items) || [];
+function enterRoom(kind, opts) { leaveRoom(); room = buildRoom(kind, opts); document.body.classList.add('inroom'); sfx('tick'); }
 function leaveRoom() { if (!room) return; room.dispose(); room = null; document.body.classList.remove('inroom'); }
 function adminPlaces() {
   const out = [], add = (region, name, x, z) => out.push({ region, name, x, z });
   for (const r of ['village', 'forest']) for (const l of L.REGIONS[r].LANDMARKS) add(r, l.label, ...(l.spot || [l.x, l.z]));
   add('village', 'Tom', 2.6, 9.6); add('village', 'Cửa hàng', SHOP_DOOR.x - 1, SHOP_DOOR.z); add('village', 'Cú Mèo', OWL.x, OWL.z + 1.2); add('village', 'Bảng săn quái', BOARD.x + 1.2, BOARD.z + 1);
   for (const st of STARTS) add('village', 'Trò: ' + st.sign.replace(/^\S+\s/, ''), st.x + 0.8, st.z + 0.8);
+  add('village', 'Nhà của các con', HOMES[0].door[0] + 2, HOMES[0].door[1] + 1.5); add('village', 'Cửa hàng nội thất', FURNITURE.door[0] + 1.5, FURNITURE.door[1]);
+  add('village', 'Quầy rau quả', STALLS.produce.at[0] + 0.5, STALLS.produce.at[1]); add('village', 'Quầy nhạc cụ', STALLS.music.at[0] + 0.5, STALLS.music.at[1]);
   add('village', 'Vua Slime', BOSS_AT.x, BOSS_AT.z - 4); add('village', 'Golem Cổ', BOSS2_AT.x, BOSS2_AT.z - 4); add('village', 'Rương Đồng Hoang', CHEST_SPOTS[0][0], CHEST_SPOTS[0][1] - 1.5);
   add('forest', 'Cổng vào rừng', L.REGIONS.forest.SPAWN.x, L.REGIONS.forest.SPAWN.z); add('forest', 'Bảng săn quái rừng', FOREST_BOARD.x + 1.2, FOREST_BOARD.z + 0.6);
   add('forest', 'Nữ hoàng Nấm', BOSS3_AT.x + 6, BOSS3_AT.z); add('forest', 'Rương rừng', FOREST_CHESTS[0][0], FOREST_CHESTS[0][1] - 1.5);
@@ -655,6 +661,14 @@ function interactTarget() {
   if (near(tom.x, tom.z, 3)) return { text: 'E · Nói chuyện với Tom', run: () => story.talkTom() };
   if (near(ben.x, ben.z, 3.6)) return { text: 'E · Nói chuyện với Ben', run: () => story.talkBen() };
   if (near(sam.x, sam.z, 3)) return { text: 'E · Nói chuyện với Sam', run: () => story.talkSam() };
+  if (homes) {       // the children's homes, Bram's furniture shop and the two stalls (18/11)
+    const lot = homes.doorAt(player.pos);
+    if (lot) { const o = lot.owner; if (!o) return { text: 'Nhà trống: tạo thêm người chơi để nhận nhà này', run: () => ui.toast('Mỗi bé (tối đa 2) có một ngôi nhà ở đây.') };
+      const mine = o.id === profile.id; return { text: mine ? 'E · Vào nhà của con' : `E · Thăm nhà của ${o.name}`, run: () => { enterRoom('home', { items: [...homesItems(o)] }); homePanel.show(o, mine); } }; }
+    if (near(FURNITURE.door[0] + 0.9, FURNITURE.door[1], 1.9)) return { text: 'E · Cửa hàng nội thất (giường, bàn ghế, vườn)', run: () => { enterRoom('shop'); shopWin.show('Furniture & Garden Shop', ['home', 'garden']); } };
+    if (near(STALLS.produce.at[0], STALLS.produce.at[1], 1.8)) return { text: 'E · Quầy rau quả của Ben', run: () => shopWin.show("Ben's Fruit & Veg", ['produce']) };
+    if (near(STALLS.music.at[0], STALLS.music.at[1], 1.8)) return { text: 'E · Quầy nhạc cụ của Anna', run: () => shopWin.show("Anna's Instruments", ['music']) };
+  }
   if (near(SHOP_DOOR.x, SHOP_DOOR.z, 1.7)) return { text: 'E · Vào cửa hàng (xem và mua bán đồ)', run: () => { enterRoom('shop'); shopWin.show('Village Shop'); } };
   if (near(HALL_DOOR.x, HALL_DOOR.z, 1.8)) return { text: 'E · Vào nhà trưởng làng (sổ nhiệm vụ chính tuyến)', run: () => { enterRoom('hall'); journal.show('main'); speak('Welcome to my office! Here is your quest book.'); } };
   if (near(LILY_DOOR.x, LILY_DOOR.z, 1.8)) return { text: 'E · Vào nhà Lily (nhiệm vụ hằng ngày)', run: () => { enterRoom('herb'); journal.show('daily'); speak('Hello! Here are your tasks for today.'); } };
@@ -672,6 +686,7 @@ function onKey(e) {
   if (shopWin && shopWin.key(e.code)) { e.preventDefault(); return; }
   if (music && music.key(e.code)) { e.preventDefault(); return; }
   if (journal && !ui.busy && journal.key(e.code)) { e.preventDefault(); return; }
+  if (homePanel && homePanel.key(e.code)) { e.preventDefault(); return; }
   if (intro && intro.active) { if (e.code === 'KeyE' || e.code === 'Space' || e.code === 'Escape') endIntro(); e.preventDefault(); return; }
   if (e.code === 'F3') { perfOn = !perfOn; $('perf').classList.toggle('hidden', !perfOn); e.preventDefault(); return; }
   if (admin && admin.key(e.code)) { e.preventDefault(); return; }
@@ -713,10 +728,13 @@ async function boot() {
   tom = new Npc(tomG, 2.6, 7.6, -0.4); sam = new Npc(samG, 14, 17, 1.2); ben = new Npc(benG, -9.9, 19.5, Math.PI / 2); scene.add(tom.root, sam.root, ben.root);
   pip = new Pip(pipG.scene); scene.add(pip.root);
   for (const f of Object.values(FRIENDS)) { const npc = new Npc(await gltf(f.file), ...f.at, ngoc.animations); scene.add(npc.root); friends.push({ ...f, npc }); }
-  shopWin = new ShopWindow({ profile: () => profile, sfx, track, onClose: leaveRoom, today: () => Review.today(), changed: () => { setSword(); setWear(); save(); refresh(); } });
+  shopWin = new ShopWindow({ profile: () => profile, sfx, track, onClose: leaveRoom, today: () => Review.today(), changed: () => { setSword(); setWear(); save(); refresh(); if (homes) homes.refresh(); } });
   music = new MusicRoom({ profile: () => profile, sfx, track, onClose: leaveRoom, changed: () => { save(); refresh(); } });
   { const F = L.REGIONS.forest, y = F.groundHeight(FOREST_SHOP.x, FOREST_SHOP.z); forestStall = campStall(FOREST_SHOP.x, y, FOREST_SHOP.z, Math.PI / 2 + 0.3);
     const name = label("🌿 Willow's Camp Shop", { size: 28, scale: 0.8 }); name.position.set(0, 3.2, 0); forestStall.add(name); forestStall.visible = false; scene.add(forestStall); }
+  { const opt = (n) => staticModel(n).catch(() => null);
+    homes = new Homes({ scene, load: staticModel, profiles: () => store.profiles, models: { garden: await opt('prop_vegetable_garden_v01'), tree: await opt('prop_tree_round_v01') } });
+    await homes.build(); homes.setRegion(L.NAME); homePanel = new HomePanel({ onClose: leaveRoom }); }
   journal = new Journal({ profile: () => profile, today: () => Review.today(), onClose: leaveRoom,
     claimMain: (id) => claimReward(Q.claimMain(profile, id), 'Nhiệm vụ chính'), claimDaily: (id) => claimReward(Q.claimDaily(profile, Review.today(), id), 'Nhiệm vụ ngày') });
   Save.hooks.skill = (p, ok) => { if (ok && p === profile) track('right'); };
@@ -787,7 +805,7 @@ const AUTO = !navigator.webdriver && !localStorage.getItem('eq-quality-manual');
 function frame() {
   const now = performance.now(), raw = (now - last) / 1000, real = Math.min(0.25, raw); last = now;
   const dt = Math.min(0.05, real); TIME.value += real; const t = TIME.value;
-  const frozen = ui.modal || !started || (arcade && arcade.open) || (shopWin && shopWin.open) || (music && music.open) || (journal && journal.open);
+  const frozen = ui.modal || !started || (arcade && arcade.open) || (shopWin && shopWin.open) || (music && music.open) || (journal && journal.open) || (homePanel && homePanel.open);
   if (arcade) arcade.update(real, keys);
   if (touch) touch.update();
   releaseSoftKeys();
@@ -850,7 +868,7 @@ function frame() {
       markers.push(...wild.markers(), ...chests.markers(), ...spots.markers());
       if (Save.gateWaiting(profile)) markers.push({ x: OWL.x, z: OWL.z, text: '🦉', color: '#ffe28a' });
     }
-    minimap.draw(player.pos, player.yaw, markers); questMarks(markers); guideGoal = pickGoal(markers); }
+    minimap.draw(player.pos, player.yaw, markers); questMarks(markers); guideGoal = pickGoal(markers); if (homes) homes.refresh(); }
     autosave += dt; if (autosave > 20) { autosave = 0; save(); }
   }
   renderer.info.reset();

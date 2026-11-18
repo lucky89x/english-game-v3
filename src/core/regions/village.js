@@ -6,6 +6,12 @@ const bw = (b) => [b.x - BRIDGE_LEN / 2 - 0.8, b.z], be = (b) => [b.x + BRIDGE_L
 export const GATE = { x: -30, z: -44 };
 /** D1: things that fill the empty south fields (windmill, pond, training dummies, campsite). */
 export const SOUTH = { mill: [-30, 41], pond: [-6, 50], dummies: [[13, 45], [15, 48], [6, 52]], tent: [-17, 54.5], fire: [-11.5, 50] };
+/** 18/11: the children's own homes, two lots in the empty west fields, doors facing east (+x) like Lily's house; the
+ *  furniture shop stands south of them. Each yard is the strip between the door and the lane at x = -40. */
+export const HOMES = [{ x: -50, z: -5, door: [-45.4, -5], yard: [-42.6, -5] }, { x: -50, z: 10, door: [-45.4, 10], yard: [-42.6, 10] }];
+export const FURNITURE = { x: -40, z: -18, door: [-35.1, -18] };
+/** Two market stalls (18/11): Ben's fruit and vegetables south of his jar stall, Anna's instruments near her house. at: where E works. */
+export const STALLS = { produce: { x: -7.5, z: 24.8, yaw: Math.PI / 2, at: [-4.6, 24.8] }, music: { x: -19, z: 21.5, yaw: Math.PI / 2, at: [-16.4, 21.5] } };
 export default makeRegion({
   name: 'village', title: 'Starter Village', size: 140, playRadius: 62, seed: 4242, trees: 230, rocks: 40, roughness: 0.3, treeMix: [0.3, 0.85],
   riverX, riverHalf: () => 3.4, riverStart: -52, waterfall: true,
@@ -55,11 +61,15 @@ export default makeRegion({
     P(2.2, [-10, -1], [-14, -16], [-12, -30], [-4, -36]),                    // west lane past the hall to the hill
     P(2.2, [-17.4, -4], [-12, -3.6]), P(2.2, [-17.8, 12.5], [-11.4, 12.2]),     // garden paths to the two moved houses
     P(2.2, [-12.5, -1.5], [-19, 2.5], [-30, 4]),                              // lane to Max's blocks yard
+    P(2.4, [-30, 4], [-36, 2.5], [-40, 2.5]), P(2.2, [-40, -9], [-40, 14]),    // lane to the children's homes (18/11)
+    P(1.8, [-45.4, -5], [-40, -5]), P(1.8, [-45.4, 10], [-40, 10]),             // garden paths to the two front doors
+    P(2.2, [-40, -9], [-38, -14], [-35.1, -18]),                              // on to the furniture shop
   ],
-  lateSolids: [{ x: 0, z: 4, r: 3.8 }],                                      // the plaza fountain (model r 3.7)
+  lateSolids: [{ x: 0, z: 4, r: 3.8 },                                      // the plaza fountain (model r 3.7)
+    ...HOMES.map((h) => ({ x: h.x, z: h.z, r: 4.4 })), { x: FURNITURE.x, z: FURNITURE.z, r: 4.6 }, ...Object.values(STALLS).map((t) => ({ x: t.x, z: t.z, r: 1.7 }))],      // homes and the furniture shop (18/11)
   // 18/11 ("the houses are too close together"): Lily's and Anna's houses move further west, each with a garden path
   lateMove: [{ from: [-14.5, -8], to: [-22, -4] }, { from: [-15, 9], to: [-22.5, 12.5] }],
-  lateClear: (x, z) => x > -36 && x < 16 && z > 37 && z < 57,
+  lateClear: (x, z) => (x > -36 && x < 16 && z > 37 && z < 57) || (x > -57 && x < -33 && z > -24 && z < 17),      // south fields; west homesteads
   hills: (x, z, h) => h + 3.2 * gauss(Math.hypot(x + 44, z + 20), 12) + 2.4 * gauss(Math.hypot(x - 46, z + 30), 11)
     + 8.5 * (1 - smooth(-57.5, -52.5, z)) * smooth(-4, 8, x),      // north-east cliff with the waterfall
   treeFree: (x, z) => (Math.abs(x) < 20 && z > -34 && z < 26) || (x < -12 && x > -36 && z > 22 && z < 40) || (x > 30 && x < 52 && z > -4 && z < 26),

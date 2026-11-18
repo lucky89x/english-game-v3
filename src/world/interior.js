@@ -10,7 +10,7 @@ const cyl = (g, r1, r2, h, m, x, y, z, seg = 12) => { const o = new THREE.Mesh(n
 const ball = (g, r, m, x, y, z) => { const o = new THREE.Mesh(new THREE.SphereGeometry(r, 14, 10), m); o.position.set(x, y, z); g.add(o); return o; };
 
 /** The shell every room shares: 8 x 6 m, 3.4 m high, open towards the camera. */
-function shell(g, wallCol, floorCol) {
+function shell(g, wallCol, floorCol, rugs = true) {
   const plank = M(floorCol, 0.85), wall = M(wallCol, 0.9), beam = M(0x5a3416, 0.85), trim = M(0x7a4a24, 0.8);
   for (let i = 0; i < 16; i++) box(g, 0.5, 0.06, 6.2, i % 2 ? plank : M(new THREE.Color(floorCol).multiplyScalar(0.9).getHex(), 0.85), -3.75 + i * 0.5, 0, 0);
   box(g, 8, 3.4, 0.2, wall, 0, 1.7, -3.1); box(g, 0.2, 3.4, 6.2, wall, -4, 1.7, 0); box(g, 0.2, 3.4, 6.2, wall, 4, 1.7, 0);
@@ -19,6 +19,7 @@ function shell(g, wallCol, floorCol) {
   box(g, 8.2, 0.12, 6.4, M(0x6a4020, 0.9), 0, 3.46, 0);
   // two windows with daylight
   for (const x of [-2.2, 2.2]) { box(g, 1.3, 1.2, 0.08, M(0xfff2c0, 0.3, { emissive: 0xffe0a0, emissiveIntensity: 0.9 }), x, 2.15, -2.98); box(g, 1.45, 0.1, 0.16, trim, x, 1.52, -2.95); box(g, 0.08, 1.2, 0.12, trim, x, 2.15, -2.94); box(g, 1.3, 0.08, 0.12, trim, x, 2.15, -2.94); }
+  if (!rugs) return;
   // rug
   const rug = new THREE.Mesh(new THREE.CircleGeometry(1.6, 32), M(0xb8463a, 0.95)); rug.rotation.x = -Math.PI / 2; rug.scale.set(1.4, 1, 1); rug.position.set(0, 0.04, 0.6); g.add(rug);
   const rug2 = new THREE.Mesh(new THREE.RingGeometry(1.2, 1.4, 32), M(0xf2c84a, 0.95)); rug2.rotation.x = -Math.PI / 2; rug2.scale.set(1.4, 1, 1); rug2.position.set(0, 0.05, 0.6); g.add(rug2);
@@ -47,14 +48,45 @@ const bread = (g, x, y, z) => { const o = new THREE.Mesh(new THREE.CapsuleGeomet
 const bottle = (g, x, y, z, col) => { cyl(g, 0.08, 0.1, 0.22, M(col, 0.2, { transparent: true, opacity: 0.85, emissive: col, emissiveIntensity: 0.25 }), x, y + 0.12, z); cyl(g, 0.03, 0.03, 0.08, M(0x8a5a2a), x, y + 0.27, z, 6); };
 const pot = (g, x, y, z, s = 1) => { cyl(g, 0.16 * s, 0.12 * s, 0.24 * s, M(0xb8643a), x, y + 0.12 * s, z); for (let i = 0; i < 5; i++) ball(g, 0.12 * s, M([0x4f9a3a, 0x6cc044, 0x3f8a34][i % 3], 0.8), x + Math.cos(i * 1.3) * 0.1 * s, y + (0.32 + (i % 2) * 0.08) * s, z + Math.sin(i * 1.3) * 0.1 * s); };
 
-/** kind: 'shop' | 'music' | 'hall' | 'herb' | 'forest'. Returns { scene, camera, update(dt), dispose() }. */
-export function buildRoom(kind) {
+/** A child's home (18/11): empty walls at first; each thing bought in the shops stands in its own place. */
+function homeThings(g, items, lights) {
+  const has = (id) => items.includes(id), wood = M(0x9a6436), dark = M(0x5a3416), white = M(0xf4efe6, 0.7);
+  if (has('rug')) { const r = new THREE.Mesh(new THREE.CircleGeometry(1.5, 32), M(0x3d6fc6, 0.95)); r.rotation.x = -Math.PI / 2; r.scale.set(1.4, 1, 1); r.position.set(-0.2, 0.04, 0.9); g.add(r);
+    const r2 = new THREE.Mesh(new THREE.RingGeometry(1.15, 1.32, 32), M(0xffd23c, 0.95)); r2.rotation.x = -Math.PI / 2; r2.scale.set(1.4, 1, 1); r2.position.set(-0.2, 0.05, 0.9); g.add(r2); }
+  if (has('bed')) { box(g, 1.5, 0.4, 2.2, wood, -2.8, 0.2, -1.85); box(g, 1.4, 0.22, 2.05, white, -2.8, 0.51, -1.85); box(g, 1.42, 0.12, 1.3, M(0xe2483e, 0.9), -2.8, 0.66, -1.4);
+    box(g, 0.9, 0.16, 0.42, M(0xffffff, 0.8), -2.8, 0.7, -2.6); box(g, 1.5, 1.2, 0.12, wood, -2.8, 0.6, -2.95); }
+  if (has('wardrobe')) { box(g, 0.6, 2.2, 1.3, dark, -3.55, 1.1, 0.9); box(g, 0.04, 2.0, 0.02, M(0x2a1a0a), -3.24, 1.1, 0.9); for (const z of [0.82, 0.98]) ball(g, 0.04, M(0xe2b04a, 0.3), -3.22, 1.15, z); }
+  if (has('mirror')) { box(g, 0.06, 1.35, 0.75, M(0xe2b04a, 0.35), -3.86, 1.55, 2.3); box(g, 0.03, 1.2, 0.6, new THREE.MeshStandardMaterial({ color: 0xcfe8ff, roughness: 0.05, metalness: 0.9 }), -3.82, 1.55, 2.3); }
+  if (has('table')) { box(g, 1.4, 0.08, 0.9, wood, -0.2, 0.75, 0.9); for (const [x, z] of [[-0.8, 0.55], [0.4, 0.55], [-0.8, 1.25], [0.4, 1.25]]) box(g, 0.08, 0.72, 0.08, wood, x, 0.36, z);
+    for (const x of [-1.25, 0.85]) { box(g, 0.45, 0.06, 0.45, wood, x, 0.45, 0.9); for (const [dx, dz] of [[-0.18, -0.18], [0.18, -0.18], [-0.18, 0.18], [0.18, 0.18]]) box(g, 0.05, 0.45, 0.05, wood, x + dx, 0.22, 0.9 + dz); box(g, 0.06, 0.5, 0.45, wood, x + (x < 0 ? -0.2 : 0.2), 0.72, 0.9); }
+    ball(g, 0.12, M(0xe2402f, 0.5), -0.4, 0.88, 0.9); ball(g, 0.11, M(0xff8a1a, 0.5), -0.1, 0.87, 0.95); }
+  if (has('sofa')) { const c = M(0x2e9a5a, 0.95); box(g, 0.9, 0.45, 2.0, c, 3.3, 0.3, 0.7); box(g, 0.25, 0.85, 2.0, c, 3.75, 0.62, 0.7); for (const z of [-0.35, 1.75]) box(g, 0.95, 0.65, 0.2, c, 3.3, 0.4, z); }
+  if (has('lamp')) { cyl(g, 0.03, 0.03, 1.5, M(0x333333), -1.3, 0.75, -2.6, 6); cyl(g, 0.18, 0.18, 0.04, M(0x333333), -1.3, 0.02, -2.6); cyl(g, 0.16, 0.3, 0.32, M(0xfff0c0, 0.6, { emissive: 0xffc060, emissiveIntensity: 0.9, side: THREE.DoubleSide }), -1.3, 1.6, -2.6, 16);
+    const l = new THREE.PointLight(0xffc070, 3, 6, 1.8); l.position.set(-1.3, 1.5, -2.4); g.add(l); lights.push(l); }
+  if (has('bookcase')) bookshelf(g, 3.0, -2.75, 0);
+  if (has('desk')) { box(g, 1.2, 0.07, 0.6, wood, -2.0, 0.75, 2.5); for (const [x, z] of [[-2.5, 2.3], [-1.5, 2.3], [-2.5, 2.7], [-1.5, 2.7]]) box(g, 0.06, 0.72, 0.06, wood, x, 0.36, z); box(g, 0.32, 0.05, 0.24, M(0x2f6fd0), -2.2, 0.81, 2.5); box(g, 0.28, 0.05, 0.22, M(0xe8b030), -1.8, 0.81, 2.45); }
+  if (has('clock')) { const c = cyl(g, 0.32, 0.32, 0.06, M(0x7a4a24), 1.3, 2.75, -2.95, 24); c.rotation.x = Math.PI / 2; const f = cyl(g, 0.27, 0.27, 0.02, white, 1.3, 2.75, -2.91, 24); f.rotation.x = Math.PI / 2;
+    box(g, 0.025, 0.2, 0.01, M(0x222222), 1.3, 2.83, -2.89); box(g, 0.14, 0.02, 0.01, M(0x222222), 1.36, 2.75, -2.89); }
+  if (has('picture')) { box(g, 1.0, 0.75, 0.05, M(0xe2b04a, 0.4), 0, 2.2, -2.97); box(g, 0.86, 0.3, 0.02, M(0x8fd0ff, 0.8), 0, 2.33, -2.94); box(g, 0.86, 0.32, 0.02, M(0x5fb84a, 0.8), 0, 2.03, -2.94); ball(g, 0.08, M(0xffd23c, 0.5, { emissive: 0xffc000, emissiveIntensity: 0.5 }), 0.25, 2.38, -2.93); }
+  if (has('plant')) pot(g, 3.4, 0, 2.4, 1.6);
+  if (has('guitar')) { const gg = new THREE.Group(), body = M(0xc87a30, 0.4); const b1 = ball(gg, 0.26, body, 0, 0.3, 0); b1.scale.z = 0.35; const b2 = ball(gg, 0.2, body, 0, 0.62, 0); b2.scale.z = 0.35;
+    box(gg, 0.07, 0.75, 0.04, dark, 0, 1.1, 0); cyl(gg, 0.07, 0.07, 0.02, M(0x222222), 0, 0.45, 0.1, 12).rotation.x = Math.PI / 2; gg.position.set(-0.55, 0, -2.75); gg.rotation.x = -0.18; g.add(gg); }
+  if (has('piano')) { const k = M(0x14141a, 0.15); box(g, 1.7, 1.15, 0.6, k, 1.35, 0.58, -2.65); box(g, 1.6, 0.05, 0.3, white, 1.35, 0.78, -2.25); for (let i = 0; i < 10; i++) if (i % 7 !== 2 && i % 7 !== 6) box(g, 0.06, 0.04, 0.16, k, 0.65 + i * 0.15, 0.82, -2.32);
+    box(g, 0.6, 0.06, 0.35, k, 1.35, 0.48, -1.8); }
+  if (has('drum')) { cyl(g, 0.38, 0.38, 0.45, M(0xd8342a, 0.4), 2.3, 0.23, 2.0, 20); cyl(g, 0.39, 0.39, 0.02, white, 2.3, 0.46, 2.0, 20); for (const dx of [-0.12, 0.12]) { const st = cyl(g, 0.015, 0.015, 0.45, M(0xe8c070), 2.3 + dx, 0.5, 2.0, 5); st.rotation.z = 1.2 * Math.sign(dx); } }
+  if (has('violin')) { const vg = new THREE.Group(), b = M(0x8a3a10, 0.3); const v1 = ball(vg, 0.15, b, 0, 0, 0); v1.scale.z = 0.3; const v2 = ball(vg, 0.12, b, 0, 0.2, 0); v2.scale.z = 0.3; box(vg, 0.04, 0.35, 0.03, M(0x1a1a1a), 0, 0.45, 0);
+    vg.position.set(3.86, 1.6, -1.2); vg.rotation.y = -Math.PI / 2; vg.rotation.z = 0.3; g.add(vg); }
+}
+
+/** kind: 'shop' | 'music' | 'hall' | 'herb' | 'forest' | 'home' (opts.items: what the child bought). Returns { scene, camera, update(dt), dispose() }. */
+export function buildRoom(kind, opts = {}) {
   const scene = new THREE.Scene(), g = new THREE.Group(), lights = []; scene.add(g);
   scene.background = new THREE.Color(0x2a1a10);
   scene.add(new THREE.HemisphereLight(0xfff0d0, 0x5a3a20, 1.1));
   const sun = new THREE.DirectionalLight(0xfff0d0, 1.2); sun.position.set(-2, 5, 4); scene.add(sun);
-  const look = { shop: [0xe8d2a8, 0xb07a44], music: [0xd8c8f0, 0x9a6a44], hall: [0xd8e0f0, 0xa0703c], herb: [0xd8ecc8, 0xa87a48], forest: [0xd0e8c0, 0x8a6a40] }[kind] || [0xe8d2a8, 0xb07a44];
-  shell(g, ...look); lantern(g, -1.6, 0, lights); lantern(g, 1.6, 0, lights);
+  const look = { home: [0xf2e6d0, 0xc08a50], shop: [0xe8d2a8, 0xb07a44], music: [0xd8c8f0, 0x9a6a44], hall: [0xd8e0f0, 0xa0703c], herb: [0xd8ecc8, 0xa87a48], forest: [0xd0e8c0, 0x8a6a40] }[kind] || [0xe8d2a8, 0xb07a44];
+  shell(g, ...look, kind !== 'home'); lantern(g, -1.6, 0, lights); lantern(g, 1.6, 0, lights);
+  if (kind === 'home') homeThings(g, opts.items || [], lights);
   if (kind === 'shop' || kind === 'forest') {
     box(g, 3.6, 1.0, 0.8, M(0x7a4a24), 0, 0.5, 1.6); box(g, 3.8, 0.08, 0.95, M(0x9a6030), 0, 1.02, 1.6);       // counter
     for (let i = 0; i < 4; i++) bread(g, -1.2 + i * 0.8, 1.06, 1.6);

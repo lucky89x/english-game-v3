@@ -266,7 +266,7 @@ test('village: no vocabulary for the unit -> Ben says so and the story is not bl
 
 // ---------------------------------------------------------------- mini games (rules and places)
 test('mini games: stars, race rings and start signs are on reachable ground', async () => {
-  const STARS = [[-46, -6], [-38, -34], [-12, -38], [30, -30], [48, -12], [52, 20], [44, 38], [10, 50], [-22, 50], [-48, 30], [-30, 14], [8, -36]];
+  const STARS = [[-55, 3], [-38, -34], [-12, -38], [30, -30], [48, -12], [52, 20], [44, 38], [10, 50], [-22, 50], [-48, 30], [-30, 14], [8, -36]];
   const RACE = [[-20, 2], [-32, 4], [-42, 14], [-40, 28], [-34, 42], [-18, 46], [-6, 44], [-8, 30], [-20, 2]];
   const STARTS = [[18.4, 19.2], [33.5, 6], [-15, -17], [-6, -33], [10, 28], [-31, 4.5]];
   const src = (await import('node:fs')).readFileSync(new URL('../src/game/minigames.js', import.meta.url), 'utf8');
@@ -534,4 +534,17 @@ test('candy groups: runs of 3–6 and L shapes, bonus per shape, fall distances'
   const gl = M3.groups(b2).find((x) => x.kind === 0); assert.equal(gl.shape, 'L'); assert.equal(gl.cells.length, 5);
   const b3 = [...b2]; const fall = M3.collapseWithFall(b3, new Set(gl.cells), () => 0.5);
   assert.ok(b3.every((v) => v >= 0)); assert.equal(fall[M3.idx(0, 3)], 1); assert.equal(fall[M3.idx(4, 2)], 3);
+});
+
+// ---------------------------------------------------------------- homes and new shops (18/11)
+import * as RH from '../src/core/rules.js';
+test('homes: furniture goes into the home once, fruit is eaten after bread, the admin gets no house', () => {
+  const p = { stats: { gold: 1000, level: 9, hp: 10 } };
+  assert.equal(RH.buy(p, 'bed').ok, true); assert.equal(RH.buy(p, 'bed').why, 'have'); assert.deepEqual(RH.home(p).items, ['bed']); assert.equal(p.stats.gold, 880);
+  assert.equal(RH.buy(p, 'flowers').ok, true); assert.ok(RH.home(p).items.includes('flowers'));
+  RH.buy(p, 'apple'); RH.buy(p, 'watermelon'); assert.equal(RH.foodCount(p, 'apple'), 1);
+  assert.equal(RH.eat(p, 100), 60); assert.equal(RH.foodCount(p, 'watermelon'), 0);      // the biggest fruit first
+  assert.equal(RH.sell(p, 'bed'), 60); assert.ok(!RH.home(p).items.includes('bed'));
+  for (const s of ['home', 'garden', 'produce', 'music']) assert.ok(RH.shopList(s).length >= 4, s);
+  assert.deepEqual(RH.owners([{ id: 'a', admin: true }, { id: 'b' }, { id: 'c' }, { id: 'd' }]).map((x) => x.id), ['b', 'c']);
 });

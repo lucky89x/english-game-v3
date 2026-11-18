@@ -44,8 +44,44 @@ export const ITEMS = {
   bark_armor: { en: 'Barkskin Armor', vi: 'giáp vỏ cây', slot: 'armor', cost: 1800, level: 28, def: 14, hp: 140, seller: 'forest' },
   owl_feather: { en: 'Owl Feather', vi: 'lông cú (bùa)', slot: 'charm', cost: 800, level: 24, hp: 70, seller: 'forest' },
   forest_stew: { en: 'Forest Stew', vi: 'súp rừng (hồi 120 máu, phím Q)', slot: 'food', cost: 20, level: 21, heal: 120, seller: 'forest' },
+  // 18/11: Ben's fruit and vegetables (eaten with Q after the bread runs out)
+  apple: { en: 'Apple', vi: 'quả táo (hồi 20 máu)', slot: 'food', cost: 4, level: 1, heal: 20, seller: 'produce' },
+  carrot: { en: 'Carrot', vi: 'củ cà rốt (hồi 15 máu)', slot: 'food', cost: 3, level: 1, heal: 15, seller: 'produce' },
+  banana: { en: 'Banana', vi: 'quả chuối (hồi 25 máu)', slot: 'food', cost: 5, level: 1, heal: 25, seller: 'produce' },
+  corn: { en: 'Corn', vi: 'bắp ngô (hồi 30 máu)', slot: 'food', cost: 6, level: 1, heal: 30, seller: 'produce' },
+  watermelon: { en: 'Watermelon', vi: 'quả dưa hấu (hồi 60 máu)', slot: 'food', cost: 12, level: 3, heal: 60, seller: 'produce' },
+  // 18/11: things for the children's homes. Bram makes furniture, Lily sells garden things, Anna sells instruments.
+  bed: { en: 'Bed', vi: 'cái giường', slot: 'home', cost: 120, level: 1, seller: 'home' },
+  wardrobe: { en: 'Wardrobe', vi: 'tủ quần áo', slot: 'home', cost: 150, level: 1, seller: 'home' },
+  mirror: { en: 'Mirror', vi: 'cái gương', slot: 'home', cost: 80, level: 1, seller: 'home' },
+  table: { en: 'Table and Chairs', vi: 'bàn và ghế', slot: 'home', cost: 100, level: 1, seller: 'home' },
+  sofa: { en: 'Sofa', vi: 'ghế sô-pha', slot: 'home', cost: 180, level: 3, seller: 'home' },
+  lamp: { en: 'Lamp', vi: 'đèn cây', slot: 'home', cost: 60, level: 1, seller: 'home' },
+  bookcase: { en: 'Bookcase', vi: 'giá sách', slot: 'home', cost: 140, level: 2, seller: 'home' },
+  desk: { en: 'Desk', vi: 'bàn học', slot: 'home', cost: 110, level: 1, seller: 'home' },
+  clock: { en: 'Clock', vi: 'đồng hồ treo tường', slot: 'home', cost: 70, level: 1, seller: 'home' },
+  picture: { en: 'Picture', vi: 'bức tranh', slot: 'home', cost: 50, level: 1, seller: 'home' },
+  rug: { en: 'Rug', vi: 'tấm thảm', slot: 'home', cost: 60, level: 1, seller: 'home' },
+  plant: { en: 'Pot Plant', vi: 'chậu cây', slot: 'home', cost: 30, level: 1, seller: 'home' },
+  flowers: { en: 'Flower Bed', vi: 'luống hoa', slot: 'yard', cost: 40, level: 1, seller: 'garden' },
+  veg_patch: { en: 'Vegetable Patch', vi: 'luống rau', slot: 'yard', cost: 90, level: 1, seller: 'garden' },
+  fruit_tree: { en: 'Fruit Tree', vi: 'cây ăn quả', slot: 'yard', cost: 120, level: 2, seller: 'garden' },
+  bench: { en: 'Garden Bench', vi: 'ghế đá trong vườn', slot: 'yard', cost: 70, level: 1, seller: 'garden' },
+  mailbox: { en: 'Mailbox', vi: 'hòm thư', slot: 'yard', cost: 30, level: 1, seller: 'garden' },
+  garden_lamp: { en: 'Garden Lamp', vi: 'đèn vườn', slot: 'yard', cost: 50, level: 1, seller: 'garden' },
+  guitar: { en: 'Guitar', vi: 'đàn ghi-ta', slot: 'home', cost: 150, level: 1, seller: 'music' },
+  piano: { en: 'Piano', vi: 'đàn piano', slot: 'home', cost: 400, level: 8, seller: 'music' },
+  drum: { en: 'Drum', vi: 'cái trống', slot: 'home', cost: 200, level: 3, seller: 'music' },
+  violin: { en: 'Violin', vi: 'đàn vi-ô-lông', slot: 'home', cost: 250, level: 5, seller: 'music' },
 };
 export const bag = (profile) => profile.inv || (profile.inv = { owned: [], weapon: '', armor: '', charm: '', food: 0 });
+/** What a child has put in their home (18/11): furniture and instruments inside, garden things in the yard. */
+export const home = (profile) => profile.home || (profile.home = { items: [] });
+const pantry = (b) => b.pantry || (b.pantry = {});
+/** The children who own the two home lots: the first two players made on this computer (the admin does not get one). */
+export const owners = (profiles, lots = 2) => profiles.filter((p) => p && !p.admin).slice(0, lots);
+/** How many of a food the bag holds (bread, stew, or fruit and vegetables from Ben). */
+export const foodCount = (profile, id) => { const b = bag(profile); return id === 'bread' ? b.food : id === 'forest_stew' ? (b.stew || 0) : (pantry(b)[id] || 0); };
 /** Recomputes profile.gear from what is worn. */
 export function wear(profile) {
   const b = bag(profile), g = { atk: 0, def: 0, hp: 0 };
@@ -55,17 +91,25 @@ export function wear(profile) {
 /** Buys (and puts on) an item. Returns { ok, why } — why: 'gold' | 'level' | 'owned'. */
 export function buy(profile, id) {
   const it = ITEMS[id], b = bag(profile); if (!it) return { ok: false, why: 'none' };
-  if (it.slot !== 'food' && b.owned.includes(id)) { b[it.slot] = id; wear(profile); return { ok: true, why: 'owned' }; }
+  const placed = it.slot === 'home' || it.slot === 'yard';
+  if (placed && home(profile).items.includes(id)) return { ok: false, why: 'have' };
+  if (!placed && it.slot !== 'food' && b.owned.includes(id)) { b[it.slot] = id; wear(profile); return { ok: true, why: 'owned' }; }
   if (profile.stats.level < it.level) return { ok: false, why: 'level' };
   if (profile.stats.gold < it.cost) return { ok: false, why: 'gold' };
   profile.stats.gold -= it.cost;
-  if (it.slot === 'food') { if (id === 'forest_stew') b.stew = (b.stew || 0) + 1; else b.food += 1; } else { b.owned.push(id); b[it.slot] = id; wear(profile); }
+  if (placed) home(profile).items.push(id);
+  else if (it.slot === 'food') { if (id === 'forest_stew') b.stew = (b.stew || 0) + 1; else if (id === 'bread') b.food += 1; else pantry(b)[id] = (pantry(b)[id] || 0) + 1; } else { b.owned.push(id); b[it.slot] = id; wear(profile); }
   return { ok: true, why: '' };
 }
 /** Eats one bread. Returns the health restored (0 when there is none or health is full). */
 export function eat(profile, hpMax) {
-  const b = bag(profile), hp = profile.stats.hp ?? hpMax; if ((b.food <= 0 && !(b.stew > 0)) || hp >= hpMax) return 0;
-  let heal = ITEMS.bread.heal; if (b.stew > 0 && hpMax - hp > ITEMS.bread.heal) { b.stew -= 1; heal = ITEMS.forest_stew.heal; } else if (b.food > 0) b.food -= 1; else { b.stew -= 1; heal = ITEMS.forest_stew.heal; }   // stew for big wounds
+  const b = bag(profile), hp = profile.stats.hp ?? hpMax, P = pantry(b), fruit = Object.keys(P).filter((k) => P[k] > 0 && ITEMS[k]);
+  if ((b.food <= 0 && !(b.stew > 0) && !fruit.length) || hp >= hpMax) return 0;
+  let heal;
+  if (b.stew > 0 && hpMax - hp > ITEMS.bread.heal) { b.stew -= 1; heal = ITEMS.forest_stew.heal; }      // stew for big wounds
+  else if (b.food > 0) { b.food -= 1; heal = ITEMS.bread.heal; }
+  else if (b.stew > 0) { b.stew -= 1; heal = ITEMS.forest_stew.heal; }
+  else { const k = fruit.sort((x, y) => ITEMS[y].heal - ITEMS[x].heal)[0]; P[k] -= 1; heal = ITEMS[k].heal; }      // then the biggest fruit or vegetable
   const after = Math.min(hpMax, hp + heal); profile.stats.hp = after; return after - hp;
 }
 /** Selling back pays half the price (bread: half too, rounded down). Worn items are taken off first. */
@@ -73,7 +117,8 @@ export const SELL_RATE = 0.5;
 export const sellPrice = (id) => Math.floor(ITEMS[id].cost * SELL_RATE);
 export function sell(profile, id) {
   const it = ITEMS[id], b = bag(profile); if (!it) return 0;
-  if (it.slot === 'food') { const k = id === 'forest_stew' ? 'stew' : 'food'; if (!(b[k] > 0)) return 0; b[k] -= 1; }
+  if (it.slot === 'food') { if (id === 'bread' || id === 'forest_stew') { const k = id === 'forest_stew' ? 'stew' : 'food'; if (!(b[k] > 0)) return 0; b[k] -= 1; } else { const P = pantry(b); if (!(P[id] > 0)) return 0; P[id] -= 1; } }
+  else if (it.slot === 'home' || it.slot === 'yard') { const h = home(profile), i = h.items.indexOf(id); if (i < 0) return 0; h.items.splice(i, 1); }
   else { const i = b.owned.indexOf(id); if (i < 0) return 0; b.owned.splice(i, 1); if (b[it.slot] === id) b[it.slot] = ''; wear(profile); }
   const g = sellPrice(id); profile.stats.gold += g; return g;
 }
