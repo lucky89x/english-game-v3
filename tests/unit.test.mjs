@@ -523,3 +523,15 @@ test('mini game tiers: the four boards build at every tier and carry the tier in
   assert.equal(candyGame(Math.random, 3).moves, 20); assert.equal(slingGame(Math.random, 2).shots, 11);
   const g = withTier(candyGame(Math.random, 2), 2); g.moves = 0; g.flash = 0; assert.equal(g.done().tier, 2);
 });
+
+test('candy groups: runs of 3–6 and L shapes, bonus per shape, fall distances', () => {
+  const b = new Array(M3.N * M3.N).fill(0).map((_, i) => (i * 7 + Math.floor(i / 7) * 3) % 5 + 1);      // busy background, kinds 1..5
+  const put = (cells, k) => { for (const [r, c] of cells) b[M3.idx(r, c)] = k; };
+  put([[0, 0], [0, 1], [0, 2], [0, 3]], 0);                 // four in a row
+  const g4 = M3.groups(b).find((x) => x.kind === 0); assert.equal(g4.shape, 4); assert.equal(M3.shapeBonus(4), 30);
+  const b2 = new Array(M3.N * M3.N).fill(-1).map((_, i) => 1 + (i % 2) + (Math.floor(i / 7) % 2) * 2);
+  for (const [r, c] of [[2, 2], [2, 3], [2, 4], [3, 2], [4, 2]]) b2[M3.idx(r, c)] = 0;      // an L
+  const gl = M3.groups(b2).find((x) => x.kind === 0); assert.equal(gl.shape, 'L'); assert.equal(gl.cells.length, 5);
+  const b3 = [...b2]; const fall = M3.collapseWithFall(b3, new Set(gl.cells), () => 0.5);
+  assert.ok(b3.every((v) => v >= 0)); assert.equal(fall[M3.idx(0, 3)], 1); assert.equal(fall[M3.idx(4, 2)], 3);
+});

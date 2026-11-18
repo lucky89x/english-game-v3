@@ -1,7 +1,7 @@
 // Arcade overlay: a canvas board over the 3D world for the skill games that are not played with Ngọc's body.
 // Each game is { title, help, start(api), draw(ctx, w, h, t), click(x, y), key(code), done() -> result | null }.
 import { rule, TIER_NAME } from '../core/tiers.js';
-import { N, KINDS, idx, newBoard, move, hasMove, candyReward } from '../core/match3.js';
+import { N, KINDS, idx, newBoard, move, hasMove, candyReward, matches, groups, shapeBonus, collapseWithFall, adjacent } from '../core/match3.js';
 import * as BL from '../core/blocks.js';
 import * as SP from '../core/spell.js';
 import { speak } from './speech.js';
@@ -35,30 +35,75 @@ export class Arcade {
 
 const GEMS = [['#e8443a', '●'], ['#f6c62e', '◆'], ['#4fb85a', '▲'], ['#3d8fd6', '■'], ['#b684e8', '★'], ['#ff8fc0', '♥']];
 /** Candy Match: swap two neighbouring sweets to line up three. 25 moves. */
+/** Candy pieces rendered in Blender (tools/sprites/candy.py); the round gems stay as a fallback until they load. */
+const CANDY_IMG = typeof Image === 'undefined' ? [] : Array.from({ length: 6 }, (_, k) => Object.assign(new Image(), { src: `./assets/ui/candy_${k}.png` }));
+const CANDY_COL = ['#f0283a', '#ff8c14', '#ffd21a', '#3fcf4a', '#2f7dff', '#b048f0'];
+const SHAPE_WORD = { 4: 'Sweet!', 5: 'Tasty!', 6: 'Divine!', L: 'Delicious!' };
+/** Candy Match (18/11: "the balls look ugly, add effects like Candy Crush"): a swap slides, matched candies swell and
+ *  burst into sparks, the ones above fall into place, new ones drop in, and chains repeat with a growing combo. Four,
+ *  five, six in a line and L / T shapes pay a bonus with a big word. */
 export function candyGame(rnd = Math.random, tier = 1) {
   const R = rule('candy', tier);
-  const g = { title: '🍬 Candy Match', help: 'Bấm 2 viên kẹo cạnh nhau để đổi chỗ. Xếp 3 viên giống nhau thành hàng. ' + R.moves + ' lượt.', board: newBoard(rnd), sel: -1, moves: R.moves, score: 0, flash: 0, combo: 0, pop: [] };
-  const cell = 560 / N;
-  g.info = () => `Điểm ${g.score} · Còn ${g.moves} lượt`;
-  g.update = (dt) => { g.flash = Math.max(0, g.flash - dt); g.pop = g.pop.filter((p) => (p.t -= dt) > 0); };
-  g.click = (x, y) => {
-    const i = idx(Math.floor(y / cell), Math.floor(x / cell)); if (g.moves <= 0 || i < 0 || i >= N * N) return;
-    if (g.sel < 0 || g.sel === i) { g.sel = g.sel === i ? -1 : i; return; }
-    const r = move(g.board, g.sel, i, rnd);
-    if (r.ok) { g.moves -= 1; g.score += r.score; g.combo = r.combo; g.flash = 0.5; g.pop.push({ x, y, t: 0.9, text: '+' + r.score + (r.combo > 1 ? '  x' + r.combo : '') }); g.sel = -1; if (!hasMove(g.board)) g.board = newBoard(rnd); }
-    else g.sel = i;
+  const g = { title: '🍬 Candy Match', help: 'Bấm 2 viên kẹo cạnh nhau để đổi chỗ. Xếp 3 viên giống nhau thành hàng dọc hoặc ngang; 4, 5, 6 viên hay hình chữ L được thưởng thêm. ' + R.moves + ' lượt.',
+    board: newBoard(rnd), sel: -1, moves: R.moves, score: 0, flash: 0, combo: 0, pop: [], parts: [], words: [], fall: new Array(N * N).fill(0), burst: null, swap: null, phase: 'idle', pt: 0 };
+  const cell = 560 / N, centre = (i) => [(i % N + 0.5) * cell, (Math.floor(i / N) + 0.5) * cell];
+  g.info = () => `Điểm ${g.score} · Còn ${g.moves} lượt${g.combo > 1 ? ` · Combo x${g.combo}` : ''}`;
+  const startBurst = () => {          // the matched groups light up; points and the shape word come now
+    const gs = groups(g.board); if (!gs.length) { g.phase = 'idle'; g.combo = 0; if (!hasMove(g.board)) g.board = newBoard(rnd); return; }
+    g.combo += 1; const cells = new Set(); let pts = 0;
+    for (const gr of gs) { for (const i of gr.cells) cells.add(i); pts += gr.cells.length * 10 * g.combo + shapeBonus(gr.shape); if (SHAPE_WORD[gr.shape]) { const [x, y] = centre(gr.cells[Math.floor(gr.cells.length / 2)]); g.words.push({ x, y, t: 1.2, text: SHAPE_WORD[gr.shape], big: gr.shape === 6 || gr.shape === 'L' }); } }
+    g.score += pts; g.flash = 0.6; const [px, py] = centre([...cells][0]); g.pop.push({ x: px, y: py, t: 0.9, text: '+' + pts + (g.combo > 1 ? '  x' + g.combo : '') });
+    g.burst = { cells, t: 0 }; g.phase = 'burst'; g.pt = 0;
   };
-  g.done = () => (g.moves <= 0 && g.flash <= 0 ? { id: 'candy', score: g.score, ...candyReward(g.score), text: `Candy Match: ${g.score} points!` } : null);
+  const explode = () => {             // sparks and stars fly out of each burst candy, then everything above falls
+    for (const i of g.burst.cells) { const [x, y] = centre(i), col = CANDY_COL[g.board[i] % 6];
+      for (let n = 0; n < 9; n++) { const a = n / 9 * Math.PI * 2 + rnd() * 0.5, sp = 120 + rnd() * 220; g.parts.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 80, t: 0.55 + rnd() * 0.35, col, star: n % 3 === 0, r: 4 + rnd() * 5 }); } }
+    g.fall = collapseWithFall(g.board, g.burst.cells, rnd); g.burst = null; g.phase = 'fall'; g.pt = 0;
+  };
+  g.update = (dt) => {
+    g.flash = Math.max(0, g.flash - dt); g.pop = g.pop.filter((p) => (p.t -= dt) > 0); g.words = g.words.filter((p) => (p.t -= dt) > 0);
+    g.parts = g.parts.filter((p) => { p.t -= dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 520 * dt; return p.t > 0; });
+    g.pt += dt;
+    if (g.phase === 'swap' && g.pt >= 0.16) { if (g.swap.back) { g.swap = null; g.phase = 'idle'; } else { g.swap = null; startBurst(); } }
+    else if (g.phase === 'burst') { g.burst.t = g.pt; if (g.pt >= 0.3) explode(); }
+    else if (g.phase === 'fall' && g.pt >= 0.32) { g.fall.fill(0); startBurst(); }
+  };
+  g.click = (x, y) => {
+    const i = idx(Math.floor(y / cell), Math.floor(x / cell)); if (g.moves <= 0 || g.phase !== 'idle' || i < 0 || i >= N * N) return;
+    if (g.sel < 0 || g.sel === i || !adjacent(g.sel, i)) { g.sel = g.sel === i ? -1 : i; return; }
+    const a = g.sel, b = i; g.sel = -1;
+    [g.board[a], g.board[b]] = [g.board[b], g.board[a]];
+    const ok = matches(g.board).size > 0;
+    if (!ok) [g.board[a], g.board[b]] = [g.board[b], g.board[a]];
+    else { g.moves -= 1; g.combo = 0; }
+    g.swap = { a, b, back: !ok }; g.phase = 'swap'; g.pt = 0;
+  };
+  g.done = () => (g.moves <= 0 && g.phase === 'idle' && g.flash <= 0 ? { id: 'candy', score: g.score, ...candyReward(g.score), text: `Candy Match: ${g.score} points!` } : null);
   g.draw = (c, w, h, t) => {
-    c.fillStyle = '#fff4dc'; c.fillRect(0, 0, w, h);
-    for (let r = 0; r < N; r++) for (let k = 0; k < N; k++) {
-      const i = idx(r, k), [col, sym] = GEMS[g.board[i] % KINDS], x = k * cell, y = r * cell, on = i === g.sel, bob = on ? Math.sin(t * 9) * 3 : 0;
-      c.fillStyle = (r + k) % 2 ? '#f8e6c0' : '#fdf0d2'; c.fillRect(x, y, cell, cell);
-      c.beginPath(); c.arc(x + cell / 2, y + cell / 2 + bob, cell * 0.38, 0, 7); c.fillStyle = col; c.fill(); c.lineWidth = on ? 5 : 2.5; c.strokeStyle = on ? '#4a2a10' : 'rgba(74,42,16,.45)'; c.stroke();
-      c.beginPath(); c.arc(x + cell * 0.38, y + cell * 0.36 + bob, cell * 0.1, 0, 7); c.fillStyle = 'rgba(255,255,255,.7)'; c.fill();
-      c.fillStyle = 'rgba(255,255,255,.92)'; c.font = `800 ${Math.round(cell * 0.34)}px sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(sym, x + cell / 2, y + cell / 2 + 2 + bob);
+    const bg = c.createLinearGradient(0, 0, 0, h); bg.addColorStop(0, '#ffe7f3'); bg.addColorStop(1, '#ffd9b8'); c.fillStyle = bg; c.fillRect(0, 0, w, h);
+    for (let r = 0; r < N; r++) for (let k = 0; k < N; k++) { c.fillStyle = (r + k) % 2 ? 'rgba(255,255,255,.55)' : 'rgba(255,255,255,.32)'; c.beginPath(); c.roundRect(k * cell + 3, r * cell + 3, cell - 6, cell - 6, 12); c.fill(); }
+    const ease = (x) => 1 - (1 - Math.min(1, x)) ** 3;
+    for (let i = 0; i < N * N; i++) {
+      const v = g.board[i]; if (v < 0) continue;
+      let [x, y] = centre(i), s = 1;
+      if (g.phase === 'fall' && g.fall[i]) y -= g.fall[i] * cell * (1 - ease(g.pt / 0.32));
+      if (g.swap) { const o = i === g.swap.a ? g.swap.b : i === g.swap.b ? g.swap.a : -1; if (o >= 0) { const [ox, oy] = centre(o), k = g.swap.back ? Math.sin(Math.min(1, g.pt / 0.16) * Math.PI) * 0.5 : 1 - Math.min(1, g.pt / 0.16); x += (ox - x) * k; y += (oy - y) * k; } }
+      if (g.burst && g.burst.cells.has(i)) s = 1 + g.burst.t * 1.3;
+      if (i === g.sel) { s *= 1.08 + Math.sin(t * 9) * 0.05; c.fillStyle = 'rgba(255,255,255,.85)'; c.beginPath(); c.arc(x, y, cell * 0.47, 0, 7); c.fill(); }
+      const img = CANDY_IMG[v % 6], sz = cell * 0.98 * s;
+      if (g.burst && g.burst.cells.has(i)) { c.globalAlpha = Math.max(0, 1 - g.burst.t / 0.3); c.fillStyle = 'rgba(255,255,255,.7)'; c.beginPath(); c.arc(x, y, cell * 0.5 * s, 0, 7); c.fill(); }
+      if (img && img.complete && img.naturalWidth) c.drawImage(img, x - sz / 2, y - sz / 2, sz, sz);
+      else { const [col, sym] = GEMS[v % KINDS]; c.beginPath(); c.arc(x, y, cell * 0.38 * s, 0, 7); c.fillStyle = col; c.fill(); c.fillStyle = '#fff'; c.font = `800 ${Math.round(cell * 0.34)}px sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(sym, x, y + 2); }
+      c.globalAlpha = 1;
     }
-    for (const p of g.pop) { c.globalAlpha = Math.min(1, p.t * 2); c.fillStyle = '#4a2a10'; c.font = '800 30px sans-serif'; c.textAlign = 'center'; c.fillText(p.text, p.x, p.y - (0.9 - p.t) * 60); c.globalAlpha = 1; }
+    for (const p of g.parts) { c.globalAlpha = Math.min(1, p.t * 2.5); c.fillStyle = p.star ? '#fffbe0' : p.col;
+      if (p.star) { c.save(); c.translate(p.x, p.y); c.rotate(p.t * 8); c.beginPath(); for (let n = 0; n < 10; n++) { const rr = n % 2 ? p.r * 0.45 : p.r * 1.2, a = n * Math.PI / 5; c[n ? 'lineTo' : 'moveTo'](Math.cos(a) * rr, Math.sin(a) * rr); } c.fill(); c.restore(); }
+      else { c.beginPath(); c.arc(p.x, p.y, p.r, 0, 7); c.fill(); } }
+    c.globalAlpha = 1; c.textAlign = 'center'; c.textBaseline = 'alphabetic';
+    for (const p of g.pop) { c.globalAlpha = Math.min(1, p.t * 2); c.fillStyle = '#7a2a6a'; c.font = '900 28px sans-serif'; c.fillText(p.text, p.x, p.y - (0.9 - p.t) * 60); }
+    for (const p of g.words) { const k = 1.2 - p.t, sc = (p.big ? 1.25 : 1) * (k < 0.15 ? k / 0.15 * 1.2 : 1); c.globalAlpha = Math.min(1, p.t * 2.5); c.save(); c.translate(w / 2, h / 2 - 40); c.scale(sc, sc);
+      c.font = '900 56px sans-serif'; c.lineWidth = 9; c.strokeStyle = '#7a1a5a'; c.strokeText(p.text, 0, 0); const gr = c.createLinearGradient(0, -40, 0, 10); gr.addColorStop(0, '#fff3a0'); gr.addColorStop(1, '#ff7ab8'); c.fillStyle = gr; c.fillText(p.text, 0, 0); c.restore(); }
+    c.globalAlpha = 1;
   };
   return g;
 }
