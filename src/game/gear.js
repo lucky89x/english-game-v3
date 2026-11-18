@@ -6,6 +6,8 @@ const mat = (color, metal = 0, rough = 0.7) => new THREE.MeshStandardMaterial({ 
 export const ARMOR_LOOK = {
   leather_vest: { body: 0x8a5228, trim: 0x5f3519, metal: 0, pads: false },
   iron_armor: { body: 0xb8c0ca, trim: 0xe2b04a, metal: 0.75, pads: true },
+  ranger_cloak: { body: 0x3f7a3a, trim: 0xc9a24a, metal: 0, pads: false },
+  bark_armor: { body: 0x6a4a2a, trim: 0x7fc24a, metal: 0, pads: true },
 };
 /** Fit values, tuned with tests/look.mjs ngoc_front / ngoc_side. */
 export const FIT = { y: 0.05, r: 0.155, h: 0.22, depth: 0.82, padX: 0.17, padY: 0.17 };

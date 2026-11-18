@@ -490,6 +490,60 @@ export function smoke(x, y, z) {
   return pts;
 }
 
+// Animals redrawn 18/11 ("make the animals nicer"): more rounded shapes, bigger, with proper faces (eye whites and
+// shine, nose, inner ears, whiskers), a hen with comb and wattle instead of the toy slimes, and a fuller corgi.
+const SM = (color, rough = 0.85) => new THREE.MeshStandardMaterial({ color, roughness: rough });
+function part(g, geo, m, x, y, z, sx = 1, sy = 1, sz = 1, rx = 0, ry = 0, rz = 0) { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.scale.set(sx, sy, sz); o.rotation.set(rx, ry, rz); o.castShadow = true; g.add(o); return o; }
+function eyes(g, y, z, w, r = 0.055) {
+  const dark = new THREE.MeshBasicMaterial({ color: 0x1a0e08 }), white = new THREE.MeshBasicMaterial({ color: 0xffffff });
+  for (const sx of [-1, 1]) { part(g, new THREE.SphereGeometry(r * 1.25, 12, 10), white, sx * w, y, z - 0.01); part(g, new THREE.SphereGeometry(r, 12, 10), dark, sx * w, y, z + r * 0.4); part(g, new THREE.SphereGeometry(r * 0.32, 6, 5), white, sx * w + r * 0.3, y + r * 0.35, z + r * 1.1); }
+}
+export function rabbit(furHex) {
+  const g = new THREE.Group(), fur = SM(furHex, 0.95), belly = SM(0xfffaf2, 0.95), pink = SM(0xffaec0, 0.7), dark = SM(0x5a3a30, 0.6);
+  part(g, new THREE.SphereGeometry(0.3, 24, 18), fur, 0, 0.3, -0.05, 0.95, 0.88, 1.15);             // body
+  for (const sx of [-1, 1]) { part(g, new THREE.SphereGeometry(0.16, 18, 14), fur, sx * 0.17, 0.22, -0.16, 0.8, 1, 1.2); part(g, new THREE.CapsuleGeometry(0.055, 0.16, 4, 10), belly, sx * 0.16, 0.05, -0.02, 1, 1, 1, Math.PI / 2); part(g, new THREE.CapsuleGeometry(0.04, 0.12, 4, 8), fur, sx * 0.09, 0.12, 0.2); }
+  part(g, new THREE.SphereGeometry(0.17, 18, 14), belly, 0, 0.27, 0.13, 1, 1.1, 0.7);              // chest
+  part(g, new THREE.SphereGeometry(0.22, 24, 18), fur, 0, 0.6, 0.2, 1.05, 0.95, 1);                // head
+  for (const sx of [-1, 1]) { part(g, new THREE.SphereGeometry(0.08, 12, 10), belly, sx * 0.07, 0.53, 0.36); part(g, new THREE.CapsuleGeometry(0.06, 0.34, 4, 12), fur, sx * 0.09, 0.98, 0.14, 1, 1, 0.55, -0.12, 0, -sx * 0.12); part(g, new THREE.CapsuleGeometry(0.032, 0.26, 4, 8), pink, sx * 0.09, 0.98, 0.17, 1, 1, 0.4, -0.12, 0, -sx * 0.12); }
+  part(g, new THREE.SphereGeometry(0.035, 10, 8), pink, 0, 0.58, 0.42);                             // nose
+  eyes(g, 0.65, 0.36, 0.09, 0.045);
+  const wh = new THREE.MeshBasicMaterial({ color: 0x6a5a50 });
+  for (const sx of [-1, 1]) for (const k of [-1, 1]) part(g, new THREE.CylinderGeometry(0.004, 0.004, 0.18, 3), wh, sx * 0.13, 0.55 + k * 0.015, 0.4, 1, 1, 1, 0, 0, Math.PI / 2 + sx * k * 0.15);
+  part(g, new THREE.SphereGeometry(0.1, 14, 10), belly, 0, 0.36, -0.38);                            // tail
+  part(g, new THREE.SphereGeometry(0.02, 6, 5), dark, 0, 0.5, 0.41);
+  g.scale.setScalar(1.3); return g;
+}
+export function hen(featherHex) {
+  const g = new THREE.Group(), body = SM(featherHex, 0.9), red = SM(0xd8322a, 0.6), beak = SM(0xf0a830, 0.5), leg = SM(0xe8a030, 0.6);
+  part(g, new THREE.SphereGeometry(0.28, 24, 18), body, 0, 0.42, 0, 0.9, 0.85, 1.15);
+  part(g, new THREE.SphereGeometry(0.16, 20, 14), body, 0, 0.72, 0.2);
+  for (let k = 0; k < 3; k++) part(g, new THREE.SphereGeometry(0.05, 10, 8), red, 0, 0.88 + (k === 1 ? 0.03 : 0), 0.14 + k * 0.06);    // comb
+  part(g, new THREE.ConeGeometry(0.045, 0.12, 10), beak, 0, 0.7, 0.38, 1, 1, 1, Math.PI / 2);
+  part(g, new THREE.SphereGeometry(0.035, 10, 8), red, 0, 0.62, 0.33, 0.8, 1.4, 0.8);              // wattle
+  for (const sx of [-1, 1]) { part(g, new THREE.SphereGeometry(0.17, 16, 12), body, sx * 0.22, 0.45, -0.02, 0.35, 0.7, 1.1, 0, 0, sx * 0.2); part(g, new THREE.CylinderGeometry(0.02, 0.02, 0.2, 6), leg, sx * 0.08, 0.12, 0.02); part(g, new THREE.BoxGeometry(0.1, 0.02, 0.12), leg, sx * 0.08, 0.02, 0.05); }
+  for (let k = 0; k < 3; k++) part(g, new THREE.SphereGeometry(0.1, 12, 10), body, (k - 1) * 0.07, 0.62, -0.32, 0.5, 1.2, 0.6, 0.5);    // tail feathers
+  eyes(g, 0.76, 0.32, 0.075, 0.03);
+  g.scale.setScalar(1.15); return g;
+}
+export function corgi() {
+  const g = new THREE.Group(), fur = SM(0xe39a46, 0.95), cream = SM(0xfff4e2, 0.95), nose = SM(0x1e1410, 0.4), tongue = SM(0xff7f8f, 0.6);
+  part(g, new THREE.CapsuleGeometry(0.24, 0.5, 6, 18), fur, 0, 0.4, 0, 1, 1, 1, Math.PI / 2);           // long body
+  part(g, new THREE.SphereGeometry(0.22, 20, 14), cream, 0, 0.34, 0.24, 0.9, 0.8, 0.9);
+  part(g, new THREE.SphereGeometry(0.24, 24, 18), fur, 0, 0.66, 0.45);                                  // head
+  part(g, new THREE.SphereGeometry(0.15, 20, 14), cream, 0, 0.58, 0.62, 1, 0.75, 1.1);                   // muzzle
+  part(g, new THREE.SphereGeometry(0.11, 18, 12), cream, 0, 0.74, 0.58, 0.6, 0.9, 0.6);                  // white blaze
+  part(g, new THREE.SphereGeometry(0.045, 12, 10), nose, 0, 0.62, 0.78);
+  part(g, new THREE.SphereGeometry(0.05, 12, 8), tongue, 0, 0.51, 0.72, 0.8, 0.5, 1);
+  for (const sx of [-1, 1]) {
+    part(g, new THREE.ConeGeometry(0.11, 0.26, 12), fur, sx * 0.15, 0.94, 0.42, 1, 1, 0.5, 0, 0, -sx * 0.2); part(g, new THREE.ConeGeometry(0.06, 0.16, 10), SM(0xffc0a8), sx * 0.15, 0.92, 0.45, 1, 1, 0.3, 0, 0, -sx * 0.2);
+    for (const z of [0.3, -0.3]) part(g, new THREE.CapsuleGeometry(0.065, 0.1, 4, 10), cream, sx * 0.14, 0.13, z);
+  }
+  eyes(g, 0.72, 0.62, 0.1, 0.04);
+  part(g, new THREE.TorusGeometry(0.19, 0.04, 8, 20), SM(0x2f6fd0, 0.5), 0, 0.52, 0.36, 1, 1, 1, 1.2);   // collar
+  part(g, new THREE.CylinderGeometry(0.04, 0.04, 0.015, 12), SM(0xffd23c, 0.3), 0, 0.42, 0.52, 1, 1, 1, Math.PI / 2);
+  g.scale.setScalar(1.25); return g;
+}
+
 /** Friendly creatures: bouncing slimes and hopping bunnies (decoration only, no collision). */
 export function creatures() {
   const g = new THREE.Group(), list = [];
@@ -497,33 +551,14 @@ export function creatures() {
   const eye = new THREE.MeshBasicMaterial({ color: 0x24140c }), white = new THREE.MeshBasicMaterial({ color: 0xffffff }), blush = new THREE.MeshBasicMaterial({ color: 0xff9fb0 });
   const face = (o, y, z, w) => { for (const sx of [-1, 1]) { const e = new THREE.Mesh(new THREE.SphereGeometry(0.07, 8, 6), eye); e.position.set(sx * w, y, z); o.add(e); const h = new THREE.Mesh(new THREE.SphereGeometry(0.025, 5, 4), white); h.position.set(sx * w + 0.02, y + 0.03, z + 0.05); o.add(h); const b = new THREE.Mesh(new THREE.SphereGeometry(0.05, 6, 4), blush); b.scale.set(1.3, 0.6, 0.4); b.position.set(sx * (w + 0.12), y - 0.08, z - 0.01); o.add(b); } };
   spots.forEach((sp, i) => {
-    const o = new THREE.Group(), slime = i % 2 === 0;
-    if (slime) {
-      const hue = [0x6fc8ff, 0x8fe08a, 0xffb0d0][i % 3];
-      const body = new THREE.Mesh(new THREE.SphereGeometry(0.45, 16, 12), new THREE.MeshStandardMaterial({ color: hue, roughness: 0.15, transparent: true, opacity: 0.88, emissive: hue, emissiveIntensity: 0.15 }));
-      body.scale.set(1, 0.78, 1); body.position.y = 0.34; body.castShadow = true; o.add(body);
-      const tip = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.26, 8), body.material); tip.position.set(0.05, 0.76, 0); tip.rotation.z = -0.3; o.add(tip);
-      face(o, 0.36, 0.4, 0.15);
-    } else {
-      const fur = new THREE.MeshStandardMaterial({ color: i % 4 === 1 ? 0xfaf6ee : 0xd9b48a, roughness: 0.95 }), pink = new THREE.MeshStandardMaterial({ color: 0xffb6c8 });
-      const body = new THREE.Mesh(new THREE.SphereGeometry(0.3, 12, 10), fur); body.scale.set(0.9, 0.85, 1.1); body.position.y = 0.28; body.castShadow = true; o.add(body);
-      const head = new THREE.Mesh(new THREE.SphereGeometry(0.24, 12, 10), fur); head.position.set(0, 0.56, 0.2); o.add(head);
-      for (const sx of [-1, 1]) { const ear = new THREE.Mesh(new THREE.CapsuleGeometry(0.06, 0.3, 3, 6), fur); ear.position.set(sx * 0.1, 0.9, 0.16); ear.rotation.z = -sx * 0.18; o.add(ear); const inn = new THREE.Mesh(new THREE.CapsuleGeometry(0.03, 0.2, 3, 5), pink); inn.position.set(sx * 0.1, 0.9, 0.205); inn.rotation.z = -sx * 0.18; o.add(inn); }
-      const tail = new THREE.Mesh(new THREE.SphereGeometry(0.1, 8, 6), new THREE.MeshStandardMaterial({ color: 0xffffff })); tail.position.set(0, 0.3, -0.33); o.add(tail);
-      face(o, 0.6, 0.42, 0.1);
-    }
+    const slime = false, kind = i % 3;                  // rabbits and hens (the toy slimes were dropped 18/11)
+    const o = kind === 1 ? hen([0xfaf6ee, 0xd8a060, 0x8a5a3a][i % 3]) : rabbit([0xd9b48a, 0xfaf6ee, 0x9a8a80][i % 3]);
+    o.userData.hen = kind === 1;
     compact(o); g.add(o); list.push({ o, slime, x: sp.x, z: sp.z, r: 0.8 + (i % 3) * 0.5, ph: i * 1.7, sp: (slime ? 0.25 : 0.45) * (i % 2 ? 1 : -1) });
   });
   if (L.NAME === 'village') {      // a corgi trotting round the square and an owl on the market sign
-    const dog = new THREE.Group(), fur = new THREE.MeshStandardMaterial({ color: 0xe8a04a, roughness: 0.95 }), cream = new THREE.MeshStandardMaterial({ color: 0xfff4e2, roughness: 0.95 });
-    const B = (geo, m, x, y, z, sx = 1, sy = 1, sz = 1) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.scale.set(sx, sy, sz); o.castShadow = true; dog.add(o); return o; };
-    B(new THREE.SphereGeometry(0.3, 12, 10), fur, 0, 0.36, 0, 0.85, 0.8, 1.45); B(new THREE.SphereGeometry(0.22, 10, 8), cream, 0, 0.3, 0.2, 0.8, 0.7, 0.9);
-    B(new THREE.SphereGeometry(0.25, 12, 10), fur, 0, 0.62, 0.42); B(new THREE.SphereGeometry(0.13, 10, 8), cream, 0, 0.56, 0.62, 1, 0.8, 1.1);
-    B(new THREE.SphereGeometry(0.04, 6, 5), eye, 0, 0.6, 0.76);
-    for (const sx of [-1, 1]) { B(new THREE.ConeGeometry(0.09, 0.2, 6), fur, sx * 0.14, 0.9, 0.38); B(new THREE.CapsuleGeometry(0.06, 0.12, 3, 6), cream, sx * 0.14, 0.12, 0.3); B(new THREE.CapsuleGeometry(0.06, 0.12, 3, 6), cream, sx * 0.14, 0.12, -0.3); }
-    const tailD = B(new THREE.SphereGeometry(0.11, 8, 6), cream, 0, 0.5, -0.45); tailD.userData.live = true;
-    B(new THREE.TorusGeometry(0.2, 0.045, 6, 14), new THREE.MeshStandardMaterial({ color: 0xd23b30 }), 0, 0.5, 0.3).rotation.x = 1.2;
-    face(dog, 0.68, 0.62, 0.1);
+    const dog = corgi(), cream = new THREE.MeshStandardMaterial({ color: 0xfff4e2, roughness: 0.95 }), eye = new THREE.MeshBasicMaterial({ color: 0x24140c });
+    const tailD = new THREE.Mesh(new THREE.SphereGeometry(0.12, 14, 10), cream); tailD.position.set(0, 0.52, -0.5); tailD.userData.live = true; dog.add(tailD);
     compact(dog); g.add(dog); list.push({ o: dog, dog: true, tail: tailD, x: 6, z: 12, r: 2.3, ph: 1, sp: 0.5 });      // open grass east of the path: no fence to run through
     const owl = new THREE.Group(), brown = new THREE.MeshStandardMaterial({ color: 0x9a6a3c, roughness: 0.95 });
     const O = (geo, m, x, y, z, sx = 1, sy = 1, sz = 1) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.scale.set(sx, sy, sz); owl.add(o); return o; };

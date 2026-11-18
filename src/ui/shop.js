@@ -6,12 +6,15 @@
 import { ITEMS, bag, buy, sell, sellPrice, shopList, wear } from '../core/rules.js';
 import { speak } from './speech.js';
 
-const ICON = { wood_sword: '🗡️', iron_sword: '⚔️', crystal_blade: '🔷', leather_vest: '🦺', iron_armor: '🛡️', clover: '🍀', bread: '🍞' };
+const ICON = { wood_sword: '🗡️', iron_sword: '⚔️', crystal_blade: '🔷', leather_vest: '🦺', iron_armor: '🛡️', clover: '🍀', bread: '🍞',
+  oak_blade: '🪵', moon_sword: '🌙', ranger_cloak: '🧥', bark_armor: '🌳', owl_feather: '🪶', forest_stew: '🍲' };
 const KEEPERS = {
   forge: { name: 'Bram', img: 'assets/ui/keeper_bram.jpg', title: "⚒️ Bram's counter", sub: 'Weapons & Armour · vũ khí và giáp',
     talk: ['A good sword is a hero\'s best friend.', 'Iron is strong, but crystal is stronger!', 'Wear armour before you visit the Wild Meadow.', 'I make every blade by hand. Clang, clang!'] },
   rose: { name: 'Rose', img: 'assets/ui/keeper_rose.jpg', title: "🥖 Rose's counter", sub: 'Bread & Charms · bánh và bùa',
     talk: ['My honey bread makes you feel strong again.', 'A lucky clover keeps you safe on long trips.', 'I bake fresh bread every morning at six.', 'Press Q to eat bread when you are hurt!'] },
+  forest: { name: 'Willow', img: 'assets/ui/keeper_willow.jpg', title: "🌿 Willow's camp shop", sub: 'Forest gear · đồ của rừng (Map 2)',
+    talk: ['The forest is dark. Strong armour keeps you safe.', 'Moonlight makes my swords shine.', 'Owls are wise. Their feathers bring good health.', 'My stew is hot and full of mushrooms. Not angry ones!'] },
 };
 const CSS = `
 #shopwin { position:fixed; inset:0; z-index:40; display:flex; align-items:center; justify-content:center; background:rgba(30,16,6,.6); }
@@ -55,13 +58,13 @@ export class ShopWindow {
       this.act(act, id, b.dataset.k);
     });
   }
-  show(title = 'Village Shop') {
-    this.title = title; this.open = true; this.quiz = null;
-    this.say = { forge: 'Welcome! Look at my blades.', rose: 'Hello! Fresh bread today!' };
+  show(title = 'Village Shop', counters = ['forge', 'rose']) {
+    this.title = title; this.counters = counters; this.open = true; this.quiz = null;
+    this.say = { forge: 'Welcome! Look at my blades.', rose: 'Hello! Fresh bread today!', forest: 'Welcome to my camp, brave explorer!' };
     this.msg = 'Buy = mua · Wear = mặc · Sell = bán lại nửa giá. Bấm 📜 để nhận nhiệm vụ từ vựng của chủ quầy.';
     this.render(); this.el.classList.remove('hidden');
   }
-  close() { this.open = false; this.el.classList.add('hidden'); }
+  close() { this.open = false; this.el.classList.add('hidden'); if (this.api.onClose) this.api.onClose(); }
   key(code) { if (!this.open) return false; if (code === 'Escape' || code === 'KeyE') this.close(); return true; }
   /** The keeper's word quest: three questions about the goods on the shelves, once a day per keeper. */
   startQuest(k) {
@@ -82,7 +85,7 @@ export class ShopWindow {
     if (q.n < q.list.length) { this.ask(); if (!ok) this.say[q.k] = `It's "${it.en}". ` + this.say[q.k]; return; }
     const p = this.api.profile(), gold = q.right * 6; p.stats.gold += gold; (p.shopQuest || (p.shopQuest = {}))[q.k] = this.api.today();
     this.say[q.k] = q.right === 3 ? `Perfect! You know all the shop words! (+${gold} gold)` : `${q.right} of 3 right. (+${gold} gold) Try again tomorrow!`;
-    this.quiz = null; this.api.changed();
+    this.quiz = null; if (this.api.track) this.api.track('shopquest'); this.api.changed();
   }
   act(what, id, k) {
     const p = this.api.profile(), it = ITEMS[id], b = bag(p);
@@ -99,10 +102,10 @@ export class ShopWindow {
     const stat = [it.atk && `ATK +${it.atk}`, it.def && `DEF +${it.def}`, it.hp && `HP +${it.hp}`, it.heal && `+${it.heal} HP (Q)`].filter(Boolean).join(' · ');
     const canBuy = food || !own, lock = p.stats.level < it.level;
     return `<div class="card ${lock ? 'locked' : ''}"><span class="tag">${it.cost} ●</span><span class="ic">${ICON[id] || '📦'}</span><b>${it.en}</b><span class="vi">${it.vi}</span><span class="st">${stat}</span>
-      ${lock ? `<span class="lock">🔒 Cần cấp ${it.level}</span>` : ''}${food ? `<span class="vi">Trong túi: ${b.food}</span>` : ''}
+      ${lock ? `<span class="lock">🔒 Cần cấp ${it.level}</span>` : ''}${food ? `<span class="vi">Trong túi: ${id === 'forest_stew' ? b.stew || 0 : b.food}</span>` : ''}
       <div class="row">${canBuy ? `<button data-act="buy" data-id="${id}" ${lock || p.stats.gold < it.cost ? 'disabled' : ''}>Buy</button>` : ''}
         ${own ? `<button data-act="wear" data-id="${id}">${on ? 'Take off' : 'Wear'}</button>` : ''}${on ? '<span class="on">✔ wearing</span>' : ''}
-        ${own || (food && b.food > 0) ? `<button class="sell" data-act="sell" data-id="${id}">Sell ${sellPrice(id)} ●</button>` : ''}</div></div>`;
+        ${own || (food && (id === 'forest_stew' ? b.stew > 0 : b.food > 0)) ? `<button class="sell" data-act="sell" data-id="${id}">Sell ${sellPrice(id)} ●</button>` : ''}</div></div>`;
   }
   counter(k) {
     const kp = KEEPERS[k], q = this.quiz && this.quiz.k === k ? this.quiz : null;
@@ -114,6 +117,6 @@ export class ShopWindow {
   render() {
     const p = this.api.profile();
     this.el.innerHTML = `<div class="room"><header><span style="font-size:28px">🏪</span><h2>${this.title}</h2><span class="lv">Lv ${p.stats.level}</span><span class="gold">● ${p.stats.gold}</span><button data-act="close">Leave (Esc)</button></header>
-      ${this.counter('forge')}${this.counter('rose')}<div class="msg">${this.msg || ''}</div></div>`;
+      ${(this.counters || ['forge', 'rose']).map((k) => this.counter(k)).join('')}<div class="msg">${this.msg || ''}</div></div>`;
   }
 }

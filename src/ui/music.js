@@ -68,7 +68,7 @@ export class MusicRoom {
     });
   }
   show() { this.open = true; this.say = 'Hi! I\'m Anna. Pick a song and sing with me!'; this.render(); this.el.classList.remove('hidden'); speak(this.say); }
-  close() { this.stop(); this.open = false; this.el.classList.add('hidden'); }
+  close() { this.stop(); this.open = false; this.el.classList.add('hidden'); if (this.api.onClose) this.api.onClose(); }
   key(code) { if (!this.open) return false; if (code === 'Escape' || code === 'KeyE') this.close(); return true; }
   stop() { for (const t of this.timers) clearTimeout(t); this.timers = []; this.now = -1; if (this.ctx) { try { this.ctx.close(); } catch { /* closed */ } this.ctx = null; } }
   /** Plays the melody with a soft plucked sound and lights up each line as it is sung. */
@@ -90,6 +90,7 @@ export class MusicRoom {
     this.render();
   }
   finish() {
+    if (this.api.track) this.api.track('song');
     const p = this.api.profile(), heard = p.songs || (p.songs = {}); this.now = -1;
     if (!heard[this.song.id]) { heard[this.song.id] = true; p.stats.gold += 5; this.say = `Great singing! You learned "${this.song.title}". (+5 gold)`; this.api.sfx('fanfare'); this.api.changed(); }
     else this.say = 'Lovely! Want to sing another one?';

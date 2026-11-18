@@ -466,3 +466,18 @@ test('desktop app: every save is mirrored to a file and an empty page storage is
     const back = load(); assert.equal(back.profiles[0].stats.level, 9, 'restored from the file'); assert.ok(fresh.getItem(KEY), 'page storage refilled');
   } finally { delete globalThis.eqDesktop; if (realLS) Object.defineProperty(globalThis, 'localStorage', { value: realLS, configurable: true }); else delete globalThis.localStorage; }
 });
+
+test('quest journal: main quests follow the save, daily quests count events and pay once', async () => {
+  const Q = await import('../src/core/quests.js');
+  const p = S.newProfile('An', 6); p.quests.village = { step: 'jars' };
+  assert.equal(Q.mainCurrent(p).id, 'jars', 'letter done, jars next');
+  assert.deepEqual(Q.claimMain(p, 'letter'), { gold: 20, exp: 40 }); assert.equal(Q.claimMain(p, 'letter'), null, 'paid once');
+  assert.equal(Q.claimMain(p, 'bridge'), null, 'not done yet');
+  const d = Q.dailyOf(p, 100); assert.equal(d.ids.length, 3); assert.deepEqual(Q.dailyOf(p, 100).ids, d.ids, 'same three all day');
+  const id = d.ids[0], q = Q.DAILY.find((x) => x.id === id);
+  assert.equal(Q.claimDaily(p, 100, id), null, 'nothing before it is done');
+  const fin = Q.track(p, 100, q.ev, q.need); assert.ok(fin.some((x) => x.id === id));
+  assert.ok(Q.claimDaily(p, 100, id).gold > 0); assert.equal(Q.claimDaily(p, 100, id), null);
+  assert.notEqual(Q.dailyOf(p, 101), d, 'a new day, new quests');
+  for (const x of [...Q.MAIN, ...Q.DAILY]) assert.ok(!/[àáảãạăâđêôơư]/i.test(x.en), 'English titles');
+});

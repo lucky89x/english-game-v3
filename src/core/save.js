@@ -52,7 +52,10 @@ export function importProfile(store, text) {
   return p;
 }
 /** Per skill counters: {attempts, correct, firstTry, hints}. */
+/** hooks.skill(profile, correct): set by the game to count right answers for the daily quests. */
+export const hooks = { skill: null };
 export function recordSkill(profile, skill, correct, hints) {
+  if (hooks.skill) hooks.skill(profile, correct);
   const row = profile.skills[skill] || (profile.skills[skill] = { attempts: 0, correct: 0, firstTry: 0, hints: 0 });
   row.attempts += 1; row.hints += hints || 0;
   if (correct) { row.correct += 1; if (!hints) row.firstTry += 1; }

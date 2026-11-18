@@ -37,6 +37,13 @@ export const ITEMS = {
   iron_armor: { en: 'Iron Armor', vi: 'giáp sắt', slot: 'armor', cost: 220, level: 7, def: 5, hp: 50, seller: 'forge' },
   clover: { en: 'Lucky Clover', vi: 'cỏ bốn lá may mắn', slot: 'charm', cost: 120, level: 4, hp: 30, seller: 'rose' },
   bread: { en: 'Honey Bread', vi: 'bánh mì mật ong (hồi 50 máu, phím Q)', slot: 'food', cost: 8, level: 1, heal: 50, seller: 'rose' },
+  // Map 2 gear (18/11), sold by Willow at the forest camp once Map 2 is open
+  oak_blade: { en: 'Oakheart Blade', vi: 'kiếm lõi sồi', slot: 'weapon', cost: 700, level: 21, atk: 32, color: 0x9a6a3a, seller: 'forest' },
+  moon_sword: { en: 'Moonlight Sword', vi: 'kiếm ánh trăng', slot: 'weapon', cost: 1500, level: 27, atk: 44, color: 0xbfd8ff, seller: 'forest' },
+  ranger_cloak: { en: 'Ranger Cloak', vi: 'áo choàng kiểm lâm', slot: 'armor', cost: 900, level: 22, def: 9, hp: 90, seller: 'forest' },
+  bark_armor: { en: 'Barkskin Armor', vi: 'giáp vỏ cây', slot: 'armor', cost: 1800, level: 28, def: 14, hp: 140, seller: 'forest' },
+  owl_feather: { en: 'Owl Feather', vi: 'lông cú (bùa)', slot: 'charm', cost: 800, level: 24, hp: 70, seller: 'forest' },
+  forest_stew: { en: 'Forest Stew', vi: 'súp rừng (hồi 120 máu, phím Q)', slot: 'food', cost: 20, level: 21, heal: 120, seller: 'forest' },
 };
 export const bag = (profile) => profile.inv || (profile.inv = { owned: [], weapon: '', armor: '', charm: '', food: 0 });
 /** Recomputes profile.gear from what is worn. */
@@ -52,20 +59,21 @@ export function buy(profile, id) {
   if (profile.stats.level < it.level) return { ok: false, why: 'level' };
   if (profile.stats.gold < it.cost) return { ok: false, why: 'gold' };
   profile.stats.gold -= it.cost;
-  if (it.slot === 'food') b.food += 1; else { b.owned.push(id); b[it.slot] = id; wear(profile); }
+  if (it.slot === 'food') { if (id === 'forest_stew') b.stew = (b.stew || 0) + 1; else b.food += 1; } else { b.owned.push(id); b[it.slot] = id; wear(profile); }
   return { ok: true, why: '' };
 }
 /** Eats one bread. Returns the health restored (0 when there is none or health is full). */
 export function eat(profile, hpMax) {
-  const b = bag(profile), hp = profile.stats.hp ?? hpMax; if (b.food <= 0 || hp >= hpMax) return 0;
-  b.food -= 1; const after = Math.min(hpMax, hp + ITEMS.bread.heal); profile.stats.hp = after; return after - hp;
+  const b = bag(profile), hp = profile.stats.hp ?? hpMax; if ((b.food <= 0 && !(b.stew > 0)) || hp >= hpMax) return 0;
+  let heal = ITEMS.bread.heal; if (b.stew > 0 && hpMax - hp > ITEMS.bread.heal) { b.stew -= 1; heal = ITEMS.forest_stew.heal; } else if (b.food > 0) b.food -= 1; else { b.stew -= 1; heal = ITEMS.forest_stew.heal; }   // stew for big wounds
+  const after = Math.min(hpMax, hp + heal); profile.stats.hp = after; return after - hp;
 }
 /** Selling back pays half the price (bread: half too, rounded down). Worn items are taken off first. */
 export const SELL_RATE = 0.5;
 export const sellPrice = (id) => Math.floor(ITEMS[id].cost * SELL_RATE);
 export function sell(profile, id) {
   const it = ITEMS[id], b = bag(profile); if (!it) return 0;
-  if (it.slot === 'food') { if (b.food <= 0) return 0; b.food -= 1; }
+  if (it.slot === 'food') { const k = id === 'forest_stew' ? 'stew' : 'food'; if (!(b[k] > 0)) return 0; b[k] -= 1; }
   else { const i = b.owned.indexOf(id); if (i < 0) return 0; b.owned.splice(i, 1); if (b[it.slot] === id) b[it.slot] = ''; wear(profile); }
   const g = sellPrice(id); profile.stats.gold += g; return g;
 }

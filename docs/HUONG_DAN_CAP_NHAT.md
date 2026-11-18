@@ -109,6 +109,12 @@ py -m http.server 8000
 - **Cửa hàng** mới: kệ gỗ, mỗi món có biểu tượng, giá, cấp cần có; chủ quầy Bram và Rose có nút **Talk** và **📜 Word quest** (hỏi tên tiếng Anh các món, có thưởng).
 - **Nhà Anna = Phòng nhạc**: đứng trước cửa bấm E, nghe 4 bài hát kèm lời tiếng Anh và nghĩa tiếng Việt. Bài của BLACKPINK có bản quyền nên chỉ có nút mở kênh YouTube chính thức (cần mạng).
 
+## Có gì mới (18/11, lượt 3)
+- **Sổ nhiệm vụ** (phím **N** hoặc nút 📜 dưới khung nhân vật): tab **Chính tuyến** (làm lần lượt để lên cấp, mở Map 2…) và tab **Hằng ngày** (3 việc mới mỗi ngày). Xong việc bấm **Nhận thưởng**.
+- **Vào trong nhà**: đứng trước cửa bấm E. Cửa hàng, phòng nhạc nhà Anna, **nhà trưởng làng** (xem nhiệm vụ chính tuyến), **nhà Lily** (nhiệm vụ ngày).
+- **Đồ mới cho Map 2**: quầy của Willow trong rừng (gần cổng vào rừng), mở khi tới Map 2: kiếm lõi sồi, kiếm ánh trăng, áo choàng kiểm lâm, giáp vỏ cây, lông cú, súp rừng.
+- Thỏ, chó, gà vẽ lại đẹp hơn.
+
 ## Phím chơi
-WASD đi · Shift chạy · Space nhảy · E nói chuyện/nhặt · J đánh · K né · Q ăn bánh · I túi đồ · B sổ từ · F2 admin · bấm chuột xuống đất để đi · H gợi ý · chuột trái kéo để xoay · lăn chuột để zoom · bấm bản đồ nhỏ để tự đi.
+WASD đi · Shift chạy · Space nhảy · E nói chuyện/nhặt · J đánh · K né · Q ăn bánh · I túi đồ · B sổ từ · N sổ nhiệm vụ · F2 admin · bấm chuột xuống đất để đi · H gợi ý · chuột trái kéo để xoay · lăn chuột để zoom · bấm bản đồ nhỏ để tự đi.
 Phụ huynh: nút **⚙** góc dưới trái → ô **Unit** để chọn Unit con đang học trên lớp.

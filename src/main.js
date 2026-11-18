@@ -13,6 +13,11 @@ import { VillageStory } from './game/village.js';
 import { MiniGames, STARS, STARTS } from './game/minigames.js';
 import { AdminPanel } from './ui/admin.js';
 import { MusicRoom } from './ui/music.js';
+import { Journal } from './ui/journal.js';
+import { campStall } from './world/stall.js';
+import { buildRoom } from './world/interior.js';
+import { label } from './world/common.js';
+import * as Q from './core/quests.js';
 import { Wild, BOARD, BOSS_AT, BOSS2_AT, FOREST_BOARD, BOSS3_AT } from './game/combat.js';
 import { Arcade, candyGame, blocksGame, slingGame, spellGame, raceGame } from './ui/arcade.js';
 import { Chests, CHEST_SPOTS, FOREST_CHESTS } from './game/chests.js';
@@ -28,7 +33,7 @@ import { addOutline, showOutlines } from './render/outline.js';
 import { Minimap } from './ui/minimap.js';
 import { initTouch, touchWanted } from './ui/touch.js';
 import { sfx, setSound, soundOn, unlock } from './audio.js';
-import { voiceOn, setVoice } from './ui/speech.js';
+import { voiceOn, setVoice, speak } from './ui/speech.js';
 import { QuestMarks } from './game/marks.js';
 import { keyCode } from './core/keys.js';
 import { WordSpots } from './game/wordspots.js';
@@ -95,7 +100,7 @@ let profile = null, quest = null, story = null, world = null, player = null, cam
 let shopWin = null, walkers = null, talkW = -1, touch = null, quality = localStorage.getItem('eq-quality') || 'medium', perfOn = false, started = false, switching = false, wordIds = {}, jarKey = '';
 const keys = new Set();
 const game = { errors, get profile() { return profile; }, get quest() { return quest; }, get story() { return story; }, get player() { return player; }, get cam() { return cam; }, get minimap() { return minimap; }, ui, L, stats: { fps: 0, ms: 0, calls: 0, tris: 0 },
-  teleport(x, z) { player.place(x, z); cam.target.set(x, player.pos.y + 1.25, z); }, setQuality, key: (code) => onKey({ code, preventDefault() {} }), get started() { return started && !switching; }, get region() { return L.NAME; }, chooseProfile, enterRegion, MARKET_JARS, BRIDGE_SPOTS, get mini() { return mini; }, get wild() { return wild; }, get scene() { return scene; }, openShop, get sword() { return swordMesh; }, get armor() { return armorShown; }, setWear, openBag: () => openBag(), get arcade() { return arcade; }, get chests() { return chests; }, get spots() { return spots; }, get admin() { return admin; }, get friends() { return friends; }, get walkers() { return walkers; }, get shopWin() { return shopWin; }, get music() { return music; }, get intro() { return intro; }, cardOf: (id) => cardOfFn(id), pause: (on) => renderer.setAnimationLoop(on ? null : frame),      // tests: stop drawing while another page is checked
+  teleport(x, z) { player.place(x, z); cam.target.set(x, player.pos.y + 1.25, z); }, setQuality, key: (code) => onKey({ code, preventDefault() {} }), get started() { return started && !switching; }, get region() { return L.NAME; }, chooseProfile, enterRegion, MARKET_JARS, BRIDGE_SPOTS, get mini() { return mini; }, get wild() { return wild; }, get scene() { return scene; }, openShop, get sword() { return swordMesh; }, get armor() { return armorShown; }, setWear, openBag: () => openBag(), get arcade() { return arcade; }, get chests() { return chests; }, get spots() { return spots; }, get admin() { return admin; }, get friends() { return friends; }, get walkers() { return walkers; }, get shopWin() { return shopWin; }, get music() { return music; }, get journal() { return journal; }, get intro() { return intro; }, cardOf: (id) => cardOfFn(id), pause: (on) => renderer.setAnimationLoop(on ? null : frame),      // tests: stop drawing while another page is checked
   post, refresh: () => refresh() };
 globalThis.__eq = game;
 
@@ -164,7 +169,7 @@ function refresh() {
     profile.flags.map2 = true; save(); sfx('fanfare');
     ui.dialogue([{ who: 'Tom', en: 'You have grown so strong! The road to the Memory Forest is yours now.', vi: `Đã mở Map 2 · Rừng Ký Ức. Từ giờ rương, boss, Cú Mèo hỏi từ Unit ${Save.unitOf(profile)}.` }], () => reloadUnit());
   }
-  const learned = Review.learned(profile.words);
+  const learned = Review.learned(profile.words); if (journal) journal.sync();
   if (L.NAME === 'forest') {
     ui.hud(profile, 'Rừng Ký Ức', [`Pha lê ${quest.q.found.length}/5`, wild ? wild.huntNote() : '', Save.gateWaiting(profile) ? '🦉 ôn tập' : ''].filter(Boolean).join('  '), learned, bag(profile).food);
     const c = quest.clue, t = quest.targetId ? landmark(quest.targetId) : null;
@@ -261,7 +266,7 @@ async function enterRegion(name, at) {
   const q = QUALITY[quality]; world.setDetail(q.density, q.particles, q.far);
   scene.traverse((o) => { if (o.material) [].concat(o.material).forEach((m) => (m.needsUpdate = true)); });
   try { await renderer.compileAsync(scene, camera); } catch { /* older browsers: shaders compile on first sight */ }      // no hitch when new things come into view
-  minimap.rebuild(); placeActors(); if (walkers) walkers.setRegion(name); if (mini) mini.setRegion(name); if (wild) wild.setRegion(name); if (chests) chests.setRegion(name); if (spots) spots.setRegion(name);
+  minimap.rebuild(); placeActors(); if (walkers) walkers.setRegion(name); if (mini) mini.setRegion(name); if (wild) wild.setRegion(name); if (chests) chests.setRegion(name); if (spots) spots.setRegion(name); if (forestStall) forestStall.visible = name === 'forest';
   const [x, z] = at || [L.SPAWN.x, L.SPAWN.z];
   game.teleport(x, z); player.yaw = Math.PI; cam.tYaw = cam.yaw = 0.25;
   if (quest && quest.step === 'seek') quest.clueStart = performance.now();
@@ -310,8 +315,25 @@ canvas.addEventListener('pointerup', (e) => {
   walkMark.position.set(hit[0], L.walkHeight(hit[0], hit[1]) + 0.06, hit[1]); walkMark.visible = true; walkMark.userData.t = 0;
 });
 // ---------------------------------------------------------------- admin (password 321, see ui/admin.js)
-let admin = null, music = null;
-const ANNA_DOOR = { x: -17.4, z: 12.5 };      // Anna's music house (moved west on 18/11), door on the east side
+let admin = null, music = null, journal = null;
+/** Counts a game event for today's quests; tells the child when one is finished. */
+function track(ev, n = 1) {
+  if (!profile) return;
+  const done = Q.track(profile, Review.today(), ev, n);
+  for (const q of done) { ui.toast('📜 Xong nhiệm vụ ngày: ' + q.en); sfx('fanfare'); }
+  if (done.length) save(); if (journal) journal.sync();
+}
+function claimReward(r, what) {
+  if (!r) return; profile.stats.gold += r.gold; if (r.exp) Save.addExp(profile, r.exp); sfx('fanfare'); save(); refresh();
+  ui.toast(`🎁 ${what}: +${r.gold} vàng${r.exp ? `, +${r.exp} EXP` : ''}${r.bonusAll ? ' (thưởng xong cả 3!)' : ''}`);
+}
+// Anna's music house (moved west on 18/11, door on the east side); Willow's stall at the forest camp (Map 2 gear)
+const ANNA_DOOR = { x: -17.4, z: 12.5 }, FOREST_SHOP = { x: -36.5, z: 39.5 };
+let forestStall = null, room = null;
+const HALL_DOOR = { x: 0, z: -16.4 }, LILY_DOOR = { x: -17.4, z: -4 };
+/** Inside a house: the room is drawn instead of the world, the window docks on the right (body.inroom). */
+function enterRoom(kind) { leaveRoom(); room = buildRoom(kind); document.body.classList.add('inroom'); sfx('tick'); }
+function leaveRoom() { if (!room) return; room.dispose(); room = null; document.body.classList.remove('inroom'); }
 function adminPlaces() {
   const out = [], add = (region, name, x, z) => out.push({ region, name, x, z });
   for (const r of ['village', 'forest']) for (const l of L.REGIONS[r].LANDMARKS) add(r, l.label, ...(l.spot || [l.x, l.z]));
@@ -368,7 +390,7 @@ function hostQuiz(who, words) {
 /** A word sparkle was touched: teach one word (a new one first, else one met before), with a small reward. */
 function learnWord(card, isNew) {
   if (!card) { ui.dialogue([{ who: 'Pip', en: 'This bubble is empty…', vi: `Từ vựng Unit ${Save.unitOf(profile)} lớp ${profile.grade} chưa có.` }]); save(); return; }
-  (profile.seen || (profile.seen = {}))[card.id] = Review.today();
+  (profile.seen || (profile.seen = {}))[card.id] = Review.today(); track('bubble');
   const exp = isNew ? 6 : 3, gold = isNew ? 2 : 1; profile.stats.gold += gold; Save.addExp(profile, exp); sfx('correct'); save(); refresh();
   ui.dialogue([{ who: isNew ? '✨ Từ mới' : '🔁 Ôn lại', card, vi: `${isNew ? 'Nghe, đọc theo rồi nhớ nghĩa nhé.' : 'Con nhớ từ này chứ? Nghe và đọc lại nhé.'} (+${exp} EXP, +${gold} vàng)` }]);
 }
@@ -526,6 +548,7 @@ function interactTarget() {
     if (near(sam.x, sam.z, 3)) return { text: 'E · Nói chuyện với Sam', run: () => ui.dialogue(SAM_LINES) };
     const tree = landmark('tree');
     if (quest.step === 'tree' && near(tree.spot[0], tree.spot[1], 3.2)) return { text: 'E · Đặt pha lê vào cây cổ thụ', run: () => quest.treeChallenge() };
+    if (near(FOREST_SHOP.x + 1.6, FOREST_SHOP.z + 0.6, 2.4)) return profile.flags.map2 ? { text: "E · Cửa hàng của Willow (đồ Map 2)", run: () => { enterRoom('forest'); shopWin.show("Willow's Camp Shop", ['forest']); } } : { text: 'Quầy của Willow mở khi tới Map 2', run() {} };
     for (const f of [wild, chests, spots]) { const c = f && f.interact(p); if (c) return c; }      // Map 2: board, boss shield, chests, word bubbles
     return null;
   }
@@ -544,8 +567,10 @@ function interactTarget() {
   if (near(tom.x, tom.z, 3)) return { text: 'E · Nói chuyện với Tom', run: () => story.talkTom() };
   if (near(ben.x, ben.z, 3.6)) return { text: 'E · Nói chuyện với Ben', run: () => story.talkBen() };
   if (near(sam.x, sam.z, 3)) return { text: 'E · Nói chuyện với Sam', run: () => story.talkSam() };
-  if (near(SHOP_DOOR.x, SHOP_DOOR.z, 1.7)) return { text: 'E · Vào cửa hàng (xem và mua bán đồ)', run: () => shopWin.show('Village Shop') };
-  if (near(ANNA_DOOR.x, ANNA_DOOR.z, 1.9)) return { text: 'E · Vào phòng nhạc của Anna (nghe hát, học lời)', run: () => music.show() };
+  if (near(SHOP_DOOR.x, SHOP_DOOR.z, 1.7)) return { text: 'E · Vào cửa hàng (xem và mua bán đồ)', run: () => { enterRoom('shop'); shopWin.show('Village Shop'); } };
+  if (near(HALL_DOOR.x, HALL_DOOR.z, 1.8)) return { text: 'E · Vào nhà trưởng làng (sổ nhiệm vụ chính tuyến)', run: () => { enterRoom('hall'); journal.show('main'); speak('Welcome to my office! Here is your quest book.'); } };
+  if (near(LILY_DOOR.x, LILY_DOOR.z, 1.8)) return { text: 'E · Vào nhà Lily (nhiệm vụ hằng ngày)', run: () => { enterRoom('herb'); journal.show('daily'); speak('Hello! Here are your tasks for today.'); } };
+  if (near(ANNA_DOOR.x, ANNA_DOOR.z, 1.9)) return { text: 'E · Vào phòng nhạc của Anna (nghe hát, học lời)', run: () => { enterRoom('music'); music.show(); } };
   { const wi = walkers ? walkers.near(p) : -1; if (wi >= 0) return { text: 'E · Chào dân làng', run: () => { talkW = wi; ui.dialogue([{ who: 'Villager', en: walkers.greet(wi) }]); } }; }
   for (const f of friends) if (near(f.npc.x, f.npc.z, 2.6)) {
     if (f.shop) return { text: 'E · Cửa hàng của ' + f.who, run: () => openShop(f.who, f.shop, f.lines[0]) };
@@ -558,6 +583,7 @@ function onKey(e) {
   if (arcade && arcade.key(e.code)) { e.preventDefault(); return; }
   if (shopWin && shopWin.key(e.code)) { e.preventDefault(); return; }
   if (music && music.key(e.code)) { e.preventDefault(); return; }
+  if (journal && !ui.busy && journal.key(e.code)) { e.preventDefault(); return; }
   if (intro && intro.active) { if (e.code === 'KeyE' || e.code === 'Space' || e.code === 'Escape') endIntro(); e.preventDefault(); return; }
   if (e.code === 'F3') { perfOn = !perfOn; $('perf').classList.toggle('hidden', !perfOn); e.preventDefault(); return; }
   if (admin && admin.key(e.code)) { e.preventDefault(); return; }
@@ -599,8 +625,13 @@ async function boot() {
   tom = new Npc(tomG, 2.6, 7.6, -0.4); sam = new Npc(samG, 14, 17, 1.2); ben = new Npc(benG, -9.9, 19.5, Math.PI / 2); scene.add(tom.root, sam.root, ben.root);
   pip = new Pip(pipG.scene); scene.add(pip.root);
   for (const f of Object.values(FRIENDS)) { const npc = new Npc(await gltf(f.file), ...f.at, ngoc.animations); scene.add(npc.root); friends.push({ ...f, npc }); }
-  shopWin = new ShopWindow({ profile: () => profile, sfx, today: () => Review.today(), changed: () => { setSword(); setWear(); save(); refresh(); } });
-  music = new MusicRoom({ profile: () => profile, sfx, changed: () => { save(); refresh(); } });
+  shopWin = new ShopWindow({ profile: () => profile, sfx, track, onClose: leaveRoom, today: () => Review.today(), changed: () => { setSword(); setWear(); save(); refresh(); } });
+  music = new MusicRoom({ profile: () => profile, sfx, track, onClose: leaveRoom, changed: () => { save(); refresh(); } });
+  { const F = L.REGIONS.forest, y = F.groundHeight(FOREST_SHOP.x, FOREST_SHOP.z); forestStall = campStall(FOREST_SHOP.x, y, FOREST_SHOP.z, Math.PI / 2 + 0.3);
+    const name = label("🌿 Willow's Camp Shop", { size: 28, scale: 0.8 }); name.position.set(0, 3.2, 0); forestStall.add(name); forestStall.visible = false; scene.add(forestStall); }
+  journal = new Journal({ profile: () => profile, today: () => Review.today(), onClose: leaveRoom,
+    claimMain: (id) => claimReward(Q.claimMain(profile, id), 'Nhiệm vụ chính'), claimDaily: (id) => claimReward(Q.claimDaily(profile, Review.today(), id), 'Nhiệm vụ ngày') });
+  Save.hooks.skill = (p, ok) => { if (ok && p === profile) track('right'); };
   walkers = new Walkers(scene, (name) => loader.loadAsync(`./assets/models/${name}.glb`)); await walkers.init();      // villagers on the roads
   for (const a of [player, tom, sam, ben, ...friends.map((f) => f.npc)]) addOutline(a.root);     // cartoon outlines (medium/high)
   const F = L.REGIONS.forest;
@@ -619,7 +650,7 @@ async function boot() {
     const best = mini.data.best, record = best[res.id] === undefined || res.score > best[res.id]; if (record) best[res.id] = res.score;
     const r = pay(profile, res.id, Review.today(), res.gold, res.exp);
     profile.stats.gold += r.gold; Save.addExp(profile, r.exp); sfx('fanfare'); save(); refresh();
-    for (const c of res.words || []) (profile.seen || (profile.seen = {}))[c.id] = Review.today();      // words met inside the game count as seen
+    track('mini'); for (const c of res.words || []) (profile.seen || (profile.seen = {}))[c.id] = Review.today();      // words met inside the game count as seen
     ui.dialogue([{ who: 'Ngọc', en: `${res.text} (+${r.gold} gold, +${r.exp} EXP)`, vi: [record ? 'Kỷ lục mới của con!' : '', payNote(r)].filter(Boolean).join(' ') || undefined }],
       () => { if (res.words && res.words.length >= 2) hostQuiz(res.id === 'blocks' ? 'Max' : 'Leo', res.words); });
   });
@@ -630,12 +661,12 @@ async function boot() {
       const g = spellGame(card); const started = Date.now();
       g.onResult = (res) => {
         Review.record(profile.words, card.id, { correct: res.wrong === 0, hints: res.wrong ? 1 : 0, ms: Date.now() - started }); Save.recordSkill(profile, 'spelling', res.wrong === 0, res.wrong ? 1 : 0);
-        chests.opened(c); profile.stats.gold += res.gold; Save.addExp(profile, res.exp); sfx('fanfare'); save(); refresh();
+        chests.opened(c); track('chest'); profile.stats.gold += res.gold; Save.addExp(profile, res.exp); sfx('fanfare'); save(); refresh();
         ui.dialogue([{ who: 'Ngọc', en: `${res.text} (+${res.gold} gold, +${res.exp} EXP)`, vi: `${card.word} = ${card.vi}` }]);
       };
       teach([card], () => arcade.start(g));
     } });
-  wild = new Wild({ scene, player, ui, sfx, profile: () => profile, save, onChange: refresh,
+  wild = new Wild({ scene, player, ui, sfx, profile: () => profile, save, onChange: refresh, onKill: () => track('kill'),
     quiz: (bossName, done) => {       // word shield: pick the English word for the Vietnamese meaning (unit vocabulary, due words first)
       const pool = unitCards.filter((c) => c.word.length <= 18); if (pool.length < 4) { done(true); return; }
       const due = Review.dueIds(profile.words).map((id) => pool.find((c) => c.id === id)).filter(Boolean), card = (due.length ? due : pool)[Math.floor(Math.random() * (due.length || pool.length))];
@@ -647,7 +678,7 @@ async function boot() {
       }));
     },
     respawn: () => { game.teleport(L.SPAWN.x, L.SPAWN.z); ui.dialogue([{ who: 'Tom', en: 'You fainted, so I carried you home. Rest, then try again!', vi: 'Con hết máu nên được đưa về làng. Máu đã đầy lại. Mua trang bị tốt hơn rồi quay lại nhé.' }]); } });
-  mini = new MiniGames({ scene, player, ui, sfx, profile: () => profile, save, onNote: refresh, board: (id) => arcade.start(({ candy: () => candyGame(), blocks: () => blocksGame(Math.random, unitCards), sling: () => slingGame(), race2: () => raceGame(Math.random, unitCards) })[id]()) });
+  mini = new MiniGames({ scene, player, ui, sfx, track, profile: () => profile, save, onNote: refresh, board: (id) => arcade.start(({ candy: () => candyGame(), blocks: () => blocksGame(Math.random, unitCards), sling: () => slingGame(), race2: () => raceGame(Math.random, unitCards) })[id]()) });
   await mini.addHosts((name) => loader.loadAsync(`./assets/models/${name}.glb`));      // a host by each mini game
   admin = new AdminPanel({ profile: () => profile, places: adminPlaces, go: adminGo, unlockAll: adminUnlock, setStep: adminStep,
     resetForest: () => { delete profile.quests.forest; if (L.NAME === 'forest') enterRegion('forest'); }, setGrade: (g) => { profile.grade = g; save(); chooseProfile(profile); },
@@ -667,7 +698,7 @@ const AUTO = !navigator.webdriver && !localStorage.getItem('eq-quality-manual');
 function frame() {
   const now = performance.now(), raw = (now - last) / 1000, real = Math.min(0.25, raw); last = now;
   const dt = Math.min(0.05, real); TIME.value += real; const t = TIME.value;
-  const frozen = ui.modal || !started || (arcade && arcade.open) || (shopWin && shopWin.open) || (music && music.open);
+  const frozen = ui.modal || !started || (arcade && arcade.open) || (shopWin && shopWin.open) || (music && music.open) || (journal && journal.open);
   if (arcade) arcade.update(real, keys);
   if (touch) touch.update();
   releaseSoftKeys();
@@ -729,7 +760,9 @@ function frame() {
     minimap.draw(player.pos, player.yaw, markers); questMarks(markers); }
     autosave += dt; if (autosave > 20) { autosave = 0; save(); }
   }
-  renderer.info.reset(); post.setSun(camera, sunDir); post.render(scene, camera);
+  renderer.info.reset();
+  if (room) { room.update(real, camera.aspect); post.setSun(room.camera, sunDir); post.render(room.scene, room.camera); }
+  else { post.setSun(camera, sunDir); post.render(scene, camera); }
   acc += raw; frames++; worstNow = Math.max(worstNow, raw * 1000);
   if (acc >= 0.5) { game.stats = { gpu: GPU, software: SOFTWARE_GL, worst: Math.round(worstNow), fps: +(frames / acc).toFixed(1), ms: +(acc / frames * 1000).toFixed(1), calls: renderer.info.render.calls, tris: renderer.info.render.triangles };
     if (perfOn) $('perf').textContent = `FPS ${game.stats.fps}  (${game.stats.ms} ms, chậm nhất ${worst.toFixed(0)} ms)\nGPU: ${GPU.slice(0, 60)}${SOFTWARE_GL ? '  ⚠ ĐANG VẼ BẰNG CPU' : ''}\nđộ phân giải ${Math.round(renderScale * 100)}%\ndraw calls ${game.stats.calls}\ntriangles ${game.stats.tris.toLocaleString()}\nquality ${quality} · ${renderer.domElement.width}x${renderer.domElement.height}`;

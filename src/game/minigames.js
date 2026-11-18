@@ -104,6 +104,7 @@ export class MiniGames {
     this.api.sfx(ok ? 'correct' : 'wrong'); a.msg = ok ? 'Got one!' : 'It got away…'; a.wait = 0.9;
   }
   finish(gold, text, key, score, lowerIsBetter) {
+    if (this.api.track) this.api.track('mini');
     const p = this.api.profile(), best = this.data.best, old = best[key];
     const record = old === undefined || (lowerIsBetter ? score < old : score > old); if (record) best[key] = score;
     const r = pay(p, key, today(), gold);
@@ -148,6 +149,7 @@ export class MiniGames {
     }
   }
   takeStar(s) {
+    if (this.api.track) this.api.track('star');
     const d = this.data; if (d.stars.includes(s.i)) return;
     d.stars.push(s.i); s.m.visible = s.ring.visible = false; const p = this.api.profile(); p.stats.gold += 3; this.api.sfx('correct');
     if (d.stars.length < STARS.length && this.api.ui.toast) this.api.ui.toast(`★ ${d.stars.length}/${STARS.length} · +3 vàng · đủ ${STARS.length} sao thưởng thêm 20 vàng`);
