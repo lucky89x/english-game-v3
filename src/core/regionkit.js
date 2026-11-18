@@ -114,12 +114,16 @@ export function makeRegion(cfg) {
   if (cfg.lateRiverHalf) R.riverHalf = cfg.lateRiverHalf;                    // wider river carved after the trees were placed
   if (cfg.pathWiden) for (const p of R.PATHS) p.w *= cfg.pathWiden;          // wider roads, trees on them are removed below
   if (cfg.latePaths) R.PATHS.push(...cfg.latePaths(R));
-  if (cfg.latePaths || cfg.lateClear || cfg.pathWiden || cfg.lateRiverHalf || cfg.thinTrees) {
+  if (cfg.latePaths || cfg.lateClear || cfg.pathWiden || cfg.lateRiverHalf || cfg.thinTrees || cfg.lateMove) {
     // thinTrees: share removed inside the play area; thinOuter: share removed beyond it (the scenery ring)
     const thin = (x, z) => { const k = Math.abs(Math.sin(x * 91.7 + z * 47.3) * 43758.5) % 1; return Math.hypot(x, z) < R.PLAY_RADIUS ? k < (cfg.thinTrees || 0) : k < (cfg.thinOuter || 0); };
     const gone = (x, z, pad) => (cfg.lateClear && cfg.lateClear(x, z)) || R.pathDistance(x, z) < pad || R.riverDistance(x, z) < R.riverHalf(z) + pad * 0.5;
     const pad = 3.6 * (cfg.treeScale || 1);          // bigger trees keep further from the roads
     R.TREES = R.TREES.filter((t) => !gone(t.x, t.z, pad) && !thin(t.x, t.z)); R.ROCKS = R.ROCKS.filter((r) => !gone(r.x, r.z, 1.6));
+    if (cfg.lateMove) for (const mv of cfg.lateMove) {          // a building moved after the trees were placed: its solid follows, trees at the new spot go
+      const sd = R.SOLIDS.find((q) => Math.abs(q.x - mv.from[0]) < 0.01 && Math.abs(q.z - mv.from[1]) < 0.01); if (!sd) continue;
+      sd.x = mv.to[0]; sd.z = mv.to[1]; R.TREES = R.TREES.filter((t) => Math.hypot(t.x - sd.x, t.z - sd.z) > sd.r + 2.5);
+    }
     if (cfg.lateSolids) { const add = cfg.lateSolids; R.TREES = R.TREES.filter((t) => add.every((s) => Math.hypot(t.x - s.x, t.z - s.z) > s.r + 2)); R.SOLIDS.push(...add); }
   }
   R.TREE_SCALE = cfg.treeScale || 1;

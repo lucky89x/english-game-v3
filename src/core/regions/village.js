@@ -53,8 +53,12 @@ export default makeRegion({
     P(2.4, [-10, 8], [-13, 18], [-16, 30]),                                  // west houses to the farm
     P(2.4, [0, -17], [8, -13], [8, -6]),                                     // hall to the shop
     P(2.2, [-10, -1], [-14, -16], [-12, -30], [-4, -36]),                    // west lane past the hall to the hill
+    P(2.2, [-17.4, -4], [-12, -3.6]), P(2.2, [-17.8, 12.5], [-11.4, 12.2]),     // garden paths to the two moved houses
+    P(2.2, [-12.5, -1.5], [-19, 2.5], [-30, 4]),                              // lane to Max's blocks yard
   ],
   lateSolids: [{ x: 0, z: 4, r: 1.9 }],                                      // the fountain
+  // 18/11 ("the houses are too close together"): Lily's and Anna's houses move further west, each with a garden path
+  lateMove: [{ from: [-14.5, -8], to: [-22, -4] }, { from: [-15, 9], to: [-22.5, 12.5] }],
   lateClear: (x, z) => x > -36 && x < 16 && z > 37 && z < 57,
   hills: (x, z, h) => h + 3.2 * gauss(Math.hypot(x + 44, z + 20), 12) + 2.4 * gauss(Math.hypot(x - 46, z + 30), 11)
     + 8.5 * (1 - smooth(-57.5, -52.5, z)) * smooth(-4, 8, x),      // north-east cliff with the waterfall

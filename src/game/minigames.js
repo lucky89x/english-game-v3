@@ -9,14 +9,16 @@ export const payNote = (r) => (!r.full ? `Hôm nay trò này chỉ còn thưởn
 
 export const STARS = [[-46, -6], [-38, -34], [-12, -38], [30, -30], [48, -12], [52, 20], [44, 38], [10, 50], [-22, 50], [-48, 30], [-30, 14], [8, -36]];
 export const RACE = [[-20, 2], [-32, 4], [-42, 14], [-40, 28], [-34, 42], [-18, 46], [-6, 44], [-8, 30], [-20, 2]];
+// Each skill game has its own spot, well apart from the others, and a host who runs it (18/11: "one NPC for each mini
+// game"). host: villager model, tint, name, a short greeting shown when the game starts. The fishing spot is Sam's dock.
+// The ring race was dropped (17/11): the cart race board is the racing game.
 export const STARTS = [
   { id: 'fish', x: 18.4, z: 19.2, text: 'E · Câu cá (trò chơi)', sign: '🎣 Fishing' },
-  { id: 'apple', x: 33.5, z: 6, text: 'E · Hứng táo (trò chơi)', sign: '🍎 Apple catch' },
-  { id: 'race', x: -22, z: 4, text: 'E · Chạy vòng (trò chơi)', sign: '🏁 Ring race' },
-  { id: 'candy', x: -4.4, z: -8.5, text: 'E · Xếp kẹo (trò chơi)', sign: '🍬 Candy Match', board: true },
-  { id: 'sling', x: -20, z: -4, text: 'E · Bắn súng cao su (trò chơi)', sign: '🎯 Slingshot', board: true },
-  { id: 'race2', x: 10, z: 28, text: 'E · Đua xe bí ngô (trò chơi)', sign: '🏎 Cart Race', board: true },
-  { id: 'blocks', x: -26, z: -2, text: 'E · Xếp hình (trò chơi)', sign: '🧱 Blocks', board: true },
+  { id: 'apple', x: 33.5, z: 6, text: 'E · Hứng táo với cô Hana', sign: '🍎 Apple catch', host: { name: 'Hana', file: 'npc_ben_merchant_v02', tint: [0.85, 1.12, 0.85], hello: 'The apples are falling! Catch them!' } },
+  { id: 'candy', x: -15, z: -17, text: 'E · Xếp kẹo với cô Mimi', sign: '🍬 Candy Match', board: true, host: { name: 'Mimi', file: 'npc_ben_merchant_v02', tint: [1.15, 0.88, 1.0], hello: 'Sweet! Let\'s match the candies!' } },
+  { id: 'sling', x: -6, z: -33, text: 'E · Bắn ná với chú Rex', sign: '🎯 Slingshot', board: true, host: { name: 'Rex', file: 'npc_forge_blacksmith_v01', tint: [1.05, 0.95, 0.82], hello: 'Aim high and let go!' } },
+  { id: 'race2', x: 10, z: 28, text: 'E · Đua xe bí ngô với anh Leo', sign: '🏎 Cart Race', board: true, host: { name: 'Leo', file: 'npc_sam_fisherman_v02', tint: [1.12, 0.95, 0.8], hello: 'Ready, steady, go!' } },
+  { id: 'blocks', x: -31, z: 4.5, text: 'E · Xếp hình với bác Max', sign: '🧱 Blocks', board: true, host: { name: 'Max', file: 'npc_forge_blacksmith_v01', tint: [0.88, 0.92, 1.08], hello: 'Fill a whole line!' } },
 ];
 export const ORCHARD = { x: 40, z: 11, r: 8 };
 
@@ -62,6 +64,18 @@ export class MiniGames {
     }
     this.setRegion(L.NAME);
   }
+  /** Puts each game's host by its sign. load(name) -> Promise<gltf>, a fresh copy each call. */
+  async addHosts(load) {
+    this.hosts = [];
+    for (const s of STARTS) if (s.host) {
+      const gltf = await load(s.host.file), root = gltf.scene, mixer = new THREE.AnimationMixer(root), act = {};
+      for (const c of gltf.animations) act[c.name] = mixer.clipAction(c);
+      root.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.frustumCulled = false; o.material = o.material.clone(); o.material.color.multiply(new THREE.Color(...s.host.tint)); } });
+      const y = L.REGIONS.village.walkHeight(s.x, s.z); root.position.set(s.x - 0.6, y, s.z + 0.4); root.rotation.y = 0.6; this.root.add(root);
+      if (act.Idle) act.Idle.play();
+      this.hosts.push({ s, root, mixer, act, cur: 'Idle' });
+    }
+  }
   get data() { const p = this.api.profile(); if (!p) return { stars: [], best: {} }; return p.mini || (p.mini = { stars: [], best: {} }); }
   setRegion(name) { this.root.visible = name === 'village'; if (name !== 'village') this.stop(); this.syncStars(); }
   syncStars() { const got = this.data.stars; for (const s of this.stars) s.m.visible = s.ring.visible = !got.includes(s.i); }
@@ -77,7 +91,7 @@ export class MiniGames {
     return null;
   }
   start(id) {
-    const s = STARTS.find((x) => x.id === id); this.api.sfx('tick');
+    const s = STARTS.find((x) => x.id === id); this.api.sfx('tick'); if (s.host && this.api.ui.toast) this.api.ui.toast(`${s.host.name}: ${s.host.hello}`);
     if (s.board) return this.api.board(id);
     if (id === 'fish') { this.active = { id, s, cast: 0, caught: 0, pos: 0, centre: 0.5, width: 0.3, speed: 0.6, wait: 0, msg: '' }; this.newCast(); }
     if (id === 'apple') this.active = { id, s, time: 30, score: 0, next: 0.5 };
@@ -100,6 +114,12 @@ export class MiniGames {
   update(dt, pos) {
     if (!this.root.visible) return;
     this.t += dt;
+    for (const h of this.hosts || []) {          // hosts turn to Ngọc and wave when she comes close
+      const d = Math.hypot(pos.x - h.root.position.x, pos.z - h.root.position.z); if (d > 40) continue;
+      if (d < 7) { let k = Math.atan2(pos.x - h.root.position.x, pos.z - h.root.position.z) - h.root.rotation.y; k = Math.atan2(Math.sin(k), Math.cos(k)); h.root.rotation.y += k * Math.min(1, dt * 4); }
+      const want = d < 4 && h.act.Talk ? 'Talk' : 'Idle'; if (want !== h.cur && h.act[want]) { h.act[want].reset().play(); if (h.act[h.cur]) h.act[h.cur].crossFadeTo(h.act[want], 0.3, false); h.cur = want; }
+      if (d < 30) h.mixer.update(dt);
+    }
     for (const s of this.stars) if (s.m.visible) {
       s.spin.rotation.y = s.edge.rotation.y = this.t * 1.8 + s.i; s.m.position.y += Math.sin(this.t * 2.4 + s.i) * 0.003;
       if (Math.hypot(pos.x - s.x, pos.z - s.z) < 1.3) this.takeStar(s);

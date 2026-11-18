@@ -1,0 +1,28 @@
+# Builds the Windows installer of the desktop app (desktop/) on GitHub's own Windows machine.
+# Run it from the Actions tab ("Run workflow"); the installer appears under the run's Artifacts.
+name: Desktop app (Windows)
+on:
+  workflow_dispatch:
+  push:
+    branches: [fable/web-rebuild]
+    paths: ['desktop/**', 'src/**', 'assets/**', 'data/**', 'vendor/**', 'index.html']
+jobs:
+  build:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: desktop
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install --no-audit --no-fund
+      - run: npm run dist:win
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+      - uses: actions/upload-artifact@v4
+        with:
+          name: EnglishQuest-Windows
+          path: desktop/dist/*.exe
+          retention-days: 30

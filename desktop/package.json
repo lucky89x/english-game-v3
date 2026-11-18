@@ -1,0 +1,31 @@
+{
+  "name": "english-quest",
+  "productName": "English Quest",
+  "version": "0.9.0",
+  "description": "English Quest — game học tiếng Anh lớp 6–9",
+  "main": "main.js",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "dist:win": "electron-builder --win nsis --x64 --publish never"
+  },
+  "devDependencies": {
+    "electron": "33.2.1",
+    "electron-builder": "25.1.8"
+  },
+  "build": {
+    "appId": "vn.englishquest.game",
+    "productName": "English Quest",
+    "directories": { "output": "dist" },
+    "files": ["main.js", "package.json"],
+    "extraResources": [
+      { "from": "../index.html", "to": "game/index.html" },
+      { "from": "../src", "to": "game/src" },
+      { "from": "../assets", "to": "game/assets" },
+      { "from": "../data", "to": "game/data" },
+      { "from": "../vendor", "to": "game/vendor" }
+    ],
+    "win": { "target": "nsis", "artifactName": "EnglishQuest-Setup-${version}.exe" },
+    "nsis": { "oneClick": false, "allowToChangeInstallationDirectory": true, "createDesktopShortcut": true, "shortcutName": "English Quest", "perMachine": false }
+  }
+}

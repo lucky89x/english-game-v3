@@ -97,12 +97,23 @@ const game = { errors, get profile() { return profile; }, get quest() { return q
   post, refresh: () => refresh() };
 globalThis.__eq = game;
 
+// Dynamic resolution (18/11: "high graphics without stutter"): all the effects stay on, only the number of pixels
+// drawn follows the machine. A slow half-second lowers the render scale a step (at most every 2 s, down to 60%);
+// steady fast frames raise it again (every 5 s). Changing it reallocates the effect buffers, so steps are rare.
+let baseRatio = 1, renderScale = 1, drsT = 0;
+function adaptResolution(stats, dt) {
+  drsT += dt; if (quality === 'low' || !started || switching || document.hidden) return;
+  const want = stats.ms > 19 ? -0.1 : stats.ms < 12.5 && stats.worst < 25 ? 0.05 : 0;
+  if (!want || (want < 0 && drsT < 2) || (want > 0 && drsT < 5)) return;
+  const next = Math.min(1, Math.max(0.6, renderScale + want)); if (Math.abs(next - renderScale) < 0.01) return;
+  renderScale = next; drsT = 0; renderer.setPixelRatio(baseRatio * renderScale); resize();
+}
 function resize() { const w = innerWidth, h = innerHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
 function setQuality(name) {
   quality = QUALITY[name] ? name : 'medium'; const q = QUALITY[quality];
   localStorage.setItem('eq-quality', quality);
   const dpr = devicePixelRatio || 1;
-  renderer.setPixelRatio(q.ratio < 1 ? dpr * q.ratio : Math.min(dpr, q.ratio));
+  baseRatio = q.ratio < 1 ? dpr * q.ratio : Math.min(dpr, q.ratio); renderScale = 1; renderer.setPixelRatio(baseRatio);
   renderer.shadowMap.enabled = q.shadow > 0; sun.castShadow = q.shadow > 0;
   if (q.shadow) { sun.shadow.mapSize.set(q.shadow, q.shadow); if (sun.shadow.map) { sun.shadow.map.dispose(); sun.shadow.map = null; }
     const c = sun.shadow.camera, d = q.shadowDist / 2; c.left = -d; c.right = d; c.top = d; c.bottom = -d; c.near = 1; c.far = 220; c.updateProjectionMatrix(); }
@@ -554,6 +565,7 @@ async function boot() {
     },
     respawn: () => { game.teleport(L.SPAWN.x, L.SPAWN.z); ui.dialogue([{ who: 'Tom', en: 'You fainted, so I carried you home. Rest, then try again!', vi: 'Con hết máu nên được đưa về làng. Máu đã đầy lại. Mua trang bị tốt hơn rồi quay lại nhé.' }]); } });
   mini = new MiniGames({ scene, player, ui, sfx, profile: () => profile, save, onNote: refresh, board: (id) => arcade.start(({ candy: candyGame, blocks: blocksGame, sling: slingGame, race2: raceGame })[id]()) });
+  await mini.addHosts((name) => loader.loadAsync(`./assets/models/${name}.glb`));      // a host by each mini game
   minimap = new Minimap($('minimap'), (path) => { player.route = path.slice(1); });
   placeActors(); player.place(L.SPAWN.x, L.SPAWN.z);
   setQuality(quality);
@@ -632,9 +644,10 @@ function frame() {
   renderer.info.reset(); post.setSun(camera, sunDir); post.render(scene, camera);
   acc += raw; frames++; worstNow = Math.max(worstNow, raw * 1000);
   if (acc >= 0.5) { game.stats = { gpu: GPU, software: SOFTWARE_GL, worst: Math.round(worstNow), fps: +(frames / acc).toFixed(1), ms: +(acc / frames * 1000).toFixed(1), calls: renderer.info.render.calls, tris: renderer.info.render.triangles };
-    if (perfOn) $('perf').textContent = `FPS ${game.stats.fps}  (${game.stats.ms} ms, chậm nhất ${worst.toFixed(0)} ms)\nGPU: ${GPU.slice(0, 60)}${SOFTWARE_GL ? '  ⚠ ĐANG VẼ BẰNG CPU' : ''}\ndraw calls ${game.stats.calls}\ntriangles ${game.stats.tris.toLocaleString()}\nquality ${quality} · ${renderer.domElement.width}x${renderer.domElement.height}`;
+    if (perfOn) $('perf').textContent = `FPS ${game.stats.fps}  (${game.stats.ms} ms, chậm nhất ${worst.toFixed(0)} ms)\nGPU: ${GPU.slice(0, 60)}${SOFTWARE_GL ? '  ⚠ ĐANG VẼ BẰNG CPU' : ''}\nđộ phân giải ${Math.round(renderScale * 100)}%\ndraw calls ${game.stats.calls}\ntriangles ${game.stats.tris.toLocaleString()}\nquality ${quality} · ${renderer.domElement.width}x${renderer.domElement.height}`;
+    adaptResolution(game.stats, acc);
     if (AUTO && started && !switching && !document.hidden && quality !== 'low' && !localStorage.getItem('eq-quality-manual')) {
-      slow = game.stats.fps < 26 ? slow + 1 : 0;
+      slow = game.stats.fps < 26 && renderScale <= 0.61 ? slow + 1 : 0;      // only after the resolution can go no lower
       if (slow >= 6) { slow = 0; setQuality(quality === 'high' ? 'medium' : 'low'); ui.toast('Đã hạ đồ họa cho mượt hơn'); }
     }
     acc = 0; frames = 0; worst = worstNow; worstNow = 0; }

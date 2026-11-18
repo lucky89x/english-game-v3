@@ -120,8 +120,8 @@ export function fountain(x, z) {
 export const HOUSE_SIGNS = [
   [7.0, 4.9, -8, -Math.PI / 2, 'VILLAGE SHOP', 'Weapons · Armour · Bread'],
   [0, 6.3, -18.2, 0, 'VILLAGE HALL', "Mr Tom's office", 1.5],
-  [-10.2, 4.7, -8, Math.PI / 2, "LILY'S HOUSE", 'Herbs and flowers'],
-  [-10.7, 4.7, 9, Math.PI / 2, "ANNA'S HOUSE", 'Music and songs'],
+  [-17.7, 4.7, -4, Math.PI / 2, "LILY'S HOUSE", 'Herbs and flowers'],
+  [-18.2, 4.7, 12.5, Math.PI / 2, "ANNA'S HOUSE", 'Music and songs'],
 ];
 /** A wooden board hanging on two chains from an iron arm fixed to the wall behind it; painted on both sides. */
 export function hangSign(name, sub, x, y, z, yaw, size = 1) {
@@ -151,8 +151,8 @@ export async function villageExtras(add, loadModel, shadowed) {
   const place = async (name, x, z, rot, scale) => { const m = shadowed(await loadModel(name)); m.position.set(x, L.groundHeight(x, z) - 0.05, z); m.rotation.y = rot; m.scale.setScalar(scale); add(m); return m; };
   await place('bld_hall_blue_v02', 0, -25.5, 0, 1.35);
   await place('bld_shop_orange_v02', 12.5, -8, -Math.PI / 2, 1.3);
-  await place('bld_cottage_red_v02', -14.5, -8, Math.PI / 2, 1.3);
-  await place('bld_house_blue_v02', -15, 9, Math.PI / 2, 1.3);
+  await place('bld_cottage_red_v02', -22, -4, Math.PI / 2, 1.3);
+  await place('bld_house_blue_v02', -22.5, 12.5, Math.PI / 2, 1.3);
   const gate = await place('prop_forest_gate_v02', GATE.x, GATE.z, 0, 1); gate.position.y += 0.05;
   const title = label('Forest of Memories\nRừng Ký Ức', { size: 28 }); title.position.set(GATE.x, L.groundHeight(GATE.x, GATE.z) + 4.4, GATE.z); add(title);
   const still = new THREE.Group(); for (const g of [marketStall(), dock(), farm()]) still.add(g);      // the well in the square was removed (17/11): it blocked the main road
@@ -172,11 +172,11 @@ export async function villageExtras(add, loadModel, shadowed) {
   add(windmill()); add(pond()); add(dummies()); add(campsite());           // D1: the south fields
   signs(add, [[-2.5, 37.5, '← Windmill · Campsite\nTraining Yard →']]);
   add(bunting(-5.2, -3.2, 5.2, -3.2)); add(bunting(-6.5, 10.5, -6.5, 15.2, 3.0)); add(bunting(5.4, 9.6, 5.4, 2.2, 3.0));
-  for (const [x, y, z] of [[4.0, 14.2, -24.3], [14.6, 9.3, -4.6], [-16.5, 7.4, -4.9], [-17.3, 10.6, 12.2]]) add(smoke(x, L.groundHeight(x, z) + y, z));
+  for (const [x, y, z] of [[4.0, 14.2, -24.3], [14.6, 9.3, -4.6], [-24, 7.4, -0.9], [-24.8, 10.6, 15.7]]) add(smoke(x, L.groundHeight(x, z) + y, z));
 }
 /** kind, x, z, rotation, scale — all outside paths; the big ones are also solids in core/regions/village.js */
 export const VILLAGE_PROPS = [
-  ['barrel', -9.5, -5.2, 0, 1], ['barrel', -9.2, -6.2, 1, 0.9], ['crate', -9.5, -10.6, 0.3, 1], ['fruit', -9.3, -9.5, 0.2, 1],
+  ['barrel', -17, -1.2, 0, 1], ['barrel', -16.7, -2.2, 1, 0.9], ['crate', -17, -6.6, 0.3, 1], ['fruit', -16.8, -5.5, 0.2, 1],
   ['bench', -3.4, -4.4, 1.57, 1], ['bench', 4.7, 9.2, 3.14, 1], ['barrel', 7.5, -11.4, 0, 1], ['crate', 7.4, -2.6, 0.5, 1], ['crate', 6.6, -2.0, 0.1, 0.8],
   ['fruit', 7.4, -9.9, 1.57, 1], ['cart', -12.6, 22.6, 0.5, 1], ['hay', -17.5, 22.6, 0.3, 1], ['hay', -18.9, 23.3, 1.2, 1], ['hay', -18.2, 22.9, 0.7, 0.8],
   ['barrel', -10.9, 12.8, 0, 1], ['crate', -8.0, 5.4, 0.2, 1], ['bench', 3.6, -13.6, -1.57, 1], ['barrel', -4.6, -17.6, 0, 1], ['crate', 4.6, -17.4, 0.4, 1],

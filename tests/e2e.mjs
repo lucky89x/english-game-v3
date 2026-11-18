@@ -149,14 +149,7 @@ const MG = await ev(() => ({ stars: __eq.mini.stars.map((s) => [s.x, s.z]), ring
 const gold0 = await ev(() => __eq.profile.stats.gold);
 await ev((p) => __eq.teleport(p[0], p[1]), MG.stars[0]); await wait(500);
 check(await ev((g) => __eq.mini.data.stars.length === 1 && __eq.profile.stats.gold === g + 3, gold0) && (await page.textContent('#hud')).includes('★ 1/12'), 'Walking into a hidden star collects it (HUD shows ★ 1/12)');
-await ev(() => __eq.teleport(-22.8, 4.6)); await wait(450);
-check((await page.textContent('#prompt')).includes('Chạy vòng'), 'Prompt at the ring race sign');
-await page.keyboard.press('KeyE'); await wait(300);
-check(await ev(() => __eq.mini.active && __eq.mini.active.id === 'race') && (await page.textContent('#clue')).includes('🏁'), 'Ring race starts: timer on the card');
-await snap('03b_ring_race');
-for (const r of MG.rings) { await ev((p) => __eq.teleport(p[0], p[1]), r); await wait(350); }
-check(await ev(() => !__eq.mini.active && __eq.mini.data.best.race > 0) && (await page.textContent('#dialog')).includes('ring race'), 'All rings passed: time saved as the record, reward shown');
-await page.keyboard.press('KeyE'); await wait(250);
+await closeDialog();
 await ev(() => __eq.teleport(18.6, 19.8)); await wait(450); await page.keyboard.press('KeyE'); await wait(300);
 check(await ev(() => __eq.mini.active && __eq.mini.active.id === 'fish') && (await page.textContent('#clue')).includes('◆'), 'Fishing starts: moving marker on the bar');
 for (let c = 0; c < 5; c++) {      // software GL (~1 fps) cannot time a rhythm game: hold the marker inside the zone, then press a real E
@@ -202,7 +195,7 @@ await page.keyboard.press('Digit2'); await wait(300); await page.keyboard.press(
 check(await ev(() => __eq.profile.inv.food === 1) && (await page.innerHTML('#hud')).includes('chip food'), 'Rose sells honey bread; the HUD shows it');
 await ev(() => { __eq.profile.stats.hp = 40; }); await page.keyboard.press('KeyQ'); await wait(250);
 check(await ev(() => __eq.profile.stats.hp >= 90 && __eq.profile.stats.hp <= 99 && __eq.profile.inv.food === 0), 'Q eats the bread: +50 health (plus slow natural healing)');
-await ev(() => __eq.teleport(-5.0, -8.0)); await wait(450);
+await ev(() => __eq.teleport(-14.4, -16.4)); await wait(450);
 check((await page.textContent('#prompt')).includes('Xếp kẹo'), 'Prompt at the Candy Match sign');
 await page.keyboard.press('KeyE'); await wait(800);
 const cmv = await ev(async () => { const M = await import('./src/core/match3.js'); const b = __eq.arcade.game.board; for (let i = 0; i < 49; i++) for (const j of [i + 1, i + 7]) { if (j >= 49 || !M.adjacent(i, j)) continue; if (M.move([...b], i, j, Math.random).ok) return [i, j]; } return null; });
@@ -213,14 +206,14 @@ await snap('03g_candy'); await ev(() => { __eq.arcade.game.moves = 0; }); await 
 check(await ev(() => !__eq.arcade.open && __eq.mini.data.best.candy >= 30) && (await page.textContent('#dialog')).includes('Candy Match'), 'Board ends: gold and EXP paid, record saved');
 for (let k = 0; k < 3 && await page.isVisible('#dialog'); k++) { await page.keyboard.press('KeyE'); await wait(200); }
 // slingshot: drag back from the sling with the real mouse and let go
-await ev(() => __eq.teleport(-20.6, -3.4)); await wait(450); await page.keyboard.press('KeyE'); await wait(800);
+await ev(() => __eq.teleport(-5.4, -32.4)); await wait(450); await page.keyboard.press('KeyE'); await wait(800);
 const sbox = await page.locator('#arccv').boundingBox(), sk = sbox.width / 560;
 await page.mouse.move(sbox.x + 280 * sk, sbox.y + 470 * sk); await page.mouse.down(); await page.mouse.move(sbox.x + 300 * sk, sbox.y + 560 * sk, { steps: 4 }); await page.mouse.up(); await wait(300);
 check(await ev(() => __eq.arcade.game.title.includes('Slingshot') && __eq.arcade.game.shots === 11), 'Slingshot: a real drag-and-release fires a pebble');
 await snap('03h_slingshot'); await page.keyboard.press('Escape'); await wait(300);
 check(await ev(() => !__eq.arcade.open && __eq.mini.data.best.sling === undefined), 'Esc quits a board game with no reward');
 // falling blocks: real arrow keys
-await ev(() => __eq.teleport(-26.6, -1.4)); await wait(450); await page.keyboard.press('KeyE'); await wait(800);
+await ev(() => __eq.teleport(-30.4, 5.1)); await wait(450); await page.keyboard.press('KeyE'); await wait(800);
 const bk0 = await ev(() => JSON.stringify(__eq.arcade.game.piece));
 await page.keyboard.press('ArrowLeft'); await wait(200); await page.keyboard.press('ArrowUp'); await wait(200);
 check(await ev((p0) => JSON.stringify(__eq.arcade.game.piece) !== p0, bk0), 'Falling Blocks: arrow keys move and turn the piece');

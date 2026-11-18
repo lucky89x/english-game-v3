@@ -2,7 +2,17 @@
 
 Game nằm ở nhánh `fable/web-rebuild` của repo `lucky89x/english-game-v3`. Game chạy trong trình duyệt (Chrome hoặc Edge), cần một "máy chủ nhỏ" chạy trên chính máy đó, không cần Internet khi chơi.
 
-## Lần đầu: cài 2 thứ (một lần duy nhất)
+## Cách mới (khuyên dùng): bản cài đặt English Quest.exe
+Bản .exe tự dùng card đồ họa rời và tự giữ khung hình đều, không cần Python hay trình duyệt.
+1. Vào https://github.com/lucky89x/english-game-v3/actions , chọn **Desktop app (Windows)**, bấm lần chạy mới nhất có dấu ✔ xanh.
+2. Kéo xuống mục **Artifacts**, tải **EnglishQuest-Windows** (file .zip), giải nén ra **EnglishQuest-Setup-….exe**.
+3. Nháy đúp để cài (Windows có thể hỏi "Windows protected your PC": bấm **More info → Run anyway**, vì file chưa có chữ ký số).
+4. Mở **English Quest** trên màn hình Desktop. F11: toàn màn hình.
+- Tiến độ của bản .exe để riêng với bản trình duyệt: ở bản trình duyệt bấm ⚙ → **Xuất hồ sơ**, rồi trong bản .exe chọn **Nhập hồ sơ (JSON)** ở màn hình chọn người chơi.
+- Mỗi lần có bản mới: tải bộ cài mới ở bước 1–3 và cài đè.
+
+## Cách cũ: chạy trong trình duyệt
+### Lần đầu: cài 2 thứ (một lần duy nhất)
 1. **Git for Windows**: tải ở https://git-scm.com/download/win, cài mặc định (bấm Next liên tục).
 2. **Python 3**: tải ở https://www.python.org/downloads/, khi cài **tick ô "Add python.exe to PATH"**.
 
@@ -83,6 +93,12 @@ py -m http.server 8000
 - 5 rương khóa chữ và 10 bong bóng chữ trong rừng (từ Unit 2).
 - Boss **Nữ hoàng Nấm** thức dậy ở cấp 30, bãi trống phía Tây tàn tích; phá 3 khiên chữ bằng từ tiếng Anh.
 - Cú Mèo ôn tập thêm ở cấp 25 và 30.
+
+## Có gì mới (18/11)
+- Bản cài đặt **.exe** (xem đầu file). Game tự hạ/nâng độ phân giải để luôn mượt, đồ họa Cao vẫn giữ đủ hiệu ứng.
+- Mỗi trò chơi có một người giữ trò đứng cạnh biển: cô Hana (hứng táo), cô Mimi (xếp kẹo), chú Rex (bắn ná), anh Leo (đua xe), bác Max (xếp hình). Các trò đặt xa nhau.
+- Xếp hình: rơi nhanh hơn, **bấm chuột để xoay**. Bắn ná: vẽ lại slime và bóng bay, bay chậm hơn.
+- Nhà Lily, nhà Anna dời ra xa hơn.
 
 ## Phím chơi
 WASD đi · Shift chạy · Space nhảy · E nói chuyện/nhặt · J đánh · K né · Q ăn bánh · I túi đồ · B sổ từ · Esc bỏ qua thoại · H gợi ý · chuột trái kéo để xoay · lăn chuột để zoom · bấm bản đồ nhỏ để tự đi.
