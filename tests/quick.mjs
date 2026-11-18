@@ -110,9 +110,12 @@ await run('exam', async () => {        // map exam at level 20: 10 questions, 8 
   const first = await ev(() => __eq.ui.options.length);
   await sit(3);          // 7 of 10
   check((await page.textContent('#dialog')).includes('7 of 10') && await ev(() => !__eq.profile.gates[20] && __eq.profile.exam.tries === 1), '7 of 10 fails: the gate stays shut, the try is counted');
-  await passCards(); await closeDialogs();          // the study screens, then the missed questions again
-  const redo = await ev(() => !!document.querySelector('#dialog') && __eq.ui.options.length > 0);
-  for (let n = 0; n < 12 && (await ev(() => __eq.ui.options.length > 0)); n++) { const r = await right(); await page.keyboard.press('Digit' + (r.i + 1)); await wait(250); await passCards(); }
+  let redone = 0;          // the study screens, then every missed question again until it is right
+  for (let n = 0; n < 60 && await page.isVisible('#dialog'); n++) {
+    if (await page.isVisible('#dialog .opts')) { const r = await right(); await page.keyboard.press('Digit' + (r.i + 1)); redone += 1; await wait(250); }
+    else { await page.keyboard.press('KeyE'); await wait(200); }
+  }
+  check(redone === 3, 'The three missed questions are asked again (' + redone + ')');
   check(await ev(() => !__eq.profile.gates[20]), 'Studying the missed questions again does not open the gate by itself');
   await closeDialogs();
   const last1 = await ev(() => [...__eq.profile.exam.last]);
