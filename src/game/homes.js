@@ -82,7 +82,7 @@ export class Homes {
       const p = kids[i] || null, h = lot.h; lot.owner = p;
       for (const o of [lot.sign, lot.post]) if (o) { o.removeFromParent(); o.traverse((c) => { if (c.material) { if (c.material.map) c.material.map.dispose(); c.material.dispose(); } }); }
       const name = p ? p.name : '';
-      lot.sign = hangSign(p ? `${name.toUpperCase()}'S HOME` : 'EMPTY HOME', p ? `Nhà của ${name}` : 'Chưa có chủ', h.door[0] - 0.3, gh(h.door[0], h.door[1]) + 4.7, h.door[1], Math.PI / 2);
+      lot.sign = hangSign(p ? `NHÀ CỦA ${name.toLocaleUpperCase('vi')}` : 'NHÀ TRỐNG', p ? `${name}'s home` : 'Chưa có chủ', h.door[0] - 0.3, gh(h.door[0], h.door[1]) + 4.7, h.door[1], Math.PI / 2, 1.25);      // the hero's own name (18/11)
       this.root.add(lot.sign);
       lot.post = label(p ? `🏠 Nhà của ${name}` : '🏠 Nhà trống', { size: 28, scale: 0.8 }); lot.post.position.set(h.yard[0] + 2.9, gh(h.yard[0] + 2.9, h.z - 1.6) + 2.2, h.z - 1.6); this.root.add(lot.post);
       lot.yard.clear();
