@@ -222,8 +222,8 @@ export function spellGame(card, rnd = Math.random) {
 export function raceGame(rnd = Math.random, cards = [], tier = 1) {
   const R = rule('race', tier);
   const words = cards.filter((c) => SP.spellable(c.word) && SP.letters(c.word).length >= 3 && SP.letters(c.word).length <= 9).sort(() => rnd() - 0.5);
-  const g = { title: '🏎 Kart Race', help: 'Giữ ← → (A D) để lái. Đi qua đồng xu có CHỮ CÁI TIẾP THEO của từ tiếng Anh (nghĩa ở trên cùng) để ghép từ. Né đá, tránh bùn, vượt 3 xe đối thủ. 60 giây, 3 tim.',
-    x: 280, time: 60, hearts: 3, dist: 0, speed: 250, things: [], next: 0.5, hurt: 0, endT: 0, steer: 0, done_: [], wi: 0, got: 0, bad: 0, flash: 0, bonus: 0,
+  const g = { title: '🏎 Kart Race', help: 'Giữ ← → (A D) để lái. Ăn đồng xu vàng, né đá, tránh bùn, vượt 3 xe đối thủ trong 60 giây.', help: 'Giữ ← → (A D) để lái. Đi qua đồng xu có CHỮ CÁI TIẾP THEO của từ tiếng Anh (nghĩa ở trên cùng) để ghép từ. Né đá, tránh bùn, vượt 3 xe đối thủ. 60 giây, 3 tim.',
+    x: 280, coins: 0, time: 60, hearts: 3, dist: 0, speed: 250, things: [], next: 0.5, hurt: 0, endT: 0, steer: 0, done_: [], wi: 0, got: 0, bad: 0, flash: 0, bonus: 0,
     rivals: [['#2f6fd0', 160, 0.98], ['#2e9a5a', 300, 1.0], ['#8a4ad0', 440, 1.02]].map(([col, ahead, k], i) => ({ col, d: ahead, k: k + R.rival, off: (i - 1) * 60, ph: i * 2, num: i + 2 })) };
   const roadAt = (y) => 280 + Math.sin((g.dist - y) / 260) * 90;          // centre of the road at screen height y
   const word = () => words[g.wi % Math.max(1, words.length)], need = () => (word() ? SP.letters(word().word)[g.got] : '');
@@ -245,24 +245,26 @@ export function raceGame(rnd = Math.random, cards = [], tier = 1) {
       g.next = Math.max(0.3, 0.7 - (60 - g.time) * 0.005) * (0.75 + rnd() * 0.5) * R.gap;
       const roll = rnd(), off = (rnd() - 0.5) * 160;
       if (roll < 0.5 && word()) { const right = rnd() < 0.55, abc = 'abcdefghijklmnopqrstuvwxyz'; let ch = need(); if (!right) { do ch = abc[Math.floor(rnd() * 26)]; while (ch === need()); } g.things.push({ kind: 'letter', ch, off, y: -30 }); }
-      else g.things.push({ kind: roll < 0.78 ? 'rock' : 'mud', off, y: -30 });
+      else if (roll < 0.45) g.things.push({ kind: 'coin', off, y: -30 });      // 18/11: no spelling while racing, just coins
+      else g.things.push({ kind: roll < 0.8 ? 'rock' : 'mud', off, y: -30 });
     }
     for (const t of g.things) {
       t.y += g.speed * dt; const tx = roadAt(t.y) + t.off;
       if (!t.hit && Math.abs(t.y - 470) < 26 && Math.abs(tx - g.x) < 32) {
         t.hit = true;
-        if (t.kind === 'letter') {
+        if (t.kind === 'coin') { g.coins += 1; g.bonus += 6; }
+        else if (t.kind === 'letter') {
           if (t.ch === need()) { g.got += 1; g.bonus += 5; if (g.got >= SP.letters(word().word).length) { g.done_.push(word()); g.bonus += 40; speak(word().word, true, 0.85); g.wi += 1; g.got = 0; g.flash = 0.8; } }
           else { g.bad += 1; g.speed *= 0.8; g.hurt = 0.3; }
         } else if (g.hurt <= 0) { if (t.kind === 'rock') g.hearts -= 1; g.hurt = t.kind === 'rock' ? 1.0 : 0.6; g.speed *= t.kind === 'rock' ? 0.5 : 0.65; }
       }
     }
     if (Math.abs(g.x - roadAt(470)) > 110) { g.dist -= g.speed * dt * 0.5; g.speed *= 0.99; }      // off the road: slow
-    g.things = g.things.filter((t) => t.y < 600 && !(t.hit && t.kind === 'letter'));
+    g.things = g.things.filter((t) => t.y < 600 && !(t.hit && (t.kind === 'letter' || t.kind === 'coin')));
   };
   const score = () => Math.floor(g.dist / 100) + g.hearts * 20 + g.bonus + (4 - place()) * 30;
-  g.done = () => (g.endT > 0.8 ? { id: 'race2', score: score(), gold: Math.min(40, g.done_.length * 6 + (4 - place()) * 4 + g.hearts * 2), exp: Math.min(50, Math.floor(score() / 6)), words: g.done_,
-    text: g.hearts > 0 ? `Race over: place ${place()} of 4, ${g.done_.length} words spelled!` : `Crash! Place ${place()}, ${g.done_.length} words spelled.` } : null);
+  g.done = () => (g.endT > 0.8 ? { id: 'race2', score: score(), gold: Math.min(40, g.done_.length * 6 + g.coins * 2 + (4 - place()) * 4 + g.hearts * 2), exp: Math.min(50, Math.floor(score() / 6)), words: g.done_,
+    text: g.hearts > 0 ? `Race over: place ${place()} of 4, ${g.coins} coins!` : `Crash! Place ${place()}, ${g.coins} coins.` } : null);
   // drawing: grass with flowers, a curbed road with lane marks, shaded rocks, mud with ripples, letter coins, top-down karts
   const kart = (c, x, y, col, num, tilt, ghost) => {
     c.save(); c.translate(x, y); c.rotate(tilt); if (ghost) c.globalAlpha = 0.5;
@@ -290,11 +292,11 @@ export function raceGame(rnd = Math.random, cards = [], tier = 1) {
       c.fillStyle = 'rgba(0,0,0,.18)'; c.beginPath(); c.ellipse(cx + 8, y + 10, 24, 14, 0, 0, 7); c.fill();
       const tr = c.createRadialGradient(cx - 8, y - 8, 3, cx, y, 26); tr.addColorStop(0, '#8fdc5a'); tr.addColorStop(1, '#2f8a34'); c.fillStyle = tr; c.beginPath(); c.arc(cx, y, 24, 0, 7); c.fill(); }
     for (const tg of g.things) { const x = roadAt(tg.y) + tg.off, y = tg.y;
-      if (tg.kind === 'letter') {
+      if (tg.kind === 'coin' || tg.kind === 'letter') {
         const wob = Math.abs(Math.cos(t * 4 + tg.off));
         const coin = c.createRadialGradient(x - 5, y - 6, 2, x, y, 18); coin.addColorStop(0, '#fff6c0'); coin.addColorStop(1, '#e0a020'); c.fillStyle = coin;
         c.beginPath(); c.ellipse(x, y, 17 * (0.7 + 0.3 * wob), 17, 0, 0, 7); c.fill(); c.strokeStyle = '#9a6a10'; c.lineWidth = 2.5; c.stroke();
-        c.fillStyle = '#4a2a10'; c.font = '900 20px sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(tg.ch.toUpperCase(), x, y + 1); c.textBaseline = 'alphabetic';
+        c.fillStyle = '#4a2a10'; c.font = '900 20px sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(tg.kind === 'coin' ? '$' : tg.ch.toUpperCase(), x, y + 1); c.textBaseline = 'alphabetic';
       } else if (tg.kind === 'rock') {
         c.fillStyle = 'rgba(0,0,0,.25)'; c.beginPath(); c.ellipse(x + 5, y + 8, 24, 10, 0, 0, 7); c.fill();
         const rk = c.createRadialGradient(x - 8, y - 8, 2, x, y, 26); rk.addColorStop(0, '#d8d4ce'); rk.addColorStop(1, '#6e6a64'); c.fillStyle = rk;
@@ -310,7 +312,7 @@ export function raceGame(rnd = Math.random, cards = [], tier = 1) {
     c.fillStyle = g.flash > 0 ? 'rgba(255,241,184,.95)' : 'rgba(255,248,230,.92)'; c.beginPath(); c.roundRect(110, 8, 340, 64, 14); c.fill(); c.strokeStyle = '#b98a52'; c.lineWidth = 3; c.stroke();
     c.textAlign = 'center'; c.fillStyle = '#7a3e00'; c.font = '700 16px sans-serif';
     if (wd) { c.fillText(`Spell: "${wd.vi}"`, 280, 32, 320); const L2 = SP.letters(wd.word); c.font = '900 22px monospace'; c.fillStyle = '#2a5a9a'; c.fillText(L2.map((ch, i) => (i < g.got ? ch.toUpperCase() : '_')).join(' '), 280, 60, 320); }
-    else { c.fillText('Né đá, vượt đối thủ!', 280, 46); }
+    else { c.fillText(`🪙 ${g.coins} xu · Né đá, vượt đối thủ!`, 280, 46); }
     if (g.time <= 0 || g.hearts <= 0) { c.fillStyle = 'rgba(255,244,220,.94)'; c.fillRect(110, 220, 340, 100); c.fillStyle = '#4a2a10'; c.font = '800 30px sans-serif'; c.fillText(g.hearts > 0 ? `Finish! Place ${place()}` : 'Crash!', 280, 262); c.font = '700 18px sans-serif'; c.fillText(`${g.done_.length} words spelled`, 280, 296); }
   };
   return g;

@@ -557,7 +557,7 @@ export function creatures(models = {}) {
     if (glb) { o = new THREE.Group(); const m = glb.clone(true); m.scale.setScalar((kind === 1 ? 1.35 : 1.05) * (0.92 + (i % 3) * 0.06)); m.traverse((c) => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } }); o.add(m); }
     else { o = kind === 1 ? hen([0xfaf6ee, 0xd8a060, 0x8a5a3a][i % 3]) : rabbit([0xd9b48a, 0xfaf6ee, 0x9a8a80][i % 3]); compact(o); }
     o.userData.hen = kind === 1;
-    g.add(o); list.push({ o, slime, x: sp.x, z: sp.z, r: 0.8 + (i % 3) * 0.5, ph: i * 1.7, sp: (slime ? 0.25 : 0.45) * (i % 2 ? 1 : -1) });
+    g.add(o); list.push({ o, slime, x: sp.x, z: sp.z, r: 0.8 + (i % 3) * 0.5, ph: i * 1.7, sp: (slime ? 0.25 : 0.3) * (i % 2 ? 1 : -1) });
   });
   if (L.NAME === 'village') {      // a corgi trotting round the square and an owl on the market sign
     const cream = new THREE.MeshStandardMaterial({ color: 0xfff4e2, roughness: 0.95 }), eye = new THREE.MeshBasicMaterial({ color: 0x24140c });
@@ -579,9 +579,10 @@ export function creatures(models = {}) {
     for (const c of list) {
       if (c.owl) { c.o.rotation.y = Math.sin(t * 0.5) * 1.1; c.o.scale.y = 1 + Math.sin(t * 2) * 0.03; continue; }
       if (c.dog) { const a = c.ph + t * c.sp, x = c.x + Math.cos(a) * c.r, z = c.z + Math.sin(a) * c.r; c.o.position.set(x, L.groundHeight(x, z) + (c.mixer ? 0 : Math.abs(Math.sin(t * 9)) * 0.06), z); c.o.rotation.y = -a; if (c.tail) c.tail.position.x = Math.sin(t * 14) * 0.06; if (c.mixer) { c.mixer.update(Math.max(0, Math.min(0.1, t - (c.lastT ?? t)))); c.lastT = t; } continue; }
-      const a = c.ph + t * c.sp, x = c.x + Math.cos(a) * c.r, z = c.z + Math.sin(a) * c.r, hop = Math.abs(Math.sin(t * (c.slime ? 2.4 : 5) + c.ph));
+      const a = c.ph + t * c.sp, x = c.x + Math.cos(a) * c.r, z = c.z + Math.sin(a) * c.r, hop = Math.abs(Math.sin(t * 7 + c.ph));
       if (!L.walkable(x, z, 0.4)) continue;
-      c.o.position.set(x, L.groundHeight(x, z) + hop * (c.slime ? 0.22 : 0.3), z); c.o.rotation.y = -a + (c.sp > 0 ? 0 : Math.PI);
+      c.o.position.set(x, L.groundHeight(x, z) + hop * 0.015, z); c.o.rotation.y = -a + (c.sp > 0 ? 0 : Math.PI);      // a walk, not a hop (18/11)
+      c.o.rotation.z = Math.sin(t * 7 + c.ph) * 0.05;      // a little waddle
       if (c.slime) c.o.scale.set(1 + (1 - hop) * 0.18, 0.82 + hop * 0.3, 1 + (1 - hop) * 0.18);
     }
   };

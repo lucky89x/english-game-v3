@@ -47,6 +47,14 @@ check(Math.abs((await ev(() => __eq.cam.tYaw)) - yaw0) > Math.PI * 2, 'Left-drag
 const d0 = await ev(() => __eq.cam.tDist); await page.mouse.move(640, 400); await page.mouse.wheel(0, 400);
 check((await ev(() => __eq.cam.tDist)) > d0, 'Wheel zooms the camera');
 // ---------------------------------------------------------------- Chapter I in the village
+const answerGate = async () => {          // the three words asked before Candy Match and the Kart Race (18/11)
+  for (let k = 0; k < 40 && await page.isVisible('#dialog') && !(await page.evaluate(() => __eq.arcade.open)); k++) {
+    if (await page.isVisible('#dialog .opts')) {
+      const i = await page.evaluate(() => { const en = document.querySelector('#dialog .en').textContent, m = /What does "(.+)" mean/.exec(en), cards = [...__eq.chests.api.cards(), ...Object.keys(__eq.profile.words).map(__eq.cardOf).filter(Boolean)]; return __eq.ui.options.indexOf(cards.find((x) => x.word === m[1]).vi); });
+      await page.keyboard.press('Digit' + (i + 1)); await new Promise((r) => setTimeout(r, 260));
+    } else { await page.keyboard.press('KeyE'); await new Promise((r) => setTimeout(r, 220)); }
+  }
+};
 const passCards = async () => { for (let k = 0; k < 8 && await page.isVisible('#dialog .card-w'); k++) { await page.keyboard.press('KeyE'); await wait(220); } };   // "new word" cards come before a question
 await ev(() => __eq.teleport(1.6, 9.2)); await wait(500);
 await page.keyboard.press('KeyE'); await wait(300);
@@ -198,6 +206,8 @@ check(await ev(() => __eq.profile.stats.hp >= 90 && __eq.profile.stats.hp <= 99 
 await ev(() => __eq.teleport(-14.4, -16.4)); await wait(450);
 check((await page.textContent('#prompt')).includes('Xếp kẹo'), 'Prompt at the Candy Match sign');
 await page.keyboard.press('KeyE'); await wait(800);
+await answerGate(); await wait(600);
+check(await ev(() => __eq.arcade.open && __eq.arcade.game.title.includes('Candy')), 'Candy Match opens only after three words are answered');
 const cmv = await ev(async () => { const M = await import('./src/core/match3.js'); const b = __eq.arcade.game.board; for (let i = 0; i < 49; i++) for (const j of [i + 1, i + 7]) { if (j >= 49 || !M.adjacent(i, j)) continue; if (M.move([...b], i, j, Math.random).ok) return [i, j]; } return null; });
 const cbox = await page.locator('#arccv').boundingBox();
 for (const i of cmv) { await page.mouse.click(cbox.x + (i % 7 + 0.5) * cbox.width / 7, cbox.y + (Math.floor(i / 7) + 0.5) * cbox.width / 7); await wait(400); }
@@ -283,7 +293,7 @@ for (let n = 0; n < 5; n++) {
 check(await ev(() => __eq.profile.stats.level === 6 && __eq.profile.gates[5]) && (await page.textContent('#dialog')).includes('Wonderful'), 'Five owl questions answered: level 6');
 for (let k = 0; k < 3 && await page.isVisible('#dialog'); k++) { await page.keyboard.press('KeyE'); await wait(200); }
 // pumpkin cart race: hold the arrow key to steer
-await ev(() => __eq.teleport(10.6, 28.6)); await wait(450); await page.keyboard.press('KeyE'); await wait(600);
+await ev(() => __eq.teleport(10.6, 28.6)); await wait(450); await page.keyboard.press('KeyE'); await wait(600); await answerGate(); await wait(500);
 const cx0 = await ev(() => __eq.arcade.game.x); await page.keyboard.down('ArrowRight'); await wait(1200); await page.keyboard.up('ArrowRight');
 check(await ev((x) => __eq.arcade.game.title.includes('Race') && __eq.arcade.game.x > x + 40, cx0), 'Cart Race: holding → steers the cart');
 await snap('03l_cart_race'); await ev(() => { __eq.arcade.game.time = 0; }); await page.waitForFunction(() => !__eq.arcade.open, null, { timeout: 60000 });

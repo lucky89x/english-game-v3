@@ -199,6 +199,16 @@ export class Wild {
     }
     if (!fighting && p.stats.hp < hpMax) { this.regen += dt; if (this.regen > 0.5) { this.regen = 0; p.stats.hp = Math.min(hpMax, p.stats.hp + 3); this.api.onChange(); } }
   }
+  /** Where the hunt board sends the hero: the nearest living monster of the asked kind, or the board when the job is done. */
+  guide(pos) {
+    const p = this.api.profile(); if (!p || !this.root.visible || !(this.region === 'village' || p.flags.map2)) return null;
+    const list = huntsOf(this.region), h = hunt(p, this.region), q = list[h.i % list.length], at = this.region === 'forest' ? FOREST_BOARD : BOARD;
+    if (!h.active) return null;
+    if (h.got >= q.need) return { x: at.x, z: at.z, text: 'Bảng nhiệm vụ' };
+    let best = null, bd = 1e9;
+    for (const m of this.mobs) if (!m.dead && !m.boss && m.kind === q.kind && this.here(m, p)) { const d = Math.hypot(m.x - pos.x, m.z - pos.z); if (d < bd) { bd = d; best = m; } }
+    return best ? { x: best.x, z: best.z, text: `Săn: ${MONSTERS[q.kind].name}` } : null;
+  }
   markers() {
     if (!this.root.visible) return [];
     const p = this.api.profile(), out = [];

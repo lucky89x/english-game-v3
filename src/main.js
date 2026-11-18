@@ -216,6 +216,34 @@ function haloTexture() {
   g.addColorStop(0, 'rgba(255,240,170,1)'); g.addColorStop(0.45, 'rgba(255,210,60,0.55)'); g.addColorStop(1, 'rgba(255,200,40,0)'); c.fillStyle = g; c.fillRect(0, 0, 128, 128);
   return (HALO = new THREE.CanvasTexture(cv));
 }
+// ---------------------------------------------------------------- guide arrow (18/11: "an arrow to where the quest is")
+// A gold arrow floats in front of the hero and points at the current goal: the owl when a gate waits, else the story's
+// next "!" / "?" / letter / star, else the monsters the hunt board asked for. A small sign under it gives the distance.
+let guideGoal = null, guide = null;
+function pickGoal(markers) {
+  if (Save.gateWaiting(profile)) return { x: OWL.x, z: OWL.z, text: 'Cú Mèo' };
+  const story = markers.find((m) => !m.host && !m.color && ['!', '?', '✉', '★'].includes(m.text));
+  if (story) return { x: story.x, z: story.z, text: story.text === '✉' ? 'Bức thư' : 'Nhiệm vụ' };
+  return wild ? wild.guide(player.pos) : null;
+}
+function guideArrow(dt) {
+  if (!guide) {
+    const sh = new THREE.Shape(); sh.moveTo(0, 0.55); sh.lineTo(0.38, 0.05); sh.lineTo(0.14, 0.05); sh.lineTo(0.14, -0.45); sh.lineTo(-0.14, -0.45); sh.lineTo(-0.14, 0.05); sh.lineTo(-0.38, 0.05); sh.closePath();
+    const geo = new THREE.ExtrudeGeometry(sh, { depth: 0.08, bevelEnabled: true, bevelSize: 0.025, bevelThickness: 0.025, bevelSegments: 1 }); geo.rotateX(-Math.PI / 2); geo.translate(0, 0, 0);
+    const m = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: 0xffd23c, emissive: 0xffa800, emissiveIntensity: 0.9, roughness: 0.4, transparent: true, opacity: 0.92, depthTest: false }));
+    m.scale.setScalar(1.45); m.renderOrder = 9; guide = { m, sign: null, txt: '', t: 0 }; scene.add(m);
+  }
+  const g = guideGoal, show = !!g && started && !room && !switching;
+  const d = show ? Math.hypot(g.x - player.pos.x, g.z - player.pos.z) : 0;
+  guide.m.visible = show && d > 4; if (guide.sign) guide.sign.visible = guide.m.visible;
+  if (!guide.m.visible) return;
+  guide.t += dt; const a = Math.atan2(g.x - player.pos.x, g.z - player.pos.z), r = 1.35;
+  guide.m.position.set(player.pos.x + Math.sin(a) * r, player.pos.y + 0.18 + Math.sin(guide.t * 4) * 0.05, player.pos.z + Math.cos(a) * r);
+  guide.m.rotation.y = a + Math.PI;      // the shape points along -z after the rotation; turn it to face the goal
+  const txt = `${g.text} · ${Math.round(d)} m`;
+  if (txt !== guide.txt) { guide.txt = txt; if (guide.sign) { scene.remove(guide.sign); guide.sign.material.map.dispose(); guide.sign.material.dispose(); } guide.sign = label(txt, { size: 24, scale: 0.6 }); guide.sign.renderOrder = 9; guide.sign.material.depthTest = false; scene.add(guide.sign); }
+  guide.sign.position.set(guide.m.position.x, guide.m.position.y + 0.6, guide.m.position.z);
+}
 let marks3d = null; const shadowAt = new THREE.Vector3();
 function questMarks(list) {
   // quest givers: the solid spinning "!" / "?" with a light beam (game/marks.js); the owl's review counts as a job
@@ -378,6 +406,23 @@ function adminLevel(n) {
   st.hp = Save.maxHp(profile);
 }
 /** After a word game, its host asks up to three of the words the child met in it (English → meaning, 3 options). */
+/** Before Candy Match and the Kart Race (18/11: "to play you must answer some new words"): three words, new ones first,
+ *  each shown as a card before it is asked; a wrong answer is shown and asked again, so the game opens only when all are right. */
+function wordGate(who, then) {
+  const pool = unitCards.filter((c) => c.word.length <= 22);
+  if (pool.length < 4) { then(); return; }
+  const known = (c) => profile.words[c.id] && profile.words[c.id].right > 0, mix = (a) => [...a].sort(() => Math.random() - 0.5);
+  const list = [...mix(pool.filter((c) => !known(c))), ...mix(pool.filter(known))].slice(0, 3);
+  const ask = (n) => {
+    if (n >= list.length) { sfx('fanfare'); ui.dialogue([{ who, en: "Great! Now let's play!", vi: 'Con trả lời đúng cả 3 từ rồi. Vào chơi thôi!' }], then); return; }
+    const c = list[n], opts = mix([c, ...mix(pool.filter((x) => x.id !== c.id && x.vi !== c.vi)).slice(0, 2)]), t0 = Date.now();
+    ui.choose({ who: `${who} · ${n + 1}/${list.length}`, en: `What does "${c.word}" mean?`, vi: 'Trả lời đúng 3 từ để vào chơi.' }, opts.map((o) => o.vi), (i) => {
+      const ok = opts[i].id === c.id; Review.record(profile.words, c.id, { correct: ok, hints: 0, ms: Date.now() - t0 }); Save.recordSkill(profile, 'vocabulary', ok, 0); sfx(ok ? 'correct' : 'wrong');
+      if (ok) ask(n + 1); else ui.dialogue([{ who, en: `"${c.word}" means "${c.vi}". Try again!`, vi: `${c.word} = ${c.vi}` }], () => ask(n));
+    });
+  };
+  ui.dialogue([{ who, en: 'Answer three words, then you can play!', vi: `${who}: trả lời đúng 3 từ tiếng Anh thì được vào chơi.` }], () => teach(list, () => ask(0)));
+}
 function hostQuiz(who, words) {
   const pool = unitCards.length >= 4 ? unitCards : words, list = [...words].sort(() => Math.random() - 0.5).slice(0, 3); let right = 0;
   const ask = (n) => {
@@ -722,7 +767,7 @@ async function boot() {
       }));
     },
     respawn: () => { game.teleport(L.SPAWN.x, L.SPAWN.z); ui.dialogue([{ who: 'Tom', en: 'You fainted, so I carried you home. Rest, then try again!', vi: 'Con hết máu nên được đưa về làng. Máu đã đầy lại. Mua trang bị tốt hơn rồi quay lại nhé.' }]); } });
-  mini = new MiniGames({ scene, player, ui, sfx, track, profile: () => profile, save, onNote: refresh, board: (id) => { const t = tierOf(profile.stats.level); arcade.start(withTier(({ candy: () => candyGame(Math.random, t), blocks: () => blocksGame(Math.random, unitCards, t), sling: () => slingGame(Math.random, t), race2: () => raceGame(Math.random, unitCards, t) })[id](), t)); } });
+  mini = new MiniGames({ scene, player, ui, sfx, track, profile: () => profile, save, onNote: refresh, board: (id) => { const t = tierOf(profile.stats.level), go = () => arcade.start(withTier(({ candy: () => candyGame(Math.random, t), blocks: () => blocksGame(Math.random, unitCards, t), sling: () => slingGame(Math.random, t), race2: () => raceGame(Math.random, [], t) })[id](), t)); if (id === 'candy' || id === 'race2') wordGate(id === 'candy' ? 'Mimi' : 'Leo', go); else go(); } });
   await mini.addHosts((name) => loader.loadAsync(`./assets/models/${name}.glb`));      // a host by each mini game
   admin = new AdminPanel({ profile: () => profile, places: adminPlaces, go: adminGo, unlockAll: adminUnlock, setStep: adminStep,
     resetForest: () => { delete profile.quests.forest; if (L.NAME === 'forest') enterRegion('forest'); }, setGrade: (g) => { profile.grade = g; save(); chooseProfile(profile); },
@@ -754,7 +799,7 @@ function frame() {
   else for (let left = real; left > 1e-4; left -= 0.05) player.update(Math.min(0.05, left), input, cam.yaw, frozen, sfx);
   if (hadRoute && !player.route) minimap.clearRoute();
   if (walkMark && walkMark.visible) { walkMark.userData.t += real; walkMark.scale.setScalar(1 + Math.sin(walkMark.userData.t * 6) * 0.15); if (!player.route) walkMark.visible = false; }
-  cam.update(real, player.pos);
+  cam.update(real, player.pos); guideArrow(real);
   const talkingTo = ui.busy && ui.pages ? ui.pages[0].who : '';
   tom.update(dt, player.pos, talkingTo === 'Tom'); sam.update(dt, player.pos, talkingTo === 'Sam'); ben.update(dt, player.pos, talkingTo === 'Ben');
   for (const f of friends) f.npc.update(dt, player.pos, talkingTo === f.who);
@@ -798,10 +843,14 @@ function frame() {
       if (st === 'done' && quest.step !== 'done') markers.push({ x: L.EXITS[0].x, z: L.EXITS[0].z, text: '★' });
       if (story.market && Math.hypot(player.pos.x + 7, player.pos.z - 19.5) > 15) story.leaveMarket();
       if (!story.market) markers.push(...mini.markers());
+      for (const st of STARTS) if (st.host) {      // a glowing "!" over each mini game host while today's full-pay plays remain (18/11)
+        const n = (profile.plays && profile.plays.day === Review.today() && profile.plays.n[st.id]) || 0;
+        if (n < 3) markers.push({ x: st.x - 0.6, z: st.z + 0.4, text: '!', host: true });
+      }
       markers.push(...wild.markers(), ...chests.markers(), ...spots.markers());
       if (Save.gateWaiting(profile)) markers.push({ x: OWL.x, z: OWL.z, text: '🦉', color: '#ffe28a' });
     }
-    minimap.draw(player.pos, player.yaw, markers); questMarks(markers); }
+    minimap.draw(player.pos, player.yaw, markers); questMarks(markers); guideGoal = pickGoal(markers); }
     autosave += dt; if (autosave > 20) { autosave = 0; save(); }
   }
   renderer.info.reset();

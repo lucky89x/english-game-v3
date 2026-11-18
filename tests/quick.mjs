@@ -7,6 +7,14 @@ let failed = 0;
 const check = (ok, name) => { if (!ok) failed++; console.log((ok ? 'PASS: ' : 'FAIL: ') + name); };
 const { server, url } = await serve(); const { browser, page, logs } = await open(url);
 const ev = (f, a) => page.evaluate(f, a), wait = (ms) => page.waitForTimeout(ms);
+const answerGate = async () => {          // the three words asked before Candy Match and the Kart Race (18/11)
+  for (let k = 0; k < 40 && await page.isVisible('#dialog') && !(await page.evaluate(() => __eq.arcade.open)); k++) {
+    if (await page.isVisible('#dialog .opts')) {
+      const i = await page.evaluate(() => { const en = document.querySelector('#dialog .en').textContent, m = /What does "(.+)" mean/.exec(en), cards = [...__eq.chests.api.cards(), ...Object.keys(__eq.profile.words).map(__eq.cardOf).filter(Boolean)]; return __eq.ui.options.indexOf(cards.find((x) => x.word === m[1]).vi); });
+      await page.keyboard.press('Digit' + (i + 1)); await new Promise((r) => setTimeout(r, 260));
+    } else { await page.keyboard.press('KeyE'); await new Promise((r) => setTimeout(r, 220)); }
+  }
+};
 const passCards = async () => { for (let k = 0; k < 8 && await page.isVisible('#dialog .card-w'); k++) { await page.keyboard.press('KeyE'); await wait(220); } };   // "new word" cards come before a question
 const closeDialogs = async () => { for (let k = 0; k < 14 && await page.isVisible('#dialog'); k++) { await page.keyboard.press('KeyE'); await wait(180); } };
 const run = async (name, fn) => { if (only && !only.includes(name)) return; const t = Date.now(); await fn(); console.log(`  [${name}] ${((Date.now() - t) / 1000).toFixed(0)} s`); };
@@ -131,7 +139,7 @@ await run('arcade', async () => {
   await ev(() => { __eq.profile.plays = undefined; }); const g0 = await ev(() => __eq.profile.stats.gold);
   const paid = [];
   for (let n = 0; n < 4; n++) {
-    await ev(() => __eq.teleport(10.6, 28.6)); await wait(400); await page.keyboard.press('KeyE'); await wait(500);
+    await ev(() => __eq.teleport(10.6, 28.6)); await wait(400); await page.keyboard.press('KeyE'); await wait(500); await answerGate(); await wait(400);
     const before = await ev(() => __eq.profile.stats.gold);
     await ev(() => { __eq.arcade.game.coins = 10; __eq.arcade.game.time = 0; }); await page.waitForFunction(() => !__eq.arcade.open, null, { timeout: 60000 });
     paid.push((await ev(() => __eq.profile.stats.gold)) - before); await wait(200);
