@@ -6,11 +6,21 @@ export const MONSTERS = {
   // Map 2 (Memory Forest, levels 21-40): they appear only once Map 2 is open
   bat: { name: 'Shadow Bat', level: 21, hp: 260, atk: 32, exp: 120, gold: 22, speed: 3.2, color: 0x6a4a9a, size: 1.0, fly: true },
   shroom: { name: 'Angry Mushroom', level: 26, hp: 420, atk: 40, exp: 170, gold: 30, speed: 1.8, color: 0xe2483e, size: 1.3 },
+  // Map 2 (Sunny Harbor, levels 21-30): the Blender models in assets/models/harbor_mob_*; `fit` scales the model, `model` names it
+  crab: { name: 'Beach Crab', level: 21, hp: 300, atk: 34, exp: 130, gold: 24, speed: 2.3, color: 0xe2483e, size: 1.0, model: 'crab', fit: 1.0 },
+  jelly: { name: 'Glow Jellyfish', level: 24, hp: 340, atk: 38, exp: 150, gold: 26, speed: 1.9, color: 0xb48ae8, size: 1.0, fly: true, model: 'jelly', fit: 1.2 },
+  pirate: { name: 'Little Pirate', level: 27, hp: 520, atk: 44, exp: 210, gold: 36, speed: 2.4, color: 0x2f4f8a, size: 1.2, model: 'pirate', fit: 1.15 },
 };
 /** Map 2 monsters in the Memory Forest: [kind, x, z] (open ground away from crystals, paths and the gate). */
 export const FOREST_SPAWNS = [
   ['bat', -25, -43], ['bat', 35, -34], ['bat', -16, -31], ['bat', 38, -19], ['bat', -46, -4],
   ['shroom', 14, -7], ['shroom', -19, 14], ['shroom', 17, 26], ['shroom', -40, 26], ['shroom', 2, 20],
+];
+/** Map 2 monsters in Sunny Harbor: crabs on the south beach, jellyfish along the north shore, little pirates round the lighthouse point. */
+export const HARBOR_SPAWNS = [
+  ['crab', 9, 41], ['crab', 17, 45], ['crab', 7, 51], ['crab', 21, 48], ['crab', 12, 57],
+  ['jelly', 8, -19], ['jelly', 15, -28], ['jelly', 22, -34], ['jelly', 38, -36],
+  ['pirate', 32, -29], ['pirate', 14, -40], ['pirate', 40, -40], ['pirate', 12, -46], ['pirate', 26, -37],
 ];
 /** Where monsters live in the Starter Village region: [kind, x, z]. The Wild Meadow is north-east, golems guard the south-east. */
 export const SPAWNS = [
@@ -139,14 +149,23 @@ export const FOREST_HUNTS = [
   { kind: 'bat', need: 5, gold: 90, exp: 450, en: { easy: 'More bats are here tonight. Can you defeat five?', hard: "The bats have come back in a big group. Could you defeat five of them?" } },
   { kind: 'shroom', need: 4, gold: 120, exp: 600, en: { easy: 'Four angry mushrooms are in the forest. Be brave!', hard: "Four angry mushrooms are hiding among the trees. You'll need to be brave!" } },
 ];
-export const huntsOf = (region) => (region === 'forest' ? FOREST_HUNTS : HUNTS);
+/** Map 2 (Sunny Harbor) board: crabs, jellyfish and pirates (18/11). */
+export const HARBOR_HUNTS = [
+  { kind: 'crab', need: 3, gold: 70, exp: 320, en: { easy: 'Beach crabs are pinching the fishermen. Please chase away three of them!', hard: "The beach crabs keep pinching the fishermen's toes. Could you chase three of them away?" } },
+  { kind: 'jelly', need: 3, gold: 90, exp: 420, en: { easy: 'Purple jellyfish are floating near the rocks. Please stop three!', hard: "Glowing jellyfish are drifting near the rocks and scaring the swimmers. Would you mind stopping three of them?" } },
+  { kind: 'pirate', need: 2, gold: 120, exp: 560, en: { easy: 'Two little pirates are stealing fish by the lighthouse!', hard: "Two little pirates have been stealing fish near the lighthouse. Please put a stop to it!" } },
+  { kind: 'crab', need: 5, gold: 130, exp: 650, en: { easy: 'More crabs came with the tide. Can you defeat five?', hard: "The tide has brought a big group of crabs onto the beach. Could you defeat five of them?" } },
+  { kind: 'pirate', need: 4, gold: 190, exp: 900, en: { easy: 'Four pirates are hiding near the rocks. Be brave!', hard: "Four pirates are hiding among the rocks. You'll need to be brave!" } },
+];
+export const huntsOf = (region) => (region === 'forest' ? FOREST_HUNTS : region === 'harbor' ? HARBOR_HUNTS : HUNTS);
 export const huntLine = (h, grade) => h.en[grade >= 8 ? 'hard' : 'easy'];
-/** The hunt in progress for a board: profile.hunt (village) or profile.hunt2 (forest). */
-export const hunt = (profile, region = 'village') => { const k = region === 'forest' ? 'hunt2' : 'hunt'; return profile[k] || (profile[k] = { i: 0, got: 0, active: false, done: 0 }); };
+/** The hunt in progress for a board: profile.hunt (village), profile.hunt2 (forest) or profile.hunt3 (harbor). */
+export const HUNT_KEY = { village: 'hunt', forest: 'hunt2', harbor: 'hunt3' };
+export const hunt = (profile, region = 'village') => { const k = HUNT_KEY[region] || 'hunt'; return profile[k] || (profile[k] = { i: 0, got: 0, active: false, done: 0 }); };
 /** Counts a defeated monster for the active hunt on either board. Returns true when this kill finished one. */
 export function countKill(profile, kind) {
   let done = false;
-  for (const region of ['village', 'forest']) {
+  for (const region of ['village', 'forest', 'harbor']) {
     const h = hunt(profile, region), list = huntsOf(region), q = list[h.i % list.length];
     if (!h.active || q.kind !== kind || h.got >= q.need) continue;
     h.got += 1; if (h.got >= q.need) done = true;
@@ -158,7 +177,9 @@ export const BOSS = { id: 'king', flag: 'boss1', name: 'Slime King', level: 8, h
 export const BOSS2 = { id: 'ancient', flag: 'boss2', name: 'Ancient Golem', level: 18, hp: 1600, atk: 30, exp: 900, gold: 300, speed: 1.2, color: 0x9a8f7a, size: 3.0 };
 /** Map 2's boss: the Mushroom Queen, deep in the west of the Forest of Memories near the old ruins. */
 export const BOSS3 = { id: 'queen', flag: 'boss3', name: 'Mushroom Queen', level: 30, hp: 2600, atk: 46, exp: 1600, gold: 450, speed: 1.3, color: 0xc0397a, size: 3.0, region: 'forest' };
-export const BOSSES = [BOSS, BOSS2, BOSS3];
+/** Map 2's main boss: Captain Octopus on the north point beside the lighthouse (the Blender octopus, 3 word shields). */
+export const BOSS4 = { id: 'octopus', flag: 'boss4', name: 'Captain Octopus', level: 30, hp: 3000, atk: 52, exp: 1800, gold: 500, speed: 1.4, color: 0xc0397a, size: 2.4, region: 'harbor', model: 'octopus', fit: 1.0 };
+export const BOSSES = [BOSS, BOSS2, BOSS3, BOSS4];
 /** Map 2 opens once the Ancient Golem is beaten and the hero has reached level 20 (owl gate passed or waiting). */
 export const map2Ready = (profile) => !!(profile.flags.boss2 && profile.stats.level >= 20);
 

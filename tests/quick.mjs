@@ -173,6 +173,41 @@ await run('map2', async () => {        // Map 2 monsters in the forest, only onc
   await closeDialogs();
 });
 
+await run('harbor', async () => {        // Map 2 in Sunny Harbor: sea monsters, Captain Octopus, board, chests, bubbles and the two new shop games (18/11)
+  await closeDialogs();
+  await ev(() => { const p = __eq.profile; p.flags.map2 = true; p.stats.level = 29; p.stats.hp = 9999; p.god = true; __eq.enterRegion('harbor'); });
+  await page.waitForFunction(() => __eq.region === 'harbor' && __eq.started, null, { timeout: 180000 }); await wait(1000);
+  const vis = await ev(() => __eq.wild.mobs.filter((m) => m.g.visible).map((m) => m.kind));
+  check(vis.length === 14 && vis.every((k) => ['crab', 'jelly', 'pirate'].includes(k)), `Harbor at level 29: 14 sea monsters, no boss yet, none from the other maps (${vis.length})`);
+  check(await ev(() => __eq.wild.mobs.filter((m) => m.region === 'harbor' && m.mixer).length === 15), 'The Blender monsters and the octopus carry their own Idle/Walk clips');
+  await ev(() => { __eq.profile.stats.level = 30; }); await wait(900);
+  check(await ev(() => __eq.wild.bosses[3].g.visible && __eq.wild.markers().some((m) => m.text === '♛')), 'Level 30: Captain Octopus rises by the lighthouse');
+  check(await ev(() => __eq.chests.list.filter((c) => c.region === 'harbor' && c.g.visible).length === 6 && __eq.chests.list.filter((c) => c.region !== 'harbor').every((c) => !c.g.visible)), 'Six word chests in the harbor');
+  check(await ev(() => __eq.spots.list.filter((s) => s.region === 'harbor' && s.sp.visible).length === 10), 'Ten word bubbles in the harbor');
+  await ev(() => { __eq.wild.mobs.forEach((m) => { if (!m.boss) { m.dead = 999; m.g.visible = false; } }); __eq.teleport(-2, -0.2); }); await wait(600);
+  check((await page.textContent('#prompt')).includes('Bảng nhiệm vụ'), 'Harbor quest board beside the square');
+  await page.keyboard.press('KeyE'); await wait(400);
+  check(/crabs/i.test(await page.textContent('#dialog .en')), 'The harbor board asks for crabs in English');
+  await closeDialogs();
+  check(await ev(() => !!(__eq.profile.hunt3 && __eq.profile.hunt3.active)), 'Harbor hunt accepted (its own record)');
+  check(await ev(() => { const w = __eq.wild, m = w.mobs.find((m) => m.kind === 'crab'); m.dead = 0; w.kill(m, __eq.profile); return __eq.profile.hunt3.got === 1 && !(__eq.profile.hunt && __eq.profile.hunt.got); }), 'A defeated crab counts for the harbor hunt only');
+  await closeDialogs();
+  await ev(() => __eq.teleport(-24.4, 14)); await wait(600);
+  check((await page.textContent('#prompt')).includes('Café'), 'Seaside Café door has its prompt');
+  await page.keyboard.press('KeyE'); await wait(500);
+  check(await ev(() => __eq.arcade.open && __eq.arcade.game.title.includes('Café')), 'E at the café door starts the cooking game');
+  await page.keyboard.press('Escape'); await wait(300);
+  await ev(() => __eq.teleport(-12, -18.4)); await wait(600);
+  check((await page.textContent('#prompt')).includes('Salon'), 'Beauty Salon door has its prompt');
+  await page.keyboard.press('KeyE'); await wait(500);
+  check(await ev(() => __eq.arcade.open && __eq.arcade.game.title.includes('Salon')), 'E at the salon door starts the beauty game');
+  await page.keyboard.press('Escape'); await wait(300);
+  check(await ev(() => __eq.errors.length === 0), 'Harbor: no script errors');
+  await ev(() => __eq.enterRegion('village')); await page.waitForFunction(() => __eq.region === 'village' && __eq.started, null, { timeout: 120000 }); await wait(600);
+  check(await ev(() => __eq.wild.mobs.filter((m) => m.g.visible).every((m) => m.region === 'village')), 'Back in the village: the sea monsters are gone');
+  await closeDialogs();
+});
+
 await run('forest', async () => {
   await ev(() => __eq.enterRegion('forest')); await page.waitForFunction(() => __eq.region === 'forest' && __eq.started, null, { timeout: 90000 });
   check(await ev(() => __eq.errors.length === 0 && __eq.wild.mobs.every((m) => m.region === 'forest' || !m.g.visible)), 'Forest loads, no monsters from the meadow there');

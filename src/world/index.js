@@ -18,7 +18,7 @@ export async function buildWorld(scene, loadModel, loadAnimated) {
   const root = new THREE.Group(); root.name = 'world:' + L.NAME; scene.add(root);
   const updaters = [], add = (o) => { root.add(o); if (o.userData.update) updaters.push(o.userData.update); return o; };
   add(buildTerrain());
-  const detail = { cobbles: add(buildCobbles()), grass: add(buildGrass()), flowers: add(buildFlowers()), far: add(mountains()), critters: add(critters()) };
+  const detail = { cobbles: add(buildCobbles()), grass: add(buildGrass()), flowers: add(buildFlowers()), far: add(L.NAME === 'harbor' ? new THREE.Group() : mountains()), critters: add(critters()) };      // no mountains round a harbour: open sea to the horizon
   add(buildWater()); add(buildTrees()); add(buildRocks()); add(buildFences()); add(riverside()); add(bushes()); add(creatures(await animalModels(loadModel, loadAnimated))); if (L.WATERFALL) add(fallRocks());
   // models from files (houses, bridge, gate) get the same painted surface as the generated scenery
   const shadowed = (o) => { o.traverse((c) => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; for (const m of [].concat(c.material)) if (m.isMeshStandardMaterial && !m.userData.painted) { m.userData.painted = true; paint(m); } } }); return o; };

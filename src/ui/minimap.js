@@ -17,14 +17,15 @@ export class Minimap {
   zoomBy(k) { this.zoom = Math.min(6, Math.max(0.6, this.zoom * k)); }
   rebuild() { this.bg = this.renderBase(); this.route = null; }
   renderBase() {
-    const n = L.SIZE * BASE, cv = document.createElement('canvas'); cv.width = cv.height = n;
+    const n = L.SIZE * BASE, cv = document.createElement('canvas'), SEA = L.NAME === 'harbor', SAND = L.REGIONS[L.NAME].lowSand || (() => false); cv.width = cv.height = n;
     const ctx = cv.getContext('2d'), img = ctx.createImageData(n, n);
     for (let pz = 0; pz < n; pz++) for (let px = 0; px < n; px++) {
       const x = px / BASE - L.SIZE / 2, z = pz / BASE - L.SIZE / 2, h = L.groundHeight(x, z);
       let c = [110, 196, 86];
-      if (Math.hypot(x, z) > L.PLAY_RADIUS) c = [70, 150, 78];
-      else if (L.pathDistance(x, z) < 0) c = [236, 214, 160];
-      else if (h < L.WATER_LEVEL + 0.12 && z > L.RIVER_START - 1) c = [72, 178, 226];
+      if (Math.hypot(x, z) > L.PLAY_RADIUS) c = SEA ? [72, 178, 226] : [70, 150, 78];      // the harbour island sits in open sea
+      else if (L.pathDistance(x, z) < 0) c = SEA ? [196, 150, 96] : [236, 214, 160];      // boardwalk
+      else if (h < L.WATER_LEVEL + 0.12 && (SEA || z > L.RIVER_START - 1)) c = [72, 178, 226];
+      else if (SEA && h < 0.62 && SAND(x, z)) c = [240, 226, 174];
       else if (h > 6) c = [168, 164, 180];
       else if (h > 2.2) c = [134, 204, 100];
       img.data.set([...c, 255], (pz * n + px) * 4);
@@ -49,7 +50,7 @@ export class Minimap {
   draw(player, yaw, markers) {
     const { ctx, cv } = this; this.px = player.x; this.pz = player.z; this.cx = player.x; this.cz = player.z;
     const s = BASE * this.zoom / 2, w = cv.width, h = cv.height;
-    ctx.fillStyle = '#46965a'; ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = L.NAME === 'harbor' ? '#48b2e2' : '#46965a'; ctx.fillRect(0, 0, w, h);
     ctx.imageSmoothingEnabled = true;
     ctx.drawImage(this.bg, w / 2 - (player.x + L.SIZE / 2) * s, h / 2 - (player.z + L.SIZE / 2) * s, L.SIZE * s, L.SIZE * s);
     if (this.route) { ctx.strokeStyle = '#ff5a3c'; ctx.lineWidth = 2.5; ctx.setLineDash([5, 4]); ctx.beginPath(); this.route.forEach((p, i) => { const [mx, my] = this.toMap(p.x, p.z); if (i) ctx.lineTo(mx, my); else ctx.moveTo(mx, my); }); ctx.stroke(); ctx.setLineDash([]); }

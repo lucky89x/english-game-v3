@@ -43,8 +43,8 @@ export class AdminPanel {
       <h4>Mở khóa</h4><div class="row"><button data-a="unlock">Mở hết (rừng, cầu, Map 2, boss, cổng Cú Mèo)</button><button data-a="limits">Xóa giới hạn mini game hôm nay</button>
         <button data-a="daily">Mở lại rương + bong bóng hôm nay</button></div>
       <h4>Nhiệm vụ làng (Chương I)</h4><div class="row">${STEPS.map(([k, t]) => `<button data-a="step" data-v="${k}">${k === step ? '✔ ' : ''}${t}</button>`).join('')}</div>
-      <div class="row"><button data-a="forest">Làm lại nhiệm vụ pha lê Rừng Ký Ức</button><button data-a="hunts">Làm lại 2 bảng săn quái</button></div>
-      ${Object.entries(by).map(([r, list]) => `<h4>Đi tới · ${r === 'village' ? 'Làng Khởi Đầu (Map 1)' : r === 'forest' ? 'Rừng Ký Ức' : r}</h4><div class="row">${list.map((pl, i) => `<button data-a="go" data-v="${r}|${i}">${pl.name}</button>`).join('')}</div>`).join('')}`;
+      <div class="row"><button data-a="forest">Làm lại nhiệm vụ pha lê Rừng Ký Ức</button><button data-a="hunts">Làm lại 3 bảng săn quái</button></div>
+      ${Object.entries(by).map(([r, list]) => `<h4>Đi tới · ${r === 'village' ? 'Làng Khởi Đầu (Map 1)' : r === 'forest' ? 'Rừng Ký Ức' : r === 'harbor' ? 'Cảng Mặt Trời (Map 2)' : r}</h4><div class="row">${list.map((pl, i) => `<button data-a="go" data-v="${r}|${i}">${pl.name}</button>`).join('')}</div>`).join('')}`;
     this.list = by;
   }
   act(a, v) {
@@ -60,7 +60,7 @@ export class AdminPanel {
     if (a === 'daily') { p.chests = {}; p.spots = {}; api.toast('Rương và bong bóng chữ mở lại'); }
     if (a === 'step') { api.setStep(v); api.toast('Nhiệm vụ làng: ' + (STEPS.find((s) => s[0] === v) || [, v])[1]); }
     if (a === 'forest') { api.resetForest(); api.toast('Nhiệm vụ pha lê làm lại từ đầu'); }
-    if (a === 'hunts') { delete p.hunt; delete p.hunt2; api.toast('Bảng săn quái làm lại'); }
+    if (a === 'hunts') { delete p.hunt; delete p.hunt2; delete p.hunt3; api.toast('Bảng săn quái làm lại'); }
     if (a === 'go') { const [r, i] = v.split('|'), pl = this.list[r][Number(i)]; api.go(pl.region, pl.x, pl.z); }
     api.changed(); this.render();
   }

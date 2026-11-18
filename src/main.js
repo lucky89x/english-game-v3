@@ -21,14 +21,16 @@ import { HomePanel } from './ui/home.js';
 import { HOMES, FURNITURE, STALLS } from './core/regions/village.js';
 import { HARBOR } from './core/regions/harbor.js';
 import { styleGame } from './ui/style.js';
+import { cafeGame } from './ui/cafe.js';
+import { salonGame } from './ui/salon.js';
 import { buildRoom } from './world/interior.js';
 import { label } from './world/common.js';
 import * as Q from './core/quests.js';
 import * as Exam from './core/exam.js';
-import { Wild, BOARD, BOSS_AT, BOSS2_AT, FOREST_BOARD, BOSS3_AT } from './game/combat.js';
+import { Wild, BOARD, BOSS_AT, BOSS2_AT, FOREST_BOARD, BOSS3_AT, HARBOR_BOARD, BOSS4_AT } from './game/combat.js';
 import { Arcade, candyGame, blocksGame, slingGame, spellGame, raceGame, withTier } from './ui/arcade.js';
 import { tierOf, TIER_PAY } from './core/tiers.js';
-import { Chests, CHEST_SPOTS, FOREST_CHESTS } from './game/chests.js';
+import { Chests, CHEST_SPOTS, FOREST_CHESTS, HARBOR_CHESTS } from './game/chests.js';
 import { armorMesh, charmMesh } from './game/gear.js';
 import { Walkers } from './game/walkers.js';
 import { ShopWindow } from './ui/shop.js';
@@ -100,6 +102,9 @@ const manager = new THREE.LoadingManager();
 manager.onProgress = (_u, done, total) => { $('loadbar').style.width = Math.round((done / total) * 100) + '%'; };
 const loader = new GLTFLoader(manager), texLoader = new THREE.TextureLoader(manager), modelCache = new Map();
 const gltf = (name) => { if (!modelCache.has(name)) modelCache.set(name, loader.loadAsync(`./assets/models/${name}.glb`)); return modelCache.get(name); };
+/** Map 2 monsters (crab, jellyfish, pirate, Captain Octopus): fetched when the hero first sails to the harbor. */
+const SEA_FILES = { crab: 'harbor_mob_crab_v01', jelly: 'harbor_mob_jellyfish_v01', pirate: 'harbor_mob_pirate_v01', octopus: 'harbor_boss_octopus_v01' };
+const seaModel = (k) => gltf(SEA_FILES[k]).catch(() => null);
 const staticModel = async (name) => (await gltf(name)).scene.clone(true);
 const animatedModel = async (name) => { const g = await gltf(name); return { scene: SkeletonUtils.clone(g.scene), animations: g.animations }; };
 const faceTex = async (name) => { const t = await texLoader.loadAsync(`./assets/tex/ngoc_face_${name}.png`); t.flipY = false; t.colorSpace = THREE.SRGBColorSpace; return t; };
@@ -176,12 +181,13 @@ function refresh() {
   shownLevel = profile.stats.level;
   if (map2Ready(profile) && !profile.flags.map2) {      // T3: Ancient Golem beaten at level 20 -> Map 2 and Unit 2 words
     profile.flags.map2 = true; save(); sfx('fanfare');
-    ui.dialogue([{ who: 'Tom', en: 'You have grown so strong! The road to the Memory Forest is yours now.', vi: `Đã mở Map 2 · Rừng Ký Ức. Từ giờ rương, boss, Cú Mèo hỏi từ Unit ${Save.unitOf(profile)}.` }], () => reloadUnit());
+    ui.dialogue([{ who: 'Tom', en: 'You have grown so strong! A boat is waiting at the dock to take you to Sunny Harbor.', vi: `Đã mở Map 2 · Cảng Mặt Trời: ra bến thuyền bên sông (chỗ chú Sam câu cá) để đi. Từ giờ rương, boss, Cú Mèo hỏi từ Unit ${Save.unitOf(profile)}.` }], () => reloadUnit());
   }
   const learned = Review.learned(profile.words); if (journal) journal.sync();
   if (L.NAME === 'harbor') {
     ui.hud(profile, 'Cảng Mặt Trời', [wild ? wild.huntNote() : '', Save.gateWaiting(profile) ? '🦉 ôn tập' : ''].filter(Boolean).join('  '), learned, bag(profile).food);
-    ui.clue(null, 0, '', 'Welcome to Sunny Harbor! Visit the Style Boutique west of the square.');
+    const mq = Q.mainCurrent(profile);
+    ui.clue(null, 0, '', mq && ['harbor', 'shops', 'hunt3', 'owl25', 'boss4'].includes(mq.id) ? `Quest: ${mq.en}. Press N for the quest book.` : 'Welcome to Sunny Harbor! Take jobs from the board by the square.');
     crystals.show([]);
   } else if (L.NAME === 'forest') {
     ui.hud(profile, 'Rừng Ký Ức', [`Pha lê ${quest.q.found.length}/5`, wild ? wild.huntNote() : '', Save.gateWaiting(profile) ? '🦉 ôn tập' : ''].filter(Boolean).join('  '), learned, bag(profile).food);
@@ -230,7 +236,7 @@ function haloTexture() {
 // next "!" / "?" / letter / star, else the monsters the hunt board asked for. A small sign under it gives the distance.
 let guideGoal = null, guide = null;
 function pickGoal(markers) {
-  if (Save.gateWaiting(profile)) return { x: OWL.x, z: OWL.z, text: 'Cú Mèo' };
+  if (Save.gateWaiting(profile)) return L.NAME === 'village' ? { x: OWL.x, z: OWL.z, text: 'Cú Mèo' } : { x: L.EXITS[0].x, z: L.EXITS[0].z, text: 'Về làng gặp Cú Mèo' };      // the owl lives in the village
   const story = markers.find((m) => !m.host && !m.color && ['!', '?', '✉', '★'].includes(m.text));
   if (story) return { x: story.x, z: story.z, text: story.text === '✉' ? 'Bức thư' : 'Nhiệm vụ' };
   return wild ? wild.guide(player.pos) : null;
@@ -304,13 +310,14 @@ async function enterRegion(name, at) {
   switching = true; ui.prompt('');
   if (story) story.leaveMarket();
   L.setRegion(name);
+  if (name === 'harbor' && profile) profile.flags.harbor_seen = true;      // main quest: sail to Sunny Harbor
   if (world) world.dispose();
   jarKey = '';
   world = await buildWorld(scene, staticModel, animatedModel);
   const q = QUALITY[quality]; world.setDetail(q.density, q.particles, q.far);
   scene.traverse((o) => { if (o.material) [].concat(o.material).forEach((m) => (m.needsUpdate = true)); });
   try { await renderer.compileAsync(scene, camera); } catch { /* older browsers: shaders compile on first sight */ }      // no hitch when new things come into view
-  minimap.rebuild(); placeActors(); if (walkers) walkers.setRegion(name); if (mini) mini.setRegion(name); if (wild) wild.setRegion(name); if (chests) chests.setRegion(name); if (spots) spots.setRegion(name); if (homes) homes.setRegion(name); if (forestStall) forestStall.visible = name === 'forest';
+  minimap.rebuild(); placeActors(); if (walkers) walkers.setRegion(name); if (mini) mini.setRegion(name); if (wild) { if (name === 'harbor') await wild.addHarbor(seaModel); wild.setRegion(name); } if (chests) chests.setRegion(name); if (spots) spots.setRegion(name); if (homes) homes.setRegion(name); if (forestStall) forestStall.visible = name === 'forest';
   const [x, z] = at || [L.SPAWN.x, L.SPAWN.z];
   game.teleport(x, z); player.yaw = Math.PI; cam.tYaw = cam.yaw = 0.25;
   if (quest && quest.step === 'seek') quest.clueStart = performance.now();
@@ -391,6 +398,8 @@ function adminPlaces() {
   add('village', 'Vua Slime', BOSS_AT.x, BOSS_AT.z - 4); add('village', 'Golem Cổ', BOSS2_AT.x, BOSS2_AT.z - 4); add('village', 'Rương Đồng Hoang', CHEST_SPOTS[0][0], CHEST_SPOTS[0][1] - 1.5);
   add('forest', 'Cổng vào rừng', L.REGIONS.forest.SPAWN.x, L.REGIONS.forest.SPAWN.z); add('forest', 'Bảng săn quái rừng', FOREST_BOARD.x + 1.2, FOREST_BOARD.z + 0.6);
   add('forest', 'Nữ hoàng Nấm', BOSS3_AT.x + 6, BOSS3_AT.z); add('forest', 'Rương rừng', FOREST_CHESTS[0][0], FOREST_CHESTS[0][1] - 1.5);
+  add('harbor', 'Bảng săn quái cảng', HARBOR_BOARD.x + 1.2, HARBOR_BOARD.z + 1.4); add('harbor', 'Bãi cua (bờ Nam)', 12, 42); add('harbor', 'Bờ sứa (phía Bắc)', 14, -24); add('harbor', 'Mũi cướp biển', 30, -34);
+  add('harbor', 'Quầy Willow (đồ Map 2)', HARBOR.shop.x + 1.6, HARBOR.shop.z + 1.2); add('harbor', 'Thuyền trưởng Bạch Tuộc', BOSS4_AT.x, BOSS4_AT.z + 5); add('harbor', 'Rương cảng', HARBOR_CHESTS[0][0], HARBOR_CHESTS[0][1] - 1.5);
   return out;
 }
 /** Nearest free spot to (x, z) in a region: admins land beside a house or NPC, never inside it. */
@@ -650,8 +659,9 @@ function interactTarget() {
   if (L.NAME === 'harbor') {          // Map 2: Sunny Harbor (18/11)
     const H = HARBOR;
     if (near(H.boutique.door[0] + 1, H.boutique.door[1], 2.0)) return { text: 'E · Style Boutique: trò thời trang với cô Mia', run: () => { const t = tierOf(profile.stats.level); arcade.start(withTier(styleGame(Math.random, t), t)); } };
-    if (near(H.cafe.door[0] + 1, H.cafe.door[1], 2.0)) return { text: 'E · Seaside Café (sắp mở)', run: () => ui.dialogue([{ who: 'Chef Leo', en: 'Our kitchen opens soon. Come back later!', vi: 'Quán đang chuẩn bị trò nấu ăn bằng tiếng Anh, sắp mở.' }]) };
-    if (near(H.salon.door[0], H.salon.door[1] + 1, 2.0)) return { text: 'E · Beauty Salon (sắp mở)', run: () => ui.dialogue([{ who: 'Ruby', en: 'The salon opens soon!', vi: 'Tiệm làm tóc, làm móng bằng tiếng Anh đang chuẩn bị, sắp mở.' }]) };
+    if (near(H.cafe.door[0] + 1, H.cafe.door[1], 2.0)) return { text: 'E · Seaside Café: trò nấu ăn với đầu bếp Leo', run: () => { const t = tierOf(profile.stats.level); arcade.start(withTier(cafeGame(Math.random, t), t)); } };
+    if (near(H.salon.door[0], H.salon.door[1] + 1, 2.0)) return { text: 'E · Beauty Salon: trò làm đẹp với chị Ruby', run: () => { const t = tierOf(profile.stats.level); arcade.start(withTier(salonGame(Math.random, t), t)); } };
+    if (near(H.shop.x + 1.6, H.shop.z + 0.6, 2.4)) return { text: "E · Quầy của Willow (đồ Map 2)", run: () => { enterRoom('forest'); shopWin.show("Willow's Harbor Stall", ['forest']); } };
     if (near(sam.x, sam.z, 3)) return { text: 'E · Nói chuyện với Sam', run: () => ui.dialogue([{ who: 'Sam', en: 'Welcome to Sunny Harbor! The sea is big and blue.', vi: 'Chào mừng tới Cảng Mặt Trời (Map 2)! Ghé Style Boutique bên trái quảng trường nhé.' }]) };
     for (const f of [wild, chests, spots]) { const c = f && f.interact(p); if (c) return c; }
     return null;
@@ -866,7 +876,11 @@ function frame() {
     mapT += real; const markers = [];
     if (mapT >= 0.08) { mapT = 0;            // minimap and markers 12 times a second, not every frame
     if (L.NAME === 'harbor') {
-      markers.push({ x: HARBOR.boutique.door[0] + 1, z: HARBOR.boutique.door[1], text: '!', host: true }, { x: sam.x, z: sam.z, text: '!', host: true });
+      const left = (id) => ((profile.plays && profile.plays.day === Review.today() && profile.plays.n[id]) || 0) < 3;      // a glowing "!" while today's full-pay plays remain
+      if (left('style')) markers.push({ x: HARBOR.boutique.door[0] + 1, z: HARBOR.boutique.door[1], text: '!', host: true });
+      if (left('cafe')) markers.push({ x: HARBOR.cafe.door[0] + 1, z: HARBOR.cafe.door[1], text: '!', host: true });
+      if (left('salon')) markers.push({ x: HARBOR.salon.door[0], z: HARBOR.salon.door[1] + 1, text: '!', host: true });
+      markers.push({ x: sam.x, z: sam.z, text: '!', host: true });
       markers.push(...wild.markers(), ...chests.markers(), ...spots.markers());
     } else if (L.NAME === 'forest') {
       if (quest.step === 'intro') markers.push({ x: tom.x, z: tom.z, text: '!' });

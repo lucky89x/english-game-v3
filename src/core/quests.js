@@ -19,10 +19,12 @@ export const MAIN = [
   { id: 'owl10', en: "The Owl's second review", vi: 'Lên cấp 10 rồi ôn tập với Cú Mèo (có câu ngữ pháp).', done: (p) => gate(p, 10), gold: 40, exp: 0 },
   { id: 'owl15', en: 'Halfway hero', vi: 'Lên cấp 15 và qua cổng ôn tập của Cú Mèo.', done: (p) => gate(p, 15), gold: 50, exp: 0 },
   { id: 'boss2', en: 'The Ancient Golem', vi: 'Đạt cấp 18, tới cánh đồng đá phía Đông Nam đánh bại Golem Cổ.', done: (p) => !!p.flags.boss2, gold: 120, exp: 0 },
-  { id: 'map2', en: 'Open Map 2', vi: 'Lên cấp 20, làm bài kiểm tra 10 câu của Cú Mèo (đúng 8/10, đề mỗi lần khác): Map 2 (Rừng Ký Ức, từ Unit 2) mở ra.', done: (p) => !!p.flags.map2, gold: 150, exp: 0, unlock: 'Map 2' },
-  { id: 'hunt2', en: 'Forest hunter', vi: 'Hoàn thành 2 việc ở bảng săn quái trong rừng.', done: (p) => !!(p.hunt2 && p.hunt2.done >= 2), gold: 120, exp: 300 },
-  { id: 'owl25', en: 'Forest scholar', vi: 'Lên cấp 25 và qua cổng ôn tập của Cú Mèo (từ Unit 2).', done: (p) => gate(p, 25), gold: 120, exp: 0 },
-  { id: 'boss3', en: 'The Mushroom Queen', vi: 'Đạt cấp 30, tìm bãi trống phía Tây tàn tích và đánh bại Nữ hoàng Nấm.', done: (p) => !!p.flags.boss3, gold: 300, exp: 0, unlock: 'Map 3 (đang xây)' },
+  { id: 'map2', en: 'Open Map 2', vi: 'Lên cấp 20, làm bài kiểm tra 10 câu của Cú Mèo (đúng 8/10, đề mỗi lần khác): Map 2 (Cảng Mặt Trời, từ Unit 2) mở ra.', done: (p) => !!p.flags.map2, gold: 150, exp: 0, unlock: 'Map 2' },
+  { id: 'harbor', en: 'Sail to Sunny Harbor', vi: 'Ra bến thuyền bên sông (chỗ chú Sam câu cá) rồi đi thuyền tới Cảng Mặt Trời.', done: (p) => !!p.flags.harbor_seen, gold: 100, exp: 200 },
+  { id: 'shops', en: 'The three harbour shops', vi: 'Chơi đủ 3 trò ở cảng: Style Boutique (thời trang), Seaside Café (nấu ăn), Beauty Salon (làm đẹp).', done: (p) => ['style', 'cafe', 'salon'].every((k) => p.mini && p.mini.best && p.mini.best[k] !== undefined), gold: 120, exp: 300 },
+  { id: 'hunt3', en: 'Harbor hunter', vi: 'Hoàn thành 2 việc ở bảng săn quái cạnh quảng trường cảng (cua, sứa, cướp biển).', done: (p) => !!(p.hunt3 && p.hunt3.done >= 2), gold: 150, exp: 400 },
+  { id: 'owl25', en: 'Harbor scholar', vi: 'Lên cấp 25 rồi về làng gặp Cú Mèo qua cổng ôn tập (từ Unit 2).', done: (p) => gate(p, 25), gold: 120, exp: 0 },
+  { id: 'boss4', en: 'Captain Octopus', vi: 'Đạt cấp 30, ra mũi hải đăng phía Bắc cảng và đánh bại Thuyền trưởng Bạch Tuộc.', done: (p) => !!p.flags.boss4, gold: 300, exp: 0, unlock: 'Map 3 (đang xây)' },
 ];
 export const mainState = (p) => p.mainClaimed || (p.mainClaimed = {});
 /** The first main quest not yet finished (null when all are done). */
@@ -33,7 +35,7 @@ export function claimMain(p, id) { const q = MAIN.find((x) => x.id === id); if (
 
 /** Daily pool: event name, how many, text. */
 export const DAILY = [
-  { id: 'kill', ev: 'kill', need: 5, en: 'Defeat 5 monsters', vi: 'Hạ 5 con quái (Đồng Hoang hoặc trong rừng).' },
+  { id: 'kill', ev: 'kill', need: 5, en: 'Defeat 5 monsters', vi: 'Hạ 5 con quái (Đồng Hoang, trong rừng hoặc ngoài bãi biển).' },
   { id: 'bubble', ev: 'bubble', need: 3, en: 'Learn 3 words from word bubbles', vi: 'Chạm 3 bong bóng chữ "Abc" dọc đường.' },
   { id: 'chest', ev: 'chest', need: 2, en: 'Open 2 word chests', vi: 'Mở 2 rương khóa chữ.' },
   { id: 'mini', ev: 'mini', need: 2, en: 'Play 2 mini games', vi: 'Chơi 2 trò chơi với các chủ trò trong làng.' },

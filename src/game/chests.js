@@ -4,17 +4,20 @@ import * as THREE from 'three';
 import * as L from '../core/layout.js';
 import { today } from '../core/review.js';
 import { spellable } from '../core/spell.js';
+import { PLAY } from '../core/regions/harbor.js';
 
 export const CHEST_SPOTS = [[40, -20], [46, -30], [34, -34], [30, -28], [42, -40]];
 /** Map 2: chests in the Forest of Memories, shown once Map 2 is open (they ask Unit 2 words there). */
 export const FOREST_CHESTS = [[-10, -20], [25, -12], [-30, 30], [30, 35], [45, -30]];
+/** Map 2 (Sunny Harbor, 18/11): chests on the south beach, the rock-pool path, the west trails and near Captain Octopus's cove. */
+export const HARBOR_CHESTS = PLAY.chests;
 
 export class Chests {
   /** api: { scene, profile() -> profile, cards() -> [{id, word, vi}], dueIds() -> [id], open(chest, card) } */
   constructor(api) {
     this.api = api; this.root = new THREE.Group(); api.scene.add(this.root); this.t = 0;
     const wood = new THREE.MeshStandardMaterial({ color: 0x9a5a2c, roughness: 0.8 }), band = new THREE.MeshStandardMaterial({ color: 0xe2b04a, roughness: 0.3, metalness: 0.8 });
-    this.list = [...CHEST_SPOTS.map((p) => [...p, 'village']), ...FOREST_CHESTS.map((p) => [...p, 'forest'])].map(([x, z, region], i) => {
+    this.list = [...CHEST_SPOTS.map((p) => [...p, 'village']), ...FOREST_CHESTS.map((p) => [...p, 'forest']), ...HARBOR_CHESTS.map((p) => [...p, 'harbor'])].map(([x, z, region], i) => {
       const g = new THREE.Group(), y = L.REGIONS[region].groundHeight(x, z);
       const base = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.6, 0.75), wood); base.position.y = 0.3; g.add(base);
       const lid = new THREE.Group(); lid.position.set(0, 0.6, -0.375); g.add(lid);
@@ -23,16 +26,16 @@ export class Chests {
       const lock = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.22, 0.08), new THREE.MeshStandardMaterial({ color: 0xffd23c, emissive: 0xffb020, emissiveIntensity: 0.9, metalness: 0.6, roughness: 0.3 })); lock.position.set(0, 0.55, 0.4); g.add(lock);
       const glow = new THREE.Mesh(new THREE.SphereGeometry(0.9, 12, 8), new THREE.MeshBasicMaterial({ color: 0xffe28a, transparent: true, opacity: 0.18, depthWrite: false })); glow.position.y = 0.5; g.add(glow);
       g.traverse((o) => { if (o.isMesh && o !== glow) o.castShadow = true; });
-      g.position.set(x, y, z); g.rotation.y = Math.atan2(-x + 40, -z - 10) + Math.PI; this.root.add(g);
+      g.position.set(x, y, z); g.rotation.y = region === 'harbor' ? Math.atan2(-12 - x, 2 - z) : Math.atan2(-x + 40, -z - 10) + Math.PI; this.root.add(g);
       return { i, x, z, g, lid, lock, glow, region };
     });
     this.setRegion(L.NAME);
   }
   get data() { const p = this.api.profile(); return p ? (p.chests || (p.chests = {})) : {}; }
   isOpen(c) { return this.data[c.i] === today(); }
-  setRegion(name) { this.region = name; this.root.visible = name === 'village' || name === 'forest'; this.sync(); }
-  /** A chest takes part in this region (forest ones once Map 2 is open). */
-  live(c) { const p = this.api.profile(); return c.region === this.region && (c.region !== 'forest' || !!(p && p.flags.map2)); }
+  setRegion(name) { this.region = name; this.root.visible = name === 'village' || name === 'forest' || name === 'harbor'; this.sync(); }
+  /** A chest takes part in this region (forest and harbor ones once Map 2 is open). */
+  live(c) { const p = this.api.profile(); return c.region === this.region && (c.region === 'village' || !!(p && p.flags.map2)); }
   sync() { for (const c of this.list) { c.g.visible = this.live(c); const o = this.isOpen(c); c.lid.rotation.x = o ? -1.9 : 0; c.lock.visible = !o; c.glow.visible = !o; } }
   /** Chooses the lock word: a due review word first, otherwise a word of the unit; null when the unit has none that fit. */
   word(c) {

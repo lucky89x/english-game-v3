@@ -18,16 +18,25 @@ export const HARBOR = {
   market: { x: 2, z: 16 },
   lighthouse: { x: 34, z: -40 },
   ship: { x: 60, z: 14 },
+  shop: { x: -7.5, z: 9.5 },      // Willow's harbor stall: the Map 2 gear (the same counter as her forest camp)
   yard: { x: 3, z: -8.5 },      // container yard north of the main pier, with the quay crane beside it
   crane: { x: 14.5, z: -10 },
+};
+/** Map 2 play places (pure data, so node tests can check them): the hunt board by the square, Captain Octopus's cove beside the
+ *  lighthouse, six word chests and ten word bubbles. */
+export const PLAY = {
+  board: { x: -3.2, z: -1.6 }, boss: { x: 33, z: -47 },
+  chests: [[4, 44], [-2, -30], [-40, -26], [16, 36], [-34, 20], [22, -38]],
+  spots: [[-16, 6], [-20, -9], [-20, 12], [-12, -14], [3, 13], [22, 2], [12, 36], [26, 28], [1, -26], [28, -34]],
 };
 const onPier = (x, z) => PIERS.some((p) => Math.abs(z - p.z) < p.half && x > p.x0 - 2 && x < p.x1 + 1);
 
 export default makeRegion({
-  name: 'harbor', title: 'Sunny Harbor', size: 150, playRadius: 66, seed: 20261118, trees: 160, rocks: 60,
+  name: 'harbor', title: 'Sunny Harbor', size: 150, playRadius: 66, seed: 20261118, trees: 16, rocks: 24,      // an island town: few trees, only on the slope behind the shops
+  treeFree: (x, z) => x > -30 || Math.hypot(x, z) > 58,
   riverX: () => 999, riverHalf: () => 0, riverStart: 9999, riverEnd: 9999,      // no river: the sea is made by the ground (hills)
-  bridges: [], stonesZ: null, lowSand: (x, z) => x > coastX(z) - 15,      // sand only along the coast
-  rim: (x, z) => 1 - smooth(coastX(z) - 2, coastX(z) + 9, x),      // no rim hills out at sea: open water to the horizon
+  bridges: [], stonesZ: null, lowSand: (x, z) => x > coastX(z) - 15 || Math.hypot(x, z) > 46,      // sand along every shore
+  rim: () => 0,      // no hills round the edge and no mountains: open sea to the horizon on every side
   landmarks: [
     { id: 'lighthouse', en: 'lighthouse', vi: 'ngọn hải đăng', label: 'Lighthouse', x: 34, z: -40, spot: [28, -35] },
     { id: 'pier', en: 'pier', vi: 'cầu tàu', label: 'Main Pier', x: 30, z: 2, spot: [26, 2] },
@@ -52,7 +61,8 @@ export default makeRegion({
     P(2.4, [-24, -8], [-36, -20], [-44, -28]), P(2.4, [-24, 14], [-38, 26], [-46, 34]),   // trails into the hills
   ],
   hills: (x, z, h) => {
-    const xc = coastX(z), point = gauss(Math.hypot(x - 32, z + 38), 9), sea = smooth(xc - 2, xc + 9, x) * (1 - Math.min(1, point * 1.6));      // the rocky point stays land
+    const xc = coastX(z), point = gauss(Math.hypot(x - 32, z + 38), 9), ring = smooth(57, 66, Math.hypot(x, z));      // the sea also closes round the west, north and south: the harbour is an island
+    const sea = Math.max(smooth(xc - 2, xc + 9, x) * (1 - Math.min(1, point * 1.6)), ring);      // the rocky point stays land
     h *= 0.6;                                                             // gentle ground: a harbour town, not hills
     h += 2.4 * smooth(-10, -40, x) * (1 - sea);                           // the town slope rises to the west
     h += 6.0 * gauss(Math.hypot(x - 34, z + 40), 7) + 2.5 * gauss(Math.hypot(x - 30, z + 34), 6);      // lighthouse point
@@ -60,7 +70,7 @@ export default makeRegion({
     if (onPier(x, z)) h = Math.max(h, 0.05);                              // under the piers: just above the water line
     return h;
   },
-  lateClear: (x, z) => onPier(x, z) || x > coastX(z) - 7,              // no trees on the piers or the sand
+  lateClear: (x, z) => onPier(x, z) || x > coastX(z) - 7 || Math.hypot(x + 7.5, z - 9.5) < 3.6,              // no trees on the piers or the sand
   keepClear: [{ x: -12, z: 2, r: 10 }, { x: -30, z: -8, r: 7 }, { x: -30, z: 14, r: 7 }, { x: -12, z: -24, r: 7 }, { x: 2, z: 16, r: 6 }, { x: 34, z: -40, r: 6 }, { x: 5, z: -9, r: 9 }, { x: 14, z: 40, r: 9 }],
   solids: [
     { x: -30, z: -8, r: 4.6 }, { x: -30, z: 14, r: 4.6 }, { x: -12, z: -24, r: 4.6 },      // the three shops
@@ -68,5 +78,6 @@ export default makeRegion({
     { x: 0, z: -8.5, r: 3.4 }, { x: 6.5, z: -8.5, r: 3.4 }, { x: 12, z: -8.5, r: 2.4 },      // container yard
     { x: 14.5, z: -15, r: 2.6 }, { x: 14.5, z: -5, r: 2.6 },              // quay crane legs
     { x: -1, z: 18, r: 1.6 }, { x: 5, z: 18, r: 1.6 },                    // fish market stalls
+    { x: -7.5, z: 9.5, r: 1.9 },                                          // Willow's stall
   ],
 });

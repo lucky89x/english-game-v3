@@ -90,8 +90,8 @@ async function props(add, loadModel, shadowed) {
 
 export async function harborExtras(add, loadModel, shadowed) {
   // the open sea: one big water sheet; the land hides it where the ground is higher
-  const seaGeo = new THREE.PlaneGeometry(320, 320, 1, 1); seaGeo.rotateX(-Math.PI / 2);
-  const sea = new THREE.Mesh(seaGeo, waterMaterial(false)); sea.position.set(60, L.WATER_LEVEL, 0); add(sea);
+  const seaGeo = new THREE.PlaneGeometry(1000, 1000, 1, 1); seaGeo.rotateX(-Math.PI / 2);      // the sea closes round the whole island and runs to the horizon
+  const sea = new THREE.Mesh(seaGeo, waterMaterial(false)); sea.position.set(0, L.WATER_LEVEL, 0); add(sea);
   const still = new THREE.Group(); piers(still);
   // the three shops with mini games: boutique (fashion), café (cooking), salon (beauty)
   const place = async (name, x, z, rot, tint) => { const m = shadowed(await loadModel(name)); m.position.set(x, L.groundHeight(x, z) - 0.05, z); m.rotation.y = rot; m.scale.setScalar(1.3); if (tint) m.traverse((c) => { if (c.isMesh) { c.material = c.material.clone(); c.material.color.multiply(new THREE.Color(...tint)); } }); add(m); return m; };
@@ -107,10 +107,12 @@ export async function harborExtras(add, loadModel, shadowed) {
   // fish market: two stalls with blue awnings
   for (const sx of [-1, 5]) add(campStall(sx, gh(sx, 18), 18, Math.PI, 0x2f6fd0));
   { const n = label('🐟 Fish Market', { size: 28, scale: 0.8 }); n.position.set(2, gh(2, 18) + 3.4, 18); add(n); }
+  { const sx = B.shop.x, sz = B.shop.z; add(campStall(sx, gh(sx, sz), sz, Math.PI / 2 + 0.3)); const n = label("🌿 Willow's Harbor Stall", { size: 28, scale: 0.8 }); n.position.set(sx, gh(sx, sz) + 3.4, sz); add(n); }      // the Map 2 gear counter
   // boats at the fishing pier
   for (const [bx, bz, r] of [[22, 31.2, 0.2], [30, 24.8, -0.3], [44, 5.6, 1.6]]) { try { const b = shadowed(await loadModel('prop_boat_v01')); b.position.set(bx, L.WATER_LEVEL - 0.25, bz); b.rotation.y = r; b.scale.setScalar(1.2); add(b); } catch { /* no boat model: the piers are enough */ } }
   // palms and umbrellas on the beach, crates and barrels on the main pier
-  [[10, 34], [16, 46], [4, 42], [14, 22], [-2, 30], [20, 52]].forEach(([x, z], k) => palm(still, x, z, k));
+  [[10, 34], [16, 46], [4, 42], [14, 22], [-2, 30], [20, 52], [-6, -8], [-18, 22], [-4, 24], [10, -14], [-22, -14], [-26, 4], [-14, 36], [-2, 50], [-18, 46], [-8, -34], [4, -40], [-26, -36], [-34, 30], [22, 40]]
+    .filter(([x, z]) => L.walkable(x, z, 1.0) && L.pathDistance(x, z) > 3.2 && !L.inWater(x, z)).forEach(([x, z], k) => palm(still, x, z, k));      // palms instead of forest
   [[10, 40, 0xe2483e], [15, 34, 0x2f6fd0], [6, 47, 0xffb020], [18, 44, 0x2e9a5a]].forEach(([x, z, c]) => umbrella(still, x, z, c));
   for (const [x, z] of [[22, 0.5], [38, 0.6]]) mesh(still, new THREE.CylinderGeometry(0.4, 0.4, 0.95, 12), M(0x7a4a24), x, 0.7, z);
   add(bake(still));

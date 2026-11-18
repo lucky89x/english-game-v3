@@ -3,13 +3,18 @@
 // village square with full health and no loss, so young players are never punished hard.
 import * as THREE from 'three';
 import * as L from '../core/layout.js';
-import { MONSTERS, SPAWNS, FOREST_SPAWNS, playerAtk, hurt, inArc, huntsOf, hunt, countKill, huntLine, BOSSES, shieldDue } from '../core/rules.js';
+import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
+import { PLAY } from '../core/regions/harbor.js';
+import { MONSTERS, SPAWNS, FOREST_SPAWNS, HARBOR_SPAWNS, HUNT_KEY, playerAtk, hurt, inArc, huntsOf, hunt, countKill, huntLine, BOSSES, BOSS4, shieldDue } from '../core/rules.js';
 
 // BOARD: on the Quest Square since 17/11 (was out at 29, -14), facing the fountain
 export const BOARD = { x: -6.2, z: 0.6 }, BOSS_AT = { x: 40, z: -26 }, BOSS2_AT = { x: 46, z: 40 };
 /** Map 2: the forest board by the entrance path, the Mushroom Queen's glade west of the old ruins (17/11). */
 export const FOREST_BOARD = { x: -33.5, z: 46 }, BOSS3_AT = { x: -46, z: -24 };
-const BOSS_NAMES = { boss1: 'Vua Slime', boss2: 'Golem Cổ', boss3: 'Nữ hoàng Nấm' };
+/** Map 2 (Sunny Harbor, 18/11): the board beside the harbour square, Captain Octopus's cove next to the lighthouse. */
+export const HARBOR_BOARD = PLAY.board, BOSS4_AT = PLAY.boss;
+const BOARD_OF = { village: BOARD, forest: FOREST_BOARD, harbor: HARBOR_BOARD };
+const BOSS_NAMES = { boss1: 'Vua Slime', boss2: 'Golem Cổ', boss3: 'Nữ hoàng Nấm', boss4: 'Thuyền trưởng Bạch Tuộc' };
 import { addExp, maxHp } from '../core/save.js';
 import { compact } from '../world/common.js';
 
@@ -47,25 +52,40 @@ export class Wild {
       return { i, kind, def, region, g, body, bar, back, home: { x, z }, x, z, hp: def.hp, dead: 0, hitCool: 0, flash: 0, ph: i * 1.3 };
     });
     // Map 1's bosses wake up once Ngọc reaches their level: the Slime King in the meadow, the Ancient Golem in the golem fields
-    this.bosses = BOSSES.map((def, k) => this.makeBoss(def, [BOSS_AT, BOSS2_AT, BOSS3_AT][k], eye));
+    this.bosses = BOSSES.filter((def) => def.region !== 'harbor').map((def, k) => this.makeBoss(def, [BOSS_AT, BOSS2_AT, BOSS3_AT][k], eye));      // Captain Octopus is built with the harbor (addHarbor)
     this.boss = this.bosses[0];
     // quest boards: the Quest Square in the village, the entrance path in the forest
     this.boards = [];
-    for (const [at, region] of [[BOARD, 'village'], [FOREST_BOARD, 'forest']]) {
+    for (const [at, region] of [[BOARD, 'village'], [FOREST_BOARD, 'forest'], [HARBOR_BOARD, 'harbor']]) {
       const wood = new THREE.MeshStandardMaterial({ color: 0x8a5a30, roughness: 0.85 }), g = new THREE.Group();
       for (const sx of [-0.7, 0.7]) { const p = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.08, 2.2, 6), wood); p.position.set(sx, 1.1, 0); g.add(p); }
       const b = new THREE.Mesh(new THREE.BoxGeometry(1.7, 1.0, 0.1), new THREE.MeshStandardMaterial({ color: 0xc89a5a, roughness: 0.9 })); b.position.y = 1.6; g.add(b);
       for (const [x, y, c] of [[-0.45, 1.7, 0xfff4dc], [0.15, 1.55, 0xfff4dc], [0.55, 1.75, 0xffd8a0]]) { const n = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.45, 0.02), new THREE.MeshStandardMaterial({ color: c })); n.position.set(x, y, 0.06); n.rotation.z = (x * 3) % 0.2; g.add(n); }
       const roof = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.1, 0.5), wood); roof.position.y = 2.2; g.add(roof);
       compact(g); g.traverse((o) => { if (o.isMesh) o.castShadow = true; });
-      g.position.set(at.x, L.REGIONS[region].groundHeight(at.x, at.z), at.z); g.rotation.y = region === 'village' ? Math.atan2(-at.x, 4 - at.z) : Math.PI / 2; g.scale.setScalar(1.25); this.root.add(g);
+      g.position.set(at.x, L.REGIONS[region].groundHeight(at.x, at.z), at.z); g.rotation.y = region === 'village' ? Math.atan2(-at.x, 4 - at.z) : region === 'harbor' ? 0.55 : Math.PI / 2; g.scale.setScalar(1.25); this.root.add(g);
       this.boards.push({ at, region, g }); if (region === 'village') this.boardMesh = g;
     }
     // sword slash arc shown for a moment in front of Ngọc
     this.slash = new THREE.Mesh(new THREE.TorusGeometry(1.5, 0.09, 6, 20, Math.PI * 0.9), new THREE.MeshBasicMaterial({ color: 0xfff2a0, transparent: true, opacity: 0.9, depthWrite: false })); this.slash.rotation.x = Math.PI / 2; this.slash.visible = false; api.scene.add(this.slash);
     this.setRegion(L.NAME);
   }
-  makeBoss(def, at, eye) {
+  /** Captain Octopus (Blender model with a word shield) or, when it did not load, a purple blob with a captain's hat. */
+  glbBoss(def, at, gl, eye) {
+    let g, parts = {}, body = null, top = 1.6, centre = 0.6, rad = 0.9;
+    if (gl) { parts = this.glbBody(def, gl); g = parts.g; const sz = parts.box.getSize(new THREE.Vector3()), c = parts.box.getCenter(new THREE.Vector3()); top = parts.box.max.y + 0.25; centre = c.y; rad = Math.max(sz.x, sz.z) * 0.55; }
+    else {
+      g = new THREE.Group(); body = new THREE.Mesh(new THREE.SphereGeometry(0.6, 18, 12), new THREE.MeshStandardMaterial({ color: def.color, roughness: 0.35, emissive: def.color, emissiveIntensity: 0.12 })); body.position.y = 0.6; body.castShadow = true; g.add(body);
+      for (const sx of [-1, 1]) { const e = new THREE.Mesh(new THREE.SphereGeometry(0.09, 8, 6), eye); e.position.set(sx * 0.2, 0.7, 0.54); g.add(e); }
+      const hat = new THREE.Mesh(new THREE.ConeGeometry(0.4, 0.3, 12), new THREE.MeshStandardMaterial({ color: 0x1f2f5a })); hat.position.y = 1.35; g.add(hat);
+    }
+    const shield = new THREE.Mesh(new THREE.IcosahedronGeometry(rad, 1), new THREE.MeshBasicMaterial({ color: 0xffe28a, transparent: true, opacity: 0.3, wireframe: true, depthWrite: false })); shield.position.y = centre; shield.visible = false; g.add(shield);
+    const { bar, back } = this.mobBars(g, top, true); g.scale.setScalar(def.size); this.root.add(g); g.visible = false;
+    const m = { i: this.mobs.length, kind: def.id, boss: true, region: def.region, def, g, body, bar, back, shield, home: { ...at }, x: at.x, z: at.z, hp: def.hp, dead: 0, hitCool: 0, flash: 0, ph: 0, broken: 0, shieldOn: false, mats: parts.mats, mixer: parts.mixer, idle: parts.idle, walk: parts.walk, cur: parts.idle };
+    this.mobs.push(m); return m;
+  }
+  makeBoss(def, at, eye, gltf) {
+    if (def.model) return this.glbBoss(def, at, gltf, eye);
     const g = new THREE.Group(), stone = def.id === 'ancient', queen = def.id === 'queen';
     const mat = new THREE.MeshStandardMaterial({ color: queen ? 0xf3e4c8 : def.color, roughness: stone ? 0.95 : 0.15, transparent: !stone, opacity: stone ? 1 : 0.9, emissive: def.color, emissiveIntensity: 0.12, flatShading: stone });
     const body = new THREE.Mesh(stone ? new THREE.IcosahedronGeometry(0.5, 1) : new THREE.SphereGeometry(0.5, 20, 14), mat); body.scale.set(1, stone ? 1.15 : 0.8, 1); body.position.y = stone ? 0.55 : 0.4; body.castShadow = true; body.userData.live = true; g.add(body);
@@ -102,11 +122,53 @@ export class Wild {
   }
   /** Village: meadow monsters, bosses and the board. Forest: Map 2 monsters, only once Map 2 is open. */
   setRegion(name) {
-    this.region = name; this.root.visible = name === 'village' || name === 'forest'; for (const b of this.boards || []) b.g.visible = b.region === name;
+    this.region = name; this.root.visible = name === 'village' || name === 'forest' || name === 'harbor'; for (const b of this.boards || []) b.g.visible = b.region === name;
     for (const m of this.mobs) { if (m.region === name) this.place(m); else m.g.visible = false; }
   }
-  /** A monster takes part when it lives in this region (forest ones wait for Map 2). */
-  here(m, p) { return m.region === this.region && (m.region !== 'forest' || !!(p && p.flags.map2)); }
+  /** A monster takes part when it lives in this region (forest and harbor ones wait for Map 2). */
+  here(m, p) { return m.region === this.region && (m.region === 'village' || !!(p && p.flags.map2)); }
+  /** A monster made from a Blender model (rigged, with Idle and Walk clips). Own copies of the materials, so a hit can flash it. */
+  glbBody(def, gltf) {
+    const g = new THREE.Group(), inner = SkeletonUtils.clone(gltf.scene), mats = [];
+    inner.scale.setScalar((def.fit || 1) / def.size);
+    inner.traverse((o) => { if (!o.isMesh) return; o.castShadow = true; o.frustumCulled = false; const c = o.material.clone(); o.material = c; mats.push({ mat: c, e: c.emissive ? c.emissive.clone() : null, k: c.emissiveIntensity === undefined ? 1 : c.emissiveIntensity }); });
+    inner.updateMatrixWorld(true); const box = new THREE.Box3().setFromObject(inner); g.add(inner);
+    const mixer = new THREE.AnimationMixer(inner), act = {}; for (const c of gltf.animations) act[c.name] = mixer.clipAction(c);
+    const idle = act.Idle || Object.values(act)[0] || null, walk = act.Walk || idle; if (idle) idle.play();
+    return { g, mats, mixer, idle, walk, top: box.max.y, box };
+  }
+  mobBars(g, top, thin) {
+    const bar = new THREE.Sprite(new THREE.SpriteMaterial({ color: 0xe23a2a, depthTest: false })); bar.center.set(0, 0.5); bar.scale.set(1, thin ? 0.07 : 0.12, 1); bar.position.set(-0.5, top, 0); bar.renderOrder = 6; g.add(bar);
+    const back = new THREE.Sprite(new THREE.SpriteMaterial({ color: 0x3a2410, depthTest: false })); back.center.set(0, 0.5); back.scale.set(1.04, thin ? 0.1 : 0.16, 1); back.position.set(-0.52, top, 0); back.renderOrder = 5; g.add(back);
+    return { bar, back };
+  }
+  /** Map 2 (Sunny Harbor): the crabs, jellyfish, pirates and Captain Octopus, built when the hero first sails there so the
+   *  models are only fetched then. load(key) -> a loaded glTF ({ scene, animations }) or null. Falls back to plain blobs. */
+  async addHarbor(load) {
+    if (this.harbor) return; this.harbor = true;
+    const src = {}; for (const k of ['crab', 'jelly', 'pirate', 'octopus']) { try { src[k] = await load(k); } catch { src[k] = null; } }
+    const eye = new THREE.MeshBasicMaterial({ color: 0x24140c }), white = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    HARBOR_SPAWNS.forEach(([kind, x, z], n) => {
+      const def = MONSTERS[kind], i = this.mobs.length, gl = src[def.model]; let g, body = null, parts = {}, top = 1.3;
+      if (gl) { parts = this.glbBody(def, gl); g = parts.g; top = parts.top + 0.25; }
+      else {          // the model did not load: a coloured blob with eyes
+        g = new THREE.Group(); body = new THREE.Mesh(new THREE.SphereGeometry(0.5, 14, 10), new THREE.MeshStandardMaterial({ color: def.color, roughness: 0.4, emissive: def.color, emissiveIntensity: 0.12 })); body.position.y = def.fly ? 1.2 : 0.45; body.castShadow = true; g.add(body);
+        for (const sx of [-1, 1]) { const e = new THREE.Mesh(new THREE.SphereGeometry(0.085, 8, 6), eye); e.position.set(sx * 0.17, body.position.y + 0.06, 0.44); g.add(e); }
+      }
+      const { bar, back } = this.mobBars(g, top, false); g.scale.setScalar(def.size); this.root.add(g);
+      if (parts.idle) parts.idle.time = (n * 0.37) % parts.idle.getClip().duration;      // not all in step
+      this.mobs.push({ i, kind, def, region: 'harbor', g, body, bar, back, home: { x, z }, x, z, hp: def.hp, dead: 0, hitCool: 0, flash: 0, ph: n * 1.3, mats: parts.mats, mixer: parts.mixer, idle: parts.idle, walk: parts.walk, cur: parts.idle });
+      g.visible = false;
+    });
+    this.bosses.push(this.makeBoss(BOSS4, BOSS4_AT, eye, src.octopus));
+    for (const m of this.mobs) if (m.region === 'harbor') { m.g.visible = this.region === 'harbor' && !m.boss; if (this.region === 'harbor') this.place(m); }
+  }
+  /** Lights a monster up for a moment when it is hit (Blender ones: all their materials). */
+  lit(m, on) {
+    if (m.lighted === on) return; m.lighted = on;
+    if (m.mats) for (const t of m.mats) { if (!t.e) continue; if (on) { t.mat.emissive.setRGB(1, 0.85, 0.8); t.mat.emissiveIntensity = 1.1; } else { t.mat.emissive.copy(t.e); t.mat.emissiveIntensity = t.k; } }
+    else if (m.body) m.body.material.emissiveIntensity = on ? 1.4 : 0.12;
+  }
   place(m) { m.g.position.set(m.x, L.groundHeight(m.x, m.z), m.z); }
   /** K: a quick roll forward. Monsters cannot hurt Ngọc for half a second. */
   dodge() {
@@ -141,6 +203,7 @@ export class Wild {
     else this.api.ui.toast(`+${exp} EXP   +${gold} ●`);
     if (first && m.def.flag === 'boss1') this.api.ui.dialogue([{ who: 'Ngọc', en: `I defeated the Slime King! (+${gold} gold, +${exp} EXP)`, vi: 'Con đã thắng Vua Slime! Ở cấp 18, Golem Cổ sẽ thức dậy ở cánh đồng đá phía Đông Nam.' }]);
     if (first && m.def.flag === 'boss3') this.api.ui.dialogue([{ who: 'Ngọc', en: `I defeated the Mushroom Queen! The forest remembers its words again! (+${gold} gold, +${exp} EXP)`, vi: 'Con đã thắng Nữ hoàng Nấm, trùm của Rừng Ký Ức!' }]);
+    if (first && m.def.flag === 'boss4') this.api.ui.dialogue([{ who: 'Ngọc', en: `I defeated Captain Octopus! The harbour is safe again! (+${gold} gold, +${exp} EXP)`, vi: 'Con đã thắng Thuyền trưởng Bạch Tuộc, trùm của Cảng Mặt Trời!' }]);
     if (first && m.def.flag === 'boss2') this.api.ui.dialogue([{ who: 'Ngọc', en: `I defeated the Ancient Golem! (+${gold} gold, +${exp} EXP)`, vi: p.stats.level >= 20 ? 'Cổng Map 2 đã mở!' : 'Đạt cấp 20 (qua cổng Cú Mèo) là mở được Map 2.' }]);
     this.api.save(); this.api.onChange();
   }
@@ -153,7 +216,7 @@ export class Wild {
       else { b.hp = Math.min(b.def.hp * [1, 0.75, 0.5][b.broken], b.hp + b.def.hp * 0.07); this.api.sfx('wrong'); }
       this.api.onChange(); }) };
     for (const bd of this.boards) if (bd.region === this.region && Math.hypot(pos.x - bd.at.x, pos.z - bd.at.z) < 2.2) {
-      if (bd.region === 'forest' && !(p && p.flags.map2)) return { text: 'Bảng nhiệm vụ rừng: mở khi tới Map 2', run() {} };
+      if (bd.region !== 'village' && !(p && p.flags.map2)) return { text: 'Bảng nhiệm vụ: mở khi tới Map 2', run() {} };
       return { text: 'E · Bảng nhiệm vụ săn quái', run: () => this.board() };
     }
     return null;
@@ -166,7 +229,7 @@ export class Wild {
     ui.dialogue([{ who: 'Quest board', en: `Thank you, hero! (+${q.gold} gold, +${q.exp} EXP)`, vi: 'Quay lại bảng để nhận nhiệm vụ mới.' }]); this.api.save(); this.api.onChange();
   }
   /** Short text for the HUD while a hunt of this region's board is running. */
-  huntNote() { const p = this.api.profile(); if (!p) return ''; const k = this.region === 'forest' ? 'hunt2' : 'hunt', h = p[k]; if (!h || !h.active) return ''; const list = huntsOf(this.region), q = list[h.i % list.length]; return `⚔ ${Math.min(h.got, q.need)}/${q.need}`; }
+  huntNote() { const p = this.api.profile(); if (!p) return ''; const k = HUNT_KEY[this.region] || 'hunt', h = p[k]; if (!h || !h.active) return ''; const list = huntsOf(this.region), q = list[h.i % list.length]; return `⚔ ${Math.min(h.got, q.need)}/${q.need}`; }
   update(dt, frozen) {
     if (!this.root.visible) return;
     const { player, profile } = this.api, p = profile(); if (!p) return;
@@ -185,10 +248,14 @@ export class Wild {
       if (!frozen && d < 9 && far < 13) { fighting = true; if (d > 0.9) { vx = dx / d; vz = dz / d; } }
       else if (far > 0.6) { vx = (m.home.x - m.x) / far; vz = (m.home.z - m.z) / far; if (far > 2) m.hp = Math.min(m.def.hp, m.hp + dt * 12); }
       const nx = m.x + vx * m.def.speed * dt, nz = m.z + vz * m.def.speed * dt; if ((vx || vz) && L.walkable(nx, nz, 0.45)) { m.x = nx; m.z = nz; }
-      const hop = Math.abs(Math.sin(this.t * (m.kind === 'golem' ? 3 : 5) + m.ph)) * (vx || vz ? 0.22 : 0.08);
+      let hop = Math.abs(Math.sin(this.t * (m.kind === 'golem' ? 3 : 5) + m.ph)) * (vx || vz ? 0.22 : 0.08);
+      if (m.mixer) {          // Blender monsters walk and idle by their own clips; jellyfish float
+        const want = vx || vz ? m.walk : m.idle; if (want && m.cur !== want) { const prev = m.cur; m.cur = want; want.reset().play(); if (prev) prev.crossFadeTo(want, 0.25, false); }
+        m.mixer.update(dt); hop = m.def.fly ? 0.8 + Math.sin(this.t * 2 + m.ph) * 0.12 : 0;
+      }
       m.g.position.set(m.x, L.groundHeight(m.x, m.z) + hop, m.z); if (vx || vz) m.g.rotation.y = Math.atan2(vx, vz);
       if (m.g.userData.wings) for (const [k, w] of m.g.userData.wings.entries()) w.rotation.z = (k ? -1 : 1) * Math.sin(this.t * 14 + m.ph) * 0.6;   // bats flap
-      m.flash = Math.max(0, m.flash - dt); m.body.material.emissiveIntensity = m.flash > 0 ? 1.4 : 0.12;
+      m.flash = Math.max(0, m.flash - dt); this.lit(m, m.flash > 0);
       if (m.shieldOn) m.shield.rotation.y += dt * 1.5;
       m.bar.scale.x = Math.max(0.001, m.hp / m.def.hp); const show = m.hp < m.def.hp || d < 9; m.bar.visible = m.back.visible = show;
       m.hitCool = Math.max(0, m.hitCool - dt);
@@ -202,7 +269,7 @@ export class Wild {
   /** Where the hunt board sends the hero: the nearest living monster of the asked kind, or the board when the job is done. */
   guide(pos) {
     const p = this.api.profile(); if (!p || !this.root.visible || !(this.region === 'village' || p.flags.map2)) return null;
-    const list = huntsOf(this.region), h = hunt(p, this.region), q = list[h.i % list.length], at = this.region === 'forest' ? FOREST_BOARD : BOARD;
+    const list = huntsOf(this.region), h = hunt(p, this.region), q = list[h.i % list.length], at = BOARD_OF[this.region] || BOARD;
     if (!h.active) return null;
     if (h.got >= q.need) return { x: at.x, z: at.z, text: 'Bảng nhiệm vụ' };
     let best = null, bd = 1e9;
@@ -213,10 +280,10 @@ export class Wild {
     if (!this.root.visible) return [];
     const p = this.api.profile(), out = [];
     if (p && (this.region === 'village' || p.flags.map2)) {
-      const list = huntsOf(this.region), h = hunt(p, this.region), q = list[h.i % list.length], at = this.region === 'forest' ? FOREST_BOARD : BOARD;
+      const list = huntsOf(this.region), h = hunt(p, this.region), q = list[h.i % list.length], at = BOARD_OF[this.region] || BOARD;
       if (!h.active || h.got >= q.need) out.push({ x: at.x, z: at.z, text: '!', color: '#ffd23c' });
     }
-    for (const b of this.bosses) if (b.g.visible && !b.dead && this.here(b, p)) out.push({ x: b.x, z: b.z, text: '♛', color: ({ boss1: '#8fd8ff', boss2: '#e0c890', boss3: '#f08ac0' })[b.def.flag] });
-    return out.concat(this.mobs.filter((m) => !m.dead && !m.boss && this.here(m, p)).map((m) => ({ x: m.x, z: m.z, text: '', color: ({ golem: '#8a8490', red: '#ff6a5a', bat: '#9a7ad0', shroom: '#e2483e' })[m.kind] || '#6ad05a', small: true })));
+    for (const b of this.bosses) if (b.g.visible && !b.dead && this.here(b, p)) out.push({ x: b.x, z: b.z, text: '♛', color: ({ boss1: '#8fd8ff', boss2: '#e0c890', boss3: '#f08ac0', boss4: '#d070e0' })[b.def.flag] });
+    return out.concat(this.mobs.filter((m) => !m.dead && !m.boss && this.here(m, p)).map((m) => ({ x: m.x, z: m.z, text: '', color: ({ golem: '#8a8490', red: '#ff6a5a', bat: '#9a7ad0', shroom: '#e2483e', crab: '#ff7a3c', jelly: '#b48ae8', pirate: '#3f6fd0' })[m.kind] || '#6ad05a', small: true })));
   }
 }

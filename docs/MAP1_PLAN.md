@@ -42,6 +42,12 @@ Mỗi 5 cấp có một "cổng kiến thức" (ôn từ đến hạn) mới lê
 | M2-3 | Bảng nhiệm vụ rừng | Cạnh đường vào rừng, 4 việc săn dơi/nấm, lưu riêng | xong |
 | M2-4 | Rương + bong bóng chữ rừng | 5 rương khóa chữ, 10 bong bóng chữ dọc đường rừng (Unit 2) | xong |
 | M2-5 | Cổng Cú Mèo 25/30 | Ôn từ Unit 2; câu ngữ pháp Unit 2 chưa soạn | xong một phần |
+| M2-6 | Cảng Mặt Trời: quái biển | 5 cua (cấp 21, bãi Nam), 4 sứa (cấp 24, bờ Bắc, bay lơ lửng), 5 cướp biển (cấp 27, mũi hải đăng); model Blender có xương, clip Idle/Walk | xong |
+| M2-7 | Boss Map 2 | Thuyền trưởng Bạch Tuộc cấp 30, mũi bắc cạnh hải đăng, 3 khiên chữ Unit 2 (thay Nữ hoàng Nấm làm boss cuối chuỗi nhiệm vụ chính Map 2) | xong |
+| M2-8 | Bảng săn + rương + bong bóng cảng | Bảng cạnh quảng trường cảng (5 việc cua/sứa/cướp biển, lưu riêng `hunt3`), 6 rương khóa chữ, 10 bong bóng chữ | xong |
+| M2-9 | Trò Seaside Café | "Café Chef": khách gọi món bằng tiếng Anh (sandwich, burger, pizza, salad + nguyên liệu, bậc 3 thêm đồ uống) | xong |
+| M2-10 | Trò Beauty Salon | Kiểu tóc, màu tóc, son môi, phấn mắt, sơn móng theo lời khách (bậc 1/2/3 = 3/4/5 phần) | xong |
+| M2-11 | Chuỗi nhiệm vụ chính Map 2 | map2 → harbor → shops → hunt3 → owl25 → boss4 (Rừng Ký Ức còn là khu phụ) | xong |
 | B1 | Xếp kẹo (match-3) | Biển phía Tây quảng trường, 25 lượt, có combo | xong |
 | B2 | Đua xe | Xe bí ngô, giữ phím để lái, né đá và bùn, nhặt xu | xong |
 | B3 | Bắn súng cao su | Kéo thả ná, đạn bay vòng cung, slime và bóng bay | xong |

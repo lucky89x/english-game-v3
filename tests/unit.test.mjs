@@ -564,3 +564,73 @@ test('style studio: orders can be worn together, read well, and score the outfit
   assert.deepEqual(ST.scoreOutfit(order, { hat: 'pink', bag: 'blue' }), { right: 2, total: 2, points: 40 });
   assert.equal(ST.scoreOutfit(order, { hat: 'pink', bag: 'red', shoes: 'black' }).points, 10);
 });
+
+// ---------------------------------------------------------------- Map 2 gameplay in the harbor (18/11)
+import * as CA from '../src/ui/cafe.js';
+import * as SA from '../src/ui/salon.js';
+test('harbor: monsters, boss, hunt board, chests and word bubbles all stand on ground the hero can reach', async () => {
+  const H = await import('../src/core/regions/harbor.js'), R = await import('../src/core/rules.js');
+  L.setRegion('harbor');
+  try {
+    const reach = (x, z, what) => assert.ok(findPath(40, 2, x, z), `${what} at ${x},${z} must be reachable from the pier`);
+    for (const [k, x, z] of R.HARBOR_SPAWNS) { assert.ok(R.MONSTERS[k] && R.MONSTERS[k].model, k + ' has a model'); assert.ok(L.walkable(x, z, 0.5), `${k} ${x},${z} walkable`); reach(x, z, k); }
+    for (const [x, z] of H.PLAY.chests) { assert.ok(L.walkable(x, z, 1.2), `chest ${x},${z}`); reach(x, z, 'chest'); }
+    for (const [x, z] of H.PLAY.spots) reach(x, z, 'bubble');
+    reach(H.PLAY.board.x, H.PLAY.board.z + 1.5, 'board'); reach(H.PLAY.boss.x, H.PLAY.boss.z, 'boss');
+    const near = (x, z, r, what) => { let hit = false; for (let a = 0; a < 6.28 && !hit; a += 0.4) for (const d of [0.6, 1.2, 1.8, 2.2]) if (d < r && findPath(40, 2, x + Math.cos(a) * d, z + Math.sin(a) * d)) hit = true; assert.ok(hit, `${what}: the hero can stand within ${r} m of E point ${x},${z}`); };
+    near(H.HARBOR.shop.x + 1.6, H.HARBOR.shop.z + 0.6, 2.4, "Willow's stall"); reach(H.HARBOR.cafe.door[0] + 1, H.HARBOR.cafe.door[1], 'café door'); reach(H.HARBOR.salon.door[0], H.HARBOR.salon.door[1] + 1, 'salon door'); reach(H.HARBOR.boutique.door[0] + 1, H.HARBOR.boutique.door[1], 'boutique door');
+    assert.ok(Math.hypot(H.PLAY.boss.x - 34, H.PLAY.boss.z + 40) > 5, 'the boss stands clear of the lighthouse');
+  } finally { L.setRegion('forest'); }
+});
+test('Map 2 (harbor): own hunt board, Captain Octopus at level 30, kills count for the right board only', async () => {
+  const R = await import('../src/core/rules.js'), p = S.newProfile('An', 8);
+  const h = R.hunt(p, 'harbor'); assert.ok(p.hunt3 && h === p.hunt3); assert.notEqual(h, R.hunt(p, 'forest'));
+  h.active = true; assert.equal(R.HARBOR_HUNTS[0].kind, 'crab');
+  assert.equal(R.countKill(p, 'crab'), false); assert.equal(R.countKill(p, 'crab'), false); assert.equal(R.countKill(p, 'crab'), true);
+  assert.equal(R.hunt(p).got, 0, 'village hunt untouched'); assert.equal(R.hunt(p, 'forest').got, 0, 'forest hunt untouched');
+  for (const q of R.HARBOR_HUNTS) { assert.ok(R.MONSTERS[q.kind], q.kind); assert.ok(R.HARBOR_SPAWNS.filter(([k]) => k === q.kind).length >= q.need, `${q.kind} x${q.need} fit the spawns`); for (const t of Object.values(q.en)) assert.ok(!/[àáảãạăâđêôơư]/i.test(t), 'English only'); }
+  const o = R.BOSSES.find((b) => b.flag === 'boss4'); assert.equal(o.region, 'harbor'); assert.equal(o.level, 30); assert.ok(o.model);
+  for (const m of ['crab', 'jelly', 'pirate']) assert.ok(R.MONSTERS[m].level >= 21 && R.MONSTERS[m].level <= 30, m + ' is a Map 2 level');
+  const Q = await import('../src/core/quests.js'), q = { flags: {}, stats: { level: 30 }, gates: {} };
+  assert.ok(Q.MAIN.some((x) => x.id === 'boss4') && !Q.MAIN.some((x) => x.id === 'boss3'), 'the Map 2 chain ends with the octopus');
+  const shops = Q.MAIN.find((x) => x.id === 'shops'); assert.equal(shops.done(q), false);
+  q.mini = { best: { style: 10, cafe: 20 } }; assert.equal(shops.done(q), false); q.mini.best.salon = 5; assert.equal(shops.done(q), true);
+});
+test('café: orders read well, score by dish, fillings and drink, and the whole game can be played through', () => {
+  let seed = 7; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  for (const tier of [1, 2, 3]) for (let i = 0; i < 60; i++) {
+    const o = CA.makeOrder(rnd, tier); assert.equal(o.fill.length, tier <= 1 ? 2 : 3); assert.equal(new Set(o.fill).size, o.fill.length); assert.equal(!!o.drink, tier >= 3);
+    for (const f of o.fill) assert.ok(CA.DISHES[o.dish].fill.includes(f), `${f} goes on a ${o.dish}`);
+    assert.ok(/^(I'd like|Could I have|I'll have) /.test(CA.orderText(o)));
+  }
+  const o = { dish: 'burger', fill: ['cheese', 'tomato'], drink: null, k: 0 };
+  assert.equal(CA.orderText(o), "I'd like a burger with cheese and tomato, please.");
+  assert.equal(CA.orderText({ ...o, drink: 'tea', k: 1 }), 'Could I have a burger with cheese and tomato and a cup of tea, please?');
+  assert.deepEqual(CA.scoreOrder(o, { dish: 'burger', fill: ['tomato', 'cheese'], drink: null }), { right: 3, total: 3, extra: 0, points: 50 });
+  assert.equal(CA.scoreOrder(o, { dish: 'pizza', fill: ['cheese', 'ham'], drink: null }).points, 10, 'wrong dish 0, cheese 15, ham -5');
+  assert.equal(CA.scoreOrder({ ...o, drink: 'milk' }, { dish: 'burger', fill: ['cheese', 'tomato'], drink: 'water' }).points, 45, 'wrong drink -5');
+  const g = CA.cafeGame(rnd, 3); assert.equal(g.done(), null);
+  for (let n = 0; n < 5; n++) { g.click(311, 510); assert.equal(g.n, n); g.click(475, 510); assert.equal(g.n, n + 1, 'SERVE works'); }      // the listen and serve buttons both answer
+  g.update(2); assert.equal(g.done().id, 'cafe'); assert.ok(g.done().gold >= 0);
+  const g2 = CA.cafeGame(rnd, 1); g2.click(236 + 79 * 2 + 5, 110); assert.equal(g2.dish, 'pizza', 'dish tab'); g2.click(250, 160); assert.equal(g2.fill.length, 1, 'tap an ingredient'); g2.click(250, 160); assert.equal(g2.fill.length, 0, 'tap again to remove');
+});
+test('salon: orders read well, never match the starting look, score by part, and DONE works on every tab', () => {
+  let seed = 11; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  for (const tier of [1, 2, 3]) for (let i = 0; i < 60; i++) {
+    const o = SA.makeOrder(rnd, tier), asked = ['style', 'hair', 'lips', 'eyes', 'nails'].filter((k) => o[k]);
+    assert.equal(asked.length, 2 + tier); assert.ok(!(o.style === SA.DEFAULT_LOOK.style && o.hair === SA.DEFAULT_LOOK.hair)); assert.ok(SA.STYLES.includes(o.style));
+    assert.ok(SA.scoreLook(o, SA.DEFAULT_LOOK).points < asked.length * 20, 'not done by default');
+  }
+  assert.equal(SA.orderText({ style: 'curly', hair: 'pink', lips: 'red', k: 0 }), "I'd like curly pink hair and red lipstick, please.");
+  assert.equal(SA.orderText({ style: 'ponytail', hair: 'orange', eyes: 'blue', nails: 'purple', k: 1 }), 'Could you give me an orange ponytail, blue eyeshadow and purple nails, please?');
+  assert.equal(SA.hairText('braids', 'black'), 'black braids'); assert.equal(SA.hairText('ponytail', 'pink'), 'a pink ponytail');
+  const o = { style: 'long', hair: 'red', lips: 'pink', k: 0 };
+  assert.deepEqual(SA.scoreLook(o, { style: 'long', hair: 'red', lips: 'pink', eyes: null, nails: null }), { right: 3, total: 3, extra: 0, points: 60 });
+  assert.equal(SA.scoreLook(o, { style: 'long', hair: 'blue', lips: null, eyes: 'red', nails: 'red' }).points, 20 - 10, 'one right, two things nobody asked for');
+  const g = SA.salonGame(rnd, 2); g.click(236 + 216 + 10, 166); assert.equal(g.look.style, 'curly', 'style tile');
+  g.click(236 + 63 + 5, 110); assert.equal(g.tab, 'hair'); g.click(250, 170); assert.equal(g.look.hair, 'red', 'hair colour tile');
+  g.click(236 + 63 * 2 + 5, 110); g.click(250, 170); assert.equal(g.look.lips, 'red'); g.click(250, 170); assert.equal(g.look.lips, null, 'tap again clears lipstick');
+  for (let n = 0; n < 5; n++) { g.click(475, 510); assert.equal(g.n, n + 1, 'DONE works'); }
+  g.update(2); assert.equal(g.done().id, 'salon');
+  const g2 = SA.salonGame(rnd, 1); g2.click(475, 510); assert.equal(g2.n, 1, 'DONE works on the style tab too (it once hid under the style tiles)');
+});

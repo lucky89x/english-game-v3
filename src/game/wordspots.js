@@ -6,10 +6,13 @@
 import * as THREE from 'three';
 import * as L from '../core/layout.js';
 import { today } from '../core/review.js';
+import { PLAY } from '../core/regions/harbor.js';
 
 export const SPOTS = [[-2.2, -6], [6.5, 0.5], [-6.5, 12], [9, 7.2], [1.5, 22], [-6, 30.5], [27, 6], [-12, -2.5], [12.5, -2.5], [-2, 41]];
 /** Map 2: bubbles along the forest paths (they teach the unit being studied there, Unit 2 once Map 2 is open). */
 export const FOREST_SPOTS = [[-30, 44], [-36, 18], [-34, 2], [-22, -11], [-8, -13], [16, -23], [30, -15], [38, 12], [20, 44], [12, 6]];
+/** Map 2 (Sunny Harbor): bubbles by the square, the shops, the pier, the beach and the rock-pool path. */
+export const HARBOR_SPOTS = PLAY.spots;
 
 function bubbleTexture() {
   const cv = document.createElement('canvas'); cv.width = cv.height = 128; const c = cv.getContext('2d'), g = c.createRadialGradient(64, 64, 8, 64, 64, 62);
@@ -24,7 +27,7 @@ export class WordSpots {
   constructor(api) {
     this.api = api; this.t = 0; this.root = new THREE.Group(); api.scene.add(this.root);
     const tex = bubbleTexture();
-    this.list = [...SPOTS.map((p) => [...p, 'village']), ...FOREST_SPOTS.map((p) => [...p, 'forest'])].map(([x, z, region], i) => {
+    this.list = [...SPOTS.map((p) => [...p, 'village']), ...FOREST_SPOTS.map((p) => [...p, 'forest']), ...HARBOR_SPOTS.map((p) => [...p, 'harbor'])].map(([x, z, region], i) => {
       const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false, toneMapped: false })); sp.scale.setScalar(1.0); sp.renderOrder = 4;
       const y = L.REGIONS[region].walkHeight(x, z) + 1.25; sp.position.set(x, y, z); this.root.add(sp);
       return { i, x, z, y, sp, region };
@@ -33,7 +36,7 @@ export class WordSpots {
   }
   get data() { const p = this.api.profile(); return p ? (p.spots || (p.spots = {})) : {}; }
   used(s) { return this.data[s.i] === today(); }
-  setRegion(name) { this.region = name; this.root.visible = name === 'village' || name === 'forest'; this.sync(); }
+  setRegion(name) { this.region = name; this.root.visible = name === 'village' || name === 'forest' || name === 'harbor'; this.sync(); }
   sync() { for (const s of this.list) s.sp.visible = s.region === this.region && !this.used(s); }
   /** The word a sparkle teaches: the first unit word never met, else the one met longest ago. */
   pick() {
