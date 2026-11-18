@@ -481,3 +481,45 @@ test('quest journal: main quests follow the save, daily quests count events and 
   assert.notEqual(Q.dailyOf(p, 101), d, 'a new day, new quests');
   for (const x of [...Q.MAIN, ...Q.DAILY]) assert.ok(!/[àáảãạăâđêôơư]/i.test(x.en), 'English titles');
 });
+
+// ---------------------------------------------------------------- map exam (18/11)
+import * as Exam from '../src/core/exam.js';
+test('map exam: ten questions, 4 words + 3 grammar + 3 sentences, each answer inside its options', () => {
+  const cards = Array.from({ length: 20 }, (_, i) => ({ id: 'w' + i, word: 'word' + i, vi: 'nghia' + i }));
+  const paper = Exam.buildExam({ cards, grammar: grammarFor(6, 1, 6) });
+  assert.equal(paper.questions.length, 10); assert.equal(paper.ids.length, 10);
+  const kinds = {}; for (const q of paper.questions) { kinds[q.kind] = (kinds[q.kind] || 0) + 1; assert.ok(q.options[q.a], q.en); assert.equal(new Set(q.options).size, q.options.length, 'distinct options: ' + q.en); }
+  assert.deepEqual(kinds, { vocab: 4, grammar: 3, sentence: 3 });
+  for (const q of paper.questions.filter((x) => x.kind === 'sentence')) assert.ok(!/___/.test(q.options[q.a]) && q.options.length >= 2);
+});
+test('map exam: papers differ and avoid the last one; pass mark is 8 of 10; thin grammar falls back to words', () => {
+  const cards = Array.from({ length: 40 }, (_, i) => ({ id: 'w' + i, word: 'word' + i, vi: 'nghia' + i }));
+  const a = Exam.buildExam({ cards, grammar: grammarFor(8, 1, 6) }), b = Exam.buildExam({ cards, grammar: grammarFor(8, 1, 6), avoid: a.ids });
+  assert.ok(b.ids.filter((id) => id.startsWith('w') && a.ids.includes(id)).length === 0, 'fresh words first');
+  const none = Exam.buildExam({ cards, grammar: [] }); assert.equal(none.questions.length, 10); assert.ok(none.questions.every((q) => q.kind === 'vocab'));
+  assert.equal(Exam.buildExam({ cards: cards.slice(0, 3), grammar: [] }), null);
+  const g = (n) => Exam.grade(a.questions, a.questions.map((q, i) => (i < n ? q.a : q.a + 1)));
+  assert.equal(g(10).pass, true); assert.equal(g(8).pass, true); assert.equal(g(7).pass, false); assert.equal(g(7).wrong.length, 3);
+  const p = {}; Exam.recordExam(p, a.ids, false); Exam.recordExam(p, b.ids, true);
+  assert.equal(p.exam.tries, 2); assert.equal(p.exam.passed, true); assert.deepEqual(p.exam.last.slice(0, 10), b.ids);
+  assert.deepEqual(Exam.EXAM_GATES, [20, 30]);
+});
+
+// ---------------------------------------------------------------- mini game tiers (18/11)
+import { tierOf, TIER_PAY, rule } from '../src/core/tiers.js';
+import { candyGame, blocksGame, slingGame, raceGame, withTier } from '../src/ui/arcade.js';
+test('mini game tiers: by level, harder numbers and better pay at higher tiers', () => {
+  assert.deepEqual([1, 9, 10, 19, 20, 30].map(tierOf), [1, 1, 2, 2, 3, 3]);
+  assert.ok(TIER_PAY[3] > TIER_PAY[2] && TIER_PAY[2] > TIER_PAY[1]);
+  assert.ok(rule('candy', 3).moves < rule('candy', 1).moves && rule('blocks', 3).fall < rule('blocks', 1).fall);
+  assert.ok(rule('sling', 3).speed > rule('sling', 1).speed && rule('sling', 3).shots < rule('sling', 1).shots && rule('race', 3).rival > rule('race', 1).rival);
+});
+test('mini game tiers: the four boards build at every tier and carry the tier in the title and result', () => {
+  const cards = Array.from({ length: 8 }, (_, i) => ({ id: 'w' + i, word: 'cat' + 'abcdefgh'[i], vi: 'mèo' + i }));
+  for (const t of [1, 2, 3]) {
+    const games = [candyGame(Math.random, t), blocksGame(Math.random, cards, t), slingGame(Math.random, t), raceGame(Math.random, cards, t)].map((g) => withTier(g, t));
+    for (const g of games) { assert.match(g.title, /Bậc/); assert.equal(g.tier, t); }
+  }
+  assert.equal(candyGame(Math.random, 3).moves, 20); assert.equal(slingGame(Math.random, 2).shots, 11);
+  const g = withTier(candyGame(Math.random, 2), 2); g.moves = 0; g.flash = 0; assert.equal(g.done().tier, 2);
+});

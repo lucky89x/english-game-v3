@@ -19,8 +19,10 @@ import { campStall } from './world/stall.js';
 import { buildRoom } from './world/interior.js';
 import { label } from './world/common.js';
 import * as Q from './core/quests.js';
+import * as Exam from './core/exam.js';
 import { Wild, BOARD, BOSS_AT, BOSS2_AT, FOREST_BOARD, BOSS3_AT } from './game/combat.js';
-import { Arcade, candyGame, blocksGame, slingGame, spellGame, raceGame } from './ui/arcade.js';
+import { Arcade, candyGame, blocksGame, slingGame, spellGame, raceGame, withTier } from './ui/arcade.js';
+import { tierOf, TIER_PAY } from './core/tiers.js';
 import { Chests, CHEST_SPOTS, FOREST_CHESTS } from './game/chests.js';
 import { armorMesh, charmMesh } from './game/gear.js';
 import { Walkers } from './game/walkers.js';
@@ -503,6 +505,41 @@ function setWear() {
   const a = armorMesh(b.armor); if (a && chest) { chest.add(a); armorShown = a; }
   if (b.charm && hips) { const c = charmMesh(); c.position.set(0.13, 0.02, 0.08); hips.add(c); charmShown = c; }
 }
+/** The map exam (18/11): ten questions (words, grammar, sentences), 8 right to pass; no hints while it runs, answers shown
+ *  at the end. A failed paper sends the child through the missed questions again until each one is right; the next paper is new. */
+function mapExam(L0, pool) {
+  const st = Exam.examState(profile), paper = Exam.buildExam({ cards: pool, grammar: grammarFor(profile.grade, Save.unitOf(profile), 6), avoid: st.last });
+  if (!paper) { Save.passGate(profile, L0); save(); refresh(); return; }
+  const qs = paper.questions, total = qs.length, answers = [], who = 'Cú Mèo';
+  const redo = (list, k) => {          // study again: every missed question until it is right
+    if (k >= list.length) { ui.dialogue([{ who: 'Owl', en: 'Good work! Come back for a new test when you are ready.', vi: 'Đề lần sau sẽ khác. Khi nào thuộc rồi thì gặp cú làm bài mới nhé.' }]); return; }
+    const q = list[k];
+    ui.choose({ who: `${who} · Học lại ${k + 1}/${list.length}`, en: q.en, vi: q.vi }, q.options, (i) => {
+      sfx(i === q.a ? 'correct' : 'wrong');
+      if (i === q.a) redo(list, k + 1); else ui.dialogue([{ who: 'Owl', en: q.explain.en, vi: q.explain.vi }], () => redo(list, k));
+    });
+  };
+  const finish = () => {
+    const g = Exam.grade(qs, answers); Exam.recordExam(profile, paper.ids, g.pass);
+    if (g.pass) { Save.passGate(profile, L0); sfx('fanfare'); }
+    save(); refresh();
+    if (g.pass) { ui.dialogue([{ who: 'Owl', en: `Wonderful! ${g.right} of ${g.total}. The next land is open to you!`, vi: `Con làm đúng ${g.right}/${g.total}, qua bài kiểm tra rồi. Map mới đã mở!` }]); return; }
+    const lines = [{ who: 'Owl', en: `${g.right} of ${g.total}. You need ${Math.min(Exam.EXAM_PASS, g.total)} to pass.`, vi: `Con đúng ${g.right}/${g.total}, cần ${Math.min(Exam.EXAM_PASS, g.total)}. Mình học lại những câu sai nhé.` }];
+    for (const q of g.wrong) lines.push(q.card ? { who: 'Học lại', card: q.card } : { who: 'Học lại', en: q.explain.en, vi: q.explain.vi });
+    ui.dialogue(lines, () => redo(g.wrong, 0));
+  };
+  const ask = (n) => {
+    if (n >= total) { finish(); return; }
+    const q = qs[n], t0 = Date.now();
+    ui.choose({ who: `${who} · Bài kiểm tra ${n + 1}/${total}`, en: q.en, vi: q.vi }, q.options, (i) => {
+      answers[n] = i; const ok = i === q.a;
+      if (q.card) Review.record(profile.words, q.card.id, { correct: ok, hints: 0, ms: Date.now() - t0 });
+      Save.recordSkill(profile, q.kind === 'vocab' ? 'vocabulary' : 'grammar', ok, 0); sfx(ok ? 'correct' : 'wrong'); ask(n + 1);
+    });
+  };
+  const tries = st.tries ? ` Lần thử thứ ${st.tries + 1}.` : '';
+  ui.dialogue([{ who: 'Owl', en: 'Hoo-hoo! Before the next land, I must test you.', vi: `Bài kiểm tra mở map: ${total} câu về từ vựng, ngữ pháp và câu. Cần đúng ${Math.min(Exam.EXAM_PASS, total)}/${total}. Đề mỗi lần khác nhau.${tries}` }], () => ask(0));
+}
 /** The owl's review: five quick questions on learned and unit words, both directions. 4 of 5 opens the gate. */
 const OWL = { x: 2.9, z: 14.5 }, SHOP_DOOR = { x: 7.6, z: -8 };      // the orange shop's door (west side)
 function owlReview() {
@@ -510,6 +547,7 @@ function owlReview() {
   if (!L0) { const next = Save.GATES.find((g) => g > profile.stats.level); ui.dialogue([{ who: 'Owl', en: 'Hoo-hoo! Keep training, little hero.', vi: next ? `Đến cấp ${next}, cú sẽ ôn tập với con để mở cấp tiếp theo.` : 'Con đã qua hết các cổng ôn tập của làng.' }]); return; }
   const seen = Object.keys(profile.words).map((id) => cardOfFn(id)).filter(Boolean), pool = [...seen, ...unitCards.filter((c) => !seen.some((x) => x.id === c.id))].filter((c) => c.word.length <= 22);
   if (pool.length < 4) { Save.passGate(profile, L0); save(); refresh(); ui.dialogue([{ who: 'Owl', en: 'Hoo! No words to review yet. Go on!', vi: `Từ vựng Unit ${Save.unitOf(profile)} lớp ${profile.grade} chưa có, cổng tự mở.` }]); return; }
+  if (Exam.EXAM_GATES.includes(L0)) return mapExam(L0, pool);      // the levels that open a new map ask the 10-question exam
   const due = new Set(Review.dueIds(profile.words)), order = [...pool].sort((a, b) => (due.has(b.id) ? 1 : 0) - (due.has(a.id) ? 1 : 0) || Math.random() - 0.5).slice(0, 5);
   const gram = GRAMMAR_GATES.includes(L0) ? grammarFor(profile.grade, Save.unitOf(profile)) : [], total = order.length + gram.length;
   let right = 0;
@@ -653,7 +691,8 @@ async function boot() {
     if (!res) return;
     if (g.onResult) return g.onResult(res);
     const best = mini.data.best, record = best[res.id] === undefined || res.score > best[res.id]; if (record) best[res.id] = res.score;
-    const r = pay(profile, res.id, Review.today(), res.gold, res.exp);
+    const mul = TIER_PAY[res.tier || 1];      // higher tiers pay more
+    const r = pay(profile, res.id, Review.today(), Math.round(res.gold * mul), Math.round(res.exp * mul));
     profile.stats.gold += r.gold; Save.addExp(profile, r.exp); sfx('fanfare'); save(); refresh();
     track('mini'); for (const c of res.words || []) (profile.seen || (profile.seen = {}))[c.id] = Review.today();      // words met inside the game count as seen
     ui.dialogue([{ who: 'Ngọc', en: `${res.text} (+${r.gold} gold, +${r.exp} EXP)`, vi: [record ? 'Kỷ lục mới của con!' : '', payNote(r)].filter(Boolean).join(' ') || undefined }],
@@ -683,7 +722,7 @@ async function boot() {
       }));
     },
     respawn: () => { game.teleport(L.SPAWN.x, L.SPAWN.z); ui.dialogue([{ who: 'Tom', en: 'You fainted, so I carried you home. Rest, then try again!', vi: 'Con hết máu nên được đưa về làng. Máu đã đầy lại. Mua trang bị tốt hơn rồi quay lại nhé.' }]); } });
-  mini = new MiniGames({ scene, player, ui, sfx, track, profile: () => profile, save, onNote: refresh, board: (id) => arcade.start(({ candy: () => candyGame(), blocks: () => blocksGame(Math.random, unitCards), sling: () => slingGame(), race2: () => raceGame(Math.random, unitCards) })[id]()) });
+  mini = new MiniGames({ scene, player, ui, sfx, track, profile: () => profile, save, onNote: refresh, board: (id) => { const t = tierOf(profile.stats.level); arcade.start(withTier(({ candy: () => candyGame(Math.random, t), blocks: () => blocksGame(Math.random, unitCards, t), sling: () => slingGame(Math.random, t), race2: () => raceGame(Math.random, unitCards, t) })[id](), t)); } });
   await mini.addHosts((name) => loader.loadAsync(`./assets/models/${name}.glb`));      // a host by each mini game
   admin = new AdminPanel({ profile: () => profile, places: adminPlaces, go: adminGo, unlockAll: adminUnlock, setStep: adminStep,
     resetForest: () => { delete profile.quests.forest; if (L.NAME === 'forest') enterRegion('forest'); }, setGrade: (g) => { profile.grade = g; save(); chooseProfile(profile); },

@@ -19,7 +19,7 @@ export const MAIN = [
   { id: 'owl10', en: "The Owl's second review", vi: 'Lên cấp 10 rồi ôn tập với Cú Mèo (có câu ngữ pháp).', done: (p) => gate(p, 10), gold: 40, exp: 0 },
   { id: 'owl15', en: 'Halfway hero', vi: 'Lên cấp 15 và qua cổng ôn tập của Cú Mèo.', done: (p) => gate(p, 15), gold: 50, exp: 0 },
   { id: 'boss2', en: 'The Ancient Golem', vi: 'Đạt cấp 18, tới cánh đồng đá phía Đông Nam đánh bại Golem Cổ.', done: (p) => !!p.flags.boss2, gold: 120, exp: 0 },
-  { id: 'map2', en: 'Open Map 2', vi: 'Lên cấp 20, qua cổng Cú Mèo: Map 2 (Rừng Ký Ức, từ Unit 2) mở ra.', done: (p) => !!p.flags.map2, gold: 150, exp: 0, unlock: 'Map 2' },
+  { id: 'map2', en: 'Open Map 2', vi: 'Lên cấp 20, làm bài kiểm tra 10 câu của Cú Mèo (đúng 8/10, đề mỗi lần khác): Map 2 (Rừng Ký Ức, từ Unit 2) mở ra.', done: (p) => !!p.flags.map2, gold: 150, exp: 0, unlock: 'Map 2' },
   { id: 'hunt2', en: 'Forest hunter', vi: 'Hoàn thành 2 việc ở bảng săn quái trong rừng.', done: (p) => !!(p.hunt2 && p.hunt2.done >= 2), gold: 120, exp: 300 },
   { id: 'owl25', en: 'Forest scholar', vi: 'Lên cấp 25 và qua cổng ôn tập của Cú Mèo (từ Unit 2).', done: (p) => gate(p, 25), gold: 120, exp: 0 },
   { id: 'boss3', en: 'The Mushroom Queen', vi: 'Đạt cấp 30, tìm bãi trống phía Tây tàn tích và đánh bại Nữ hoàng Nấm.', done: (p) => !!p.flags.boss3, gold: 300, exp: 0, unlock: 'Map 3 (đang xây)' },

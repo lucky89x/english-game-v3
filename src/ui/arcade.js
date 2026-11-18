@@ -1,5 +1,6 @@
 // Arcade overlay: a canvas board over the 3D world for the skill games that are not played with Ngọc's body.
 // Each game is { title, help, start(api), draw(ctx, w, h, t), click(x, y), key(code), done() -> result | null }.
+import { rule, TIER_NAME } from '../core/tiers.js';
 import { N, KINDS, idx, newBoard, move, hasMove, candyReward } from '../core/match3.js';
 import * as BL from '../core/blocks.js';
 import * as SP from '../core/spell.js';
@@ -34,8 +35,9 @@ export class Arcade {
 
 const GEMS = [['#e8443a', '●'], ['#f6c62e', '◆'], ['#4fb85a', '▲'], ['#3d8fd6', '■'], ['#b684e8', '★'], ['#ff8fc0', '♥']];
 /** Candy Match: swap two neighbouring sweets to line up three. 25 moves. */
-export function candyGame(rnd = Math.random) {
-  const g = { title: '🍬 Candy Match', help: 'Bấm 2 viên kẹo cạnh nhau để đổi chỗ. Xếp 3 viên giống nhau thành hàng. 25 lượt.', board: newBoard(rnd), sel: -1, moves: 25, score: 0, flash: 0, combo: 0, pop: [] };
+export function candyGame(rnd = Math.random, tier = 1) {
+  const R = rule('candy', tier);
+  const g = { title: '🍬 Candy Match', help: 'Bấm 2 viên kẹo cạnh nhau để đổi chỗ. Xếp 3 viên giống nhau thành hàng. ' + R.moves + ' lượt.', board: newBoard(rnd), sel: -1, moves: R.moves, score: 0, flash: 0, combo: 0, pop: [] };
   const cell = 560 / N;
   g.info = () => `Điểm ${g.score} · Còn ${g.moves} lượt`;
   g.update = (dt) => { g.flash = Math.max(0, g.flash - dt); g.pop = g.pop.filter((p) => (p.t -= dt) > 0); };
@@ -64,12 +66,13 @@ export function candyGame(rnd = Math.random) {
 const BCOL = ['#f0f0f0', '#4fc8e8', '#f6c62e', '#b684e8', '#5fb84a', '#e8443a', '#3d6fc6', '#f08a2c'];
 /** Falling Blocks: arrows or WASD move, up/W turns, down/S drops faster, Space drops at once. Ends when the stack reaches the top. */
 /** cards: the unit's words; each cleared line shows and reads one of them (18/11: English inside the game). */
-export function blocksGame(rnd = Math.random, cards = []) {
+export function blocksGame(rnd = Math.random, cards = [], tier = 1) {
+  const R = rule('blocks', tier);
   const bag = []; const next = () => { if (!bag.length) { const ks = [0, 1, 2, 3, 4, 5, 6]; for (let i = 6; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [ks[i], ks[j]] = [ks[j], ks[i]]; } bag.push(...ks); } return bag.shift(); };
   const g = { title: '🧱 Falling Blocks', help: 'Bấm chuột để xoay · ← → (A D) di chuyển · ↓ (S) rơi nhanh · Space thả ngay. Mỗi hàng xóa được tặng một từ tiếng Anh, nhớ nó: cuối trò bác Max sẽ hỏi!',
     board: BL.empty(), piece: BL.spawn(next()), nextK: next(), score: 0, lines: 0, timer: 0, over: false, endT: 0, flash: 0, words: [], word: null };
   const pool = [...cards].sort(() => rnd() - 0.5);
-  const speed = () => Math.max(0.08, 0.36 - Math.floor(g.lines / 3) * 0.04);      // faster again (18/11: "still a bit slow")
+  const speed = () => Math.max(0.07, R.fall - Math.floor(g.lines / 3) * 0.04);      // faster again (18/11: "still a bit slow")
   const land = () => {
     const n = BL.lock(g.board, g.piece); g.lines += n; g.score += BL.LINE_SCORE[n] + 5; if (n) g.flash = 0.25;
     if (n && pool.length) { const c = pool[g.words.length % pool.length]; if (!g.words.includes(c)) g.words.push(c); g.word = c; g.wordT = 3.5; speak(c.word, true, 0.8); }      // a word for every clear
@@ -111,13 +114,14 @@ export function blocksGame(rnd = Math.random, cards = []) {
 }
 
 /** Slingshot: drag back from the sling and let go; the pebble flies in an arc. 12 pebbles, target drones and clay discs. */
-export function slingGame(rnd = Math.random) {
+export function slingGame(rnd = Math.random, tier = 1) {
+  const R = rule('sling', tier);
   const SX = 280, SY = 470, G = 520;
-  const g = { title: '🎯 Slingshot', help: 'Nhấn giữ chuột ở ná, kéo ngược về sau rồi thả. Kéo càng xa bay càng mạnh. Bắn trúng drone bia và đĩa bay. 12 viên.',
-    shots: 12, score: 0, hits: 0, aim: null, rock: null, pop: [], t: 0, endT: 0, targets: [] };
+  const g = { title: '🎯 Slingshot', help: 'Nhấn giữ chuột ở ná, kéo ngược về sau rồi thả. Kéo càng xa bay càng mạnh. Bắn trúng drone bia và đĩa bay. ' + R.shots + ' viên.',
+    shots: R.shots, score: 0, hits: 0, aim: null, rock: null, pop: [], t: 0, endT: 0, targets: [] };
   // targets (18/11: "too childish for grades 6-8"): hovering target drones and flying clay discs
   const add = () => { const row = Math.floor(rnd() * 3), drone = rnd() < 0.6, dir = rnd() < 0.5 ? 1 : -1, y = 90 + row * 85 + rnd() * 20;
-    g.targets.push({ x: dir > 0 ? -30 : 590, y, yy: y, vx: dir * (26 + rnd() * 34 + row * 8), r: drone ? 22 : 17, drone, col: drone ? ['#e8443a', '#2f6fd0', '#2e9a5a'][Math.floor(rnd() * 3)] : '#f08a2c', ph: rnd() * 6 }); };   // yy set at once: a new target is drawn before its first update
+    g.targets.push({ x: dir > 0 ? -30 : 590, y, yy: y, vx: dir * (26 + rnd() * 34 + row * 8) * R.speed, r: (drone ? 22 : 17) * R.size, drone, col: drone ? ['#e8443a', '#2f6fd0', '#2e9a5a'][Math.floor(rnd() * 3)] : '#f08a2c', ph: rnd() * 6 }); };   // yy set at once: a new target is drawn before its first update
   for (let i = 0; i < 5; i++) { add(); g.targets[i].x = 60 + i * 100; }
   g.info = () => `Điểm ${g.score} · Còn ${g.shots + (g.rock ? 1 : 0)} viên`;
   g.down = (x, y) => { if (!g.rock && g.shots > 0 && Math.hypot(x - SX, y - SY) < 90) g.aim = { x, y }; };
@@ -215,11 +219,12 @@ export function spellGame(card, rnd = Math.random) {
  *  karts and spell English words: the Vietnamese meaning is shown at the top, letter coins lie on the road, drive
  *  through the next letter of the word. A finished word is read aloud and scores a bonus; a wrong letter slows you.
  *  Rocks cost a heart, mud slows you down. 60 seconds, 3 hearts; the final place pays extra. */
-export function raceGame(rnd = Math.random, cards = []) {
+export function raceGame(rnd = Math.random, cards = [], tier = 1) {
+  const R = rule('race', tier);
   const words = cards.filter((c) => SP.spellable(c.word) && SP.letters(c.word).length >= 3 && SP.letters(c.word).length <= 9).sort(() => rnd() - 0.5);
   const g = { title: '🏎 Kart Race', help: 'Giữ ← → (A D) để lái. Đi qua đồng xu có CHỮ CÁI TIẾP THEO của từ tiếng Anh (nghĩa ở trên cùng) để ghép từ. Né đá, tránh bùn, vượt 3 xe đối thủ. 60 giây, 3 tim.',
     x: 280, time: 60, hearts: 3, dist: 0, speed: 250, things: [], next: 0.5, hurt: 0, endT: 0, steer: 0, done_: [], wi: 0, got: 0, bad: 0, flash: 0, bonus: 0,
-    rivals: [['#2f6fd0', 160, 0.98], ['#2e9a5a', 300, 1.0], ['#8a4ad0', 440, 1.02]].map(([col, ahead, k], i) => ({ col, d: ahead, k, off: (i - 1) * 60, ph: i * 2, num: i + 2 })) };
+    rivals: [['#2f6fd0', 160, 0.98], ['#2e9a5a', 300, 1.0], ['#8a4ad0', 440, 1.02]].map(([col, ahead, k], i) => ({ col, d: ahead, k: k + R.rival, off: (i - 1) * 60, ph: i * 2, num: i + 2 })) };
   const roadAt = (y) => 280 + Math.sin((g.dist - y) / 260) * 90;          // centre of the road at screen height y
   const word = () => words[g.wi % Math.max(1, words.length)], need = () => (word() ? SP.letters(word().word)[g.got] : '');
   const place = () => 1 + g.rivals.filter((r) => r.d > g.dist).length;
@@ -237,7 +242,7 @@ export function raceGame(rnd = Math.random, cards = []) {
     }
     g.next -= dt;
     if (g.next <= 0) {
-      g.next = Math.max(0.3, 0.7 - (60 - g.time) * 0.005) * (0.75 + rnd() * 0.5);
+      g.next = Math.max(0.3, 0.7 - (60 - g.time) * 0.005) * (0.75 + rnd() * 0.5) * R.gap;
       const roll = rnd(), off = (rnd() - 0.5) * 160;
       if (roll < 0.5 && word()) { const right = rnd() < 0.55, abc = 'abcdefghijklmnopqrstuvwxyz'; let ch = need(); if (!right) { do ch = abc[Math.floor(rnd() * 26)]; while (ch === need()); } g.things.push({ kind: 'letter', ch, off, y: -30 }); }
       else g.things.push({ kind: roll < 0.78 ? 'rock' : 'mud', off, y: -30 });
@@ -308,5 +313,12 @@ export function raceGame(rnd = Math.random, cards = []) {
     else { c.fillText('Né đá, vượt đối thủ!', 280, 46); }
     if (g.time <= 0 || g.hearts <= 0) { c.fillStyle = 'rgba(255,244,220,.94)'; c.fillRect(110, 220, 340, 100); c.fillStyle = '#4a2a10'; c.font = '800 30px sans-serif'; c.fillText(g.hearts > 0 ? `Finish! Place ${place()}` : 'Crash!', 280, 262); c.font = '700 18px sans-serif'; c.fillText(`${g.done_.length} words spelled`, 280, 296); }
   };
+  return g;
+}
+
+/** Marks a game with its tier: the name shows the version and the result carries the tier so the pay can grow with it. */
+export function withTier(g, tier) {
+  g.title += ` · ${TIER_NAME[tier]}`; g.tier = tier;
+  const done = g.done; g.done = () => { const r = done(); if (r) r.tier = tier; return r; };
   return g;
 }

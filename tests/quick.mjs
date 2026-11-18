@@ -86,6 +86,44 @@ await run('owl', async () => {
   await closeDialogs();
 });
 
+await run('exam', async () => {        // map exam at level 20: 10 questions, 8 to pass, failed paper is studied again, next paper differs
+  await ev(() => { const p = __eq.profile; delete p.unitPick; p.flags.map2 = false; p.exam = undefined; p.stats.level = 20; p.stats.exp = 0; p.gates = { 5: true, 10: true, 15: true }; }); await ev(() => __eq.refresh());
+  await closeDialogs(); await wait(800);
+  const right = () => ev(async () => {          // index of the right option for the question on screen
+    const en = document.querySelector('#dialog .en').textContent, vi = ((document.querySelector('#dialog .vi') || {}).textContent || '').trim(), opts = __eq.ui.options;
+    const cards = [...__eq.chests.api.cards(), ...Object.keys(__eq.profile.words).map(__eq.cardOf).filter(Boolean)], G = await import('./src/core/grammar.js'), list = G.GRAMMAR['g' + __eq.profile.grade + '_u01'] || [];
+    if (en.includes('___')) { const g = list.find((x) => x.q === en); return { i: opts.indexOf(g.options[g.a]), n: opts.length }; }
+    if (en.startsWith('Which sentence')) { const g = list.find((x) => opts.includes(x.q.replace('___', x.options[x.a]))); return { i: opts.indexOf(g.q.replace('___', g.options[g.a])), n: opts.length }; }
+    const m = /What does "(.+)" mean/.exec(en);
+    if (m) return { i: opts.indexOf(cards.find((x) => x.word === m[1]).vi), n: opts.length };
+    return { i: opts.indexOf(cards.find((x) => x.vi === vi).word), n: opts.length };
+  });
+  const askOwl = async () => { await ev(() => __eq.teleport(2.9, 15.6)); await wait(450); await page.keyboard.press('KeyE'); await wait(250); };
+  const sit = async (wrongOn) => {          // answers the ten questions; wrongOn = how many to get wrong
+    let done = 0;
+    for (let n = 0; n < 10; n++) { const r = await right(); const pick = n < wrongOn ? (r.i + 1) % r.n : r.i; await page.keyboard.press('Digit' + (pick + 1)); await wait(250); done += 1; }
+    return done;
+  };
+  await askOwl();
+  check((await page.textContent('#dialog')).includes('8/10') && (await page.textContent('#dialog')).includes('khác nhau'), 'Level 20 gate announces the exam: 8 of 10, a different paper each time');
+  await page.keyboard.press('KeyE'); await wait(300);
+  const first = await ev(() => __eq.ui.options.length);
+  await sit(3);          // 7 of 10
+  check((await page.textContent('#dialog')).includes('7 of 10') && await ev(() => !__eq.profile.gates[20] && __eq.profile.exam.tries === 1), '7 of 10 fails: the gate stays shut, the try is counted');
+  await passCards(); await closeDialogs();          // the study screens, then the missed questions again
+  const redo = await ev(() => !!document.querySelector('#dialog') && __eq.ui.options.length > 0);
+  for (let n = 0; n < 12 && (await ev(() => __eq.ui.options.length > 0)); n++) { const r = await right(); await page.keyboard.press('Digit' + (r.i + 1)); await wait(250); await passCards(); }
+  check(await ev(() => !__eq.profile.gates[20]), 'Studying the missed questions again does not open the gate by itself');
+  await closeDialogs();
+  const last1 = await ev(() => [...__eq.profile.exam.last]);
+  await askOwl(); await page.keyboard.press('KeyE'); await wait(300);
+  await sit(0);          // 10 of 10 on a new paper
+  const last2 = await ev(() => [...__eq.profile.exam.last].slice(0, 10));
+  check((await page.textContent('#dialog')).includes('Wonderful') && await ev(() => __eq.profile.gates[20] && __eq.profile.exam.passed && __eq.profile.exam.tries === 2), '10 of 10 on the second paper opens the gate');
+  check(last2.join() !== last1.slice(0, 10).join(), 'The second paper is a different set of questions');
+  await closeDialogs();
+});
+
 await run('arcade', async () => {
   await ev(() => { __eq.profile.plays = undefined; }); const g0 = await ev(() => __eq.profile.stats.gold);
   const paid = [];
