@@ -18,3 +18,12 @@ Chó Shiba giữ 4 hoạt ảnh: Idle, Walk, Gallop, Eating. Thỏ và gà khôn
 11 file `prop_*_v01.glb` (đài phun nước quảng trường, vườn rau, cây tròn, cây thông, bụi cỏ, táo, cam, hồ, bãi lửa, thuyền, tháp nước) do dự án
 tự dựng từ hình khối cơ bản trong Blender, không dùng mô hình ngoài. Dựng lại bằng:
 `OUT=<thư mục> blender -b -P tools/props/build_props.py` (tùy chọn `ONLY=tên,tên`).
+
+## Map 2 "Sunny Harbor" (tự dựng, không cần ghi công)
+
+21 file `harbor_*_v01.glb` do dự án tự dựng bằng script, không dùng mô hình ngoài:
+container 4 màu, tàu hàng, hải đăng, ghế cầu tàu, cọc buộc dây, đèn cầu tàu, chồng thùng, lưới cá, cẩu giàn,
+ma-nơ-canh (4 object), đồ cửa hàng (4 object), 3 nhà (boutique, cafe, salon), quái cua/sứa/cướp biển và boss bạch tuộc
+(có xương, clip "Idle" và "Walk"). Mặt trước hướng +Z glTF; vật liệu phát sáng tên `light_*`, kính `glass`.
+Dựng lại: `OUT=<thư mục> blender -b -P tools/harbor/build_harbor.py` (tùy chọn `ONLY=harbor_crane,…`);
+ảnh xem trước: `tools/harbor/preview.py`, kiểm hoạt ảnh: `tools/harbor/check_anim.py`.

@@ -50,7 +50,7 @@ PY=<python có bpy 4.2> tools/chibi05/build_all.sh   # dựng lại model, ~1 ph
 ## Tiến độ (cập nhật cuối mỗi lượt làm việc, trước khi commit)
 Cập nhật mục này mỗi khi xong việc, để phiên/hội thoại mới đọc là nắm được ngay.
 
-**Lần cập nhật:** 2026-11-17 (lượt 12: nhiệm vụ ngày + chính tuyến, đồ Map 2, vào nhà 3D, con vật) · nhánh `fable/web-rebuild` · unit 41/41 · quick 54/54 · e2e 118/118 · tải 11,54 MB
+**Lần cập nhật:** 2026-11-18 (lượt 16: mô hình Map 2 Sunny Harbor; lượt 12: nhiệm vụ ngày + chính tuyến, đồ Map 2, vào nhà 3D, con vật) · nhánh `fable/web-rebuild` · unit 41/41 · quick 54/54 · e2e 118/118 · tải 11,54 MB
 
 **Đã có (Map 1 + Rừng):**
 - Truyện: Bức thư, Hũ chữ của Ben, Sửa cây cầu cho cả lớp 6–9 (lớp 8 dùng ngữ pháp Unit 1: động từ sở thích + V-ing), pha lê Rừng Ký Ức.
@@ -78,6 +78,7 @@ Cập nhật mục này mỗi khi xong việc, để phiên/hội thoại mới 
 - Lượt 13 (18/11) **model con vật từ Poly Pizza** (nhánh `blender-assets`, chưa nối vào game): `assets/models/animal_rabbit_cream_v01.glb` (thỏ, CC-BY, Poly by Google), `animal_chicken_white_v01.glb` (gà, CC-BY, jeremy), `animal_dog_shiba_v01.glb` (chó Shiba, CC0, Quaternius; clip Idle/Walk/Gallop/Eating). Đã xoay mặt về +Z, chân chạm đất, tô lại màu; ghi công ở `assets/models/CREDITS.md` (CC-BY bắt buộc). Dựng bằng Blender 5.3 chạy nền (`blender -b -P`), chưa có trong `tools/`.
 - Lượt 14 (18/11) **10 prop Blender tự dựng** (nhánh `blender-assets`, chưa nối vào game): `assets/models/prop_{vegetable_garden,tree_round,tree_pine,grass_tuft,apple,orange,pond,campfire,boat,water_tower}_v01.glb`, low-poly màu phẳng, chân chạm đất, mặt trước +Z; script `tools/props/build_props.py` (`OUT=… blender -b -P …`, Blender 5.3 chạy nền). Mặt nước hồ (`water`) và lửa (`flame_*`) là vật liệu riêng để game làm động.
 - Lượt 15 (18/11) **đài phun nước tròn quảng trường** (nhánh `blender-assets`, chưa nối vào game): `assets/models/prop_plaza_fountain_v01.glb` (đường kính 7,4 m, cao 5,8 m, ~5.300 tam giác: tường đá 8 trụ tượng/chậu hoa, vòng cây và hoa, bể đá, đài 3 tầng, quả cầu vàng; vật liệu `water`, `gold` riêng). Khi nối vào game phải nới `lateSolids` đài cũ (r 1,9) lên ~3,7 m và kiểm lại sân lát đá bán kính 8,5 m.
+- Lượt 16 (18/11) **mô hình Map 2 "Sunny Harbor"** (nhánh `blender-assets`, chưa nối vào game): 21 file `assets/models/harbor_*_v01.glb` tự dựng bằng `tools/harbor/build_harbor.py` (+ `b2_pier`, `b3_boutique`, `b4_houses`, `b5_mobs`, chung `hlib.py`): container 20 ft 4 màu (1.498 tam giác), tàu hàng 40 m (gốc ở mặt nước, đáy Z −2, 15 container bản rút gọn), hải đăng, ghế, cọc buộc, đèn, thùng, lưới cá, cẩu giàn 18,9 m, ma-nơ-canh 4 bản, đồ cửa hàng, nhà boutique/cafe/salon 8×6 m, quái cua/sứa/cướp biển + boss bạch tuộc 4,3 m có xương và clip `Idle`/`Walk` (xương cứng, mỗi phần gắn 1 xương). Mặt trước +Z glTF (−Y Blender). Vật liệu `light_*` phát sáng, `glass`, `water`.
 **Còn lại (Map 1):** vườn rau, hồ cá, đống lửa rộng và nét hơn (mạng máy chủ chặn Kenney/Quaternius/poly.pizza; nhánh `main` có rau củ/thùng Quaternius CC0 dùng được).
 **Còn lại:** **Map 2 bản đồ mới** (anh chốt 18/11: Map 2 phải là bản đồ khác; đề xuất Cảng Biển theo `docs/reference_art/12_map_ocean_harbor.jpg`, chuyển quái/boss/bảng/rương Map 2 sang đó, Rừng Ký Ức thành chương cuối Map 1); Map 3 (Sa mạc Gió Vàng); câu ngữ pháp Unit 2.
 
