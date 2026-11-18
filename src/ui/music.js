@@ -50,6 +50,17 @@ const CSS = `
 #music .kpop { margin-top:10px; background:#fff0f6; border:2px dashed #d04a8a; border-radius:12px; padding:8px 10px; font-size:13px; }
 `;
 
+/** Gold for one full song from the family's own music (18/11: "to listen you pay in gold, and play the whole song"). */
+export const PLAY_PRICE = 10;
+/** The family's own songs: the desktop app reads Documents/EnglishQuest/music; in a browser, assets/music/list.json. */
+async function familySongs() {
+  if (globalThis.eqDesktop && globalThis.eqDesktop.musicList) { try { return globalThis.eqDesktop.musicList() || []; } catch { return []; } }
+  try {
+    const r = await fetch('./assets/music/list.json'); if (!r.ok) return [];
+    const list = await r.json();
+    return Promise.all(list.map(async (x) => ({ title: x.title || x.file, url: './assets/music/' + x.file, lyrics: x.lyrics ? await fetch('./assets/music/' + x.lyrics).then((t) => (t.ok ? t.text() : '')).catch(() => '') : '' })));
+  } catch { return []; }
+}
 export class MusicRoom {
   /** api: { profile(), sfx(name), changed() } */
   constructor(api) {
@@ -65,12 +76,15 @@ export class MusicRoom {
       if (a === 'stop') { this.stop(); this.render(); }
       if (a === 'say') speak(this.song.lines[Number(b.dataset.v)].en, true, 0.85);
       if (a === 'kpop') window.open('https://www.youtube.com/@BLACKPINK', '_blank');
+      if (a === 'own') { this.stop(); this.pick = this.songs[Number(b.dataset.v)]; this.render(); }
+      if (a === 'learn') { this.stop(); this.pick = null; this.render(); }
+      if (a === 'buy') this.playOwn();
     });
   }
-  show() { this.open = true; this.say = 'Hi! I\'m Anna. Pick a song and sing with me!'; this.render(); this.el.classList.remove('hidden'); speak(this.say); }
+  show() { familySongs().then((l) => { this.songs = l; this.render(); }); this.open = true; this.say = 'Hi! I\'m Anna. Pick a song and sing with me!'; this.render(); this.el.classList.remove('hidden'); speak(this.say); }
   close() { this.stop(); this.open = false; this.el.classList.add('hidden'); if (this.api.onClose) this.api.onClose(); }
   key(code) { if (!this.open) return false; if (code === 'Escape' || code === 'KeyE') this.close(); return true; }
-  stop() { for (const t of this.timers) clearTimeout(t); this.timers = []; this.now = -1; if (this.ctx) { try { this.ctx.close(); } catch { /* closed */ } this.ctx = null; } }
+  stop() { if (this.audio) { this.audio.pause(); this.audio = null; } for (const t of this.timers) clearTimeout(t); this.timers = []; this.now = -1; if (this.ctx) { try { this.ctx.close(); } catch { /* closed */ } this.ctx = null; } }
   /** Plays the melody with a soft plucked sound and lights up each line as it is sung. */
   play() {
     this.stop(); const song = this.song, beat = 60 / song.bpm;
@@ -89,6 +103,16 @@ export class MusicRoom {
     this.timers.push(setTimeout(() => this.finish(), t * 1000));
     this.render();
   }
+  /** A whole song from the family's music, paid in gold; the words (if the family added them) are shown while it plays. */
+  playOwn() {
+    const p = this.api.profile(), s = this.pick; if (!s) return;
+    if (p.stats.gold < PLAY_PRICE) { this.say = `You need ${PLAY_PRICE} gold to play a song. Win some in the mini games!`; this.api.sfx('wrong'); this.render(); return; }
+    this.stop(); p.stats.gold -= PLAY_PRICE; this.api.changed();
+    const a = new Audio(s.url); this.audio = a; a.volume = 0.9;
+    a.onended = () => { this.audio = null; if (this.api.track) this.api.track('song'); this.say = 'That was a great song! Want another one?'; this.render(); };
+    a.onerror = () => { this.audio = null; p.stats.gold += PLAY_PRICE; this.api.changed(); this.say = 'This file cannot be played. Your gold is back.'; this.render(); };
+    a.play().catch(() => {}); this.say = `Now playing: ${s.title} (−${PLAY_PRICE} gold)`; this.api.sfx('tick'); this.render();
+  }
   finish() {
     if (this.api.track) this.api.track('song');
     const p = this.api.profile(), heard = p.songs || (p.songs = {}); this.now = -1;
@@ -98,12 +122,18 @@ export class MusicRoom {
   }
   render() {
     if (!this.open) return;
-    const p = this.api.profile(), heard = (p && p.songs) || {}, s = this.song, playing = this.timers.length > 0;
-    this.el.innerHTML = `<div class="room"><header><span style="font-size:28px">🎵</span><h2>Anna's Music Room</h2><button data-a="close">Leave (Esc)</button></header>
+    const p = this.api.profile(), heard = (p && p.songs) || {}, s = this.song, playing = this.timers.length > 0, own = this.songs || [], pk = this.pick;
+    const folder = globalThis.eqDesktop && globalThis.eqDesktop.musicFolder ? globalThis.eqDesktop.musicFolder() : 'assets/music (file list.json)';
+    const sheet = pk ? `<h3>🎧 ${pk.title}</h3><small>Nhạc của gia đình · ${PLAY_PRICE} vàng mỗi lần phát cả bài</small>
+        <div style="margin:6px 0">${this.audio ? '<button data-a="stop">■ Dừng</button>' : `<button data-a="buy">▶ Phát cả bài (${PLAY_PRICE} ●)</button>`} <button data-a="learn">← Bài học hát</button></div>
+        ${pk.lyrics ? pk.lyrics.split(/\r?\n/).map((l) => `<div class="line"><div class="en">${l.replace(/[<>&]/g, '')}</div></div>`).join('') : '<p class="vi">Bài này chưa có lời. Muốn hiện lời, thêm file .txt cùng tên vào thư mục nhạc.</p>'}`
+      : `<h3>${s.title}</h3><small>${s.by}</small><div style="margin:6px 0">${playing ? '<button data-a="stop">■ Dừng</button>' : '<button data-a="play">▶ Phát nhạc và hát theo</button>'}</div>
+        ${s.lines.map((ln, i) => `<div class="line ${i === this.now ? 'now' : ''}"><button data-a="say" data-v="${i}">🔊</button><div class="en">${ln.en}</div><div class="vi">${ln.vi}</div></div>`).join('')}`;
+    this.el.innerHTML = `<div class="room"><header><span style="font-size:28px">🎵</span><h2>Anna's Music Room</h2><span class="gold" style="font-weight:800">● ${p.stats.gold}</span><button data-a="close">Leave (Esc)</button></header>
       <div class="body"><div class="anna"><img src="assets/ui/keeper_anna.jpg" alt="Anna"><b>Anna</b><p style="font-weight:700;font-size:13px">${this.say || ''}</p>
-        <div class="list">${SONGS.map((x) => `<button data-a="song" data-v="${x.id}" class="${x.id === s.id ? 'on' : ''}">${heard[x.id] ? '✔' : '♪'} ${x.title}</button>`).join('')}</div></div>
-      <div class="sheet"><h3>${s.title}</h3><small>${s.by}</small><div style="margin:6px 0">${playing ? '<button data-a="stop">■ Dừng</button>' : '<button data-a="play">▶ Phát nhạc và hát theo</button>'}</div>
-        ${s.lines.map((ln, i) => `<div class="line ${i === this.now ? 'now' : ''}"><button data-a="say" data-v="${i}">🔊</button><div class="en">${ln.en}</div><div class="vi">${ln.vi}</div></div>`).join('')}
-        <div class="kpop">🎤 <b>Nhạc K-pop (BLACKPINK…)</b>: lời bài hát có bản quyền nên game không chép vào được. Bấm để nghe bản chính thức trên YouTube (cần mạng, phụ huynh nên ngồi cùng): <button data-a="kpop">Mở kênh BLACKPINK</button></div></div></div></div>`;
+        <div class="list"><b style="font-size:13px">Học hát (miễn phí)</b>${SONGS.map((x) => `<button data-a="song" data-v="${x.id}" class="${!pk && x.id === s.id ? 'on' : ''}">${heard[x.id] ? '✔' : '♪'} ${x.title}</button>`).join('')}
+        <b style="font-size:13px;margin-top:6px">🎧 Nghe nhạc (${PLAY_PRICE} ● / bài)</b>${own.length ? own.map((x, i) => `<button data-a="own" data-v="${i}" class="${pk === x ? 'on' : ''}">🎧 ${x.title}</button>`).join('') : `<small>Chưa có bài nào. Phụ huynh chép file nhạc (.mp3) vào thư mục: <b>${folder}</b></small>`}</div></div>
+      <div class="sheet">${sheet}
+        <div class="kpop">🎤 <b>Nhạc K-pop (BLACKPINK…)</b>: game không tự chép bài hay lời có bản quyền. Phụ huynh có file nhạc thì chép vào thư mục nhạc ở trên (lời bài hát để file .txt cùng tên) là con nghe được ở đây. Hoặc nghe bản chính thức: <button data-a="kpop">Mở kênh BLACKPINK</button></div></div></div></div>`;
   }
 }

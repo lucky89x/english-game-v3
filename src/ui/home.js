@@ -16,22 +16,52 @@ body.inroom #homewin { background:transparent; justify-content:flex-end; } body.
 `;
 
 export class HomePanel {
-  /** api: { onClose() } */
+  /** api: { onClose(), profile(), today(), changed(), sfx(name), track(ev) } */
   constructor(api) {
     this.api = api; const st = document.createElement('style'); st.textContent = CSS; document.head.appendChild(st);
     this.el = document.createElement('div'); this.el.id = 'homewin'; this.el.className = 'hidden'; document.body.appendChild(this.el);
-    this.el.addEventListener('click', (e) => { const b = e.target.closest('button'); if ((b && b.dataset.a === 'close') || e.target === this.el) this.close(); });
+    this.el.addEventListener('click', (e) => {
+      const b = e.target.closest('button'); if ((b && b.dataset.a === 'close') || e.target === this.el) { this.close(); return; }
+      if (b && b.dataset.a === 'quiz') this.startQuiz();
+      if (b && b.dataset.a === 'ans') this.answer(Number(b.dataset.v));
+    });
   }
   get open() { return !this.el.classList.contains('hidden'); }
   /** owner: the profile whose home it is; mine: the child playing now owns it (a visitor only looks). */
-  show(owner, mine) {
+  show(owner, mine) { this.owner = owner; this.mine = mine; this.quiz = null; this.paint(); this.el.classList.remove('hidden'); }
+  paint() {
+    const owner = this.owner, mine = this.mine;
     const have = home(owner).items, row = (slot) => Object.entries(ITEMS).filter(([, it]) => it.slot === slot)
       .map(([id, it]) => `<div class="it ${have.includes(id) ? '' : 'no'}"><b>${it.en}</b>${it.vi}${have.includes(id) ? ' ✔' : `<br><small>${it.cost} ● · ${SHOP[it.seller] || ''}</small>`}</div>`).join('');
     const n = have.length, total = Object.values(ITEMS).filter((it) => it.slot === 'home' || it.slot === 'yard').length;
     this.el.innerHTML = `<div class="book"><header><span style="font-size:28px">🏠</span><h2>${mine ? 'My home' : `${owner.name}'s home`} · Nhà của ${owner.name}</h2><button data-a="close">✕</button></header>
       <div class="note">${mine ? 'Nhà của con. Mua đồ ở cửa hàng nội thất (phía Tây, cạnh nhà), quầy nhạc cụ của Anna; đồ mua về tự đặt vào nhà hoặc sân.' : `Con đang thăm nhà của ${owner.name}. Chỉ ${owner.name} mới mua được đồ cho nhà này.`} (${n}/${total})</div>
+      ${this.quizBox(mine)}
       <h3>In the house · Trong nhà</h3><div class="grid">${row('home')}</div><h3>In the yard · Ngoài sân</h3><div class="grid">${row('yard')}</div></div>`;
-    this.el.classList.remove('hidden');
+  }
+  quizBox(mine) {
+    if (!mine) return '';
+    const q = this.quiz, p = this.api.profile(), doneToday = p.homeQuiz === this.api.today();
+    if (!q) return `<div class="note">📜 <b>Home words</b>: gọi tên 3 đồ trong nhà bằng tiếng Anh, mỗi câu đúng +5 vàng (mỗi ngày một lần). ${doneToday ? '✔ Hôm nay con làm rồi.' : '<button data-a="quiz">Bắt đầu</button>'}</div>`;
+    if (q.done) return `<div class="note">📜 ${q.last || ''} ${q.done}</div>`;
+    const it = ITEMS[q.list[q.n]];
+    return `<div class="note">📜 ${q.last || ''} <b>${q.n + 1}/3</b> · "${it.vi}" in English is…<br>${q.opts.map((id, i) => `<button data-a="ans" data-v="${i}">${i + 1}. ${ITEMS[id].en}</button>`).join(' ')}</div>`;
+  }
+  /** Home word quiz (18/11: "the houses have no quests inside"): once a day, name three things for a home in English. */
+  startQuiz() {
+    const ids = Object.keys(ITEMS).filter((id) => ITEMS[id].slot === 'home' || ITEMS[id].slot === 'yard').sort(() => Math.random() - 0.5);
+    this.quiz = { list: ids.slice(0, 3), n: 0, right: 0, pool: ids }; this.ask();
+  }
+  ask() {
+    const q = this.quiz, id = q.list[q.n], opts = [id, ...q.pool.filter((x) => x !== id).sort(() => Math.random() - 0.5).slice(0, 2)].sort(() => Math.random() - 0.5);
+    q.opts = opts; this.paint();
+  }
+  answer(i) {
+    const q = this.quiz, ok = q.opts[i] === q.list[q.n]; if (ok) q.right += 1; this.api.sfx(ok ? 'correct' : 'wrong');
+    q.last = ok ? 'Right!' : `It's "${ITEMS[q.list[q.n]].en}".`; q.n += 1;
+    if (q.n < q.list.length) { this.ask(); return; }
+    const p = this.api.profile(), gold = q.right * 5; p.stats.gold += gold; p.homeQuiz = this.api.today(); this.api.track('shopquest'); this.api.changed();
+    q.done = `${q.right}/3 đúng · +${gold} vàng. Mai làm tiếp nhé!`; this.paint();
   }
   close() { if (!this.open) return; this.el.classList.add('hidden'); if (this.api.onClose) this.api.onClose(); }
   key(code) { if (this.open && (code === 'Escape' || code === 'KeyE')) { this.close(); return true; } return this.open; }

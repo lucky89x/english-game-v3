@@ -37,6 +37,21 @@ ipcMain.on('eq-write-save', (e, text) => {
   } catch (err) { console.warn('save file failed', err.message); }
 });
 
+// The family's own music (18/11): audio files the parent puts in Documents/EnglishQuest/music, with the words in a .txt
+// file of the same name if they have them. The game ships no songs or lyrics of its own beyond its free ones.
+const musicDir = () => path.join(saveDir(), 'music');
+const AUDIO = /\.(mp3|m4a|ogg|wav|aac)$/i;
+ipcMain.on('eq-music-list', (e) => {
+  try {
+    const dir = musicDir(); fs.mkdirSync(dir, { recursive: true });
+    e.returnValue = fs.readdirSync(dir).filter((f) => AUDIO.test(f)).sort().map((f) => {
+      const base = f.replace(AUDIO, ''), txt = path.join(dir, base + '.txt');
+      return { title: base, url: 'app://music/' + encodeURIComponent(f), lyrics: fs.existsSync(txt) ? fs.readFileSync(txt, 'utf8') : '' };
+    });
+  } catch { e.returnValue = []; }
+});
+ipcMain.on('eq-music-folder', (e) => { e.returnValue = musicDir(); });
+
 function createWindow() {
   const win = new BrowserWindow({
     width: 1600, height: 900, minWidth: 960, minHeight: 600, backgroundColor: '#7ec3f5', title: 'English Quest', autoHideMenuBar: true,
@@ -56,9 +71,9 @@ function createWindow() {
 
 app.whenReady().then(() => {
   protocol.handle('app', (req) => {
-    const rel = decodeURIComponent(new URL(req.url).pathname).replace(/^\/+/, '') || 'index.html';
-    const file = path.normalize(path.join(ROOT, rel));
-    if (!file.startsWith(ROOT)) return new Response('Not found', { status: 404 });
+    const u = new URL(req.url), rel = decodeURIComponent(u.pathname).replace(/^\/+/, '') || 'index.html';
+    const base = u.host === 'music' ? musicDir() : ROOT, file = path.normalize(path.join(base, rel));      // app://music/… is the family's music folder
+    if (!file.startsWith(base)) return new Response('Not found', { status: 404 });
     return net.fetch(pathToFileURL(file).toString());
   });
   createWindow();

@@ -118,3 +118,9 @@ py -m http.server 8000
 ## Phím chơi
 WASD đi · Shift chạy · Space nhảy · E nói chuyện/nhặt · J đánh · K né · Q ăn bánh · I túi đồ · B sổ từ · N sổ nhiệm vụ · F2 admin · bấm chuột xuống đất để đi · H gợi ý · chuột trái kéo để xoay · lăn chuột để zoom · bấm bản đồ nhỏ để tự đi.
 Phụ huynh: nút **⚙** góc dưới trái → ô **Unit** để chọn Unit con đang học trên lớp.
+
+
+## Nghe nhạc của gia đình trong phòng nhạc (18/11)
+- Chép file nhạc `.mp3` vào thư mục `Documents\EnglishQuest\music` (game tạo sẵn khi mở phòng nhạc của Anna).
+- Muốn hiện lời: thêm file `.txt` cùng tên với file nhạc.
+- Mỗi lần nghe trọn bài tốn 10 vàng của nhân vật.

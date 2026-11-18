@@ -6,4 +6,6 @@ contextBridge.exposeInMainWorld('eqDesktop', {
   readSave: () => ipcRenderer.sendSync('eq-read-save'),
   writeSave: (text) => ipcRenderer.send('eq-write-save', String(text)),
   saveFolder: () => ipcRenderer.sendSync('eq-save-folder'),
+  musicList: () => ipcRenderer.sendSync('eq-music-list'),
+  musicFolder: () => ipcRenderer.sendSync('eq-music-folder'),
 });
