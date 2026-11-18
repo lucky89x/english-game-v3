@@ -130,7 +130,7 @@ test('village: landmarks, spawn and the village bridge are walkable; forest gate
     assert.ok(L.inWater(L.riverX(20), 20));
     for (const l of L.LANDMARKS.filter((x) => x.spot)) assert.ok(L.walkable(l.spot[0], l.spot[1]), l.id);
     const ex = L.EXITS[0];
-    for (const [x, z] of [[ex.x, ex.z + 1.5], [40, 8], [-20, 30], [15.5, 15]]) assert.ok(findPath(L.SPAWN.x, L.SPAWN.z, x, z), 'route to ' + x + ',' + z);
+    for (const [x, z] of [[ex.x, ex.z + 1.5], [40, 8], [-15.5, 30], [15.5, 15]]) assert.ok(findPath(L.SPAWN.x, L.SPAWN.z, x, z), 'route to ' + x + ',' + z);
     assert.equal(findPath(L.SPAWN.x, L.SPAWN.z, 0, -25.5), null, 'inside the hall');
     assert.ok(L.TREES.every((t) => Math.hypot(t.x, t.z - 4) > 9 && L.pathDistance(t.x, t.z) > 1.2 || Math.hypot(t.x, t.z) > L.PLAY_RADIUS));
   } finally { L.setRegion('forest'); }

@@ -5,7 +5,7 @@ const riverX = (z) => 22 + 3 * Math.sin(z * 0.08);
 const bw = (b) => [b.x - BRIDGE_LEN / 2 - 0.8, b.z], be = (b) => [b.x + BRIDGE_LEN / 2 + 0.8, b.z];
 export const GATE = { x: -30, z: -44 };
 /** D1: things that fill the empty south fields (windmill, pond, training dummies, campsite). */
-export const SOUTH = { mill: [-30, 41], pond: [-6, 50], dummies: [[13, 45], [15, 48], [6, 52]], tent: [-15, 53], fire: [-11.5, 50] };
+export const SOUTH = { mill: [-30, 41], pond: [-6, 50], dummies: [[13, 45], [15, 48], [6, 52]], tent: [-17, 54.5], fire: [-11.5, 50] };
 export default makeRegion({
   name: 'village', title: 'Starter Village', size: 140, playRadius: 62, seed: 4242, trees: 230, rocks: 40, roughness: 0.3, treeMix: [0.3, 0.85],
   riverX, riverHalf: () => 3.4, riverStart: -52, waterfall: true,
@@ -56,7 +56,7 @@ export default makeRegion({
     P(2.2, [-17.4, -4], [-12, -3.6]), P(2.2, [-17.8, 12.5], [-11.4, 12.2]),     // garden paths to the two moved houses
     P(2.2, [-12.5, -1.5], [-19, 2.5], [-30, 4]),                              // lane to Max's blocks yard
   ],
-  lateSolids: [{ x: 0, z: 4, r: 1.9 }],                                      // the fountain
+  lateSolids: [{ x: 0, z: 4, r: 3.8 }],                                      // the plaza fountain (model r 3.7)
   // 18/11 ("the houses are too close together"): Lily's and Anna's houses move further west, each with a garden path
   lateMove: [{ from: [-14.5, -8], to: [-22, -4] }, { from: [-15, 9], to: [-22.5, 12.5] }],
   lateClear: (x, z) => x > -36 && x < 16 && z > 37 && z < 57,
@@ -69,9 +69,10 @@ export default makeRegion({
     { x: -8.6, z: 18.2, r: 1.5 }, { x: -8.6, z: 20.8, r: 1.5 },               // Ben's stall
     { x: GATE.x - 3.4, z: GATE.z, r: 0.9 }, { x: GATE.x + 3.4, z: GATE.z, r: 0.9 },
     ...[[36, 0], [42, 3], [46, 9], [38, 20], [45, 18], [34, 13]].map(([x, z]) => ({ x, z, r: 0.6 })),   // orchard trees
-    { x: -27, z: 27, r: 1.0 },                                                // scarecrow
-    { x: SOUTH.mill[0], z: SOUTH.mill[1], r: 2.4 }, { x: SOUTH.pond[0], z: SOUTH.pond[1], r: 3.6 }, { x: SOUTH.tent[0], z: SOUTH.tent[1], r: 1.7 },
-    { x: SOUTH.fire[0], z: SOUTH.fire[1], r: 0.6 }, ...SOUTH.dummies.map(([x, z]) => ({ x, z, r: 0.45 })),
+    { x: -31.5, z: 28.5, r: 1.0 },                                            // scarecrow
+    ...[-27.6, -23.2, -18.8].flatMap((x) => [26.5, 30.2, 33.9].map((z) => ({ x, z, r: 1.6 }))),      // the nine garden beds
+    { x: SOUTH.mill[0], z: SOUTH.mill[1], r: 2.4 }, { x: SOUTH.pond[0], z: SOUTH.pond[1], r: 4.1 }, { x: SOUTH.tent[0], z: SOUTH.tent[1], r: 1.7 },
+    { x: SOUTH.fire[0], z: SOUTH.fire[1], r: 1.7 }, ...SOUTH.dummies.map(([x, z]) => ({ x, z, r: 0.45 })),
   ],
 });
 export const ORCHARD_TREES = [[36, 0], [42, 3], [46, 9], [38, 20], [45, 18], [34, 13]];

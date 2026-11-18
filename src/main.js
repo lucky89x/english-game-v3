@@ -431,7 +431,10 @@ function openShop(who, seller, hello) {
 /** Opening scene (feedback 17/11): a new child arrives by boat down the river and steps onto the village dock.
  *  E / Space skips it. Not shown to automated tests unless the address has ?intro=1. */
 let intro = null;
-function makeBoat() {
+function makeBoat(model = null) {
+  if (model) {      // the boat made in Blender (prop_boat_v01): deck 0.37 above its bottom, so lower it to sit like the old hull
+    const g = new THREE.Group(); model.scale.setScalar(1.1); model.position.y = -0.67; model.traverse((o) => { if (o.isMesh) o.castShadow = true; }); g.add(model); return g;
+  }
   const g = new THREE.Group(), wood = new THREE.MeshStandardMaterial({ color: 0x9a5a30, roughness: 0.8, side: THREE.DoubleSide }), light = new THREE.MeshStandardMaterial({ color: 0xc89058, roughness: 0.85 });
   const hull = new THREE.Mesh(new THREE.SphereGeometry(1, 16, 8, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), wood); hull.scale.set(0.85, 0.5, 1.9); g.add(hull);
   const deck = new THREE.Mesh(new THREE.CircleGeometry(1, 20), light); deck.rotation.x = -Math.PI / 2; deck.scale.set(0.8, 1.8, 1); deck.position.y = -0.3; g.add(deck);
@@ -442,8 +445,8 @@ function makeBoat() {
 }
 function startIntro() {
   if (navigator.webdriver && !/[?&]intro=1/.test(location.search)) { profile.flags.arrived = true; return; }
-  ui.dialogue(OPENING(profile.name), () => {          // the story first, then the boat ride (18/11)
-    if (!intro) { intro = { boat: makeBoat(), t: 0, len: 9 }; scene.add(intro.boat); }
+  ui.dialogue(OPENING(profile.name), async () => {          // the story first, then the boat ride (18/11)
+    if (!intro) { let m = null; try { m = (await gltf('prop_boat_v01')).scene.clone(true); } catch (e) { console.warn('boat model', e); } intro = { boat: makeBoat(m), t: 0, len: 9 }; scene.add(intro.boat); }
     intro.t = 0; intro.boat.visible = true; intro.active = true;
     ui.toast('Ngọc đang tới làng bằng thuyền…');
   });

@@ -39,29 +39,30 @@ export function jarRow() {
   }
   return g;
 }
-export function dock() {
+export function dock(bare = false) {
   const g = new THREE.Group(), wood = new THREE.MeshStandardMaterial({ color: 0xa8743f, roughness: 0.9 }), dark = new THREE.MeshStandardMaterial({ color: 0x6b4024, roughness: 0.9 });
   const x0 = L.riverX(18) - 3.4;
   const deck = new THREE.Mesh(new THREE.BoxGeometry(4.6, 0.16, 2.6), wood); deck.position.set(x0 - 0.2, 0.12, 18); deck.receiveShadow = true; deck.castShadow = true; g.add(deck);
   for (const [dx, dz] of [[-2, -1.1], [-2, 1.1], [1.9, -1.1], [1.9, 1.1]]) { const p = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 1.5, 7), dark); p.position.set(x0 - 0.2 + dx, -0.2, 18 + dz); g.add(p); }
-  const hull = new THREE.Mesh(new THREE.SphereGeometry(1, 12, 8, 0, 6.283, Math.PI / 2, Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0x9a5a30, roughness: 0.8, side: THREE.DoubleSide })); hull.scale.set(0.7, 0.5, 1.7); hull.position.set(x0 + 3.2, L.WATER_LEVEL + 0.32, 20.2); hull.castShadow = true; g.add(hull);
+  const hull = new THREE.Mesh(new THREE.SphereGeometry(1, 12, 8, 0, 6.283, Math.PI / 2, Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0x9a5a30, roughness: 0.8, side: THREE.DoubleSide })); hull.scale.set(0.7, 0.5, 1.7); hull.position.set(x0 + 3.2, L.WATER_LEVEL + 0.32, 20.2); hull.castShadow = true; if (!bare) g.add(hull);
   const seat = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.07, 0.3), wood); seat.position.set(x0 + 3.2, L.WATER_LEVEL + 0.2, 20.2); g.add(seat);
   for (const [dx, dz] of [[-1.4, 2.0], [-0.8, 2.3]]) { const b = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.32, 0.9, 10), dark); b.position.set(x0 + dx, L.groundHeight(x0 + dx, 18 + dz) + 0.45, 18 + dz); b.castShadow = true; g.add(b); }
   return g;
 }
-export function farm() {
+const SCARE = [-31.5, 28.5];      // scarecrow, west of the garden beds
+export function farm(bare = false) {
   const g = new THREE.Group(), soil = new THREE.MeshStandardMaterial({ color: 0x7a4f2c, roughness: 1 }), wood = new THREE.MeshStandardMaterial({ color: 0x9a6436, roughness: 0.85 });
   const crops = [[0x5fb84a, 0.22], [0xf08a3c, 0.2], [0x8fd05a, 0.28], [0xe2c04a, 0.24]];
-  for (let r = 0; r < 4; r++) {
+  for (let r = 0; r < 4 && !bare; r++) {
     const z = 25.5 + r * 2.9, y = L.groundHeight(-24, z);
     const bed = new THREE.Mesh(new THREE.BoxGeometry(11, 0.24, 1.9), soil); bed.position.set(-24, y + 0.06, z); bed.receiveShadow = true; g.add(bed);
     for (let i = 0; i < 12; i++) { const c = new THREE.Mesh(new THREE.SphereGeometry(crops[r][1], 7, 5), new THREE.MeshStandardMaterial({ color: crops[r][0], roughness: 0.8 })); c.position.set(-29 + i * 0.9, y + 0.3, z + (i % 2 ? 0.3 : -0.3)); c.scale.y = r === 3 ? 2.2 : 0.9; g.add(c); }
   }
-  const sy = L.groundHeight(-27, 27), pole = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 2.4, 6), wood); pole.position.set(-27, sy + 1.2, 27); g.add(pole);
-  const arms = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 1.6, 6), wood); arms.rotation.z = Math.PI / 2; arms.position.set(-27, sy + 1.7, 27); g.add(arms);
-  const shirt = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.8, 0.3), new THREE.MeshStandardMaterial({ color: 0x3d6fc6, roughness: 0.9 })); shirt.position.set(-27, sy + 1.5, 27); shirt.castShadow = true; g.add(shirt);
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.28, 10, 8), new THREE.MeshStandardMaterial({ color: 0xf1d9a0 })); head.position.set(-27, sy + 2.2, 27); g.add(head);
-  const hat = new THREE.Mesh(new THREE.ConeGeometry(0.5, 0.4, 10), new THREE.MeshStandardMaterial({ color: 0xd9b25a })); hat.position.set(-27, sy + 2.55, 27); g.add(hat);
+  const sy = L.groundHeight(SCARE[0], SCARE[1]), pole = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 2.4, 6), wood); pole.position.set(SCARE[0], sy + 1.2, SCARE[1]); g.add(pole);
+  const arms = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 1.6, 6), wood); arms.rotation.z = Math.PI / 2; arms.position.set(SCARE[0], sy + 1.7, SCARE[1]); g.add(arms);
+  const shirt = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.8, 0.3), new THREE.MeshStandardMaterial({ color: 0x3d6fc6, roughness: 0.9 })); shirt.position.set(SCARE[0], sy + 1.5, SCARE[1]); shirt.castShadow = true; g.add(shirt);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.28, 10, 8), new THREE.MeshStandardMaterial({ color: 0xf1d9a0 })); head.position.set(SCARE[0], sy + 2.2, SCARE[1]); g.add(head);
+  const hat = new THREE.Mesh(new THREE.ConeGeometry(0.5, 0.4, 10), new THREE.MeshStandardMaterial({ color: 0xd9b25a })); hat.position.set(SCARE[0], sy + 2.55, SCARE[1]); g.add(hat);
   return g;
 }
 /** Orchard (redone 17/11: "trees too low, cannot tell the fruit"): tall round fruit trees, each with one kind of big,
@@ -70,7 +71,9 @@ export const FRUITS = [
   { en: 'Apple', color: 0xe02a2a, shape: 'apple' }, { en: 'Orange', color: 0xff8a1a, shape: 'round' }, { en: 'Pear', color: 0xb8d43a, shape: 'pear' },
   { en: 'Lemon', color: 0xffe03a, shape: 'lemon' }, { en: 'Peach', color: 0xffa07a, shape: 'round' }, { en: 'Plum', color: 0x7a3a9a, shape: 'round' },
 ];
-function fruitMesh(f, s = 1) {
+function fruitMesh(f, s = 1, models = null) {
+  const fm = models && models[f.en];      // apple and orange made in Blender
+  if (fm) { const w = new THREE.Group(), c = fm.clone(true); c.scale.setScalar(s * 1.4); c.position.y = -0.15 * s * 1.4; w.add(c); return w; }
   const g = new THREE.Group(), m = new THREE.MeshStandardMaterial({ color: f.color, roughness: 0.45 }), stemM = new THREE.MeshStandardMaterial({ color: 0x5a3a1a }), leafM = new THREE.MeshStandardMaterial({ color: 0x3f9a3a });
   const body = new THREE.Mesh(new THREE.SphereGeometry(0.22 * s, 12, 9), m);
   if (f.shape === 'apple') body.scale.set(1.05, 0.92, 1.05);
@@ -81,7 +84,7 @@ function fruitMesh(f, s = 1) {
   const leaf = new THREE.Mesh(new THREE.SphereGeometry(0.07 * s, 6, 4), leafM); leaf.scale.set(1.4, 0.3, 0.7); leaf.position.set(0.07 * s, (f.shape === 'pear' ? 0.29 : 0.24) * s, 0); leaf.rotation.z = -0.4; g.add(leaf);
   return g;
 }
-export function orchard(list) {
+export function orchard(list, fruitModels = null) {
   const g = new THREE.Group(), still = new THREE.Group(), H = 3.3, R = 2.25;
   const geo = leafyGeo(0x7a4a26, [0x3f9a3a, 0x5fbe3f, 0x8fd04a], { h: H, r: R, clumps: 12, trunkR: 0.32, seed: 6 }), mat = windy(std(), 0.008);
   const wood = new THREE.MeshStandardMaterial({ color: 0xa8743f, roughness: 0.9 });
@@ -91,12 +94,12 @@ export function orchard(list) {
     const cy = y + H + R * 0.55;
     for (let i = 0; i < 16; i++) {           // fruit hanging all round the lower half of the crown, big enough to read from afar
       const a = i * 2.399 + k, e = -0.15 - 0.5 * ((i * 7) % 5) / 5, rr = R * 0.92;
-      const fr = fruitMesh(f, 1.15); fr.position.set(x + Math.cos(a) * rr * Math.cos(e), cy + Math.sin(e) * rr, z + Math.sin(a) * rr * Math.cos(e)); fr.rotation.y = a; still.add(fr);
+      const fr = fruitMesh(f, 1.15, fruitModels); fr.position.set(x + Math.cos(a) * rr * Math.cos(e), cy + Math.sin(e) * rr, z + Math.sin(a) * rr * Math.cos(e)); fr.rotation.y = a; still.add(fr);
     }
-    for (let i = 0; i < 3; i++) { const fr = fruitMesh(f); const a = k + i * 2.1; fr.position.set(x + Math.cos(a) * 1.4, y + 0.2, z + Math.sin(a) * 1.4); fr.rotation.z = 1.2; still.add(fr); }   // fallen fruit
+    for (let i = 0; i < 3; i++) { const fr = fruitMesh(f, 1, fruitModels); const a = k + i * 2.1; fr.position.set(x + Math.cos(a) * 1.4, y + 0.2, z + Math.sin(a) * 1.4); fr.rotation.z = 1.2; still.add(fr); }   // fallen fruit
     // crate of the same fruit, by the trunk on the side of the path
     const cx = x - 1.6, cz = z + 1.3, crate = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.5, 0.7), wood); crate.position.set(cx, L.groundHeight(cx, cz) + 0.25, cz); still.add(crate);
-    for (let i = 0; i < 6; i++) { const fr = fruitMesh(f, 0.9); fr.position.set(cx - 0.3 + (i % 3) * 0.3, L.groundHeight(cx, cz) + 0.55, cz - 0.15 + Math.floor(i / 3) * 0.3); still.add(fr); }
+    for (let i = 0; i < 6; i++) { const fr = fruitMesh(f, 0.9, fruitModels); fr.position.set(cx - 0.3 + (i % 3) * 0.3, L.groundHeight(cx, cz) + 0.55, cz - 0.15 + Math.floor(i / 3) * 0.3); still.add(fr); }
   });
   g.add(bake(still));
   list.forEach(([x, z], k) => { const sx = x - 1.6, sz = z + 1.3, b = label(`${FRUITS[k % FRUITS.length].en} tree`, { size: 26, scale: 0.7 }); b.position.set(sx, L.groundHeight(sx, sz) + 1.35, sz); g.add(b); });
@@ -117,6 +120,8 @@ export function fountain(x, z) {
   g.position.set(x, L.groundHeight(x, z), z); return g;
 }
 /** x, height above the ground, z, which way the board faces, name, small line, size (1 = 2.7 m wide). */
+/** The nine garden beds of the farm: x, z. */
+export const FARM_BEDS = [-27.6, -23.2, -18.8].flatMap((x) => [26.5, 30.2, 33.9].map((z) => [x, z]));
 export const HOUSE_SIGNS = [
   [7.0, 4.9, -8, -Math.PI / 2, 'VILLAGE SHOP', 'Weapons · Armour · Bread'],
   [0, 6.3, -18.2, 0, 'VILLAGE HALL', "Mr Tom's office", 1.5],
@@ -155,21 +160,37 @@ export async function villageExtras(add, loadModel, shadowed) {
   await place('bld_house_blue_v02', -22.5, 12.5, Math.PI / 2, 1.3);
   const gate = await place('prop_forest_gate_v02', GATE.x, GATE.z, 0, 1); gate.position.y += 0.05;
   const title = label('Forest of Memories\nRừng Ký Ức', { size: 28 }); title.position.set(GATE.x, L.groundHeight(GATE.x, GATE.z) + 4.4, GATE.z); add(title);
-  const still = new THREE.Group(); for (const g of [marketStall(), dock(), farm()]) still.add(g);      // the well in the square was removed (17/11): it blocked the main road
-  add(jarRow()); add(orchard(ORCHARD_TREES));
+  // props made in Blender (assets/models/prop_*); if one fails to load the code-drawn version stays
+  const tryModel = async (name) => { try { return await loadModel(name); } catch (e) { console.warn('model', name, e); return null; } };
+  const setup = (m, x, z, rot, sc, dy = 0) => { m.position.set(x, L.groundHeight(x, z) + dy, z); m.rotation.y = rot; m.scale.setScalar(sc); m.traverse((c) => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } }); return m; };
+  const glow = (m, names, lo, hi, speed) => {      // water and flames: the emissive colour breathes, so the surface shimmers
+    const mats = []; m.traverse((c) => { if (c.isMesh) for (const x of [].concat(c.material)) if (names.some((n) => x.name.startsWith(n)) && !mats.includes(x)) { if (!x.emissive || x.emissive.getHex() === 0) { x.emissive = x.color.clone().multiplyScalar(0.6); } mats.push(x); } });
+    const o = new THREE.Group(); o.userData.update = (t) => { for (const [i, x] of mats.entries()) x.emissiveIntensity = lo + (hi - lo) * (0.5 + 0.5 * Math.sin(t * speed + i * 1.7)); }; return o;
+  };
+  const [gardenM, fountainM, pondM, fireM, boatM, appleM, orangeM] = await Promise.all(['prop_vegetable_garden_v01', 'prop_plaza_fountain_v01', 'prop_pond_v01', 'prop_campfire_v01', 'prop_boat_v01', 'prop_apple_v01', 'prop_orange_v01'].map(tryModel));
+  const still = new THREE.Group(); for (const g of [marketStall(), dock(!!boatM), farm(!!gardenM)]) still.add(g);      // the well in the square was removed (17/11): it blocked the main road
+  add(jarRow()); add(orchard(ORCHARD_TREES, appleM && orangeM ? { Apple: appleM, Orange: orangeM } : null));
+  if (boatM) { const bg = new THREE.Group(); const x0 = L.riverX(18) - 3.4; bg.add(setup(boatM, x0 + 3.2, 20.2, 0.25, 0.9, 0)); bg.children[0].position.y = L.WATER_LEVEL - 0.3; add(bake(bg)); }
+  if (gardenM) {      // nine raised vegetable beds on the farm, three rows of three
+    const gg = new THREE.Group();
+    for (const [x, z] of FARM_BEDS) gg.add(setup(gardenM.clone(true), x, z, 0, 1.25, -0.02));
+    add(bake(gg));
+  }
   const stallName = label("Ben's Word Jars", { size: 28, scale: 0.8 }); stallName.position.set(-8.4, L.groundHeight(-8.6, 19.5) + 3.5, 19.5); add(stallName);
   for (const [x, z] of [[3.6, -12], [-3.6, -2], [3.8, 10], [-4, 16], [2.6, 27], [6, 8.2], [-8, 1.5], [-20, -10], [-26, -26], [32, 9], [42.6, 22], [8, 38]]) still.add(lampPost(x, z));
   signs(add, [[2.9, 14.5, '← Market\nFarm ↓'], [30.5, 9.5, 'Orchard']]);
   // Quest Square: fountain in the middle, a signpost where each road leaves (17/11)
-  add(fountain(0, 4));
+  if (fountainM) { setup(fountainM, 0, 4, 0, 1); const sh = glow(fountainM, ['water', 'water_spray'], 0.25, 0.7, 2.2); add(bake(fountainM)); add(sh); } else add(fountain(0, 4));
   signs(add, [[-3.2, -4.6, '↑ Village Hall · Shop'], [8.6, 8.8, 'Bridge · Dock →\nOrchard · Wild Meadow ⚔'], [-9.6, -4.2, '← Forest Gate'], [-9.4, 9.6, "← Anna's · Lily's houses\nFarm ↓"]]);
-  const sq = label('QUEST SQUARE', { size: 30, scale: 0.9 }); sq.position.set(0, L.groundHeight(0, 4) + 3.3, 4); add(sq);
+  const sq = label('QUEST SQUARE', { size: 30, scale: 0.9 }); sq.position.set(0, L.groundHeight(0, 4) + (fountainM ? 6.9 : 3.3), 4); add(sq);
   for (const [kind, x, z, rot, sc] of VILLAGE_PROPS) still.add(prop(kind, x, z, rot, sc));
   add(bake(still));
   // hanging signboards over the doors (feedback 17/11): the name of each house in big letters, what is inside below
   const boards = new THREE.Group(); for (const [x, y, z, yaw, name, sub, size] of HOUSE_SIGNS) boards.add(hangSign(name, sub, x, L.groundHeight(x, z) + y, z, yaw, size));
   add(bake(boards));          // wood and iron merged into one mesh; only the painted faces stay apart
-  add(windmill()); add(pond()); add(dummies()); add(campsite());           // D1: the south fields
+  add(windmill()); add(dummies()); add(campsite(!!fireM));
+  if (pondM) { const [px, pz] = SOUTH.pond; setup(pondM, px, pz, 0, 1); const sh = glow(pondM, ['water'], 0.05, 0.3, 1.4); add(bake(pondM)); add(sh); } else add(pond());
+  if (fireM) { const [fx, fz] = SOUTH.fire; setup(fireM, fx, fz, 0.4, 1); const sh = glow(fireM, ['flame'], 1.2, 3.2, 12); add(bake(fireM)); add(sh); }           // D1: the south fields
   signs(add, [[-2.5, 37.5, '← Windmill · Campsite\nTraining Yard →']]);
   add(bunting(-5.2, -3.2, 5.2, -3.2)); add(bunting(-6.5, 10.5, -6.5, 15.2, 3.0)); add(bunting(5.4, 9.6, 5.4, 2.2, 3.0));
   for (const [x, y, z] of [[4.0, 14.2, -24.3], [14.6, 9.3, -4.6], [-24, 7.4, -0.9], [-24.8, 10.6, 15.7]]) add(smoke(x, L.groundHeight(x, z) + y, z));
@@ -269,19 +290,19 @@ export function dummies() {
   return bake(g);
 }
 /** Campsite: striped tent, log seats and a crackling fire that glows at night-ish hours and makes sparks. */
-export function campsite() {
+export function campsite(bare = false) {
   const [tx, tz] = SOUTH.tent, [fx, fz] = SOUTH.fire, g = new THREE.Group(), still = new THREE.Group();
   const tent = new THREE.Mesh(new THREE.ConeGeometry(1.9, 2.4, 4, 1, true), M(0xf0a03c, { side: THREE.DoubleSide })); tent.rotation.y = Math.PI / 4; tent.position.set(tx, L.groundHeight(tx, tz) + 1.2, tz); still.add(tent);
   const flap = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 1.4), M(0x7a3a1a, { side: THREE.DoubleSide })); flap.position.set(tx, L.groundHeight(tx, tz) + 0.7, tz + 1.3); flap.rotation.x = -0.5; still.add(flap);
   const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.6, 5), M(0x5f3519)); pole.position.set(tx, L.groundHeight(tx, tz) + 2.6, tz); still.add(pole);
   const fy = L.groundHeight(fx, fz), wood = M(0x6a4020), stone = M(0x9b99a8, { flatShading: true });
-  for (let k = 0; k < 8; k++) { const a = k / 8 * Math.PI * 2, r = new THREE.Mesh(new THREE.IcosahedronGeometry(0.16, 0), stone); r.position.set(fx + Math.cos(a) * 0.55, fy + 0.08, fz + Math.sin(a) * 0.55); still.add(r); }
-  for (let k = 0; k < 3; k++) { const l = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.8, 6), wood); l.rotation.z = Math.PI / 2; l.rotation.y = k * 1.05; l.position.set(fx, fy + 0.12, fz); still.add(l); }
-  for (const [dx, dz, ry] of [[1.7, 0.3, 0.2], [-0.4, 1.7, 1.6]]) { const seat = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 1.3, 8), wood); seat.rotation.z = Math.PI / 2; seat.rotation.y = ry; seat.position.set(fx + dx, fy + 0.22, fz + dz); still.add(seat); }
+  if (!bare) for (let k = 0; k < 8; k++) { const a = k / 8 * Math.PI * 2, r = new THREE.Mesh(new THREE.IcosahedronGeometry(0.16, 0), stone); r.position.set(fx + Math.cos(a) * 0.55, fy + 0.08, fz + Math.sin(a) * 0.55); still.add(r); }
+  if (!bare) for (let k = 0; k < 3; k++) { const l = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.8, 6), wood); l.rotation.z = Math.PI / 2; l.rotation.y = k * 1.05; l.position.set(fx, fy + 0.12, fz); still.add(l); }
+  if (!bare) for (const [dx, dz, ry] of [[1.7, 0.3, 0.2], [-0.4, 1.7, 1.6]]) { const seat = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 1.3, 8), wood); seat.rotation.z = Math.PI / 2; seat.rotation.y = ry; seat.position.set(fx + dx, fy + 0.22, fz + dz); still.add(seat); }
   g.add(bake(still));
   const flame = new THREE.Mesh(new THREE.ConeGeometry(0.28, 0.75, 8), new THREE.MeshStandardMaterial({ color: 0xffb030, emissive: 0xff7a10, emissiveIntensity: 2.6, transparent: true, opacity: 0.92 }));
   flame.position.set(fx, fy + 0.5, fz); g.add(flame);
-  const inner = new THREE.Mesh(new THREE.ConeGeometry(0.15, 0.45, 6), new THREE.MeshStandardMaterial({ color: 0xfff0a0, emissive: 0xffe060, emissiveIntensity: 3 })); inner.position.set(fx, fy + 0.4, fz); g.add(inner);
+  const inner = new THREE.Mesh(new THREE.ConeGeometry(0.15, 0.45, 6), new THREE.MeshStandardMaterial({ color: 0xfff0a0, emissive: 0xffe060, emissiveIntensity: 3 })); inner.position.set(fx, fy + 0.4, fz); g.add(inner); flame.visible = inner.visible = !bare;
   const sparkGeo = new THREE.BufferGeometry(), N = 24, pos = new Float32Array(N * 3), seed = Array.from({ length: N }, (_, i) => i * 0.37);
   sparkGeo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
   const sparks = new THREE.Points(sparkGeo, new THREE.PointsMaterial({ color: 0xffb040, size: 0.09, transparent: true, opacity: 0.9, depthWrite: false })); sparks.userData.particles = true; sparks.frustumCulled = false; g.add(sparks);
