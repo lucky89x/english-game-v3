@@ -137,7 +137,7 @@ export class Wild {
     inner.updateMatrixWorld(true); const box = new THREE.Box3().setFromObject(inner); g.add(inner);
     const mixer = new THREE.AnimationMixer(inner), act = {}; for (const c of gltf.animations) act[c.name] = mixer.clipAction(c);
     const idle = act.Idle || Object.values(act)[0] || null, walk = act.Walk || idle; if (idle) idle.play();
-    return { g, mats, mixer, idle, walk, top: box.max.y, box };
+    return { g, mats, mixer, idle, walk, acts: act, top: box.max.y, box };
   }
   mobBars(g, top, thin) {
     const bar = new THREE.Sprite(new THREE.SpriteMaterial({ color: 0xe23a2a, depthTest: false })); bar.center.set(0, 0.5); bar.scale.set(1, thin ? 0.07 : 0.12, 1); bar.position.set(-0.5, top, 0); bar.renderOrder = 6; g.add(bar);
@@ -165,6 +165,29 @@ export class Wild {
     this.bosses.push(this.makeBoss(BOSS4, BOSS4_AT, eye, src.octopus));
     for (const m of this.mobs) if (m.region === 'harbor') { m.g.visible = this.region === 'harbor' && !m.boss; if (this.region === 'harbor') this.place(m); }
   }
+  /** Map 1 (batch 13, 19/11): swaps the code-built meadow and forest monsters and the three bosses for the Blender models.
+   *  load(kind) -> a loaded glTF or null; kinds are the monster keys (slime, red, golem, bat, shroom) and the boss ids (king, ancient, queen).
+   *  The health bar, the word shield and the position stay; a model that did not load leaves the old shapes. */
+  async addMap1(load) {
+    const src = {}; for (const k of ['slime', 'red', 'golem', 'bat', 'shroom', 'king', 'ancient', 'queen']) { try { src[k] = await load(k); } catch { src[k] = null; } }
+    for (const m of this.mobs) {
+      const gl = src[m.kind]; if (!gl || m.region === 'harbor' || m.mixer) continue;
+      const keep = new Set([m.bar, m.back, m.shield]); for (const c of [...m.g.children]) if (!keep.has(c)) c.removeFromParent();
+      const parts = this.glbBody(m.def, gl); m.g.add(parts.g); delete m.g.userData.wings;
+      const sz = parts.box.getSize(new THREE.Vector3()), c = parts.box.getCenter(new THREE.Vector3());
+      m.bar.position.y = m.back.position.y = parts.box.max.y + (m.boss ? 0.25 : 0.3);
+      if (m.shield) { m.shield.geometry.dispose(); m.shield.geometry = new THREE.IcosahedronGeometry(Math.max(sz.x, sz.z) * 0.55, 1); m.shield.position.y = c.y; }
+      Object.assign(m, { body: null, mats: parts.mats, mixer: parts.mixer, idle: parts.idle, walk: parts.walk, acts: parts.acts, cur: parts.idle });
+      if (parts.idle) parts.idle.time = (m.ph * 0.7) % parts.idle.getClip().duration;
+      m.lighted = undefined;
+    }
+  }
+  /** Plays a one-shot clip (Attack, Hit) over the idle and walk; a hit does not cut an attack short. */
+  cue(m, name) {
+    const a = m.acts && m.acts[name]; if (!a) return;
+    if (m.once && m.once.a !== a && m.once.t < 0.35 && name === 'Hit') return;
+    a.setLoop(THREE.LoopOnce, 1); a.clampWhenFinished = true; m.once = { a, t: 0 }; if (m.cur !== a) { const prev = m.cur; m.cur = a; a.reset().play(); if (prev) prev.crossFadeTo(a, 0.1, false); }
+  }
   /** Lights a monster up for a moment when it is hit (Blender ones: all their materials). */
   lit(m, on) {
     if (m.lighted === on) return; m.lighted = on;
@@ -188,7 +211,7 @@ export class Wild {
     let hits = 0; const atk = playerAtk(p);
     for (const m of this.mobs) if (!m.dead && this.here(m, p) && inArc(player.pos.x, player.pos.z, player.yaw, m.x, m.z, 2.4 + m.def.size * 0.3)) {
       if (m.shieldOn) { hits += 1; m.flash = 0.1; if (!this.shieldTold) { this.shieldTold = true; this.api.ui.toast('Word shield! Press E'); } continue; }
-      hits += 1; m.hp -= atk; m.flash = 0.18;
+      hits += 1; m.hp -= atk; m.flash = 0.18; this.cue(m, 'Hit');
       if (m.boss && shieldDue(m.hp, m.def.hp, m.broken)) { m.shieldOn = true; m.shield.visible = true; this.shieldTold = false; this.api.ui.toast('Word shield! Press E'); this.api.sfx('wrong'); }
       const dx = m.x - player.pos.x, dz = m.z - player.pos.z, d = Math.hypot(dx, dz) || 1, nx = m.x + dx / d * 0.9, nz = m.z + dz / d * 0.9; if (L.walkable(nx, nz, 0.5)) { m.x = nx; m.z = nz; }   // knock back
       if (m.hp <= 0) this.kill(m, p);
@@ -252,8 +275,9 @@ export class Wild {
       const nx = m.x + vx * m.def.speed * dt, nz = m.z + vz * m.def.speed * dt; if ((vx || vz) && L.walkable(nx, nz, 0.45)) { m.x = nx; m.z = nz; }
       let hop = Math.abs(Math.sin(this.t * (m.kind === 'golem' ? 3 : 5) + m.ph)) * (vx || vz ? 0.22 : 0.08);
       if (m.mixer) {          // Blender monsters walk and idle by their own clips; jellyfish float
-        const want = vx || vz ? m.walk : m.idle; if (want && m.cur !== want) { const prev = m.cur; m.cur = want; want.reset().play(); if (prev) prev.crossFadeTo(want, 0.25, false); }
-        m.mixer.update(dt); hop = m.def.fly ? 0.8 + Math.sin(this.t * 2 + m.ph) * 0.12 : 0;
+        if (m.once) { m.once.t += dt; if (m.once.t >= m.once.a.getClip().duration) m.once = null; }
+        const want = m.once ? m.once.a : vx || vz ? m.walk : m.idle; if (want && m.cur !== want) { const prev = m.cur; m.cur = want; want.reset().play(); if (prev) prev.crossFadeTo(want, 0.25, false); }
+        m.mixer.update(dt); hop = m.def.fly ? (m.def.hover === undefined ? 0.8 : m.def.hover) + Math.sin(this.t * 2 + m.ph) * 0.12 : 0;
       }
       m.g.position.set(m.x, L.groundHeight(m.x, m.z) + hop, m.z); if (vx || vz) m.g.rotation.y = Math.atan2(vx, vz);
       if (m.g.userData.wings) for (const [k, w] of m.g.userData.wings.entries()) w.rotation.z = (k ? -1 : 1) * Math.sin(this.t * 14 + m.ph) * 0.6;   // bats flap
@@ -262,7 +286,7 @@ export class Wild {
       m.bar.scale.x = Math.max(0.001, m.hp / m.def.hp); const show = m.hp < m.def.hp || d < 9; m.bar.visible = m.back.visible = show;
       m.hitCool = Math.max(0, m.hitCool - dt);
       if (!frozen && !this.iframes && d < 0.95 + m.def.size * 0.35 && m.hitCool <= 0) {
-        m.hitCool = 1.1; if (!p.god) p.stats.hp -= hurt(m.def.atk, p); this.api.sfx('wrong'); this.api.onChange();      // god: admin's no-damage switch
+        m.hitCool = 1.1; this.cue(m, 'Attack'); if (!p.god) p.stats.hp -= hurt(m.def.atk, p); this.api.sfx('wrong'); this.api.onChange();      // god: admin's no-damage switch
         if (p.stats.hp <= 0) { p.stats.hp = hpMax; this.api.save(); this.api.respawn(); return; }
       }
     }

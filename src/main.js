@@ -120,6 +120,9 @@ const gltf = (name) => { if (!modelCache.has(name)) modelCache.set(name, loader.
 /** Map 2 monsters (crab, jellyfish, pirate, Captain Octopus): fetched when the hero first sails to the harbor. */
 const SEA_FILES = { crab: 'harbor_mob_crab_v01', jelly: 'harbor_mob_jellyfish_v01', pirate: 'harbor_mob_pirate_v01', octopus: 'harbor_boss_octopus_v01' };
 const seaModel = (k) => gltf(SEA_FILES[k]).catch(() => null);
+/** Map 1 monsters and bosses (batch 13): swapped in by the Wild after the game has started. */
+const MAP1_FILES = { slime: 'mob_slime_green_v01', red: 'mob_slime_red_v01', golem: 'mob_golem_stone_v01', bat: 'mob_bat_shadow_v01', shroom: 'mob_shroom_angry_v01', king: 'boss_slime_king_v01', ancient: 'boss_golem_ancient_v01', queen: 'boss_mushroom_queen_v01' };
+const map1Model = (k) => gltf(MAP1_FILES[k]).catch(() => null);
 const staticModel = async (name) => (await gltf(name)).scene.clone(true);
 const animatedModel = async (name) => { const g = await gltf(name); return { scene: SkeletonUtils.clone(g.scene), animations: g.animations }; };
 const faceTex = async (name) => { const t = await texLoader.loadAsync(`./assets/tex/ngoc_face_${name}.png`); t.flipY = false; t.colorSpace = THREE.SRGBColorSpace; return t; };
@@ -963,6 +966,7 @@ async function boot() {
       }));
     },
     respawn: () => { game.teleport(L.SPAWN.x, L.SPAWN.z); ui.dialogue([{ who: 'Tom', en: 'You fainted, so I carried you home. Rest, then try again!', vi: 'Con hết máu nên được đưa về làng. Máu đã đầy lại. Mua trang bị tốt hơn rồi quay lại nhé.' }]); } });
+  wild.addMap1(map1Model).catch((e) => console.warn('map 1 monsters', e));      // the Blender monsters replace the shapes a moment after the game starts (not awaited: a slow download must not hold the boot)
   mini = new MiniGames({ scene, player, ui, sfx, track, profile: () => profile, save, onNote: refresh, board: (id) => { const t = tierOf(profile.stats.level), go = () => arcade.start(withTier(({ candy: () => candyGame(Math.random, t), blocks: () => blocksGame(Math.random, unitCards, t), sling: () => slingGame(Math.random, t), race2: () => raceGame(Math.random, [], t) })[id](), t)); if (id === 'candy' || id === 'race2') wordGate(id === 'candy' ? 'Mimi' : 'Leo', go); else go(); } });
   await mini.addHosts((name) => loader.loadAsync(`./assets/models/${name}.glb`));      // a host by each mini game
   admin = new AdminPanel({ profile: () => profile, places: adminPlaces, go: adminGo, unlockAll: adminUnlock, setStep: adminStep,
