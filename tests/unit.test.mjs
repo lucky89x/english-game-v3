@@ -780,3 +780,9 @@ test('treasure maps: every map for every tier is English, solvable, and leads to
     assert.match(TRS.warmth(2).en, /hot/i); assert.match(TRS.warmth(30).en, /cold/i); assert.deepEqual(TRS.reward(2), { gold: 60, exp: 150 });
   } finally { L.setRegion('forest'); }
 });
+
+test('map exams ask the map just finished: level 20 is Unit 1, level 30 is Unit 2 (not the unit of the map that opens)', async () => {
+  const EX = await import('../src/core/exam.js'); assert.deepEqual(EX.EXAM_UNIT, { 20: 1, 30: 2 });
+  for (const g of EX.EXAM_GATES) assert.ok(EX.EXAM_UNIT[g], 'every exam gate has a unit');
+  for (const grade of [6, 7, 8, 9]) for (const g of EX.EXAM_GATES) assert.ok(grammarFor(grade, EX.EXAM_UNIT[g], 10).length >= 6, `grade ${grade} gate ${g} has grammar for its exam`);
+});

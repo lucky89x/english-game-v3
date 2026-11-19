@@ -99,9 +99,9 @@ await run('exam', async () => {        // map exam at level 20: 10 questions, 8 
   await closeDialogs(); await wait(800);
   const right = () => ev(async () => {          // index of the right option for the question on screen
     const en = document.querySelector('#dialog .en').textContent, vi = ((document.querySelector('#dialog .vi') || {}).textContent || '').trim(), opts = __eq.ui.options;
-    const cards = [...__eq.chests.api.cards(), ...Object.keys(__eq.profile.words).map(__eq.cardOf).filter(Boolean)], G = await import('./src/core/grammar.js'), list = G.GRAMMAR['g' + __eq.profile.grade + '_u01'] || [];
+    const cards = [...__eq.cardsOfUnit(1), ...__eq.chests.api.cards(), ...Object.keys(__eq.profile.words).map(__eq.cardOf).filter(Boolean)], G = await import('./src/core/grammar.js'), list = G.GRAMMAR['g' + __eq.profile.grade + '_u01'] || [];      // the level 20 exam asks Unit 1 (the map just finished) even after Map 2 opened
     if (en.includes('___')) { const g = list.find((x) => x.q === en); return { i: opts.indexOf(g.options[g.a]), n: opts.length }; }
-    if (en.startsWith('Which sentence')) { const g = list.find((x) => opts.includes(x.q.replace('___', x.options[x.a]))); return { i: opts.indexOf(g.q.replace('___', g.options[g.a])), n: opts.length }; }
+    if (en.startsWith('Which sentence')) { const g = list.find((x) => opts.includes(x.q.replace('___', x.options[x.a]))); if (!g) throw new Error('no grammar item matches the sentence options: ' + JSON.stringify({ opts, unit: __eq.profile.unitPick, map2: __eq.profile.flags.map2, grade: __eq.profile.grade, n: list.length })); return { i: opts.indexOf(g.q.replace('___', g.options[g.a])), n: opts.length }; }
     const m = /What does "(.+)" mean/.exec(en);
     if (m) return { i: opts.indexOf(cards.find((x) => x.word === m[1]).vi), n: opts.length };
     return { i: opts.indexOf(cards.find((x) => x.vi === vi).word), n: opts.length };
@@ -153,7 +153,7 @@ await run('arcade', async () => {
 });
 
 await run('map2', async () => {        // the forest is the last chapter of Map 1 (19/11): its monsters, board, chests, bubbles and Queen need the forest gate, not Map 2
-  await ev(() => { const p = __eq.profile; p.flags.forest_open = true; p.flags.map2 = false; __eq.enterRegion('forest'); }); await page.waitForFunction(() => __eq.region === 'forest' && __eq.started, null, { timeout: 120000 }); await wait(600);
+  await ev(() => { const p = __eq.profile; p.flags.forest_open = true; delete p.flags.boss2; p.flags.map2 = false; __eq.enterRegion('forest'); });      // boss2 is cleared too: an earlier group may have beaten the Golem, and refresh() would reopen Map 2 await page.waitForFunction(() => __eq.region === 'forest' && __eq.started, null, { timeout: 120000 }); await wait(600);
   check(await ev(() => !__eq.profile.flags.map2), 'The forest chapter is played before Map 2 opens');
   await ev(() => { __eq.profile.stats.level = 3; __eq.wild.mobs.forEach((m) => { if (m.region === 'forest') m.dead = 0; }); }); await wait(700);
   check(await ev(() => __eq.wild.mobs.filter((m) => m.g.visible).length === 0), 'The crystal quest is not done: the forest is quiet for a young hero');
@@ -223,7 +223,7 @@ await run('extras', async () => {        // the sea extras (19/11): fishing, Sea
   check(await ev(() => __eq.arcade.open && __eq.arcade.game.title.includes('Fishing')), 'E starts the fishing game');
   await page.keyboard.press('Escape'); await wait(300);
   await ev(() => __eq.catchFish(['sardine', 'dolphin', 'boot']));
-  check(await ev(() => Object.keys(__eq.profile.dex).sort().join() === 'dolphin,sardine' && __eq.profile.fish.boot === 1 && __eq.profile.fish.sardine === 1), 'Catches fill the bucket; only creatures enter the Sea Dex');
+  check(await ev(() => { const d = __eq.profile.dex; return !!d.sardine && !!d.dolphin && !d.boot && __eq.profile.fish.boot === 1 && __eq.profile.fish.sardine === 1; }), 'Catches fill the bucket; only creatures enter the Sea Dex');
   await page.keyboard.press('KeyG'); await wait(400);
   check(await page.isVisible('#dexwin') && (await page.textContent('#dexwin')).includes('sardine') && (await page.textContent('#dexwin')).includes('dolphin'), 'G opens the Sea Dex with the found creatures');
   await page.keyboard.press('Escape'); await wait(300);
