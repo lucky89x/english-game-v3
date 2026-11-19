@@ -1,6 +1,7 @@
 // Local, versioned saves with several child profiles. Nothing leaves the browser.
 // Layout: { version, last, profiles: [{ id, name, grade, unit, created, quests, flags, words, skills, stats }] }
 import { rankHp } from './saga.js';
+import { powers } from './skills.js';
 export const SAVE_VERSION = 2;
 export const KEY = 'english-quest-web';
 export const GRADES = [6, 7, 8, 9];
@@ -69,7 +70,7 @@ export const expTo = (level) => { let t = 0; for (let l = 1; l < level; l++) t +
 /** Unit being studied: the one a parent picked, otherwise the unit of the map reached (Map 1 = Unit 1, Map 2 = Unit 2). */
 export const unitOf = (profile) => profile.unitPick || (profile.flags && profile.flags.map2 ? 2 : 1);
 /** Hit points grow with the level; equipment adds on top (profile.gear, later). */
-export const maxHp = (profile) => 100 + (profile.stats.level - 1) * 12 + ((profile.gear && profile.gear.hp) || 0) + rankHp(profile);      // + the Word Keeper rank (saga.js)
+export const maxHp = (profile) => 100 + (profile.stats.level - 1) * 12 + ((profile.gear && profile.gear.hp) || 0) + rankHp(profile) + powers(profile).hp;      // + the Word Keeper rank (saga.js) and skill points (skills.js)
 /** Knowledge gates: at these levels the bar fills but the next level waits for a short word review (the owl). */
 export const GATES = [5, 10, 15, 20, 25, 30];          // 25 and 30: Map 2 (Unit 2 words)
 export const gateWaiting = (profile) => { const L = profile.stats.level; return GATES.includes(L) && !(profile.gates && profile.gates[L]) ? L : 0; };

@@ -18,6 +18,7 @@ const BOSS_NAMES = { boss1: 'Vua Slime', boss2: 'Golem Cổ', boss3: 'Nữ hoàn
 import { addExp, maxHp } from '../core/save.js';
 import { compact } from '../world/common.js';
 import { bossWake } from './saga.js';
+import { ELEMENTS, elementFactor, comboOf, powers } from '../core/skills.js';
 
 export class Wild {
   /** api: { scene, player, ui, sfx(name), profile() -> profile, save(), onChange(), respawn(), quiz(bossName, done(ok)) } */
@@ -145,6 +146,10 @@ export class Wild {
     const back = new THREE.Sprite(new THREE.SpriteMaterial({ color: 0x3a2410, depthTest: false })); back.center.set(0, 0.5); back.scale.set(1.04, thin ? 0.1 : 0.16, 1); back.position.set(-0.52, top, 0); back.renderOrder = 5; g.add(back);
     return { bar, back };
   }
+  /** (20/11) a small dot left of the health bar in the monster's element colour (the colour of a spell mark while one is on). */
+  elementDot(m) {
+    if (m.elDot || !m.def.el) return; const d = new THREE.Sprite(new THREE.SpriteMaterial({ color: ELEMENTS[m.def.el].hex, depthTest: false })); d.scale.set(0.26, 0.26, 1); d.position.set(-0.68, m.bar.position.y, 0); d.renderOrder = 7; m.g.add(d); m.elDot = d;
+  }
   /** Map 2 (Sunny Harbor): the crabs, jellyfish, pirates and Captain Octopus, built when the hero first sails there so the
    *  models are only fetched then. load(key) -> a loaded glTF ({ scene, animations }) or null. Falls back to plain blobs. */
   async addHarbor(load) {
@@ -204,21 +209,44 @@ export class Wild {
     for (let d = 0; d < 3.2; d += 0.2) { const nx = x + dx * 0.2, nz = z + dz * 0.2; if (!L.canStep(x, z, nx, nz)) break; x = nx; z = nz; }
     const yaw = player.yaw; player.place(x, z); player.yaw = yaw; return true;
   }
-  /** Ngọc swings (J / F). Returns the number of monsters hit. */
+  /** The hero swings (J / F). Returns the number of monsters hit. The worn weapon's element rides on the swing (20/11). */
   attack() {
     const { player, profile } = this.api, p = profile(); if (!this.root.visible || this.cool > 0 || !p) return 0;
     this.cool = 0.42; player.emote('Interact'); this.api.sfx('tick');
+    const el = (p.gear && p.gear.el) || '';
+    this.slash.material.color.set(el ? ELEMENTS[el].hex : 0xfff2a0);
     this.slash.visible = true; this.slashT = 0.16; this.slash.position.set(player.pos.x, player.pos.y + 0.9, player.pos.z); this.slash.rotation.z = -player.yaw + Math.PI * 0.05;
     let hits = 0; const atk = playerAtk(p);
-    for (const m of this.mobs) if (!m.dead && this.here(m, p) && inArc(player.pos.x, player.pos.z, player.yaw, m.x, m.z, 2.4 + m.def.size * 0.3)) {
-      if (m.shieldOn) { hits += 1; m.flash = 0.1; if (!this.shieldTold) { this.shieldTold = true; this.api.ui.toast('Word shield! Press E'); } continue; }
-      hits += 1; m.hp -= atk; m.flash = 0.18; this.cue(m, 'Hit');
-      if (m.boss && shieldDue(m.hp, m.def.hp, m.broken)) { m.shieldOn = true; m.shield.visible = true; this.shieldTold = false; this.api.ui.toast('Word shield! Press E'); this.api.sfx('wrong'); }
-      const dx = m.x - player.pos.x, dz = m.z - player.pos.z, d = Math.hypot(dx, dz) || 1, nx = m.x + dx / d * 0.9, nz = m.z + dz / d * 0.9; if (L.walkable(nx, nz, 0.5)) { m.x = nx; m.z = nz; }   // knock back
-      if (m.hp <= 0) this.kill(m, p);
-    }
+    for (const m of this.targets(p)) if (inArc(player.pos.x, player.pos.z, player.yaw, m.x, m.z, 2.4 + m.def.size * 0.3)) { hits += 1; this.damage(m, atk, el, { knock: 0.9, mark: !!el }); }
     if (hits) this.api.sfx('correct');
     return hits;
+  }
+  /** The monsters the hero can hit now (alive, in this region, shown). */
+  targets(p = this.api.profile()) { return this.root.visible && p ? this.mobs.filter((m) => !m.dead && this.here(m, p) && m.g.visible) : []; }
+  /** One hit on a monster (20/11, magic): element factor (Fire > Ice > Thunder > Wind > Fire), the combo when the element
+   *  feeding this one marked it, a critical hit, then the status (burn / slow / stun), the mark, a knock back and the
+   *  floating number. A word shield still blocks everything: only English breaks it. Returns the damage dealt. */
+  damage(m, amount, el = '', o = {}) {
+    const p = this.api.profile(); if (!p || m.dead) return 0;
+    if (m.shieldOn) { m.flash = 0.1; if (!this.shieldTold) { this.shieldTold = true; this.api.ui.toast('Word shield! Press E'); } return 0; }
+    const pw = powers(p), f = elementFactor(el, m.def.el), combo = el && m.mark && m.mark.t > 0 ? comboOf(m.mark.el, el) : null;
+    const crit = Math.random() < pw.crit, dmg = Math.max(1, Math.round(amount * f * (combo ? 1 + combo.bonus : 1) * (crit ? 1.8 : 1)));
+    m.hp -= dmg; m.flash = 0.18; this.cue(m, 'Hit');
+    if (pw.lifesteal && o.spell) { const max = maxHp(p); p.stats.hp = Math.min(max, (p.stats.hp ?? max) + Math.max(1, Math.round(dmg * pw.lifesteal))); }
+    if (o.burn) m.burn = { t: o.burn, dps: Math.max(1, Math.round(dmg * 0.2)) };
+    if (o.slow) m.slow = Math.max(m.slow || 0, o.slow);
+    if (o.stun) m.stun = Math.max(m.stun || 0, o.stun);
+    if (combo && combo.stun) m.stun = Math.max(m.stun || 0, combo.stun);
+    if (o.mark !== false && el) m.mark = { el, t: 4 };
+    if (combo) { m.mark = null; this.api.floater(m.x, m.z, `${combo.en}!`, '#ffffff', 1.25);
+      if (combo.chain || combo.spread) { const near = this.targets(p).filter((x) => x !== m && Math.hypot(x.x - m.x, x.z - m.z) < 4).slice(0, combo.chain || combo.spread);
+        for (const x of near) this.damage(x, amount * 0.5, '', { burn: combo.spread ? 3 : 0, mark: false }); } }
+    const { player } = this.api;
+    if (o.knock) { const dx = m.x - player.pos.x, dz = m.z - player.pos.z, d = Math.hypot(dx, dz) || 1, k = m.boss ? o.knock * 0.3 : o.knock, nx = m.x + dx / d * k, nz = m.z + dz / d * k; if (L.walkable(nx, nz, 0.5)) { m.x = nx; m.z = nz; } }
+    this.api.floater(m.x, m.z, (crit ? '💥' : '') + dmg + (f > 1 ? ' ▲' : f < 1 ? ' ▼' : ''), f > 1 ? '#ffe04a' : f < 1 ? '#b8c4d0' : el ? ELEMENTS[el].color : '#ffffff', crit ? 1.15 : 0.9);
+    if (m.boss && shieldDue(m.hp, m.def.hp, m.broken)) { m.shieldOn = true; m.shield.visible = true; this.shieldTold = false; this.api.ui.toast('Word shield! Press E'); this.api.sfx('wrong'); m.hp = Math.max(m.hp, 1); }
+    if (m.hp <= 0) this.kill(m, p);
+    return dmg;
   }
   kill(m, p) {
     m.dead = m.boss ? 300 : m.kind === 'golem' ? 40 : 14; m.g.visible = false;
@@ -270,7 +298,14 @@ export class Wild {
       let vx = 0, vz = 0;
       if (!frozen && d < 9 && far < 13) { fighting = true; if (d > 0.9) { vx = dx / d; vz = dz / d; } }
       else if (far > 0.6) { vx = (m.home.x - m.x) / far; vz = (m.home.z - m.z) / far; if (far > 2) m.hp = Math.min(m.def.hp, m.hp + dt * 12); }
-      const nx = m.x + vx * m.def.speed * dt, nz = m.z + vz * m.def.speed * dt; if ((vx || vz) && L.walkable(nx, nz, 0.45)) { m.x = nx; m.z = nz; }
+      // (20/11) spells: stunned monsters stand still, slowed ones walk at half speed, burning ones lose health, marks fade
+      if (m.stun > 0) { m.stun -= dt; vx = vz = 0; }
+      if (m.slow > 0) m.slow -= dt;
+      if (m.mark && (m.mark.t -= dt) <= 0) m.mark = null;
+      if (m.burn) { m.burn.t -= dt; m.burnTick = (m.burnTick || 0) + dt; if (m.burnTick >= 1) { m.burnTick = 0; m.hp -= m.burn.dps; m.flash = 0.08; this.api.floater(m.x, m.z, String(m.burn.dps), '#ff8a3a', 0.75); if (m.hp <= 0) { m.burn = null; this.kill(m, p); continue; } } if (m.burn && m.burn.t <= 0) m.burn = null; }
+      if (!m.elDot) this.elementDot(m);
+      if (m.elDot) { m.elDot.position.y = m.bar.position.y; const want = m.mark ? ELEMENTS[m.mark.el].hex : ELEMENTS[m.def.el].hex; if (m.elDot.material.color.getHex() !== want) m.elDot.material.color.setHex(want); }
+      const sp = m.def.speed * (m.slow > 0 ? 0.5 : 1), nx = m.x + vx * sp * dt, nz = m.z + vz * sp * dt; if ((vx || vz) && L.walkable(nx, nz, 0.45)) { m.x = nx; m.z = nz; }
       let hop = Math.abs(Math.sin(this.t * (m.kind === 'golem' ? 3 : 5) + m.ph)) * (vx || vz ? 0.22 : 0.08);
       if (m.mixer) {          // Blender monsters walk and idle by their own clips; jellyfish float
         if (m.once) { m.once.t += dt; if (m.once.t >= m.once.a.getClip().duration) m.once = null; }
@@ -281,10 +316,13 @@ export class Wild {
       if (m.g.userData.wings) for (const [k, w] of m.g.userData.wings.entries()) w.rotation.z = (k ? -1 : 1) * Math.sin(this.t * 14 + m.ph) * 0.6;   // bats flap
       m.flash = Math.max(0, m.flash - dt); this.lit(m, m.flash > 0);
       if (m.shieldOn) m.shield.rotation.y += dt * 1.5;
-      m.bar.scale.x = Math.max(0.001, m.hp / m.def.hp); const show = m.hp < m.def.hp || d < 9; m.bar.visible = m.back.visible = show;
+      m.bar.scale.x = Math.max(0.001, m.hp / m.def.hp); const show = m.hp < m.def.hp || d < 9; m.bar.visible = m.back.visible = show; if (m.elDot) m.elDot.visible = show;
       m.hitCool = Math.max(0, m.hitCool - dt);
       if (!frozen && !this.iframes && d < 0.95 + m.def.size * 0.35 && m.hitCool <= 0) {
-        m.hitCool = 1.1; this.cue(m, 'Attack'); if (!p.god) p.stats.hp -= hurt(m.def.atk, p); this.api.sfx('wrong'); this.api.onChange();      // god: admin's no-damage switch
+        m.hitCool = 1.1; this.cue(m, 'Attack');
+        if (m.stun > 0) m.hitCool = 0.3;      // stunned: no hit
+        else if (Math.random() < powers(p).dodge) this.api.floater(player.pos.x, player.pos.z, 'Miss!', '#9fe8ff', 0.9);      // Wind Steps: a dodge
+        else { if (!p.god) p.stats.hp -= hurt(m.def.atk, p, m.def.el); this.api.sfx('wrong'); this.api.onChange(); }      // god: admin's no-damage switch
         if (p.stats.hp <= 0) { p.stats.hp = hpMax; this.api.save(); this.api.respawn(); return; }
       }
     }

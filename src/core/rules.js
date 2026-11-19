@@ -1,16 +1,18 @@
 // Combat and reward numbers in one place (no three.js, tested in node).
 import { rankAtk } from './saga.js';
+import { powers, resisted } from './skills.js';
+// (20/11) el: the monster's element (core/skills.js): it decides which spells hurt it most and which resistance its hits meet
 export const MONSTERS = {
-  slime: { name: 'Green Slime', level: 1, hp: 30, atk: 6, exp: 12, gold: 3, speed: 2.0, color: 0x7fd86a, size: 1.0 },
-  red: { name: 'Red Slime', level: 4, hp: 70, atk: 11, exp: 26, gold: 7, speed: 2.5, color: 0xff7a6a, size: 1.25 },
-  golem: { name: 'Stone Golem', level: 8, hp: 180, atk: 18, exp: 75, gold: 20, speed: 1.6, color: 0xa49aa6, size: 1.7 },
+  slime: { el: 'wind', name: 'Green Slime', level: 1, hp: 30, atk: 6, exp: 12, gold: 3, speed: 2.0, color: 0x7fd86a, size: 1.0 },
+  red: { el: 'fire', name: 'Red Slime', level: 4, hp: 70, atk: 11, exp: 26, gold: 7, speed: 2.5, color: 0xff7a6a, size: 1.25 },
+  golem: { el: 'thunder', name: 'Stone Golem', level: 8, hp: 180, atk: 18, exp: 75, gold: 20, speed: 1.6, color: 0xa49aa6, size: 1.7 },
   // The Forest of Memories is the last chapter of Map 1 (19/11): levels 11-16, open once the forest gate is
-  bat: { name: 'Shadow Bat', level: 11, hp: 200, atk: 21, exp: 70, gold: 12, speed: 3.2, color: 0x6a4a9a, size: 1.0, fly: true, hover: 0.05 },      // hover: the Blender bat already floats 0.9 m up in its own file
-  shroom: { name: 'Angry Mushroom', level: 14, hp: 320, atk: 26, exp: 100, gold: 16, speed: 1.8, color: 0xe2483e, size: 1.3 },
+  bat: { el: 'wind', name: 'Shadow Bat', level: 11, hp: 200, atk: 21, exp: 70, gold: 12, speed: 3.2, color: 0x6a4a9a, size: 1.0, fly: true, hover: 0.05 },      // hover: the Blender bat already floats 0.9 m up in its own file
+  shroom: { el: 'ice', name: 'Angry Mushroom', level: 14, hp: 320, atk: 26, exp: 100, gold: 16, speed: 1.8, color: 0xe2483e, size: 1.3 },
   // Map 2 (Sunny Harbor, levels 21-30): the Blender models in assets/models/harbor_mob_*; `fit` scales the model, `model` names it
-  crab: { name: 'Beach Crab', level: 21, hp: 300, atk: 34, exp: 130, gold: 24, speed: 2.3, color: 0xe2483e, size: 1.0, model: 'crab', fit: 1.0 },
-  jelly: { name: 'Glow Jellyfish', level: 24, hp: 340, atk: 38, exp: 150, gold: 26, speed: 1.9, color: 0xb48ae8, size: 1.0, fly: true, model: 'jelly', fit: 1.2 },
-  pirate: { name: 'Little Pirate', level: 27, hp: 520, atk: 44, exp: 210, gold: 36, speed: 2.4, color: 0x2f4f8a, size: 1.2, model: 'pirate', fit: 1.15 },
+  crab: { el: 'ice', name: 'Beach Crab', level: 21, hp: 300, atk: 34, exp: 130, gold: 24, speed: 2.3, color: 0xe2483e, size: 1.0, model: 'crab', fit: 1.0 },
+  jelly: { el: 'thunder', name: 'Glow Jellyfish', level: 24, hp: 340, atk: 38, exp: 150, gold: 26, speed: 1.9, color: 0xb48ae8, size: 1.0, fly: true, model: 'jelly', fit: 1.2 },
+  pirate: { el: 'fire', name: 'Little Pirate', level: 27, hp: 520, atk: 44, exp: 210, gold: 36, speed: 2.4, color: 0x2f4f8a, size: 1.2, model: 'pirate', fit: 1.15 },
 };
 /** Monsters of the Memory Forest, the last chapter of Map 1: [kind, x, z] (open ground away from crystals, paths and the gate). */
 export const FOREST_SPAWNS = [
@@ -29,9 +31,9 @@ export const SPAWNS = [
   ['red', 44, -36], ['red', 50, -16], ['red', 30, -38], ['golem', 52, 30], ['golem', 38, 48],
 ];
 /** The hero's attack: grows with the level, weapon adds on top. */
-export const playerAtk = (profile) => 10 + (profile.stats.level - 1) * 2 + ((profile.gear && profile.gear.atk) || 0) + rankAtk(profile);      // + the Word Keeper rank (saga.js)
+export const playerAtk = (profile) => 10 + (profile.stats.level - 1) * 2 + ((profile.gear && profile.gear.atk) || 0) + rankAtk(profile) + powers(profile).atk;      // + skill points (Fire Heart)      // + the Word Keeper rank (saga.js)
 /** Damage a monster deals after armour (never below 1). */
-export const hurt = (atk, profile) => Math.max(1, atk - ((profile.gear && profile.gear.def) || 0));
+export const hurt = (atk, profile, el = '') => resisted(profile, Math.max(1, atk - ((profile.gear && profile.gear.def) || 0) - powers(profile).def), el);      // + Ice Skin and the element resistance (20/11)
 /** A target is hit when it is close and roughly in front of the attacker. */
 export function inArc(px, pz, yaw, tx, tz, reach = 2.4, minDot = 0.25) {
   const dx = tx - px, dz = tz - pz, d = Math.hypot(dx, dz); if (d > reach) return false; if (d < 0.6) return true;
@@ -48,12 +50,39 @@ export const ITEMS = {
   iron_armor: { en: 'Iron Armor', vi: 'giáp sắt', slot: 'armor', cost: 220, level: 7, def: 5, hp: 50, seller: 'forge' },
   clover: { en: 'Lucky Clover', vi: 'cỏ bốn lá may mắn', slot: 'charm', cost: 120, level: 4, hp: 30, seller: 'rose' },
   bread: { en: 'Honey Bread', vi: 'bánh mì mật ong (hồi 50 máu, phím Q)', slot: 'food', cost: 8, level: 1, heal: 50, seller: 'rose' },
+  // (20/11) element gear, Map 1. Swords (kind: 'sword') make the close spells of their element stronger (near), staffs
+  // (kind: 'staff') the far spells and ultimates (far); a weapon also gives its element to the plain J attack.
+  ember_sword: { en: 'Ember Sword', vi: 'kiếm than hồng (hệ Lửa)', slot: 'weapon', kind: 'sword', el: 'fire', near: 0.2, cost: 280, level: 6, atk: 14, color: 0xff6a2a, seller: 'forge' },
+  frost_sword: { en: 'Frost Sword', vi: 'kiếm sương giá (hệ Băng)', slot: 'weapon', kind: 'sword', el: 'ice', near: 0.2, cost: 280, level: 6, atk: 14, color: 0x6fd0ff, seller: 'forge' },
+  gale_sword: { en: 'Gale Sword', vi: 'kiếm gió lốc (hệ Gió)', slot: 'weapon', kind: 'sword', el: 'wind', near: 0.2, cost: 280, level: 6, atk: 14, color: 0x6fe08a, seller: 'forge' },
+  spark_sword: { en: 'Spark Sword', vi: 'kiếm tia lửa điện (hệ Sét)', slot: 'weapon', kind: 'sword', el: 'thunder', near: 0.2, cost: 280, level: 6, atk: 14, color: 0xffd23c, seller: 'forge' },
+  ember_staff: { en: 'Ember Staff', vi: 'gậy phép than hồng (hệ Lửa)', slot: 'weapon', kind: 'staff', el: 'fire', far: 0.25, cost: 320, level: 8, atk: 10, color: 0xff6a2a, seller: 'forge' },
+  frost_staff: { en: 'Frost Staff', vi: 'gậy phép sương giá (hệ Băng)', slot: 'weapon', kind: 'staff', el: 'ice', far: 0.25, cost: 320, level: 8, atk: 10, color: 0x6fd0ff, seller: 'forge' },
+  gale_staff: { en: 'Gale Staff', vi: 'gậy phép gió lốc (hệ Gió)', slot: 'weapon', kind: 'staff', el: 'wind', far: 0.25, cost: 320, level: 8, atk: 10, color: 0x6fe08a, seller: 'forge' },
+  spark_staff: { en: 'Spark Staff', vi: 'gậy phép tia sét (hệ Sét)', slot: 'weapon', kind: 'staff', el: 'thunder', far: 0.25, cost: 320, level: 8, atk: 10, color: 0xffd23c, seller: 'forge' },
+  fire_amulet: { en: 'Fire Amulet', vi: 'bùa Lửa (+15% phép Lửa, kháng Lửa)', slot: 'charm', el: 'fire', eldmg: 0.15, resist: 0.15, cost: 200, level: 5, hp: 20, seller: 'rose' },
+  ice_amulet: { en: 'Ice Amulet', vi: 'bùa Băng (+15% phép Băng, kháng Băng)', slot: 'charm', el: 'ice', eldmg: 0.15, resist: 0.15, cost: 200, level: 5, hp: 20, seller: 'rose' },
+  wind_amulet: { en: 'Wind Amulet', vi: 'bùa Gió (+15% phép Gió, kháng Gió)', slot: 'charm', el: 'wind', eldmg: 0.15, resist: 0.15, cost: 200, level: 5, hp: 20, seller: 'rose' },
+  thunder_amulet: { en: 'Thunder Amulet', vi: 'bùa Sét (+15% phép Sét, kháng Sét)', slot: 'charm', el: 'thunder', eldmg: 0.15, resist: 0.15, cost: 200, level: 5, hp: 20, seller: 'rose' },
   // Map 2 gear (18/11), sold by Willow at the forest camp once Map 2 is open
   oak_blade: { en: 'Oakheart Blade', vi: 'kiếm lõi sồi', slot: 'weapon', cost: 700, level: 21, atk: 32, color: 0x9a6a3a, seller: 'forest' },
   moon_sword: { en: 'Moonlight Sword', vi: 'kiếm ánh trăng', slot: 'weapon', cost: 1500, level: 27, atk: 44, color: 0xbfd8ff, seller: 'forest' },
   ranger_cloak: { en: 'Ranger Cloak', vi: 'áo choàng kiểm lâm', slot: 'armor', cost: 900, level: 22, def: 9, hp: 90, seller: 'forest' },
   bark_armor: { en: 'Barkskin Armor', vi: 'giáp vỏ cây', slot: 'armor', cost: 1800, level: 28, def: 14, hp: 140, seller: 'forest' },
   owl_feather: { en: 'Owl Feather', vi: 'lông cú (bùa)', slot: 'charm', cost: 800, level: 24, hp: 70, seller: 'forest' },
+  // (20/11) element gear, Map 2 (Willow's stall at the harbor)
+  blaze_blade: { en: 'Blaze Blade', vi: 'kiếm hỏa diệm (hệ Lửa)', slot: 'weapon', kind: 'sword', el: 'fire', near: 0.35, eldmg: 0.1, cost: 1600, level: 23, atk: 38, color: 0xff6a2a, seller: 'forest' },
+  glacier_blade: { en: 'Glacier Blade', vi: 'kiếm băng hà (hệ Băng)', slot: 'weapon', kind: 'sword', el: 'ice', near: 0.35, eldmg: 0.1, cost: 1600, level: 23, atk: 38, color: 0x6fd0ff, seller: 'forest' },
+  tempest_blade: { en: 'Tempest Blade', vi: 'kiếm cuồng phong (hệ Gió)', slot: 'weapon', kind: 'sword', el: 'wind', near: 0.35, eldmg: 0.1, cost: 1600, level: 23, atk: 38, color: 0x6fe08a, seller: 'forest' },
+  storm_blade: { en: 'Storm Blade', vi: 'kiếm lôi đình (hệ Sét)', slot: 'weapon', kind: 'sword', el: 'thunder', near: 0.35, eldmg: 0.1, cost: 1600, level: 23, atk: 38, color: 0xffd23c, seller: 'forest' },
+  inferno_staff: { en: 'Inferno Staff', vi: 'trượng hỏa ngục (hệ Lửa)', slot: 'weapon', kind: 'staff', el: 'fire', far: 0.4, eldmg: 0.1, cost: 1700, level: 24, atk: 28, color: 0xff6a2a, seller: 'forest' },
+  glacier_staff: { en: 'Glacier Staff', vi: 'trượng băng hà (hệ Băng)', slot: 'weapon', kind: 'staff', el: 'ice', far: 0.4, eldmg: 0.1, cost: 1700, level: 24, atk: 28, color: 0x6fd0ff, seller: 'forest' },
+  tempest_staff: { en: 'Tempest Staff', vi: 'trượng cuồng phong (hệ Gió)', slot: 'weapon', kind: 'staff', el: 'wind', far: 0.4, eldmg: 0.1, cost: 1700, level: 24, atk: 28, color: 0x6fe08a, seller: 'forest' },
+  storm_staff: { en: 'Storm Staff', vi: 'trượng lôi đình (hệ Sét)', slot: 'weapon', kind: 'staff', el: 'thunder', far: 0.4, eldmg: 0.1, cost: 1700, level: 24, atk: 28, color: 0xffd23c, seller: 'forest' },
+  flame_mail: { en: 'Flame Mail', vi: 'giáp lửa (kháng Lửa 30%)', slot: 'armor', el: 'fire', resist: 0.3, eldmg: 0.05, cost: 1500, level: 25, def: 11, hp: 110, seller: 'forest' },
+  frost_mail: { en: 'Frost Mail', vi: 'giáp băng (kháng Băng 30%)', slot: 'armor', el: 'ice', resist: 0.3, eldmg: 0.05, cost: 1500, level: 25, def: 11, hp: 110, seller: 'forest' },
+  wind_cloak: { en: 'Wind Cloak', vi: 'áo choàng gió (kháng Gió 30%)', slot: 'armor', el: 'wind', resist: 0.3, eldmg: 0.05, cost: 1500, level: 25, def: 11, hp: 110, seller: 'forest' },
+  storm_plate: { en: 'Storm Plate', vi: 'giáp sấm (kháng Sét 30%)', slot: 'armor', el: 'thunder', resist: 0.3, eldmg: 0.05, cost: 1500, level: 25, def: 11, hp: 110, seller: 'forest' },
   forest_stew: { en: 'Forest Stew', vi: 'súp rừng (hồi 120 máu, phím Q)', slot: 'food', cost: 20, level: 21, heal: 120, seller: 'forest' },
   // 18/11: Ben's fruit and vegetables (eaten with Q after the bread runs out)
   apple: { en: 'Apple', vi: 'quả táo (hồi 20 máu)', slot: 'food', cost: 4, level: 1, heal: 20, seller: 'produce' },
@@ -95,8 +124,15 @@ export const owners = (profiles, lots = 2) => profiles.filter((p) => p && !p.adm
 export const foodCount = (profile, id) => { const b = bag(profile); return id === 'bread' ? b.food : id === 'forest_stew' ? (b.stew || 0) : (pantry(b)[id] || 0); };
 /** Recomputes profile.gear from what is worn. */
 export function wear(profile) {
-  const b = bag(profile), g = { atk: 0, def: 0, hp: 0 };
-  for (const slot of ['weapon', 'armor', 'charm']) { const it = ITEMS[b[slot]]; if (it) { g.atk += it.atk || 0; g.def += it.def || 0; g.hp += it.hp || 0; } }
+  const b = bag(profile), g = { atk: 0, def: 0, hp: 0, el: '', near: 0, far: 0, resist: {}, eldmg: {} };
+  for (const slot of ['weapon', 'armor', 'charm']) {
+    const it = ITEMS[b[slot]]; if (!it) continue; g.atk += it.atk || 0; g.def += it.def || 0; g.hp += it.hp || 0;
+    if (it.el) {      // (20/11) element gear: the weapon gives its element to the plain J attack; every piece adds its bonuses
+      if (slot === 'weapon') { g.el = it.el; g.near += it.near || 0; g.far += it.far || 0; }
+      if (it.resist) g.resist[it.el] = (g.resist[it.el] || 0) + it.resist;
+      if (it.eldmg) g.eldmg[it.el] = (g.eldmg[it.el] || 0) + it.eldmg;
+    }
+  }
   profile.gear = g; return g;
 }
 /** Buys (and puts on) an item. Returns { ok, why } — why: 'gold' | 'level' | 'owned'. */
@@ -173,13 +209,13 @@ export function countKill(profile, kind) {
   }
   return done;
 }
-export const BOSS = { id: 'king', flag: 'boss1', name: 'Slime King', level: 8, hp: 600, atk: 16, exp: 400, gold: 150, speed: 1.4, color: 0x5fd0ff, size: 2.6 };
+export const BOSS = { id: 'king', el: 'ice', flag: 'boss1', name: 'Slime King', level: 8, hp: 600, atk: 16, exp: 400, gold: 150, speed: 1.4, color: 0x5fd0ff, size: 2.6 };
 /** Map 1's last boss in the golem fields. Beating it at level 20 opens Map 2. */
-export const BOSS2 = { id: 'ancient', flag: 'boss2', name: 'Ancient Golem', level: 18, hp: 1600, atk: 30, exp: 900, gold: 300, speed: 1.2, color: 0x9a8f7a, size: 3.0 };
+export const BOSS2 = { id: 'ancient', el: 'thunder', flag: 'boss2', name: 'Ancient Golem', level: 18, hp: 1600, atk: 30, exp: 900, gold: 300, speed: 1.2, color: 0x9a8f7a, size: 3.0 };
 /** The boss of the Forest chapter (last chapter of Map 1): the Mushroom Queen, deep in the west of the forest near the old ruins. Level 16, before the Ancient Golem. */
-export const BOSS3 = { id: 'queen', flag: 'boss3', name: 'Mushroom Queen', level: 16, hp: 1300, atk: 28, exp: 700, gold: 220, speed: 1.3, color: 0xc0397a, size: 3.0, region: 'forest' };
+export const BOSS3 = { id: 'queen', el: 'wind', flag: 'boss3', name: 'Mushroom Queen', level: 16, hp: 1300, atk: 28, exp: 700, gold: 220, speed: 1.3, color: 0xc0397a, size: 3.0, region: 'forest' };
 /** Map 2's main boss: Captain Octopus on the north point beside the lighthouse (the Blender octopus, 3 word shields). */
-export const BOSS4 = { id: 'octopus', flag: 'boss4', name: 'Captain Octopus', level: 28, hp: 3000, atk: 52, exp: 1800, gold: 500, speed: 1.4, color: 0xc0397a, size: 2.4, region: 'harbor', model: 'octopus', fit: 1.0 };
+export const BOSS4 = { id: 'octopus', el: 'fire', flag: 'boss4', name: 'Captain Octopus', level: 28, hp: 3000, atk: 52, exp: 1800, gold: 500, speed: 1.4, color: 0xc0397a, size: 2.4, region: 'harbor', model: 'octopus', fit: 1.0 };
 export const BOSSES = [BOSS, BOSS2, BOSS3, BOSS4];
 /** Map 2 opens once the Ancient Golem is beaten and the hero has reached level 20 (owl gate passed or waiting). */
 export const map2Ready = (profile) => !!(profile.flags.boss2 && profile.stats.level >= 20);

@@ -20,7 +20,6 @@ const CSS = `
 #creator .go { display:flex; gap:8px; margin-top:12px; position:sticky; bottom:-12px; background:#ffeccc; padding:8px 0 4px; }
 #creator .go button { flex:1; font-size:17px; padding:8px; } #creator .go .main { background:#7cc46a; border-color:#3f8a33; color:#fff; }
 #creator .hint { font-size:12px; color:#8a6a4a; margin-top:4px; }
-body.creating #view { filter:none !important; }
 body.creating #hud, body.creating #clue, body.creating #prompt, body.creating #mapbox, body.creating #gear, body.creating #xbar { visibility:hidden; }
 @media (max-width:700px) { #creator { top:auto; height:52vh; } }`;
 

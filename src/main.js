@@ -32,8 +32,11 @@ import { outfitParts } from './game/outfit.js';
 import { tintBody, tintAccessory, setHairStyle } from './game/tint.js';
 import { faceMaps, tintSkin, lookOf } from './game/faces.js';
 import * as Saga from './core/saga.js';
-import { COLOUR_TOAST } from './game/saga.js';
 import { Creator } from './ui/creator.js';
+import * as SK from './core/skills.js';
+import { Spells } from './game/spells.js';
+import { Floaters } from './game/floaters.js';
+import { SkillUI } from './ui/skills.js';
 import { Tailor } from './ui/tailor.js';
 import * as WR from './core/wardrobe.js';
 import { DexPanel } from './ui/dex.js';
@@ -137,7 +140,7 @@ let profile = null, quest = null, story = null, world = null, player = null, cam
 let shopWin = null, walkers = null, talkW = -1, touch = null, quality = localStorage.getItem('eq-quality') || 'medium', perfOn = false, started = false, switching = false, wordIds = {}, jarKey = '';
 const keys = new Set();
 const game = { errors, get profile() { return profile; }, get quest() { return quest; }, get story() { return story; }, get player() { return player; }, get cam() { return cam; }, get minimap() { return minimap; }, ui, L, stats: { fps: 0, ms: 0, calls: 0, tris: 0 },
-  teleport(x, z) { player.place(x, z); cam.target.set(x, player.pos.y + 1.25, z); }, applyLook, syncPet, get digs() { return digMeshes; }, catchFish, gainItems, cardsOfUnit: (n) => cardsOfUnit(n), get pet() { return petObj; }, get petPanel() { return petPanel; },  setQuality, key: (code) => onKey({ code, preventDefault() {} }), get started() { return started && !switching; }, get region() { return L.NAME; }, chooseProfile, enterRegion, MARKET_JARS, BRIDGE_SPOTS, get mini() { return mini; }, get wild() { return wild; }, get scene() { return scene; }, openShop, get sword() { return swordMesh; }, get armor() { return armorShown; }, setWear, openBag: () => openBag(), get arcade() { return arcade; }, get chests() { return chests; }, get spots() { return spots; }, get admin() { return admin; }, get friends() { return friends; }, get walkers() { return walkers; }, get shopWin() { return shopWin; }, get music() { return music; }, get journal() { return journal; }, get intro() { return intro; }, cardOf: (id) => cardOfFn(id), pause: (on) => renderer.setAnimationLoop(on ? null : frame),      // tests: stop drawing while another page is checked
+  teleport(x, z) { player.place(x, z); cam.target.set(x, player.pos.y + 1.25, z); }, applyLook, syncPet, get digs() { return digMeshes; }, catchFish, gainItems, cardsOfUnit: (n) => cardsOfUnit(n), get pet() { return petObj; }, get petPanel() { return petPanel; },  setQuality, key: (code) => onKey({ code, preventDefault() {} }), get started() { return started && !switching; }, get region() { return L.NAME; }, chooseProfile, enterRegion, MARKET_JARS, BRIDGE_SPOTS, get mini() { return mini; }, get wild() { return wild; }, get scene() { return scene; }, openShop, get sword() { return swordMesh; }, get armor() { return armorShown; }, setWear, openBag: () => openBag(), get arcade() { return arcade; }, get chests() { return chests; }, get spots() { return spots; }, get admin() { return admin; }, get friends() { return friends; }, get walkers() { return walkers; }, get shopWin() { return shopWin; }, get music() { return music; }, get journal() { return journal; }, get spells() { return spells; }, get floaters() { return floaters; }, get skillUI() { return skillUI; }, get intro() { return intro; }, cardOf: (id) => cardOfFn(id), pause: (on) => renderer.setAnimationLoop(on ? null : frame),      // tests: stop drawing while another page is checked
   post, refresh: () => refresh() };
 globalThis.__eq = game;
 
@@ -200,7 +203,7 @@ let shownLevel = 0;
 function refresh() {
   if (!profile) return;
   const gate = Save.gateWaiting(profile); if (gate && profile.toldGate !== gate) { profile.toldGate = gate; ui.toast('Gặp Cú Mèo để lên cấp!'); }
-  if (shownLevel && profile.stats.level > shownLevel) { profile.stats.hp = Save.maxHp(profile); ui.toast(`LEVEL UP!  Lv ${profile.stats.level}`); sfx('fanfare'); }
+  if (shownLevel && profile.stats.level > shownLevel) { profile.stats.hp = Save.maxHp(profile); ui.toast(`LEVEL UP!  Lv ${profile.stats.level} · +1 điểm kỹ năng (phím T)`); sfx('fanfare'); }
   shownLevel = profile.stats.level;
   if (map2Ready(profile) && !profile.flags.map2) {      // T3: Ancient Golem beaten at level 20 -> Map 2 and Unit 2 words
     profile.flags.map2 = true; save(); sfx('fanfare');
@@ -210,7 +213,6 @@ function refresh() {
     profile.flags.map3 = true; save(); sfx('fanfare');
     ui.dialogue([{ who: 'Tom', en: 'You beat Captain Octopus! The sea is calm again. A warm wind from the desert is calling you now.', vi: 'Con đã hoàn thành Map 2 · Cảng Mặt Trời! Map 3 · Sa mạc Gió Vàng đang được xây, sắp mở. Làm bài kiểm tra cấp 30 của Cú Mèo để lên cấp tiếp.' }]);
   }
-  applyColour();
   const learned = Review.learned(profile.words); if (journal) journal.sync(); if (toolbar) toolbar.sync(profile);
   if (L.NAME === 'isle') {
     ui.hud(profile, 'Đảo Kho Báu', [`🗺 ${Math.min(TR.state(profile).n, TR.MAX_DAILY)}/${TR.MAX_DAILY}`, Save.gateWaiting(profile) ? '🦉 ôn tập' : ''].filter(Boolean).join('  '), learned, bag(profile).food);
@@ -344,7 +346,7 @@ async function enterRegion(name, at) {
   switching = true; ui.prompt('');
   if (story) story.leaveMarket();
   L.setRegion(name);
-  for (const m of digMeshes.splice(0)) m.removeFromParent(); digMixers.length = 0;
+  for (const m of digMeshes.splice(0)) m.removeFromParent(); digMixers.length = 0; if (spells) spells.clear();
   if (name === 'harbor' && profile) profile.flags.harbor_seen = true;      // main quest: sail to Sunny Harbor
   if (world) world.dispose();
   jarKey = '';
@@ -426,7 +428,7 @@ const HALL_DOOR = { x: 0, z: -16.4 }, LILY_DOOR = { x: -17.4, z: -4 };
 const VILLAGE_DOCK = [L.REGIONS.village.riverX(18) - 5.2, 18.6];
 const homesItems = (p) => (p.home && p.home.items) || [];
 // ---------------------------------------------------------------- the sea extras (19/11): fishing, Sea Dex, fish market
-let dexPanel = null, wardPanel = null, creator = null, tailor = null, petPanel = null, petObj = null, trPanel = null, toolbar = null;
+let dexPanel = null, wardPanel = null, creator = null, tailor = null, spells = null, skillUI = null, floaters = null, petPanel = null, petObj = null, trPanel = null, toolbar = null;
 let digMeshes = [], digMixers = [];
 const seaOpen = () => !!(profile && (profile.flags.map2 || profile.admin));
 /** The pet of this profile (if any) shows in the world; its hunger is brought up to date. */
@@ -473,8 +475,8 @@ const HOME_FILE = { bed: 'home_bed', wardrobe: 'home_wardrobe', mirror: 'home_mi
 const homeScenes = {};
 const homeModel = (file) => (homeScenes[file] ? homeScenes[file].clone(true) : null);
 const loadHomeModels = (items) => Promise.all(items.map((id) => HOME_FILE[id]).filter((f) => f && homeScenes[f] === undefined).map((f) => { homeScenes[f] = null; return staticModel(`${f}_v01`).then((m) => { homeScenes[f] = m; }, () => {}); }));
-function enterRoom(kind, opts) { leaveRoom(); room = buildRoom(kind, opts); document.body.classList.add('inroom'); sfx('tick'); applyColour(); }
-function leaveRoom() { if (!room) return; room.dispose(); room = null; document.body.classList.remove('inroom'); applyColour(); }
+function enterRoom(kind, opts) { leaveRoom(); room = buildRoom(kind, opts); document.body.classList.add('inroom'); sfx('tick'); }
+function leaveRoom() { if (!room) return; room.dispose(); room = null; document.body.classList.remove('inroom'); }
 function adminPlaces() {
   const out = [], add = (region, name, x, z) => out.push({ region, name, x, z });
   for (const r of ['village', 'forest', 'harbor', 'isle']) for (const l of L.REGIONS[r].LANDMARKS) add(r, l.label, ...(l.spot || [l.x, l.z]));
@@ -583,11 +585,11 @@ async function chooseProfile(p) {
 
 /** Shop: a choice list. Buying puts the item on at once; owned items can be put on again for free. */
 function openShop(who, seller, hello) {
-  const b = bag(profile), ids = shopList(seller);
+  const b = bag(profile), ids = shopList(seller).filter((id) => !ITEMS[id].el);      // (20/11) element gear is on the shelves inside the Village Shop (the talk list keys only 1-9)
   const line = (id) => { const it = ITEMS[id], own = it.slot !== 'food' && b.owned.includes(id), on = b[it.slot] === id;
     const stat = [it.atk && `ATK +${it.atk}`, it.def && `DEF +${it.def}`, it.hp && `HP +${it.hp}`, it.heal && `heals ${it.heal}`].filter(Boolean).join(', ');
     return `${it.en} (${stat}) · ${on ? 'wearing' : own ? 'put on' : it.cost + ' ●' + (profile.stats.level < it.level ? ' · Lv ' + it.level : '')}`; };
-  ui.choose({ who, en: hello, vi: `Vàng: ${profile.stats.gold} ● · Bánh trong túi: ${b.food}` }, [...ids.map(line), 'Goodbye!'], (i) => {
+  ui.choose({ who, en: hello, vi: `Vàng: ${profile.stats.gold} ● · Bánh trong túi: ${b.food}${seller === 'forge' || seller === 'rose' ? ' · Đồ theo hệ (kiếm, gậy phép, bùa) bày trong Village Shop' : ''}` }, [...ids.map(line), 'Goodbye!'], (i) => {
     if (i >= ids.length) return;
     const id = ids[i], it = ITEMS[id], r = buy(profile, id);
     if (r.ok) { sfx('correct'); setSword(); setWear(); save(); refresh(); return openShop(who, seller, r.why === 'owned' ? `You are wearing the ${it.en} now.` : `Here is your ${it.en}! Anything else?`); }
@@ -650,7 +652,13 @@ function setSword() {
   let hand = null; player.root.traverse((o) => { if (!hand && o.isBone && /hand.?R$/i.test(o.name)) hand = o; });
   if (swordMesh) { swordMesh.removeFromParent(); swordMesh = null; }
   const it = ITEMS[bag(profile).weapon]; if (!hand || !it) return;
-  const g = new THREE.Group(), mat = (c, m = 0) => new THREE.MeshStandardMaterial({ color: c, roughness: m ? 0.3 : 0.7, metalness: m, emissive: it.color === 0x7fd6ff ? 0x2f8fd0 : 0, emissiveIntensity: 0.6 });
+  const g = new THREE.Group(), mat = (c, m = 0) => new THREE.MeshStandardMaterial({ color: c, roughness: m ? 0.3 : 0.7, metalness: m, emissive: it.el ? it.color : it.color === 0x7fd6ff ? 0x2f8fd0 : 0, emissiveIntensity: it.el ? 0.35 : 0.6 });
+  if (it.kind === 'staff') {      // (20/11) element staffs: a wooden staff with a glowing orb of the element, until the Blender ones (batch 20)
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.03, 1.15, 8), mat(0x6a4020)); pole.position.y = 0.3; g.add(pole);
+    const orb = new THREE.Mesh(new THREE.IcosahedronGeometry(0.09, 1), new THREE.MeshStandardMaterial({ color: it.color, emissive: it.color, emissiveIntensity: 1.3, roughness: 0.2 })); orb.position.y = 0.92; g.add(orb);
+    for (let k = 0; k < 3; k++) { const prong = new THREE.Mesh(new THREE.ConeGeometry(0.018, 0.16, 4), mat(0xe2b04a, 0.8)); const a = k / 3 * Math.PI * 2; prong.position.set(Math.cos(a) * 0.07, 0.86, Math.sin(a) * 0.07); prong.rotation.set(Math.sin(a) * 0.5, 0, -Math.cos(a) * 0.5); g.add(prong); }
+    g.traverse((o) => { if (o.isMesh) o.castShadow = true; }); g.rotation.set(Math.PI / 2, 0, 0); g.position.set(0, 0.05, 0.03); hand.add(g); swordMesh = g; return;
+  }
   const blade = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.6, 0.022), mat(it.color, it.atk > 5 ? 0.7 : 0)); blade.position.y = 0.4; g.add(blade);
   const tip = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.12, 4), blade.material); tip.position.y = 0.76; tip.scale.z = 0.45; g.add(tip);
   const guard = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.04, 0.05), mat(0xe2b04a, 0.8)); guard.position.y = 0.09; g.add(guard);
@@ -695,18 +703,6 @@ function placeHomeDoor(region) {
     homeDoor.position.set(x, L.walkHeight(x, z), z); homeDoor.rotation.y = Math.atan2(sx - x, sz - z); return;
   }
   homeDoor.position.set(sx + 2, L.walkHeight(sx + 2, sz), sz);
-}
-/** (19/11, the backbone story) the Dark Wind drained the colour of each land; story quests bring it back. A CSS filter on
- *  the canvas works at every graphics level and costs nothing once the colour is full. Indoors and in the creator: full colour. */
-let colourShown = { region: '', v: 1 };
-function applyColour() {
-  if (!profile) return;
-  const v = room ? 1 : Saga.colourOf(profile, L.NAME), same = colourShown.region === L.NAME;
-  if (same && v > colourShown.v + 0.01 && started && !switching) { ui.toast(COLOUR_TOAST); sfx('fanfare'); }
-  if (same && Math.abs(v - colourShown.v) < 0.001) return;
-  canvas.style.transition = same ? 'filter 3.5s ease' : 'none';
-  canvas.style.filter = v >= 0.999 ? '' : `saturate(${v.toFixed(2)}) brightness(${(0.93 + 0.07 * v).toFixed(3)})`;
-  colourShown = { region: L.NAME, v };
 }
 /** The creator's view: the hero's front, close, and shifted right of the card on the left. */
 let camBefore = null;
@@ -917,6 +913,7 @@ function onKey(e) {
   if (dexPanel && dexPanel.key(e.code)) { e.preventDefault(); return; }
   if (creator && creator.key(e.code)) { e.preventDefault(); return; }
   if (tailor && tailor.key(e.code)) { e.preventDefault(); return; }
+  if (skillUI && skillUI.open && skillUI.key(e.code)) { e.preventDefault(); return; }
   if (wardPanel && wardPanel.key(e.code)) { e.preventDefault(); return; }
   if (petPanel && petPanel.key(e.code)) { e.preventDefault(); return; }
   if (trPanel && trPanel.key(e.code)) { e.preventDefault(); return; }
@@ -934,6 +931,8 @@ function onKey(e) {
   if (e.code === 'KeyI' && profile) openBag();
   if (e.code === 'KeyB' && profile) wordBook();
   if (e.code === 'KeyQ' && profile) { const got = eat(profile, Save.maxHp(profile)); if (got) { sfx('correct'); ui.toast(`+${got} HP`); save(); refresh(); } }
+  if (e.code === 'KeyT' && skillUI && profile && !profile.admin) { skillUI.show(); e.preventDefault(); return; }
+  { const d = /^Digit([1-4])$/.exec(e.code); if (d && spells && wild && !(mini && mini.active)) { spells.castSlot(Number(d[1]) - 1); e.preventDefault(); return; } }      // (20/11) spells in the hotbar
   if (e.code === 'KeyK' && wild && !(mini && mini.active)) wild.dodge();
   if ((e.code === 'KeyJ' || e.code === 'KeyF') && wild && !(mini && mini.active)) wild.attack();
   if (e.code === 'Space') e.preventDefault();
@@ -1028,7 +1027,8 @@ async function boot() {
       };
       teach([card], () => arcade.start(g));
     } });
-  wild = new Wild({ scene, player, ui, sfx, profile: () => profile, save, onChange: refresh, goldMul: petGoldMul, onKill: (m) => { track('kill'); if (m && m.region === 'harbor') track('sea_kill'); if (m && m.region === 'harbor') seaFound(m.kind); }, onJob: (region) => { if (region === 'harbor') track('sea_job'); },
+  floaters = new Floaters(scene);
+  wild = new Wild({ scene, player, ui, sfx, profile: () => profile, save, onChange: refresh, floater: (x, z, t, c, k) => floaters.add(x, z, t, c, k), goldMul: petGoldMul, onKill: (m) => { track('kill'); if (m && m.region === 'harbor') track('sea_kill'); if (m && m.region === 'harbor') seaFound(m.kind); }, onJob: (region) => { if (region === 'harbor') track('sea_job'); },
     quiz: (bossName, done) => {       // word shield: pick the English word for the Vietnamese meaning (unit vocabulary, due words first)
       const pool = unitCards.filter((c) => c.word.length <= 18); if (pool.length < 4) { done(true); return; }
       const due = Review.dueIds(profile.words).map((id) => pool.find((c) => c.id === id)).filter(Boolean), card = (due.length ? due : pool)[Math.floor(Math.random() * (due.length || pool.length))];
@@ -1040,7 +1040,9 @@ async function boot() {
       }));
     },
     respawn: () => { game.teleport(L.SPAWN.x, L.SPAWN.z); ui.dialogue([{ who: 'Tom', en: 'You fainted, so I carried you home. Rest, then try again!', vi: 'Con hết máu nên được đưa về làng. Máu đã đầy lại. Mua trang bị tốt hơn rồi quay lại nhé.' }]); } });
-  wild.addMap1(map1Model).catch((e) => console.warn('map 1 monsters', e));      // the Blender monsters replace the shapes a moment after the game starts (not awaited: a slow download must not hold the boot)
+  wild.addMap1(map1Model).catch((e) => console.warn('map 1 monsters', e));
+  spells = new Spells({ scene, wild, player, profile: () => profile, sfx, ui, onChange: () => {} });      // (20/11) magic skills: keys 1-4, the skill book T
+  skillUI = new SkillUI({ profile: () => profile, spells, sfx, toast: (t) => ui.toast(t), atk: () => playerAtk(profile), changed: () => { save(); refresh(); } });      // the Blender monsters replace the shapes a moment after the game starts (not awaited: a slow download must not hold the boot)
   mini = new MiniGames({ scene, player, ui, sfx, track, profile: () => profile, save, onNote: refresh, board: (id) => { const t = tierOf(profile.stats.level), go = () => arcade.start(withTier(({ candy: () => candyGame(Math.random, t), blocks: () => blocksGame(Math.random, unitCards, t), sling: () => slingGame(Math.random, t), race2: () => raceGame(Math.random, [], t) })[id](), t)); if (id === 'candy' || id === 'race2') wordGate(id === 'candy' ? 'Mimi' : 'Leo', go); else go(); } });
   await mini.addHosts((name) => loader.loadAsync(`./assets/models/${name}.glb`));      // a host by each mini game
   admin = new AdminPanel({ profile: () => profile, places: adminPlaces, go: adminGo, unlockAll: adminUnlock, setStep: adminStep,
@@ -1061,7 +1063,7 @@ const AUTO = !navigator.webdriver && !localStorage.getItem('eq-quality-manual');
 function frame() {
   const now = performance.now(), raw = (now - last) / 1000, real = Math.min(0.25, raw); last = now;
   const dt = Math.min(0.05, real); TIME.value += real; const t = TIME.value;
-  const frozen = ui.modal || !started || (arcade && arcade.open) || (shopWin && shopWin.open) || (music && music.open) || (journal && journal.open) || (homePanel && homePanel.open) || (dexPanel && dexPanel.open) || (wardPanel && wardPanel.open) || (creator && creator.open) || (tailor && tailor.open) || (petPanel && petPanel.open) || (trPanel && trPanel.open);
+  const frozen = ui.modal || !started || (arcade && arcade.open) || (shopWin && shopWin.open) || (music && music.open) || (journal && journal.open) || (homePanel && homePanel.open) || (dexPanel && dexPanel.open) || (wardPanel && wardPanel.open) || (creator && creator.open) || (tailor && tailor.open) || (skillUI && skillUI.open) || (petPanel && petPanel.open) || (trPanel && trPanel.open);
   if (arcade) arcade.update(real, keys);
   if (touch) touch.update();
   releaseSoftKeys();
@@ -1079,6 +1081,9 @@ function frame() {
   for (const f of friends) f.npc.update(dt, player.pos, talkingTo === f.who);
   if (walkers && started) walkers.update(real, player.pos, ui.busy ? talkW : -1);
   if (pip.root.visible) pip.update(dt, t, player, started && L.NAME === 'forest' && quest && quest.step !== 'intro');
+  if (floaters) floaters.update(real); if (spells) spells.update(real);
+  if (profile && !profile.admin) SK.regen(profile, real);
+  if (skillUI) skillUI.sync(started && !switching && !room && !profile.admin && !frozen && !(mini && mini.active) && !(intro && intro.active));
   crystals.update(t); if (world) world.update(t); if (homeDoor && homeDoor.visible) homeDoor.userData.star.rotation.y = t * 1.6;
   if (mini && started && !switching && !ui.modal && !arcade.open) mini.update(real, player.pos);      // real time, so timers stay honest on slow machines
   if (chests && started) chests.update(real);

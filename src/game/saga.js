@@ -4,7 +4,7 @@
 
 /** Tom, when the bridge is fixed and the village has all its colours back: the badge, the compass, the forest. */
 export const BADGE = (name) => [
-  { who: 'Tom', en: `Look, ${name}! The colours are back in our village. You did it!` },
+  { who: 'Tom', en: `Look, ${name}! Our village has its words back. You did it!` },
   { who: 'Tom', en: 'You helped us with English words. You are a real Word Keeper now!' },
   { who: '🥉 Word Keeper badge', en: 'Rank: Apprentice Word Keeper.', vi: 'Con nhận huy hiệu Người Giữ Chữ hạng Tập sự (xem ở thẻ Hành trình trong sổ nhiệm vụ, phím N). Mỗi lần lên hạng con mạnh hơn.' },
   { who: 'Tom', en: 'One piece of the Language Compass is hidden in this land. The forest remembers where it is.' },
@@ -64,5 +64,3 @@ export function HUSH(n) {
   ];
 }
 
-/** The toast when a region gets colour back. */
-export const COLOUR_TOAST = '🌈 Colour is coming back to this land!';

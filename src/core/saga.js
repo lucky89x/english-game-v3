@@ -1,7 +1,7 @@
 // The backbone story (19/11, docs/COT_TRUYEN.md, approved by the parent): the child is an apprentice Word Keeper. Lord Hush
 // broke the Language Compass into ten pieces and hid them in ten lands; each land's last boss guards one piece. Pure rules,
-// no DOM: the ten lands, the Word Keeper ranks (with a small bonus each), the pieces found, and how much colour each region
-// has got back (the Dark Wind drained it; story quests return it).
+// no DOM: the ten lands, the Word Keeper ranks (with a small bonus each),, the pieces found. (The drained-colour idea was
+// dropped on 20/11: the parent wants the full colours from the start.)
 
 /** The ten lands. map: the map number; piece: the flag of the boss that guards that land's compass piece (null: not built yet). */
 export const LANDS = [
@@ -51,31 +51,4 @@ export function nextGoal(p) {
   if (!fl.boss4) return 'Tìm mảnh La Bàn số 2: Thuyền trưởng Bạch Tuộc ở mũi hải đăng đang giữ nó (cần cấp 28).';
   if (!(p.gates && p.gates[30])) return 'Lên cấp 30 và vượt bài thi lớn của Cú Mèo để lên hạng Kiểm lâm.';
   return 'Sa mạc Gió Vàng (Map 3) đang được xây. Mảnh la bàn số 3 đang chờ!';
-}
-
-// ------------------------------------------------------------------ colour
-const VILLAGE_ORDER = ['arrive', 'letter_find', 'letter_return', 'jars', 'jars_play', 'tom_bridge', 'bridge', 'gather', 'plan', 'open', 'done'];
-const vStep = (p) => VILLAGE_ORDER.indexOf((p.quests && p.quests.village && p.quests.village.step) || 'arrive');
-/** How much colour a region has (0..1 saturation; 1 = full colour). The Dark Wind drained every land; each story quest
- *  brings part of it back. Saves that are already past a quest have that colour at once. */
-export function colourOf(p, region) {
-  if (!p || p.admin) return 1;
-  const fl = f(p);
-  if (region === 'village') {
-    const s = vStep(p);
-    if (fl.bridge_fixed || s >= VILLAGE_ORDER.indexOf('open')) return 1;
-    if (s >= VILLAGE_ORDER.indexOf('tom_bridge')) return 0.8;       // Ben's jars done
-    if (s >= VILLAGE_ORDER.indexOf('jars')) return 0.65;            // the letter read and returned
-    return 0.45;
-  }
-  if (region === 'forest') {
-    if (fl.boss3) return 1;
-    return p.quests && p.quests.forest && p.quests.forest.step === 'done' ? 0.8 : 0.5;
-  }
-  if (region === 'harbor') {
-    if (fl.boss4) return 1;
-    const shops = ['style', 'cafe', 'salon'].every((k) => p.mini && p.mini.best && p.mini.best[k] !== undefined);
-    return 0.55 + (shops ? 0.15 : 0) + (p.hunt3 && p.hunt3.done >= 2 ? 0.15 : 0);
-  }
-  return 1;
 }

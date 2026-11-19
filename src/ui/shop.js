@@ -5,6 +5,7 @@
 // Vietnamese meaning, what it does, a price tag and a lock when the level is too low. Buy / Wear / Sell buttons.
 import { ITEMS, bag, buy, sell, sellPrice, shopList, wear, home, foodCount } from '../core/rules.js';
 import { speak } from './speech.js';
+import { ELEMENTS } from '../core/skills.js';
 
 const ICON = { wood_sword: '🗡️', iron_sword: '⚔️', crystal_blade: '🔷', leather_vest: '🦺', iron_armor: '🛡️', clover: '🍀', bread: '🍞',
   oak_blade: '🪵', moon_sword: '🌙', ranger_cloak: '🧥', bark_armor: '🌳', owl_feather: '🪶', forest_stew: '🍲',
@@ -111,9 +112,9 @@ export class ShopWindow {
   card(id) {
     const p = this.api.profile(), it = ITEMS[id], b = bag(p), food = it.slot === 'food', placed = it.slot === 'home' || it.slot === 'yard';
     const own = !food && (placed ? home(p).items.includes(id) : b.owned.includes(id)), on = !food && !placed && b[it.slot] === id, n = food ? foodCount(p, id) : 0;
-    const stat = [it.atk && `ATK +${it.atk}`, it.def && `DEF +${it.def}`, it.hp && `HP +${it.hp}`, it.heal && `+${it.heal} HP (Q)`, placed && (it.slot === 'yard' ? 'Đặt ở sân nhà con' : 'Đặt trong nhà con')].filter(Boolean).join(' · ');
+    const stat = [it.el && `${ELEMENTS[it.el].icon} ${ELEMENTS[it.el].en}`, it.near && `phép gần +${Math.round(it.near * 100)}%`, it.far && `phép xa +${Math.round(it.far * 100)}%`, it.eldmg && `phép ${ELEMENTS[it.el].vi} +${Math.round(it.eldmg * 100)}%`, it.resist && `kháng ${ELEMENTS[it.el].vi} ${Math.round(it.resist * 100)}%`, it.atk && `ATK +${it.atk}`, it.def && `DEF +${it.def}`, it.hp && `HP +${it.hp}`, it.heal && `+${it.heal} HP (Q)`, placed && (it.slot === 'yard' ? 'Đặt ở sân nhà con' : 'Đặt trong nhà con')].filter(Boolean).join(' · ');
     const canBuy = food || !own, lock = p.stats.level < it.level;
-    return `<div class="card ${lock ? 'locked' : ''}"><span class="tag">${it.cost} ●</span><span class="ic">${ICON[id] || '📦'}</span><b>${it.en}</b><span class="vi">${it.vi}</span><span class="st">${stat}</span>
+    return `<div class="card ${lock ? 'locked' : ''}"><span class="tag">${it.cost} ●</span><span class="ic">${ICON[id] || (it.kind === 'staff' ? '🪄' : it.kind === 'sword' ? '⚔️' : it.slot === 'charm' ? '🧿' : it.slot === 'armor' ? '🛡️' : '📦')}</span><b>${it.en}</b><span class="vi">${it.vi}</span><span class="st">${stat}</span>
       ${lock ? `<span class="lock">🔒 Cần cấp ${it.level}</span>` : ''}${food ? `<span class="vi">Trong túi: ${n}</span>` : ''}${placed && own ? '<span class="on">✔ Đã có ở nhà</span>' : ''}
       <div class="row">${canBuy ? `<button data-act="buy" data-id="${id}" ${lock || p.stats.gold < it.cost ? 'disabled' : ''}>Buy</button>` : ''}
         ${own && !placed ? `<button data-act="wear" data-id="${id}">${on ? 'Take off' : 'Wear'}</button>` : ''}${on ? '<span class="on">✔ wearing</span>' : ''}

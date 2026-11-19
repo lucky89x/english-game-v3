@@ -20,12 +20,12 @@ Giữ nguyên những gì đã có (Vương quốc Ngôn Từ, Gió Đen thổi 
 - **Mảnh la bàn**: mỗi map giữ 1 mảnh. Mảnh vừa lấy được chỉ đường tới vùng đất tiếp theo. Đây là lý do mở map mới.
 - **Gió Đen càng xa càng mạnh**: quái map sau cấp cao hơn, nên phải lên cấp, sắm trang bị.
 - **Hạng Người Giữ Chữ** (thi với Cú Mèo, hiện trên HUD cạnh tên): Tập sự (Map 1) → Thám hiểm (Map 2) → Kiểm lâm (Map 3) → … → Đại sư Ngôn Từ (Map 10). Mỗi hạng mới tặng một **huy hiệu** và một **kỹ năng chiến đấu** mới (ví dụ hạng 2: lướt chữ, hạng 3: tiếng hét vang), nên lên hạng có lợi thật khi chơi.
-- **Trả màu cho vùng đất**: map mới tới thì nhạt màu, xám như bị Gió Đen thổi qua. Mỗi nhiệm vụ cốt truyện xong, một phần vùng đất có màu lại (làm bằng hậu kỳ màu, ~3 bước mỗi map). Trẻ nhìn thấy ngay việc mình làm có ý nghĩa.
+- ~~Trả màu cho vùng đất~~ (đã bỏ 20/11 theo ý anh: game đủ màu đẹp ngay từ đầu). Lý do lên cấp nay là **hệ thống kỹ năng 4 hệ** (`docs/KY_NANG.md`): mỗi cấp +1 điểm kỹ năng.
 - **Bệ La Bàn ở nhà của con**: 10 ô trống, mỗi mảnh lấy được gắn lên và phát sáng. Trong sổ nhiệm vụ có thêm thẻ **Hành trình** (10 vùng đất, mảnh nào đã có, hạng hiện tại, việc tiếp theo).
 
 ## 4. Khuôn mỗi map (áp lại cho mọi map, Map 1 làm trước)
-1. **Tới nơi**: vùng đất nhạt màu, người dân quên tên đồ vật (từ vựng của Unit).
-2. **3 nhiệm vụ cốt truyện** giúp dân → mỗi nhiệm vụ trả lại một phần màu.
+1. **Tới nơi**: người dân quên tên đồ vật (từ vựng của Unit).
+2. **3 nhiệm vụ cốt truyện** giúp dân.
 3. **Boss giữa map** (bị Gió Đen nhập) → khu mới mở.
 4. **Thi lên hạng với Cú Mèo** (bài 10 câu như hiện nay).
 5. **Kẻ gác mảnh la bàn** → mảnh la bàn → cảnh ngắn Chúa tể Im Lặng → mảnh chỉ đường sang map sau.
@@ -35,7 +35,7 @@ Giữ nguyên những gì đã có (Vương quốc Ngôn Từ, Gió Đen thổi 
 | Chương | Nội dung | Đã có / cần làm |
 |---|---|---|
 | 0. Mở đầu | **Tạo nhân vật** (mặt, màu da, kiểu tóc, màu tóc, áo, quần/váy/đầm) → lời mở đầu mới: Vương quốc Ngôn Từ, Chúa tể Im Lặng đập vỡ La Bàn, ông Tom gửi thư mời **con** → thuyền xuôi sông. | Tạo nhân vật: **làm ngay lượt này**. Lời mở đầu: sửa chữ. |
-| 1. Làng mất màu | Làng xám nhạt. Bức thư của Tom → Hũ chữ của Ben → Sửa cầu. Mỗi việc trả lại màu cho quảng trường, chợ, dòng sông. Xong: Tom trao **huy hiệu Tập sự** và kể về La Bàn. | Ba nhiệm vụ đã có; thêm trả màu, cảnh trao huy hiệu. |
+| 1. Làng Khởi Đầu | Bức thư của Tom → Hũ chữ của Ben → Sửa cầu. Xong: Tom trao **huy hiệu Tập sự** và kể về La Bàn. | Ba nhiệm vụ đã có; thêm trả màu, cảnh trao huy hiệu. |
 | 2. Đồng Hoang nổi gió | Gió Đen làm slime giận dữ. Bảng săn, rương chữ. Cú Mèo cấp 5, 10. **Vua Slime** (boss giữa map) tỉnh lại sau khi thua, chỉ đường vào rừng. | Đã có; thêm lời thoại boss tỉnh lại. |
 | 3. Rừng Ký Ức | Pip và 5 viên pha lê trả lại **ký ức của khu rừng**: cảnh ngắn kể chuyện Chúa tể Im Lặng (thay cho "mảnh la bàn ở đây"). Dơi, nấm, **Nữ hoàng Nấm** tỉnh lại, nói mảnh la bàn ở cánh đồng đá. | Đã có; sửa lời thoại, thêm cảnh ký ức. |
 | 4. Kẻ gác mảnh | Cú Mèo cấp 15. **Golem Cổ** gác **mảnh la bàn số 1**. Thắng → mảnh chỉ về phía biển (Cảng Mặt Trời). | Đã có boss; thêm mảnh la bàn, bệ ở nhà, cảnh Chúa tể Im Lặng. |
@@ -84,7 +84,7 @@ Map 2 (Cảng Mặt Trời + Đảo Kho Báu, Unit 2) áp cùng khuôn: Bạch T
 
 ## Đã làm (lượt 30)
 - Lời mở đầu mới (La Bàn, Chúa tể Im Lặng, Tom mời đúng tên con); lời thoại viết cho "Ngọc" giờ hiện tên con.
-- Vùng đất mất màu và được trả màu: làng 45% → 65% (xong thư) → 80% (xong hũ chữ) → 100% (sửa cầu); rừng 50% → 80% (pha lê) → 100% (Nữ hoàng Nấm); cảng 55% → +15% (3 trò cửa hàng) → +15% (bảng săn) → 100% (Bạch Tuộc). Có thông báo "🌈 Colour is coming back".
+- ~~Vùng đất mất màu và được trả màu~~: đã bỏ ngày 20/11 (anh muốn đủ màu từ đầu).
 - Tom trao huy hiệu Tập sự khi mở cổng rừng; hạng hiện trên HUD; Thám hiểm (Map 2) và Kiểm lâm (cấp 30) mạnh hơn (+4 công, +30 máu mỗi hạng).
 - Cây cổ thụ cho xem ký ức Chúa tể Im Lặng; 4 boss tỉnh lại khi thua lần đầu; Golem Cổ trao mảnh 1, Bạch Tuộc trao mảnh 2, kèm cảnh Chúa tể Im Lặng.
 - Thẻ 🧭 Hành trình trong sổ nhiệm vụ (N); bệ La Bàn trong nhà; Cửa nhà thần kỳ ở cảng, rừng, đảo.

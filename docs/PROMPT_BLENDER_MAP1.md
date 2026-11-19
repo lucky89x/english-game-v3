@@ -151,3 +151,74 @@ ngoc_skin, NgocFace để game thay mặt), dáng vai rộng hơn chút, 4 kiể
 
 Xuất xong: render bảng ảnh xem trước tools/chibi05/preview_v05.py (mỗi kiểu áo/quần/đầm một ô, màu mẫu), commit từng file, đẩy nhánh blender-assets.
 ```
+
+---
+
+## LÔ 20 — Vũ khí, giáp, bùa theo 4 hệ (20/11, cho hệ thống kỹ năng `docs/KY_NANG.md`)
+
+Thay cho phần kiếm/giáp/bùa của lô 14 (lô 14 vẫn làm các món thường: kiếm gỗ, kiếm sắt, kiếm pha lê, áo da, giáp sắt, cỏ bốn lá, kiếm lõi sồi, kiếm ánh trăng, áo choàng kiểm lâm, giáp vỏ cây, lông cú). Màu hệ: Lửa `#ff6a2a`, Băng `#6fd0ff`, Gió `#6fe08a`, Sét `#ffd23c`.
+
+```
+Lô 20: viết tools/gear/build_gear.py (chạy nền như các lô trước), xuất 28 file vào assets/models/:
+
+A. VŨ KHÍ CẦM TAY (16 file) — quy ước riêng cho vũ khí:
+- Gốc toạ độ = ĐIỂM TAY NẮM (giữa chuôi), lưỡi/thân hướng lên +Z trong Blender (game xoay vào xương hand.R).
+- Kiếm cấp 1 (Map 1, dài 0,85 m, lưỡi 0,6 m): weapon_sword_ember_v01 (lưỡi đỏ cam, vân lửa, chuôi đen),
+  weapon_sword_frost_v01 (lưỡi băng xanh trong, tinh thể ở chuôi), weapon_sword_gale_v01 (lưỡi cong như lá, xanh lá, dải lụa
+  bay ở chuôi), weapon_sword_spark_v01 (lưỡi răng cưa hình tia sét, vàng, chuôi tím).
+- Kiếm cấp 2 (Map 2, dài 1,0 m, to và lộng lẫy hơn, có viên ngọc ở chắn tay): weapon_sword_blaze_v01, weapon_sword_glacier_v01,
+  weapon_sword_tempest_v01, weapon_sword_storm_v01.
+- Gậy phép cấp 1 (dài 1,15 m: 0,25 m dưới tay, 0,9 m trên tay; gỗ + quả cầu hệ trên đỉnh có 3 móc kim loại giữ):
+  weapon_staff_ember_v01, weapon_staff_frost_v01, weapon_staff_gale_v01, weapon_staff_spark_v01.
+- Trượng cấp 2 (dài 1,35 m, đầu trượng hình biểu tượng hệ: ngọn lửa / bông tuyết / xoáy gió / tia sét, có vòng bay quanh):
+  weapon_staff_inferno_v01, weapon_staff_glacier_v01, weapon_staff_tempest_v01, weapon_staff_storm_v01.
+- Vật liệu đặt tên: metal, grip, wood, gem, glow (phần phát sáng của hệ, màu hệ, emissive 1,5–2; game làm nhấp nháy theo tên).
+- ≤ 900 tam giác mỗi món. Không rig.
+
+B. GIÁP HỆ (4 file, Map 2) — đặt sẵn đúng chỗ trên Ngọc v04 (như acc_*), skin vào xương chest/spine/upper_arm.*:
+- armor_flame_mail_v01 (giáp vảy đỏ cam, vai hình ngọn lửa), armor_frost_mail_v01 (giáp băng xanh trắng, vai tinh thể),
+  armor_wind_cloak_v01 (áo choàng xanh lá nhẹ, vạt áo có 2 xương cape_1, cape_2 để game đung đưa),
+  armor_storm_plate_v01 (giáp tấm tím đậm, đường sét vàng).
+- Vật liệu: armor_main, armor_trim, glow. ≤ 1.500 tam giác. Không được xuyên thân trong Run/Attack (ảnh 4 tư thế).
+
+C. BÙA HỆ (4 file, Map 1) — mặt dây chuyền đeo trước ngực, đặt sẵn trên Ngọc v04, xương chest:
+- acc_amulet_fire_v01 (ngọn lửa trong khung vàng), acc_amulet_ice_v01 (bông tuyết), acc_amulet_wind_v01 (xoáy gió),
+  acc_amulet_thunder_v01 (tia sét). Vật liệu: metal, gem, glow. ≤ 400 tam giác.
+
+D. ẢNH CỬA HÀNG (4 + 4 + 4 + 16 = 28 ảnh nhỏ): render mỗi món 128×128 PNG nền trong suốt, góc 3/4, viền tối nhẹ, vào
+   assets/ui/item_<tên file không có _v01>.png (ví dụ assets/ui/item_weapon_sword_ember.png).
+
+Xuất xong: in bbox/tam giác/vật liệu; render tools/gear/preview_gear.py (bảng ảnh tất cả món, Ngọc cầm kiếm + gậy, mặc 4 giáp);
+commit từng file, đẩy nhánh blender-assets.
+```
+
+---
+
+## LÔ 21 — Hiệu ứng phép và biểu tượng kỹ năng (20/11)
+
+Hiện các phép được vẽ tạm bằng khối màu. Lô này làm hình đẹp cho từng phép. Game tự di chuyển, phóng to, làm mờ dần các model này.
+
+```
+Lô 21: viết tools/fx/build_fx.py, xuất vào assets/models/ (glTF, gốc ở tâm hiệu ứng, +Y glTF = lên trên, hướng bay = +Z glTF):
+- fx_fireball_v01: quả cầu lửa 0,5 m, lõi vàng trắng + 6 lưỡi lửa cam đỏ phía sau (đuôi theo −Z). Clip "Spin" lặp 0,6 s.
+- fx_ice_spear_v01: giáo băng dài 1,4 m, tinh thể xanh trong suốt có cạnh, mũi nhọn về +Z, vài mảnh băng nhỏ bay quanh.
+- fx_wind_blade_v01: lưỡi gió hình trăng khuyết 1,6 m nằm ngang, xanh lá trắng, 3 vệt gió mỏng phía sau.
+- fx_meteor_v01: tảng đá nóng chảy 0,9 m (đá nâu đen + vết nứt phát sáng cam), đuôi lửa dài 2,5 m theo +Y (rơi xuống).
+- fx_tornado_v01: phễu lốc xoáy cao 4,5 m (rộng 3,4 m ở trên, 0,6 m ở dưới), 3 lớp xoắn ốc mờ dần, lá cây và đá nhỏ bay quanh;
+  clip "Spin" lặp 0,8 s (xoay quanh Y).
+- fx_blizzard_ring_v01: vòng tròn băng tuyết bán kính 6 m dưới đất (băng mỏng + gờ tinh thể quanh mép) + 12 bông tuyết 6 cánh
+  object riêng snowflake_1..12 (game cho rơi).
+- fx_thunder_strike_v01: cột sét từ trời cao 12 m (đường gấp khúc, 2 nhánh phụ) + vòng nứt đất bán kính 1,5 m dưới chân.
+- fx_slash_arc_v01: vệt chém vòng cung 160°, bán kính 2,2 m, dày ở giữa mỏng ở hai đầu (game tô màu theo hệ: vật liệu tint_main).
+- fx_whirlwind_ring_v01: vòng gió xoay quanh người bán kính 3,2 m, 3 vệt cong (vật liệu tint_main).
+- fx_hit_spark_v01: chùm tia nhỏ 0,6 m khi đánh trúng (8 tia nhọn, vật liệu tint_main).
+- Vật liệu: fx_core (sáng nhất), fx_glow (màu hệ), fx_soft (mờ, alpha 0,4–0,6, blend alpha), tint_main (xám 0,8 để game tô).
+  Emissive mạnh (2–4) để hậu kỳ bloom làm phát sáng. Mỗi model ≤ 1.200 tam giác.
+
+Biểu tượng kỹ năng: render 24 ảnh 128×128 PNG nền trong suốt vào assets/ui/skill_<id>.png cho đúng các id:
+fire_core fire_guard fire_flow flame_slash fireball meteor ice_core ice_guard ice_flow frost_strike ice_spear blizzard
+wind_core wind_guard wind_flow whirlwind wind_blade tornado thunder_core thunder_guard thunder_flow thunder_fist lightning thunderstorm
+(nội năng: biểu tượng tròn kiểu huy hiệu — trái tim lửa, khiên, giọt máu…; ngoại năng: chính hiệu ứng phép trên nền tròn màu hệ).
+
+Xuất xong: render tools/fx/preview_fx.py (bảng ảnh mọi hiệu ứng + bảng 24 biểu tượng); commit từng file, đẩy nhánh blender-assets.
+```

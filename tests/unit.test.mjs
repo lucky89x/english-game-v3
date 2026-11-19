@@ -306,7 +306,7 @@ test('shop: buying needs gold and level, puts the item on, owned items are free 
   assert.ok(buy(p, 'bread').ok && buy(p, 'bread').ok); assert.equal(bag(p).food, 2);
   p.stats.hp = 30; assert.equal(eat(p, S.maxHp(p)), 50); assert.equal(p.stats.hp, 80); assert.equal(bag(p).food, 1);
   p.stats.hp = S.maxHp(p); assert.equal(eat(p, S.maxHp(p)), 0, 'not wasted at full health'); assert.equal(bag(p).food, 1);
-  assert.deepEqual(shopList('rose'), ['clover', 'bread']); assert.equal(shopList('forge').length, 5);
+  assert.deepEqual(shopList('rose'), ['clover', 'bread', 'fire_amulet', 'ice_amulet', 'wind_amulet', 'thunder_amulet']); assert.equal(shopList('forge').length, 13);      // + element swords, staffs, amulets (20/11)
   for (const it of Object.values(ITEMS)) assert.ok(it.en && it.vi && it.cost > 0);
 });
 
@@ -405,7 +405,7 @@ test('old saves (v1 and v2 before bag, hunts, chests, gates) load and play on (K
   const v1 = S.migrate({ version: 1, name: 'Bé', grade: 8, quests: { village: { step: 'done' } }, flags: { forest_open: true }, words: { 'g8_u01:hobby': { box: 2, due: 1 } }, stats: { gold: 12 } });
   const p = v1.profiles[0]; assert.equal(p.grade, 8); assert.equal(p.stats.gold, 12); assert.equal(p.stats.level, 1); assert.equal(S.unitOf(p), 1);
   const v2 = S.migrate({ version: 2, last: 'a', profiles: [{ id: 'a', name: 'An', grade: 6, unit: 1, quests: {}, flags: {}, words: {}, skills: {}, stats: { gold: 5, exp: 3, level: 4 } }] }), q = v2.profiles[0];
-  assert.deepEqual(bag(q), { owned: [], weapon: '', armor: '', charm: '', food: 0 }); assert.deepEqual(wear(q), { atk: 0, def: 0, hp: 0 });
+  assert.deepEqual(bag(q), { owned: [], weapon: '', armor: '', charm: '', food: 0 }); assert.deepEqual(wear(q), { atk: 0, def: 0, hp: 0, el: '', near: 0, far: 0, resist: {}, eldmg: {} });
   assert.equal(hunt(q).active, false); assert.equal(S.gateWaiting(q), 0); assert.equal(S.addExp(q, S.expNeed(4)), 1); assert.equal(S.gateWaiting(q), 5);
   assert.equal(pay(q, 'candy', 1, 10).gold, 10); assert.equal(map2Ready(q), false);
 });
@@ -807,17 +807,45 @@ test('wardrobe: creator starters are free and worn, Mia sells pieces for gold, j
 
 // ---------------------------------------------------------------- the backbone story (19/11)
 import * as SAGA from '../src/core/saga.js';
-test('saga: badge and exams give ranks with bonuses, bosses give compass pieces, story quests bring colour back', () => {
+test('saga: badge and exams give ranks with bonuses, bosses give compass pieces', () => {
   const p = S.newProfile('An', 6);
-  assert.equal(SAGA.rankOf(p), 0); assert.equal(SAGA.colourOf(p, 'village'), 0.45, 'a new village is drained by the Dark Wind');
+  assert.equal(SAGA.rankOf(p), 0);
   const atk0 = playerAtk(p), hp0 = S.maxHp(p);
-  p.quests.village = { step: 'jars' }; assert.equal(SAGA.colourOf(p, 'village'), 0.65);
-  p.quests.village.step = 'tom_bridge'; assert.equal(SAGA.colourOf(p, 'village'), 0.8);
-  p.flags.bridge_fixed = true; assert.equal(SAGA.colourOf(p, 'village'), 1);
   p.flags.badge1 = true; assert.equal(SAGA.rankOf(p), 1); assert.equal(playerAtk(p), atk0, "apprentice: no bonus yet");
   p.flags.boss2 = true; assert.deepEqual(SAGA.pieces(p), [1]);
   p.flags.map2 = true; assert.equal(SAGA.rankOf(p), 2); assert.equal(playerAtk(p), atk0 + 4); assert.equal(S.maxHp(p), hp0 + 30);
   p.flags.boss4 = true; p.gates = { 30: true }; assert.equal(SAGA.rankOf(p), 3); assert.deepEqual(SAGA.pieces(p), [1, 2]);
-  assert.equal(SAGA.colourOf(p, 'harbor'), 1); assert.equal(SAGA.colourOf(p, 'isle'), 1); assert.equal(SAGA.LANDS.length, 10);
-  assert.ok(SAGA.nextGoal(p).length > 10); assert.equal(SAGA.colourOf({ ...p, admin: true, flags: {} }, 'village'), 1, 'the admin sees full colour');
+  assert.equal(SAGA.LANDS.length, 10);
+  assert.ok(SAGA.nextGoal(p).length > 10);
+});
+
+// ---------------------------------------------------------------- magic skills (20/11)
+import * as SK from '../src/core/skills.js';
+test('skills: a point per level, more ranks than levels, requirements, hotbar, elements beat and feed each other', () => {
+  const p = S.newProfile('An', 6); p.stats.level = 13; p.stats.gold = 500;
+  assert.equal(SK.earned(p), 12); assert.equal(SK.free(p), 12); assert.ok(SK.TOTAL_RANKS === 240 && SK.TOTAL_RANKS > 179, 'more ranks than a level-180 hero has points');
+  assert.equal(SK.EL_IDS.length, 4); for (const el of SK.EL_IDS) assert.equal(SK.TREE[el].filter((n) => n.kind === 'inner').length, 3);
+  for (const el of SK.EL_IDS) assert.deepEqual(SK.TREE[el].filter((n) => n.kind === 'outer').map((n) => n.range), ['near', 'far', 'ult']);
+  const atk0 = playerAtk(p);
+  assert.ok(SK.learn(p, 'fire_core')); assert.equal(playerAtk(p), atk0 + 2, 'Fire Heart adds attack');
+  assert.ok(SK.learn(p, 'flame_slash')); assert.deepEqual(SK.magic(p).bar, ['flame_slash', null, null, null], 'a new spell goes to the hotbar');
+  assert.equal(SK.blocked(p, 'meteor'), 'cần 10 điểm hệ Lửa'); for (let i = 0; i < 8; i++) SK.learn(p, 'fire_core');
+  assert.equal(SK.rank(p, 'fire_core'), 9); assert.ok(SK.learn(p, 'meteor'), 'ultimate opens after 10 fire points and level 12'); assert.equal(SK.free(p), 1);
+  assert.ok(SK.learn(p, 'fire_core')); assert.equal(SK.blocked(p, 'fire_core'), 'đã tối đa');
+  assert.equal(SK.free(p), 0); assert.equal(SK.blocked(p, 'ice_core'), 'hết điểm');
+  assert.ok(SK.assign(p, 3, 'flame_slash')); assert.deepEqual(SK.magic(p).bar, [null, 'meteor', null, 'flame_slash'], 'a spell moves between slots');
+  assert.ok(!SK.assign(p, 0, 'fire_core'), 'only spells go on the bar');
+  // the ring
+  assert.equal(SK.elementFactor('fire', 'ice'), 1.5); assert.equal(SK.elementFactor('ice', 'fire'), 0.7); assert.equal(SK.elementFactor('fire', 'thunder'), 1);
+  assert.equal(SK.elementFactor('', 'fire'), 1);
+  for (const el of SK.EL_IDS) { assert.equal(SK.FEEDS[SK.BEATS[el]], el, 'the beaten element feeds its beater'); assert.ok(SK.comboOf(SK.BEATS[el], el)); }
+  assert.equal(SK.comboOf('ice', 'fire').en, 'Steam Burst'); assert.equal(SK.comboOf('fire', 'ice'), null);
+  // damage, energy, gear
+  assert.ok(SK.spellDamage(p, 'meteor', 100) > SK.spellDamage(p, 'flame_slash', 100));
+  assert.equal(SK.mpOf(p), SK.powers(p).mpMax); assert.ok(SK.spend(p, 40)); assert.ok(!SK.spend(p, 1000)); SK.regen(p, 1000); assert.equal(SK.mpOf(p), SK.powers(p).mpMax);
+  p.stats.gold = 2000; p.stats.level = 8; assert.ok(buy(p, 'ember_staff').ok); assert.equal(p.gear.el, 'fire'); assert.equal(p.gear.far, 0.25);
+  const before = SK.spellDamage({ ...p, gear: {} }, 'meteor', 100); assert.ok(SK.spellDamage(p, 'meteor', 100) > before, 'a fire staff makes fire ultimates stronger');
+  assert.ok(buy(p, 'ice_amulet').ok); assert.equal(SK.powers(p).resist.ice, 0.15); assert.ok(hurt(40, p, 'ice') < hurt(40, p, 'fire'), 'resistance lowers the hit of that element');
+  for (const k of Object.keys(MONSTERS)) assert.ok(SK.ELEMENTS[MONSTERS[k].el], k + ' has an element');
+  const r = SK.reset(p); assert.ok(r.ok && r.cost === 0 && SK.spent(p) === 0, 'the first reset is free'); assert.ok(SK.resetCost(p) >= 50);
 });

@@ -60,6 +60,18 @@ await run('combat', async () => {
   check(await ev(() => __eq.profile.flags.map2) && (await page.textContent('#dialog')).includes('Map 2'), 'Level 20 with the golem beaten: Map 2 opens');
   await closeDialogs(); await wait(800);
   check(await ev(() => __eq.chests.api.cards().every((c) => c.id.startsWith('g8_u02:')) && __eq.chests.api.cards().length > 0), 'Words now come from Unit 2');
+  // (20/11) magic skills: T opens the skill book, a learnt spell goes to slot 1, key 1 casts it on a slime (energy spent, element ring)
+  await ev(() => { delete __eq.profile.flags.boss2; __eq.profile.flags.map2 = false; }); await closeDialogs();
+  await page.keyboard.press('KeyT'); await wait(400);
+  check(await page.isVisible('#skillbook') && (await page.textContent('#skillbook')).includes('Fire Heart'), 'T opens the skill book with the four elements');
+  await page.click('#skillbook [data-a="learn"][data-v="flame_slash"]'); await wait(300);
+  check(await ev(() => __eq.profile.magic.ranks.flame_slash === 1 && __eq.profile.magic.bar[0] === 'flame_slash'), 'Learning Flame Slash puts it in slot 1');
+  await page.keyboard.press('Escape'); await wait(300);
+  const sl = await ev(() => { const W = __eq.wild, m = W.mobs.find((x) => x.kind === 'slime'); m.dead = 0; m.g.visible = true; m.hp = m.def.hp; m.x = m.home.x; m.z = m.home.z; __eq.teleport(m.x, m.z - 1.6); __eq.player.yaw = 0; m.stun = 3; return { i: W.mobs.indexOf(m), hp: m.hp }; }); await wait(600);
+  const mp0 = await ev(() => __eq.profile.magic.mp);
+  await page.keyboard.press('Digit1'); await wait(500);
+  check(await ev((s) => { const m = __eq.wild.mobs[s.i]; return m.dead || m.hp < s.hp; }, sl) && await ev((v) => __eq.profile.magic.mp < v, mp0), 'Key 1 casts Flame Slash: the slime is hurt, energy is spent');
+  check(await ev((s) => { const m = __eq.wild.mobs[s.i]; return m.dead || (m.burn && m.mark && m.mark.el === 'fire'); }, sl), 'The slime burns and carries the fire mark');
 });
 
 await run('unit', async () => {
