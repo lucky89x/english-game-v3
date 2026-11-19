@@ -31,3 +31,13 @@ Dựng lại: `OUT=<thư mục> blender -b -P tools/harbor/build_harbor.py` (tù
 ## Nhân vật dựng lại (tự dựng, không cần ghi công)
 
 `chr_ngoc_adventurer_v04.glb` (6 kiểu tóc, vật liệu `_tint`) và `npc_lily_druid_v02.glb`, `npc_rose_baker_v02.glb`, `npc_anna_bard_v02.glb` dựng bằng `tools/chibi05/build_ngoc_v03.py` (qua `tools/chibi05/build_all.sh ngoc friends`).
+
+## Phụ kiện, thú cưng, đảo, nội thất (tự dựng, không cần ghi công)
+
+- `acc_*_v01.glb` (8 phụ kiện đặt sẵn trên Ngọc): `tools/acc/build_acc.py`
+- `pet_gull_v01.glb`, `pet_otter_v01.glb`, `pet_crab_v01.glb`: `tools/pets/build_pets.py`
+- `isle_*_v01.glb`, `isle_palm_v02.glb`: `tools/isle/build_isle.py`
+- `home_*_v01.glb`, `yard_*_v01.glb`: `tools/home/build_home.py`
+- Ảnh `assets/ui/dex_*.png` (18 sinh vật): `tools/sprites/dex.py`
+
+Lệnh chung: `OUT=<thư mục> blender -b -P <script>` (tùy chọn `ONLY=tên,tên`).
