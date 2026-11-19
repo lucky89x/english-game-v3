@@ -6,6 +6,7 @@ import { unitOf } from '../core/save.js';
 import { mulberry32 } from '../core/regionkit.js';
 import * as Review from '../core/review.js';
 import { recordSkill, addExp } from '../core/save.js';
+import { BADGE } from './saga.js';
 
 export const CUSTOMERS = 5, JARS = 4;
 
@@ -32,8 +33,8 @@ export class VillageStory {
     else if (s === 'tom_bridge') ui.dialogue([{ who: 'Tom', en: 'Oh no! The storm broke the bridge. Please help Sam!', vi: 'Cầu phía Nam bị gãy. Tới đầu cầu gặp Sam (dấu ! trên bản đồ).' }], () => this.set('bridge'));
     else if (s === 'bridge' || s === 'gather' || s === 'plan') ui.dialogue([{ who: 'Tom', en: 'Sam is waiting for you at the south bridge.' }]);
     else if (s === 'open') {
-      profile.flags.forest_open = true; this.api.sfx('fanfare');
-      ui.dialogue([{ who: 'Tom', en: 'Great job! Now go to the forest. Pip is waiting there.', vi: 'Cổng rừng ở phía Tây Bắc làng (dấu ★ trên bản đồ).' }], () => this.set('done'));
+      profile.flags.forest_open = true; profile.flags.badge1 = true; this.api.sfx('fanfare');      // (19/11) Tom's Word Keeper badge
+      ui.dialogue(BADGE(profile.name), () => this.set('done'));
     } else ui.dialogue([{ who: 'Tom', en: 'The forest gate is in the north-west. Good luck!' }]);
   }
 

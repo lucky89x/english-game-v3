@@ -804,3 +804,20 @@ test('wardrobe: creator starters are free and worn, Mia sells pieces for gold, j
   assert.equal(WR.buyPiece(p, 'tiara:silver').why, 'owned'); assert.equal(p.stats.gold, 70, 'owned pieces are free again');
   assert.equal(WR.itemName('earrings:blue'), 'blue earrings'); assert.ok(WR.parse('hairclip:gold') && !WR.parse('hairclip:brown'));
 });
+
+// ---------------------------------------------------------------- the backbone story (19/11)
+import * as SAGA from '../src/core/saga.js';
+test('saga: badge and exams give ranks with bonuses, bosses give compass pieces, story quests bring colour back', () => {
+  const p = S.newProfile('An', 6);
+  assert.equal(SAGA.rankOf(p), 0); assert.equal(SAGA.colourOf(p, 'village'), 0.45, 'a new village is drained by the Dark Wind');
+  const atk0 = playerAtk(p), hp0 = S.maxHp(p);
+  p.quests.village = { step: 'jars' }; assert.equal(SAGA.colourOf(p, 'village'), 0.65);
+  p.quests.village.step = 'tom_bridge'; assert.equal(SAGA.colourOf(p, 'village'), 0.8);
+  p.flags.bridge_fixed = true; assert.equal(SAGA.colourOf(p, 'village'), 1);
+  p.flags.badge1 = true; assert.equal(SAGA.rankOf(p), 1); assert.equal(playerAtk(p), atk0, "apprentice: no bonus yet");
+  p.flags.boss2 = true; assert.deepEqual(SAGA.pieces(p), [1]);
+  p.flags.map2 = true; assert.equal(SAGA.rankOf(p), 2); assert.equal(playerAtk(p), atk0 + 4); assert.equal(S.maxHp(p), hp0 + 30);
+  p.flags.boss4 = true; p.gates = { 30: true }; assert.equal(SAGA.rankOf(p), 3); assert.deepEqual(SAGA.pieces(p), [1, 2]);
+  assert.equal(SAGA.colourOf(p, 'harbor'), 1); assert.equal(SAGA.colourOf(p, 'isle'), 1); assert.equal(SAGA.LANDS.length, 10);
+  assert.ok(SAGA.nextGoal(p).length > 10); assert.equal(SAGA.colourOf({ ...p, admin: true, flags: {} }, 'village'), 1, 'the admin sees full colour');
+});

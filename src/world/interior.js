@@ -85,6 +85,21 @@ function homeThings(g, items, lights, model) {
 }
 
 /** kind: 'shop' | 'music' | 'hall' | 'herb' | 'forest' | 'home' (opts.items: what the child bought). Returns { scene, camera, update(dt), dispose() }. */
+/** (19/11, the backbone story) the Language Compass pedestal in the hero's home: ten slots, the found pieces glow gold. */
+function compassPedestal(g, pieces, lights) {
+  const p = new THREE.Group(), stone = M(0xb8b0a0, 0.85), dark = M(0x4a4440, 0.8);
+  cyl(p, 0.32, 0.4, 0.75, stone, 0, 0.375, 0, 12); cyl(p, 0.52, 0.48, 0.1, stone, 0, 0.8, 0, 24);
+  for (let i = 0; i < 10; i++) {
+    const have = pieces.includes(i + 1), a = i / 10 * Math.PI * 2;
+    const w = new THREE.Mesh(new THREE.CylinderGeometry(0.46, 0.46, have ? 0.07 : 0.03, 8, 1, false, a + 0.03, Math.PI * 2 / 10 - 0.06),
+      have ? M(0xffcf3a, 0.3, { metalness: 0.6, emissive: 0xffa800, emissiveIntensity: 0.9 }) : dark);
+    w.position.y = 0.87; p.add(w);
+  }
+  const needle = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.42, 4), M(0xe8443a, 0.4, { emissive: 0x801010, emissiveIntensity: pieces.length ? 0.8 : 0 }));
+  needle.rotation.x = Math.PI / 2; needle.position.set(0, 0.95, 0.06); p.add(needle); cyl(p, 0.05, 0.05, 0.06, M(0xffe28a, 0.3), 0, 0.93, 0, 10);
+  if (pieces.length) { const l = new THREE.PointLight(0xffc040, 1.4, 3.5); l.position.set(0, 1.3, 0); p.add(l); lights.push(l); }
+  p.position.set(2.45, 0, -1.25); p.scale.setScalar(0.85); g.add(p);
+}
 export function buildRoom(kind, opts = {}) {
   const scene = new THREE.Scene(), g = new THREE.Group(), lights = []; scene.add(g);
   scene.background = new THREE.Color(0x2a1a10);
@@ -93,6 +108,7 @@ export function buildRoom(kind, opts = {}) {
   const look = { home: [0xf2e6d0, 0xc08a50], shop: [0xe8d2a8, 0xb07a44], music: [0xd8c8f0, 0x9a6a44], hall: [0xd8e0f0, 0xa0703c], herb: [0xd8ecc8, 0xa87a48], forest: [0xd0e8c0, 0x8a6a40] }[kind] || [0xe8d2a8, 0xb07a44];
   shell(g, ...look, kind !== 'home'); lantern(g, -1.6, 0, lights); lantern(g, 1.6, 0, lights);
   if (kind === 'home') homeThings(g, opts.items || [], lights, opts.model);
+  if (kind === 'home') compassPedestal(g, opts.pieces || [], lights);
   if (kind === 'shop' || kind === 'forest') {
     box(g, 3.6, 1.0, 0.8, M(0x7a4a24), 0, 0.5, 1.6); box(g, 3.8, 0.08, 0.95, M(0x9a6030), 0, 1.02, 1.6);       // counter
     for (let i = 0; i < 4; i++) bread(g, -1.2 + i * 0.8, 1.06, 1.6);

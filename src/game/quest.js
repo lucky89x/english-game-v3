@@ -7,6 +7,7 @@ const LANDMARKS = REGIONS.forest.LANDMARKS;
 import { CLUES, DEFINITIONS, TOM_INTRO } from './content.js';
 import * as Review from '../core/review.js';
 import { recordSkill, addExp } from '../core/save.js';
+import { FOREST_MEMORY } from './saga.js';
 
 export const TARGETS = 5;
 const GOLD = [5, 4, 3, 1];           // by hint level used (0..3)
@@ -35,7 +36,7 @@ export class ForestQuest {
     if (this.step === 'intro') {
       ui.dialogue(TOM_INTRO(profile.name), () => this.start());
     } else if (this.step === 'done') {
-      ui.dialogue([{ who: 'Tom', en: 'You gave the forest its words back. Thank you!' }, { who: 'Tom', en: 'The compass piece points to the desert now…' }]);
+      ui.dialogue([{ who: 'Tom', en: 'You gave the forest its words back. Thank you!' }, { who: 'Tom', en: 'The forest told you where the Compass piece is. The Ancient Golem has it!' }]);
     } else ui.dialogue([{ who: 'Tom', en: 'Pip knows the way. Read the clue again.', vi: 'Xem lời Pip ở khung phía trên. Nhấn H để xin gợi ý.' }]);
   }
   start() {
@@ -106,11 +107,7 @@ export class ForestQuest {
     profile.stats.gold += 10 + right * 5; addExp(profile, 50);
     profile.flags.compass_piece_forest = true;
     this.api.sfx('fanfare');
-    ui.dialogue([
-      { who: 'Ancient Tree', en: `My memories are back! You named ${right} of 3 on the first try.` },
-      { who: 'Pip', en: 'Look! A piece of the Language Compass! It points to the Golden Wind Desert.' },
-      { who: 'Pip', en: 'See you in the next chapter!', vi: 'Hết phần Rừng Ký Ức. Các từ con còn nhầm sẽ quay lại ở lần chơi sau.' },
-    ]);
+    ui.dialogue(FOREST_MEMORY(right));      // (19/11) the forest's memory of Lord Hush: the Ancient Golem has the Compass piece
     this.api.save(); this.api.onChange();
   }
 }

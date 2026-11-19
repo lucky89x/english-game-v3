@@ -163,8 +163,9 @@ export const FRIENDS = {
 // talk, with one Vietnamese line per page so a new player understands why the adventure starts.
 export const OPENING = (name) => [
   { who: '📜 The Kingdom of Words', en: 'Long ago, the Kingdom of Words was full of colour. Every tree, every river and every house had its own name.', vi: 'Ngày xưa, Vương quốc Ngôn Từ rực rỡ sắc màu. Mọi cái cây, dòng sông, ngôi nhà đều có tên riêng.' },
-  { who: '📜 The Kingdom of Words', en: 'Then one night, a dark wind came and blew the words away. People forgot the names of things, and the land began to fade.', vi: 'Một đêm, cơn gió đen thổi bay hết các từ. Mọi người quên tên mọi vật, vùng đất dần phai màu.' },
-  { who: '📜 The Kingdom of Words', en: 'Mr Tom, the old village leader, wrote to the bravest young explorer he knew: Ngọc!', vi: 'Ông Tom, trưởng làng, viết thư mời nhà thám hiểm trẻ dũng cảm nhất: Ngọc!' },
-  { who: '📜 The Kingdom of Words', en: `Now ${name} and Ngọc travel together. Learn the lost words, help the villagers, grow stronger, and bring the colours back to every land!`, vi: `Giờ ${name} cùng Ngọc lên đường: học lại các từ đã mất, giúp dân làng, mạnh lên từng ngày và mang màu sắc trở lại mọi vùng đất!` },
-  { who: '📜 The Kingdom of Words', en: "Ngọc's boat is going down the river to the Starter Village. The adventure begins!", vi: 'Thuyền của Ngọc đang xuôi dòng tới Làng Khởi Đầu. Cuộc phiêu lưu bắt đầu!' },
+  { who: '📜 The Kingdom of Words', en: 'The Language Compass kept all the words safe. The Word Keepers looked after it.', vi: 'La Bàn Ngôn Từ giữ cho mọi từ được an toàn. Hội Người Giữ Chữ bảo vệ nó.' },
+  { who: '📜 The Kingdom of Words', en: 'But Lord Hush hates words. One night, he broke the Compass into ten pieces and hid them in ten lands.', vi: 'Nhưng Chúa tể Im Lặng ghét tiếng nói. Một đêm, hắn đập vỡ La Bàn thành 10 mảnh và giấu ở 10 vùng đất.' },
+  { who: '📜 The Kingdom of Words', en: 'His Dark Wind blew the words away. The lands lost their colours, and gentle animals became angry monsters.', vi: 'Gió Đen của hắn thổi bay các từ. Vùng đất mất màu, con vật hiền lành hóa thành quái vật giận dữ.' },
+  { who: '📜 The Kingdom of Words', en: `Mr Tom, the old village leader, wrote a letter to a brave young explorer: ${name}!`, vi: `Ông Tom, trưởng làng, viết thư mời một nhà thám hiểm trẻ dũng cảm: ${name}!` },
+  { who: '📜 The Kingdom of Words', en: `${name}, learn the lost words, help the people, find the ten pieces and stop Lord Hush. Your boat is going down the river to the Starter Village. The adventure begins!`, vi: `${name} ơi: học lại các từ đã mất, giúp mọi người, tìm đủ 10 mảnh La Bàn và chặn Chúa tể Im Lặng. Thuyền đang xuôi dòng tới Làng Khởi Đầu. Cuộc phiêu lưu bắt đầu!` },
 ];

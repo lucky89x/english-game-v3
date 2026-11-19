@@ -150,7 +150,7 @@ let topB = 0, arrivedB = false;
 for (let i = 0; i < 60 && !arrivedB; i++) { await wait(250); const s = await ev(() => ({ x: __eq.player.pos.x, y: __eq.player.pos.y, r: !!__eq.player.route })); topB = Math.max(topB, s.y); arrivedB = !s.r && s.x > sb.x + 5; }
 check(arrivedB, 'Ngọc walks across the fixed south bridge');
 await view(sb.x - 9, sb.z + 6, -2.3, 0.35, 14); await wait(1500); await snap('04d_fixed_bridge');
-await ev(() => __eq.teleport(1.6, 9.2)); await wait(400); await page.keyboard.press('KeyE'); await wait(220); for (let k = 0; k < 3 && await page.isVisible('#dialog'); k++) { await page.keyboard.press('KeyE'); await wait(220); }
+await ev(() => __eq.teleport(1.6, 9.2)); await wait(400); await page.keyboard.press('KeyE'); await wait(220); for (let k = 0; k < 8 && await page.isVisible('#dialog'); k++) { await page.keyboard.press('KeyE'); await wait(220); }      // Tom's badge talk has 5 pages (19/11)
 check(await ev(() => __eq.story.step === 'done' && __eq.profile.flags.forest_open === true), 'Tom opens the forest gate');
 // ---------------------------------------------------------------- mini games (no English in them)
 const MG = await ev(() => ({ stars: __eq.mini.stars.map((s) => [s.x, s.z]), rings: __eq.mini.rings.map((r) => [r.x, r.z]) }));
@@ -212,7 +212,7 @@ const cmv = await ev(async () => { const M = await import('./src/core/match3.js'
 const cbox = await page.locator('#arccv').boundingBox();
 for (const i of cmv) { await page.mouse.click(cbox.x + (i % 7 + 0.5) * cbox.width / 7, cbox.y + (Math.floor(i / 7) + 0.5) * cbox.width / 7); await wait(400); }
 check(await ev(() => __eq.arcade.open && __eq.arcade.game.score >= 30 && __eq.arcade.game.moves === 24), 'Candy Match: a real mouse swap lines up three and scores');
-await snap('03g_candy'); await ev(() => { __eq.arcade.game.moves = 0; }); await wait(1800);
+await snap('03g_candy'); await ev(() => { __eq.arcade.game.moves = 0; }); for (let k = 0; k < 30 && await ev(() => __eq.arcade.open); k++) await wait(500);      // the last cascade may still be falling (slow frames without a GPU)
 check(await ev(() => !__eq.arcade.open && __eq.mini.data.best.candy >= 30) && (await page.textContent('#dialog')).includes('Candy Match'), 'Board ends: gold and EXP paid, record saved');
 for (let k = 0; k < 3 && await page.isVisible('#dialog'); k++) { await page.keyboard.press('KeyE'); await wait(200); }
 // slingshot: drag back from the sling with the real mouse and let go

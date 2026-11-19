@@ -1,4 +1,4 @@
-# Cốt truyện xương sống và kế hoạch chơi lâu dài (bản đề xuất 19/11, chờ anh duyệt)
+# Cốt truyện xương sống và kế hoạch chơi lâu dài (anh đã duyệt 19/11)
 
 Anh góp ý 19/11: nhiệm vụ thiếu "xương sống": nhân vật muốn gì, đi qua các map, lên cấp để làm gì. Game chơi lâu dài (lớp 6 → 9), nên mỗi map phải là một bước trên một hành trình có đích rõ ràng, trẻ luôn nhìn thấy mình đã đi được bao xa.
 
@@ -77,7 +77,14 @@ Map 2 (Cảng Mặt Trời + Đảo Kho Báu, Unit 2) áp cùng khuôn: Bạch T
 4. Mini game chơi chung (làm được cả khi chỉ một máy: chơi với "bạn máy").
 5. Kết nối wifi (desktop): phòng, gặp nhau, trò chơi chung, sự kiện.
 
-## Cần anh quyết
-1. Tên phản diện: **Chúa tể Im Lặng (Lord Hush)**, hay anh muốn tên khác?
-2. Nhân vật chính là nhân vật con tự tạo (bỏ tên "Ngọc" ở lời mở đầu), đúng không?
-3. Hai con có bé trai không? Nếu có, lô 19 cần thêm thân bạn nam.
+## Anh đã quyết (19/11)
+1. Phản diện: **Chúa tể Im Lặng (Lord Hush)**.
+2. Nhân vật chính là nhân vật con tự tạo; tên và nhà mang tên con; **nhà của bé đi theo bé tới mọi map** (ngoài làng có Cửa nhà thần kỳ gần chỗ đến, mở đúng ngôi nhà ở làng).
+3. Hai bé gái, nhưng vẫn làm **thân bạn nam** (lô 19) để sau này bạn nam nhà khác chơi khi đưa game lên mạng.
+
+## Đã làm (lượt 30)
+- Lời mở đầu mới (La Bàn, Chúa tể Im Lặng, Tom mời đúng tên con); lời thoại viết cho "Ngọc" giờ hiện tên con.
+- Vùng đất mất màu và được trả màu: làng 45% → 65% (xong thư) → 80% (xong hũ chữ) → 100% (sửa cầu); rừng 50% → 80% (pha lê) → 100% (Nữ hoàng Nấm); cảng 55% → +15% (3 trò cửa hàng) → +15% (bảng săn) → 100% (Bạch Tuộc). Có thông báo "🌈 Colour is coming back".
+- Tom trao huy hiệu Tập sự khi mở cổng rừng; hạng hiện trên HUD; Thám hiểm (Map 2) và Kiểm lâm (cấp 30) mạnh hơn (+4 công, +30 máu mỗi hạng).
+- Cây cổ thụ cho xem ký ức Chúa tể Im Lặng; 4 boss tỉnh lại khi thua lần đầu; Golem Cổ trao mảnh 1, Bạch Tuộc trao mảnh 2, kèm cảnh Chúa tể Im Lặng.
+- Thẻ 🧭 Hành trình trong sổ nhiệm vụ (N); bệ La Bàn trong nhà; Cửa nhà thần kỳ ở cảng, rừng, đảo.

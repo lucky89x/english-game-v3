@@ -17,6 +17,7 @@ const BOARD_OF = { village: BOARD, forest: FOREST_BOARD, harbor: HARBOR_BOARD };
 const BOSS_NAMES = { boss1: 'Vua Slime', boss2: 'Golem Cổ', boss3: 'Nữ hoàng Nấm', boss4: 'Thuyền trưởng Bạch Tuộc' };
 import { addExp, maxHp } from '../core/save.js';
 import { compact } from '../world/common.js';
+import { bossWake } from './saga.js';
 
 export class Wild {
   /** api: { scene, player, ui, sfx(name), profile() -> profile, save(), onChange(), respawn(), quiz(bossName, done(ok)) } */
@@ -226,10 +227,7 @@ export class Wild {
     if (m.boss) { m.broken = 0; m.shieldOn = false; m.shield.visible = false; p.flags[m.def.flag] = true; }
     if (countKill(p, m.kind)) this.api.ui.toast('Quest done! Go back to the board');
     else this.api.ui.toast(`+${exp} EXP   +${gold} ●`);
-    if (first && m.def.flag === 'boss1') this.api.ui.dialogue([{ who: 'Ngọc', en: `I defeated the Slime King! (+${gold} gold, +${exp} EXP)`, vi: 'Con đã thắng Vua Slime! Ở cấp 18, Golem Cổ sẽ thức dậy ở cánh đồng đá phía Đông Nam.' }]);
-    if (first && m.def.flag === 'boss3') this.api.ui.dialogue([{ who: 'Ngọc', en: `I defeated the Mushroom Queen! The forest remembers its words again! (+${gold} gold, +${exp} EXP)`, vi: 'Con đã thắng Nữ hoàng Nấm, trùm của Rừng Ký Ức!' }]);
-    if (first && m.def.flag === 'boss4') this.api.ui.dialogue([{ who: 'Ngọc', en: `I defeated Captain Octopus! The harbor is safe again! (+${gold} gold, +${exp} EXP)`, vi: 'Con đã thắng Thuyền trưởng Bạch Tuộc, trùm của Cảng Mặt Trời!' }]);
-    if (first && m.def.flag === 'boss2') this.api.ui.dialogue([{ who: 'Ngọc', en: `I defeated the Ancient Golem! (+${gold} gold, +${exp} EXP)`, vi: p.stats.level >= 20 ? 'Cổng Map 2 đã mở!' : 'Đạt cấp 20 (qua cổng Cú Mèo) là mở được Map 2.' }]);
+    if (first) { const pages = bossWake(m.def.flag, gold, exp, p.stats.level); if (pages) this.api.ui.dialogue(pages); }      // the boss wakes up from the Dark Wind (saga, 19/11)
     this.api.save(); this.api.onChange();
   }
   /** E near the board, or near the shielded boss. */

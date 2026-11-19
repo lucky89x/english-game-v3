@@ -31,6 +31,8 @@ import * as PETS from './core/pet.js';
 import { outfitParts } from './game/outfit.js';
 import { tintBody, tintAccessory, setHairStyle } from './game/tint.js';
 import { faceMaps, tintSkin, lookOf } from './game/faces.js';
+import * as Saga from './core/saga.js';
+import { COLOUR_TOAST } from './game/saga.js';
 import { Creator } from './ui/creator.js';
 import { Tailor } from './ui/tailor.js';
 import * as WR from './core/wardrobe.js';
@@ -202,12 +204,13 @@ function refresh() {
   shownLevel = profile.stats.level;
   if (map2Ready(profile) && !profile.flags.map2) {      // T3: Ancient Golem beaten at level 20 -> Map 2 and Unit 2 words
     profile.flags.map2 = true; save(); sfx('fanfare');
-    ui.dialogue([{ who: 'Tom', en: 'You have grown so strong! A boat is waiting at the dock to take you to Sunny Harbor.', vi: `Đã mở Map 2 · Cảng Mặt Trời: ra bến thuyền bên sông (chỗ chú Sam câu cá) để đi. Từ giờ rương, boss, Cú Mèo hỏi từ Unit ${Save.unitOf(profile)}.` }], () => reloadUnit());
+    ui.dialogue([{ who: 'Tom', en: 'You have grown so strong! A boat is waiting at the dock to take you to Sunny Harbor.', vi: `Đã mở Map 2 · Cảng Mặt Trời: ra bến thuyền bên sông (chỗ chú Sam câu cá) để đi. Từ giờ rương, boss, Cú Mèo hỏi từ Unit ${Save.unitOf(profile)}.` }, { who: '🥈 Word Keeper badge', en: 'Rank up: Explorer Word Keeper!', vi: 'Lên hạng Thám hiểm: mạnh hơn (+4 công, +30 máu).' }], () => reloadUnit());
   }
   if (map3Ready(profile) && !profile.flags.map3) {      // Captain Octopus beaten at level 30: the sea map is finished (Map 3, the desert, is still being built)
     profile.flags.map3 = true; save(); sfx('fanfare');
     ui.dialogue([{ who: 'Tom', en: 'You beat Captain Octopus! The sea is calm again. A warm wind from the desert is calling you now.', vi: 'Con đã hoàn thành Map 2 · Cảng Mặt Trời! Map 3 · Sa mạc Gió Vàng đang được xây, sắp mở. Làm bài kiểm tra cấp 30 của Cú Mèo để lên cấp tiếp.' }]);
   }
+  applyColour();
   const learned = Review.learned(profile.words); if (journal) journal.sync(); if (toolbar) toolbar.sync(profile);
   if (L.NAME === 'isle') {
     ui.hud(profile, 'Đảo Kho Báu', [`🗺 ${Math.min(TR.state(profile).n, TR.MAX_DAILY)}/${TR.MAX_DAILY}`, Save.gateWaiting(profile) ? '🦉 ôn tập' : ''].filter(Boolean).join('  '), learned, bag(profile).food);
@@ -233,7 +236,7 @@ function refresh() {
     else if (mini && mini.note) ui.clue(null, 0, '', mini.note);
     else if (story.step === 'gather') { const have = story.items, need = ['rope', 'log', 'axe'];
       ui.clue(null, 0, '', need.every((k) => have.includes(k)) ? 'Take everything to Sam at the bridge.' : 'Find: ' + need.map((k) => (have.includes(k) ? '✓ ' : '☐ ') + k).join('   ')); }
-    else ui.clue(null, 0, '', quest.step === 'done' && story.step === 'done' ? 'Chapter complete! The compass piece points to the desert.' : NOTES[story.step] || '');
+    else ui.clue(null, 0, '', quest.step === 'done' && story.step === 'done' ? 'Chapter complete! The Ancient Golem has the Compass piece.' : NOTES[story.step] || '');
     crystals.show([]);
     const key = c ? c.index + ':' + c.options.map((o) => o.id).join('|') : '';
     if (key !== jarKey) { jarKey = key; world.setJars(c ? c.options.map((o) => o.vi) : null); }
@@ -350,6 +353,7 @@ async function enterRegion(name, at) {
   scene.traverse((o) => { if (o.material) [].concat(o.material).forEach((m) => (m.needsUpdate = true)); });
   try { await renderer.compileAsync(scene, camera); } catch { /* older browsers: shaders compile on first sight */ }      // no hitch when new things come into view
   minimap.rebuild(); placeActors(); if (walkers) walkers.setRegion(name); if (mini) mini.setRegion(name); if (wild) { if (name === 'harbor') await wild.addHarbor(seaModel); wild.setRegion(name); } if (chests) chests.setRegion(name); if (spots) spots.setRegion(name); if (homes) homes.setRegion(name); if (forestStall) forestStall.visible = name === 'forest';
+  placeHomeDoor(name);
   const [x, z] = at || [L.SPAWN.x, L.SPAWN.z];
   game.teleport(x, z); player.yaw = Math.PI; cam.tYaw = cam.yaw = 0.25; if (petObj) petObj.snap(x, z);
   if (quest && quest.step === 'seek') quest.clueStart = performance.now();
@@ -469,8 +473,8 @@ const HOME_FILE = { bed: 'home_bed', wardrobe: 'home_wardrobe', mirror: 'home_mi
 const homeScenes = {};
 const homeModel = (file) => (homeScenes[file] ? homeScenes[file].clone(true) : null);
 const loadHomeModels = (items) => Promise.all(items.map((id) => HOME_FILE[id]).filter((f) => f && homeScenes[f] === undefined).map((f) => { homeScenes[f] = null; return staticModel(`${f}_v01`).then((m) => { homeScenes[f] = m; }, () => {}); }));
-function enterRoom(kind, opts) { leaveRoom(); room = buildRoom(kind, opts); document.body.classList.add('inroom'); sfx('tick'); }
-function leaveRoom() { if (!room) return; room.dispose(); room = null; document.body.classList.remove('inroom'); }
+function enterRoom(kind, opts) { leaveRoom(); room = buildRoom(kind, opts); document.body.classList.add('inroom'); sfx('tick'); applyColour(); }
+function leaveRoom() { if (!room) return; room.dispose(); room = null; document.body.classList.remove('inroom'); applyColour(); }
 function adminPlaces() {
   const out = [], add = (region, name, x, z) => out.push({ region, name, x, z });
   for (const r of ['village', 'forest', 'harbor', 'isle']) for (const l of L.REGIONS[r].LANDMARKS) add(r, l.label, ...(l.spot || [l.x, l.z]));
@@ -562,6 +566,8 @@ function wordBook() {
 async function reloadUnit() { learning(profile, await loadGrade(profile.grade)); save(); refresh(); }
 async function chooseProfile(p) {
   unlock(); profile = p; store.last = p.id; started = false; shownLevel = 0;
+  if (p.flags.forest_open && !p.flags.badge1) p.flags.badge1 = true;      // saves from before the badge: Tom already opened the forest
+  ui.hero = p.name;      // lines written for 'Ngọc' are spoken by the child's own hero (19/11)
   if (p.admin) Object.assign(p.flags, { arrived: true, forest_open: true, map2: true });      // the admin may enter every map (18/11)
   learning(p, await loadGrade(p.grade));                                   // this grade only
   wear(profile); setSword(); setWear(); syncPet();
@@ -608,7 +614,7 @@ function startIntro() {
   ui.dialogue(OPENING(profile.name), async () => {          // the story first, then the boat ride (18/11)
     if (!intro) { let m = null; try { m = (await gltf('prop_boat_v01')).scene.clone(true); } catch (e) { console.warn('boat model', e); } intro = { boat: makeBoat(m), t: 0, len: 9 }; scene.add(intro.boat); }
     intro.t = 0; intro.boat.visible = true; intro.active = true;
-    ui.toast('Ngọc đang tới làng bằng thuyền…');
+    ui.toast(`${profile.name} đang tới làng bằng thuyền…`);
   });
 }
 function introStep(dt) {
@@ -663,6 +669,44 @@ function setWear() {
   const a = armorMesh(b.armor); if (a && chest) { chest.add(a); armorShown = a; }
   if (b.charm && hips) { const c = charmMesh(); c.position.set(0.13, 0.02, 0.08); hips.add(c); charmShown = c; }
   applyLook();
+}
+/** (19/11) "nhà của bé sẽ theo bé đến các Map": outside the village a magic door near the arrival spot opens the hero's own home. */
+let homeDoor = null;
+function placeHomeDoor(region) {
+  if (!homeDoor) {
+    homeDoor = new THREE.Group(); const wood = new THREE.MeshStandardMaterial({ color: 0x8a5a2a, roughness: 0.8 }), door = new THREE.MeshStandardMaterial({ color: 0x3f7ad0, roughness: 0.6 });
+    const glow = new THREE.MeshStandardMaterial({ color: 0xffe28a, emissive: 0xffb030, emissiveIntensity: 1.2 });
+    for (const x of [-0.62, 0.62]) { const post = new THREE.Mesh(new THREE.BoxGeometry(0.16, 2.3, 0.16), wood); post.position.set(x, 1.15, 0); homeDoor.add(post); }
+    const top = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.18, 0.2), wood); top.position.y = 2.35; homeDoor.add(top);
+    const d = new THREE.Mesh(new THREE.BoxGeometry(1.08, 2.1, 0.08), door); d.position.y = 1.08; homeDoor.add(d);
+    const knob = new THREE.Mesh(new THREE.SphereGeometry(0.06, 10, 8), glow); knob.position.set(0.38, 1.05, 0.07); homeDoor.add(knob);
+    const star = new THREE.Mesh(new THREE.OctahedronGeometry(0.16), glow); star.position.set(0, 2.62, 0); homeDoor.add(star); homeDoor.userData.star = star;
+    homeDoor.traverse((o) => { if (o.isMesh) o.castShadow = true; }); scene.add(homeDoor);
+  }
+  if (homeDoor.userData.sign) { homeDoor.remove(homeDoor.userData.sign); homeDoor.userData.sign.material.map.dispose(); homeDoor.userData.sign.material.dispose(); }
+  const sign = label(`🏠 Nhà của ${profile ? profile.name : ''}`, { size: 26, scale: 0.7 }); sign.position.y = 3.1; homeDoor.add(sign); homeDoor.userData.sign = sign;
+  homeDoor.visible = region !== 'village' && !!profile && !profile.admin;
+  if (!homeDoor.visible) return;
+  // a walkable spot a few metres from the arrival point, facing it
+  const sx = L.SPAWN.x, sz = L.SPAWN.z;
+  for (let d = 4; d <= 16; d += 2) for (let k = 0; k < 12; k++) {      // open ground (not a narrow pier), as near the arrival as possible
+    const a = k / 12 * Math.PI * 2, x = sx + Math.sin(a) * d, z = sz + Math.cos(a) * d;
+    if (!L.walkable(x, z, 2.4) || L.inWater(x, z) || L.EXITS.some((ex) => Math.hypot(x - ex.x, z - ex.z) < ex.r + 3)) continue;
+    homeDoor.position.set(x, L.walkHeight(x, z), z); homeDoor.rotation.y = Math.atan2(sx - x, sz - z); return;
+  }
+  homeDoor.position.set(sx + 2, L.walkHeight(sx + 2, sz), sz);
+}
+/** (19/11, the backbone story) the Dark Wind drained the colour of each land; story quests bring it back. A CSS filter on
+ *  the canvas works at every graphics level and costs nothing once the colour is full. Indoors and in the creator: full colour. */
+let colourShown = { region: '', v: 1 };
+function applyColour() {
+  if (!profile) return;
+  const v = room ? 1 : Saga.colourOf(profile, L.NAME), same = colourShown.region === L.NAME;
+  if (same && v > colourShown.v + 0.01 && started && !switching) { ui.toast(COLOUR_TOAST); sfx('fanfare'); }
+  if (same && Math.abs(v - colourShown.v) < 0.001) return;
+  canvas.style.transition = same ? 'filter 3.5s ease' : 'none';
+  canvas.style.filter = v >= 0.999 ? '' : `saturate(${v.toFixed(2)}) brightness(${(0.93 + 0.07 * v).toFixed(3)})`;
+  colourShown = { region: L.NAME, v };
 }
 /** The creator's view: the hero's front, close, and shifted right of the card on the left. */
 let camBefore = null;
@@ -798,6 +842,7 @@ function interactTarget() {
     if (ex.flag && !profile.flags[ex.flag]) return { text: 'Cổng rừng còn khóa. Hãy giúp Tom và Ben trước.', run() {} };
     return { text: 'E · ' + ex.label, run: () => { const back = ex.to === 'village' ? (L.NAME === 'harbor' ? VILLAGE_DOCK : [L.REGIONS.village.EXITS[0].x + 0.5, L.REGIONS.village.EXITS[0].z + 5]) : (L.NAME === 'isle' ? [HARBOR.isle.x + 2.2, HARBOR.isle.z - 0.5] : null); enterRegion(ex.to, back); } };
   }
+  if (homeDoor && homeDoor.visible && near(homeDoor.position.x, homeDoor.position.z, 1.9)) return { text: `E · Cửa nhà thần kỳ: về nhà của ${profile.name}`, run: async () => { const items = [...homesItems(profile)]; await loadHomeModels(items); enterRoom('home', { items, model: homeModel, pieces: Saga.pieces(profile) }); homePanel.show(profile, true); } };
   if (L.NAME === 'isle') {          // Treasure Isle (19/11): read the map, walk the steps, dig
     if (!treasureMap()) return { text: 'Hôm nay con đã tìm đủ kho báu. Mai có bản đồ mới!', run() {} };
     return { text: 'E · Đào ở đây (bản đồ kho báu: phím M)', run: digHere };
@@ -845,7 +890,7 @@ function interactTarget() {
   if (homes) {       // the children's homes, Bram's furniture shop and the two stalls (18/11)
     const lot = homes.doorAt(player.pos);
     if (lot) { const o = lot.owner; if (!o) return { text: 'Nhà trống: tạo thêm người chơi để nhận nhà này', run: () => ui.toast('Mỗi bé (tối đa 2) có một ngôi nhà ở đây.') };
-      const mine = o.id === profile.id; return { text: mine ? 'E · Vào nhà của con' : `E · Thăm nhà của ${o.name}`, run: async () => { const items = [...homesItems(o)]; await loadHomeModels(items); enterRoom('home', { items, model: homeModel }); homePanel.show(o, mine); } }; }
+      const mine = o.id === profile.id; return { text: mine ? 'E · Vào nhà của con' : `E · Thăm nhà của ${o.name}`, run: async () => { const items = [...homesItems(o)]; await loadHomeModels(items); enterRoom('home', { items, model: homeModel, pieces: Saga.pieces(o) }); homePanel.show(o, mine); } }; }
     if (near(FURNITURE.door[0] + 0.9, FURNITURE.door[1], 1.9)) return { text: 'E · Cửa hàng nội thất (giường, bàn ghế, vườn)', run: () => { enterRoom('shop'); shopWin.show('Furniture & Garden Shop', ['home', 'garden']); } };
     if (near(STALLS.produce.at[0], STALLS.produce.at[1], 1.8)) return { text: 'E · Quầy rau quả của Ben', run: () => shopWin.show("Ben's Fruit & Veg", ['produce']) };
     if (near(STALLS.music.at[0], STALLS.music.at[1], 1.8)) return { text: 'E · Quầy nhạc cụ của Anna', run: () => shopWin.show("Anna's Instruments", ['music']) };
@@ -911,7 +956,7 @@ addEventListener('resize', resize);
 
 async function boot() {
   resize();
-  $('loadtext').textContent = 'Đang gọi Ngọc và các bạn…';
+  $('loadtext').textContent = 'Đang gọi dân làng…';
   const [ngoc, tomG, samG, benG, pipG, blink, talk, joy] = await Promise.all([gltf('chr_ngoc_adventurer_v04'), gltf('npc_tom_elder_v02'), gltf('npc_sam_fisherman_v02'), gltf('npc_ben_merchant_v02'), gltf('npc_pip_spirit_v02'), faceTex('blink'), faceTex('talk'), faceTex('joy')]);
   $('loadtext').textContent = 'Đang dựng ngôi làng…';
   L.setRegion('village');
@@ -1034,7 +1079,7 @@ function frame() {
   for (const f of friends) f.npc.update(dt, player.pos, talkingTo === f.who);
   if (walkers && started) walkers.update(real, player.pos, ui.busy ? talkW : -1);
   if (pip.root.visible) pip.update(dt, t, player, started && L.NAME === 'forest' && quest && quest.step !== 'intro');
-  crystals.update(t); if (world) world.update(t);
+  crystals.update(t); if (world) world.update(t); if (homeDoor && homeDoor.visible) homeDoor.userData.star.rotation.y = t * 1.6;
   if (mini && started && !switching && !ui.modal && !arcade.open) mini.update(real, player.pos);      // real time, so timers stay honest on slow machines
   if (chests && started) chests.update(real);
   if (petObj && started && !switching) petObj.update(real, player.pos, player.yaw);

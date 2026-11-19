@@ -2,6 +2,7 @@
 import * as Save from '../core/save.js';
 import { speak, stop } from './speech.js';
 import { ADMIN_PASS } from './admin.js';
+import { rankName, rankOf } from '../core/saga.js';
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
@@ -60,7 +61,7 @@ export class UI {
     const st = profile.stats, need = Save.expNeed(st.level), hpMax = Save.maxHp(profile), hp = Math.min(hpMax, st.hp ?? hpMax);
     $('hud').classList.remove('hidden');
     $('hud').innerHTML = `<div class="top"><div class="portrait"><i></i><span class="lv">${st.level}</span></div>
-      <div class="who"><b>${esc(profile.name)}</b><small>Lớp ${profile.grade} · ${esc(place)}</small>
+      <div class="who"><b>${esc(profile.name)}</b><small>${(() => { const r = rankName(profile); return rankOf(profile) ? `${r.icon} ${r.en} · ` : ''; })()}Lớp ${profile.grade} · ${esc(place)}</small>
         <div class="bar hp" title="Máu"><u style="width:${Math.round(hp / hpMax * 100)}%"></u><em>${Math.round(hp)}/${hpMax}</em></div>
         <div class="bar xp" title="Kinh nghiệm"><u style="width:${Math.min(100, Math.round(st.exp / need * 100))}%"></u><em>EXP ${st.exp}/${need}</em></div></div></div>
       <div class="chips"><span class="chip gold" title="Vàng"><i>●</i>${st.gold}</span><span class="chip word" title="Từ đã học"><i>✎</i>${learned}</span>${extra ? `<span class="chip star">${esc(extra)}</span>` : ''}${food ? `<span class="chip food" title="Bánh (phím Q)"><i>🍞</i>${food}</span>` : ''}</div>`;
@@ -111,7 +112,7 @@ export class UI {
         `<div class="vi">${esc(p.vi || 'Nghe, đọc theo rồi nhớ nghĩa nhé.')}</div><div class="next">Đã nhớ · E / Space ▸</div>`;
       speak(p.card.word, true, 0.75);
     } else {
-      el.innerHTML = `<div class="who">${esc(p.who)}</div>${tools}<div class="en">${this.onPick ? esc(p.en) : this.marked(p.en)}</div>${p.vi ? `<div class="vi">${esc(p.vi)}</div>` : ''}<div class="gl hidden"></div>` +
+      el.innerHTML = `<div class="who">${esc(p.who === 'Ngọc' && this.hero ? this.hero : p.who)}</div>${tools}<div class="en">${this.onPick ? esc(p.en) : this.marked(p.en)}</div>${p.vi ? `<div class="vi">${esc(p.vi)}</div>` : ''}<div class="gl hidden"></div>` +
         (this.onPick ? `<div class="opts">${this.options.map((o, i) => `<button data-i="${i}">${i + 1}. ${esc(o)}</button>`).join('')}</div>` : '<div class="next">E / Space / bấm chuột ▸</div>');
       speak(p.en);
     }

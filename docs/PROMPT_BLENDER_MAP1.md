@@ -125,9 +125,9 @@ Lô 18: đồ rừng, thư mục tools/forest/, file build_forest.py. Chân ở 
 
 ---
 
-## LÔ 19 — Trang phục khác hình, trang sức, (tuỳ chọn) thân bạn nam (19/11, cho màn tạo nhân vật và tiệm may cô Mia)
+## LÔ 19 — Trang phục khác hình, trang sức, thân bạn nam (19/11, cho màn tạo nhân vật và tiệm may cô Mia)
 
-Hiện game đã có tạo nhân vật (8 khuôn mặt, 4 màu da, 6 kiểu tóc, màu áo/quần/váy/đầm) và tiệm may cô Mia bán đồ bằng vàng. Hạn chế: áo phông, quần, váy, đầm **cùng một hình** (chỉ khác màu); trang sức đang vẽ tạm bằng khối; kính bảo hộ + khăn đỏ của Ngọc luôn che mũ/vương miện.
+Hiện game đã có tạo nhân vật (8 khuôn mặt, 4 màu da, 6 kiểu tóc, màu áo/quần/váy/đầm) và tiệm may cô Mia bán đồ bằng vàng. Màn tạo nhân vật sẽ có thêm lựa chọn **Bạn nữ / Bạn nam** khi có thân bạn nam. Hạn chế hiện nay: áo phông, quần, váy, đầm **cùng một hình** (chỉ khác màu); trang sức đang vẽ tạm bằng khối; kính bảo hộ + khăn đỏ của Ngọc luôn che mũ/vương miện.
 
 ```
 Lô 19: sửa tools/chibi05/build_ngoc_v03.py để xuất chr_ngoc_adventurer_v05.glb (giữ v04 nguyên vẹn), cùng xương, cùng clip, cùng vật liệu
@@ -146,7 +146,7 @@ Trang sức: thêm vào tools/acc/build_acc.py, đặt sẵn đúng chỗ trên 
   acc_tiara_v01 (vương miện nhỏ 5 mũi, xương head), acc_hairclip_v01 (kẹp hoa 5 cánh bên trái đầu, xương head).
 - Vật liệu: tint_main = phần kim loại (game tô vàng kim/bạc), tint_trim = đá quý (game tô hồng/xanh/tím…). Mỗi món ≤ 600 tam giác.
 
-(Tuỳ chọn, nếu nhà có bé trai) chr_ban_nam_v01.glb: cùng xương và tên vật liệu với Ngọc v05 (ban_nam_hair_tint/top_tint/bottom_tint,
+(BẮT BUỘC, anh duyệt 19/11: game sẽ đưa lên mạng cho cả bạn nam chơi) chr_ban_nam_v01.glb: cùng xương và tên vật liệu với Ngọc v05 (ban_nam_hair_tint/top_tint/bottom_tint,
 ngoc_skin, NgocFace để game thay mặt), dáng vai rộng hơn chút, 4 kiểu tóc nam Hair_short, Hair_spiky, Hair_side, Hair_buzz.
 
 Xuất xong: render bảng ảnh xem trước tools/chibi05/preview_v05.py (mỗi kiểu áo/quần/đầm một ô, màu mẫu), commit từng file, đẩy nhánh blender-assets.

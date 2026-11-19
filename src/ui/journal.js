@@ -2,6 +2,7 @@
 // and today's three daily quests with progress bars. Rewards are claimed here.
 import { MAIN, mainCurrent, mainState, DAILY, dailyOf, dailyReward } from '../core/quests.js';
 import * as FAM from '../core/family.js';
+import * as SAGA from '../core/saga.js';
 
 const CSS = `
 #jbtn { position:fixed; left:14px; top:150px; z-index:25; font:800 14px system-ui, sans-serif; border:3px solid #b07a3c; border-radius:12px; background:#fff3d6; color:#4a2a10; padding:5px 10px; cursor:pointer; box-shadow:0 3px 0 rgba(74,42,16,.25); }
@@ -58,6 +59,8 @@ export class Journal {
         return `<div class="q ${isCur ? 'cur' : ''} ${lock ? 'lock' : ''}"><span class="ic">${done ? '✅' : isCur ? '⭐' : '🔒'}</span><div><b>${q.en}</b><div class="vi">${lock ? 'Làm xong nhiệm vụ trước để mở.' : q.vi}</div><div class="rw">Thưởng: ${reward}</div></div>
           <div>${done ? (claimed[q.id] ? '<span class="rw">Đã nhận</span>' : `<button data-a="main" data-v="${q.id}">Nhận thưởng</button>`) : ''}</div></div>`;
       }).join('');
+    } else if (this.tab === 'journey') {
+      body = this.journeyHtml(p);
     } else if (this.tab === 'family') {
       body = this.familyHtml(p, day);
     } else {
@@ -68,8 +71,20 @@ export class Journal {
           <div>${d.claimed[id] ? '<span class="rw">Đã nhận</span>' : `<button data-a="daily" data-v="${id}" ${ok ? '' : 'disabled'}>Nhận thưởng</button>`}</div></div>`;
       }).join('');
     }
-    this.el.innerHTML = `<div class="book"><header><span style="font-size:28px">📜</span><h2>Sổ nhiệm vụ</h2><button class="tab ${this.tab === 'main' ? 'on' : ''}" data-a="tab" data-v="main">Chính tuyến</button>
+    this.el.innerHTML = `<div class="book"><header><span style="font-size:28px">📜</span><h2>Sổ nhiệm vụ</h2><button class="tab ${this.tab === 'journey' ? 'on' : ''}" data-a="tab" data-v="journey">🧭 Hành trình</button><button class="tab ${this.tab === 'main' ? 'on' : ''}" data-a="tab" data-v="main">Chính tuyến</button>
       <button class="tab ${this.tab === 'daily' ? 'on' : ''}" data-a="tab" data-v="daily">Hằng ngày</button><button class="tab ${this.tab === 'family' ? 'on' : ''}" data-a="tab" data-v="family">⚓ Tàu gia đình</button><button data-a="close">✕</button></header>${body}</div>`;
+  }
+  /** (19/11, the backbone story) the Journey card: the goal, the rank, the ten lands and the compass pieces found. */
+  journeyHtml(p) {
+    const rank = SAGA.rankOf(p), r = SAGA.RANKS[rank], got = SAGA.pieces(p), atLand = p.flags.map2 ? 2 : 1;
+    const ring = Array.from({ length: 10 }, (_, i) => `<span title="Mảnh ${i + 1}" style="display:inline-block;width:30px;height:30px;line-height:30px;margin:2px;border-radius:50%;text-align:center;font-weight:800;${got.includes(i + 1) ? 'background:#ffcf3a;box-shadow:0 0 8px #ffa800;color:#5a3a00' : 'background:#d9cbb0;color:#8a7a60'}">${i + 1}</span>`).join('');
+    return `<div class="note"><b>Mục tiêu:</b> Chúa tể Im Lặng (Lord Hush) đã đập vỡ La Bàn Ngôn Từ thành 10 mảnh, giấu ở 10 vùng đất. Tìm đủ 10 mảnh, lên Tháp Pha Lê và trả lại tiếng nói cho cả vương quốc!</div>
+      <div class="q cur"><span class="ic">${r.icon}</span><div><b>${p.name} · ${r.en} Word Keeper</b><div class="vi">Hạng: ${r.vi}${rank > 1 ? ` (+${SAGA.rankAtk(p)} công, +${SAGA.rankHp(p)} máu)` : ''}${rank < SAGA.RANKS.length - 1 ? ` · hạng sau: ${SAGA.RANKS[rank + 1].en} (${SAGA.RANKS[rank + 1].vi})` : ''}</div></div><div></div></div>
+      <div class="q"><span class="ic">🧭</span><div><b>Language Compass: ${got.length}/10</b><div>${ring}</div><div class="vi">Mảnh đã tìm được đặt trên bệ La Bàn trong nhà của con.</div></div><div></div></div>
+      <div class="q cur"><span class="ic">➡️</span><div><b>Next step · Việc tiếp theo</b><div class="vi">${SAGA.nextGoal(p)}</div></div><div></div></div>
+      <h3 style="margin:10px 0 2px">Ten lands · 10 vùng đất</h3>
+      ${SAGA.LANDS.map((l) => { const done = l.piece && p.flags[l.piece], here = l.map === atLand, open = l.map <= atLand;
+        return `<div class="q ${here ? 'cur' : ''} ${open ? '' : 'lock'}"><span class="ic">${done ? '🧭' : here ? '📍' : open ? '🗺' : '🔒'}</span><div><b>Map ${l.map}: ${l.en}</b><div class="vi">${l.vi}${l.guard ? ` · giữ mảnh: ${l.guard}` : ''}${!l.piece ? ' · đang xây' : ''}</div></div><div class="rw">${done ? 'Đã có mảnh' : ''}</div></div>`; }).join('')}`;
   }
   /** The family ship, this week's board and the parents' weekly report (19/11). */
   familyHtml(p, day) {
