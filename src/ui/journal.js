@@ -1,6 +1,7 @@
 // Quest journal window (N key or the 📜 button): two tabs, the main story quests in order (done / current / locked)
 // and today's three daily quests with progress bars. Rewards are claimed here.
 import { MAIN, mainCurrent, mainState, DAILY, dailyOf, dailyReward } from '../core/quests.js';
+import * as FAM from '../core/family.js';
 
 const CSS = `
 #jbtn { position:fixed; left:14px; top:150px; z-index:25; font:800 14px system-ui, sans-serif; border:3px solid #b07a3c; border-radius:12px; background:#fff3d6; color:#4a2a10; padding:5px 10px; cursor:pointer; box-shadow:0 3px 0 rgba(74,42,16,.25); }
@@ -31,6 +32,7 @@ export class Journal {
       if (b.dataset.a === 'tab') this.tab = b.dataset.v;
       if (b.dataset.a === 'main') this.api.claimMain(b.dataset.v);
       if (b.dataset.a === 'daily') this.api.claimDaily(b.dataset.v);
+      if (b.dataset.a === 'ship') this.api.claimShip();
       this.render();
     });
   }
@@ -56,6 +58,8 @@ export class Journal {
         return `<div class="q ${isCur ? 'cur' : ''} ${lock ? 'lock' : ''}"><span class="ic">${done ? '✅' : isCur ? '⭐' : '🔒'}</span><div><b>${q.en}</b><div class="vi">${lock ? 'Làm xong nhiệm vụ trước để mở.' : q.vi}</div><div class="rw">Thưởng: ${reward}</div></div>
           <div>${done ? (claimed[q.id] ? '<span class="rw">Đã nhận</span>' : `<button data-a="main" data-v="${q.id}">Nhận thưởng</button>`) : ''}</div></div>`;
       }).join('');
+    } else if (this.tab === 'family') {
+      body = this.familyHtml(p, day);
     } else {
       const d = dailyOf(p, day), r = dailyReward(p);
       body = `<div class="note">Mỗi ngày 3 việc mới. Mỗi việc thưởng ${r.gold} vàng, ${r.exp} EXP; xong cả 3 được thêm 30 vàng.</div>` + d.ids.map((id) => {
@@ -65,6 +69,20 @@ export class Journal {
       }).join('');
     }
     this.el.innerHTML = `<div class="book"><header><span style="font-size:28px">📜</span><h2>Sổ nhiệm vụ</h2><button class="tab ${this.tab === 'main' ? 'on' : ''}" data-a="tab" data-v="main">Chính tuyến</button>
-      <button class="tab ${this.tab === 'daily' ? 'on' : ''}" data-a="tab" data-v="daily">Hằng ngày</button><button data-a="close">✕</button></header>${body}</div>`;
+      <button class="tab ${this.tab === 'daily' ? 'on' : ''}" data-a="tab" data-v="daily">Hằng ngày</button><button class="tab ${this.tab === 'family' ? 'on' : ''}" data-a="tab" data-v="family">⚓ Tàu gia đình</button><button data-a="close">✕</button></header>${body}</div>`;
+  }
+  /** The family ship, this week's board and the parents' weekly report (19/11). */
+  familyHtml(p, day) {
+    const store = this.api.store(), profiles = store.profiles || [], f = FAM.fam(store); FAM.roll(store, day, profiles);
+    const lvl = FAM.shipLevel(f.pts), nm = FAM.SHIP_NAMES[lvl], next = FAM.nextNeed(f.pts), from = FAM.SHIP[lvl], pc = next ? Math.round((f.pts - from) / (next - from) * 100) : 100, pend = FAM.pending(store, p);
+    const rep = FAM.weekReport(store, profiles), champ = FAM.champion(f.scores, profiles), top = Math.max(1, ...rep.map((r) => r.pts));
+    const last = f.last ? `Tuần trước: ${f.last.champ ? '👑 ' + ((profiles.find((x) => x.id === f.last.champ) || {}).name || '?') : 'hòa'}.` : '';
+    return `<div class="note">Cả hai bé chơi chung một con tàu: mỗi việc làm (trả lời đúng, đánh quái, mở rương, chơi trò, câu cá…) đều góp điểm. Tàu lên cấp thì <b>mỗi bé</b> được thưởng vàng.</div>
+      <div class="q cur"><span class="ic">🚢</span><div><b>Cấp ${lvl + 1}: ${nm.en} · ${nm.vi}</b><div class="bar"><u style="width:${pc}%"></u></div><div class="rw">${f.pts} điểm${next ? ` · còn ${next - f.pts} điểm để lên ${FAM.SHIP_NAMES[lvl + 1].en}` : ' · tàu lớn nhất!'}</div></div>
+        <div>${pend.levels.length ? `<button data-a="ship">Nhận ${pend.gold} vàng</button>` : '<span class="rw">Đã nhận hết</span>'}</div></div>
+      <h3 style="margin:10px 0 2px">Bảng xếp hạng tuần này ${last ? '· ' + last : ''}</h3>
+      ${rep.map((r) => `<div class="q ${r.id === p.id ? 'cur' : ''}"><span class="ic">${r.id === champ ? '👑' : '🏅'}</span><div><b>${r.name}</b> (lớp ${r.grade})<div class="bar"><u style="width:${Math.round(r.pts / top * 100)}%"></u></div></div><div class="rw">${r.pts} điểm</div></div>`).join('') || '<div class="note">Chưa có người chơi.</div>'}
+      <h3 style="margin:10px 0 2px">Báo cáo tuần cho phụ huynh</h3>
+      <div class="note">${rep.map((r) => `<b>${r.name}</b>: ${r.tries} câu hỏi, đúng ${r.right} (${r.pct}%), gặp ${r.words} từ mới, ${r.pts} điểm.`).join('<br>')}</div>`;
   }
 }

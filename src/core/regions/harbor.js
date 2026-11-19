@@ -18,6 +18,7 @@ export const HARBOR = {
   market: { x: 2, z: 16 },
   lighthouse: { x: 34, z: -40 },
   ship: { x: 60, z: 14 },
+  isle: { x: 22, z: 28.6 },      // the boat to Treasure Isle waits at the west end of the fishing pier (19/11)
   fishing: { x: 34, z: 28 },      // the end of the fishing pier: E to fish (19/11)
   shop: { x: -7.5, z: 9.5 },      // Willow's harbor stall: the Map 2 gear (the same counter as her forest camp)
   yard: { x: 3, z: -8.5 },      // container yard north of the main pier, with the quay crane beside it
@@ -33,7 +34,7 @@ export const PLAY = {
 const onPier = (x, z) => PIERS.some((p) => Math.abs(z - p.z) < p.half && x > p.x0 - 2 && x < p.x1 + 1);
 
 export default makeRegion({
-  name: 'harbor', title: 'Sunny Harbor', size: 150, playRadius: 66, seed: 20261118, trees: 16, rocks: 24,      // an island town: few trees, only on the slope behind the shops
+  name: 'harbor', title: 'Sunny Harbor', sea: true, size: 150, playRadius: 66, seed: 20261118, trees: 16, rocks: 24,      // an island town: few trees, only on the slope behind the shops
   treeFree: (x, z) => x > -30 || Math.hypot(x, z) > 58,
   riverX: () => 999, riverHalf: () => 0, riverStart: 9999, riverEnd: 9999,      // no river: the sea is made by the ground (hills)
   bridges: [], stonesZ: null, lowSand: (x, z) => x > coastX(z) - 15 || Math.hypot(x, z) > 46,      // sand along every shore

@@ -49,6 +49,11 @@ Mỗi 5 cấp có một "cổng kiến thức" (ôn từ đến hạn) mới lê
 | M2-10 | Trò Beauty Salon | Kiểu tóc, màu tóc, son môi, phấn mắt, sơn móng theo lời khách (bậc 1/2/3 = 3/4/5 phần) | xong |
 | M2-11 | Chuỗi nhiệm vụ chính Map 2 | map2 → harbor → shops → hunt3 → owl25 → boss4 (Bạch Tuộc cấp 28) → exam2 (bài thi cấp 30); Map 1 có thêm hunt2 và boss3 (chương rừng) | xong |
 | M2-12 | Nhiệm vụ ngày của cảng | 5 nhiệm vụ riêng (quái biển, rương, bong bóng, việc ở bảng, 2 trò ở cửa hàng); khi đã mở Map 2 mỗi ngày có 1 nhiệm vụ cảng + 2 nhiệm vụ chung | xong |
+| M2-13 | Câu cá + Album biển | Trò câu cá 5 lần (thanh trượt), 18 mục Album biển có nghĩa tiếng Việt và độ hiếm, bán cá ở chợ cá, mốc thưởng | xong |
+| M2-14 | Tủ đồ | Khách hoàn hảo ở Boutique/Salon trả phụ kiện (8 loại, 10 màu), mặc lên Ngọc | xong (đổi màu tóc/áo cần tách vật liệu trong Blender) |
+| M2-15 | Tàu gia đình + bảng tuần | Điểm chung hai bé, 8 cấp tàu, xếp hạng tuần, báo cáo phụ huynh | xong |
+| M2-16 | Thú đồng hành | 3 loài, chăm bằng tiếng Anh (món ăn, lệnh), gắn bó +% vàng, quà hằng ngày | xong |
+| M2-17 | Đảo Kho Báu | Đi thuyền từ cầu tàu nhỏ, bản đồ kho báu tiếng Anh (hướng, số bước, giữa hai vật), 2 kho báu/ngày | xong |
 | B1 | Xếp kẹo (match-3) | Biển phía Tây quảng trường, 25 lượt, có combo | xong |
 | B2 | Đua xe | Xe bí ngô, giữ phím để lái, né đá và bùn, nhặt xu | xong |
 | B3 | Bắn súng cao su | Kéo thả ná, đạn bay vòng cung, slime và bóng bay | xong |

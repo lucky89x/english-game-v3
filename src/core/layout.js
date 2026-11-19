@@ -2,9 +2,10 @@
 // pathfinding and minimap always agree. setRegion() swaps the whole map (live ES bindings).
 import forest from './regions/forest.js';
 import harbor from './regions/harbor.js';
+import isle from './regions/isle.js';
 import village from './regions/village.js';
 export { mulberry32, WATER_LEVEL, BRIDGE_LEN, BRIDGE_RISE } from './regionkit.js';
-export const REGIONS = { forest, village, harbor };
+export const REGIONS = { forest, village, harbor, isle };
 let cur = forest;
 export let NAME, TITLE, SIZE, PLAY_RADIUS, RIVER_START, RIVER_END, WATERFALL, BRIDGES, STONES_Z, STONES, LANDMARKS, ENTRANCE, SPAWN, EXITS, PATHS, SOLIDS, TREES, ROCKS;
 const listeners = [];
@@ -22,6 +23,8 @@ export function setRegion(name) {
 }
 setRegion('forest');
 export const treeScale = () => cur.TREE_SCALE || 1;
+/** A map in open sea (Sunny Harbor, Treasure Isle): no mountains, boardwalk roads, blue minimap. */
+export const isSea = () => !!cur.sea;
 export const riverX = (z) => cur.riverX(z);
 export const riverHalf = (z) => cur.riverHalf(z);
 export const riverDistance = (x, z) => cur.riverDistance(x, z);

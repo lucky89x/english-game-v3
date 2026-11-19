@@ -26,6 +26,7 @@ export const MAIN = [
   { id: 'harbor', en: 'Sail to Sunny Harbor', vi: 'Ra bến thuyền bên sông (chỗ chú Sam câu cá) rồi đi thuyền tới Cảng Mặt Trời.', done: (p) => !!p.flags.harbor_seen, gold: 100, exp: 200 },
   { id: 'shops', en: 'The three harbor shops', vi: 'Chơi đủ 3 trò ở cảng: Style Boutique (thời trang), Seaside Café (nấu ăn), Beauty Salon (làm đẹp).', done: (p) => ['style', 'cafe', 'salon'].every((k) => p.mini && p.mini.best && p.mini.best[k] !== undefined), gold: 120, exp: 300 },
   { id: 'dex', en: 'The Sea Dex', vi: 'Câu cá ở cầu tàu nhỏ (E ở cuối cầu) và đánh quái biển để ghi 8 sinh vật vào Album biển (phím G).', done: (p) => dexCount(p) >= 8, gold: 150, exp: 300 },
+  { id: 'treasure', en: 'Treasure hunter', vi: 'Đi thuyền từ cầu tàu nhỏ tới Đảo Kho Báu, đọc bản đồ tiếng Anh (phím M) và đào được 1 kho báu.', done: (p) => !!(p.treasure && p.treasure.total >= 1), gold: 150, exp: 350 },
   { id: 'hunt3', en: 'Harbor hunter', vi: 'Hoàn thành 2 việc ở bảng săn quái cạnh quảng trường cảng (cua, sứa, cướp biển).', done: (p) => !!(p.hunt3 && p.hunt3.done >= 2), gold: 150, exp: 400 },
   { id: 'owl25', en: 'Harbor scholar', vi: 'Lên cấp 25 rồi về làng gặp Cú Mèo qua cổng ôn tập (từ Unit 2).', done: (p) => gate(p, 25), gold: 120, exp: 0 },
   { id: 'boss4', en: 'Captain Octopus', vi: 'Đạt cấp 28, ra mũi hải đăng phía Bắc cảng và đánh bại Thuyền trưởng Bạch Tuộc.', done: (p) => !!p.flags.boss4, gold: 300, exp: 0 },
@@ -53,6 +54,7 @@ export const DAILY = [
   { id: 'sea_chest', map: 2, ev: 'sea_chest', need: 2, en: 'Open 2 harbor chests', vi: 'Mở 2 rương khóa chữ ở Cảng Mặt Trời.' },
   { id: 'sea_bubble', map: 2, ev: 'sea_bubble', need: 3, en: 'Learn 3 words from harbor bubbles', vi: 'Chạm 3 bong bóng chữ "Abc" ở cảng (bãi biển, cầu tàu, đường ra hải đăng).' },
   { id: 'sea_fish', map: 2, ev: 'sea_fish', need: 3, en: 'Catch 3 sea creatures', vi: 'Câu được 3 con (cá, tôm, mực…) ở cuối cầu tàu nhỏ.' },
+  { id: 'sea_treasure', map: 2, ev: 'treasure', need: 1, en: 'Find a treasure on Treasure Isle', vi: 'Ra Đảo Kho Báu, đọc bản đồ tiếng Anh và đào một kho báu.' },
   { id: 'sea_job', map: 2, ev: 'sea_job', need: 1, en: 'Finish a job on the harbor board', vi: 'Nhận và hoàn thành một việc ở bảng săn quái cạnh quảng trường cảng.' },
   { id: 'sea_games', map: 2, ev: 'sea_game', need: 2, en: 'Play 2 harbor shop games', vi: 'Chơi 2 trò ở Style Boutique, Seaside Café hoặc Beauty Salon.' },
 ];

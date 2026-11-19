@@ -25,11 +25,18 @@ import { cafeGame } from './ui/cafe.js';
 import { salonGame } from './ui/salon.js';
 import { fishGame } from './ui/fish.js';
 import { WardrobePanel } from './ui/wardrobe.js';
+import { PetPanel } from './ui/petpanel.js';
+import { Pet } from './game/pet.js';
+import * as PETS from './core/pet.js';
 import { outfitParts } from './game/outfit.js';
 import * as WR from './core/wardrobe.js';
 import { DexPanel } from './ui/dex.js';
 import { Toolbar } from './ui/toolbar.js';
 import * as Sea from './core/sea.js';
+import * as Family from './core/family.js';
+import { TreasurePanel } from './ui/treasure.js';
+import * as TR from './core/treasure.js';
+import { MARKS as ISLE_MARKS } from './core/regions/isle.js';
 import { buildRoom } from './world/interior.js';
 import { label } from './world/common.js';
 import * as Q from './core/quests.js';
@@ -121,7 +128,7 @@ let profile = null, quest = null, story = null, world = null, player = null, cam
 let shopWin = null, walkers = null, talkW = -1, touch = null, quality = localStorage.getItem('eq-quality') || 'medium', perfOn = false, started = false, switching = false, wordIds = {}, jarKey = '';
 const keys = new Set();
 const game = { errors, get profile() { return profile; }, get quest() { return quest; }, get story() { return story; }, get player() { return player; }, get cam() { return cam; }, get minimap() { return minimap; }, ui, L, stats: { fps: 0, ms: 0, calls: 0, tris: 0 },
-  teleport(x, z) { player.place(x, z); cam.target.set(x, player.pos.y + 1.25, z); }, applyLook,  setQuality, key: (code) => onKey({ code, preventDefault() {} }), get started() { return started && !switching; }, get region() { return L.NAME; }, chooseProfile, enterRegion, MARKET_JARS, BRIDGE_SPOTS, get mini() { return mini; }, get wild() { return wild; }, get scene() { return scene; }, openShop, get sword() { return swordMesh; }, get armor() { return armorShown; }, setWear, openBag: () => openBag(), get arcade() { return arcade; }, get chests() { return chests; }, get spots() { return spots; }, get admin() { return admin; }, get friends() { return friends; }, get walkers() { return walkers; }, get shopWin() { return shopWin; }, get music() { return music; }, get journal() { return journal; }, get intro() { return intro; }, cardOf: (id) => cardOfFn(id), pause: (on) => renderer.setAnimationLoop(on ? null : frame),      // tests: stop drawing while another page is checked
+  teleport(x, z) { player.place(x, z); cam.target.set(x, player.pos.y + 1.25, z); }, applyLook, catchFish, gainItems, get pet() { return petObj; }, get petPanel() { return petPanel; },  setQuality, key: (code) => onKey({ code, preventDefault() {} }), get started() { return started && !switching; }, get region() { return L.NAME; }, chooseProfile, enterRegion, MARKET_JARS, BRIDGE_SPOTS, get mini() { return mini; }, get wild() { return wild; }, get scene() { return scene; }, openShop, get sword() { return swordMesh; }, get armor() { return armorShown; }, setWear, openBag: () => openBag(), get arcade() { return arcade; }, get chests() { return chests; }, get spots() { return spots; }, get admin() { return admin; }, get friends() { return friends; }, get walkers() { return walkers; }, get shopWin() { return shopWin; }, get music() { return music; }, get journal() { return journal; }, get intro() { return intro; }, cardOf: (id) => cardOfFn(id), pause: (on) => renderer.setAnimationLoop(on ? null : frame),      // tests: stop drawing while another page is checked
   post, refresh: () => refresh() };
 globalThis.__eq = game;
 
@@ -195,7 +202,11 @@ function refresh() {
     ui.dialogue([{ who: 'Tom', en: 'You beat Captain Octopus! The sea is calm again. A warm wind from the desert is calling you now.', vi: 'Con đã hoàn thành Map 2 · Cảng Mặt Trời! Map 3 · Sa mạc Gió Vàng đang được xây, sắp mở. Làm bài kiểm tra cấp 30 của Cú Mèo để lên cấp tiếp.' }]);
   }
   const learned = Review.learned(profile.words); if (journal) journal.sync(); if (toolbar) toolbar.sync(profile);
-  if (L.NAME === 'harbor') {
+  if (L.NAME === 'isle') {
+    ui.hud(profile, 'Đảo Kho Báu', [`🗺 ${Math.min(TR.state(profile).n, TR.MAX_DAILY)}/${TR.MAX_DAILY}`, Save.gateWaiting(profile) ? '🦉 ôn tập' : ''].filter(Boolean).join('  '), learned, bag(profile).food);
+    ui.clue(null, 0, '', treasureMap() ? 'Read the treasure map (M), walk the steps and dig with E!' : 'You found today’s treasures. Come back tomorrow!');
+    crystals.show([]);
+  } else if (L.NAME === 'harbor') {
     ui.hud(profile, 'Cảng Mặt Trời', [wild ? wild.huntNote() : '', Save.gateWaiting(profile) ? '🦉 ôn tập' : ''].filter(Boolean).join('  '), learned, bag(profile).food);
     const mq = Q.mainCurrent(profile);
     ui.clue(null, 0, '', mq && ['harbor', 'shops', 'hunt3', 'owl25', 'boss4', 'exam2'].includes(mq.id) ? `Quest: ${mq.en}. Press N for the quest book.` : 'Welcome to Sunny Harbor! Take jobs from the board by the square.');
@@ -307,6 +318,8 @@ function placeActors() {
     const ex = L.EXITS[0]; if (profile && profile.flags.forest_open) { pip.root.visible = true; pip.place(ex.x + 2.2, ex.z + 3); } else pip.root.visible = false;
     if (story) placeVillageHelpers();
     for (const f of friends) f.npc.move(...f.at);
+  } else if (L.NAME === 'isle') {
+    tom.hide(); ben.hide(); sam.hide(); pip.root.visible = false; for (const f of friends) f.npc.hide();
   } else if (L.NAME === 'harbor') {
     tom.hide(); ben.hide(); pip.root.visible = false; for (const f of friends) f.npc.hide();
     sam.move(30, 29.4, Math.PI);      // fishing at the end of the small pier
@@ -321,6 +334,7 @@ async function enterRegion(name, at) {
   switching = true; ui.prompt('');
   if (story) story.leaveMarket();
   L.setRegion(name);
+  for (const m of digMeshes.splice(0)) m.removeFromParent();
   if (name === 'harbor' && profile) profile.flags.harbor_seen = true;      // main quest: sail to Sunny Harbor
   if (world) world.dispose();
   jarKey = '';
@@ -330,9 +344,10 @@ async function enterRegion(name, at) {
   try { await renderer.compileAsync(scene, camera); } catch { /* older browsers: shaders compile on first sight */ }      // no hitch when new things come into view
   minimap.rebuild(); placeActors(); if (walkers) walkers.setRegion(name); if (mini) mini.setRegion(name); if (wild) { if (name === 'harbor') await wild.addHarbor(seaModel); wild.setRegion(name); } if (chests) chests.setRegion(name); if (spots) spots.setRegion(name); if (homes) homes.setRegion(name); if (forestStall) forestStall.visible = name === 'forest';
   const [x, z] = at || [L.SPAWN.x, L.SPAWN.z];
-  game.teleport(x, z); player.yaw = Math.PI; cam.tYaw = cam.yaw = 0.25;
+  game.teleport(x, z); player.yaw = Math.PI; cam.tYaw = cam.yaw = 0.25; if (petObj) petObj.snap(x, z);
   if (quest && quest.step === 'seek') quest.clueStart = performance.now();
   switching = false; save(); refresh();
+  if (name === 'isle' && trPanel && treasureMap()) trPanel.show();      // the map greets the hero on arrival
 }
 /** Words, story and quest for the profile's grade and current unit (Save.unitOf). Called again when the unit changes. */
 function learning(p, units) {
@@ -383,7 +398,9 @@ function track(ev, n = 1) {
   if (!profile) return;
   const done = Q.track(profile, Review.today(), ev, n);
   for (const q of done) { ui.toast('📜 Xong nhiệm vụ ngày: ' + q.en); sfx('fanfare'); }
-  if (done.length) save(); if (journal) journal.sync();
+  const fp = Family.addPoints(store, profile, ev, Review.today());      // the family ship and the weekly board (19/11)
+  if (fp.up) { const nm = Family.SHIP_NAMES[fp.up]; ui.toast(`⚓ Tàu gia đình lên cấp ${fp.up + 1}: ${nm.en} (${nm.vi})! Mở sổ nhiệm vụ để nhận thưởng.`); sfx('fanfare'); }
+  if (done.length || fp.n) save(); if (journal) journal.sync();
 }
 function claimReward(r, what) {
   if (!r) return; profile.stats.gold += r.gold; if (r.exp) Save.addExp(profile, r.exp); sfx('fanfare'); save(); refresh();
@@ -398,8 +415,25 @@ const HALL_DOOR = { x: 0, z: -16.4 }, LILY_DOOR = { x: -17.4, z: -4 };
 const VILLAGE_DOCK = [L.REGIONS.village.riverX(18) - 5.2, 18.6];
 const homesItems = (p) => (p.home && p.home.items) || [];
 // ---------------------------------------------------------------- the sea extras (19/11): fishing, Sea Dex, fish market
-let dexPanel = null, wardPanel = null, toolbar = null;
+let dexPanel = null, wardPanel = null, petPanel = null, petObj = null, trPanel = null, toolbar = null;
+let digMeshes = [];
 const seaOpen = () => !!(profile && (profile.flags.map2 || profile.admin));
+/** The pet of this profile (if any) shows in the world; its hunger is brought up to date. */
+function syncPet() { if (!petObj) return; if (profile && profile.pet) PETS.tick(profile.pet); petObj.set(profile && profile.pet ? profile.pet.kind : null); }
+const petGoldMul = () => { if (profile && profile.pet) PETS.tick(profile.pet); return profile ? PETS.goldMul(profile) : 1; };
+/** Treasure Isle: today's map for this child, and the dig. */
+const treasureOk = (x, z) => L.REGIONS.isle.walkable(x, z, 0.8);
+function treasureMap() { return profile ? TR.current(profile, Review.today(), tierOf(profile.stats.level), ISLE_MARKS, treasureOk) : null; }
+function digHere() {
+  const m = treasureMap(); if (!m) return; player.emote('Interact'); sfx('tick');
+  const x = player.pos.x, z = player.pos.z;
+  if (!TR.isGoal(m, x, z)) { const w = TR.warmth(TR.dist(m, x, z)); ui.dialogue([{ who: 'Ngọc', en: `Nothing here… ${w.en}`, vi: w.vi }]); return; }
+  const t = tierOf(profile.stats.level), r = TR.reward(t); TR.solved(profile);
+  const kinds = Object.keys(WR.KINDS), all = kinds.flatMap((k) => WR.COLOR_NAMES.map((c) => [k, c])), fresh = all.filter(([k, c]) => !WR.wardrobe(profile).owned.includes(WR.itemId(k, c))), [k, c] = (fresh.length ? fresh : all)[Math.floor(Math.random() * (fresh.length || all.length))];
+  const isNew = WR.unlock(profile, k, c); profile.stats.gold += r.gold; Save.addExp(profile, r.exp); track('treasure'); sfx('fanfare'); save(); refresh();
+  const mound = new THREE.Mesh(new THREE.SphereGeometry(0.7, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0x6a4a2a, roughness: 1 })); mound.position.set(m.goal.x, L.groundHeight(m.goal.x, m.goal.z), m.goal.z); scene.add(mound); digMeshes.push(mound);
+  ui.dialogue([{ who: 'Ngọc', en: `I found the treasure! A chest full of gold, and a ${WR.itemName(WR.itemId(k, c))}! (+${r.gold} gold, +${r.exp} EXP)`, vi: `Tìm được kho báu! ${isNew ? 'Có thêm món mới trong tủ đồ (phím V).' : ''} ${treasureMap() ? 'Còn một bản đồ nữa hôm nay: bấm M.' : 'Hôm nay con đã tìm đủ rồi, mai có bản đồ mới.'}` }]);
+}
 function openDex() { dexPanel.show(); sfx('tick'); }
 /** A sea creature is found (caught or defeated): the first time pays by rarity, milestones pay a bonus. */
 function seaFound(id) {
@@ -421,7 +455,7 @@ function enterRoom(kind, opts) { leaveRoom(); room = buildRoom(kind, opts); docu
 function leaveRoom() { if (!room) return; room.dispose(); room = null; document.body.classList.remove('inroom'); }
 function adminPlaces() {
   const out = [], add = (region, name, x, z) => out.push({ region, name, x, z });
-  for (const r of ['village', 'forest', 'harbor']) for (const l of L.REGIONS[r].LANDMARKS) add(r, l.label, ...(l.spot || [l.x, l.z]));
+  for (const r of ['village', 'forest', 'harbor', 'isle']) for (const l of L.REGIONS[r].LANDMARKS) add(r, l.label, ...(l.spot || [l.x, l.z]));
   add('village', 'Tom', 2.6, 9.6); add('village', 'Cửa hàng', SHOP_DOOR.x - 1, SHOP_DOOR.z); add('village', 'Cú Mèo', OWL.x, OWL.z + 1.2); add('village', 'Bảng săn quái', BOARD.x + 1.2, BOARD.z + 1);
   for (const st of STARTS) add('village', 'Trò: ' + st.sign.replace(/^\S+\s/, ''), st.x + 0.8, st.z + 0.8);
   add('village', 'Nhà của các con', HOMES[0].door[0] + 2, HOMES[0].door[1] + 1.5); add('village', 'Cửa hàng nội thất', FURNITURE.door[0] + 1.5, FURNITURE.door[1]);
@@ -441,7 +475,7 @@ function freeSpot(region, x, z) {
 }
 async function adminGo(region, x, z) {
   const at = freeSpot(region, x, z);
-  if (region !== L.NAME) { if (region === 'forest') profile.flags.forest_open = true; if (region === 'harbor') profile.flags.map2 = true; await enterRegion(region, at); } else game.teleport(...at);
+  if (region !== L.NAME) { if (region === 'forest') profile.flags.forest_open = true; if (region === 'harbor' || region === 'isle') profile.flags.map2 = true; await enterRegion(region, at); } else game.teleport(...at);
   ui.toast('Đã tới nơi');
 }
 const STEP_ORDER = ['arrive', 'letter_find', 'letter_return', 'jars', 'jars_play', 'tom_bridge', 'bridge', 'gather', 'plan', 'open', 'done'];
@@ -512,11 +546,11 @@ async function chooseProfile(p) {
   unlock(); profile = p; store.last = p.id; started = false; shownLevel = 0;
   if (p.admin) Object.assign(p.flags, { arrived: true, forest_open: true, map2: true });      // the admin may enter every map (18/11)
   learning(p, await loadGrade(p.grade));                                   // this grade only
-  wear(profile); setSword(); setWear();
+  wear(profile); setSword(); setWear(); syncPet();
   if ((story.step === 'open' || story.step === 'done') && !p.flags.bridge_fixed) p.flags.bridge_fixed = true;   // saves from before the bridge quest
   applyBridge();
   $('mapbox').classList.remove('hidden');
-  await enterRegion(p.region === 'forest' && p.flags.forest_open ? 'forest' : p.region === 'harbor' && p.flags.map2 ? 'harbor' : 'village');
+  await enterRegion(p.region === 'forest' && p.flags.forest_open ? 'forest' : (p.region === 'harbor' || p.region === 'isle') && p.flags.map2 ? p.region : 'village');
   started = true; renderGear(); if (admin) admin.sync();
   if (L.NAME === 'village' && story.step === 'arrive' && !p.flags.arrived) startIntro();
 }
@@ -700,13 +734,18 @@ function interactTarget() {
   const p = player.pos;
   for (const ex of L.EXITS) if (near(ex.x, ex.z, ex.r)) {
     if (ex.flag && !profile.flags[ex.flag]) return { text: 'Cổng rừng còn khóa. Hãy giúp Tom và Ben trước.', run() {} };
-    return { text: 'E · ' + ex.label, run: () => { const back = ex.to === 'village' ? (L.NAME === 'harbor' ? VILLAGE_DOCK : [L.REGIONS.village.EXITS[0].x + 0.5, L.REGIONS.village.EXITS[0].z + 5]) : null; enterRegion(ex.to, back); } };
+    return { text: 'E · ' + ex.label, run: () => { const back = ex.to === 'village' ? (L.NAME === 'harbor' ? VILLAGE_DOCK : [L.REGIONS.village.EXITS[0].x + 0.5, L.REGIONS.village.EXITS[0].z + 5]) : (L.NAME === 'isle' ? [HARBOR.isle.x + 2.2, HARBOR.isle.z - 0.5] : null); enterRegion(ex.to, back); } };
+  }
+  if (L.NAME === 'isle') {          // Treasure Isle (19/11): read the map, walk the steps, dig
+    if (!treasureMap()) return { text: 'Hôm nay con đã tìm đủ kho báu. Mai có bản đồ mới!', run() {} };
+    return { text: 'E · Đào ở đây (bản đồ kho báu: phím M)', run: digHere };
   }
   if (L.NAME === 'harbor') {          // Map 2: Sunny Harbor (18/11)
     const H = HARBOR;
     if (near(H.boutique.door[0] + 1, H.boutique.door[1], 2.0)) return { text: 'E · Style Boutique: trò thời trang với cô Mia', run: () => { const t = tierOf(profile.stats.level); arcade.start(withTier(styleGame(Math.random, t), t)); } };
     if (near(H.cafe.door[0] + 1, H.cafe.door[1], 2.0)) return { text: 'E · Seaside Café: trò nấu ăn với đầu bếp Leo', run: () => { const t = tierOf(profile.stats.level); arcade.start(withTier(cafeGame(Math.random, t), t)); } };
     if (near(H.salon.door[0], H.salon.door[1] + 1, 2.0)) return { text: 'E · Beauty Salon: trò làm đẹp với chị Ruby', run: () => { const t = tierOf(profile.stats.level); arcade.start(withTier(salonGame(Math.random, t), t)); } };
+    if (near(H.isle.x, H.isle.z, 2.3)) return { text: 'E · Đi thuyền tới Đảo Kho Báu', run: () => enterRegion('isle') };
     if (near(H.fishing.x, H.fishing.z, 2.4)) return { text: 'E · Câu cá (5 lần thả câu)', run: () => { const t = tierOf(profile.stats.level); arcade.start(withTier(fishGame(Math.random, t), t)); } };
     if (near(H.market.x, H.market.z - 1.2, 3.4)) { const n = Sea.bucketCount(profile); return { text: n ? `E · Bán ${n} món trong xô cá ở chợ cá` : 'E · Chợ cá (xô cá đang trống)', run: sellFish }; }
     if (near(H.shop.x + 1.6, H.shop.z + 0.6, 2.4)) return { text: "E · Quầy của Willow (đồ Map 2)", run: () => { enterRoom('forest'); shopWin.show("Willow's Harbor Stall", ['forest']); } };
@@ -769,6 +808,10 @@ function onKey(e) {
   if (homePanel && homePanel.key(e.code)) { e.preventDefault(); return; }
   if (dexPanel && dexPanel.key(e.code)) { e.preventDefault(); return; }
   if (wardPanel && wardPanel.key(e.code)) { e.preventDefault(); return; }
+  if (petPanel && petPanel.key(e.code)) { e.preventDefault(); return; }
+  if (trPanel && trPanel.key(e.code)) { e.preventDefault(); return; }
+  if (e.code === 'KeyM' && profile && trPanel && L.NAME === 'isle') { trPanel.show(); sfx('tick'); e.preventDefault(); return; }
+  if (e.code === 'KeyP' && profile && petPanel && seaOpen()) { petPanel.show(); sfx('tick'); e.preventDefault(); return; }
   if (e.code === 'KeyV' && profile && wardPanel && seaOpen()) { wardPanel.show(); sfx('tick'); e.preventDefault(); return; }
   if (e.code === 'KeyG' && profile && dexPanel && seaOpen()) { openDex(); e.preventDefault(); return; }
   if (intro && intro.active) { if (e.code === 'KeyE' || e.code === 'Space' || e.code === 'Escape') endIntro(); e.preventDefault(); return; }
@@ -820,12 +863,19 @@ async function boot() {
     homes = new Homes({ scene, load: staticModel, profiles: () => store.profiles, models: { garden: await opt('prop_vegetable_garden_v01'), tree: await opt('prop_tree_round_v01') } });
     await homes.build(); homes.setRegion(L.NAME); homePanel = new HomePanel({ onClose: leaveRoom, profile: () => profile, today: () => Review.today(), changed: () => { save(); refresh(); }, sfx, track }); }
   journal = new Journal({ profile: () => profile, today: () => Review.today(), onClose: leaveRoom,
+    store: () => store, claimShip: () => { const r = Family.claim(store, profile); if (r) { sfx('fanfare'); save(); refresh(); ui.toast(`⚓ Thưởng tàu gia đình: +${r.gold} vàng`); } },
     claimMain: (id) => claimReward(Q.claimMain(profile, id), 'Nhiệm vụ chính'), claimDaily: (id) => claimReward(Q.claimDaily(profile, Review.today(), id), 'Nhiệm vụ ngày') });
   Save.hooks.skill = (p, ok) => { if (ok && p === profile) track('right'); };
   dexPanel = new DexPanel({ profile: () => profile, onClose: () => {} });
   wardPanel = new WardrobePanel({ profile: () => profile, changed: () => { applyLook(); save(); refresh(); } });
+  trPanel = new TreasurePanel({ profile: () => profile, map: () => treasureMap(), speak: (t) => speak(t, true, 0.85) });
+  petObj = new Pet(scene);
+  petPanel = new PetPanel({ profile: () => profile, today: () => Review.today(), speak: (t) => speak(t, true, 0.85), sfx, playTrick: (id) => petObj.play(id), adopted: () => { syncPet(); petObj.snap(player.pos.x, player.pos.z); },
+    cared: () => track('pet'), changed: () => { save(); refresh(); } });
   toolbar = new Toolbar([
     { id: 'dex', icon: '🐠', tip: 'Album biển (G)', show: seaOpen, click: () => { if (profile) openDex(); } },
+    { id: 'map', icon: '🗺️', tip: 'Bản đồ kho báu (M)', show: () => L.NAME === 'isle', click: () => { if (profile) { trPanel.show(); sfx('tick'); } } },
+    { id: 'pet', icon: '🐾', tip: 'Thú cưng (P)', show: seaOpen, click: () => { if (profile) { petPanel.show(); sfx('tick'); } } },
     { id: 'ward', icon: '👗', tip: 'Tủ đồ (V)', show: seaOpen, badge: (p) => 0, click: () => { if (profile) { wardPanel.show(); sfx('tick'); } } },
   ]);
   walkers = new Walkers(scene, (name) => loader.loadAsync(`./assets/models/${name}.glb`)); await walkers.init();      // villagers on the roads
@@ -863,7 +913,7 @@ async function boot() {
       };
       teach([card], () => arcade.start(g));
     } });
-  wild = new Wild({ scene, player, ui, sfx, profile: () => profile, save, onChange: refresh, onKill: (m) => { track('kill'); if (m && m.region === 'harbor') track('sea_kill'); if (m && m.region === 'harbor') seaFound(m.kind); }, onJob: (region) => { if (region === 'harbor') track('sea_job'); },
+  wild = new Wild({ scene, player, ui, sfx, profile: () => profile, save, onChange: refresh, goldMul: petGoldMul, onKill: (m) => { track('kill'); if (m && m.region === 'harbor') track('sea_kill'); if (m && m.region === 'harbor') seaFound(m.kind); }, onJob: (region) => { if (region === 'harbor') track('sea_job'); },
     quiz: (bossName, done) => {       // word shield: pick the English word for the Vietnamese meaning (unit vocabulary, due words first)
       const pool = unitCards.filter((c) => c.word.length <= 18); if (pool.length < 4) { done(true); return; }
       const due = Review.dueIds(profile.words).map((id) => pool.find((c) => c.id === id)).filter(Boolean), card = (due.length ? due : pool)[Math.floor(Math.random() * (due.length || pool.length))];
@@ -895,7 +945,7 @@ const AUTO = !navigator.webdriver && !localStorage.getItem('eq-quality-manual');
 function frame() {
   const now = performance.now(), raw = (now - last) / 1000, real = Math.min(0.25, raw); last = now;
   const dt = Math.min(0.05, real); TIME.value += real; const t = TIME.value;
-  const frozen = ui.modal || !started || (arcade && arcade.open) || (shopWin && shopWin.open) || (music && music.open) || (journal && journal.open) || (homePanel && homePanel.open) || (dexPanel && dexPanel.open) || (wardPanel && wardPanel.open);
+  const frozen = ui.modal || !started || (arcade && arcade.open) || (shopWin && shopWin.open) || (music && music.open) || (journal && journal.open) || (homePanel && homePanel.open) || (dexPanel && dexPanel.open) || (wardPanel && wardPanel.open) || (petPanel && petPanel.open) || (trPanel && trPanel.open);
   if (arcade) arcade.update(real, keys);
   if (touch) touch.update();
   releaseSoftKeys();
@@ -916,6 +966,7 @@ function frame() {
   crystals.update(t); if (world) world.update(t);
   if (mini && started && !switching && !ui.modal && !arcade.open) mini.update(real, player.pos);      // real time, so timers stay honest on slow machines
   if (chests && started) chests.update(real);
+  if (petObj && started && !switching) petObj.update(real, player.pos, player.yaw);
   if (spots && started) spots.update(real);
   if (wild && started && !switching) wild.update(real, !!ui.modal || arcade.open);
   if (marks3d) marks3d.update(real);
@@ -940,6 +991,8 @@ function frame() {
       if (left('salon')) markers.push({ x: HARBOR.salon.door[0], z: HARBOR.salon.door[1] + 1, text: '!', host: true });
       markers.push({ x: sam.x, z: sam.z, text: '!', host: true });
       markers.push(...wild.markers(), ...chests.markers(), ...spots.markers());
+    } else if (L.NAME === 'isle') {
+      // Treasure Isle has no markers: the map is read on its card (M) and the place names stand on small signs
     } else if (L.NAME === 'forest') {
       if (quest.step === 'intro') markers.push({ x: tom.x, z: tom.z, text: '!' });
       if (quest.step === 'tree') { const s = landmark('tree').spot; markers.push({ x: s[0], z: s[1], text: '★' }); }

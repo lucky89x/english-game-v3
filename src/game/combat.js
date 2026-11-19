@@ -198,7 +198,7 @@ export class Wild {
   }
   kill(m, p) {
     m.dead = m.boss ? 300 : m.kind === 'golem' ? 40 : 14; m.g.visible = false;
-    const first = m.boss && !p.flags[m.def.flag], k = m.boss && !first ? 0.25 : 1, gold = Math.round(m.def.gold * k), exp = Math.round(m.def.exp * k);
+    const first = m.boss && !p.flags[m.def.flag], k = m.boss && !first ? 0.25 : 1, gold = Math.round(m.def.gold * k * (this.api.goldMul ? this.api.goldMul() : 1)), exp = Math.round(m.def.exp * k);
     p.stats.gold += gold; addExp(p, exp); p.kills = (p.kills || 0) + 1; if (this.api.onKill) this.api.onKill(m);
     if (m.boss) { m.broken = 0; m.shieldOn = false; m.shield.visible = false; p.flags[m.def.flag] = true; }
     if (countKill(p, m.kind)) this.api.ui.toast('Quest done! Go back to the board');

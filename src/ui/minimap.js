@@ -17,7 +17,7 @@ export class Minimap {
   zoomBy(k) { this.zoom = Math.min(6, Math.max(0.6, this.zoom * k)); }
   rebuild() { this.bg = this.renderBase(); this.route = null; }
   renderBase() {
-    const n = L.SIZE * BASE, cv = document.createElement('canvas'), SEA = L.NAME === 'harbor', SAND = L.REGIONS[L.NAME].lowSand || (() => false); cv.width = cv.height = n;
+    const n = L.SIZE * BASE, cv = document.createElement('canvas'), SEA = L.isSea(), SAND = L.REGIONS[L.NAME].lowSand || (() => false); cv.width = cv.height = n;
     const ctx = cv.getContext('2d'), img = ctx.createImageData(n, n);
     for (let pz = 0; pz < n; pz++) for (let px = 0; px < n; px++) {
       const x = px / BASE - L.SIZE / 2, z = pz / BASE - L.SIZE / 2, h = L.groundHeight(x, z);
@@ -50,7 +50,7 @@ export class Minimap {
   draw(player, yaw, markers) {
     const { ctx, cv } = this; this.px = player.x; this.pz = player.z; this.cx = player.x; this.cz = player.z;
     const s = BASE * this.zoom / 2, w = cv.width, h = cv.height;
-    ctx.fillStyle = L.NAME === 'harbor' ? '#48b2e2' : '#46965a'; ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = L.isSea() ? '#48b2e2' : '#46965a'; ctx.fillRect(0, 0, w, h);
     ctx.imageSmoothingEnabled = true;
     ctx.drawImage(this.bg, w / 2 - (player.x + L.SIZE / 2) * s, h / 2 - (player.z + L.SIZE / 2) * s, L.SIZE * s, L.SIZE * s);
     if (this.route) { ctx.strokeStyle = '#ff5a3c'; ctx.lineWidth = 2.5; ctx.setLineDash([5, 4]); ctx.beginPath(); this.route.forEach((p, i) => { const [mx, my] = this.toMap(p.x, p.z); if (i) ctx.lineTo(mx, my); else ctx.moveTo(mx, my); }); ctx.stroke(); ctx.setLineDash([]); }

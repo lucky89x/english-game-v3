@@ -41,7 +41,7 @@ async function ship(add, loadModel, shadowed) {
   g.userData.update = (t) => { g.rotation.z = Math.sin(t * 0.6) * 0.01; g.position.y = Math.sin(t * 0.8) * 0.06; };
   add(g);
 }
-function palm(still, x, z, k) {
+export function palm(still, x, z, k) {
   const y = L.groundHeight(x, z), trunk = M(0x9a7044), leaf = M(k % 2 ? 0x3f9a3a : 0x52b04a, 0.8, { side: THREE.DoubleSide });
   let px = x, py = y, lean = 0.12 + (k % 3) * 0.05, dir = k * 1.7;
   for (let i = 0; i < 7; i++) { const s = mesh(still, new THREE.CylinderGeometry(0.17 - i * 0.01, 0.2 - i * 0.01, 0.75, 7), trunk, px, py + 0.37, z + (px - x) * 0.2); s.rotation.z = -lean * i * 0.3; px += Math.cos(dir) * lean * 0.6; py += 0.72; }
@@ -108,6 +108,7 @@ export async function harborExtras(add, loadModel, shadowed) {
   for (const sx of [-1, 5]) add(campStall(sx, gh(sx, 18), 18, Math.PI, 0x2f6fd0));
   { const n = label('🐟 Fish Market', { size: 28, scale: 0.8 }); n.position.set(2, gh(2, 18) + 3.4, 18); add(n); }
   { const sx = B.shop.x, sz = B.shop.z; add(campStall(sx, gh(sx, sz), sz, Math.PI / 2 + 0.3)); const n = label("🌿 Willow's Harbor Stall", { size: 28, scale: 0.8 }); n.position.set(sx, gh(sx, sz) + 3.4, sz); add(n); }      // the Map 2 gear counter
+  { const n = label('⛵ Boat to Treasure Isle', { size: 26, scale: 0.75 }); n.position.set(B.isle.x, L.WATER_LEVEL + 3.2, B.isle.z + 2.6); add(n); }
   // boats at the fishing pier
   for (const [bx, bz, r] of [[22, 31.2, 0.2], [30, 24.8, -0.3], [44, 5.6, 1.6]]) { try { const b = shadowed(await loadModel('prop_boat_v01')); b.position.set(bx, L.WATER_LEVEL - 0.25, bz); b.rotation.y = r; b.scale.setScalar(1.2); add(b); } catch { /* no boat model: the piers are enough */ } }
   // palms and umbrellas on the beach, crates and barrels on the main pier

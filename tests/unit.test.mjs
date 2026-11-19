@@ -717,3 +717,66 @@ test('wardrobe: pieces unlock once, wear and take off by slot, perfect customers
   const s = SAL.salonGame(() => 0.4, 3); for (let n = 0; n < 5; n++) { const o = s.order; s.look = { style: o.style, hair: o.hair, lips: o.lips || null, eyes: o.eyes || null, nails: o.nails || null }; s.click(475, 510); }
   s.update(2); const r2 = s.done(); assert.ok(r2.unlock.length >= 5 && r2.unlock.some((x) => x.kind === 'bow'), 'salon result unlocks a bow per perfect customer');
 });
+
+// ---------------------------------------------------------------- the family ship and the weekly board (19/11)
+import * as FAM from '../src/core/family.js';
+test('family ship: points from events grow one ship, each child is paid per level, the week rolls, the report counts the week', () => {
+  const a = { id: 'a', name: 'An', grade: 6, stats: { gold: 0 }, skills: { vocabulary: { attempts: 10, correct: 7 } }, words: { w1: {} } }, b = { id: 'b', name: 'Bình', grade: 8, stats: { gold: 0 }, skills: {}, words: {} }, admin = { id: 'x', admin: true, stats: { gold: 0 } };
+  const store = { profiles: [a, b, admin] }, day = 20000;      // day 20000 is a Wednesday
+  assert.equal(FAM.weekOf(20000), FAM.weekOf(20000 - 2), 'Monday and Wednesday share a week'); assert.notEqual(FAM.weekOf(20000), FAM.weekOf(20000 + 5), 'the next Monday starts a new week');
+  assert.equal(FAM.addPoints(store, admin, 'kill', day).n, 0, 'the admin never scores'); assert.equal(FAM.addPoints(store, a, 'nonsense', day).n, 0);
+  FAM.roll(store, day, store.profiles); a.skills.vocabulary.attempts += 5; a.skills.vocabulary.correct += 4; a.words.w2 = {};
+  for (let i = 0; i < 40; i++) FAM.addPoints(store, a, 'right', day); for (let i = 0; i < 20; i++) FAM.addPoints(store, b, 'kill', day);
+  assert.equal(FAM.fam(store).pts, 100); assert.equal(FAM.champion(FAM.fam(store).scores, store.profiles), 'a');
+  const up = FAM.addPoints(store, b, 'sea_job', day); for (let i = 0; i < 9; i++) FAM.addPoints(store, b, 'sea_job', day);
+  assert.ok(FAM.fam(store).pts >= 150 && FAM.shipLevel(FAM.fam(store).pts) === 1, 'level 1 at 150 points'); assert.ok(up.up === 0 || up.up === 1);
+  const pa = FAM.pending(store, a); assert.deepEqual(pa.levels, [1]); assert.equal(pa.gold, 40); assert.equal(FAM.claim(store, a).gold, 40); assert.equal(a.stats.gold, 40); assert.equal(FAM.claim(store, a), null, 'paid once'); assert.equal(FAM.pending(store, b).gold, 40, 'the other child is paid too');
+  const rep = FAM.weekReport(store, store.profiles); assert.equal(rep.length, 2); const ra = rep.find((r) => r.id === 'a'); assert.equal(ra.tries, 5); assert.equal(ra.right, 4); assert.equal(ra.pct, 80); assert.equal(ra.words, 1);
+  assert.equal(FAM.roll(store, day + 7, store.profiles), true, 'a new week'); assert.equal(FAM.fam(store).last.champ, null, 'a tie has no champion (80 points each)'); assert.deepEqual(FAM.fam(store).scores, {});
+  assert.equal(FAM.shipLevel(0), 0); assert.equal(FAM.shipLevel(4500), FAM.SHIP.length - 1); assert.equal(FAM.nextNeed(4500), null);
+  for (const n of FAM.SHIP_NAMES) assert.ok(n.en && n.vi && !/[àáảãạăâđêôơư]/i.test(n.en));
+});
+
+// ---------------------------------------------------------------- the sea pet (19/11)
+import * as PET from '../src/core/pet.js';
+test('pet: adopt once, hunger falls with time, English questions have one right picture, care pays up to the daily cap, gifts once a day', () => {
+  const p = { stats: { gold: 0 } }; assert.equal(PET.adopt(p, 'dragon', 1), null); const pet = PET.adopt(p, 'gull', 100, 0); assert.ok(pet && pet.name === 'Skye'); assert.equal(PET.adopt(p, 'otter', 100), null, 'one pet at a time');
+  PET.tick(pet, 60 * 60 * 1000); assert.ok(pet.hunger < 80 && pet.hunger > 60, 'about 12 points an hour'); PET.tick(pet, 40 * 60 * 60 * 1000); assert.equal(pet.hunger, 0); assert.ok(pet.joy < 60, 'a hungry pet is sad');
+  assert.equal(PET.goldMul(p), 1, 'no bonus without bond'); let seed = 4; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  for (let i = 0; i < 80; i++) for (const q of [PET.foodQuestion(rnd), PET.trickQuestion(rnd)]) { assert.equal(q.options.length, 3); assert.equal(new Set(q.options.map((o) => o.id)).size, 3); assert.equal(q.options[q.a].id, q.answer); assert.ok(/[A-Za-z]/.test(q.say) && !/[àáảãạăâđêôơư]/i.test(q.say)); }
+  pet.hunger = 50; let paid = 0; for (let i = 0; i < 9; i++) if (PET.feed(p, 100).paid) paid += 1; assert.equal(paid, PET.MAX_CARES, 'only the first care actions of a day raise the bond'); assert.equal(pet.bond, 3 * PET.MAX_CARES); assert.equal(pet.hunger, 100);
+  assert.deepEqual(PET.train(p, 'sit', 101), { isNew: true, paid: true }); assert.equal(PET.train(p, 'sit', 101).isNew, false); assert.deepEqual(pet.tricks, ['sit']);
+  pet.bond = 90; assert.equal(PET.bondLevel(pet), 3); assert.equal(PET.goldMul(p), 1.12); pet.bond = 5000; assert.equal(PET.goldMul(p), 1.2, 'capped');
+  pet.joy = 80; pet.hunger = 60; const g = PET.dailyGift(p, 101); assert.ok(g && g.gold > 8); assert.equal(PET.dailyGift(p, 101), null); assert.ok(PET.dailyGift(p, 102));
+  for (const x of [...PET.FOODS, ...PET.TRICKS]) assert.ok(x.en && x.vi && x.icon);
+});
+
+// ---------------------------------------------------------------- Treasure Isle and the English treasure maps (19/11)
+import * as TRS from '../src/core/treasure.js';
+import { MARKS as ISLE_MARKS } from '../src/core/regions/isle.js';
+test('Treasure Isle: boat landing and every named place are reachable; the sea closes round the island', async () => {
+  const I = (await import('../src/core/regions/isle.js')).default;
+  L.setRegion('isle');
+  try {
+    assert.ok(L.isSea(), 'a sea map'); assert.ok(L.walkable(L.SPAWN.x, L.SPAWN.z, 0.5), 'landing is on the beach'); assert.ok(L.inWater(40, 0) && L.inWater(0, 36) && !L.inWater(0, 2), 'sea all round');
+    const ex = L.EXITS[0]; assert.ok(findPath(L.SPAWN.x, L.SPAWN.z, ex.x + 1.8, ex.z), 'the way back to the boat');
+    for (const [id, m] of Object.entries(ISLE_MARKS)) { assert.ok(findPath(L.SPAWN.x, L.SPAWN.z, m.x - (m.r + 1.4) * 0.7, m.z + (m.r + 1.4) * 0.7), id + ' can be reached'); assert.ok(!I.walkable(m.x, m.z, 0.2), id + ' is solid'); assert.ok(m.en && m.vi && !/[àáảãạăâđêôơư]/i.test(m.en)); }
+  } finally { L.setRegion('forest'); }
+});
+test('treasure maps: every map for every tier is English, solvable, and leads to a reachable spot; daily maps are stable', async () => {
+  L.setRegion('isle');
+  try {
+    const ok = (x, z) => L.REGIONS.isle.walkable(x, z, 0.8);
+    for (const tier of [1, 2, 3]) for (let k = 0; k < 80; k++) {
+      let seed = tier * 1000 + k; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647), m = TRS.makeMap(rnd, tier, ISLE_MARKS, ok);
+      assert.ok(m, `tier ${tier} map ${k}`); assert.ok(ok(m.goal.x, m.goal.z)); assert.ok(findPath(L.SPAWN.x, L.SPAWN.z, m.goal.x, m.goal.z), `goal ${m.goal.x},${m.goal.z} reachable`);
+      assert.ok(m.lines.length >= 2 && m.lines.every((l) => /^[A-Za-z]/.test(l) && !/[àáảãạăâđêôơư]/i.test(l)), m.lines.join(' ')); assert.equal(m.vi.length, m.lines.length);
+      assert.ok(TRS.isGoal(m, m.goal.x, m.goal.z) && !TRS.isGoal(m, m.goal.x + 5, m.goal.z)); assert.ok(m.lines.join(' ').endsWith('Dig there!') || m.kind === 'between' || m.kind === 'near');
+      if (m.moves) { let x = ISLE_MARKS[m.start].x, z = ISLE_MARKS[m.start].z; for (const mv of m.moves) { x += TRS.DIRS[mv.dir].d[0] * mv.n; z += TRS.DIRS[mv.dir].d[1] * mv.n; assert.ok(m.lines[1].includes(`${TRS.NUM[mv.n]} step`) && m.lines[1].includes(mv.dir)); } assert.ok(Math.hypot(x - m.goal.x, z - m.goal.z) < 1e-6, 'the written steps lead to the goal'); }
+    }
+    const p = { id: 'k1', stats: { level: 5 } }, m1 = TRS.current(p, 100, 1, ISLE_MARKS, ok), m2 = TRS.current(p, 100, 1, ISLE_MARKS, ok); assert.ok(m1 && m1 === m2, 'same map until it is solved');
+    const p2 = { id: 'k1' }; assert.deepEqual(TRS.current(p2, 100, 1, ISLE_MARKS, ok).goal, m1.goal, 'a reload gives the same map');
+    TRS.solved(p); const m3 = TRS.current(p, 100, 1, ISLE_MARKS, ok); assert.ok(m3 && m3 !== m1); TRS.solved(p); assert.equal(TRS.current(p, 100, 1, ISLE_MARKS, ok), null, 'two a day'); assert.ok(TRS.current(p, 101, 1, ISLE_MARKS, ok), 'a new day, a new map'); assert.equal(p.treasure.total, 2);
+    assert.match(TRS.warmth(2).en, /hot/i); assert.match(TRS.warmth(30).en, /cold/i); assert.deepEqual(TRS.reward(2), { gold: 60, exp: 150 });
+  } finally { L.setRegion('forest'); }
+});

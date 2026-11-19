@@ -175,7 +175,7 @@ function boardwalk() {
   }, false);
 }
 export function buildCobbles() {
-  if (L.NAME === 'harbor') return boardwalk();
+  if (L.isSea()) return boardwalk();
   const stones = [];
   for (const path of L.PATHS) for (let i = 0; i < path.pts.length - 1; i++) {
     const a = path.pts[i], b = path.pts[i + 1], len = Math.hypot(b.x - a.x, b.z - a.z);
@@ -326,7 +326,7 @@ export function buildFlowers() {
   const head = new THREE.SphereGeometry(0.15, 6, 3); head.scale(1, 0.55, 1);
   head.deleteAttribute('uv');
   const hues = [0xffffff, 0xff8fc0, 0xffd84a, 0xb69cf2, 0xff6f61, 0x7fc8ff];
-  const mesh = instanced(head, new THREE.MeshStandardMaterial({ roughness: 0.8 }), scatterGround(L.NAME === 'harbor' ? 600 : 2200, (x, z) => L.pathDistance(x, z) < 6 || L.riverDistance(x, z) < 9 || rnd() < 0.2), (t, p, e, s, i, m) => {
+  const mesh = instanced(head, new THREE.MeshStandardMaterial({ roughness: 0.8 }), scatterGround(L.isSea() ? 600 : 2200, (x, z) => L.pathDistance(x, z) < 6 || L.riverDistance(x, z) < 9 || rnd() < 0.2), (t, p, e, s, i, m) => {
     p.set(t.x, L.groundHeight(t.x, t.z) + 0.16 * t.s, t.z); e.set(R(-0.3, 0.3), t.rot, 0); s.setScalar(t.s * 0.62);
     m.setColorAt(i, C(hues[Math.floor(t.c * hues.length)]));
   }, false);
@@ -334,7 +334,7 @@ export function buildFlowers() {
   return mesh;
 }
 export function buildFences() {
-  if (L.NAME === 'harbor') return new THREE.Group();      // the harbour has boardwalks, no fences
+  if (L.isSea()) return new THREE.Group();      // the sea maps have boardwalks, no fences
   const posts = [], rails = [];
   for (const path of [L.PATHS[0], L.PATHS[1], L.PATHS[2], L.PATHS[5]]) for (const side of [-1, 1]) {
     let prev = null;
@@ -453,7 +453,7 @@ export function riverside() {
 }
 export function bushes() {
   const g = new THREE.Group();
-  const list = scatterGround(L.NAME === 'village' ? 150 : L.NAME === 'harbor' ? 60 : 190, (x, z) => L.pathDistance(x, z) > 1.3 && L.pathDistance(x, z) < 9 && L.walkable(x, z, 1.2) && Math.hypot(x, z) < L.PLAY_RADIUS && !(L.NAME === 'village' && x < -12 && x > -36 && z > 22 && z < 40) && Math.hypot(x + 6.4, z - 19.5) > 6 && Math.hypot(x, z - 4) > 7);
+  const list = scatterGround(L.NAME === 'village' ? 150 : L.isSea() ? 60 : 190, (x, z) => L.pathDistance(x, z) > 1.3 && L.pathDistance(x, z) < 9 && L.walkable(x, z, 1.2) && Math.hypot(x, z) < L.PLAY_RADIUS && !(L.NAME === 'village' && x < -12 && x > -36 && z > 22 && z < 40) && Math.hypot(x + 6.4, z - 19.5) > 6 && Math.hypot(x, z - 4) > 7);
   const parts = [];
   for (let i = 0; i < 5; i++) { const a = i * 1.257; parts.push(lumpy(new THREE.IcosahedronGeometry(i ? 0.34 : 0.46, 1), 0.14, i + 2).translate(i ? Math.cos(a) * 0.34 : 0, i ? 0.28 : 0.42, i ? Math.sin(a) * 0.34 : 0)); }
   const geo = mergeGeometries(parts);

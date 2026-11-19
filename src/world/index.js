@@ -6,6 +6,7 @@ import { paint, PAINT, label, buildTerrain, buildCobbles, buildWater, buildTrees
 import { MARKET_JARS, villageExtras, brokenBits } from './village.js';
 import { forestExtras } from './forest.js';
 import { harborExtras } from './harbor.js';
+import { isleExtras } from './isle.js';
 
 /** The three animals made in Blender; any that fails to load falls back to the animals drawn by code. */
 async function animalModels(loadModel, loadAnimated) {
@@ -18,7 +19,7 @@ export async function buildWorld(scene, loadModel, loadAnimated) {
   const root = new THREE.Group(); root.name = 'world:' + L.NAME; scene.add(root);
   const updaters = [], add = (o) => { root.add(o); if (o.userData.update) updaters.push(o.userData.update); return o; };
   add(buildTerrain());
-  const detail = { cobbles: add(buildCobbles()), grass: add(buildGrass()), flowers: add(buildFlowers()), far: add(L.NAME === 'harbor' ? new THREE.Group() : mountains()), critters: add(critters()) };      // no mountains round a harbour: open sea to the horizon
+  const detail = { cobbles: add(buildCobbles()), grass: add(buildGrass()), flowers: add(buildFlowers()), far: add(L.isSea() ? new THREE.Group() : mountains()), critters: add(critters()) };      // no mountains round a harbour: open sea to the horizon
   add(buildWater()); add(buildTrees()); add(buildRocks()); add(buildFences()); add(riverside()); add(bushes()); add(creatures(await animalModels(loadModel, loadAnimated))); if (L.WATERFALL) add(fallRocks());
   // models from files (houses, bridge, gate) get the same painted surface as the generated scenery
   const shadowed = (o) => { o.traverse((c) => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; for (const m of [].concat(c.material)) if (m.isMeshStandardMaterial && !m.userData.painted) { m.userData.painted = true; paint(m); } } }); return o; };
@@ -40,7 +41,7 @@ export async function buildWorld(scene, loadModel, loadAnimated) {
     e.broken.visible = !open;
   };
   for (const b of L.BRIDGES) setBridgeOpen(b.id, b.open);
-  if (L.NAME === 'forest') await forestExtras(add, loadModel, shadowed); else if (L.NAME === 'harbor') await harborExtras(add, loadModel, shadowed); else await villageExtras(add, loadModel, shadowed);
+  if (L.NAME === 'forest') await forestExtras(add, loadModel, shadowed); else if (L.NAME === 'harbor') await harborExtras(add, loadModel, shadowed); else if (L.NAME === 'isle') await isleExtras(add, loadModel, shadowed); else await villageExtras(add, loadModel, shadowed);
   // jar labels (village market): four pooled sprites, text swapped per customer
   const jarLabels = [];
   return {

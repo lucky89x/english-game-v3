@@ -109,7 +109,10 @@ await run('exam', async () => {        // map exam at level 20: 10 questions, 8 
   const askOwl = async () => { await ev(() => __eq.teleport(2.9, 15.6)); await wait(450); await page.keyboard.press('KeyE'); await wait(250); };
   const sit = async (wrongOn) => {          // answers the ten questions; wrongOn = how many to get wrong
     let done = 0;
-    for (let n = 0; n < 10; n++) { const r = await right(); const pick = n < wrongOn ? (r.i + 1) % r.n : r.i; await page.keyboard.press('Digit' + (pick + 1)); await wait(250); done += 1; }
+    for (let n = 0; n < 10; n++) {
+      const before = await ev(() => { const e = document.querySelector('#dialog .en'); return e ? e.textContent : ''; }), r = await right(); const pick = n < wrongOn ? (r.i + 1) % r.n : r.i; await page.keyboard.press('Digit' + (pick + 1));
+      await page.waitForFunction((b) => { const e = document.querySelector('#dialog .en'); return !e || e.textContent !== b; }, before, { timeout: 20000 }).catch(() => {}); await wait(150); done += 1;      // wait for the next question to be on screen (a slow machine used to answer the old options)
+    }
     return done;
   };
   await askOwl();
@@ -208,6 +211,56 @@ await run('harbor', async () => {        // Map 2 in Sunny Harbor: sea monsters,
   await ev(() => __eq.enterRegion('village')); await page.waitForFunction(() => __eq.region === 'village' && __eq.started, null, { timeout: 120000 }); await wait(600);
   check(await ev(() => __eq.wild.mobs.filter((m) => m.g.visible).every((m) => m.region === 'village')), 'Back in the village: the sea monsters are gone');
   await closeDialogs();
+});
+
+await run('extras', async () => {        // the sea extras (19/11): fishing, Sea Dex, fish market, wardrobe, family ship, pet
+  await closeDialogs();
+  await ev(() => { const p = __eq.profile; p.flags.map2 = true; p.stats.level = 22; p.stats.hp = 9999; p.god = true; __eq.enterRegion('harbor'); });
+  await page.waitForFunction(() => __eq.region === 'harbor' && __eq.started, null, { timeout: 180000 }); await wait(900);
+  await ev(() => { __eq.wild.mobs.forEach((m) => { m.dead = 999; m.g.visible = false; }); __eq.teleport(33.2, 28); }); await wait(700);
+  check((await page.textContent('#prompt')).includes('Câu cá'), 'The end of the fishing pier offers fishing');
+  await page.keyboard.press('KeyE'); await wait(500);
+  check(await ev(() => __eq.arcade.open && __eq.arcade.game.title.includes('Fishing')), 'E starts the fishing game');
+  await page.keyboard.press('Escape'); await wait(300);
+  await ev(() => __eq.catchFish(['sardine', 'dolphin', 'boot']));
+  check(await ev(() => Object.keys(__eq.profile.dex).sort().join() === 'dolphin,sardine' && __eq.profile.fish.boot === 1 && __eq.profile.fish.sardine === 1), 'Catches fill the bucket; only creatures enter the Sea Dex');
+  await page.keyboard.press('KeyG'); await wait(400);
+  check(await page.isVisible('#dexwin') && (await page.textContent('#dexwin')).includes('sardine') && (await page.textContent('#dexwin')).includes('dolphin'), 'G opens the Sea Dex with the found creatures');
+  await page.keyboard.press('Escape'); await wait(300);
+  await ev(() => __eq.teleport(2, 14.6)); await wait(700);
+  check((await page.textContent('#prompt')).includes('Bán'), 'The fish market buys the bucket');
+  const g0 = await ev(() => __eq.profile.stats.gold); await page.keyboard.press('KeyE'); await wait(400); await closeDialogs();
+  check(await ev((g) => __eq.profile.stats.gold > g && Object.keys(__eq.profile.fish).length === 0, g0), 'Selling pays gold and empties the bucket');
+  await ev(() => __eq.gainItems([{ kind: 'hat', color: 'pink' }, { kind: 'shoes', color: 'blue' }])); await closeDialogs();
+  await page.keyboard.press('KeyV'); await wait(400);
+  check(await page.isVisible('#wardwin') && (await page.textContent('#wardwin')).includes('pink hat'), 'V opens the wardrobe with the won pieces');
+  await page.click('#wardwin [data-a="wear"][data-v="hat:pink"]'); await wait(300);
+  check(await ev(() => __eq.profile.wardrobe.worn.head === 'hat:pink' && __eq.player.root.getObjectByProperty('isMesh', true) !== undefined), 'Clicking a piece wears it');
+  await page.keyboard.press('Escape'); await wait(300);
+  await page.keyboard.press('KeyN'); await wait(400); await page.click('#journal [data-v="family"]'); await wait(300);
+  check((await page.textContent('#journal')).includes('Tàu gia đình') && (await page.textContent('#journal')).includes('Rowboat'), 'The journal has the family ship tab');
+  await page.keyboard.press('Escape'); await wait(300);
+  await page.keyboard.press('KeyP'); await wait(400);
+  check(await page.isVisible('#petwin') && (await page.textContent('#petwin')).includes('seagull'), 'P offers the three pets');
+  await page.click('#petwin [data-v="gull"]'); await wait(300);
+  check(await ev(() => __eq.profile.pet && __eq.profile.pet.kind === 'gull' && __eq.pet.root.visible), 'Adopting shows the pet in the world');
+  await page.click('#petwin [data-a="feed"]'); await wait(300);
+  const right = await ev(() => __eq.petPanel.q.a); await page.click(`#petwin [data-a="ans"][data-v="${right}"]`); await wait(300);
+  check(await ev(() => __eq.profile.pet.bond >= 3), 'A right answer feeds the pet and raises the bond');
+  await page.keyboard.press('Escape'); await wait(300);
+  await ev(() => __eq.teleport(22, 28.6)); await wait(700);
+  check((await page.textContent('#prompt')).includes('Đảo Kho Báu'), 'The boat at the fishing pier offers Treasure Isle');
+  await page.keyboard.press('KeyE'); await page.waitForFunction(() => __eq.region === 'isle' && __eq.started, null, { timeout: 180000 }); await wait(900);
+  check(await page.isVisible('#trwin') && (await page.textContent('#trwin')).includes('Start at') || (await page.textContent('#trwin')).includes('halfway') || (await page.textContent('#trwin')).includes('Go to'), 'On Treasure Isle the English treasure map opens');
+  await page.keyboard.press('Escape'); await wait(300);
+  await ev(() => __eq.teleport(-18, 2)); await wait(600); await page.keyboard.press('KeyE'); await wait(400);
+  check((await page.textContent('#dialog')).includes('Nothing here'), 'Digging in the wrong place says hot or cold in English'); await closeDialogs();
+  await ev(() => { const g = __eq.profile.treasure.map.goal; __eq.teleport(g.x, g.z); }); await wait(600); await page.keyboard.press('KeyE'); await wait(400);
+  check((await page.textContent('#dialog')).includes('found the treasure') && await ev(() => __eq.profile.treasure.total === 1 && __eq.profile.wardrobe.owned.length >= 3), 'Digging at the goal finds the treasure: gold, EXP and a new wardrobe piece'); await closeDialogs();
+  await ev(() => __eq.teleport(-21.4, 2)); await wait(600);
+  check((await page.textContent('#prompt')).includes('Cảng Mặt Trời'), 'The isle has its way back to the harbor'); await page.keyboard.press('KeyE'); await page.waitForFunction(() => __eq.region === 'harbor' && __eq.started, null, { timeout: 180000 }); await wait(600);
+  check(await ev(() => __eq.errors.length === 0), 'Extras: no script errors');
+  await ev(() => __eq.enterRegion('village')); await page.waitForFunction(() => __eq.region === 'village' && __eq.started, null, { timeout: 120000 }); await wait(600); await closeDialogs();
 });
 
 await run('forest', async () => {
