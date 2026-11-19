@@ -41,3 +41,7 @@ Dựng lại: `OUT=<thư mục> blender -b -P tools/harbor/build_harbor.py` (tù
 - Ảnh `assets/ui/dex_*.png` (18 sinh vật): `tools/sprites/dex.py`
 
 Lệnh chung: `OUT=<thư mục> blender -b -P <script>` (tùy chọn `ONLY=tên,tên`).
+
+## Quái Map 1 (tự dựng, không cần ghi công)
+
+8 file `mob_*_v01.glb`, `boss_*_v01.glb` (slime xanh/đỏ, golem đá, Vua Slime, Golem Cổ, dơi bóng tối, nấm giận dữ, Nữ hoàng Nấm): `tools/mobs1/build_mobs1.py`.
