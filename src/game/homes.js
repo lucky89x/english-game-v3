@@ -91,7 +91,9 @@ export class Homes {
         const at = YARD_AT[id]; if (!at) continue;
         const x = h.yard[0] + at[0], z = h.z + at[1], y = gh(x, z);
         let o = null;
-        if (id === 'flowers') o = flowerBed();
+        const glb = this.api.models[id];            // Blender yard pieces (yard_*_v01.glb) when loaded; the shapes otherwise
+        if (glb && ['flowers', 'bench', 'mailbox', 'garden_lamp'].includes(id)) { o = glb.clone(true); o.rotation.y = id === 'bench' ? -Math.PI / 2 : id === 'mailbox' ? Math.PI / 2 : id === 'flowers' ? Math.PI / 2 : 0; o.scale.setScalar(id === 'flowers' ? 1.3 : 1.15); }
+        else if (id === 'flowers') o = flowerBed();
         else if (id === 'bench') { o = bench(); o.rotation.y = Math.PI; }
         else if (id === 'mailbox') o = mailbox();
         else if (id === 'garden_lamp') o = gardenLamp();
