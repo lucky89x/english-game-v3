@@ -3,6 +3,7 @@
 // picks a clothes type from the tabs, then a colour, and dresses the model; "Done" checks the outfit. Colours and
 // clothes are the words practised. Higher tiers ask for more items. Same board interface as the arcade games.
 import { speak } from './speech.js';
+import { fromStyleOrder } from '../core/wardrobe.js';
 
 export const COLORS = { red: '#e8443a', blue: '#2f6fd0', yellow: '#f6c62e', green: '#3fae4a', pink: '#ff8fc0', purple: '#9a5ae0', black: '#2a2a30', white: '#f4f4f4', orange: '#ff8a1a', brown: '#8a5a30' };
 export const CLOTHES = ['hat', 'T-shirt', 'skirt', 'trousers', 'dress', 'shoes', 'bag', 'glasses', 'scarf'];
@@ -32,7 +33,7 @@ export function scoreOutfit(order, worn) {
 
 export function styleGame(rnd = Math.random, tier = 1) {
   const per = [0, 2, 3, 4][tier] || 2, CUSTOMERS = 5;
-  const g = { title: '👗 Style Studio', help: 'Đọc yêu cầu tiếng Anh của khách. Chọn loại đồ ở hàng trên, rồi chọn màu. Xong bấm DONE.', score: 0, n: 0, tab: 'hat', worn: {}, order: makeOrder(rnd, per), msg: '', msgT: 0, endT: 0, happy: 0 };
+  const g = { title: '👗 Style Studio', help: 'Đọc yêu cầu tiếng Anh của khách. Chọn loại đồ ở hàng trên, rồi chọn màu. Xong bấm DONE.', score: 0, n: 0, tab: 'hat', worn: {}, order: makeOrder(rnd, per), msg: '', msgT: 0, endT: 0, happy: 0, won: [] };
   const COLS = Object.keys(COLORS);
   g.info = () => `Khách ${Math.min(g.n + 1, CUSTOMERS)}/${CUSTOMERS} · Điểm ${g.score}`;
   const say = () => speak(orderText(g.order), true, 0.9);
@@ -49,7 +50,7 @@ export function styleGame(rnd = Math.random, tier = 1) {
     if (y > 92 && y < 128 && x > 226) { const i = Math.floor((x - 228) / 36); if (CLOTHES[i]) g.tab = CLOTHES[i]; return; }      // tabs
     if (y > 150 && y < 470 && x > 236) { const c = Math.floor((x - 236) / 108), r = Math.floor((y - 150) / 64), k = r * 3 + c; if (c < 3 && COLS[k]) wear(g.tab, COLS[k]); return; }      // colours
     if (y > 486 && y < 540 && x > 400) {          // DONE
-      const s = scoreOutfit(g.order, g.worn); g.score += s.points; g.n += 1;
+      const s = scoreOutfit(g.order, g.worn); g.score += s.points; g.n += 1; if (s.right === s.total && s.points === s.total * 20) g.won.push(...fromStyleOrder(g.order));      // a perfect customer: the wearable pieces go to the wardrobe
       g.msg = s.right === s.total ? 'Perfect! I love it!' : s.right ? `Nice, but I asked for: ${orderText(g.order).replace("I'd like ", '').replace(', please.', '')}` : `Oh no! I asked for ${orderText(g.order).replace("I'd like ", '').replace(', please.', '')}`;
       g.msgT = 2.6; g.happy = s.right === s.total ? 1.4 : 0; speak(g.msg, true, 0.95);
       if (g.n < CUSTOMERS) { g.order = makeOrder(rnd, per); g.worn = {}; setTimeout(say, 2600); }
@@ -57,7 +58,7 @@ export function styleGame(rnd = Math.random, tier = 1) {
     }
     if (y > 486 && y < 540 && x > 236 && x < 390) say();          // hear again
   };
-  g.done = () => (g.n >= CUSTOMERS && g.endT > 1.2 ? { id: 'style', score: g.score, gold: Math.min(35, Math.floor(g.score / 10)), exp: Math.min(45, Math.floor(g.score / 7)), text: `Style Studio: ${g.score} points!` } : null);
+  g.done = () => (g.n >= CUSTOMERS && g.endT > 1.2 ? { id: 'style', score: g.score, gold: Math.min(35, Math.floor(g.score / 10)), exp: Math.min(45, Math.floor(g.score / 7)), text: `Style Studio: ${g.score} points!`, unlock: g.won } : null);
   g.draw = (c, w, h, t) => {
     const bg = c.createLinearGradient(0, 0, 0, h); bg.addColorStop(0, '#ffeef6'); bg.addColorStop(1, '#ffe0c8'); c.fillStyle = bg; c.fillRect(0, 0, w, h);
     // the order bubble

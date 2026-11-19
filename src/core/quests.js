@@ -2,6 +2,7 @@
 // Main quests follow the story in order; each one is checked against the save, so quests already done in older saves
 // count at once, and the reward is claimed in the journal. Daily quests: three picked for each day from a pool, with
 // counters fed by game events (track); each pays when claimed, all three pay a bonus.
+import { dexCount } from './sea.js';
 
 const VILLAGE_ORDER = ['arrive', 'letter_find', 'letter_return', 'jars', 'jars_play', 'tom_bridge', 'bridge', 'gather', 'plan', 'open', 'done'];
 const past = (p, step) => VILLAGE_ORDER.indexOf((p.quests && p.quests.village && p.quests.village.step) || 'arrive') > VILLAGE_ORDER.indexOf(step);
@@ -24,6 +25,7 @@ export const MAIN = [
   { id: 'map2', en: 'Open Map 2', vi: 'Lên cấp 20, làm bài kiểm tra 10 câu của Cú Mèo (đúng 8/10, đề mỗi lần khác): Map 2 (Cảng Mặt Trời, từ Unit 2) mở ra.', done: (p) => !!p.flags.map2, gold: 150, exp: 0, unlock: 'Map 2' },
   { id: 'harbor', en: 'Sail to Sunny Harbor', vi: 'Ra bến thuyền bên sông (chỗ chú Sam câu cá) rồi đi thuyền tới Cảng Mặt Trời.', done: (p) => !!p.flags.harbor_seen, gold: 100, exp: 200 },
   { id: 'shops', en: 'The three harbor shops', vi: 'Chơi đủ 3 trò ở cảng: Style Boutique (thời trang), Seaside Café (nấu ăn), Beauty Salon (làm đẹp).', done: (p) => ['style', 'cafe', 'salon'].every((k) => p.mini && p.mini.best && p.mini.best[k] !== undefined), gold: 120, exp: 300 },
+  { id: 'dex', en: 'The Sea Dex', vi: 'Câu cá ở cầu tàu nhỏ (E ở cuối cầu) và đánh quái biển để ghi 8 sinh vật vào Album biển (phím G).', done: (p) => dexCount(p) >= 8, gold: 150, exp: 300 },
   { id: 'hunt3', en: 'Harbor hunter', vi: 'Hoàn thành 2 việc ở bảng săn quái cạnh quảng trường cảng (cua, sứa, cướp biển).', done: (p) => !!(p.hunt3 && p.hunt3.done >= 2), gold: 150, exp: 400 },
   { id: 'owl25', en: 'Harbor scholar', vi: 'Lên cấp 25 rồi về làng gặp Cú Mèo qua cổng ôn tập (từ Unit 2).', done: (p) => gate(p, 25), gold: 120, exp: 0 },
   { id: 'boss4', en: 'Captain Octopus', vi: 'Đạt cấp 28, ra mũi hải đăng phía Bắc cảng và đánh bại Thuyền trưởng Bạch Tuộc.', done: (p) => !!p.flags.boss4, gold: 300, exp: 0 },
@@ -50,6 +52,7 @@ export const DAILY = [
   { id: 'sea_kill', map: 2, ev: 'sea_kill', need: 5, en: 'Defeat 5 sea monsters', vi: 'Hạ 5 con quái biển (cua, sứa, cướp biển) ở Cảng Mặt Trời.' },
   { id: 'sea_chest', map: 2, ev: 'sea_chest', need: 2, en: 'Open 2 harbor chests', vi: 'Mở 2 rương khóa chữ ở Cảng Mặt Trời.' },
   { id: 'sea_bubble', map: 2, ev: 'sea_bubble', need: 3, en: 'Learn 3 words from harbor bubbles', vi: 'Chạm 3 bong bóng chữ "Abc" ở cảng (bãi biển, cầu tàu, đường ra hải đăng).' },
+  { id: 'sea_fish', map: 2, ev: 'sea_fish', need: 3, en: 'Catch 3 sea creatures', vi: 'Câu được 3 con (cá, tôm, mực…) ở cuối cầu tàu nhỏ.' },
   { id: 'sea_job', map: 2, ev: 'sea_job', need: 1, en: 'Finish a job on the harbor board', vi: 'Nhận và hoàn thành một việc ở bảng săn quái cạnh quảng trường cảng.' },
   { id: 'sea_games', map: 2, ev: 'sea_game', need: 2, en: 'Play 2 harbor shop games', vi: 'Chơi 2 trò ở Style Boutique, Seaside Café hoặc Beauty Salon.' },
 ];

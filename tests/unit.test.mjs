@@ -666,3 +666,54 @@ test('the sea-map exam (level 30, Unit 2): 4 words + 3 grammar + 3 sentences for
     assert.equal(new Set(papers).size, 3, `grade ${g}: three different papers`);
   }
 });
+
+// ---------------------------------------------------------------- fishing and the Sea Dex (19/11)
+import * as SEA from '../src/core/sea.js';
+import { fishGame } from '../src/ui/fish.js';
+test('Sea Dex: fish are rolled by rarity, first finds pay once, milestones pay once, the market buys the bucket', () => {
+  let seed = 5; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647), seen = new Set(), by = [0, 0, 0, 0];
+  for (let i = 0; i < 4000; i++) { const f = SEA.rollFish(rnd, 2); seen.add(f.id); if (!f.junk) by[f.r] += 1; assert.ok(SEA.entry(f.id)); }
+  assert.ok(by[0] > by[1] && by[1] > by[2] && by[2] > by[3] && by[3] > 0, 'commoner fish bite more often: ' + by);
+  for (const f of SEA.FISH) assert.ok(seen.has(f.id), f.id + ' can be caught');
+  for (const e of [...SEA.CREATURES, ...SEA.JUNK]) { assert.ok(e.en && e.vi && e.icon); assert.ok(!/[àáảãạăâđêôơư]/i.test(e.en)); }
+  assert.equal(SEA.DEX_TOTAL, 18);
+  const p = { stats: { gold: 0 } }, r1 = SEA.discover(p, 'sardine', 1), r2 = SEA.discover(p, 'sardine', 1);
+  assert.ok(r1.isNew && r1.gold === 10 && !r2.isNew && r2.gold === 0 && SEA.dex(p).sardine.n === 2);
+  let bonus = 0; for (const f of SEA.FISH.slice(1, 5)) bonus += SEA.discover(p, f.id, 1).bonus; assert.equal(bonus, 50, 'five different creatures: the first milestone, once');
+  assert.equal(SEA.discover(p, 'dolphin', 1).gold, 55, 'a legendary first find pays more');
+  SEA.keep(p, SEA.entry('sardine')); SEA.keep(p, SEA.entry('sardine')); SEA.keep(p, SEA.JUNK[0]); assert.equal(SEA.bucketCount(p), 3);
+  assert.deepEqual(SEA.sellAll(p), { gold: 7, n: 3 }); assert.equal(p.stats.gold, 7); assert.equal(SEA.bucketCount(p), 0);
+});
+test('fishing game: cast, wait, bite, reel in the zone; too early or off the zone loses the cast; five casts end it', () => {
+  let seed = 9; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647), g = fishGame(rnd, 1);
+  const tick = (s) => { for (let t = 0; t < s; t += 0.05) g.update(0.05); };
+  assert.equal(g.done(), null); g.click(); assert.equal(g.phase, 'wait'); g.click(); assert.equal(g.phase, 'result'); assert.equal(g.n, 1, 'too early costs the cast'); assert.equal(g.caught.length, 0);
+  tick(3); assert.equal(g.phase, 'ready');
+  let caught = 0;
+  for (let k = 0; k < 4; k++) {
+    g.click(); tick(3.5); assert.equal(g.phase, 'bite', 'something bites');
+    if (k % 2) { g.marker = (g.zone[0] + g.zone[1]) / 2; g.click(); assert.equal(g.ok, true); caught += 1; } else { g.marker = g.zone[1] + 10; g.click(); assert.equal(g.ok, false); }
+    tick(3);
+  }
+  assert.equal(g.phase, 'end'); assert.equal(g.caught.length, caught); g.update(2);
+  const res = g.done(); assert.equal(res.id, 'fish'); assert.equal(res.fish.length, 2); assert.ok(res.gold >= 0 && res.exp > 0);
+});
+
+// ---------------------------------------------------------------- the wardrobe (19/11)
+import * as WR from '../src/core/wardrobe.js';
+import * as STY from '../src/ui/style.js';
+import * as SAL from '../src/ui/salon.js';
+test('wardrobe: pieces unlock once, wear and take off by slot, perfect customers pay in wearable pieces', () => {
+  const p = {}; assert.equal(WR.unlock(p, 'hat', 'pink'), true); assert.equal(WR.unlock(p, 'hat', 'pink'), false); assert.equal(WR.unlock(p, 'tutu', 'pink'), false, 'unknown kind'); assert.equal(WR.unlock(p, 'hat', 'plaid'), false, 'unknown colour');
+  WR.unlock(p, 'hat', 'blue'); WR.unlock(p, 'glasses', 'black');
+  assert.equal(WR.wear(p, 'hat:pink'), 'hat:pink'); assert.equal(WR.wear(p, 'hat:blue'), 'hat:blue', 'one piece per slot'); assert.equal(WR.wear(p, 'hat:blue'), null, 'again takes it off'); assert.equal(WR.wear(p, 'bag:red'), null, 'not owned');
+  assert.equal(WR.itemName('hat:pink'), 'pink hat'); assert.equal(WR.itemName('bow:red'), 'red hair bow');
+  for (const [k, v] of Object.entries(WR.KINDS)) { assert.ok(v.en && v.vi && v.icon && WR.SLOTS.some((s) => s.id === v.slot), k); assert.ok(!/[àáảãạăâđêôơư]/i.test(v.en)); }
+  assert.deepEqual(WR.fromStyleOrder([{ item: 'hat', color: 'pink' }, { item: 'T-shirt', color: 'red' }, { item: 'shoes', color: 'blue' }]), [{ kind: 'hat', color: 'pink' }, { kind: 'shoes', color: 'blue' }], 'a T-shirt is not a piece on Ngoc');
+  assert.deepEqual(WR.fromSalonOrder({ style: 'long', hair: 'red', eyes: 'blue', nails: 'pink' }), [{ kind: 'bow', color: 'red' }, { kind: 'headband', color: 'blue' }, { kind: 'bracelet', color: 'pink' }]);
+  // a perfect Style customer: the game result carries the wearable pieces
+  const g = STY.styleGame(() => 0.31, 1); for (let n = 0; n < 5; n++) { g.worn = {}; for (const o of g.order) g.worn[o.item] = o.color; g.click(475, 510); }
+  g.update(2); const res = g.done(); assert.ok(res && Array.isArray(res.unlock) && res.unlock.every((x) => WR.KINDS[x.kind]), 'style result unlocks pieces');
+  const s = SAL.salonGame(() => 0.4, 3); for (let n = 0; n < 5; n++) { const o = s.order; s.look = { style: o.style, hair: o.hair, lips: o.lips || null, eyes: o.eyes || null, nails: o.nails || null }; s.click(475, 510); }
+  s.update(2); const r2 = s.done(); assert.ok(r2.unlock.length >= 5 && r2.unlock.some((x) => x.kind === 'bow'), 'salon result unlocks a bow per perfect customer');
+});

@@ -18,6 +18,7 @@ export const HARBOR = {
   market: { x: 2, z: 16 },
   lighthouse: { x: 34, z: -40 },
   ship: { x: 60, z: 14 },
+  fishing: { x: 34, z: 28 },      // the end of the fishing pier: E to fish (19/11)
   shop: { x: -7.5, z: 9.5 },      // Willow's harbor stall: the Map 2 gear (the same counter as her forest camp)
   yard: { x: 3, z: -8.5 },      // container yard north of the main pier, with the quay crane beside it
   crane: { x: 14.5, z: -10 },

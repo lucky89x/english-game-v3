@@ -5,6 +5,7 @@
 // are the words practised. Higher tiers ask for more. Same board interface as the other arcade games.
 import { speak } from './speech.js';
 import { COLORS } from './style.js';
+import { fromSalonOrder } from '../core/wardrobe.js';
 
 export const STYLES = ['short', 'long', 'curly', 'wavy', 'ponytail', 'braids'];
 export const TABS = [{ id: 'style', label: 'Style', name: 'hair style' }, { id: 'hair', label: 'Hair', name: 'hair colour' }, { id: 'lips', label: 'Lips', name: 'lipstick' }, { id: 'eyes', label: 'Eyes', name: 'eyeshadow' }, { id: 'nails', label: 'Nails', name: 'nail polish' }];
@@ -33,7 +34,7 @@ export function scoreLook(o, look) {
 export function salonGame(rnd = Math.random, tier = 1) {
   const CUSTOMERS = 5, COLS = Object.keys(COLORS);
   const g = { title: '💇 Beauty Salon', help: 'Đọc yêu cầu tiếng Anh của khách. Chọn kiểu tóc, màu tóc, son môi, phấn mắt, sơn móng ở hàng trên, rồi chọn kiểu hoặc màu. Xong bấm DONE.',
-    score: 0, n: 0, tab: 'style', look: { ...DEFAULT_LOOK }, order: makeOrder(rnd, tier), msg: '', msgT: 0, endT: 0, happy: 0, pops: [] };
+    score: 0, n: 0, tab: 'style', look: { ...DEFAULT_LOOK }, order: makeOrder(rnd, tier), msg: '', msgT: 0, endT: 0, happy: 0, pops: [], won: [] };
   g.info = () => `Khách ${Math.min(g.n + 1, CUSTOMERS)}/${CUSTOMERS} · Điểm ${g.score}`;
   const say = () => speak(orderText(g.order), true, 0.9);
   setTimeout(say, 300);
@@ -53,14 +54,14 @@ export function salonGame(rnd = Math.random, tier = 1) {
     }
     if (y > 486 && y < 540 && x > 400) {          // DONE
       const s = scoreLook(g.order, g.look), asked = body(g.order); g.score += s.points; g.n += 1;
-      const perfect = s.right === s.total && !s.extra;
+      const perfect = s.right === s.total && !s.extra; if (perfect) g.won.push(...fromSalonOrder(g.order));      // a perfect customer: hair bow, headband and bracelet go to the wardrobe
       g.msg = perfect ? 'Wow! I look beautiful!' : `Hmm, I asked for ${asked}.`; g.msgT = 2.8; g.happy = perfect ? 1.8 : 0; speak(g.msg, true, 0.95); g.pops.push({ x: 115, y: 120, t: 1.4, text: '+' + s.points });
       if (g.n < CUSTOMERS) { g.order = makeOrder(rnd, tier); g.look = { ...DEFAULT_LOOK }; g.tab = 'style'; setTimeout(say, 2800); }
       return;
     }
     if (y > 486 && y < 540 && x > 236 && x < 390) say();      // hear again
   };
-  g.done = () => (g.n >= CUSTOMERS && g.endT > 1.2 ? { id: 'salon', score: g.score, gold: Math.min(35, Math.floor(g.score / 12)), exp: Math.min(45, Math.floor(g.score / 9)), text: `Beauty Salon: ${g.score} points!` } : null);
+  g.done = () => (g.n >= CUSTOMERS && g.endT > 1.2 ? { id: 'salon', score: g.score, gold: Math.min(35, Math.floor(g.score / 12)), exp: Math.min(45, Math.floor(g.score / 9)), text: `Beauty Salon: ${g.score} points!`, unlock: g.won } : null);
   g.draw = (c, w, h, t) => {
     const bg = c.createLinearGradient(0, 0, 0, h); bg.addColorStop(0, '#f6eaff'); bg.addColorStop(1, '#ffe4ee'); c.fillStyle = bg; c.fillRect(0, 0, w, h);
     c.fillStyle = '#fff'; c.beginPath(); c.roundRect(10, 8, 540, 74, 16); c.fill(); c.strokeStyle = '#a860c8'; c.lineWidth = 3; c.stroke();
