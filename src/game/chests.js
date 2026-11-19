@@ -7,7 +7,7 @@ import { spellable } from '../core/spell.js';
 import { PLAY } from '../core/regions/harbor.js';
 
 export const CHEST_SPOTS = [[40, -20], [46, -30], [34, -34], [30, -28], [42, -40]];
-/** Map 2: chests in the Forest of Memories, shown once Map 2 is open (they ask Unit 2 words there). */
+/** Chests in the Forest of Memories, the last chapter of Map 1 (they ask the words of the unit being studied, Unit 1). */
 export const FOREST_CHESTS = [[-10, -20], [25, -12], [-30, 30], [30, 35], [45, -30]];
 /** Map 2 (Sunny Harbor, 18/11): chests on the south beach, the rock-pool path, the west trails and near Captain Octopus's cove. */
 export const HARBOR_CHESTS = PLAY.chests;
@@ -34,8 +34,8 @@ export class Chests {
   get data() { const p = this.api.profile(); return p ? (p.chests || (p.chests = {})) : {}; }
   isOpen(c) { return this.data[c.i] === today(); }
   setRegion(name) { this.region = name; this.root.visible = name === 'village' || name === 'forest' || name === 'harbor'; this.sync(); }
-  /** A chest takes part in this region (forest and harbor ones once Map 2 is open). */
-  live(c) { const p = this.api.profile(); return c.region === this.region && (c.region === 'village' || !!(p && p.flags.map2)); }
+  /** A chest takes part in this region (harbor ones once Map 2 is open; the forest is the last chapter of Map 1). */
+  live(c) { const p = this.api.profile(); return c.region === this.region && (c.region !== 'harbor' || !!(p && p.flags.map2)); }
   sync() { for (const c of this.list) { c.g.visible = this.live(c); const o = this.isOpen(c); c.lid.rotation.x = o ? -1.9 : 0; c.lock.visible = !o; c.glow.visible = !o; } }
   /** Chooses the lock word: a due review word first, otherwise a word of the unit; null when the unit has none that fit. */
   word(c) {

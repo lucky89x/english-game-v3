@@ -1,4 +1,4 @@
-// Short grammar checks for the owl's knowledge gates at levels 10, 15 and 20 (N5). Sentences are original and follow
+// Short grammar checks for the owl's knowledge gates at levels 10, 15, 20, 25 and 30 and for the map exams (N5; Unit 2 added 19/11). Sentences are original and follow
 // the grammar line of the unit's data file. Only units listed here have them; other units ask words only.
 // q: sentence with ___, options: forms of the same word, a: index of the right one, why: one-line Vietnamese reason.
 export const GRAMMAR = {
@@ -9,6 +9,10 @@ export const GRAMMAR = {
     { q: 'Listen! Mai ___ the piano in the music room.', options: ['is playing', 'plays', 'play'], a: 0, why: 'Listen! → đang xảy ra: is + V-ing.' },
     { q: 'She usually ___ her homework after dinner.', options: ['do', 'does', 'is doing'], a: 1, why: 'usually → hiện tại đơn; she + does.' },
     { q: 'I ___ a letter to my pen friend now.', options: ['write', 'writes', 'am writing'], a: 2, why: 'now → hiện tại tiếp diễn: I am + V-ing.' },
+    { q: 'My parents ___ TV in the evening every day.', options: ['watch', 'watches', 'are watching'], a: 0, why: 'every day → hiện tại đơn; my parents (they) + watch.' },
+    { q: 'Be quiet! The baby ___ now.', options: ['sleeps', 'is sleeping', 'sleep'], a: 1, why: 'now / Be quiet! → đang xảy ra: is + V-ing.' },
+    { q: 'Does your friend ___ to school by bus?', options: ['goes', 'go', 'going'], a: 1, why: 'Does + chủ ngữ + V nguyên mẫu.' },
+    { q: 'They ___ playing basketball at the moment.', options: ['are', 'is', 'do'], a: 0, why: 'at the moment → tiếp diễn; they + are + V-ing.' },
   ],
   g7_u01: [            // present simple for habits, liking verbs + V-ing (data file: not yet checked against the book)
     { q: 'Lily ___ the flowers every morning.', options: ['waters', 'water', 'is watering'], a: 0, why: 'every morning → hiện tại đơn; Lily (she) + -s.' },
@@ -17,6 +21,10 @@ export const GRAMMAR = {
     { q: 'I enjoy ___ models from cardboard.', options: ['making', 'make', 'to making'], a: 0, why: 'enjoy + V-ing.' },
     { q: 'Do you like ___ insects in the garden?', options: ['watch', 'watching', 'watches'], a: 1, why: 'like + V-ing (sở thích).' },
     { q: 'How often ___ your sister go jogging?', options: ['do', 'is', 'does'], a: 2, why: 'câu hỏi hiện tại đơn với she: does + V.' },
+    { q: 'My cousin loves ___ photos of animals.', options: ['taking', 'take', 'takes'], a: 0, why: 'love + V-ing (sở thích).' },
+    { q: 'We ___ go to the cinema very often. It is too expensive.', options: ["don't", "doesn't", "aren't"], a: 0, why: "phủ định hiện tại đơn với we: don't + V." },
+    { q: 'Hobbies like collecting stamps ___ interesting.', options: ['are', 'is', 'am'], a: 0, why: 'Hobbies (số nhiều) + are.' },
+    { q: 'My dad hates ___ up late at weekends.', options: ['getting', 'get', 'gets'], a: 0, why: 'hate + V-ing.' },
   ],
   g8_u01: [
     { q: 'My sister enjoys ___ comics in her free time.', options: ['reading', 'to read', 'read'], a: 0, why: 'enjoy + V-ing.' },
@@ -25,6 +33,10 @@ export const GRAMMAR = {
     { q: 'He detests ___ up early at weekends.', options: ['getting', 'to get', 'gets'], a: 0, why: 'detest + V-ing.' },
     { q: 'Nam is keen ___ making models of ships.', options: ['in', 'on', 'at'], a: 1, why: 'be keen on + V-ing.' },
     { q: 'My parents are interested ___ growing vegetables.', options: ['in', 'on', 'with'], a: 0, why: 'be interested in + V-ing.' },
+    { q: 'She is fond ___ listening to music.', options: ['of', 'in', 'on'], a: 0, why: 'be fond of + V-ing.' },
+    { q: 'He is crazy ___ collecting stamps.', options: ['about', 'in', 'with'], a: 0, why: 'be crazy about + V-ing (rất mê).' },
+    { q: 'We love ___ out with friends after school.', options: ['hanging', 'to hanging', 'hang'], a: 0, why: 'love + V-ing (hoặc to V); hang → hanging.' },
+    { q: 'My brother dislikes ___ the dishes.', options: ['washing', 'wash', 'to washing'], a: 0, why: 'dislike + V-ing.' },
   ],
   g9_u01: [            // question words + to-infinitive, phrasal verbs (data file: not yet checked against the book)
     { q: "I don't know where ___ good clay for my pots.", options: ['to find', 'finding', 'find'], a: 0, why: 'where + to V: where to find.' },
@@ -33,6 +45,58 @@ export const GRAMMAR = {
     { q: 'These skills are passed ___ from parents to children.', options: ['down', 'over', 'on to'], a: 0, why: 'pass down = truyền lại (cho đời sau).' },
     { q: 'Let\'s look ___ the old town before lunch.', options: ['after', 'around', 'up'], a: 1, why: 'look around = đi xem quanh.' },
     { q: 'She asked us what ___ for the community fair.', options: ['bringing', 'bring', 'to bring'], a: 2, why: 'what + to V: what to bring.' },
+    { q: 'Could you show me how ___ this machine?', options: ['to use', 'using', 'use'], a: 0, why: 'how + to V: how to use.' },
+    { q: 'My grandfather taught me what ___ when I made pottery.', options: ['to do', 'doing', 'do'], a: 0, why: 'what + to V: what to do.' },
+    { q: 'We decided to carry ___ a survey about local crafts.', options: ['out', 'off', 'up'], a: 0, why: 'carry out = tiến hành.' },
+    { q: 'He grew ___ in a small craft village.', options: ['up', 'out', 'off'], a: 0, why: 'grow up = lớn lên.' },
+  ],
+  g6_u02: [            // there is/there are, prepositions of place, possessive 's (framework of Unit 2; sentences are original)
+    { q: 'There ___ a lamp on my desk.', options: ['is', 'are', 'be'], a: 0, why: 'a lamp (số ít) → there is.' },
+    { q: 'There ___ three chairs in the kitchen.', options: ['is', 'are', 'am'], a: 1, why: 'three chairs (số nhiều) → there are.' },
+    { q: 'The fridge is ___ the cooker and the sink.', options: ['between', 'behind', 'on'], a: 0, why: 'between A and B = ở giữa A và B.' },
+    { q: 'Look! The cat is hiding ___ the cupboard. I can only see its tail.', options: ['behind', 'between', 'in front of'], a: 0, why: 'chỉ thấy cái đuôi → nó ở phía sau: behind.' },
+    { q: 'My bedroom is ___ the bathroom, so we share a wall.', options: ['next to', 'between', 'under'], a: 0, why: 'chung một bức tường → next to (bên cạnh).' },
+    { q: 'This is Lan, my sister. This is my ___ room.', options: ["sister's", 'sisters', "sisters'"], a: 0, why: "sở hữu của một người: danh từ số ít + 's." },
+    { q: '___ there any chairs in your living room?', options: ['Is', 'Are', 'Do'], a: 1, why: 'any + danh từ số nhiều → Are there ...?' },
+    { q: 'There ___ a dishwasher in our kitchen. We wash the bowls by hand.', options: ["isn't", "aren't", "don't"], a: 0, why: "phủ định với a dishwasher (số ít): there isn't." },
+    { q: 'How many bedrooms ___ there in your flat?', options: ['is', 'are', 'do'], a: 1, why: 'How many + danh từ số nhiều → are there?' },
+    { q: 'My cousins live in a country house. ___ house has a big garden.', options: ['Their', 'Her', 'Our'], a: 0, why: 'cousins = họ (they) → tính từ sở hữu their.' },
+  ],
+  g7_u02: [            // should/shouldn't for advice, compound sentences with and/but/so/or (framework of Unit 2; sentences are original)
+    { q: 'Eating too much sugar is bad for your teeth, so you ___ eat too many sweets.', options: ["shouldn't", 'should', 'ought'], a: 0, why: "lời khuyên không nên làm: shouldn't + V." },
+    { q: 'You look tired. You ___ go to bed early tonight.', options: ['should', "shouldn't", 'are'], a: 0, why: 'lời khuyên nên làm: should + V.' },
+    { q: 'I wanted to play football, ___ it was raining.', options: ['but', 'so', 'or'], a: 0, why: 'hai ý trái nhau → but.' },
+    { q: 'My eyes are itchy, ___ I use eye drops.', options: ['so', 'but', 'or'], a: 0, why: 'kết quả/hệ quả → so.' },
+    { q: 'We can eat tofu ___ soybeans to get protein.', options: ['or', 'but', 'so'], a: 0, why: 'hai lựa chọn → or.' },
+    { q: '___ I wear a hat when the sun is strong?', options: ['Should', 'Do', 'Am'], a: 0, why: 'hỏi xin lời khuyên: Should I + V?' },
+    { q: 'Tom ___ eat fast food every day because it has too much fat.', options: ["shouldn't", 'should', "doesn't should"], a: 0, why: "quá nhiều chất béo → không nên: shouldn't + V." },
+    { q: 'She has acne, ___ she washes her face twice a day.', options: ['so', 'but', 'or'], a: 0, why: 'kết quả → so.' },
+    { q: 'You ___ pop your pimples. It can leave marks on your skin.', options: ["shouldn't", 'should', 'are'], a: 0, why: "có hại → không nên: shouldn't + V." },
+    { q: "He is very tired, ___ he doesn't want to go to bed.", options: ['but', 'so', 'or'], a: 0, why: 'hai ý trái nhau → but.' },
+  ],
+  g8_u02: [            // comparative forms of adjectives and adverbs, as ... as (framework of Unit 2; sentences are original)
+    { q: 'Life in the countryside is ___ than life in the city.', options: ['peaceful', 'more peaceful', 'most peaceful'], a: 1, why: 'tính từ dài + than → more + adj.' },
+    { q: 'The buffalo walks ___ than the cow.', options: ['slower', 'more slow', 'slowest'], a: 0, why: 'tính từ ngắn: slow → slower.' },
+    { q: 'This paddy field is ___ than that one.', options: ['large', 'larger', 'more large'], a: 1, why: 'tính từ ngắn tận cùng -e: large → larger.' },
+    { q: 'Our village is not as ___ as the city, but it is quiet.', options: ['crowded', 'more crowded', 'crowdeder'], a: 0, why: 'not as + adj gốc + as.' },
+    { q: 'Mai drives the tractor ___ than her brother. He is not careful.', options: ['more carefully', 'more careful', 'carefullier'], a: 0, why: 'trạng từ dài so sánh hơn: more + adv.' },
+    { q: 'Fruit from our orchard is ___ than fruit from the shop.', options: ['better', 'gooder', 'more good'], a: 0, why: 'bất quy tắc: good → better.' },
+    { q: 'The traffic in the city is ___ than the traffic in the village.', options: ['worse', 'badder', 'more bad'], a: 0, why: 'bất quy tắc: bad → worse.' },
+    { q: 'Country people are ___ than city people. They always welcome guests.', options: ['more hospitable', 'hospitabler', 'most hospitable'], a: 0, why: 'tính từ dài: more hospitable.' },
+    { q: 'My grandparents get up ___ than I do, so they feed the pigs before breakfast.', options: ['earlier', 'more early', 'earliest'], a: 0, why: 'early → earlier (y → ier).' },
+    { q: 'This ferry is as ___ as that one. Both take ten minutes.', options: ['fast', 'faster', 'more fast'], a: 0, why: 'as + adj gốc + as (bằng nhau).' },
+  ],
+  g9_u02: [            // although / even though / despite / in spite of (concession), comparatives and superlatives (framework of Unit 2; sentences are original)
+    { q: '___ the city is crowded, many people love living there.', options: ['Although', 'Despite', 'Because'], a: 0, why: 'Although + mệnh đề (S + V): dù ... nhưng.' },
+    { q: '___ the heavy traffic, she arrived on time.', options: ['Despite', 'Although', 'However'], a: 0, why: 'Despite + cụm danh từ: dù có ...' },
+    { q: 'He still goes to work by metro ___ it is very crowded at rush hour.', options: ['even though', 'despite', 'in spite'], a: 0, why: 'even though + mệnh đề.' },
+    { q: 'In spite ___ the noise, we slept well.', options: ['of', 'for', 'to'], a: 0, why: 'in spite of + danh từ.' },
+    { q: '___ living in a bustling downtown, Linh feels lonely sometimes.', options: ['Despite', 'But', 'So'], a: 0, why: 'Despite + V-ing: dù sống ở ...' },
+    { q: 'Public transport in big cities is usually ___ than in small towns.', options: ['more convenient', 'convenienter', 'most convenient'], a: 0, why: 'tính từ dài + than → more + adj.' },
+    { q: 'The metro is ___ way to get around the city. It is faster than any bus.', options: ['the best', 'better', 'the more good'], a: 0, why: 'so sánh nhất: the best.' },
+    { q: 'She did not take an umbrella ___ it looked like rain.', options: ['although', 'despite', 'because of'], a: 0, why: 'although + mệnh đề: dù trời có vẻ mưa.' },
+    { q: '___ the high cost of living, many people move to the city for jobs.', options: ['In spite of', 'Even though', 'Although'], a: 0, why: 'In spite of + cụm danh từ.' },
+    { q: 'The streets were empty ___ it was rush hour.', options: ['even though', 'so', 'because'], a: 0, why: 'trái với dự đoán → even though.' },
   ],
 };
 /** Levels whose owl gate also asks two grammar questions. */

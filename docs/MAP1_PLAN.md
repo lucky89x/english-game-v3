@@ -36,18 +36,19 @@ Mỗi 5 cấp có một "cổng kiến thức" (ôn từ đến hạn) mới lê
 | A5 | Cửa hàng + trang bị | Bram bán kiếm và giáp, Rose bán bùa và bánh hồi máu (phím Q) | xong |
 | A6 | Túi đồ | Phím I / nút 🎒: xem chỉ số, mặc/cởi đồ; kiếm trên tay, giáp da/giáp sắt trên ngực, cỏ bốn lá bên hông | xong |
 | A7 | Boss map 1 | Vua Slime (cấp 8+), Golem Cổ (cấp 18+, cánh đồng đá Đông Nam); 3 khiên chữ phá bằng từ tiếng Anh | xong |
-| A8 | Cổng Map 2 | Thắng Golem Cổ và đạt cấp 20 → mở Map 2 (Rừng Ký Ức), từ vựng chuyển sang Unit 2 | xong |
-| M2-1 | Quái Map 2 | Rừng Ký Ức: 5 Dơi Bóng Tối (cấp 21), 5 Nấm Giận Dữ (cấp 26); chỉ hiện khi đã mở Map 2 | xong |
-| M2-2 | Boss Map 2 | Nữ hoàng Nấm cấp 30, bãi trống phía Tây tàn tích, 3 khiên chữ Unit 2 | xong |
-| M2-3 | Bảng nhiệm vụ rừng | Cạnh đường vào rừng, 4 việc săn dơi/nấm, lưu riêng | xong |
-| M2-4 | Rương + bong bóng chữ rừng | 5 rương khóa chữ, 10 bong bóng chữ dọc đường rừng (Unit 2) | xong |
-| M2-5 | Cổng Cú Mèo 25/30 | Ôn từ Unit 2; câu ngữ pháp Unit 2 chưa soạn | xong một phần |
+| A8 | Cổng Map 2 | Thắng Golem Cổ và đạt cấp 20 → mở Map 2 (Cảng Mặt Trời), từ vựng chuyển sang Unit 2 | xong |
+| F-1 | Quái chương rừng (cuối Map 1) | Rừng Ký Ức: 5 Dơi Bóng Tối (cấp 11), 5 Nấm Giận Dữ (cấp 14); bật sau khi xong nhiệm vụ pha lê của Pip (19/11: chuyển từ Map 2 về Map 1) | xong |
+| F-2 | Boss chương rừng | Nữ hoàng Nấm cấp 16 (trước Golem Cổ cấp 18), bãi trống phía Tây tàn tích, 3 khiên chữ | xong |
+| F-3 | Bảng nhiệm vụ rừng | Cạnh đường vào rừng, 4 việc săn dơi/nấm (150–360 EXP), lưu riêng | xong |
+| F-4 | Rương + bong bóng chữ rừng | 5 rương khóa chữ, 10 bong bóng chữ dọc đường rừng (từ Unit đang học) | xong |
+| M2-5 | Cổng Cú Mèo 25/30 | Ôn từ + 2 câu ngữ pháp Unit 2; cổng 30 là bài thi 10 câu (4 từ + 3 ngữ pháp + 3 câu) mở Map 3 | xong (ngữ pháp chờ giáo viên đối chiếu) |
 | M2-6 | Cảng Mặt Trời: quái biển | 5 cua (cấp 21, bãi Nam), 4 sứa (cấp 24, bờ Bắc, bay lơ lửng), 5 cướp biển (cấp 27, mũi hải đăng); model Blender có xương, clip Idle/Walk | xong |
-| M2-7 | Boss Map 2 | Thuyền trưởng Bạch Tuộc cấp 30, mũi bắc cạnh hải đăng, 3 khiên chữ Unit 2 (thay Nữ hoàng Nấm làm boss cuối chuỗi nhiệm vụ chính Map 2) | xong |
+| M2-7 | Boss Map 2 | Thuyền trưởng Bạch Tuộc cấp 28, mũi bắc cạnh hải đăng, 3 khiên chữ Unit 2; đánh bại + cấp 30 → cờ `map3` | xong |
 | M2-8 | Bảng săn + rương + bong bóng cảng | Bảng cạnh quảng trường cảng (5 việc cua/sứa/cướp biển, lưu riêng `hunt3`), 6 rương khóa chữ, 10 bong bóng chữ | xong |
 | M2-9 | Trò Seaside Café | "Café Chef": khách gọi món bằng tiếng Anh (sandwich, burger, pizza, salad + nguyên liệu, bậc 3 thêm đồ uống) | xong |
 | M2-10 | Trò Beauty Salon | Kiểu tóc, màu tóc, son môi, phấn mắt, sơn móng theo lời khách (bậc 1/2/3 = 3/4/5 phần) | xong |
-| M2-11 | Chuỗi nhiệm vụ chính Map 2 | map2 → harbor → shops → hunt3 → owl25 → boss4 (Rừng Ký Ức còn là khu phụ) | xong |
+| M2-11 | Chuỗi nhiệm vụ chính Map 2 | map2 → harbor → shops → hunt3 → owl25 → boss4 (Bạch Tuộc cấp 28) → exam2 (bài thi cấp 30); Map 1 có thêm hunt2 và boss3 (chương rừng) | xong |
+| M2-12 | Nhiệm vụ ngày của cảng | 5 nhiệm vụ riêng (quái biển, rương, bong bóng, việc ở bảng, 2 trò ở cửa hàng); khi đã mở Map 2 mỗi ngày có 1 nhiệm vụ cảng + 2 nhiệm vụ chung | xong |
 | B1 | Xếp kẹo (match-3) | Biển phía Tây quảng trường, 25 lượt, có combo | xong |
 | B2 | Đua xe | Xe bí ngô, giữ phím để lái, né đá và bùn, nhặt xu | xong |
 | B3 | Bắn súng cao su | Kéo thả ná, đạn bay vòng cung, slime và bóng bay | xong |

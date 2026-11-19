@@ -29,7 +29,7 @@
     },
     {
       "word": "chapped",
-      "vi": "bị nứt nẻ, hiện tượng nứt nẻ trên da",
+      "vi": "bị nứt nẻ (da, môi)",
       "source": "vietjack"
     },
     {
@@ -114,7 +114,7 @@
     },
     {
       "word": "virus",
-      "vi": "(Con) vi rút",
+      "vi": "vi rút",
       "source": "vietjack"
     },
     {
@@ -123,11 +123,15 @@
       "source": "vietjack"
     }
   ],
-  "grammar": [],
+  "grammar": [
+    "should / shouldn't for advice: You should go to bed early. You shouldn't pop your pimples.",
+    "compound sentences with and, but, so, or: My eyes are itchy, so I use eye drops."
+  ],
   "activities": {},
   "version": 1,
   "vocabulary_checked": false,
   "grammar_checked": false,
   "source_note": "Từ vựng theo danh sách VietJack (Global Success), chỉ từ và nghĩa. Ngữ pháp và hoạt động chưa có.",
-  "status": "vocab"
+  "status": "vocab",
+  "grammar_note": "Khung ngữ pháp đoán theo chủ đề Unit (chưa đối chiếu sách); câu hỏi do English Quest tự viết (19/11) trong src/core/grammar.js."
 }

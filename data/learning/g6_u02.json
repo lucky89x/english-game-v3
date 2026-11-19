@@ -149,10 +149,16 @@
       "source": "sgk_notes"
     }
   ],
-  "grammar": [],
+  "grammar": [
+    "there is / there are: There is a lamp on my desk. There are three chairs in the kitchen.",
+    "prepositions of place: in, on, under, behind, between, next to, in front of",
+    "possessive 's: This is my sister's room."
+  ],
   "activities": {},
   "version": 1,
   "source_note": "Từ vựng do chủ dự án chép từ sổ tay kiến thức; chưa có bài đọc hay hoạt động.",
   "vocabulary_checked": true,
-  "status": "vocab"
+  "status": "vocab",
+  "grammar_checked": false,
+  "grammar_note": "Khung ngữ pháp đoán theo chủ đề Unit (chưa đối chiếu sách); câu hỏi do English Quest tự viết (19/11) trong src/core/grammar.js."
 }

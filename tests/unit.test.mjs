@@ -399,7 +399,7 @@ test('grammar gate items: valid answers, English-only sentences with one blank, 
     assert.ok(g.a >= 0 && g.a < g.options.length && new Set(g.options).size === g.options.length);
     assert.ok(!/[àáảãạăâđêôơư]/i.test(g.q + g.options.join('')), g.q); assert.ok(g.why.length > 3);
   }
-  assert.equal(grammarFor(6, 1).length, 2); assert.equal(grammarFor(9, 1).length, 2); assert.deepEqual(grammarFor(7, 2), []); assert.deepEqual(grammarFor(8, 2), []);
+  assert.equal(grammarFor(6, 1).length, 2); assert.equal(grammarFor(9, 1).length, 2); assert.equal(grammarFor(7, 2).length, 2, 'Unit 2 has grammar since 19/11'); assert.equal(grammarFor(8, 2, 6).length, 6); assert.deepEqual(grammarFor(6, 3), [], 'Unit 3 is not written yet');
 });
 test('old saves (v1 and v2 before bag, hunts, chests, gates) load and play on (K5)', () => {
   const v1 = S.migrate({ version: 1, name: 'Bé', grade: 8, quests: { village: { step: 'done' } }, flags: { forest_open: true }, words: { 'g8_u01:hobby': { box: 2, due: 1 } }, stats: { gold: 12 } });
@@ -442,7 +442,7 @@ test('keys: Vietnamese input method letters still walk and act (Unikey / Telex o
   assert.equal(keyCode({ code: '', key: 'Backspace' }), '');
 });
 
-test('Map 2: forest board has its own hunts, the Mushroom Queen waits at level 30, owl gates at 25 and 30', async () => {
+test('Forest chapter (end of Map 1): own hunts at Map 1 levels, the Mushroom Queen at level 16 before the Ancient Golem, owl gates at 25 and 30', async () => {
   const R = await import('../src/core/rules.js');
   const p = S.newProfile('An', 8), hv = R.hunt(p), hf = R.hunt(p, 'forest');
   assert.notEqual(hv, hf, 'two separate hunts'); assert.ok(p.hunt2);
@@ -450,7 +450,9 @@ test('Map 2: forest board has its own hunts, the Mushroom Queen waits at level 3
   assert.equal(R.countKill(p, 'bat'), false); assert.equal(R.countKill(p, 'bat'), false); assert.equal(R.countKill(p, 'bat'), true);
   assert.equal(hv.got, 0, 'village hunt untouched');
   for (const q of R.FOREST_HUNTS) for (const t of Object.values(q.en)) assert.ok(!/[àáảãạăâđêôơư]/i.test(t), 'English only');
-  const q3 = R.BOSSES.find((b) => b.flag === 'boss3'); assert.equal(q3.region, 'forest'); assert.equal(q3.level, 30);
+  const q3 = R.BOSSES.find((b) => b.flag === 'boss3'); assert.equal(q3.region, 'forest'); assert.equal(q3.level, 16); assert.ok(q3.level < R.BOSSES.find((b) => b.flag === 'boss2').level, 'the Queen comes before the Golem');
+  for (const k of ['bat', 'shroom']) assert.ok(R.MONSTERS[k].level < 20, k + ' is a Map 1 monster');
+  assert.equal(R.forestChapter({ quests: {} }), false); assert.equal(R.forestChapter({ quests: { forest: { step: 'seek' } } }), false); assert.equal(R.forestChapter({ quests: { forest: { step: 'done' } } }), true, 'the chapter wakes after the crystal quest');
   assert.ok(S.GATES.includes(25) && S.GATES.includes(30));
 });
 
@@ -582,17 +584,20 @@ test('harbor: monsters, boss, hunt board, chests and word bubbles all stand on g
     assert.ok(Math.hypot(H.PLAY.boss.x - 34, H.PLAY.boss.z + 40) > 5, 'the boss stands clear of the lighthouse');
   } finally { L.setRegion('forest'); }
 });
-test('Map 2 (harbor): own hunt board, Captain Octopus at level 30, kills count for the right board only', async () => {
+test('Map 2 (harbor): own hunt board, Captain Octopus at level 28, kills count for the right board only', async () => {
   const R = await import('../src/core/rules.js'), p = S.newProfile('An', 8);
   const h = R.hunt(p, 'harbor'); assert.ok(p.hunt3 && h === p.hunt3); assert.notEqual(h, R.hunt(p, 'forest'));
   h.active = true; assert.equal(R.HARBOR_HUNTS[0].kind, 'crab');
   assert.equal(R.countKill(p, 'crab'), false); assert.equal(R.countKill(p, 'crab'), false); assert.equal(R.countKill(p, 'crab'), true);
   assert.equal(R.hunt(p).got, 0, 'village hunt untouched'); assert.equal(R.hunt(p, 'forest').got, 0, 'forest hunt untouched');
   for (const q of R.HARBOR_HUNTS) { assert.ok(R.MONSTERS[q.kind], q.kind); assert.ok(R.HARBOR_SPAWNS.filter(([k]) => k === q.kind).length >= q.need, `${q.kind} x${q.need} fit the spawns`); for (const t of Object.values(q.en)) assert.ok(!/[àáảãạăâđêôơư]/i.test(t), 'English only'); }
-  const o = R.BOSSES.find((b) => b.flag === 'boss4'); assert.equal(o.region, 'harbor'); assert.equal(o.level, 30); assert.ok(o.model);
+  const o = R.BOSSES.find((b) => b.flag === 'boss4'); assert.equal(o.region, 'harbor'); assert.equal(o.level, 28); assert.ok(o.model);
   for (const m of ['crab', 'jelly', 'pirate']) assert.ok(R.MONSTERS[m].level >= 21 && R.MONSTERS[m].level <= 30, m + ' is a Map 2 level');
   const Q = await import('../src/core/quests.js'), q = { flags: {}, stats: { level: 30 }, gates: {} };
-  assert.ok(Q.MAIN.some((x) => x.id === 'boss4') && !Q.MAIN.some((x) => x.id === 'boss3'), 'the Map 2 chain ends with the octopus');
+  const at = (id) => Q.MAIN.findIndex((x) => x.id === id);
+  assert.ok(at('hunt2') > at('owl10') && at('boss3') > at('owl15') && at('boss3') < at('boss2') && at('boss2') < at('map2'), 'the forest chapter sits inside Map 1');
+  assert.ok(at('map2') < at('harbor') && at('harbor') < at('shops') && at('shops') < at('hunt3') && at('hunt3') < at('owl25') && at('owl25') < at('boss4') && at('boss4') < at('exam2') && at('exam2') === Q.MAIN.length - 1, 'the Map 2 chain ends with the octopus and the sea exam');
+  assert.ok(R.map3Ready({ flags: { boss4: true }, stats: { level: 30 } }) && !R.map3Ready({ flags: { boss4: true }, stats: { level: 29 } }) && !R.map3Ready({ flags: {}, stats: { level: 30 } }), 'Map 3 needs the octopus and level 30');
   const shops = Q.MAIN.find((x) => x.id === 'shops'); assert.equal(shops.done(q), false);
   q.mini = { best: { style: 10, cafe: 20 } }; assert.equal(shops.done(q), false); q.mini.best.salon = 5; assert.equal(shops.done(q), true);
 });
@@ -633,4 +638,31 @@ test('salon: orders read well, never match the starting look, score by part, and
   for (let n = 0; n < 5; n++) { g.click(475, 510); assert.equal(g.n, n + 1, 'DONE works'); }
   g.update(2); assert.equal(g.done().id, 'salon');
   const g2 = SA.salonGame(rnd, 1); g2.click(475, 510); assert.equal(g2.n, 1, 'DONE works on the style tab too (it once hid under the style tiles)');
+});
+
+test('daily quests: once Map 2 is open each day has one harbor quest and two others; Map 1 players never get a harbor one', async () => {
+  const Q = await import('../src/core/quests.js');
+  for (let day = 200; day < 260; day++) {
+    const a = Q.dailyOf({ id: 'a', flags: {}, stats: { level: 5 }, mini: { stars: [] } }, day), b = Q.dailyOf({ id: 'b', flags: { map2: true }, stats: { level: 25 }, mini: { stars: [] } }, day);
+    assert.equal(a.ids.length, 3); assert.ok(!a.ids.some((id) => id.startsWith('sea_')), 'Map 1 player day ' + day);
+    assert.equal(b.ids.length, 3); assert.equal(new Set(b.ids).size, 3); assert.equal(b.ids.filter((id) => id.startsWith('sea_')).length, 1, 'Map 2 player day ' + day);
+  }
+  const p = { id: 'c', flags: { map2: true }, stats: { level: 25 }, mini: { stars: [] } }, d = Q.dailyOf(p, 300), sea = Q.DAILY.find((q) => q.id === d.ids.find((id) => id.startsWith('sea_')));
+  assert.ok(Q.track(p, 300, sea.ev, sea.need).some((x) => x.id === sea.id), 'the harbor event finishes it');
+  for (const q of Q.DAILY.filter((x) => x.map === 2)) { assert.ok(!/[àáảãạăâđêôơư]/i.test(q.en), 'English title'); assert.ok(q.need >= 1 && q.vi.length > 10); }
+});
+
+test('the sea-map exam (level 30, Unit 2): 4 words + 3 grammar + 3 sentences for every grade, and the next paper differs', async () => {
+  const fs = await import('node:fs'), EX = await import('../src/core/exam.js');
+  for (const g of [6, 7, 8, 9]) {
+    const d = JSON.parse(fs.readFileSync(`data/learning/g${g}_u02.json`, 'utf8')), cards = d.vocabulary.filter((w) => w.word.length <= 22 && w.vi.length <= 34).map((w) => ({ id: `g${g}_u02:${w.word.toLowerCase()}`, word: w.word, vi: w.vi }));
+    assert.ok(cards.length >= d.vocabulary.length - 1, `grade ${g}: almost every Unit 2 word fits a card (${cards.length}/${d.vocabulary.length})`);
+    let seed = g * 13, avoid = []; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647), papers = [];
+    for (let k = 0; k < 3; k++) {
+      const paper = EX.buildExam({ cards, grammar: grammarFor(g, 2, 10), rnd, avoid }), kinds = { vocab: 0, grammar: 0, sentence: 0 };
+      assert.equal(paper.questions.length, 10); for (const q of paper.questions) { kinds[q.kind] += 1; assert.equal(q.options.length >= 3, true); assert.equal(typeof q.a, 'number'); }
+      assert.deepEqual(kinds, { vocab: 4, grammar: 3, sentence: 3 }, `grade ${g} paper ${k}`); avoid = [...paper.ids, ...avoid]; papers.push(paper.ids.join('|'));
+    }
+    assert.equal(new Set(papers).size, 3, `grade ${g}: three different papers`);
+  }
 });

@@ -29,7 +29,7 @@
     },
     {
       "word": "concrete jungle",
-      "vi": "rừng bê tông (dùng để miêu tả một khu vực có nhiều nhà cao tầng)",
+      "vi": "rừng bê tông (nhiều nhà cao tầng)",
       "source": "vietjack"
     },
     {
@@ -49,7 +49,7 @@
     },
     {
       "word": "get around",
-      "vi": "đi xung quanh (khu vực), di chuyển từ nơi này đến nơi khác",
+      "vi": "đi lại, di chuyển trong khu vực",
       "source": "vietjack"
     },
     {
@@ -118,11 +118,15 @@
       "source": "vietjack"
     }
   ],
-  "grammar": [],
+  "grammar": [
+    "concession: although / though / even though + clause; despite / in spite of + noun or V-ing",
+    "comparatives and superlatives: more convenient than, the best way"
+  ],
   "activities": {},
   "version": 1,
   "vocabulary_checked": false,
   "grammar_checked": false,
   "source_note": "Từ vựng theo danh sách VietJack (Global Success), chỉ từ và nghĩa. Ngữ pháp và hoạt động chưa có.",
-  "status": "vocab"
+  "status": "vocab",
+  "grammar_note": "Khung ngữ pháp đoán theo chủ đề Unit (chưa đối chiếu sách); câu hỏi do English Quest tự viết (19/11) trong src/core/grammar.js."
 }

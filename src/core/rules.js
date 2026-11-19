@@ -3,15 +3,15 @@ export const MONSTERS = {
   slime: { name: 'Green Slime', level: 1, hp: 30, atk: 6, exp: 12, gold: 3, speed: 2.0, color: 0x7fd86a, size: 1.0 },
   red: { name: 'Red Slime', level: 4, hp: 70, atk: 11, exp: 26, gold: 7, speed: 2.5, color: 0xff7a6a, size: 1.25 },
   golem: { name: 'Stone Golem', level: 8, hp: 180, atk: 18, exp: 75, gold: 20, speed: 1.6, color: 0xa49aa6, size: 1.7 },
-  // Map 2 (Memory Forest, levels 21-40): they appear only once Map 2 is open
-  bat: { name: 'Shadow Bat', level: 21, hp: 260, atk: 32, exp: 120, gold: 22, speed: 3.2, color: 0x6a4a9a, size: 1.0, fly: true },
-  shroom: { name: 'Angry Mushroom', level: 26, hp: 420, atk: 40, exp: 170, gold: 30, speed: 1.8, color: 0xe2483e, size: 1.3 },
+  // The Forest of Memories is the last chapter of Map 1 (19/11): levels 11-16, open once the forest gate is
+  bat: { name: 'Shadow Bat', level: 11, hp: 200, atk: 21, exp: 70, gold: 12, speed: 3.2, color: 0x6a4a9a, size: 1.0, fly: true },
+  shroom: { name: 'Angry Mushroom', level: 14, hp: 320, atk: 26, exp: 100, gold: 16, speed: 1.8, color: 0xe2483e, size: 1.3 },
   // Map 2 (Sunny Harbor, levels 21-30): the Blender models in assets/models/harbor_mob_*; `fit` scales the model, `model` names it
   crab: { name: 'Beach Crab', level: 21, hp: 300, atk: 34, exp: 130, gold: 24, speed: 2.3, color: 0xe2483e, size: 1.0, model: 'crab', fit: 1.0 },
   jelly: { name: 'Glow Jellyfish', level: 24, hp: 340, atk: 38, exp: 150, gold: 26, speed: 1.9, color: 0xb48ae8, size: 1.0, fly: true, model: 'jelly', fit: 1.2 },
   pirate: { name: 'Little Pirate', level: 27, hp: 520, atk: 44, exp: 210, gold: 36, speed: 2.4, color: 0x2f4f8a, size: 1.2, model: 'pirate', fit: 1.15 },
 };
-/** Map 2 monsters in the Memory Forest: [kind, x, z] (open ground away from crystals, paths and the gate). */
+/** Monsters of the Memory Forest, the last chapter of Map 1: [kind, x, z] (open ground away from crystals, paths and the gate). */
 export const FOREST_SPAWNS = [
   ['bat', -25, -43], ['bat', 35, -34], ['bat', -16, -31], ['bat', 38, -19], ['bat', -46, -4],
   ['shroom', 14, -7], ['shroom', -19, 14], ['shroom', 17, 26], ['shroom', -40, 26], ['shroom', 2, 20],
@@ -142,12 +142,12 @@ export const HUNTS = [
   { kind: 'slime', need: 5, gold: 35, exp: 70, en: { easy: 'Five green slimes are in the meadow. Can you help?', hard: 'The meadow is full of green slimes again. Could you defeat five of them?' } },
   { kind: 'golem', need: 1, gold: 60, exp: 120, en: { easy: 'A big stone golem is by the farm. Be careful!', hard: "A stone golem is standing near the farm. It's dangerous, so please be careful!" } },
 ];
-/** Map 2 (Forest of Memories) has its own board by the forest entrance, with its own jobs (17/11). */
+/** The Forest of Memories (last chapter of Map 1) has its own board by the forest entrance, with its own jobs (17/11, retuned 19/11). */
 export const FOREST_HUNTS = [
-  { kind: 'bat', need: 3, gold: 60, exp: 300, en: { easy: 'Shadow bats are flying over the path. Please chase away three of them!', hard: "Three shadow bats keep scaring travellers on the path. Could you chase them away?" } },
-  { kind: 'shroom', need: 2, gold: 80, exp: 380, en: { easy: 'Two angry mushrooms are near the camp. Please stop them!', hard: "Two angry mushrooms have been stamping around the camp. Would you mind stopping them?" } },
-  { kind: 'bat', need: 5, gold: 90, exp: 450, en: { easy: 'More bats are here tonight. Can you defeat five?', hard: "The bats have come back in a big group. Could you defeat five of them?" } },
-  { kind: 'shroom', need: 4, gold: 120, exp: 600, en: { easy: 'Four angry mushrooms are in the forest. Be brave!', hard: "Four angry mushrooms are hiding among the trees. You'll need to be brave!" } },
+  { kind: 'bat', need: 3, gold: 40, exp: 150, en: { easy: 'Shadow bats are flying over the path. Please chase away three of them!', hard: "Three shadow bats keep scaring travellers on the path. Could you chase them away?" } },
+  { kind: 'shroom', need: 2, gold: 55, exp: 200, en: { easy: 'Two angry mushrooms are near the camp. Please stop them!', hard: "Two angry mushrooms have been stamping around the camp. Would you mind stopping them?" } },
+  { kind: 'bat', need: 5, gold: 65, exp: 260, en: { easy: 'More bats are here tonight. Can you defeat five?', hard: "The bats have come back in a big group. Could you defeat five of them?" } },
+  { kind: 'shroom', need: 4, gold: 90, exp: 360, en: { easy: 'Four angry mushrooms are in the forest. Be brave!', hard: "Four angry mushrooms are hiding among the trees. You'll need to be brave!" } },
 ];
 /** Map 2 (Sunny Harbor) board: crabs, jellyfish and pirates (18/11). */
 export const HARBOR_HUNTS = [
@@ -175,13 +175,17 @@ export function countKill(profile, kind) {
 export const BOSS = { id: 'king', flag: 'boss1', name: 'Slime King', level: 8, hp: 600, atk: 16, exp: 400, gold: 150, speed: 1.4, color: 0x5fd0ff, size: 2.6 };
 /** Map 1's last boss in the golem fields. Beating it at level 20 opens Map 2. */
 export const BOSS2 = { id: 'ancient', flag: 'boss2', name: 'Ancient Golem', level: 18, hp: 1600, atk: 30, exp: 900, gold: 300, speed: 1.2, color: 0x9a8f7a, size: 3.0 };
-/** Map 2's boss: the Mushroom Queen, deep in the west of the Forest of Memories near the old ruins. */
-export const BOSS3 = { id: 'queen', flag: 'boss3', name: 'Mushroom Queen', level: 30, hp: 2600, atk: 46, exp: 1600, gold: 450, speed: 1.3, color: 0xc0397a, size: 3.0, region: 'forest' };
+/** The boss of the Forest chapter (last chapter of Map 1): the Mushroom Queen, deep in the west of the forest near the old ruins. Level 16, before the Ancient Golem. */
+export const BOSS3 = { id: 'queen', flag: 'boss3', name: 'Mushroom Queen', level: 16, hp: 1300, atk: 28, exp: 700, gold: 220, speed: 1.3, color: 0xc0397a, size: 3.0, region: 'forest' };
 /** Map 2's main boss: Captain Octopus on the north point beside the lighthouse (the Blender octopus, 3 word shields). */
-export const BOSS4 = { id: 'octopus', flag: 'boss4', name: 'Captain Octopus', level: 30, hp: 3000, atk: 52, exp: 1800, gold: 500, speed: 1.4, color: 0xc0397a, size: 2.4, region: 'harbor', model: 'octopus', fit: 1.0 };
+export const BOSS4 = { id: 'octopus', flag: 'boss4', name: 'Captain Octopus', level: 28, hp: 3000, atk: 52, exp: 1800, gold: 500, speed: 1.4, color: 0xc0397a, size: 2.4, region: 'harbor', model: 'octopus', fit: 1.0 };
 export const BOSSES = [BOSS, BOSS2, BOSS3, BOSS4];
 /** Map 2 opens once the Ancient Golem is beaten and the hero has reached level 20 (owl gate passed or waiting). */
 export const map2Ready = (profile) => !!(profile.flags.boss2 && profile.stats.level >= 20);
+/** Map 3 (the desert, still to be built) opens once Captain Octopus is beaten and the hero has reached level 30 (owl exam passed or waiting). */
+/** The forest chapter of Map 1 (monsters, hunt board, the Mushroom Queen) wakes once the crystal quest is done, so a young hero finds the forest quiet at first. */
+export const forestChapter = (profile) => !!(profile.quests && profile.quests.forest && profile.quests.forest.step === 'done');
+export const map3Ready = (profile) => !!(profile.flags.boss4 && profile.stats.level >= 30);
 
 // ---------------------------------------------------------------- mini game pay
 /** Each skill game pays in full for its first FULL_PLAYS games of the day, then LATER_PAY of it, so gold and EXP

@@ -118,5 +118,5 @@ export async function harborExtras(add, loadModel, shadowed) {
   add(bake(still));
   await props(add, loadModel, shadowed);
   await lighthouse(add, loadModel, shadowed); await ship(add, loadModel, shadowed);
-  const sq = label('HARBOUR SQUARE', { size: 30, scale: 0.9 }); sq.position.set(B.square.x, gh(B.square.x, B.square.z) + 3.2, B.square.z); add(sq);
+  const sq = label('HARBOR SQUARE', { size: 30, scale: 0.9 }); sq.position.set(B.square.x, gh(B.square.x, B.square.z) + 3.2, B.square.z); add(sq);
 }

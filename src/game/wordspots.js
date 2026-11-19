@@ -9,7 +9,7 @@ import { today } from '../core/review.js';
 import { PLAY } from '../core/regions/harbor.js';
 
 export const SPOTS = [[-2.2, -6], [6.5, 0.5], [-6.5, 12], [9, 7.2], [1.5, 22], [-6, 30.5], [27, 6], [-12, -2.5], [12.5, -2.5], [-2, 41]];
-/** Map 2: bubbles along the forest paths (they teach the unit being studied there, Unit 2 once Map 2 is open). */
+/** Bubbles along the forest paths (the last chapter of Map 1): they teach the unit being studied. */
 export const FOREST_SPOTS = [[-30, 44], [-36, 18], [-34, 2], [-22, -11], [-8, -13], [16, -23], [30, -15], [38, 12], [20, 44], [12, 6]];
 /** Map 2 (Sunny Harbor): bubbles by the square, the shops, the pier, the beach and the rock-pool path. */
 export const HARBOR_SPOTS = PLAY.spots;

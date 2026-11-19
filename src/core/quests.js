@@ -17,14 +17,17 @@ export const MAIN = [
   { id: 'owl5', en: "The Owl's first review", vi: 'Lên cấp 5 rồi gặp Cú Mèo cạnh chợ để ôn tập.', done: (p) => gate(p, 5), gold: 30, exp: 0 },
   { id: 'boss1', en: 'The Slime King', vi: 'Đạt cấp 8, vào Đồng Hoang (bên kia cầu làng) đánh bại Vua Slime.', done: (p) => !!p.flags.boss1, gold: 80, exp: 0 },
   { id: 'owl10', en: "The Owl's second review", vi: 'Lên cấp 10 rồi ôn tập với Cú Mèo (có câu ngữ pháp).', done: (p) => gate(p, 10), gold: 40, exp: 0 },
+  { id: 'hunt2', en: 'Forest hunter', vi: 'Chương cuối Map 1: vào Rừng Ký Ức, hoàn thành 2 việc ở bảng săn quái cạnh đường vào rừng (dơi, nấm).', done: (p) => !!(p.hunt2 && p.hunt2.done >= 2), gold: 60, exp: 150 },
   { id: 'owl15', en: 'Halfway hero', vi: 'Lên cấp 15 và qua cổng ôn tập của Cú Mèo.', done: (p) => gate(p, 15), gold: 50, exp: 0 },
+  { id: 'boss3', en: 'The Mushroom Queen', vi: 'Chương cuối Map 1: đạt cấp 16, tìm bãi trống phía Tây tàn tích trong Rừng Ký Ức và đánh bại Nữ hoàng Nấm.', done: (p) => !!p.flags.boss3, gold: 150, exp: 0 },
   { id: 'boss2', en: 'The Ancient Golem', vi: 'Đạt cấp 18, tới cánh đồng đá phía Đông Nam đánh bại Golem Cổ.', done: (p) => !!p.flags.boss2, gold: 120, exp: 0 },
   { id: 'map2', en: 'Open Map 2', vi: 'Lên cấp 20, làm bài kiểm tra 10 câu của Cú Mèo (đúng 8/10, đề mỗi lần khác): Map 2 (Cảng Mặt Trời, từ Unit 2) mở ra.', done: (p) => !!p.flags.map2, gold: 150, exp: 0, unlock: 'Map 2' },
   { id: 'harbor', en: 'Sail to Sunny Harbor', vi: 'Ra bến thuyền bên sông (chỗ chú Sam câu cá) rồi đi thuyền tới Cảng Mặt Trời.', done: (p) => !!p.flags.harbor_seen, gold: 100, exp: 200 },
-  { id: 'shops', en: 'The three harbour shops', vi: 'Chơi đủ 3 trò ở cảng: Style Boutique (thời trang), Seaside Café (nấu ăn), Beauty Salon (làm đẹp).', done: (p) => ['style', 'cafe', 'salon'].every((k) => p.mini && p.mini.best && p.mini.best[k] !== undefined), gold: 120, exp: 300 },
+  { id: 'shops', en: 'The three harbor shops', vi: 'Chơi đủ 3 trò ở cảng: Style Boutique (thời trang), Seaside Café (nấu ăn), Beauty Salon (làm đẹp).', done: (p) => ['style', 'cafe', 'salon'].every((k) => p.mini && p.mini.best && p.mini.best[k] !== undefined), gold: 120, exp: 300 },
   { id: 'hunt3', en: 'Harbor hunter', vi: 'Hoàn thành 2 việc ở bảng săn quái cạnh quảng trường cảng (cua, sứa, cướp biển).', done: (p) => !!(p.hunt3 && p.hunt3.done >= 2), gold: 150, exp: 400 },
   { id: 'owl25', en: 'Harbor scholar', vi: 'Lên cấp 25 rồi về làng gặp Cú Mèo qua cổng ôn tập (từ Unit 2).', done: (p) => gate(p, 25), gold: 120, exp: 0 },
-  { id: 'boss4', en: 'Captain Octopus', vi: 'Đạt cấp 30, ra mũi hải đăng phía Bắc cảng và đánh bại Thuyền trưởng Bạch Tuộc.', done: (p) => !!p.flags.boss4, gold: 300, exp: 0, unlock: 'Map 3 (đang xây)' },
+  { id: 'boss4', en: 'Captain Octopus', vi: 'Đạt cấp 28, ra mũi hải đăng phía Bắc cảng và đánh bại Thuyền trưởng Bạch Tuộc.', done: (p) => !!p.flags.boss4, gold: 300, exp: 0 },
+  { id: 'exam2', en: 'The Great Sea Exam', vi: 'Lên cấp 30, làm bài kiểm tra 10 câu của Cú Mèo (Unit 2, đúng 8/10, đề mỗi lần khác) để mở Map 3 (Sa mạc Gió Vàng, đang xây).', done: (p) => gate(p, 30), gold: 300, exp: 0, unlock: 'Map 3' },
 ];
 export const mainState = (p) => p.mainClaimed || (p.mainClaimed = {});
 /** The first main quest not yet finished (null when all are done). */
@@ -43,13 +46,20 @@ export const DAILY = [
   { id: 'star', ev: 'star', need: 1, en: 'Find a hidden star', vi: 'Tìm một ngôi sao vàng còn giấu trong làng.' },
   { id: 'song', ev: 'song', need: 1, en: 'Sing a song with Anna', vi: 'Vào nhà Anna, nghe trọn một bài hát.' },
   { id: 'shop', ev: 'shopquest', need: 1, en: "Do a shopkeeper's word quest", vi: 'Vào cửa hàng, bấm 📜 Word quest của Bram hoặc Rose.' },
+  // Sunny Harbor (Map 2): once Map 2 is open each day has one of these (map: 2) and two of the others (19/11)
+  { id: 'sea_kill', map: 2, ev: 'sea_kill', need: 5, en: 'Defeat 5 sea monsters', vi: 'Hạ 5 con quái biển (cua, sứa, cướp biển) ở Cảng Mặt Trời.' },
+  { id: 'sea_chest', map: 2, ev: 'sea_chest', need: 2, en: 'Open 2 harbor chests', vi: 'Mở 2 rương khóa chữ ở Cảng Mặt Trời.' },
+  { id: 'sea_bubble', map: 2, ev: 'sea_bubble', need: 3, en: 'Learn 3 words from harbor bubbles', vi: 'Chạm 3 bong bóng chữ "Abc" ở cảng (bãi biển, cầu tàu, đường ra hải đăng).' },
+  { id: 'sea_job', map: 2, ev: 'sea_job', need: 1, en: 'Finish a job on the harbor board', vi: 'Nhận và hoàn thành một việc ở bảng săn quái cạnh quảng trường cảng.' },
+  { id: 'sea_games', map: 2, ev: 'sea_game', need: 2, en: 'Play 2 harbor shop games', vi: 'Chơi 2 trò ở Style Boutique, Seaside Café hoặc Beauty Salon.' },
 ];
 const hash = (s) => { let h = 2166136261; for (const ch of String(s)) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; };
 /** Today's three quests for this profile (same three all day); stars drop out once all twelve are found. */
 export function dailyOf(p, day) {
   if (p.daily && p.daily.day === day) return p.daily;
-  const pool = DAILY.filter((q) => q.id !== 'star' || !(p.mini && p.mini.stars && p.mini.stars.length >= 12));
-  const ids = [...pool].sort((a, b) => hash(a.id + day + p.id) - hash(b.id + day + p.id)).slice(0, 3).map((q) => q.id);
+  const pool = DAILY.filter((q) => !q.map && (q.id !== 'star' || !(p.mini && p.mini.stars && p.mini.stars.length >= 12)));
+  const pick = (list, n, salt) => [...list].sort((a, b) => hash(a.id + day + p.id + salt) - hash(b.id + day + p.id + salt)).slice(0, n).map((q) => q.id);
+  const ids = p.flags && p.flags.map2 ? [...pick(DAILY.filter((q) => q.map === 2), 1, 'sea'), ...pick(pool, 2, '')] : pick(pool, 3, '');      // Map 2 open: one harbor quest a day
   return (p.daily = { day, ids, prog: {}, claimed: {}, bonus: false });
 }
 /** Counts an event for today's quests; returns the quests it just finished. */

@@ -149,11 +149,13 @@ await run('arcade', async () => {
   check(paid[0] > 0 && paid[0] === paid[2] && paid[3] < paid[0] && paid[3] >= 1, `Cart race pays in full three times, then less (${paid.join(', ')}; start ${g0})`);
 });
 
-await run('map2', async () => {        // Map 2 monsters in the forest, only once Map 2 is open
+await run('map2', async () => {        // the forest is the last chapter of Map 1 (19/11): its monsters, board, chests, bubbles and Queen need the forest gate, not Map 2
   await ev(() => { const p = __eq.profile; p.flags.forest_open = true; p.flags.map2 = false; __eq.enterRegion('forest'); }); await page.waitForFunction(() => __eq.region === 'forest' && __eq.started, null, { timeout: 120000 }); await wait(600);
-  check(await ev(() => __eq.wild.mobs.every((m) => !m.g.visible)), 'Forest before Map 2: no monsters');
-  await ev(() => { const p = __eq.profile; p.flags.map2 = true; p.stats.level = 22; p.stats.hp = 9999; __eq.wild.mobs.forEach((m) => { if (m.region === 'forest') m.dead = 0; }); });   // the setup at the top parks every monster await page.waitForFunction(() => __eq.wild.mobs.filter((m) => m.g.visible).length >= 10, null, { timeout: 60000 }).catch(() => {});
-  check(await ev(() => __eq.wild.mobs.filter((m) => m.g.visible).every((m) => m.region === 'forest') && __eq.wild.mobs.filter((m) => m.g.visible).length === 10), 'Map 2 open: 10 forest monsters, none from the meadow ' + await ev(() => __eq.wild.mobs.filter((m) => m.g.visible).map((m) => m.kind).join(',')));
+  check(await ev(() => !__eq.profile.flags.map2), 'The forest chapter is played before Map 2 opens');
+  await ev(() => { __eq.profile.stats.level = 3; __eq.wild.mobs.forEach((m) => { if (m.region === 'forest') m.dead = 0; }); }); await wait(700);
+  check(await ev(() => __eq.wild.mobs.filter((m) => m.g.visible).length === 0), 'The crystal quest is not done: the forest is quiet for a young hero');
+  await ev(() => { const p = __eq.profile; p.quests.forest = p.quests.forest || {}; p.quests.forest.step = 'done'; p.stats.level = 12; p.stats.hp = 9999; }); await wait(900);
+  check(await ev(() => __eq.wild.mobs.filter((m) => m.g.visible).every((m) => m.region === 'forest') && __eq.wild.mobs.filter((m) => m.g.visible).length === 10), 'Forest chapter of Map 1: 10 monsters before Map 2, none from the meadow ' + await ev(() => __eq.wild.mobs.filter((m) => m.g.visible).map((m) => m.kind).join(',')));
   const r = await ev(() => { const w = __eq.wild, m = w.mobs.find((m) => m.kind === 'bat' && !m.dead), e0 = __eq.profile.stats.exp, l0 = __eq.profile.stats.level; w.kill(m, __eq.profile); return { exp: __eq.profile.stats.exp !== e0 || __eq.profile.stats.level !== l0, dead: m.dead > 0 }; });
   check(r.exp && r.dead, 'Defeating a Shadow Bat pays EXP');
   await closeDialogs();
@@ -165,9 +167,9 @@ await run('map2', async () => {        // Map 2 monsters in the forest, only onc
   check(await ev(() => __eq.profile.hunt2 && __eq.profile.hunt2.active && !(__eq.profile.hunt && __eq.profile.hunt.active && __eq.profile.hunt.i > 99)), 'Forest hunt accepted (its own record)');
   check(await ev(() => __eq.chests.list.filter((c) => c.region === 'forest').every((c) => c.g.visible) && __eq.chests.list.filter((c) => c.region === 'village').every((c) => !c.g.visible)), 'Five word chests in the forest');
   check(await ev(() => __eq.spots.list.filter((s) => s.region === 'forest' && s.sp.visible).length === 10), 'Ten word bubbles along the forest paths');
-  check(await ev(() => !__eq.wild.bosses[2].g.visible), 'Mushroom Queen sleeps below level 30');
-  await ev(() => { __eq.profile.stats.level = 30; }); await wait(800);
-  check(await ev(() => __eq.wild.bosses[2].g.visible && __eq.wild.markers().some((m) => m.text === '♛')), 'Level 30: the Mushroom Queen wakes in the west glade');
+  check(await ev(() => !__eq.wild.bosses[2].g.visible), 'Mushroom Queen sleeps below level 16');
+  await ev(() => { __eq.profile.stats.level = 16; }); await wait(800);
+  check(await ev(() => __eq.wild.bosses[2].g.visible && __eq.wild.markers().some((m) => m.text === '♛')), 'Level 16: the Mushroom Queen wakes in the west glade');
   await ev(() => __eq.enterRegion('village')); await page.waitForFunction(() => __eq.region === 'village' && __eq.started, null, { timeout: 120000 }); await wait(600);
   check(await ev(() => __eq.wild.mobs.filter((m) => m.g.visible).every((m) => m.region === 'village')), 'Back in the village: only meadow monsters');
   await closeDialogs();
@@ -175,13 +177,13 @@ await run('map2', async () => {        // Map 2 monsters in the forest, only onc
 
 await run('harbor', async () => {        // Map 2 in Sunny Harbor: sea monsters, Captain Octopus, board, chests, bubbles and the two new shop games (18/11)
   await closeDialogs();
-  await ev(() => { const p = __eq.profile; p.flags.map2 = true; p.stats.level = 29; p.stats.hp = 9999; p.god = true; __eq.enterRegion('harbor'); });
+  await ev(() => { const p = __eq.profile; p.flags.map2 = true; p.stats.level = 27; p.stats.hp = 9999; p.god = true; __eq.enterRegion('harbor'); });
   await page.waitForFunction(() => __eq.region === 'harbor' && __eq.started, null, { timeout: 180000 }); await wait(1000);
   const vis = await ev(() => __eq.wild.mobs.filter((m) => m.g.visible).map((m) => m.kind));
-  check(vis.length === 14 && vis.every((k) => ['crab', 'jelly', 'pirate'].includes(k)), `Harbor at level 29: 14 sea monsters, no boss yet, none from the other maps (${vis.length})`);
+  check(vis.length === 14 && vis.every((k) => ['crab', 'jelly', 'pirate'].includes(k)), `Harbor at level 27: 14 sea monsters, no boss yet, none from the other maps (${vis.length})`);
   check(await ev(() => __eq.wild.mobs.filter((m) => m.region === 'harbor' && m.mixer).length === 15), 'The Blender monsters and the octopus carry their own Idle/Walk clips');
-  await ev(() => { __eq.profile.stats.level = 30; }); await wait(900);
-  check(await ev(() => __eq.wild.bosses[3].g.visible && __eq.wild.markers().some((m) => m.text === '♛')), 'Level 30: Captain Octopus rises by the lighthouse');
+  await ev(() => { __eq.profile.stats.level = 28; }); await wait(900);
+  check(await ev(() => __eq.wild.bosses[3].g.visible && __eq.wild.markers().some((m) => m.text === '♛')), 'Level 28: Captain Octopus rises by the lighthouse');
   check(await ev(() => __eq.chests.list.filter((c) => c.region === 'harbor' && c.g.visible).length === 6 && __eq.chests.list.filter((c) => c.region !== 'harbor').every((c) => !c.g.visible)), 'Six word chests in the harbor');
   check(await ev(() => __eq.spots.list.filter((s) => s.region === 'harbor' && s.sp.visible).length === 10), 'Ten word bubbles in the harbor');
   await ev(() => { __eq.wild.mobs.forEach((m) => { if (!m.boss) { m.dead = 999; m.g.visible = false; } }); __eq.teleport(-2, -0.2); }); await wait(600);

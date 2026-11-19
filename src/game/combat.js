@@ -5,7 +5,7 @@ import * as THREE from 'three';
 import * as L from '../core/layout.js';
 import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
 import { PLAY } from '../core/regions/harbor.js';
-import { MONSTERS, SPAWNS, FOREST_SPAWNS, HARBOR_SPAWNS, HUNT_KEY, playerAtk, hurt, inArc, huntsOf, hunt, countKill, huntLine, BOSSES, BOSS4, shieldDue } from '../core/rules.js';
+import { MONSTERS, SPAWNS, FOREST_SPAWNS, HARBOR_SPAWNS, HUNT_KEY, forestChapter, playerAtk, hurt, inArc, huntsOf, hunt, countKill, huntLine, BOSSES, BOSS4, shieldDue } from '../core/rules.js';
 
 // BOARD: on the Quest Square since 17/11 (was out at 29, -14), facing the fountain
 export const BOARD = { x: -6.2, z: 0.6 }, BOSS_AT = { x: 40, z: -26 }, BOSS2_AT = { x: 46, z: 40 };
@@ -125,8 +125,10 @@ export class Wild {
     this.region = name; this.root.visible = name === 'village' || name === 'forest' || name === 'harbor'; for (const b of this.boards || []) b.g.visible = b.region === name;
     for (const m of this.mobs) { if (m.region === name) this.place(m); else m.g.visible = false; }
   }
-  /** A monster takes part when it lives in this region (forest and harbor ones wait for Map 2). */
-  here(m, p) { return m.region === this.region && (m.region === 'village' || !!(p && p.flags.map2)); }
+  /** The region's fighting content is on: always in the village; the forest after the crystal quest (last chapter of Map 1); the harbor once Map 2 is open. */
+  on(region, p) { return region === 'village' || !!(p && (region === 'harbor' ? p.flags.map2 : forestChapter(p))); }
+  /** A monster takes part when it lives in this region and that region's fighting content is on. */
+  here(m, p) { return m.region === this.region && this.on(m.region, p); }
   /** A monster made from a Blender model (rigged, with Idle and Walk clips). Own copies of the materials, so a hit can flash it. */
   glbBody(def, gltf) {
     const g = new THREE.Group(), inner = SkeletonUtils.clone(gltf.scene), mats = [];
@@ -203,7 +205,7 @@ export class Wild {
     else this.api.ui.toast(`+${exp} EXP   +${gold} ●`);
     if (first && m.def.flag === 'boss1') this.api.ui.dialogue([{ who: 'Ngọc', en: `I defeated the Slime King! (+${gold} gold, +${exp} EXP)`, vi: 'Con đã thắng Vua Slime! Ở cấp 18, Golem Cổ sẽ thức dậy ở cánh đồng đá phía Đông Nam.' }]);
     if (first && m.def.flag === 'boss3') this.api.ui.dialogue([{ who: 'Ngọc', en: `I defeated the Mushroom Queen! The forest remembers its words again! (+${gold} gold, +${exp} EXP)`, vi: 'Con đã thắng Nữ hoàng Nấm, trùm của Rừng Ký Ức!' }]);
-    if (first && m.def.flag === 'boss4') this.api.ui.dialogue([{ who: 'Ngọc', en: `I defeated Captain Octopus! The harbour is safe again! (+${gold} gold, +${exp} EXP)`, vi: 'Con đã thắng Thuyền trưởng Bạch Tuộc, trùm của Cảng Mặt Trời!' }]);
+    if (first && m.def.flag === 'boss4') this.api.ui.dialogue([{ who: 'Ngọc', en: `I defeated Captain Octopus! The harbor is safe again! (+${gold} gold, +${exp} EXP)`, vi: 'Con đã thắng Thuyền trưởng Bạch Tuộc, trùm của Cảng Mặt Trời!' }]);
     if (first && m.def.flag === 'boss2') this.api.ui.dialogue([{ who: 'Ngọc', en: `I defeated the Ancient Golem! (+${gold} gold, +${exp} EXP)`, vi: p.stats.level >= 20 ? 'Cổng Map 2 đã mở!' : 'Đạt cấp 20 (qua cổng Cú Mèo) là mở được Map 2.' }]);
     this.api.save(); this.api.onChange();
   }
@@ -216,7 +218,7 @@ export class Wild {
       else { b.hp = Math.min(b.def.hp * [1, 0.75, 0.5][b.broken], b.hp + b.def.hp * 0.07); this.api.sfx('wrong'); }
       this.api.onChange(); }) };
     for (const bd of this.boards) if (bd.region === this.region && Math.hypot(pos.x - bd.at.x, pos.z - bd.at.z) < 2.2) {
-      if (bd.region !== 'village' && !(p && p.flags.map2)) return { text: 'Bảng nhiệm vụ: mở khi tới Map 2', run() {} };
+      if (!this.on(bd.region, p)) return { text: bd.region === 'harbor' ? 'Bảng nhiệm vụ: mở khi tới Map 2' : 'Bảng nhiệm vụ rừng: làm xong nhiệm vụ pha lê của Pip để mở', run() {} };
       return { text: 'E · Bảng nhiệm vụ săn quái', run: () => this.board() };
     }
     return null;
@@ -225,7 +227,7 @@ export class Wild {
     const { ui, profile } = this.api, p = profile(), list = huntsOf(this.region), h = hunt(p, this.region), q = list[h.i % list.length], name = MONSTERS[q.kind].name;
     if (!h.active) { ui.dialogue([{ who: 'Quest board', en: huntLine(q, p.grade), vi: `Nhiệm vụ: hạ ${q.need} ${name}. Thưởng ${q.gold} vàng, ${q.exp} EXP.` }], () => { h.active = true; h.got = 0; this.api.sfx('tick'); this.api.save(); this.api.onChange(); }); return; }
     if (h.got < q.need) { ui.dialogue([{ who: 'Quest board', en: `${name}: ${h.got} of ${q.need}. Keep going!` }]); return; }
-    p.stats.gold += q.gold; addExp(p, q.exp); h.done += 1; h.i += 1; h.active = false; h.got = 0; this.api.sfx('fanfare');
+    p.stats.gold += q.gold; addExp(p, q.exp); h.done += 1; h.i += 1; h.active = false; h.got = 0; this.api.sfx('fanfare'); if (this.api.onJob) this.api.onJob(this.region);
     ui.dialogue([{ who: 'Quest board', en: `Thank you, hero! (+${q.gold} gold, +${q.exp} EXP)`, vi: 'Quay lại bảng để nhận nhiệm vụ mới.' }]); this.api.save(); this.api.onChange();
   }
   /** Short text for the HUD while a hunt of this region's board is running. */
@@ -268,7 +270,7 @@ export class Wild {
   }
   /** Where the hunt board sends the hero: the nearest living monster of the asked kind, or the board when the job is done. */
   guide(pos) {
-    const p = this.api.profile(); if (!p || !this.root.visible || !(this.region === 'village' || p.flags.map2)) return null;
+    const p = this.api.profile(); if (!p || !this.root.visible || !this.on(this.region, p)) return null;
     const list = huntsOf(this.region), h = hunt(p, this.region), q = list[h.i % list.length], at = BOARD_OF[this.region] || BOARD;
     if (!h.active) return null;
     if (h.got >= q.need) return { x: at.x, z: at.z, text: 'Bảng nhiệm vụ' };
@@ -279,7 +281,7 @@ export class Wild {
   markers() {
     if (!this.root.visible) return [];
     const p = this.api.profile(), out = [];
-    if (p && (this.region === 'village' || p.flags.map2)) {
+    if (p && this.on(this.region, p)) {
       const list = huntsOf(this.region), h = hunt(p, this.region), q = list[h.i % list.length], at = BOARD_OF[this.region] || BOARD;
       if (!h.active || h.got >= q.need) out.push({ x: at.x, z: at.z, text: '!', color: '#ffd23c' });
     }
