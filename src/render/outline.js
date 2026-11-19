@@ -21,9 +21,12 @@ export function addOutline(root, { color = 0x3a2010, thick = 0.012, skip = /Face
     const o = m.isSkinnedMesh ? new THREE.SkinnedMesh(m.geometry, mat) : new THREE.Mesh(m.geometry, mat);
     if (m.isSkinnedMesh) o.bind(m.skeleton, m.bindMatrix);
     o.position.copy(m.position); o.quaternion.copy(m.quaternion); o.scale.copy(m.scale);
-    o.userData.outline = true; o.frustumCulled = false; o.castShadow = false; o.receiveShadow = false;
+    o.userData.outline = true; o.userData.outlineOf = m; o.frustumCulled = false; o.castShadow = false; o.receiveShadow = false;
     m.parent.add(o); all.push(o);
   }
 }
 /** Outlines follow the quality level (off on "low"). */
-export function showOutlines(on) { for (const o of all) o.visible = on; }
+let outlinesOn = true;
+export function showOutlines(on) { outlinesOn = on; for (const o of all) o.visible = on && o.userData.outlineOf.visible; }
+/** Call after hiding or showing a mesh that has an outline twin. */
+export function syncOutlines(root) { root.traverse((o) => { if (o.userData.outline) o.visible = outlinesOn && o.userData.outlineOf.visible; }); }

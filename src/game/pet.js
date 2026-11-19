@@ -29,12 +29,30 @@ function build(kind) {
 }
 const turn = (a, b, k) => { let d = ((b - a + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) - Math.PI; return a + d * Math.min(1, k); };
 export class Pet {
-  constructor(scene) { this.root = new THREE.Group(); this.root.name = 'pet'; scene.add(this.root); this.kind = null; this.t = 0; this.trick = ''; this.trickT = 0; this.pos = new THREE.Vector3(); this.yaw = 0; this.moving = false; this.root.visible = false; this.body = null; }
+  /** load(name) -> Promise<{ scene, animations }> (a private clone); the Blender model replaces the shapes when it arrives. */
+  constructor(scene, load) { this.load = load; this.root = new THREE.Group(); this.root.name = 'pet'; scene.add(this.root); this.kind = null; this.t = 0; this.trick = ''; this.trickT = 0; this.pos = new THREE.Vector3(); this.yaw = 0; this.moving = false; this.root.visible = false; this.body = null; }
   /** Shows the pet of this kind (null hides it). */
-  set(kind) { if (kind === this.kind) return; this.kind = kind; this.root.clear(); this.body = null; if (!kind) { this.root.visible = false; return; } this.body = build(kind); this.root.add(this.body); this.root.visible = true; }
+  set(kind) {
+    if (kind === this.kind) return; this.kind = kind; this.root.clear(); this.body = null; this.mixer = null; this.actions = null; this.cur = '';
+    if (!kind) { this.root.visible = false; return; }
+    this.body = build(kind); this.root.add(this.body); this.root.visible = true;
+    if (this.load) this.load(`pet_${kind}_v01`).then((m) => { if (this.kind !== kind || !m) return; this.useModel(m); }, () => {});
+  }
+  /** Swaps the shapes for the rigged model: idle and walk loop, the tricks are one-shot clips. */
+  useModel(m) {
+    this.root.clear(); const body = new THREE.Group(); body.add(m.scene); this.body = body; this.root.add(body);
+    m.scene.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.frustumCulled = false; } });
+    this.mixer = new THREE.AnimationMixer(m.scene); this.actions = {}; this.cur = '';
+    for (const c of m.animations) { const a = this.mixer.clipAction(c); this.actions[c.name] = a; if (!['idle', 'walk'].includes(c.name)) { a.setLoop(THREE.LoopOnce, 1); a.clampWhenFinished = true; } }
+    this.fade('idle');
+  }
+  fade(name) {
+    if (!this.actions || this.cur === name || !this.actions[name]) return; const next = this.actions[name], prev = this.actions[this.cur];
+    next.reset().play(); if (prev) prev.crossFadeTo(next, 0.18, false); this.cur = name;
+  }
   /** Puts the pet next to the hero (after travelling). */
   snap(x, z) { this.pos.set(x - 1.1, 0, z - 0.8); this.place(); }
-  play(trick) { this.trick = trick; this.trickT = 0; }
+  play(trick) { this.trick = trick; this.trickT = 0; this.trickLen = 0; }
   place() { const fly = this.body && this.body.userData.hover, y = Math.max(L.walkHeight(this.pos.x, this.pos.z), fly ? L.WATER_LEVEL : -9); this.root.position.set(this.pos.x, y + (fly ? this.body.userData.hover + Math.sin(this.t * 3) * 0.06 : 0), this.pos.z); }
   update(dt, player, yaw) {
     if (!this.kind || !this.body) return; this.t += dt;
@@ -45,6 +63,13 @@ export class Pet {
       if (fly || L.walkable(nx, nz, 0.2)) { this.pos.x = nx; this.pos.z = nz; } else if (L.walkable(nx, this.pos.z, 0.2)) this.pos.x = nx; else if (L.walkable(this.pos.x, nz, 0.2)) this.pos.z = nz;
       this.yaw = turn(this.yaw, Math.atan2(dx, dz), 8 * dt); this.moving = true;
     } else { this.moving = false; this.yaw = turn(this.yaw, yaw, 3 * dt); }
+    if (this.mixer) {      // rigged model: clips do the moving
+      this.place(); this.body.rotation.set(0, this.yaw, 0); this.mixer.update(dt);
+      if (this.trick) { const a = this.actions[this.trick]; if (a && this.trickT === 0) { a.reset().play(); if (this.actions[this.cur]) this.actions[this.cur].crossFadeTo(a, 0.12, false); this.cur = this.trick; this.trickLen = a.getClip().duration; }
+        this.trickT += dt; if (!a || this.trickT >= (this.trickLen || 1.2)) { this.trick = ''; this.cur = ''; this.fade(this.moving ? 'walk' : 'idle'); } }
+      else this.fade(this.moving ? 'walk' : 'idle');
+      return;
+    }
     this.place(); const b = this.body; b.rotation.set(0, this.yaw, 0); b.position.y = this.moving && !fly ? Math.abs(Math.sin(this.t * 10)) * 0.05 : 0; b.scale.set(1, 1 + Math.sin(this.t * 2.4) * 0.015, 1);
     if (b.userData.wing) b.userData.wing.forEach((w, i) => { w.rotation.z = (i ? 1 : -1) * (-0.25 - (this.moving ? Math.sin(this.t * 16) * 0.5 : 0)); });
     if (this.trick) {          // a trick: about 1.2 seconds

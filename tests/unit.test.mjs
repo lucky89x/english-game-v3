@@ -709,8 +709,10 @@ test('wardrobe: pieces unlock once, wear and take off by slot, perfect customers
   assert.equal(WR.wear(p, 'hat:pink'), 'hat:pink'); assert.equal(WR.wear(p, 'hat:blue'), 'hat:blue', 'one piece per slot'); assert.equal(WR.wear(p, 'hat:blue'), null, 'again takes it off'); assert.equal(WR.wear(p, 'bag:red'), null, 'not owned');
   assert.equal(WR.itemName('hat:pink'), 'pink hat'); assert.equal(WR.itemName('bow:red'), 'red hair bow');
   for (const [k, v] of Object.entries(WR.KINDS)) { assert.ok(v.en && v.vi && v.icon && WR.SLOTS.some((s) => s.id === v.slot), k); assert.ok(!/[àáảãạăâđêôơư]/i.test(v.en)); }
-  assert.deepEqual(WR.fromStyleOrder([{ item: 'hat', color: 'pink' }, { item: 'T-shirt', color: 'red' }, { item: 'shoes', color: 'blue' }]), [{ kind: 'hat', color: 'pink' }, { kind: 'shoes', color: 'blue' }], 'a T-shirt is not a piece on Ngoc');
-  assert.deepEqual(WR.fromSalonOrder({ style: 'long', hair: 'red', eyes: 'blue', nails: 'pink' }), [{ kind: 'bow', color: 'red' }, { kind: 'headband', color: 'blue' }, { kind: 'bracelet', color: 'pink' }]);
+  assert.deepEqual(WR.fromStyleOrder([{ item: 'hat', color: 'pink' }, { item: 'T-shirt', color: 'red' }, { item: 'shoes', color: 'blue' }]), [{ kind: 'hat', color: 'pink' }, { kind: 'top', color: 'red' }, { kind: 'shoes', color: 'blue' }], 'a T-shirt is a top');
+  assert.deepEqual(WR.fromSalonOrder({ style: 'long', hair: 'red', eyes: 'blue', nails: 'pink' }), [{ kind: 'hairstyle', color: 'long' }, { kind: 'haircolor', color: 'red' }, { kind: 'bow', color: 'red' }, { kind: 'headband', color: 'blue' }, { kind: 'bracelet', color: 'pink' }]);
+  const q = {}; WR.unlock(q, 'hairstyle', 'curly'); WR.unlock(q, 'top', 'red'); WR.unlock(q, 'dress', 'pink'); assert.equal(WR.unlock(q, 'hairstyle', 'pink'), false, 'a hair style is not a colour'); assert.equal(WR.itemName('hairstyle:curly'), 'curly hair'); assert.equal(WR.itemName('hairstyle:braids'), 'braids');
+  WR.wear(q, 'top:red'); WR.wear(q, 'dress:pink'); assert.equal(q.wardrobe.worn.top, null, 'a dress replaces the top'); WR.wear(q, 'top:red'); assert.equal(q.wardrobe.worn.body, null, 'a top replaces the dress');
   // a perfect Style customer: the game result carries the wearable pieces
   const g = STY.styleGame(() => 0.31, 1); for (let n = 0; n < 5; n++) { g.worn = {}; for (const o of g.order) g.worn[o.item] = o.color; g.click(475, 510); }
   g.update(2); const res = g.done(); assert.ok(res && Array.isArray(res.unlock) && res.unlock.every((x) => WR.KINDS[x.kind]), 'style result unlocks pieces');

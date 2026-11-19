@@ -2,11 +2,19 @@
 // sliding marker is inside the green zone. Rarer fish have a smaller zone. Every catch shows its English name with the
 // Vietnamese meaning and is read aloud; the fish go in the bucket (sold at the fish market) and into the Sea Dex.
 import { speak } from './speech.js';
-import { rollFish, RARITY, RARITY_VI } from '../core/sea.js';
+import { rollFish, RARITY, RARITY_VI, dexImage, FISH as FISH_ALL } from '../core/sea.js';
 
+const PICS = {};
+/** The Blender picture of a catch once it has loaded (null while loading, in node, or for junk). */
+function picture(item) {
+  const src = dexImage(item); if (!src || typeof Image === 'undefined') return null;
+  if (!PICS[item.id]) { const im = new Image(); im.src = src; PICS[item.id] = im; }
+  const im = PICS[item.id]; return im.complete && im.naturalWidth ? im : null;
+}
 const EMOJI = '"Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif';
 const COL = ['#5a6a78', '#2f8a3c', '#2f6fd0', '#c8782a'];
 export function fishGame(rnd = Math.random, tier = 1) {
+  for (const f of [...FISH_ALL]) picture(f);      // warm the pictures up so the result card never flashes an emoji
   const CASTS = 5, base = [0, 150, 125, 105][tier] || 150, speed = 0.8 + 0.18 * tier;
   const g = { title: '🎣 Fishing', help: 'Bấm chuột (hoặc Space) để thả câu. Khi thấy "BITE!", bấm đúng lúc thanh trượt nằm trong vùng xanh để kéo cá lên. Cá hiếm có vùng xanh nhỏ hơn.',
     n: 0, phase: 'ready', t: 0, wait: 1.5, caught: [], score: 0, item: null, zone: [0, 0], marker: 0, msg: '', endT: 0, ok: false };
@@ -56,7 +64,7 @@ export function fishGame(rnd = Math.random, tier = 1) {
     if (g.phase === 'result') {
       c.fillStyle = 'rgba(255,255,255,.95)'; c.beginPath(); c.roundRect(130, 110, 300, 250, 18); c.fill(); c.strokeStyle = g.ok && g.item ? COL[g.item.r || 0] : '#8a98a4'; c.lineWidth = 5; c.stroke();
       c.fillStyle = '#10303f'; c.font = '800 20px sans-serif'; c.fillText(g.msg, 280, 146);
-      if (g.item && g.ok) { c.font = `88px ${EMOJI}`; c.fillText(g.item.icon, 280, 245); c.font = '900 30px sans-serif'; c.fillStyle = '#10303f'; c.fillText(g.item.en, 280, 292); c.font = '700 17px sans-serif'; c.fillText(g.item.vi, 280, 318);
+      if (g.item && g.ok) { const im = picture(g.item); if (im) c.drawImage(im, 280 - 60, 150, 120, 120); else { c.font = `88px ${EMOJI}`; c.fillText(g.item.icon, 280, 245); } c.font = '900 30px sans-serif'; c.fillStyle = '#10303f'; c.fillText(g.item.en, 280, 292); c.font = '700 17px sans-serif'; c.fillText(g.item.vi, 280, 318);
         c.fillStyle = g.item.junk ? '#8a98a4' : COL[g.item.r || 0]; c.font = '800 15px sans-serif'; c.fillText(g.item.junk ? 'rubbish · rác' : `${RARITY[g.item.r]} · ${RARITY_VI[g.item.r]}`, 280, 344); }
       else { c.font = `70px ${EMOJI}`; c.fillText('💦', 280, 235); }
     }

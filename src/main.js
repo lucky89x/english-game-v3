@@ -20,7 +20,7 @@ import { Homes } from './game/homes.js';
 import { HomePanel } from './ui/home.js';
 import { HOMES, FURNITURE, STALLS } from './core/regions/village.js';
 import { HARBOR } from './core/regions/harbor.js';
-import { styleGame } from './ui/style.js';
+import { styleGame, COLORS as WCOL } from './ui/style.js';
 import { cafeGame } from './ui/cafe.js';
 import { salonGame } from './ui/salon.js';
 import { fishGame } from './ui/fish.js';
@@ -29,6 +29,7 @@ import { PetPanel } from './ui/petpanel.js';
 import { Pet } from './game/pet.js';
 import * as PETS from './core/pet.js';
 import { outfitParts } from './game/outfit.js';
+import { tintBody, tintAccessory, setHairStyle } from './game/tint.js';
 import * as WR from './core/wardrobe.js';
 import { DexPanel } from './ui/dex.js';
 import { Toolbar } from './ui/toolbar.js';
@@ -53,7 +54,7 @@ import { payNote } from './game/minigames.js';
 import { SAM_LINES, BRIDGE, BRIDGE_SPOTS, FRIENDS, OPENING } from './game/content.js';
 import { UI } from './ui/ui.js';
 import { Post } from './render/post.js';
-import { addOutline, showOutlines } from './render/outline.js';
+import { addOutline, showOutlines, syncOutlines } from './render/outline.js';
 import { Minimap } from './ui/minimap.js';
 import { initTouch, touchWanted } from './ui/touch.js';
 import { sfx, setSound, soundOn, unlock } from './audio.js';
@@ -128,7 +129,7 @@ let profile = null, quest = null, story = null, world = null, player = null, cam
 let shopWin = null, walkers = null, talkW = -1, touch = null, quality = localStorage.getItem('eq-quality') || 'medium', perfOn = false, started = false, switching = false, wordIds = {}, jarKey = '';
 const keys = new Set();
 const game = { errors, get profile() { return profile; }, get quest() { return quest; }, get story() { return story; }, get player() { return player; }, get cam() { return cam; }, get minimap() { return minimap; }, ui, L, stats: { fps: 0, ms: 0, calls: 0, tris: 0 },
-  teleport(x, z) { player.place(x, z); cam.target.set(x, player.pos.y + 1.25, z); }, applyLook, catchFish, gainItems, cardsOfUnit: (n) => cardsOfUnit(n), get pet() { return petObj; }, get petPanel() { return petPanel; },  setQuality, key: (code) => onKey({ code, preventDefault() {} }), get started() { return started && !switching; }, get region() { return L.NAME; }, chooseProfile, enterRegion, MARKET_JARS, BRIDGE_SPOTS, get mini() { return mini; }, get wild() { return wild; }, get scene() { return scene; }, openShop, get sword() { return swordMesh; }, get armor() { return armorShown; }, setWear, openBag: () => openBag(), get arcade() { return arcade; }, get chests() { return chests; }, get spots() { return spots; }, get admin() { return admin; }, get friends() { return friends; }, get walkers() { return walkers; }, get shopWin() { return shopWin; }, get music() { return music; }, get journal() { return journal; }, get intro() { return intro; }, cardOf: (id) => cardOfFn(id), pause: (on) => renderer.setAnimationLoop(on ? null : frame),      // tests: stop drawing while another page is checked
+  teleport(x, z) { player.place(x, z); cam.target.set(x, player.pos.y + 1.25, z); }, applyLook, syncPet, get digs() { return digMeshes; }, catchFish, gainItems, cardsOfUnit: (n) => cardsOfUnit(n), get pet() { return petObj; }, get petPanel() { return petPanel; },  setQuality, key: (code) => onKey({ code, preventDefault() {} }), get started() { return started && !switching; }, get region() { return L.NAME; }, chooseProfile, enterRegion, MARKET_JARS, BRIDGE_SPOTS, get mini() { return mini; }, get wild() { return wild; }, get scene() { return scene; }, openShop, get sword() { return swordMesh; }, get armor() { return armorShown; }, setWear, openBag: () => openBag(), get arcade() { return arcade; }, get chests() { return chests; }, get spots() { return spots; }, get admin() { return admin; }, get friends() { return friends; }, get walkers() { return walkers; }, get shopWin() { return shopWin; }, get music() { return music; }, get journal() { return journal; }, get intro() { return intro; }, cardOf: (id) => cardOfFn(id), pause: (on) => renderer.setAnimationLoop(on ? null : frame),      // tests: stop drawing while another page is checked
   post, refresh: () => refresh() };
 globalThis.__eq = game;
 
@@ -334,7 +335,7 @@ async function enterRegion(name, at) {
   switching = true; ui.prompt('');
   if (story) story.leaveMarket();
   L.setRegion(name);
-  for (const m of digMeshes.splice(0)) m.removeFromParent();
+  for (const m of digMeshes.splice(0)) m.removeFromParent(); digMixers.length = 0;
   if (name === 'harbor' && profile) profile.flags.harbor_seen = true;      // main quest: sail to Sunny Harbor
   if (world) world.dispose();
   jarKey = '';
@@ -416,7 +417,7 @@ const VILLAGE_DOCK = [L.REGIONS.village.riverX(18) - 5.2, 18.6];
 const homesItems = (p) => (p.home && p.home.items) || [];
 // ---------------------------------------------------------------- the sea extras (19/11): fishing, Sea Dex, fish market
 let dexPanel = null, wardPanel = null, petPanel = null, petObj = null, trPanel = null, toolbar = null;
-let digMeshes = [];
+let digMeshes = [], digMixers = [];
 const seaOpen = () => !!(profile && (profile.flags.map2 || profile.admin));
 /** The pet of this profile (if any) shows in the world; its hunger is brought up to date. */
 function syncPet() { if (!petObj) return; if (profile && profile.pet) PETS.tick(profile.pet); petObj.set(profile && profile.pet ? profile.pet.kind : null); }
@@ -429,10 +430,16 @@ function digHere() {
   const x = player.pos.x, z = player.pos.z;
   if (!TR.isGoal(m, x, z)) { const w = TR.warmth(TR.dist(m, x, z)); ui.dialogue([{ who: 'Ngọc', en: `Nothing here… ${w.en}`, vi: w.vi }]); return; }
   const t = tierOf(profile.stats.level), r = TR.reward(t); TR.solved(profile);
-  const kinds = Object.keys(WR.KINDS), all = kinds.flatMap((k) => WR.COLOR_NAMES.map((c) => [k, c])), fresh = all.filter(([k, c]) => !WR.wardrobe(profile).owned.includes(WR.itemId(k, c))), [k, c] = (fresh.length ? fresh : all)[Math.floor(Math.random() * (fresh.length || all.length))];
+  const all = WR.allItems(), fresh = all.filter(([k, c]) => !WR.wardrobe(profile).owned.includes(WR.itemId(k, c))), [k, c] = (fresh.length ? fresh : all)[Math.floor(Math.random() * (fresh.length || all.length))];
   const isNew = WR.unlock(profile, k, c); profile.stats.gold += r.gold; Save.addExp(profile, r.exp); track('treasure'); sfx('fanfare'); save(); refresh();
-  const mound = new THREE.Mesh(new THREE.SphereGeometry(0.7, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0x6a4a2a, roughness: 1 })); mound.position.set(m.goal.x, L.groundHeight(m.goal.x, m.goal.z), m.goal.z); scene.add(mound); digMeshes.push(mound);
-  ui.dialogue([{ who: 'Ngọc', en: `I found the treasure! A chest full of gold, and a ${WR.itemName(WR.itemId(k, c))}! (+${r.gold} gold, +${r.exp} EXP)`, vi: `Tìm được kho báu! ${isNew ? 'Có thêm món mới trong tủ đồ (phím V).' : ''} ${treasureMap() ? 'Còn một bản đồ nữa hôm nay: bấm M.' : 'Hôm nay con đã tìm đủ rồi, mai có bản đồ mới.'}` }]);
+  const gx = m.goal.x, gz = m.goal.z, gy = L.groundHeight(gx, gz);
+  const mound = new THREE.Mesh(new THREE.SphereGeometry(0.7, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0x6a4a2a, roughness: 1 })); mound.position.set(gx, gy, gz); scene.add(mound); digMeshes.push(mound);
+  animatedModel('isle_chest_v01').then((c) => {        // the Blender chest rises from the sand and its lid opens
+    if (L.NAME !== 'isle') return; c.scene.position.set(gx, gy, gz); c.scene.rotation.y = Math.atan2(player.pos.x - gx, player.pos.z - gz); c.scene.scale.setScalar(1.6);
+    c.scene.traverse((o) => { if (o.isMesh) o.castShadow = true; }); scene.add(c.scene); digMeshes.push(c.scene); mound.visible = false;
+    const mx = new THREE.AnimationMixer(c.scene), act = mx.clipAction(c.animations.find((a) => a.name === 'Open') || c.animations[0]); act.setLoop(THREE.LoopOnce, 1); act.clampWhenFinished = true; act.play(); digMixers.push(mx);
+  }, () => {});
+  ui.dialogue([{ who: 'Ngọc', en: `I found the treasure! A chest full of gold, and a new piece for your wardrobe: ${WR.itemName(WR.itemId(k, c))}! (+${r.gold} gold, +${r.exp} EXP)`, vi: `Tìm được kho báu! ${isNew ? 'Có thêm món mới trong tủ đồ (phím V).' : ''} ${treasureMap() ? 'Còn một bản đồ nữa hôm nay: bấm M.' : 'Hôm nay con đã tìm đủ rồi, mai có bản đồ mới.'}` }]);
 }
 function openDex() { dexPanel.show(); sfx('tick'); }
 /** A sea creature is found (caught or defeated): the first time pays by rarity, milestones pay a bonus. */
@@ -644,13 +651,34 @@ function setWear() {
   if (b.charm && hips) { const c = charmMesh(); c.position.set(0.13, 0.02, 0.08); hips.add(c); charmShown = c; }
   applyLook();
 }
-/** The wardrobe pieces worn on Ngọc (19/11): rebuilt from profile.wardrobe.worn. */
+/** The wardrobe pieces worn on Ngọc (19/11): rebuilt from profile.wardrobe.worn. Clothes and hair tint her body materials,
+ *  the hair style swaps the Hair_* object, and the accessories (acc_*_v01.glb, built in her bind pose) hang on her bones. */
+const NGOC_COLORS = { hair: '#8c4a22', top: '#f4e9d2', bottom: '#cfb487' };
+const ACC_BONE = { hat: /^head$/, bow: /^head$/, headband: /^head$/, glasses: /^head$/, scarf: /^neck$/, bag: /^chest$/, bracelet: /^hand.?L$/ };
+const accScene = {};                       // kind -> loaded glTF scene, or null when the file is missing (the shapes from outfit.js take over)
 let lookShown = [];
 function applyLook() {
   if (!player || !profile) return;
   for (const o of lookShown) o.removeFromParent(); lookShown = [];
-  const bone = (re) => { let b = null; player.root.traverse((o) => { if (!b && o.isBone && re.test(o.name)) b = o; }); return b; };
-  for (const id of Object.values(WR.wardrobe(profile).worn)) { const it = id && WR.parse(id); if (!it) continue; for (const part of outfitParts(it.kind, it.color)) { const b = bone(part.bone); if (b) { b.add(part.obj); lookShown.push(part.obj); } } }
+  const root = player.root, bone = (re) => { let b = null; root.traverse((o) => { if (!b && o.isBone && re.test(o.name)) b = o; }); return b; };
+  const worn = WR.wardrobe(profile).worn, val = (slot) => { const it = worn[slot] && WR.parse(worn[slot]); return it ? it.color : null; }, paint = (n, d) => (n && WCOL[n]) || d;
+  const dress = val('body');
+  tintBody(root, { hair: paint(val('haircolor'), NGOC_COLORS.hair), top: paint(dress || val('top'), NGOC_COLORS.top), bottom: paint(dress || val('bottom'), NGOC_COLORS.bottom) });
+  setHairStyle(root, val('style') || 'short'); syncOutlines(root);
+  let skinned = null; root.traverse((o) => { if (!skinned && o.isSkinnedMesh) skinned = o; });
+  const hang = (obj, b) => { const i = skinned ? skinned.skeleton.bones.indexOf(b) : -1; if (i >= 0) { obj.matrix.copy(skinned.skeleton.boneInverses[i]); obj.matrix.decompose(obj.position, obj.quaternion, obj.scale); } b.add(obj); lookShown.push(obj); };
+  for (const id of Object.values(worn)) {
+    const it = id && WR.parse(id); if (!it || !ACC_BONE[it.kind] && !['shoes'].includes(it.kind)) continue;
+    const src = accScene[it.kind];
+    if (src) {
+      const clone = src.clone(true); tintAccessory(clone, WCOL[it.color] || '#ffffff');
+      for (const c of [...clone.children]) { const side = /_([LR])$/.exec(c.name); const b = bone(it.kind === 'shoes' ? new RegExp(`^foot.?${side ? side[1] : 'L'}$`) : ACC_BONE[it.kind]); if (b) { c.removeFromParent(); hang(c, b); } }
+    } else if (src === undefined) {
+      accScene[it.kind] = null;
+      staticModel(`acc_${it.kind}_v01`).then((m) => { accScene[it.kind] = m; applyLook(); }, () => {});
+      for (const part of outfitParts(it.kind, it.color)) { const b = bone(part.bone); if (b) { b.add(part.obj); lookShown.push(part.obj); } }      // shapes until the file arrives
+    } else for (const part of outfitParts(it.kind, it.color)) { const b = bone(part.bone); if (b) { b.add(part.obj); lookShown.push(part.obj); } }
+  }
 }
 /** Pieces won at the Boutique or the Salon go to the wardrobe. */
 function gainItems(list) {
@@ -850,14 +878,15 @@ addEventListener('resize', resize);
 async function boot() {
   resize();
   $('loadtext').textContent = 'Đang gọi Ngọc và các bạn…';
-  const [ngoc, tomG, samG, benG, pipG, blink, talk, joy] = await Promise.all([gltf('chr_ngoc_adventurer_v03'), gltf('npc_tom_elder_v02'), gltf('npc_sam_fisherman_v02'), gltf('npc_ben_merchant_v02'), gltf('npc_pip_spirit_v02'), faceTex('blink'), faceTex('talk'), faceTex('joy')]);
+  const [ngoc, tomG, samG, benG, pipG, blink, talk, joy] = await Promise.all([gltf('chr_ngoc_adventurer_v04'), gltf('npc_tom_elder_v02'), gltf('npc_sam_fisherman_v02'), gltf('npc_ben_merchant_v02'), gltf('npc_pip_spirit_v02'), faceTex('blink'), faceTex('talk'), faceTex('joy')]);
   $('loadtext').textContent = 'Đang dựng ngôi làng…';
   L.setRegion('village');
   world = await buildWorld(scene, staticModel, animatedModel);
   player = new Player(ngoc, { blink, talk, joy }); scene.add(player.root);
   tom = new Npc(tomG, 2.6, 7.6, -0.4); sam = new Npc(samG, 14, 17, 1.2); ben = new Npc(benG, -9.9, 19.5, Math.PI / 2); scene.add(tom.root, sam.root, ben.root);
   pip = new Pip(pipG.scene); scene.add(pip.root);
-  for (const f of Object.values(FRIENDS)) { const npc = new Npc(await gltf(f.file), ...f.at, ngoc.animations); scene.add(npc.root); friends.push({ ...f, npc }); }
+  for (const f of Object.values(FRIENDS)) { const npc = new Npc(await gltf(f.file), ...f.at, ngoc.animations); if (f.tint) tintBody(npc.root, f.tint); scene.add(npc.root); friends.push({ ...f, npc }); }
+  tintBody(player.root, NGOC_COLORS); setHairStyle(player.root, 'short');
   shopWin = new ShopWindow({ profile: () => profile, sfx, track, onClose: leaveRoom, today: () => Review.today(), changed: () => { setSword(); setWear(); save(); refresh(); if (homes) homes.refresh(); } });
   music = new MusicRoom({ profile: () => profile, sfx, track, onClose: leaveRoom, changed: () => { save(); refresh(); } });
   { const F = L.REGIONS.forest, y = F.groundHeight(FOREST_SHOP.x, FOREST_SHOP.z); forestStall = campStall(FOREST_SHOP.x, y, FOREST_SHOP.z, Math.PI / 2 + 0.3);
@@ -872,7 +901,7 @@ async function boot() {
   dexPanel = new DexPanel({ profile: () => profile, onClose: () => {} });
   wardPanel = new WardrobePanel({ profile: () => profile, changed: () => { applyLook(); save(); refresh(); } });
   trPanel = new TreasurePanel({ profile: () => profile, map: () => treasureMap(), speak: (t) => speak(t, true, 0.85) });
-  petObj = new Pet(scene);
+  petObj = new Pet(scene, animatedModel);
   petPanel = new PetPanel({ profile: () => profile, today: () => Review.today(), speak: (t) => speak(t, true, 0.85), sfx, playTrick: (id) => petObj.play(id), adopted: () => { syncPet(); petObj.snap(player.pos.x, player.pos.z); },
     cared: () => track('pet'), changed: () => { save(); refresh(); } });
   toolbar = new Toolbar([
@@ -883,6 +912,7 @@ async function boot() {
   ]);
   walkers = new Walkers(scene, (name) => loader.loadAsync(`./assets/models/${name}.glb`)); await walkers.init();      // villagers on the roads
   for (const a of [player, tom, sam, ben, ...friends.map((f) => f.npc)]) addOutline(a.root);     // cartoon outlines (medium/high)
+  applyLook();
   const F = L.REGIONS.forest;
   crystals = new Crystals(scene, F.LANDMARKS.filter((l) => l.id !== 'tree'), F.walkHeight);
   const hall = L.REGIONS.village.LANDMARKS.find((l) => l.id === 'hall').spot;
@@ -970,6 +1000,7 @@ function frame() {
   if (mini && started && !switching && !ui.modal && !arcade.open) mini.update(real, player.pos);      // real time, so timers stay honest on slow machines
   if (chests && started) chests.update(real);
   if (petObj && started && !switching) petObj.update(real, player.pos, player.yaw);
+  for (const mx of digMixers) mx.update(real);
   if (spots && started) spots.update(real);
   if (wild && started && !switching) wild.update(real, !!ui.modal || arcade.open);
   if (marks3d) marks3d.update(real);
