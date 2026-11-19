@@ -27,3 +27,7 @@ ma-nơ-canh (4 object), đồ cửa hàng (4 object), 3 nhà (boutique, cafe, sa
 (có xương, clip "Idle" và "Walk"). Mặt trước hướng +Z glTF; vật liệu phát sáng tên `light_*`, kính `glass`.
 Dựng lại: `OUT=<thư mục> blender -b -P tools/harbor/build_harbor.py` (tùy chọn `ONLY=harbor_crane,…`);
 ảnh xem trước: `tools/harbor/preview.py`, kiểm hoạt ảnh: `tools/harbor/check_anim.py`.
+
+## Nhân vật dựng lại (tự dựng, không cần ghi công)
+
+`chr_ngoc_adventurer_v04.glb` (6 kiểu tóc, vật liệu `_tint`) và `npc_lily_druid_v02.glb`, `npc_rose_baker_v02.glb`, `npc_anna_bard_v02.glb` dựng bằng `tools/chibi05/build_ngoc_v03.py` (qua `tools/chibi05/build_all.sh ngoc friends`).

@@ -25,8 +25,10 @@ OUT_DIR = ROOT / 'assets/characters/models'
 SRC_DIR = ROOT / 'art_source/chibi05'
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 SRC_DIR.mkdir(parents=True, exist_ok=True)
-GLB = OUT_DIR / 'chr_ngoc_adventurer_v03.glb'
-BLEND = SRC_DIR / 'chr_ngoc_adventurer_v03.blend'
+# v04 (2026-11-19): body split into tintable materials (*_tint = grey texture, the game multiplies a colour)
+# and five extra hairstyles (Hair_long/curly/wavy/ponytail/braids) next to Hair_short; the game hides/shows them.
+GLB = OUT_DIR / 'chr_ngoc_adventurer_v04.glb'
+BLEND = SRC_DIR / 'chr_ngoc_adventurer_v04.blend'
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
 scene = bpy.context.scene
@@ -57,13 +59,13 @@ PALETTE.update({'white': ('fbf8f0', .8, 0), 'bread': ('d9953f', .7, 0), 'bread_l
                 'crystal': ('58e07a', .1, 0), 'leaf': ('4d9a3a', .8, 0), 'lute': ('c98a48', .5, 0), 'lute_dark': ('7a4a26', .6, 0)})
 VARIANT = os.environ.get('NGOC_VARIANT', 'ngoc')
 VARIANTS = {   # friends built on Ngoc's body: (file name, palette overrides)
-    'lily': ('npc_lily_druid_v01', {'hair': 'e0702c', 'hair_light': 'f08a3c', 'hair_dark': 'b8531c', 'bandana': '5fa83c', 'bandana_dark': '3f7d2a',
+    'lily': ('npc_lily_druid_v02', {'hair': 'e0702c', 'hair_light': 'f08a3c', 'hair_dark': 'b8531c', 'bandana': '5fa83c', 'bandana_dark': '3f7d2a',
                                     'scarf': '6cb444', 'scarf_dark': '4a8a30', 'shirt': '8cc25a', 'shirt_shade': '6a9e42', 'shorts': 'f0e6cc',
                                     'shorts_cuff': 'd9c9a2', 'glass': '4fd06a', 'ribbon': '5fa83c'}),
-    'rose': ('npc_rose_baker_v01', {'hair': 'ee8a94', 'hair_light': 'f8a8b0', 'hair_dark': 'd06a78', 'bandana': 'f6f0e6', 'bandana_dark': 'd8cfc0',
+    'rose': ('npc_rose_baker_v02', {'hair': 'ee8a94', 'hair_light': 'f8a8b0', 'hair_dark': 'd06a78', 'bandana': 'f6f0e6', 'bandana_dark': 'd8cfc0',
                                     'scarf': 'c8352e', 'scarf_dark': '9a2620', 'shirt': 'fbf6ec', 'shirt_shade': 'e6dcc8', 'shorts': 'c8352e',
                                     'shorts_cuff': '9a2620', 'glass': 'f6c62e', 'ribbon': 'c8352e'}),
-    'anna': ('npc_anna_bard_v01', {'hair': '6b3a1e', 'hair_light': '8a5230', 'hair_dark': '4a2612', 'bandana': 'f2c230', 'bandana_dark': 'c99a1e',
+    'anna': ('npc_anna_bard_v02', {'hair': '6b3a1e', 'hair_light': '8a5230', 'hair_dark': '4a2612', 'bandana': 'f2c230', 'bandana_dark': 'c99a1e',
                                    'scarf': 'f2c230', 'scarf_dark': 'c99a1e', 'shirt': '3f6fc6', 'shirt_shade': '2c539a', 'shorts': 'f4efe6',
                                    'shorts_cuff': 'd8d0c0', 'glass': 'b684e8', 'ribbon': 'f2c230'}),
 }
@@ -147,7 +149,54 @@ def make_material(name, albedo_path, orm_path=None, rough=.6):
     return m
 
 
-MAT_BODY = make_material('NgocBody', PAL_ALB, PAL_ORM)
+# v04: the body is split by what the game may recolour. Hair, top and bottom use *_tint materials that sample a
+# GREY copy of the palette (the group's base tone = 0.8 grey, lighter/darker tones keep their ratio), so the game can
+# multiply any colour on top; contact shadows stay in the vertex colours. Ngọc keeps skin, boots and gear apart too;
+# the friends put skin + boots + gear in one '<name>_body' material (fewer draw calls).
+TINT_GROUPS = {'hair': ('hair', 'hair_light', 'hair_dark'), 'top': ('shirt', 'shirt_shade'), 'bottom': ('shorts', 'shorts_cuff')}
+
+
+def group_of(color):
+    for g, names in TINT_GROUPS.items():
+        if color in names:
+            return g
+    if color in ('skin', 'skin_dark', 'eye_dark'):
+        return 'skin'
+    if color in ('boot', 'boot_cuff', 'sole', 'lace'):
+        return 'boots'
+    return 'gear'
+
+
+def build_tint_image():
+    from PIL import Image
+    size = CELL * GRID
+    img = Image.new('RGB', (size, size), (204, 204, 204))
+
+    def lum(h):
+        r, g, b = hex_rgb(h)
+        return .2126 * srgb_to_lin(r / 255) + .7152 * srgb_to_lin(g / 255) + .0722 * srgb_to_lin(b / 255)
+    for g, names in TINT_GROUPS.items():
+        base = lum(PALETTE[names[0]][0])
+        for n in names:
+            lin = min(1.0, srgb_to_lin(.8) * lum(PALETTE[n][0]) / base)     # base tone -> 0.8 grey (sRGB)
+            v = round(255 * (lin * 12.92 if lin <= .0031308 else 1.055 * lin ** (1 / 2.4) - .055))
+            i = NAMES.index(n)
+            x, y = (i % GRID) * CELL, (i // GRID) * CELL
+            img.paste((v, v, v), (x, y, x + CELL, y + CELL))
+    p = SRC_DIR / f'{VARIANT}_palette_tint.png'
+    img.save(p)
+    return p
+
+
+PAL_TINT = build_tint_image()
+_pre = VARIANT
+MATS = {g: make_material(f'{_pre}_{g}_tint', PAL_TINT, PAL_ORM) for g in TINT_GROUPS}
+if VARIANT == 'ngoc':
+    MATS.update({g: make_material(f'ngoc_{g}', PAL_ALB, PAL_ORM) for g in ('skin', 'boots', 'gear')})
+else:
+    _body = make_material(f'{_pre}_body', PAL_ALB, PAL_ORM)
+    MATS.update({g: _body for g in ('skin', 'boots', 'gear')})
+MAT_BODY = MATS['skin']
 MAT_FACE = make_material('NgocFace', FACE_PNGS['happy'], rough=.62)
 
 # --------------------------------------------------------------------------------------
@@ -174,12 +223,17 @@ def paint(obj, color, faces=None):
     me = obj.data
     if not me.uv_layers:
         me.uv_layers.new(name='UVMap')
-    if not me.materials:
-        me.materials.append(MAT_BODY)
+    m = MATS[group_of(color)]
+    names = [x.name for x in me.materials]
+    if m.name not in names:
+        me.materials.append(m)
+        names.append(m.name)
+    idx = names.index(m.name)
     uv = me.uv_layers.active.data
     u = cell_uv(color)
     polys = me.polygons if faces is None else [me.polygons[i] for i in faces]
     for p in polys:
+        p.material_index = idx
         for li in p.loop_indices:
             uv[li].uv = u
     return obj
@@ -893,6 +947,161 @@ else:
         finish(ellipsoid(f'Ngoc_Crown_{k}', p, (.050, .050, .040), seg=10, rings=6), 'lens_shine' if k % 2 else 'parchment', ['head'])
         finish(ellipsoid(f'Ngoc_CrownDot_{k}', p + (p - HAIR_C).normalized() * .034, (.020, .020, .016), seg=6, rings=4), 'gold', ['head'])
 
+# ---------------- v04: extra hairstyles (Ngọc only) ------------------------------------------
+# Each style is its own skinned object (head + bun bones, ngoc_hair_tint) so the game can show one at a time.
+# They are built light (≤ ~1.3k triangles, no decimation) on a slightly smaller copy of the hair cap, so the
+# bandana and goggles, which ride on the original cap surface, sit on top of every style.
+HAIR_SHORT_PREFIX = ('Ngoc_HairCap', 'Ngoc_CrownPuff', 'Ngoc_Curl_', 'Ngoc_Fringe_', 'Ngoc_SideCurl_', 'Ngoc_BackCurl_',
+                     'Ngoc_BunCore', 'Ngoc_BunCoil', 'Ngoc_BunCurl', 'Ngoc_BunBase')
+HAIR_STYLE_OF = {}          # part object name -> hairstyle object name
+HAIR_STYLES = ['Hair_long', 'Hair_curly', 'Hair_wavy', 'Hair_ponytail', 'Hair_braids']
+
+
+def hpart(style, obj, color, bone='head', smooth=True):
+    finish(obj, color, [bone], smooth=smooth)
+    HAIR_STYLE_OF[obj.name] = style
+    return obj
+
+
+def low_cap(style, seg=22, rings=12, back=-.235, shrink=.004, ridges=True):
+    """light hair cap with the same hairline as Hair_short; `back` = how low it reaches at the nape"""
+    def dfm(p, v):
+        if not ridges:
+            return p
+        d = p.normalized() if p.length else p
+        az = math.atan2(d.x, -d.y)
+        el = math.asin(max(-1, min(1, d.z)))
+        return p + d * (.022 * (.5 + .5 * math.cos(11 * az + el * 2)) ** 1.5 * smoothstep(-.9, -.1, el))
+    r = (HAIR_R[0] - shrink, HAIR_R[1] - shrink, HAIR_R[2] - shrink)
+    ob = ellipsoid(f'{style}_Cap', HAIR_C, r, seg=seg, rings=rings, deform=dfm)
+    bm = bmesh.new()
+    bm.from_mesh(ob.data)
+    kill = []
+    for f in bm.faces:
+        c = f.calc_center_median()
+        rel = c - Vector((0, 0, HZ))
+        ang = math.atan2(abs(c.x), -c.y)
+        if (ang < .95 and rel.z < .080 + .045 * smoothstep(.35, .95, ang)) or (ang < 1.45 and rel.z < -.115) \
+                or (rel.z < -.205 and c.y < .10) or rel.z < back:
+            kill.append(f)
+    bmesh.ops.delete(bm, geom=kill, context='FACES')
+    bm.to_mesh(ob.data)
+    bm.free()
+    return hpart(style, ob, 'hair')
+
+
+def strand(style, name, pts, r0, r1, seg=6, flat=1.0, color='hair', bone='head', ref=None, shape=None):
+    n = len(pts)
+    rings = [(Vector(p), (r0 + (r1 - r0) * i / (n - 1)), (r0 + (r1 - r0) * i / (n - 1)) * flat) for i, p in enumerate(pts)]
+    return hpart(style, loft(f'{style}_{name}', rings, seg=seg, ref=ref, shape=shape), color, bone)
+
+
+def fringe(style, spec, seg=5):
+    """side-swept bangs under the bandana: spec = [(az0 deg, sweep deg, el0 deg, radius), ...]"""
+    for i, (az0, da, el0, r0) in enumerate(spec):
+        pts = []
+        for k in range(6):
+            t = k / 5
+            e = el0 - 14 * math.sin(t * math.pi * .7)
+            pts.append(surf(HEAD_TREE, HC_W, hair_dir(math.radians(az0 + da * t), math.radians(e)), .016 - .006 * t)[0])
+        strand(style, f'Fringe_{i}', pts, r0, r0 * .35, seg=seg, flat=.55, color=HAIR_COLS[i % 3],
+               ref=Vector((0, 0, 1)))
+
+
+def path(p0, p1, n, bow=(0, 0, 0), wave=(0, 0, 0), waves=0.0):
+    """n points from p0 to p1, bowed out by `bow` in the middle and waving by `wave` (waves = full cycles)"""
+    p0, p1, bow, wave = Vector(p0), Vector(p1), Vector(bow), Vector(wave)
+    return [p0.lerp(p1, i / (n - 1)) + bow * math.sin(math.pi * i / (n - 1)) + wave * math.sin(2 * math.pi * waves * i / (n - 1))
+            for i in range(n)]
+
+
+if VARIANT == 'ngoc':
+    _rnd.seed(11)
+    # -- Hair_long: straight curtain down to the middle of the back, side locks over the shoulders, swept fringe
+    st = 'Hair_long'
+    low_cap(st, back=-.30)
+    curtain = loft(f'{st}_Back', [(Vector((0, .07, 1.08)), .285, .215), (Vector((0, .115, .93)), .27, .16),
+                                  (Vector((0, .15, .80)), .245, .10), (Vector((0, .175, .69)), .225, .075),
+                                  (Vector((0, .19, .60)), .205, .055), (Vector((0, .195, .54)), .17, .035)],
+                   seg=16, ref=Vector((1, 0, 0)), shape=lambda a, i: 1 + .06 * abs(math.cos(7 * a + .4 * i)) - .03)
+    hpart(st, curtain, 'hair')
+    for s in (-1, 1):
+        top = on_hair(math.radians(84) * s, math.radians(-8), -.02)
+        strand(st, f'Side_{s}', path(top, (s * .19, -.07, .74), 6, bow=(s * .05, -.03, 0)), .055, .03, seg=7, flat=.55,
+               color='hair_light' if s > 0 else 'hair', ref=Vector((0, 1, 0)))
+    fringe(st, [(-50, 60, 30, .040), (-15, 55, 28, .038), (20, 45, 26, .034), (48, 30, 20, .030)])
+
+    # -- Hair_curly: shoulder-length cloud of round curls
+    st = 'Hair_curly'
+    low_cap(st, seg=16, rings=9, back=-.28)
+    k = 0
+    for el, cnt, rr in ((52, 4, .100), (20, 5, .112), (-12, 5, .112), (-38, 4, .106)):
+        for i in range(cnt):
+            az = (i + .5 * (k % 2)) / cnt * 2 * math.pi - math.pi
+            if abs(az) < math.radians(64) and el < 45:
+                continue
+            p = on_hair(az + _rnd.uniform(-.08, .08), math.radians(el + _rnd.uniform(-4, 4)), rr * .35)
+            if el <= -30:
+                p += Vector((0, .02, -.06))
+            q = Vector((0, 0, 1)).rotation_difference((p - HAIR_C).normalized())
+            hpart(st, ellipsoid(f'{st}_Puff_{k}', p, (rr, rr, rr * .82), seg=8, rings=6, rot=q,
+                                deform=lambda q_, v: q_ * (1 + .1 * math.sin(v.x * 9 + v.y * 7))), HAIR_COLS[k % 3])
+            k += 1
+    for i, az in enumerate((-.42, -.05, .32)):     # little curls on the forehead
+        p = surf(HEAD_TREE, HC_W, hair_dir(az, math.radians(22)), .020)[0]
+        hpart(st, ellipsoid(f'{st}_Fringe_{i}', p, (.045, .032, .040), seg=6, rings=4), HAIR_COLS[(i + 1) % 3])
+
+    # -- Hair_wavy: soft waves to the shoulders, wavy side locks, centre-parted fringe
+    st = 'Hair_wavy'
+    low_cap(st, back=-.30)
+    wav = loft(f'{st}_Back', [(Vector((0, .07, 1.08)), .29, .215), (Vector((0, .11, .95)), .285, .16),
+                              (Vector((.0, .14, .84)), .27, .11), (Vector((0, .16, .75)), .255, .075),
+                              (Vector((0, .17, .69)), .24, .05)],
+               seg=18, ref=Vector((1, 0, 0)), shape=lambda a, i: 1 + .07 * math.cos(9 * a + 1.3 * i))
+    hpart(st, wav, 'hair')
+    for s in (-1, 1):
+        for j, (az, ln) in enumerate(((78, .30), (100, .33))):
+            top = on_hair(math.radians(az) * s, math.radians(-6), -.02)
+            strand(st, f'Wave_{s}_{j}', path(top, top + Vector((s * .05, -.03 + .05 * j, -ln)), 8, wave=(s * .025, .012, 0), waves=1.5),
+                   .050, .022, seg=6, flat=.7, color=HAIR_COLS[(j + (s > 0)) % 3], ref=Vector((0, 1, 0)))
+    fringe(st, [(-8, -55, 27, .036), (8, 55, 27, .036), (-36, -40, 22, .030), (36, 40, 22, .030)])
+
+    # -- Hair_ponytail: smooth cap, scrunchie high at the back, a long swinging tail on the bun bone
+    st = 'Hair_ponytail'
+    low_cap(st, back=-.24)
+    PT = on_hair(math.pi, math.radians(38), .0)
+    hpart(st, torus(f'{st}_Tie', PT, .055, .022, seg=12, rseg=5,
+                    rot=Vector((0, 0, 1)).rotation_difference((PT - HAIR_C).normalized())), 'hair_dark')
+    tail = [PT + Vector((0, .04, .03)), PT + Vector((0, .11, .0)), PT + Vector((0, .16, -.10)), PT + Vector((0, .165, -.22)),
+            PT + Vector((0, .14, -.34)), PT + Vector((.0, .11, -.45)), PT + Vector((.015, .10, -.53))]
+    rings = [(p, r, r * .9) for p, r in zip(tail, (.070, .110, .125, .118, .098, .070, .022))]
+    hpart(st, loft(f'{st}_Tail', rings, seg=12, ref=Vector((1, 0, 0)), shape=lambda a, i: 1 + .10 * math.cos(7 * a + i)),
+          'hair', bone='bun')
+    for s in (-1, 1):
+        top = on_hair(math.radians(72) * s, math.radians(4), -.015)
+        strand(st, f'Frame_{s}', path(top, top + Vector((s * .03, -.03, -.20)), 6, wave=(s * .012, 0, 0), waves=1), .030, .012,
+               seg=5, flat=.6, color='hair_light', ref=Vector((0, 1, 0)))
+    fringe(st, [(-30, 50, 28, .036), (5, 45, 27, .034), (35, 30, 22, .030)])
+
+    # -- Hair_braids: two plaits from behind the ears over the shoulders, with ties and tufts
+    st = 'Hair_braids'
+    low_cap(st, back=-.26)
+    for s in (-1, 1):
+        b0 = on_hair(math.radians(112) * s, math.radians(-14), -.03)
+        b1 = Vector((s * .20, -.06, .60))
+        ctr = path(b0, b1, 7, bow=(s * .07, .03, 0))
+        for j in range(6):
+            p = ctr[j].lerp(ctr[j + 1], .5)
+            d = (ctr[j + 1] - ctr[j]).normalized()
+            side = d.cross(Vector((0, 1, 0))).normalized() * (.014 if j % 2 else -.014)
+            r = .052 - .004 * j
+            hpart(st, ellipsoid(f'{st}_Plait_{s}_{j}', p + side, (r, r * .85, (ctr[j + 1] - ctr[j]).length * .62), seg=7, rings=5,
+                                rot=Vector((0, 0, 1)).rotation_difference(d)), HAIR_COLS[j % 3])
+        hpart(st, torus(f'{st}_Tie_{s}', b1 + Vector((0, 0, .015)), .028, .011, seg=10, rseg=4), 'hair_dark')
+        hpart(st, ellipsoid(f'{st}_Tuft_{s}', b1 + Vector((s * .004, -.004, -.045)), (.034, .03, .05), seg=7, rings=5,
+                            deform=lambda q_, v: q_ * (1 + .25 * max(0, -v.z))), 'hair_light')
+    fringe(st, [(-40, 55, 28, .036), (-8, 50, 27, .036), (28, 40, 24, .032)])
+
 # ---------------- friends' own props (v03 round 2) -----------------------------------------
 _D = Vector((ARM_DIR.x, ARM_DIR.y, ARM_DIR.z))
 HAND_L = Vector((SHOULDER.x, SHOULDER.y, SHOULDER.z)) + _D * (UPPER + FORE + .045)
@@ -1021,28 +1230,48 @@ for obj, bones in PARTS:
             if w / tot > .02:
                 groups[b].add([v.index], w / tot, 'REPLACE')
 
-# join everything into one skinned mesh (2 materials: palette body + painted face)
-objs = [o for o, _ in PARTS]
-for o in bpy.context.view_layer.objects:
-    o.select_set(o in objs)
-bpy.context.view_layer.objects.active = head
-with bpy.context.temp_override(active_object=head, selected_editable_objects=objs, selected_objects=objs):
-    bpy.ops.object.join()
-body = head
-body.name = 'Ngoc'
-body.data.name = 'Ngoc'
-# keep material order deterministic: 0 body, 1 face
-mats = [m.name for m in body.data.materials]
-print('materials', mats)
-body.parent = rig
-mod = body.modifiers.new('NgocRig', 'ARMATURE')
-mod.object = rig
-# merge exactly coincident verts per part isn't needed; just normalise weights
-bpy.context.view_layer.objects.active = body
-with bpy.context.temp_override(object=body, active_object=body):
-    bpy.ops.object.vertex_group_normalize_all(lock_active=False)
-    bpy.ops.object.vertex_group_limit_total(limit=4)
-tri_count = sum(len(p.vertices) - 2 for p in body.data.polygons)
+# join the parts into skinned meshes: the body (+ the friends' hair), and for Ngọc one object per hairstyle
+def _style(o):
+    if VARIANT != 'ngoc':
+        return None
+    if o.name in HAIR_STYLE_OF:
+        return HAIR_STYLE_OF[o.name]
+    return 'Hair_short' if o.name.startswith(HAIR_SHORT_PREFIX) else None
+
+
+def _join(objs, active, name):
+    for o in bpy.context.view_layer.objects:
+        o.select_set(o in objs)
+    bpy.context.view_layer.objects.active = active
+    if len(objs) > 1:
+        with bpy.context.temp_override(active_object=active, selected_editable_objects=objs, selected_objects=objs):
+            bpy.ops.object.join()
+    active.name = name
+    active.data.name = name
+    active.parent = rig
+    md = active.modifiers.new('NgocRig', 'ARMATURE')
+    md.object = rig
+    bpy.context.view_layer.objects.active = active
+    with bpy.context.temp_override(object=active, active_object=active):
+        bpy.ops.object.vertex_group_normalize_all(lock_active=False)
+        bpy.ops.object.vertex_group_limit_total(limit=4)
+    print('mesh', name, 'materials', [m.name for m in active.data.materials],
+          'triangles', sum(len(p.vertices) - 2 for p in active.data.polygons))
+    return active
+
+
+_groups = {}
+for o, _ in PARTS:
+    _groups.setdefault(_style(o), []).append(o)
+body = _join(_groups.pop(None), head, 'Ngoc')
+HAIRS = {}
+for st in ['Hair_short'] + HAIR_STYLES:
+    if st in _groups:
+        objs = _groups[st]
+        HAIRS[st] = _join(objs, objs[0], st)
+        if st != 'Hair_short':
+            HAIRS[st]['eq_hidden'] = 1          # glTF extras: the game starts with only Hair_short visible
+tri_count = sum(len(p.vertices) - 2 for o in [body] + list(HAIRS.values()) for p in o.data.polygons)
 print('triangles', tri_count, 'vertices', len(body.data.vertices))
 
 # --------------------------------------------------------------------------------------
@@ -1350,10 +1579,23 @@ def _decimate(ob):
     print('decimated to', sum(len(p.vertices) - 2 for p in ob.data.polygons), 'triangles')
 
 _decimate(body)
+if 'Hair_short' in HAIRS:
+    _decimate(HAIRS['Hair_short'])      # the new styles are built light and are not decimated
 from bake_ao import bake_ao
-bake_ao(body)
-for o in bpy.context.view_layer.objects:      # select rig + body again: the exporter writes the skin only for selected objects
-    o.select_set(o in (rig, body))
+# contact shadows: each mesh is baked with only the default hair (or its own style) present, so hidden styles
+# don't darken the head of the visible one
+_meshes = [body] + list(HAIRS.values())
+for target in _meshes:
+    keep = {body, target, HAIRS.get('Hair_short') if target is body else target}
+    for o in _meshes:
+        o.hide_render = o not in keep
+    bake_ao(target)
+for o in _meshes:
+    o.hide_render = False
+print('final triangles', {o.name: sum(len(p.vertices) - 2 for p in o.data.polygons) for o in _meshes})
+for o in bpy.context.view_layer.objects:      # select rig + meshes again: the exporter writes the skin only for selected objects
+    o.select_set(o in [rig] + _meshes)
+export_kwargs['export_extras'] = bool(HAIRS)
 bpy.context.view_layer.objects.active = rig
 props = bpy.ops.export_scene.gltf.get_rna_type().properties.keys()
 bpy.ops.export_scene.gltf(**{k: v for k, v in export_kwargs.items() if k in props})
