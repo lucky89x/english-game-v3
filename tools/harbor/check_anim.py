@@ -34,7 +34,7 @@ for n in os.environ["NAMES"].split(","):
         mn = mathutils.Vector([min(p[i] for p in pts) for i in range(3)])
         mx = mathutils.Vector([max(p[i] for p in pts) for i in range(3)])
         c = mathutils.Vector((0, 0, (mx.z + mn.z) / 2))
-        size = max((mx - mn).length, 1.0)
+        size = max((mx - mn).length, float(os.environ.get("MINSIZE", "1.0")))
         sc.render.engine = 'BLENDER_WORKBENCH'
         sc.render.resolution_x = sc.render.resolution_y = 320
         sh = sc.display.shading
