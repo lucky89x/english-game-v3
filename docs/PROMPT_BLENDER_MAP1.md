@@ -122,3 +122,32 @@ Lô 18: đồ rừng, thư mục tools/forest/, file build_forest.py. Chân ở 
 6. for_woodpile_v01 — đống củi xếp + rìu cắm vào gốc; for_bridge_wood_v01 — cầu gỗ cong 6 m có lan can và 2 đèn lồng (như prop_bridge_curved nhưng ván gỗ sẫm kiểu rừng).
 7. for_waterfall_v01 — vách đá có thác nước: vách đá facet cao 9 m rộng 12 m, dải nước trắng xanh (water_fall, vật liệu riêng để game cuộn), bể bọt ở chân, rêu và cây nhỏ; for_gate_arch_v01 nếu muốn thay prop_forest_gate_v01 cho khớp phong cách mới.
 ```
+
+---
+
+## LÔ 19 — Trang phục khác hình, trang sức, (tuỳ chọn) thân bạn nam (19/11, cho màn tạo nhân vật và tiệm may cô Mia)
+
+Hiện game đã có tạo nhân vật (8 khuôn mặt, 4 màu da, 6 kiểu tóc, màu áo/quần/váy/đầm) và tiệm may cô Mia bán đồ bằng vàng. Hạn chế: áo phông, quần, váy, đầm **cùng một hình** (chỉ khác màu); trang sức đang vẽ tạm bằng khối; kính bảo hộ + khăn đỏ của Ngọc luôn che mũ/vương miện.
+
+```
+Lô 19: sửa tools/chibi05/build_ngoc_v03.py để xuất chr_ngoc_adventurer_v05.glb (giữ v04 nguyên vẹn), cùng xương, cùng clip, cùng vật liệu
+ngoc_skin / ngoc_boots / ngoc_gear / NgocFace và 6 tóc Hair_*. Thêm các object quần áo ĐỔI HÌNH, mỗi object skinned theo xương như thân,
+dùng đúng vật liệu tô màu xám 0,8 đã có (game nhân màu):
+- Áo (ngoc_top_tint), tên object: Top_tshirt (hình hiện tại), Top_hoodie (mũ trùm sau gáy, túi trước), Top_jacket (áo khoác mở, cổ bẻ),
+  Top_aodai (áo dài Việt Nam: thân dài tới gối, xẻ hai bên, cổ đứng; tà áo đi theo xương thigh khi chạy).
+- Dưới (ngoc_bottom_tint): Bottom_shorts (hình hiện tại), Bottom_trousers (quần dài tới cổ chân), Bottom_skirt (váy xòe ngang gối).
+- Đầm (cả hai vật liệu đều là ngoc_top_tint): Dress_sundress (đầm xòe 2 dây), Dress_party (đầm công chúa, chân váy phồng).
+- Kính bảo hộ + khăn đỏ trên đầu: tách thành object riêng Gear_goggles (game ẩn khi đội mũ hoặc vương miện).
+- Các object mới (trừ Top_tshirt, Bottom_shorts, Gear_goggles) có extras eq_hidden: 1 như 5 kiểu tóc. Quần áo không được xuyên thân
+  trong các clip Run/Jump/Attack (kiểm bằng ảnh 4 tư thế). Mỗi món ≤ 1.500 tam giác.
+
+Trang sức: thêm vào tools/acc/build_acc.py, đặt sẵn đúng chỗ trên Ngọc v05 như các acc_* cũ:
+- acc_necklace_v01 (dây mảnh + mặt đá giọt nước, xương chest/neck), acc_earrings_v01 (2 object earring_L / earring_R, xương head),
+  acc_tiara_v01 (vương miện nhỏ 5 mũi, xương head), acc_hairclip_v01 (kẹp hoa 5 cánh bên trái đầu, xương head).
+- Vật liệu: tint_main = phần kim loại (game tô vàng kim/bạc), tint_trim = đá quý (game tô hồng/xanh/tím…). Mỗi món ≤ 600 tam giác.
+
+(Tuỳ chọn, nếu nhà có bé trai) chr_ban_nam_v01.glb: cùng xương và tên vật liệu với Ngọc v05 (ban_nam_hair_tint/top_tint/bottom_tint,
+ngoc_skin, NgocFace để game thay mặt), dáng vai rộng hơn chút, 4 kiểu tóc nam Hair_short, Hair_spiky, Hair_side, Hair_buzz.
+
+Xuất xong: render bảng ảnh xem trước tools/chibi05/preview_v05.py (mỗi kiểu áo/quần/đầm một ô, màu mẫu), commit từng file, đẩy nhánh blender-assets.
+```

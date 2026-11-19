@@ -66,8 +66,13 @@ export class Homes {
     await place('bld_shop_orange_v02', FURNITURE.x, FURNITURE.z, Math.PI / 2, 1.3, [0.92, 1.05, 1.12]);
     still.add(hangSign('FURNITURE', 'Beds · Tables · Garden', FURNITURE.door[0] - 0.3, gh(FURNITURE.door[0], FURNITURE.door[1]) + 4.9, FURNITURE.door[1], Math.PI / 2));
     for (const [k, t] of Object.entries(STALLS)) {
-      const s = campStall(t.x, gh(t.x, t.z), t.z, t.yaw, k === 'music' ? 0x8a4ad0 : 0xe2483e); this.root.add(s);
-      const n = label(k === 'music' ? "🎵 Anna's Instruments" : "🍎 Ben's Fruit & Veg", { size: 28, scale: 0.8 }); n.position.set(t.x, gh(t.x, t.z) + 3.3, t.z); this.root.add(n);
+      const s = campStall(t.x, gh(t.x, t.z), t.z, t.yaw, k === 'music' ? 0x8a4ad0 : k === 'tailor' ? 0xe06aa8 : 0xe2483e, k === 'tailor' ? 'cloth' : 'fruit'); this.root.add(s);
+      const n = label(k === 'music' ? "🎵 Anna's Instruments" : k === 'tailor' ? "🧵 Mia's Tailor Shop" : "🍎 Ben's Fruit & Veg", { size: 28, scale: 0.8 }); n.position.set(t.x, gh(t.x, t.z) + 3.3, t.z); this.root.add(n);
+      if (k === 'tailor') {      // two mannequins from the harbor boutique beside Mia's stall
+        try { const src = await load('harbor_mannequin_v01');
+          for (const [dx, keep] of [[-2.6, 'mannequin_dress'], [2.6, 'mannequin_coat']]) { const m = src.clone(true); m.children.forEach((c) => { if (c.name && c.name.startsWith('mannequin') && c.name !== keep) c.visible = false; });
+            const x = t.x + dx, z = t.z - 0.6; m.position.set(x, gh(x, z), z); m.rotation.y = t.yaw; m.traverse((c) => { if (c.isMesh) c.castShadow = true; }); this.root.add(m); } } catch (e) { /* no mannequin file: the stall alone */ }
+      }
     }
     this.root.add(bake(still));
     this.refresh(true);

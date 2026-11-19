@@ -9,8 +9,18 @@ export const KINDS = {
   top: { slot: 'top', en: 'T-shirt', vi: 'áo phông', icon: '👕' }, skirt: { slot: 'bottom', en: 'skirt', vi: 'váy', icon: '🩳' }, trousers: { slot: 'bottom', en: 'trousers', vi: 'quần dài', icon: '👖' },
   dress: { slot: 'body', en: 'dress', vi: 'đầm', icon: '👗' }, haircolor: { slot: 'haircolor', en: 'hair', vi: 'màu tóc', icon: '🎨' },
   hairstyle: { slot: 'style', en: 'hair', vi: 'kiểu tóc', icon: '💇', vals: ['short', 'long', 'curly', 'wavy', 'ponytail', 'braids'] },
+  // (19/11) jewellery sold at Mia's tailor shop in the village: metal or gem colours
+  necklace: { slot: 'chain', en: 'necklace', vi: 'dây chuyền', icon: '💎', vals: ['gold', 'silver', 'pink', 'blue', 'green', 'purple'] },
+  earrings: { slot: 'ears', en: 'earrings', vi: 'bông tai', icon: '✨', vals: ['gold', 'silver', 'pink', 'blue', 'green', 'purple'] },
+  tiara: { slot: 'head', en: 'tiara', vi: 'vương miện', icon: '👸', vals: ['gold', 'silver', 'pink', 'blue', 'green', 'purple'] },
+  hairclip: { slot: 'hair', en: 'hair clip', vi: 'kẹp tóc', icon: '🌸', vals: ['gold', 'silver', 'pink', 'blue', 'green', 'purple'] },
 };
-export const SLOTS = [{ id: 'head', en: 'Head', vi: 'đầu' }, { id: 'hair', en: 'Hair', vi: 'tóc' }, { id: 'style', en: 'Hair style', vi: 'kiểu tóc' }, { id: 'haircolor', en: 'Hair colour', vi: 'màu tóc' }, { id: 'top', en: 'Top', vi: 'áo' }, { id: 'bottom', en: 'Bottom', vi: 'quần, váy' }, { id: 'body', en: 'Dress', vi: 'đầm' }, { id: 'face', en: 'Face', vi: 'mặt' }, { id: 'neck', en: 'Neck', vi: 'cổ' }, { id: 'back', en: 'Back', vi: 'lưng' }, { id: 'wrist', en: 'Wrist', vi: 'cổ tay' }, { id: 'feet', en: 'Feet', vi: 'chân' }];
+/** Colours that are not in the ten clothes colours (the jewellery metals). */
+export const JEWEL_HEX = { gold: '#f2c23a', silver: '#d4d8e0' };
+/** Gold price of each kind at Mia's shop (19/11: "kiếm vàng để mua quần áo trang sức thay thế"). */
+export const PRICE = { top: 50, skirt: 50, trousers: 50, dress: 120, shoes: 70, hat: 60, bow: 30, headband: 40, glasses: 70, scarf: 50, bag: 80, bracelet: 60, haircolor: 40, hairstyle: 80, necklace: 150, earrings: 120, tiara: 220, hairclip: 45 };
+export const priceOf = (id) => { const it = parse(id); if (!it) return 0; return PRICE[it.kind] * (it.color === 'gold' ? 2 : it.color === 'silver' ? 1.5 : 1); };
+export const SLOTS = [{ id: 'head', en: 'Head', vi: 'đầu' }, { id: 'hair', en: 'Hair', vi: 'tóc' }, { id: 'style', en: 'Hair style', vi: 'kiểu tóc' }, { id: 'haircolor', en: 'Hair colour', vi: 'màu tóc' }, { id: 'top', en: 'Top', vi: 'áo' }, { id: 'bottom', en: 'Bottom', vi: 'quần, váy' }, { id: 'body', en: 'Dress', vi: 'đầm' }, { id: 'face', en: 'Face', vi: 'mặt' }, { id: 'neck', en: 'Neck', vi: 'cổ' }, { id: 'chain', en: 'Necklace', vi: 'dây chuyền' }, { id: 'ears', en: 'Earrings', vi: 'bông tai' }, { id: 'back', en: 'Back', vi: 'lưng' }, { id: 'wrist', en: 'Wrist', vi: 'cổ tay' }, { id: 'feet', en: 'Feet', vi: 'chân' }];
 export const COLOR_NAMES = ['red', 'blue', 'yellow', 'green', 'pink', 'purple', 'black', 'white', 'orange', 'brown'];
 /** Every [kind, value] pair that can exist. */
 export const allItems = () => Object.entries(KINDS).flatMap(([k, v]) => (v.vals || COLOR_NAMES).map((c) => [k, c]));
@@ -26,6 +36,21 @@ export function wear(p, id) {
   w.worn[it.slot] = w.worn[it.slot] === id ? null : id;
   if (w.worn[it.slot]) { if (it.slot === 'body') w.worn.top = w.worn.bottom = null; else if (it.slot === 'top' || it.slot === 'bottom') w.worn.body = null; }     // a dress replaces top and bottom
   return w.worn[it.slot];
+}
+/** Buys a piece with gold and puts it on. { ok, why: 'gold' | 'owned' | 'bad', cost } */
+export function buyPiece(p, id) {
+  const it = parse(id); if (!it) return { ok: false, why: 'bad' };
+  const w = wardrobe(p), cost = priceOf(id);
+  if (w.owned.includes(id)) { if (w.worn[it.slot] !== id) wear(p, id); return { ok: true, why: 'owned', cost: 0 }; }
+  if ((p.stats.gold || 0) < cost) return { ok: false, why: 'gold', cost };
+  p.stats.gold -= cost; w.owned.push(id); if (w.worn[it.slot] !== id) wear(p, id); return { ok: true, why: 'new', cost };
+}
+/** The look picked in the character creator: the pieces are free starters, owned and worn. */
+export function starterLook(p, pieces) {
+  const w = wardrobe(p);
+  for (const slot of ['style', 'haircolor', 'top', 'bottom', 'body']) w.worn[slot] = null;
+  for (const [kind, color] of pieces) { const id = itemId(kind, color), it = parse(id); if (!it) continue; if (!w.owned.includes(id)) w.owned.push(id); w.worn[it.slot] = id; }
+  return w;
 }
 /** Wearable pieces from a customer the child served perfectly at the Boutique: the asked pieces that can be worn. */
 export const fromStyleOrder = (order) => order.map((o) => ({ kind: o.item === 'T-shirt' ? 'top' : o.item, color: o.color })).filter((o) => KINDS[o.kind]);

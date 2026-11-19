@@ -11,7 +11,8 @@ export const SOUTH = { mill: [-30, 41], pond: [-6, 50], dummies: [[13, 45], [15,
 export const HOMES = [{ x: -50, z: -5, door: [-45.4, -5], yard: [-42.6, -5] }, { x: -50, z: 10, door: [-45.4, 10], yard: [-42.6, 10] }];
 export const FURNITURE = { x: -40, z: -18, door: [-35.1, -18] };
 /** Two market stalls (18/11): Ben's fruit and vegetables south of his jar stall, Anna's instruments near her house. at: where E works. */
-export const STALLS = { produce: { x: -7.5, z: 24.8, yaw: Math.PI / 2, at: [-4.6, 24.8] }, music: { x: -19, z: 21.5, yaw: Math.PI / 2, at: [-16.4, 21.5] } };
+export const STALLS = { produce: { x: -7.5, z: 24.8, yaw: Math.PI / 2, at: [-4.6, 24.8] }, music: { x: -19, z: 21.5, yaw: Math.PI / 2, at: [-16.4, 21.5] },
+  tailor: { x: 9.5, z: 21.5, yaw: Math.PI, at: [9.5, 18.9] } };      // Mia's tailor shop (19/11), on the grass east of the square-to-market road, facing the square
 export default makeRegion({
   name: 'village', title: 'Starter Village', size: 140, playRadius: 62, seed: 4242, trees: 230, rocks: 40, roughness: 0.3, treeMix: [0.3, 0.85],
   riverX, riverHalf: () => 3.4, riverStart: -52, waterfall: true,
@@ -66,7 +67,7 @@ export default makeRegion({
     P(2.2, [-40, -9], [-38, -14], [-35.1, -18]),                              // on to the furniture shop
   ],
   lateSolids: [{ x: 0, z: 4, r: 3.8 },                                      // the plaza fountain (model r 3.7)
-    ...HOMES.map((h) => ({ x: h.x, z: h.z, r: 4.4 })), { x: FURNITURE.x, z: FURNITURE.z, r: 4.6 }, ...Object.values(STALLS).map((t) => ({ x: t.x, z: t.z, r: 1.7 }))],      // homes and the furniture shop (18/11)
+    ...HOMES.map((h) => ({ x: h.x, z: h.z, r: 4.4 })), { x: FURNITURE.x, z: FURNITURE.z, r: 4.6 }, ...Object.values(STALLS).map((t) => ({ x: t.x, z: t.z, r: 1.7 })), { x: STALLS.tailor.x - 2.6, z: STALLS.tailor.z - 0.6, r: 0.6 }, { x: STALLS.tailor.x + 2.6, z: STALLS.tailor.z - 0.6, r: 0.6 }],      // homes and the furniture shop (18/11)
   // 18/11 ("the houses are too close together"): Lily's and Anna's houses move further west, each with a garden path
   lateMove: [{ from: [-14.5, -8], to: [-22, -4] }, { from: [-15, 9], to: [-22.5, 12.5] }],
   lateClear: (x, z) => (x > -36 && x < 16 && z > 37 && z < 57) || (x > -57 && x < -33 && z > -24 && z < 17),      // south fields; west homesteads

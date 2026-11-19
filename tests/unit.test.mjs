@@ -788,3 +788,19 @@ test('map exams ask the map just finished: level 20 is Unit 1, level 30 is Unit 
   for (const g of EX.EXAM_GATES) assert.ok(EX.EXAM_UNIT[g], 'every exam gate has a unit');
   for (const grade of [6, 7, 8, 9]) for (const g of EX.EXAM_GATES) assert.ok(grammarFor(grade, EX.EXAM_UNIT[g], 10).length >= 6, `grade ${grade} gate ${g} has grammar for its exam`);
 });
+
+// ---------------------------------------------------------------- creator starters + Mia's tailor shop (19/11)
+test('wardrobe: creator starters are free and worn, Mia sells pieces for gold, jewellery has metal and gem colours', () => {
+  const p = S.newProfile('Mi', 6);
+  WR.starterLook(p, [['hairstyle', 'braids'], ['haircolor', 'black'], ['top', 'yellow'], ['skirt', 'blue']]);
+  assert.deepEqual(p.wardrobe.worn, { style: 'hairstyle:braids', haircolor: 'haircolor:black', top: 'top:yellow', bottom: 'skirt:blue', body: null });
+  assert.equal(p.wardrobe.owned.length, 4); assert.equal(p.stats.gold, 0, 'starters cost nothing');
+  WR.starterLook(p, [['hairstyle', 'long'], ['haircolor', 'black'], ['dress', 'pink']]);
+  assert.equal(p.wardrobe.worn.top, null); assert.equal(p.wardrobe.worn.body, 'dress:pink');
+  assert.equal(WR.priceOf('necklace:gold'), 300, 'gold doubles the price'); assert.equal(WR.priceOf('necklace:pink'), 150); assert.equal(WR.priceOf('bad:id'), 0);
+  assert.deepEqual(WR.buyPiece(p, 'tiara:silver'), { ok: false, why: 'gold', cost: 330 });
+  p.stats.gold = 400; const r = WR.buyPiece(p, 'tiara:silver');
+  assert.equal(r.ok, true); assert.equal(p.stats.gold, 70); assert.equal(p.wardrobe.worn.head, 'tiara:silver', 'bought pieces are put on');
+  assert.equal(WR.buyPiece(p, 'tiara:silver').why, 'owned'); assert.equal(p.stats.gold, 70, 'owned pieces are free again');
+  assert.equal(WR.itemName('earrings:blue'), 'blue earrings'); assert.ok(WR.parse('hairclip:gold') && !WR.parse('hairclip:brown'));
+});

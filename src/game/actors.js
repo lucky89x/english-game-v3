@@ -25,6 +25,8 @@ export class Player {
     this.current = name;
   }
   emote(name) { this.play(name, 0.1); this.lock = name === 'Celebrate' ? 1.2 : 0.7; if (name === 'Celebrate') this.setFace('joy', 1.4); }
+  /** A face from the character creator: { happy, blink, talk, joy } textures (src/game/faces.js). */
+  setFaces(maps) { if (!this.face || !maps) return; this.faceMaps = { ...maps }; this.face.map = maps.happy; this.faceHold = 0; }
   setFace(name, hold) { if (this.face && this.faceMaps[name]) { this.face.map = this.faceMaps[name]; this.faceHold = hold; } }
   sync() { this.root.position.copy(this.pos); this.root.rotation.y = this.yaw; }
 

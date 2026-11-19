@@ -30,6 +30,9 @@ import { Pet } from './game/pet.js';
 import * as PETS from './core/pet.js';
 import { outfitParts } from './game/outfit.js';
 import { tintBody, tintAccessory, setHairStyle } from './game/tint.js';
+import { faceMaps, tintSkin, lookOf } from './game/faces.js';
+import { Creator } from './ui/creator.js';
+import { Tailor } from './ui/tailor.js';
 import * as WR from './core/wardrobe.js';
 import { DexPanel } from './ui/dex.js';
 import { Toolbar } from './ui/toolbar.js';
@@ -274,7 +277,7 @@ function guideArrow(dt) {
     const m = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: 0xffd23c, emissive: 0xffa800, emissiveIntensity: 0.9, roughness: 0.4, transparent: true, opacity: 0.92, depthTest: false }));
     m.scale.setScalar(1.45); m.renderOrder = 9; guide = { m, sign: null, txt: '', t: 0 }; scene.add(m);
   }
-  const g = guideGoal, show = !!g && started && !room && !switching;
+  const g = guideGoal, show = !!g && started && !room && !switching && !(creator && creator.open) && !(tailor && tailor.open);
   const d = show ? Math.hypot(g.x - player.pos.x, g.z - player.pos.z) : 0;
   guide.m.visible = show && d > 4; if (guide.sign) guide.sign.visible = guide.m.visible;
   if (!guide.m.visible) return;
@@ -419,7 +422,7 @@ const HALL_DOOR = { x: 0, z: -16.4 }, LILY_DOOR = { x: -17.4, z: -4 };
 const VILLAGE_DOCK = [L.REGIONS.village.riverX(18) - 5.2, 18.6];
 const homesItems = (p) => (p.home && p.home.items) || [];
 // ---------------------------------------------------------------- the sea extras (19/11): fishing, Sea Dex, fish market
-let dexPanel = null, wardPanel = null, petPanel = null, petObj = null, trPanel = null, toolbar = null;
+let dexPanel = null, wardPanel = null, creator = null, tailor = null, petPanel = null, petObj = null, trPanel = null, toolbar = null;
 let digMeshes = [], digMixers = [];
 const seaOpen = () => !!(profile && (profile.flags.map2 || profile.admin));
 /** The pet of this profile (if any) shows in the world; its hunger is brought up to date. */
@@ -474,7 +477,7 @@ function adminPlaces() {
   add('village', 'Tom', 2.6, 9.6); add('village', 'Cửa hàng', SHOP_DOOR.x - 1, SHOP_DOOR.z); add('village', 'Cú Mèo', OWL.x, OWL.z + 1.2); add('village', 'Bảng săn quái', BOARD.x + 1.2, BOARD.z + 1);
   for (const st of STARTS) add('village', 'Trò: ' + st.sign.replace(/^\S+\s/, ''), st.x + 0.8, st.z + 0.8);
   add('village', 'Nhà của các con', HOMES[0].door[0] + 2, HOMES[0].door[1] + 1.5); add('village', 'Cửa hàng nội thất', FURNITURE.door[0] + 1.5, FURNITURE.door[1]);
-  add('village', 'Quầy rau quả', STALLS.produce.at[0] + 0.5, STALLS.produce.at[1]); add('village', 'Quầy nhạc cụ', STALLS.music.at[0] + 0.5, STALLS.music.at[1]);
+  add('village', 'Quầy rau quả', STALLS.produce.at[0] + 0.5, STALLS.produce.at[1]); add('village', 'Quầy nhạc cụ', STALLS.music.at[0] + 0.5, STALLS.music.at[1]); add('village', 'Tiệm may cô Mia', STALLS.tailor.at[0], STALLS.tailor.at[1] - 0.6);
   add('village', 'Vua Slime', BOSS_AT.x, BOSS_AT.z - 4); add('village', 'Golem Cổ', BOSS2_AT.x, BOSS2_AT.z - 4); add('village', 'Rương Đồng Hoang', CHEST_SPOTS[0][0], CHEST_SPOTS[0][1] - 1.5);
   add('forest', 'Cổng vào rừng', L.REGIONS.forest.SPAWN.x, L.REGIONS.forest.SPAWN.z); add('forest', 'Bảng săn quái rừng', FOREST_BOARD.x + 1.2, FOREST_BOARD.z + 0.6);
   add('forest', 'Nữ hoàng Nấm', BOSS3_AT.x + 6, BOSS3_AT.z); add('forest', 'Rương rừng', FOREST_CHESTS[0][0], FOREST_CHESTS[0][1] - 1.5);
@@ -567,6 +570,8 @@ async function chooseProfile(p) {
   $('mapbox').classList.remove('hidden');
   await enterRegion(p.region === 'forest' && p.flags.forest_open ? 'forest' : (p.region === 'harbor' || p.region === 'isle') && p.flags.map2 ? p.region : 'village');
   started = true; renderGear(); if (admin) admin.sync();
+  // (19/11) a new hero, or a save from before the creator: pick a face, hair and clothes first (tests skip it unless ?creator=1)
+  if (!p.admin && (!p.look || p.lookPending) && (!navigator.webdriver || /[?&]creator=1/.test(location.search))) { await creator.show('new'); save(); refresh(); }
   if (L.NAME === 'village' && story.step === 'arrive' && !p.flags.arrived) startIntro();
 }
 
@@ -659,24 +664,42 @@ function setWear() {
   if (b.charm && hips) { const c = charmMesh(); c.position.set(0.13, 0.02, 0.08); hips.add(c); charmShown = c; }
   applyLook();
 }
+/** The creator's view: the hero's front, close, and shifted right of the card on the left. */
+let camBefore = null;
+function creatorCamera(on) {
+  if (on) {
+    if (!camBefore) camBefore = { yaw: cam.tYaw, pitch: cam.tPitch, dist: cam.tDist };
+    cam.tYaw = player.yaw; cam.tPitch = 0.14; cam.tDist = 3.2; player.route = null; document.body.classList.add('creating');
+    const w = innerWidth, h = innerHeight; if (w > 700) camera.setViewOffset(w, h, -Math.min(410, w * 0.46) * 0.5, 0, w, h);
+  } else {
+    if (camBefore) { cam.tYaw = camBefore.yaw; cam.tPitch = camBefore.pitch; cam.tDist = camBefore.dist; camBefore = null; }
+    camera.clearViewOffset(); document.body.classList.remove('creating');
+  }
+}
 /** The wardrobe pieces worn on Ngọc (19/11): rebuilt from profile.wardrobe.worn. Clothes and hair tint her body materials,
  *  the hair style swaps the Hair_* object, and the accessories (acc_*_v01.glb, built in her bind pose) hang on her bones. */
 const NGOC_COLORS = { hair: '#8c4a22', top: '#f4e9d2', bottom: '#cfb487' };
 const ACC_BONE = { hat: /^head$/, bow: /^head$/, headband: /^head$/, glasses: /^head$/, scarf: /^neck$/, bag: /^chest$/, bracelet: /^hand.?L$/ };
+const PROC_ONLY = new Set(['necklace', 'earrings', 'tiara', 'hairclip']);      // jewellery: shapes from outfit.js until Blender batch 19
 const accScene = {};                       // kind -> loaded glTF scene, or null when the file is missing (the shapes from outfit.js take over)
-let lookShown = [];
+let lookShown = [], faceShown = '';
 function applyLook() {
   if (!player || !profile) return;
   for (const o of lookShown) o.removeFromParent(); lookShown = [];
   const root = player.root, bone = (re) => { let b = null; root.traverse((o) => { if (!b && o.isBone && re.test(o.name)) b = o; }); return b; };
-  const worn = WR.wardrobe(profile).worn, val = (slot) => { const it = worn[slot] && WR.parse(worn[slot]); return it ? it.color : null; }, paint = (n, d) => (n && WCOL[n]) || d;
+  const worn = WR.wardrobe(profile).worn, val = (slot) => { const it = worn[slot] && WR.parse(worn[slot]); return it ? it.color : null; }, paint = (n, d) => (n && (WCOL[n] || WR.JEWEL_HEX[n])) || d;
+  const look = lookOf(profile); tintSkin(root, look.skin);
+  if (profile.look) { const want = look.face + '|' + look.skin; if (faceShown !== want) { faceShown = want; faceMaps(look.face, look.skin).then((m) => { if (faceShown === want) player.setFaces(m); }, (e) => console.warn(e.message)); } }
+  else if (faceShown) { faceShown = ''; player.setFaces(player.firstFaces); }
   const dress = val('body');
   tintBody(root, { hair: paint(val('haircolor'), NGOC_COLORS.hair), top: paint(dress || val('top'), NGOC_COLORS.top), bottom: paint(dress || val('bottom'), NGOC_COLORS.bottom) });
   setHairStyle(root, val('style') || 'short'); syncOutlines(root);
   let skinned = null; root.traverse((o) => { if (!skinned && o.isSkinnedMesh) skinned = o; });
   const hang = (obj, b) => { const i = skinned ? skinned.skeleton.bones.indexOf(b) : -1; if (i >= 0) { obj.matrix.copy(skinned.skeleton.boneInverses[i]); obj.matrix.decompose(obj.position, obj.quaternion, obj.scale); } b.add(obj); lookShown.push(obj); };
   for (const id of Object.values(worn)) {
-    const it = id && WR.parse(id); if (!it || !ACC_BONE[it.kind] && !['shoes'].includes(it.kind)) continue;
+    const it = id && WR.parse(id); if (!it) continue;
+    if (PROC_ONLY.has(it.kind)) { for (const part of outfitParts(it.kind, it.color)) { const b = bone(part.bone); if (b) { b.add(part.obj); lookShown.push(part.obj); } } continue; }
+    if (!ACC_BONE[it.kind] && !['shoes'].includes(it.kind)) continue;
     const src = accScene[it.kind];
     if (src) {
       const clone = src.clone(true); tintAccessory(clone, WCOL[it.color] || '#ffffff');
@@ -826,6 +849,7 @@ function interactTarget() {
     if (near(FURNITURE.door[0] + 0.9, FURNITURE.door[1], 1.9)) return { text: 'E · Cửa hàng nội thất (giường, bàn ghế, vườn)', run: () => { enterRoom('shop'); shopWin.show('Furniture & Garden Shop', ['home', 'garden']); } };
     if (near(STALLS.produce.at[0], STALLS.produce.at[1], 1.8)) return { text: 'E · Quầy rau quả của Ben', run: () => shopWin.show("Ben's Fruit & Veg", ['produce']) };
     if (near(STALLS.music.at[0], STALLS.music.at[1], 1.8)) return { text: 'E · Quầy nhạc cụ của Anna', run: () => shopWin.show("Anna's Instruments", ['music']) };
+    if (near(STALLS.tailor.at[0], STALLS.tailor.at[1], 2.0)) return { text: 'E · Tiệm may của cô Mia (quần áo, trang sức)', run: () => tailor.show() };
   }
   if (near(SHOP_DOOR.x, SHOP_DOOR.z, 1.7)) return { text: 'E · Vào cửa hàng (xem và mua bán đồ)', run: () => { enterRoom('shop'); shopWin.show('Village Shop'); } };
   if (near(HALL_DOOR.x, HALL_DOOR.z, 1.8)) return { text: 'E · Vào nhà trưởng làng (sổ nhiệm vụ chính tuyến)', run: () => { enterRoom('hall'); journal.show('main'); speak('Welcome to my office! Here is your quest book.'); } };
@@ -846,6 +870,8 @@ function onKey(e) {
   if (journal && !ui.busy && journal.key(e.code)) { e.preventDefault(); return; }
   if (homePanel && homePanel.key(e.code)) { e.preventDefault(); return; }
   if (dexPanel && dexPanel.key(e.code)) { e.preventDefault(); return; }
+  if (creator && creator.key(e.code)) { e.preventDefault(); return; }
+  if (tailor && tailor.key(e.code)) { e.preventDefault(); return; }
   if (wardPanel && wardPanel.key(e.code)) { e.preventDefault(); return; }
   if (petPanel && petPanel.key(e.code)) { e.preventDefault(); return; }
   if (trPanel && trPanel.key(e.code)) { e.preventDefault(); return; }
@@ -890,10 +916,11 @@ async function boot() {
   $('loadtext').textContent = 'Đang dựng ngôi làng…';
   L.setRegion('village');
   world = await buildWorld(scene, staticModel, animatedModel);
-  player = new Player(ngoc, { blink, talk, joy }); scene.add(player.root);
+  player = new Player(ngoc, { blink, talk, joy }); player.firstFaces = { ...player.faceMaps }; scene.add(player.root);
   tom = new Npc(tomG, 2.6, 7.6, -0.4); sam = new Npc(samG, 14, 17, 1.2); ben = new Npc(benG, -9.9, 19.5, Math.PI / 2); scene.add(tom.root, sam.root, ben.root);
   pip = new Pip(pipG.scene); scene.add(pip.root);
-  for (const f of Object.values(FRIENDS)) { const npc = new Npc(await gltf(f.file), ...f.at, ngoc.animations); if (f.tint) tintBody(npc.root, f.tint); scene.add(npc.root); friends.push({ ...f, npc }); }
+  const usedFiles = new Set();      // two friends may share a model file (Mia uses Rose's): the second gets its own copy
+  for (const f of Object.values(FRIENDS)) { let g = await gltf(f.file); if (usedFiles.has(f.file)) { const sc = SkeletonUtils.clone(g.scene); sc.traverse((o) => { if (o.isMesh) o.material = o.material.clone(); }); g = { ...g, scene: sc }; } usedFiles.add(f.file); const npc = new Npc(g, ...f.at, ngoc.animations); if (f.tint) tintBody(npc.root, f.tint); scene.add(npc.root); friends.push({ ...f, npc }); }
   tintBody(player.root, NGOC_COLORS); setHairStyle(player.root, 'short');
   shopWin = new ShopWindow({ profile: () => profile, sfx, track, onClose: leaveRoom, today: () => Review.today(), changed: () => { setSword(); setWear(); save(); refresh(); if (homes) homes.refresh(); } });
   music = new MusicRoom({ profile: () => profile, sfx, track, onClose: leaveRoom, changed: () => { save(); refresh(); } });
@@ -907,7 +934,9 @@ async function boot() {
     claimMain: (id) => claimReward(Q.claimMain(profile, id), 'Nhiệm vụ chính'), claimDaily: (id) => claimReward(Q.claimDaily(profile, Review.today(), id), 'Nhiệm vụ ngày') });
   Save.hooks.skill = (p, ok) => { if (ok && p === profile) track('right'); };
   dexPanel = new DexPanel({ profile: () => profile, onClose: () => {} });
-  wardPanel = new WardrobePanel({ profile: () => profile, changed: () => { applyLook(); save(); refresh(); } });
+  wardPanel = new WardrobePanel({ profile: () => profile, changed: () => { applyLook(); save(); refresh(); }, mirror: () => creator.show('mirror').then(() => { save(); refresh(); }) });
+  creator = new Creator({ profile: () => profile, apply: () => applyLook(), focus: creatorCamera, sfx });
+  tailor = new Tailor({ profile: () => profile, apply: () => applyLook(), focus: creatorCamera, sfx, changed: () => { save(); refresh(); } });
   trPanel = new TreasurePanel({ profile: () => profile, map: () => treasureMap(), speak: (t) => speak(t, true, 0.85) });
   petObj = new Pet(scene, animatedModel);
   petPanel = new PetPanel({ profile: () => profile, today: () => Review.today(), speak: (t) => speak(t, true, 0.85), sfx, playTrick: (id) => petObj.play(id), adopted: () => { syncPet(); petObj.snap(player.pos.x, player.pos.z); },
@@ -987,7 +1016,7 @@ const AUTO = !navigator.webdriver && !localStorage.getItem('eq-quality-manual');
 function frame() {
   const now = performance.now(), raw = (now - last) / 1000, real = Math.min(0.25, raw); last = now;
   const dt = Math.min(0.05, real); TIME.value += real; const t = TIME.value;
-  const frozen = ui.modal || !started || (arcade && arcade.open) || (shopWin && shopWin.open) || (music && music.open) || (journal && journal.open) || (homePanel && homePanel.open) || (dexPanel && dexPanel.open) || (wardPanel && wardPanel.open) || (petPanel && petPanel.open) || (trPanel && trPanel.open);
+  const frozen = ui.modal || !started || (arcade && arcade.open) || (shopWin && shopWin.open) || (music && music.open) || (journal && journal.open) || (homePanel && homePanel.open) || (dexPanel && dexPanel.open) || (wardPanel && wardPanel.open) || (creator && creator.open) || (tailor && tailor.open) || (petPanel && petPanel.open) || (trPanel && trPanel.open);
   if (arcade) arcade.update(real, keys);
   if (touch) touch.update();
   releaseSoftKeys();
