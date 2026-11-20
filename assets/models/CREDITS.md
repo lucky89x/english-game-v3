@@ -61,3 +61,5 @@ Lệnh chung: `OUT=<thư mục> blender -b -P <script>` (tùy chọn `ONLY=tên,
 ## Hiệu ứng phép lô 21 (tự dựng): `fx_*_v01.glb` — `tools/fx/build_fx.py`; biểu tượng `assets/ui/skill_*.png` — `tools/fx/skill_icons.py`.
 
 ## Nhân vật lô 19 (tự dựng): `chr_ngoc_adventurer_v05.glb`, `chr_ban_nam_v01.glb` — `tools/chibi05/build_ngoc_v03.py`; trang sức `acc_necklace/earrings/tiara/hairclip` — `tools/acc/build_acc.py`.
+
+## Quái hệ lô 22B (tự dựng): `mob_{wisp_thunder,fox_ember,gull_storm,seal_frost,scorpion_sand,djinn_dust,cactus_spark,fox_moon}_v01`, `boss_sand_dragon_v01` — `tools/mobs3/build_mobs3.py`; boss `_v02` từ `tools/mobs1/build_mobs1.py` và `tools/harbor/b5_mobs.py`.
