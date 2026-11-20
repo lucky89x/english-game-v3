@@ -27,8 +27,9 @@ OUT_DIR.mkdir(parents=True, exist_ok=True)
 SRC_DIR.mkdir(parents=True, exist_ok=True)
 # v04 (2026-11-19): body split into tintable materials (*_tint = grey texture, the game multiplies a colour)
 # and five extra hairstyles (Hair_long/curly/wavy/ponytail/braids) next to Hair_short; the game hides/shows them.
-GLB = OUT_DIR / 'chr_ngoc_adventurer_v04.glb'
-BLEND = SRC_DIR / 'chr_ngoc_adventurer_v04.blend'
+# v05 (2026-11-20): + swappable clothes (Top_*, Bottom_*, Dress_*), Gear_goggles split out, boy hero variant (ban_nam).
+GLB = OUT_DIR / 'chr_ngoc_adventurer_v05.glb'
+BLEND = SRC_DIR / 'chr_ngoc_adventurer_v05.blend'
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
 scene = bpy.context.scene
@@ -58,6 +59,9 @@ PALETTE = {  # name: (sRGB hex, roughness, metallic)
 PALETTE.update({'white': ('fbf8f0', .8, 0), 'bread': ('d9953f', .7, 0), 'bread_light': ('f0c070', .7, 0), 'wicker': ('b98a4a', .85, 0),
                 'crystal': ('58e07a', .1, 0), 'leaf': ('4d9a3a', .8, 0), 'lute': ('c98a48', .5, 0), 'lute_dark': ('7a4a26', .6, 0)})
 VARIANT = os.environ.get('NGOC_VARIANT', 'ngoc')
+BOY = VARIANT == 'ban_nam'
+HERO = VARIANT in ('ngoc', 'ban_nam')     # playable heroes: swappable hair, clothes, goggles
+BW = 1.08 if BOY else 1.0                  # the boy is a little broader in the shoulders
 VARIANTS = {   # friends built on Ngoc's body: (file name, palette overrides)
     'lily': ('npc_lily_druid_v02', {'hair': 'e0702c', 'hair_light': 'f08a3c', 'hair_dark': 'b8531c', 'bandana': '5fa83c', 'bandana_dark': '3f7d2a',
                                     'scarf': '6cb444', 'scarf_dark': '4a8a30', 'shirt': '8cc25a', 'shirt_shade': '6a9e42', 'shorts': 'f0e6cc',
@@ -68,6 +72,8 @@ VARIANTS = {   # friends built on Ngoc's body: (file name, palette overrides)
     'anna': ('npc_anna_bard_v02', {'hair': '6b3a1e', 'hair_light': '8a5230', 'hair_dark': '4a2612', 'bandana': 'f2c230', 'bandana_dark': 'c99a1e',
                                    'scarf': 'f2c230', 'scarf_dark': 'c99a1e', 'shirt': '3f6fc6', 'shirt_shade': '2c539a', 'shorts': 'f4efe6',
                                    'shorts_cuff': 'd8d0c0', 'glass': 'b684e8', 'ribbon': 'f2c230'}),
+    'ban_nam': ('chr_ban_nam_v01', {'hair': '3a2a20', 'hair_light': '5a4232', 'hair_dark': '22180f', 'shirt': '6fa8dc', 'shirt_shade': '4a86bf',
+                                    'shorts': '3a4f7a', 'shorts_cuff': '2a3a5c'}),
 }
 if VARIANT in VARIANTS:
     _name, _over = VARIANTS[VARIANT]
@@ -191,7 +197,7 @@ def build_tint_image():
 PAL_TINT = build_tint_image()
 _pre = VARIANT
 MATS = {g: make_material(f'{_pre}_{g}_tint', PAL_TINT, PAL_ORM) for g in TINT_GROUPS}
-if VARIANT == 'ngoc':
+if HERO:
     MATS.update({g: make_material(f'ngoc_{g}', PAL_ALB, PAL_ORM) for g in ('skin', 'boots', 'gear')})
 else:
     _body = make_material(f'{_pre}_body', PAL_ALB, PAL_ORM)
@@ -479,7 +485,7 @@ def shrink_to(obj, target, offset):
 # --------------------------------------------------------------------------------------
 HZ = 1.105                # head centre
 HA, HB, HC = .285, .255, .258   # head half width / depth / height
-SHOULDER = Vector((.150, 0.0, .770))
+SHOULDER = Vector((.150 * BW, 0.0, .770))
 ARM_DIR = Vector((.60, .03, -.80)).normalized()
 UPPER, FORE, HAND = .125, .115, .075
 HIP_X = .082
@@ -540,6 +546,7 @@ torso = loft('Ngoc_Shirt', [
     ((0, .004, .800), .100, .080),
     ((0, .006, .830), .055, .050),
 ], seg=28, caps=(True, True), ref=Vector((1, 0, 0)))
+torso.scale.x = BW
 finish(torso, 'shirt', ['hips', 'spine', 'chest', 'neck'], subsurf=1)
 # shirt hem flare
 hem = loft('Ngoc_ShirtHem', [((0, .004, .505), .158, .128), ((0, .006, .470), .168, .136), ((0, .006, .452), .166, .134)],
@@ -911,7 +918,7 @@ for k, (dz, sw) in enumerate(((-.11, .03), (-.07, .09))):
     tl = loft(f'Ngoc_BandanaTail_{k}', rings, seg=10, ref=Vector((0, 1, 0)))
     finish(tl, 'bandana' if k else 'bandana_dark', ['head'])
 
-if VARIANT == 'ngoc':
+if HERO:
     # goggle strap around the head, just above the bandana
     GS_N = Vector((0, .25, 1)).normalized()
     gs_c = HAIR_C + Vector((0, 0, .130))
@@ -1102,6 +1109,184 @@ if VARIANT == 'ngoc':
                             deform=lambda q_, v: q_ * (1 + .25 * max(0, -v.z))), 'hair_light')
     fringe(st, [(-40, 55, 28, .036), (-8, 50, 27, .036), (28, 40, 24, .032)])
 
+# ---------------- v05: swappable clothes for the heroes (Ngọc and the boy) ------------------
+# Each outfit piece is its own skinned object (weights from the same distance falloff as the body), using the grey
+# *_top_tint / *_bottom_tint materials. The default pieces are split off the body: Top_tshirt, Bottom_shorts and
+# Gear_goggles (bandana + goggles); everything else starts hidden (glTF extras eq_hidden: 1). One top + one bottom, or
+# one dress, is shown at a time: each top/dress carries its own torso, each bottom/dress its own hips.
+TOP_PREFIX = ('Ngoc_Shirt', 'Ngoc_Collar_', 'Ngoc_Sleeve_', 'Ngoc_SleeveCuff_')
+BOTTOM_PREFIX = ('Ngoc_Shorts',)
+GOGGLE_PREFIX = ('Ngoc_Bandana', 'Ngoc_Goggle')
+CLOTHES = ['Top_hoodie', 'Top_jacket', 'Top_aodai', 'Bottom_trousers', 'Bottom_skirt', 'Dress_sundress', 'Dress_party']
+if BOY:
+    CLOTHES = ['Top_hoodie', 'Top_jacket', 'Top_aodai', 'Bottom_trousers']
+SLOT = lambda g: 'hair' if g.startswith('Hair_') else 'dress' if g.startswith('Dress_') else 'top' if g.startswith('Top_') else \
+    'bottom' if g.startswith('Bottom_') else 'gear'
+TORSO = [((0, .005, .455), .150, .118), ((0, .000, .520), .150, .122), ((0, -.004, .600), .146, .122), ((0, -.004, .690), .150, .116),
+         ((0, .000, .755), .140, .104), ((0, .004, .800), .100, .080), ((0, .006, .830), .055, .050)]
+
+
+def cpart(style, obj, color, bones, smooth=True):
+    finish(obj, color, bones, smooth=smooth)
+    HAIR_STYLE_OF[obj.name] = style
+    return obj
+
+
+def torso_loft(style, name, z0, z1, grow, color, seg=20, caps=(False, True), extra=None):
+    rings = []
+    for (c, ra, rb) in TORSO:
+        if z0 - 1e-6 <= c[2] <= z1 + 1e-6:
+            rings.append((Vector(c), (ra + grow) * BW, rb + grow))
+    if extra:
+        rings = extra + rings
+    return cpart(style, loft(f'{style}_{name}', rings, seg=seg, caps=caps, ref=Vector((1, 0, 0))), color, ['hips', 'spine', 'chest', 'neck'])
+
+
+def arm_frame(s):
+    sh = Vector((s * SHOULDER.x, SHOULDER.y, SHOULDER.z))
+    d = Vector((s * ARM_DIR.x, ARM_DIR.y, ARM_DIR.z))
+    return sh, d, sh + d * UPPER, sh + d * (UPPER + FORE)
+
+
+def long_sleeves(style, color, cuff_color, r=(.062, .052, .047), seg=14):
+    for s in (-1, 1):
+        side = 'L' if s > 0 else 'R'
+        sh, d, el, wr = arm_frame(s)
+        rings = [(sh - d * .03, r[0] * .8, r[0] * .8), (sh + d * .03, r[0], r[0]), (el, r[1], r[1]), (wr - d * .012, r[2], r[2])]
+        cpart(style, loft(f'{style}_Sleeve_{s}', rings, seg=seg, caps=(True, False)), color, ['chest', f'upper_arm.{side}', f'forearm.{side}'])
+        cpart(style, torus(f'{style}_Cuff_{s}', wr - d * .015, r[2], .011, seg=14, rseg=5, rot=Vector((0, 0, 1)).rotation_difference(d)),
+              cuff_color, [f'forearm.{side}'])
+
+
+def hips_piece(style, color, grow=.004):
+    rings = [((0, .006, .53), (.150 + grow) * BW, .122 + grow), ((0, .010, .46), (.158 + grow) * BW, .128 + grow),
+             ((0, .012, .40), (.158 + grow) * BW, .126 + grow), ((0, .012, .37), .12 * BW, .095)]
+    return cpart(style, loft(f'{style}_Hips', [(Vector(c), a, b) for c, a, b in rings], seg=20, caps=(False, True), ref=Vector((1, 0, 0))),
+                 color, ['hips'])
+
+
+def flare(style, name, rings, color, bones, seg=24, wave=0.0):
+    sh = (lambda a, i: 1 + wave * math.cos(8 * a)) if wave else None
+    return cpart(style, loft(f'{style}_{name}', [(Vector(c), a, b) for c, a, b in rings], seg=seg, caps=(False, False),
+                             ref=Vector((1, 0, 0)), shape=sh), color, bones)
+
+
+if HERO:
+    # -- Top_hoodie: roomy torso, long sleeves, hood bunched at the nape, drawstrings, kangaroo pocket, hem band
+    st = 'Top_hoodie'
+    torso_loft(st, 'Body', .45, .84, .02, 'shirt', seg=16, extra=[(Vector((0, .006, .435)), .168 * BW, .14)])
+    long_sleeves(st, 'shirt', 'shirt_shade', r=(.07, .058, .05), seg=10)
+    cpart(st, torus(f'{st}_Hem', Vector((0, .006, .44)), .163 * BW, .016, seg=24, rseg=6), 'shirt_shade', ['hips', 'spine'])
+    cpart(st, ellipsoid(f'{st}_Hood', (0, .105, .815), (.15 * BW, .07, .075), seg=18, rings=10), 'shirt', ['chest', 'neck'])
+    cpart(st, ellipsoid(f'{st}_HoodIn', (0, .09, .835), (.11 * BW, .04, .045), seg=14, rings=8), 'shirt_shade', ['chest', 'neck'])
+    cpart(st, ellipsoid(f'{st}_Pocket', (0, -.133, .51), (.1 * BW, .02, .05), seg=14, rings=8), 'shirt_shade', ['hips', 'spine'])
+    for s in (-1, 1):
+        cpart(st, tube(f'{st}_String_{s}', [(s * .03, -.11, .79), (s * .033, -.135, .7)], [.006, .006], seg=6), 'shirt_shade', ['chest'])
+    # -- Top_jacket: tee underneath + open jacket with turned-down collar and lapels, long sleeves
+    st = 'Top_jacket'
+    torso_loft(st, 'Tee', .45, .84, .0, 'shirt_shade')
+    jk = torso_loft(st, 'Coat', .44, .80, .022, 'shirt', caps=(False, False), extra=[(Vector((0, .006, .43)), .172 * BW, .142)])
+    bm = bmesh.new()
+    bm.from_mesh(jk.data)
+    bmesh.ops.delete(bm, geom=[f for f in bm.faces if f.calc_center_median().y < -.06 and abs(f.calc_center_median().x) < .045 * BW],
+                     context='FACES')
+    bm.to_mesh(jk.data)
+    bm.free()
+    long_sleeves(st, 'shirt', 'shirt_shade', r=(.068, .056, .05))
+    for s in (-1, 1):
+        cpart(st, ellipsoid(f'{st}_Lapel_{s}', (s * .065 * BW, -.125, .72), (.045, .012, .085), seg=10, rings=6,
+                            rot=Euler((math.radians(-12), 0, math.radians(-22 * s))).to_quaternion()), 'shirt_shade', ['chest'])
+        cpart(st, ellipsoid(f'{st}_Collar_{s}', (s * .06 * BW, -.03, .805), (.06, .045, .02), seg=10, rings=6,
+                            rot=Euler((math.radians(-20), math.radians(18 * s), 0)).to_quaternion()), 'shirt_shade', ['chest', 'neck'])
+    # -- Top_aodai: fitted bodice, mandarin collar, slim long sleeves, front and back panels to the knee (slit at the sides)
+    st = 'Top_aodai'
+    torso_loft(st, 'Body', .455, .84, .006, 'shirt')
+    cpart(st, loft(f'{st}_Collar', [(Vector((0, .006, .80)), .062, .058), (Vector((0, .006, .855)), .058, .055)], seg=16, caps=(False, False)),
+          'shirt_shade', ['neck', 'chest'])
+    long_sleeves(st, 'shirt', 'shirt', r=(.058, .046, .04))
+    for side_y, nm in ((-1, 'Front'), (1, 'Back')):
+        rings = [((0, side_y * .095, .5), .14 * BW, .03), ((0, side_y * .11, .4), .15 * BW, .025), ((0, side_y * .12, .3), .16 * BW, .022),
+                 ((0, side_y * .125, .23), .165 * BW, .02)]
+        flare(st, nm, rings, 'shirt', ['hips', 'thigh.L', 'thigh.R'], seg=16)
+    if not BOY:
+        # -- Bottom_skirt: flared to the knee, waistband
+        st = 'Bottom_skirt'
+        hips_piece(st, 'shorts')
+        flare(st, 'Skirt', [((0, .006, .53), .152, .124), ((0, .008, .46), .175, .15), ((0, .012, .36), .24, .21), ((0, .014, .28), .285, .25)],
+              'shorts', ['hips', 'thigh.L', 'thigh.R'], seg=28, wave=.035)
+        cpart(st, torus(f'{st}_Band', Vector((0, .006, .52)), .154, .014, seg=24, rseg=6), 'shorts_cuff', ['hips'])
+        # -- Dress_sundress: bodice with two straps, flared skirt to the knee, bare shoulders
+        st = 'Dress_sundress'
+        torso_loft(st, 'Bodice', .455, .755, .006, 'shirt', caps=(False, False))
+        cpart(st, loft(f'{st}_Neck', [(Vector((0, .0, .755)), .14, .104), (Vector((0, .004, .80)), .1, .08), (Vector((0, .006, .835)), .052, .048)],
+                       seg=20, caps=(False, True), ref=Vector((1, 0, 0))), 'skin', ['chest', 'neck'])
+        flare(st, 'Skirt', [((0, .006, .6), .15, .124), ((0, .008, .5), .19, .16), ((0, .012, .38), .25, .22), ((0, .014, .27), .3, .27)],
+              'shirt', ['hips', 'thigh.L', 'thigh.R'], seg=28, wave=.03)
+        for s in (-1, 1):
+            side = 'L' if s > 0 else 'R'
+            sh, d, el, wr = arm_frame(s)
+            cpart(st, ellipsoid(f'{st}_Shoulder_{s}', sh + d * .02, (.05, .05, .05), seg=12, rings=8), 'skin', ['chest', f'upper_arm.{side}'])
+            cpart(st, tube(f'{st}_Strap_{s}', [(s * .06, -.1, .75), (s * .08, -.02, .8), (s * .07, .08, .76)], [.012, .012, .012], seg=6),
+                  'shirt_shade', ['chest'])
+        cpart(st, torus(f'{st}_Waist', Vector((0, .006, .6)), .152, .013, seg=24, rseg=6), 'shirt_shade', ['spine'])
+        # -- Dress_party: princess dress: bodice, puff sleeves, big petticoat skirt, ruffled hem, bow
+        st = 'Dress_party'
+        torso_loft(st, 'Bodice', .455, .84, .008, 'shirt')
+        flare(st, 'Skirt', [((0, .006, .56), .155, .128), ((0, .01, .48), .26, .23), ((0, .014, .38), .35, .32), ((0, .016, .3), .37, .34),
+                            ((0, .016, .25), .35, .32)], 'shirt', ['hips', 'thigh.L', 'thigh.R'], seg=24, wave=.05)
+        cpart(st, torus(f'{st}_Ruffle', Vector((0, .016, .255)), .35, .03, seg=32, rseg=6, sy=.32 / .35), 'shirt_shade',
+              ['hips', 'thigh.L', 'thigh.R'])
+        for s in (-1, 1):
+            side = 'L' if s > 0 else 'R'
+            sh, d, el, wr = arm_frame(s)
+            cpart(st, ellipsoid(f'{st}_Puff_{s}', sh + d * .04, (.085, .085, .075), seg=10, rings=6,
+                                deform=lambda q_, v: q_ * (1 + .06 * math.cos(8 * math.atan2(v.y, v.x)))), 'shirt', ['chest', f'upper_arm.{side}'])
+            cpart(st, ellipsoid(f'{st}_Bow_{s}', (s * .06, .135, .58), (.06, .02, .04), seg=10, rings=6, rot=Euler((0, s * .3, 0)).to_quaternion()),
+                  'shirt_shade', ['spine'])
+        cpart(st, torus(f'{st}_Waist', Vector((0, .006, .56)), .156, .016, seg=24, rseg=6), 'shirt_shade', ['spine'])
+    # -- Bottom_trousers: hips + long legs tucked into the boot tops
+    st = 'Bottom_trousers'
+    hips_piece(st, 'shorts')
+    for s in (-1, 1):
+        side = 'L' if s > 0 else 'R'
+        rings = [((s * .072, .010, .44), .088, .09), ((s * .088, .010, .34), .078, .08), ((s * .09, .008, .26), .068, .07),
+                 ((s * .09, .006, .225), .066, .068)]
+        cpart(st, loft(f'{st}_Leg_{s}', [(Vector(c), a, b) for c, a, b in rings], seg=16, caps=(False, False)), 'shorts',
+              ['hips', f'thigh.{side}', f'shin.{side}'])
+        cpart(st, torus(f'{st}_Cuff_{s}', Vector((s * .09, .006, .23)), .067, .012, seg=16, rseg=5), 'shorts_cuff', [f'shin.{side}'])
+
+if BOY:
+    # boy hairstyles (the curly updo built above is dropped at join time)
+    def boy_cap(style, back=-.2, ridges=True, shrink=.004, seg=22, rings=12):
+        return low_cap(style, seg=seg, rings=rings, back=back, shrink=shrink, ridges=ridges)
+    st = 'Hair_short'
+    boy_cap(st)
+    fringe(st, [(-40, 40, 26, .045), (-10, 35, 26, .045), (20, 30, 24, .042), (48, 20, 18, .036)])
+    for s in (-1, 1):
+        p = on_hair(math.radians(95) * s, math.radians(-12), -.01)
+        hpart(st, ellipsoid(f'{st}_Side_{s}', p, (.03, .06, .07), seg=8, rings=5), 'hair_dark')
+    st = 'Hair_spiky'
+    boy_cap(st)
+    for k in range(14):
+        az = (k / 14) * 2 * math.pi - math.pi
+        el = 55 if k % 2 else 30
+        if abs(az) < math.radians(50) and el < 40:
+            el = 50
+        p = on_hair(az, math.radians(el), -.01)
+        n = (p - HAIR_C).normalized()
+        hpart(st, loft(f'{st}_Spike_{k}', [(p, .05, .04), (p + n * .09 + Vector((0, .02, .03)), .004, .004)], seg=6, caps=(True, False)),
+              HAIR_COLS[k % 3])
+    fringe(st, [(-30, 20, 26, .04), (0, 15, 28, .04), (30, 15, 26, .04)])
+    st = 'Hair_side'
+    boy_cap(st, back=-.22)
+    hpart(st, loft(f'{st}_Sweep', [(on_hair(math.radians(-60), math.radians(55), .0), .06, .03),
+                                   (on_hair(math.radians(0), math.radians(48), .03), .09, .04),
+                                   (on_hair(math.radians(55), math.radians(32), .02), .06, .03),
+                                   (on_hair(math.radians(85), math.radians(15), .0), .02, .02)], seg=10, ref=Vector((0, 0, 1))), 'hair_light')
+    fringe(st, [(-45, 60, 28, .045), (-10, 55, 27, .042), (25, 40, 24, .038)])
+    st = 'Hair_buzz'
+    boy_cap(st, back=-.18, ridges=False, shrink=.016, seg=20, rings=10)
+
 # ---------------- friends' own props (v03 round 2) -----------------------------------------
 _D = Vector((ARM_DIR.x, ARM_DIR.y, ARM_DIR.z))
 HAND_L = Vector((SHOULDER.x, SHOULDER.y, SHOULDER.z)) + _D * (UPPER + FORE + .045)
@@ -1232,11 +1417,19 @@ for obj, bones in PARTS:
 
 # join the parts into skinned meshes: the body (+ the friends' hair), and for Ngọc one object per hairstyle
 def _style(o):
-    if VARIANT != 'ngoc':
+    if not HERO:
         return None
     if o.name in HAIR_STYLE_OF:
         return HAIR_STYLE_OF[o.name]
-    return 'Hair_short' if o.name.startswith(HAIR_SHORT_PREFIX) else None
+    if o.name.startswith(HAIR_SHORT_PREFIX):
+        return '_drop' if BOY else 'Hair_short'      # the boy has his own short cut
+    if o.name.startswith(TOP_PREFIX):
+        return 'Top_tshirt'
+    if o.name.startswith(BOTTOM_PREFIX):
+        return 'Bottom_shorts'
+    if o.name.startswith(GOGGLE_PREFIX):
+        return 'Gear_goggles'
+    return None
 
 
 def _join(objs, active, name):
@@ -1264,13 +1457,18 @@ _groups = {}
 for o, _ in PARTS:
     _groups.setdefault(_style(o), []).append(o)
 body = _join(_groups.pop(None), head, 'Ngoc')
-HAIRS = {}
-for st in ['Hair_short'] + HAIR_STYLES:
+for o in _groups.pop('_drop', []):
+    bpy.data.objects.remove(o)
+HAIRS = {}      # every swappable piece (hair, clothes, goggles), keyed by object name
+DEFAULT_SHOWN = ('Hair_short', 'Top_tshirt', 'Bottom_shorts', 'Gear_goggles')
+_order = ['Hair_short'] + (['Hair_spiky', 'Hair_side', 'Hair_buzz'] if BOY else HAIR_STYLES) + \
+    ['Top_tshirt', 'Bottom_shorts', 'Gear_goggles'] + (CLOTHES if HERO else [])
+for st in _order:
     if st in _groups:
         objs = _groups[st]
         HAIRS[st] = _join(objs, objs[0], st)
-        if st != 'Hair_short':
-            HAIRS[st]['eq_hidden'] = 1          # glTF extras: the game starts with only Hair_short visible
+        if st not in DEFAULT_SHOWN:
+            HAIRS[st]['eq_hidden'] = 1          # glTF extras: the game starts with only the default pieces visible
 tri_count = sum(len(p.vertices) - 2 for o in [body] + list(HAIRS.values()) for p in o.data.polygons)
 print('triangles', tri_count, 'vertices', len(body.data.vertices))
 
@@ -1579,14 +1777,30 @@ def _decimate(ob):
     print('decimated to', sum(len(p.vertices) - 2 for p in ob.data.polygons), 'triangles')
 
 _decimate(body)
-if 'Hair_short' in HAIRS:
-    _decimate(HAIRS['Hair_short'])      # the new styles are built light and are not decimated
+for _n in ('Top_tshirt', 'Bottom_shorts', 'Gear_goggles') + (() if BOY else ('Hair_short',)):
+    if _n in HAIRS:
+        _decimate(HAIRS[_n])            # pieces split off the original body; the new pieces are built light
+for _n, _o in HAIRS.items():            # every swappable piece <= 1,500 triangles (the curly updo Hair_short is the old hair, kept as is)
+    _t = sum(len(p.vertices) - 2 for p in _o.data.polygons)
+    if _t > 1500 and _n != 'Hair_short':
+        _m = _o.modifiers.new('Dec', 'DECIMATE')
+        _m.ratio = 1450 / _t
+        _m.use_collapse_triangulate = True
+        while _o.modifiers[0] != _m:
+            with bpy.context.temp_override(object=_o, active_object=_o):
+                bpy.ops.object.modifier_move_up(modifier=_m.name)
+        with bpy.context.temp_override(object=_o, active_object=_o):
+            bpy.ops.object.modifier_apply(modifier=_m.name)
 from bake_ao import bake_ao
 # contact shadows: each mesh is baked with only the default hair (or its own style) present, so hidden styles
 # don't darken the head of the visible one
 _meshes = [body] + list(HAIRS.values())
 for target in _meshes:
-    keep = {body, target, HAIRS.get('Hair_short') if target is body else target}
+    tslot = SLOT(target.name) if target is not body else None
+    keep = {body, target}
+    for d in DEFAULT_SHOWN:           # the default outfit stays around, except pieces in the target's own slot
+        if d in HAIRS and (tslot is None or (SLOT(d) != tslot and not (tslot == 'dress' and SLOT(d) in ('top', 'bottom')))):
+            keep.add(HAIRS[d])
     for o in _meshes:
         o.hide_render = o not in keep
     bake_ao(target)

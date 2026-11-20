@@ -59,3 +59,5 @@ Lệnh chung: `OUT=<thư mục> blender -b -P <script>` (tùy chọn `ONLY=tên,
 ## Vũ khí/giáp/bùa theo hệ lô 20 (tự dựng): `weapon_*`, `armor_*`, `acc_amulet_*` — `tools/gear/build_gear2.py`; ảnh `assets/ui/item_*.png` — `tools/sprites/icons.py`.
 
 ## Hiệu ứng phép lô 21 (tự dựng): `fx_*_v01.glb` — `tools/fx/build_fx.py`; biểu tượng `assets/ui/skill_*.png` — `tools/fx/skill_icons.py`.
+
+## Nhân vật lô 19 (tự dựng): `chr_ngoc_adventurer_v05.glb`, `chr_ban_nam_v01.glb` — `tools/chibi05/build_ngoc_v03.py`; trang sức `acc_necklace/earrings/tiara/hairclip` — `tools/acc/build_acc.py`.
