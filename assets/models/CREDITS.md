@@ -45,3 +45,5 @@ Lệnh chung: `OUT=<thư mục> blender -b -P <script>` (tùy chọn `ONLY=tên,
 ## Quái Map 1 (tự dựng, không cần ghi công)
 
 8 file `mob_*_v01.glb`, `boss_*_v01.glb` (slime xanh/đỏ, golem đá, Vua Slime, Golem Cổ, dơi bóng tối, nấm giận dữ, Nữ hoàng Nấm): `tools/mobs1/build_mobs1.py`.
+
+## Trang bị lô 14 (tự dựng): `gear_*_v01.glb` — `tools/gear/build_gear.py`.
