@@ -12,11 +12,11 @@ export class Player {
     this.root.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.frustumCulled = false; if (o.material.name === 'NgocFace') this.face = o.material; } });
     this.faceMaps = { happy: this.face ? this.face.map : null, ...faceTextures };
     this.blink = 2.5; this.faceHold = 0;
-    this.pos = new THREE.Vector3(); this.vy = 0; this.grounded = true; this.yaw = Math.PI; this.current = ''; this.route = null; this.lock = 0; this.stepTimer = 0;
+    this.pos = new THREE.Vector3(); this.vy = 0; this.grounded = true; this.yaw = Math.PI; this.current = ''; this.route = null; this.lock = 0; this.stepTimer = 0; this.swim = null; this.noSwim = false; this.onSwim = null; this.swimBlock = null;
     this.play('Idle');
     this.mixer.addEventListener('finished', (e) => { if (['Land', 'Wave', 'Celebrate', 'Interact'].includes(e.action.getClip().name)) this.play('Idle'); });
   }
-  place(x, z) { this.pos.set(x, L.walkHeight(x, z), z); this.vy = 0; this.grounded = true; this.route = null; this.sync(); }
+  place(x, z) { this.swim = null; this.pos.set(x, L.walkHeight(x, z), z); this.vy = 0; this.grounded = true; this.route = null; this.sync(); }
   play(name, fade = 0.16) {
     if (this.current === name || !this.actions[name]) return;
     const next = this.actions[name], prev = this.actions[this.current];
@@ -30,8 +30,63 @@ export class Player {
   setFace(name, hold) { if (this.face && this.faceMaps[name]) { this.face.map = this.faceMaps[name]; this.faceHold = hold; } }
   sync() { this.root.position.copy(this.pos); this.root.rotation.y = this.yaw; }
 
+  // ---------------------------------------------------------------- swimming (20/11)
+  /** Deep or shallow water the hero may enter: not inside a solid, and not far out to sea. */
+  canSwimAt(x, z) {
+    if (!L.inWater(x, z) || Math.hypot(x, z) > (L.PLAY_RADIUS || 60) + 5) return false;
+    for (const o of L.solidsNear(x, z)) if (Math.hypot(x - o.x, z - o.z) < o.r + 0.3) return false;
+    return true;
+  }
+  /** How far under the water line the bed lies here (negative: dry). */
+  depthAt(x, z) { return L.WATER_LEVEL - L.groundHeight(x, z); }
+  enterWater(x, z) {
+    this.swim = { breath: 1, vx: 0, vz: 0, cool: 0, rise: 0, t: 0, from: { x: this.pos.x, z: this.pos.z }, last: 0 };
+    this.pos.x = x; this.pos.z = z; this.route = null; this.vy = 0; this.grounded = true; this.lock = 0;
+    this.play('Fall', 0.1); if (this.onSwim) this.onSwim('enter');
+  }
+  /** One stroke: a push of 4.4 m/s towards the world direction (dx, dz) that fades in half a second; each stroke also catches a breath. */
+  stroke(dx, dz) {
+    const s = this.swim; if (!s || s.cool > 0) return false;
+    const l = Math.hypot(dx, dz) || 1; s.vx = dx / l * 4.6; s.vz = dz / l * 4.6; s.cool = 0.2; s.rise = 0.7; s.breath = Math.min(1, s.breath + 0.09);
+    if (this.onSwim) this.onSwim('stroke'); return true;
+  }
+  /** A stroke from a key: ix right/left, iz forward/back, camera yaw. */
+  keyStroke(ix, iz, camYaw) {
+    const fx = -Math.sin(camYaw), fz = -Math.cos(camYaw), rx = Math.cos(camYaw), rz = -Math.sin(camYaw);
+    return this.stroke(fx * iz + rx * ix, fz * iz + rz * ix);
+  }
+  leaveWater() { this.swim = null; this.pos.y = L.walkHeight(this.pos.x, this.pos.z); this.vy = 0; this.grounded = true; this.play('Land', 0.08); this.lock = 0.15; if (this.onSwim) this.onSwim('exit'); }
+  updateSwim(dt, input, camYaw, frozen, sfx) {
+    const s = this.swim; s.t += dt; s.cool = Math.max(0, s.cool - dt); s.rise = Math.max(0, s.rise - dt);
+    const depth = this.depthAt(this.pos.x, this.pos.z), deep = depth > 0.55;
+    if (!deep && !frozen && (input.x || input.z)) {      // wading in the shallows: the keys walk, slowly
+      const fx = -Math.sin(camYaw), fz = -Math.cos(camYaw), rx = Math.cos(camYaw), rz = -Math.sin(camYaw);
+      let mx = fx * input.z + rx * input.x, mz = fz * input.z + rz * input.x; const len = Math.hypot(mx, mz) || 1; mx /= len; mz /= len; s.vx = mx * WALK * 0.6; s.vz = mz * WALK * 0.6;
+    } else if (!deep) { s.vx *= Math.exp(-8 * dt); s.vz *= Math.exp(-8 * dt); }
+    else { s.vx *= Math.exp(-2.4 * dt); s.vz *= Math.exp(-2.4 * dt); }
+    const sp = Math.hypot(s.vx, s.vz);
+    if (sp > 0.05) {
+      const nx = this.pos.x + s.vx * dt, nz = this.pos.z + s.vz * dt;
+      if (L.walkable(nx, nz, 0.35)) {      // a bank, a pier, a stone: climb out unless the far bank is closed (the broken bridge)
+        if (this.swimBlock && this.swimBlock(nx, nz, s.from)) { s.vx = s.vz = 0; if (this.onSwim) this.onSwim('blocked'); }
+        else { this.pos.x = nx; this.pos.z = nz; return (this.leaveWater(), 0); }
+      } else if (this.canSwimAt(nx, nz)) { this.pos.x = nx; this.pos.z = nz; }
+      else { s.vx = s.vz = 0; }
+      let diff = Math.atan2(s.vx, s.vz) - this.yaw; diff = Math.atan2(Math.sin(diff), Math.cos(diff)); this.yaw += diff * Math.min(1, dt * 10);
+    }
+    if (deep) {
+      s.breath -= dt * 0.12; if (s.breath < 0.25 && s.last !== 1) { s.last = 1; if (this.onSwim) this.onSwim('low'); } if (s.breath > 0.4) s.last = 0;
+      if (s.breath <= 0) { const from = s.from; this.swim = null; this.place(from.x, from.z); if (this.onSwim) this.onSwim('rescue'); return 0; }
+    } else s.breath = Math.min(1, s.breath + dt * 0.5);
+    // height: floating with the shoulders out; it sinks lower the longer there was no stroke (the deeper the bed, the lower)
+    const target = L.WATER_LEVEL - Math.min(0.95, 0.15 + depth * 0.6) + Math.min(1, s.rise / 0.7) * 0.75 + Math.sin(s.t * 5) * 0.03;
+    this.pos.y += (target - this.pos.y) * Math.min(1, dt * 8);
+    this.play(deep ? (s.rise > 0.3 ? 'Run' : 'Fall') : sp > 0.3 ? 'Walk' : 'Idle');
+    this.mixer.update(dt); this.sync(); return 0;
+  }
   /** input: {x, z} in camera space (z forward), run, jump. camYaw: camera orbit yaw. */
   update(dt, input, camYaw, frozen, sfx) {
+    if (this.swim) return this.updateSwim(dt, input, camYaw, frozen, sfx);
     let mx = 0, mz = 0, speed = 0;
     this.lock = Math.max(0, this.lock - dt);
     const manual = input.x || input.z;
@@ -48,11 +103,13 @@ export class Player {
       }
       if (input.jump && this.grounded) { this.vy = JUMP; this.grounded = false; this.play('Jump', 0.08); }
     }
+    let swimAt;
     if (speed > 0) {
       const sx = mx * speed * dt, sz = mz * speed * dt, { x, z } = this.pos;
       if (L.canStep(x, z, x + sx, z + sz)) { this.pos.x += sx; this.pos.z += sz; }
-      else if (L.canStep(x, z, x + sx, z)) this.pos.x += sx;
-      else if (L.canStep(x, z, x, z + sz)) this.pos.z += sz;
+      else if (manual && this.grounded && !this.noSwim && (swimAt = [0.5, 0.9, 1.4, 2.0].find((k) => this.canSwimAt(x + mx * k, z + mz * k)))) this.enterWater(x + mx * swimAt, z + mz * swimAt);      // (20/11) walking off a bank or a pier: into the water (the wet edge may be a metre ahead)
+      else if (Math.abs(sx) > 1e-6 && L.canStep(x, z, x + sx, z)) this.pos.x += sx;
+      else if (Math.abs(sz) > 1e-6 && L.canStep(x, z, x, z + sz)) this.pos.z += sz;
       else if (this.route) this.route = null;
       let diff = Math.atan2(mx, mz) - this.yaw; diff = Math.atan2(Math.sin(diff), Math.cos(diff));
       this.yaw += diff * Math.min(1, dt * 12);

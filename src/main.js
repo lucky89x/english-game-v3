@@ -351,6 +351,22 @@ function placeActors() {
     pip.root.visible = true; pip.place(L.ENTRANCE.x + 3.4, L.ENTRANCE.z - 12.5);
   }
 }
+/** Swimming events from the Player (20/11): tells the child what to do, shows the breath bar. */
+let swimBar = null, swimTold = 0;
+function onSwim(ev) {
+  if (ev === 'enter') { ui.toast('💦 Con rơi xuống nước! Bấm chuột liên tục để bơi (hoặc gõ W/A/S/D) vào bờ.'); sfx('tick'); swimTold = performance.now(); }
+  else if (ev === 'stroke') { if (Math.random() < 0.5) sfx('step'); }
+  else if (ev === 'low') ui.toast('Sắp hết hơi! Bơi nhanh vào bờ!');
+  else if (ev === 'rescue') { ui.toast('Con kiệt sức nên được kéo lên bờ. Bơi nhanh hơn lần sau nhé!'); sfx('wrong'); }
+  else if (ev === 'blocked') { if (performance.now() - swimTold > 2500) { swimTold = performance.now(); ui.toast('Bờ bên kia chưa an toàn. Hãy sửa cầu cùng Sam trước nhé!'); } }
+  else if (ev === 'exit') sfx('step');
+}
+function swimHud() {
+  if (!swimBar) { swimBar = document.createElement('div'); swimBar.id = 'swimbar'; swimBar.style.cssText = 'position:fixed;left:50%;bottom:92px;transform:translateX(-50%);z-index:26;width:260px;padding:4px 10px 6px;border-radius:12px;background:rgba(10,40,70,.78);color:#fff;font:800 13px system-ui,sans-serif;text-align:center;pointer-events:none;display:none'; swimBar.innerHTML = '<div id="swimtxt"></div><div style="height:9px;margin-top:3px;border-radius:5px;background:rgba(255,255,255,.25);overflow:hidden"><u id="swimfill" style="display:block;height:100%;background:linear-gradient(90deg,#3fd0ff,#9fffd8)"></u></div>'; document.body.appendChild(swimBar); }
+  const s = player && player.swim, deep = !!(s && player.depthAt(player.pos.x, player.pos.z) > 0.55);
+  swimBar.style.display = deep ? 'block' : 'none';
+  if (deep) { $('swimtxt').textContent = '🏊 Bấm chuột liên tục để bơi!'; $('swimfill').style.width = Math.max(0, Math.round(s.breath * 100)) + '%'; }
+}
 /** Keys 5-8 and the potion slots: drinks or eats what is in the quick slot. */
 function usePotion(i) {
   const r = useQuick(profile, i, Save.maxHp(profile));
@@ -421,8 +437,9 @@ canvas.addEventListener('pointerup', (e) => {
   if (Math.hypot(e.clientX - c.x, e.clientY - c.y) > 6) return;          // the mouse moved: that was a camera drag
   const r = canvas.getBoundingClientRect(), ndc = new THREE.Vector2(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
   const ray = new THREE.Raycaster(); ray.setFromCamera(ndc, camera);
-  const o = ray.ray.origin, d = ray.ray.direction; let hit = null;
-  for (let k = 0.5; k < 160; k += 0.25) { const x = o.x + d.x * k, y = o.y + d.y * k, z = o.z + d.z * k; if (y <= L.walkHeight(x, z)) { hit = [x, z]; break; } }
+  const o = ray.ray.origin, d = ray.ray.direction; let hit = null; const swimming = !!(player && player.swim);
+  for (let k = 0.5; k < 160; k += 0.25) { const x = o.x + d.x * k, y = o.y + d.y * k, z = o.z + d.z * k; if (y <= L.walkHeight(x, z) || (swimming && y <= L.WATER_LEVEL)) { hit = [x, z]; break; } }
+  if (swimming) { const dx = hit ? hit[0] - player.pos.x : d.x, dz = hit ? hit[1] - player.pos.z : d.z; player.stroke(dx, dz); return; }      // (20/11) a click in the water is a stroke towards it
   if (!hit || !minimap.travelTo(hit[0], hit[1])) return;
   if (!walkMark) { walkMark = new THREE.Mesh(new THREE.RingGeometry(0.35, 0.55, 24), new THREE.MeshBasicMaterial({ color: 0xffd23c, transparent: true, depthWrite: false, side: THREE.DoubleSide })); walkMark.rotation.x = -Math.PI / 2; scene.add(walkMark); }
   walkMark.position.set(hit[0], L.walkHeight(hit[0], hit[1]) + 0.06, hit[1]); walkMark.visible = true; walkMark.userData.t = 0;
@@ -975,6 +992,10 @@ function interactTarget() {
 }
 function onKey(e) {
   if (!started) return;
+  if (player && player.swim && !e.repeat && !ui.modal) {      // (20/11) in deep water a tap on a move key is a stroke too
+    const ix = e.code === 'KeyA' || e.code === 'ArrowLeft' ? -1 : e.code === 'KeyD' || e.code === 'ArrowRight' ? 1 : 0, iz = e.code === 'KeyW' || e.code === 'ArrowUp' || e.code === 'Space' ? 1 : e.code === 'KeyS' || e.code === 'ArrowDown' ? -1 : 0;
+    if (ix || iz) { player.keyStroke(ix, iz, cam.yaw); e.preventDefault(); return; }
+  }
   if (arcade && arcade.key(e.code)) { e.preventDefault(); return; }
   if (shopWin && shopWin.key(e.code)) { e.preventDefault(); return; }
   if (music && music.key(e.code)) { e.preventDefault(); return; }
@@ -1034,6 +1055,8 @@ async function boot() {
   L.setRegion('village');
   world = await buildWorld(scene, staticModel, animatedModel);
   player = new Player(ngoc, { blink, talk, joy }); player.firstFaces = { ...player.faceMaps }; scene.add(player.root);
+  player.swimBlock = (x, z, from) => L.NAME === 'village' && profile && !profile.flags.bridge_fixed && (x < L.riverX(z)) !== (from.x < L.riverX(z));      // the far bank stays closed until the bridge is mended
+  player.onSwim = onSwim;
   tom = new Npc(tomG, 2.6, 7.6, -0.4); sam = new Npc(samG, 14, 17, 1.2); ben = new Npc(benG, -9.9, 19.5, Math.PI / 2); scene.add(tom.root, sam.root, ben.root);
   pip = new Pip(pipG.scene); scene.add(pip.root);
   const usedFiles = new Set();      // two friends may share a model file (Mia uses Rose's): the second gets its own copy
@@ -1149,7 +1172,7 @@ function frame() {
   else for (let left = real; left > 1e-4; left -= 0.05) player.update(Math.min(0.05, left), input, cam.yaw, frozen, sfx);
   if (hadRoute && !player.route) minimap.clearRoute();
   if (walkMark && walkMark.visible) { walkMark.userData.t += real; walkMark.scale.setScalar(1 + Math.sin(walkMark.userData.t * 6) * 0.15); if (!player.route) walkMark.visible = false; }
-  cam.update(real, player.pos); guideArrow(real);
+  cam.update(real, player.pos); guideArrow(real); swimHud();
   const talkingTo = ui.busy && ui.pages ? ui.pages[0].who : '';
   tom.update(dt, player.pos, talkingTo === 'Tom'); sam.update(dt, player.pos, talkingTo === 'Sam'); ben.update(dt, player.pos, talkingTo === 'Ben');
   for (const f of friends) f.npc.update(dt, player.pos, talkingTo === f.who);
