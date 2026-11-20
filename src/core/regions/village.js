@@ -15,7 +15,10 @@ export const FURNITURE = { x: -40, z: -18, door: [-35.1, -18] };
 export const STALLS = { produce: { x: -7.5, z: 24.8, yaw: Math.PI / 2, at: [-4.6, 24.8] }, music: { x: -19, z: 21.5, yaw: Math.PI / 2, at: [-16.4, 21.5] },
   tailor: { x: 9.5, z: 21.5, yaw: Math.PI, at: [9.5, 18.9] },
   healer: { x: -5.6, z: 15.2, yaw: Math.PI / 2, at: [-3.0, 15.2] } };      // (20/11) potions and basic gear, beside the square where a fainted hero wakes up      // Mia's tailor shop (19/11), on the grass east of the square-to-market road, facing the square
+/** The pond is water the hero can swim in (20/11); the model's stone rim is the ring beyond this radius. */
+export const PONDS = [{ x: SOUTH.pond[0], z: SOUTH.pond[1], r: 4.1 * POND_SCALE * 0.72 }];
 export default makeRegion({
+  ponds: PONDS,
   name: 'village', title: 'Starter Village', size: 140, playRadius: 62, seed: 4242, trees: 230, rocks: 40, roughness: 0.3, treeMix: [0.3, 0.85],
   riverX, riverHalf: () => 3.4, riverStart: -52, waterfall: true,
   bridges: [{ id: 'village', z: 6, name: 'Village Bridge' }, { id: 'south', z: 40, name: 'South Bridge', closed: true }], stonesZ: null,
@@ -84,7 +87,7 @@ export default makeRegion({
     ...[[36, 0], [42, 3], [46, 9], [38, 20], [45, 18], [34, 13]].map(([x, z]) => ({ x, z, r: 0.6 })),   // orchard trees
     { x: -31.5, z: 28.5, r: 1.0 },                                            // scarecrow
     ...[-27.6, -23.2, -18.8].flatMap((x) => [26.5, 30.2, 33.9].map((z) => ({ x, z, r: 1.6 }))),      // the nine garden beds
-    { x: SOUTH.mill[0], z: SOUTH.mill[1], r: 2.4 }, { x: SOUTH.pond[0], z: SOUTH.pond[1], r: 4.1 * POND_SCALE * 0.95 }, { x: SOUTH.tent[0], z: SOUTH.tent[1], r: 1.7 },
+    { x: SOUTH.mill[0], z: SOUTH.mill[1], r: 2.4 }, { x: SOUTH.tent[0], z: SOUTH.tent[1], r: 1.7 },
     { x: SOUTH.fire[0], z: SOUTH.fire[1], r: 1.7 * FIRE_SCALE }, ...SOUTH.dummies.map(([x, z]) => ({ x, z, r: 0.45 })),
   ],
 });

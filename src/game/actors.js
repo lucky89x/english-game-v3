@@ -38,7 +38,7 @@ export class Player {
     return true;
   }
   /** How far under the water line the bed lies here (negative: dry). */
-  depthAt(x, z) { return L.WATER_LEVEL - L.groundHeight(x, z); }
+  depthAt(x, z) { return L.waterDepth(x, z); }
   enterWater(x, z) {
     this.swim = { breath: 1, vx: 0, vz: 0, cool: 0, rise: 0, t: 0, from: { x: this.pos.x, z: this.pos.z }, last: 0 };
     this.pos.x = x; this.pos.z = z; this.route = null; this.vy = 0; this.grounded = true; this.lock = 0;
@@ -79,7 +79,7 @@ export class Player {
       if (s.breath <= 0) { const from = s.from; this.swim = null; this.place(from.x, from.z); if (this.onSwim) this.onSwim('rescue'); return 0; }
     } else s.breath = Math.min(1, s.breath + dt * 0.5);
     // height: floating with the shoulders out; it sinks lower the longer there was no stroke (the deeper the bed, the lower)
-    const target = L.WATER_LEVEL - Math.min(0.95, 0.15 + depth * 0.6) + Math.min(1, s.rise / 0.7) * 0.75 + Math.sin(s.t * 5) * 0.03;
+    const target = L.waterSurface(this.pos.x, this.pos.z) - Math.min(0.95, 0.15 + depth * 0.6) + Math.min(1, s.rise / 0.7) * 0.75 + Math.sin(s.t * 5) * 0.03;
     this.pos.y += (target - this.pos.y) * Math.min(1, dt * 8);
     this.play(deep ? (s.rise > 0.3 ? 'Run' : 'Fall') : sp > 0.3 ? 'Walk' : 'Idle');
     this.mixer.update(dt); this.sync(); return 0;

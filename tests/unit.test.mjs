@@ -889,3 +889,23 @@ test('house upgrades: start with one floor, buy in order, level and gold are che
   assert.equal(floorPlan({ floors: 1 }).length, 1); assert.deepEqual(floorPlan({ floors: 2 })[1], ['bedroom', '', '', '']); assert.equal(floorPlan({ floors: 3 }).length, 3);
   const all = Object.values(GROUPS).flat(); for (const id of all) assert.ok(ITEMS[id] && ITEMS[id].slot === 'home', id); assert.deepEqual(gardenOf({ garden: 0 }), { veg: 2, flowers: 2, trees: 0, pond: false, arch: false }); assert.equal(gardenOf({ garden: 2 }).pond, true);
 });
+
+import { lootCloth, CLOTH_LOOT } from '../src/core/rules.js';
+import * as WR2 from '../src/core/wardrobe.js';
+import * as L2 from '../src/core/layout.js';
+test('cloth loot: only elites and bosses, low chance, always something the wardrobe accepts', () => {
+  const p = S.newProfile('An', 6);
+  assert.equal(lootCloth(p, { id: 'slime', hp: 30 }, false, () => 0), null);
+  assert.ok(lootCloth(p, { id: 'golem' }, false, () => 0.01)); assert.equal(lootCloth(p, { id: 'golem' }, false, () => 0.5), null);
+  assert.ok(lootCloth(p, { id: 'king', flag: 'boss1', hp: 600 }, true, () => 0.3)); assert.equal(lootCloth(p, { id: 'king', flag: 'boss1', hp: 600 }, false, () => 0.3), null);
+  for (const c of CLOTH_LOOT) assert.ok(WR2.unlock(S.newProfile('Z', 6), c.kind, c.color), c.kind);
+  assert.equal(lootCloth(p, { id: 'orc' }, false, () => 0, () => true), null, 'nothing left to win');
+});
+test('the village pond is water: not walkable, deep in the middle, shallow at the rim', () => {
+  L2.setRegion('village');
+  try {
+    const pond = L2.REGIONS.village.PONDS[0]; assert.ok(L2.inWater(pond.x, pond.z) && !L2.walkable(pond.x, pond.z, 0.3));
+    assert.ok(L2.waterDepth(pond.x, pond.z) > 1.1 && L2.waterDepth(pond.x + pond.r * 0.97, pond.z) < 0.6);
+    assert.ok(L2.waterSurface(pond.x, pond.z) > L2.WATER_LEVEL + 0.1, 'a pond sits on the ground'); assert.equal(L2.waterSurface(0, 0), L2.WATER_LEVEL);
+  } finally { L2.setRegion('forest'); }
+});

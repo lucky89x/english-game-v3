@@ -447,7 +447,7 @@ canvas.addEventListener('pointerup', (e) => {
   const r = canvas.getBoundingClientRect(), ndc = new THREE.Vector2(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
   const ray = new THREE.Raycaster(); ray.setFromCamera(ndc, camera);
   const o = ray.ray.origin, d = ray.ray.direction; let hit = null; const swimming = !!(player && player.swim);
-  for (let k = 0.5; k < 160; k += 0.25) { const x = o.x + d.x * k, y = o.y + d.y * k, z = o.z + d.z * k; if (y <= L.walkHeight(x, z) || (swimming && y <= L.WATER_LEVEL)) { hit = [x, z]; break; } }
+  for (let k = 0.5; k < 160; k += 0.25) { const x = o.x + d.x * k, y = o.y + d.y * k, z = o.z + d.z * k; if (y <= L.walkHeight(x, z) || (swimming && y <= L.waterSurface(x, z))) { hit = [x, z]; break; } }
   if (swimming) { const dx = hit ? hit[0] - player.pos.x : d.x, dz = hit ? hit[1] - player.pos.z : d.z; player.stroke(dx, dz); return; }      // (20/11) a click in the water is a stroke towards it
   if (!hit || !minimap.travelTo(hit[0], hit[1])) return;
   if (!walkMark) { walkMark = new THREE.Mesh(new THREE.RingGeometry(0.35, 0.55, 24), new THREE.MeshBasicMaterial({ color: 0xffd23c, transparent: true, depthWrite: false, side: THREE.DoubleSide })); walkMark.rotation.x = -Math.PI / 2; scene.add(walkMark); }
@@ -854,7 +854,7 @@ function applyLook() {
 /** Pieces won at the Boutique or the Salon go to the wardrobe. */
 function gainItems(list) {
   const fresh = list.filter((x) => WR.unlock(profile, x.kind, x.color)); if (!fresh.length) return;
-  save(); refresh(); ui.toast(`🎁 Tủ đồ mới: ${fresh.map((x) => WR.itemName(WR.itemId(x.kind, x.color))).join(', ')} (phím V để mặc)`);
+  save(); refresh(); ui.toast(`🎁 Tủ đồ mới: ${fresh.map((x) => WR.itemName(WR.itemId(x.kind, x.color))).join(', ')} (phím U để mặc)`);
 }
 /** The map exam (18/11): ten questions (words, grammar, sentences), 8 right to pass; no hints while it runs, answers shown
  *  at the end. A failed paper sends the child through the missed questions again until each one is right; the next paper is new. */
@@ -1140,7 +1140,7 @@ async function boot() {
       teach([card], () => arcade.start(g));
     } });
   floaters = new Floaters(scene);
-  wild = new Wild({ scene, player, ui, sfx, profile: () => profile, save, onChange: refresh, floater: (x, z, t, c, k) => floaters.add(x, z, t, c, k), goldMul: petGoldMul, onKill: (m) => { track('kill'); if (m && m.region === 'harbor') track('sea_kill'); if (m && m.region === 'harbor') seaFound(m.kind); }, onJob: (region) => { if (region === 'harbor') track('sea_job'); },
+  wild = new Wild({ scene, player, ui, sfx, profile: () => profile, save, gainItems, owns: (c) => WR.wardrobe(profile).owned.includes(WR.itemId(c.kind, c.color)), onChange: refresh, floater: (x, z, t, c, k) => floaters.add(x, z, t, c, k), goldMul: petGoldMul, onKill: (m) => { track('kill'); if (m && m.region === 'harbor') track('sea_kill'); if (m && m.region === 'harbor') seaFound(m.kind); }, onJob: (region) => { if (region === 'harbor') track('sea_job'); },
     quiz: (bossName, done) => {       // word shield: pick the English word for the Vietnamese meaning (unit vocabulary, due words first)
       const pool = unitCards.filter((c) => c.word.length <= 18); if (pool.length < 4) { done(true); return; }
       const due = Review.dueIds(profile.words).map((id) => pool.find((c) => c.id === id)).filter(Boolean), card = (due.length ? due : pool)[Math.floor(Math.random() * (due.length || pool.length))];
@@ -1216,7 +1216,7 @@ function frame() {
     shadowAt.set(snap(player.pos.x), player.pos.y, snap(player.pos.z)); sun.position.copy(shadowAt).addScaledVector(sunDir, 90); sun.target.position.copy(shadowAt); }
   sky.position.copy(camera.position);
   if (started && !switching) {
-    const it = ui.modal ? null : interactTarget(); ui.prompt(it ? it.text : '');
+    const it = ui.modal || room ? null : interactTarget(); ui.prompt(it ? it.text : '');
     mapT += real; const markers = [];
     if (mapT >= 0.08) { mapT = 0;            // minimap and markers 12 times a second, not every frame
     if (L.NAME === 'harbor') {

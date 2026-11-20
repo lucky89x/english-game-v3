@@ -34,6 +34,7 @@ export function makeRegion(cfg) {
   // A closed (broken) bridge is drawn but is water for walking, collision and pathfinding.
   R.setBridgeOpen = (id, open) => { const b = R.BRIDGES.find((x) => x.id === id); if (!b || b.open === !!open) return false; b.open = !!open; return true; };
   const openBridges = () => R.BRIDGES.filter((b) => b.open);
+  R.PONDS = cfg.ponds || [];      // (20/11) round ponds that are water to swim in even though the ground under them is not lowered
   R.STONES_Z = cfg.stonesZ ?? null;
   R.STONES = [];
   if (R.STONES_Z !== null) { const cx = R.riverX(R.STONES_Z); for (let i = -3; i <= 3; i++) R.STONES.push({ x: cx + i * 1.55, z: R.STONES_Z + (i % 2 ? 0.35 : -0.25), r: 0.72 }); }
@@ -76,9 +77,14 @@ export function makeRegion(cfg) {
   };
   R.inWater = (x, z) => {
     if (R.onBridge(x, z)) return false;
+    if (R.PONDS.some((p) => Math.hypot(x - p.x, z - p.z) < p.r)) return true;
     if (R.STONES.some((s) => Math.hypot(x - s.x, z - s.z) < s.r)) return false;
     return R.groundHeight(x, z) < WATER_LEVEL + 0.12;
   };
+  /** How deep the water is here (negative on dry land): the sea and rivers by the ground, a pond by its distance from the middle. */
+  R.waterDepth = (x, z) => { let d = WATER_LEVEL - R.groundHeight(x, z); for (const p of R.PONDS) { const k = 1 - Math.hypot(x - p.x, z - p.z) / p.r; if (k > 0) d = Math.max(d, 0.4 + 0.9 * Math.min(1, k * 2.2)); } return d; };
+  /** The height of the water surface: a pond sits on the ground, the rest at WATER_LEVEL. */
+  R.waterSurface = (x, z) => { for (const p of R.PONDS) if (Math.hypot(x - p.x, z - p.z) < p.r) return R.groundHeight(p.x, p.z) + 0.1; return WATER_LEVEL; };
   const KEEP = [...R.LANDMARKS.filter((l) => l.spot).map((l) => ({ x: l.spot[0], z: l.spot[1], r: 3.2 })), ...(cfg.keepClear || []), { x: R.ENTRANCE.x, z: R.ENTRANCE.z, r: 7 }, { x: R.SPAWN.x, z: R.SPAWN.z, r: 5 }];
   const clearOf = (x, z, extra = 0) => KEEP.every((c) => Math.hypot(x - c.x, z - c.z) > c.r + extra);
   const slopeAt = (x, z) => Math.hypot(R.groundHeight(x + 0.6, z) - R.groundHeight(x - 0.6, z), R.groundHeight(x, z + 0.6) - R.groundHeight(x, z - 0.6)) / 1.2;

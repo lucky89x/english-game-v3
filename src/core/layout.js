@@ -33,6 +33,8 @@ export const groundHeight = (x, z) => cur.groundHeight(x, z);
 export const walkHeight = (x, z) => cur.walkHeight(x, z);
 export const onBridge = (x, z) => cur.onBridge(x, z);
 export const inWater = (x, z) => cur.inWater(x, z);
+export const waterDepth = (x, z) => cur.waterDepth(x, z);
+export const waterSurface = (x, z) => cur.waterSurface(x, z);
 export const solidsNear = (x, z) => cur.solidsNear(x, z);
 export const walkable = (x, z, r) => cur.walkable(x, z, r);
 export const canStep = (ax, az, bx, bz, r) => cur.canStep(ax, az, bx, bz, r);

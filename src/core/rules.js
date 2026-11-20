@@ -240,6 +240,13 @@ export function lootRoll(profile, def, first = false, rnd = Math.random) {
   const b = bag(profile), lv = profile.stats.level, pool = Object.keys(ITEMS).filter((id) => ITEMS[id].rare && ITEMS[id].level <= lv + 3 && !b.owned.includes(id));
   return pool.length ? pool[Math.floor(rnd() * pool.length) % pool.length] : null;
 }
+/** Rare clothes and jewellery that elites and bosses may drop besides gear (20/11): 3% an elite kill, 35% a boss's first defeat, 15% after that. */
+export const CLOTH_LOOT = [{ kind: 'tiara', color: 'gold' }, { kind: 'necklace', color: 'purple' }, { kind: 'earrings', color: 'blue' }, { kind: 'gown', color: 'purple' }, { kind: 'aodai', color: 'red' }, { kind: 'jacket', color: 'black' }, { kind: 'hoodie', color: 'pink' }, { kind: 'hairclip', color: 'pink' }];
+export function lootCloth(profile, def, first = false, rnd = Math.random, owned = () => false) {
+  const boss = !!def.hp && !!def.flag, chance = boss ? (first ? 0.35 : 0.15) : isElite(def.id || def.kind) ? 0.03 : 0;
+  if (!chance || rnd() >= chance) return null;
+  const pool = CLOTH_LOOT.filter((c) => !owned(c)); return pool.length ? pool[Math.floor(rnd() * pool.length) % pool.length] : null;
+}
 /** Adds a dropped piece to the bag (not worn: the child decides). */
 export function giveLoot(profile, id) { const b = bag(profile); if (!ITEMS[id] || b.owned.includes(id)) return false; b.owned.push(id); return true; }
 export const shopList = (seller) => Object.entries(ITEMS).filter(([, it]) => it.seller === seller).map(([id]) => id);
