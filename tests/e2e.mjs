@@ -186,6 +186,7 @@ const fight0 = await ev(() => ({ exp: __eq.profile.stats.exp, lv: __eq.profile.s
 await ev((m) => { __eq.teleport(m.x, m.z - 1.6); __eq.player.yaw = 0; }, mob); await wait(400);
 await page.keyboard.press('KeyJ'); await wait(700);
 check(await ev((h) => __eq.wild.mobs[0].hp < h, mob.hp), 'J swings: the slime in front loses health');
+console.log('after J', JSON.stringify(await ev(() => ({ hp: __eq.profile.stats.hp, lv: __eq.profile.stats.level, modal: __eq.ui.modal, dialog: document.getElementById('dialog').className, mini: !!(__eq.mini && __eq.mini.active), region: __eq.region, pos: __eq.player.pos.toArray().map((v) => +v.toFixed(1)), m0: [__eq.wild.mobs[0].x, __eq.wild.mobs[0].z, __eq.wild.mobs[0].hp, __eq.wild.mobs[0].dead], arcade: __eq.arcade.open, swim: !!__eq.player.swim }))));
 await snap('03e_wild_fight');
 for (let k = 0; k < 8 && await ev(() => !__eq.wild.mobs[0].dead); k++) { await ev(() => { const m = __eq.wild.mobs[0]; __eq.teleport(m.x, m.z - 1.6); __eq.player.yaw = 0; }); await wait(250); await page.keyboard.press('KeyJ'); await wait(650); }
 check(await ev((b) => __eq.wild.mobs[0].dead > 0 && (__eq.profile.stats.level > b.lv || __eq.profile.stats.exp > b.exp) && __eq.profile.stats.gold > b.gold, fight0), 'Slime defeated: EXP and gold earned');
