@@ -63,3 +63,5 @@ Lệnh chung: `OUT=<thư mục> blender -b -P <script>` (tùy chọn `ONLY=tên,
 ## Nhân vật lô 19 (tự dựng): `chr_ngoc_adventurer_v05.glb`, `chr_ban_nam_v01.glb` — `tools/chibi05/build_ngoc_v03.py`; trang sức `acc_necklace/earrings/tiara/hairclip` — `tools/acc/build_acc.py`.
 
 ## Quái hệ lô 22B (tự dựng): `mob_{wisp_thunder,fox_ember,gull_storm,seal_frost,scorpion_sand,djinn_dust,cactus_spark,fox_moon}_v01`, `boss_sand_dragon_v01` — `tools/mobs3/build_mobs3.py`; boss `_v02` từ `tools/mobs1/build_mobs1.py` và `tools/harbor/b5_mobs.py`.
+
+## Cốt truyện lô 23 (tự dựng): `npc_hush_lord`, `mob_hush_wraith`, `prop_compass_*`, `prop_magic_door` — `tools/story/build_story.py`; `npc_mia_tailor_v01` — `tools/chibi05/build_ngoc_v03.py`; ảnh `rank_*`, `compass_piece_*`, `badge_word_keeper` — `tools/story/icons_story.py`.

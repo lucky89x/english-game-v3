@@ -72,6 +72,9 @@ VARIANTS = {   # friends built on Ngoc's body: (file name, palette overrides)
     'anna': ('npc_anna_bard_v02', {'hair': '6b3a1e', 'hair_light': '8a5230', 'hair_dark': '4a2612', 'bandana': 'f2c230', 'bandana_dark': 'c99a1e',
                                    'scarf': 'f2c230', 'scarf_dark': 'c99a1e', 'shirt': '3f6fc6', 'shirt_shade': '2c539a', 'shorts': 'f4efe6',
                                    'shorts_cuff': 'd8d0c0', 'glass': 'b684e8', 'ribbon': 'f2c230'}),
+    'mia': ('npc_mia_tailor_v01', {'hair': '9a3e22', 'hair_light': 'b5502e', 'hair_dark': '6e2a16', 'bandana': '8c64c2', 'bandana_dark': '6a4a9a',
+                                   'scarf': 'e2b04a', 'scarf_dark': 'c99a1e', 'shirt': 'f4efe6', 'shirt_shade': 'd8d0c0', 'shorts': '6a4a9a',
+                                   'shorts_cuff': '4a3070', 'glass': 'e2b04a', 'ribbon': '8c64c2'}),
     'ban_nam': ('chr_ban_nam_v01', {'hair': '3a2a20', 'hair_light': '5a4232', 'hair_dark': '22180f', 'shirt': '6fa8dc', 'shirt_shade': '4a86bf',
                                     'shorts': '3a4f7a', 'shorts_cuff': '2a3a5c'}),
 }
@@ -945,8 +948,7 @@ if HERO:
     br = on_hair(math.radians(11), math.radians(37), .056)
     bridge = tube('Ngoc_GoggleBridge', [bl, (bl + br) / 2 + Vector((0, -.004, .010)), br], [.011, .011, .011], seg=8)
     finish(bridge, 'brass', ['head'])
-else:
-    _fl = {'lily': ('f6f2ea', 'f4d04a'), 'rose': ('e2483e', 'f6f2ea'), 'anna': ('f2c230', 'f6f2ea')}[VARIANT]
+elif VARIANT != 'mia':
     PALETTE_EXTRA = True
     for k in range(11):
         az = math.radians(-100 + k * 20)
@@ -1322,6 +1324,41 @@ elif VARIANT == 'rose':
                          rot=Quaternion((0, 0, 1), math.radians(rz)) @ Quaternion((1, 0, 0), math.radians(18))), 'bread' if k % 2 else 'bread_light', ['hand.L'])
     finish(tube('Rose_BasketHandle', [BK + Vector((-.122, 0, .05)), BK + Vector((-.07, 0, .15)), HAND_L, BK + Vector((.07, 0, .15)),
                                       BK + Vector((.122, 0, .05))], [.010] * 5, seg=8), 'wicker', ['hand.L'])
+elif VARIANT == 'mia':
+    # Mia the tailor: hair pins through the bun, round gold glasses, tape measure round the neck,
+    # purple checked apron, scissors in the right hand
+    for k, (dx, a) in enumerate(((-.05, .5), (.05, -.4))):
+        finish(tube(f'Mia_Pin_{k}', [BUN + Vector((dx - .14 * math.cos(a), .02, .05 - .14 * math.sin(a) * .3)),
+                                     BUN + Vector((dx + .14 * math.cos(a), .02, .05 + .14 * math.sin(a) * .3))], [.008, .008], seg=6), 'gold', ['bun'])
+        finish(ellipsoid(f'Mia_PinBead_{k}', BUN + Vector((dx + .15 * math.cos(a), .02, .05 + .15 * math.sin(a) * .3)), (.018, .018, .018),
+                         seg=8, rings=5), 'bandana', ['bun'])
+    for s in (-1, 1):   # round glasses over the eyes
+        ey = Vector((s * .112, -.272, HZ - .046))
+        finish(torus(f'Mia_Glass_{s}', ey, .06, .007, seg=18, rseg=5, rot=Quaternion((1, 0, 0), math.radians(90))), 'gold', ['head'])
+        finish(tube(f'Mia_Temple_{s}', [ey + Vector((s * .06, .0, .01)), Vector((s * .28, .0, HZ - .02))], [.006, .006], seg=5), 'gold', ['head'])
+    finish(tube('Mia_GlassBridge', [Vector((-.052, -.276, HZ - .035)), Vector((0, -.282, HZ - .025)), Vector((.052, -.276, HZ - .035))],
+                [.006, .006, .006], seg=5), 'gold', ['head'])
+    finish(torus('Mia_Tape', Vector((0, .0, .815)), .115, .012, seg=24, rseg=4, sx=1.05, sy=.95), 'scarf', ['chest', 'neck'])
+    for s in (-1, 1):
+        finish(loft(f'Mia_TapeEnd_{s}', [(Vector((s * .06, -.115, .8)), .02, .004), (Vector((s * .07, -.135, .62)), .02, .004)], seg=6,
+                    ref=Vector((0, 1, 0))), 'scarf', ['chest'])
+    # apron: bib + skirt panel in front, checked with darker stripes
+    finish(loft('Mia_ApronBib', [(Vector((0, -.135, .58)), .1, .012), (Vector((0, -.13, .74)), .085, .012)], seg=8, ref=Vector((0, 1, 0))),
+           'bandana', ['chest', 'spine'])
+    finish(loft('Mia_ApronSkirt', [(Vector((0, -.14, .52)), .15, .02), (Vector((0, -.16, .34)), .17, .02)], seg=10, ref=Vector((0, 1, 0))),
+           'bandana', ['hips', 'thigh.L', 'thigh.R'])
+    for k in range(5):
+        x = -.12 + k * .06
+        finish(tube(f'Mia_Check_{k}', [Vector((x, -.163, .51)), Vector((x * 1.1, -.183, .35))], [.004, .004], seg=4), 'bandana_dark',
+               ['hips', 'thigh.L', 'thigh.R'])
+    for k in range(3):
+        z = .5 - k * .065
+        finish(tube(f'Mia_CheckH_{k}', [Vector((-.15, -.165 - .005 * k, z)), Vector((.15, -.165 - .005 * k, z))], [.004, .004], seg=4),
+               'bandana_dark', ['hips'])
+    # scissors in her right hand
+    for k, a in enumerate((.25, -.25)):
+        finish(tube(f'Mia_Blade_{k}', [HAND_R + Vector((0, -.02, .0)), HAND_R + Vector((.04 * a, -.03, -.13))], [.008, .003], seg=4), 'brass', ['hand.R'])
+        finish(torus(f'Mia_Ring_{k}', HAND_R + Vector((.025 * (1 if k else -1), -.01, .03)), .018, .005, seg=10, rseg=3), 'bandana_dark', ['hand.R'])
 elif VARIANT == 'anna':
     # big yellow bow on the bun and a little lute on her back strap, neck up over the left shoulder
     for sgn in (-1, 1):
