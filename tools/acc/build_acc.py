@@ -248,14 +248,84 @@ def shoes(boots):
     export("acc_shoes_v01")
 
 
-BUILD = ["acc_hat", "acc_bow", "acc_headband", "acc_glasses", "acc_scarf", "acc_bag", "acc_bracelet", "acc_shoes"]
+# ------------------------------------------------------------------ jewellery (batch 19): tint_main = metal, tint_trim = gem, <= 600 tris
+PEND = Vector((0, -.165, .70))
+
+
+def necklace():
+    main, trim, _, metal = mats()
+    pts = [Vector((.13 * math.sin(t), .02 - .17 * math.cos(t), .78 + .04 * (1 - math.cos(t)))) for t in [(-1 + 2 * i / 10) * math.pi * .55 for i in range(11)]]
+    for a, b in zip(pts, pts[1:]):   # fine chain round the neck (under the scarf at the back)
+        beam(tuple(a), tuple(b), .005, main)
+    beam(tuple(pts[5]), tuple(PEND + Vector((0, 0, .04))), .005, main)
+    torus(.008, .003, tuple(PEND + Vector((0, 0, .042))), main, 8, 3)
+    lathe([(0, .035), (.012, .03), (.022, .012), (.024, 0), (.018, -.016), (0, -.024)], trim, seg=10, loc=tuple(PEND))   # teardrop gem
+    OBJS[-1].scale = (1, .55, 1)
+    torus(.02, .004, tuple(PEND + Vector((0, 0, .004))), main, 12, 3, rot=(math.pi / 2, 0, 0))
+    group("necklace", origin=None)
+    export("acc_necklace_v01")
+
+
+def earrings():
+    main, trim, _, metal = mats()
+    for s, nm in ((1, "earring_L"), (-1, "earring_R")):
+        lobe = Vector((s * .282, -.005, 1.05))
+        torus(.012, .003, tuple(lobe), main, 8, 3, rot=(0, math.pi / 2, 0))
+        beam(tuple(lobe - Vector((0, 0, .012))), tuple(lobe - Vector((0, 0, .04))), .004, main)
+        lathe([(0, .02), (.008, .016), (.014, .004), (.015, -.004), (.01, -.014), (0, -.018)], trim, seg=8, loc=tuple(lobe - Vector((0, 0, .058))))
+        group(nm, origin=None)
+    export("acc_earrings_v01")
+
+
+def tiara(htree):
+    main, trim, _, metal = mats()
+    tilt = math.radians(-8)
+    pts = []
+    for i in range(13):   # band over the forehead, riding on the hair
+        a = -math.radians(75) + math.radians(150) * i / 12
+        d = (Matrix.Rotation(tilt, 3, 'X') @ Vector((math.sin(a), -math.cos(a), .55))).normalized()
+        pts.append(HAIR_C + d * out_hit(htree, d, .005))
+    for a, b in zip(pts, pts[1:]):
+        beam(tuple(a), tuple(b), .016, main, .012)
+    for k, i in enumerate((2, 4, 6, 8, 10)):   # five points, the middle one tallest
+        p = pts[i]
+        n = (p - HAIR_C).normalized()
+        up = (Vector((0, 0, 1)) * .8 + n * .2).normalized()
+        h = .075 if i == 6 else (.055 if i in (4, 8) else .04)
+        cyl(.016, h, tuple(p + up * h / 2), main, 4, r2=.0, rot=up.to_track_quat('Z', 'Y').to_euler())
+        ball(.012 if i != 6 else .018, tuple(p + up * (h * .45) - n * .002 + Vector((0, -.012, 0))), trim, uv=(8, 5))
+    group("tiara", origin=None)
+    export("acc_tiara_v01")
+
+
+def hairclip(htree):
+    main, trim, _, metal = mats()
+    n = (hair_point(math.radians(70), math.radians(30)) - HAIR_C).normalized()   # left side of the head
+    p = HAIR_C + n * out_hit(htree, n, -.005)
+    t = Vector((0, 0, 1)).cross(n).normalized()
+    up = n.cross(t)
+    R = Matrix((n, t, up)).transposed().to_4x4()
+    s = len(OBJS)
+    box((.008, .07, .012), (-.004, 0, -.02), main, bev=.002)                   # clip bar
+    for k in range(5):   # five-petal flower
+        a = k * 2 * math.pi / 5
+        ball(.018, (.006, .02 * math.cos(a), .02 * math.sin(a)), trim, uv=(8, 5), scale=(.35, 1, 1))
+    ball(.01, (.012, 0, 0), main, uv=(6, 4))
+    transform_since(s, Matrix.Translation(p) @ R @ Matrix.Scale(1.6, 4))
+    group("hairclip", origin=None)
+    export("acc_hairclip_v01")
+
+
+BUILD = ["acc_hat", "acc_bow", "acc_headband", "acc_glasses", "acc_scarf", "acc_bag", "acc_bracelet", "acc_shoes",
+         "acc_necklace", "acc_earrings", "acc_tiara", "acc_hairclip"]
 for name in BUILD:
     if ONLY and name not in ONLY:
         continue
     reset()
-    if name in ("acc_glasses", "acc_shoes", "acc_bow", "acc_headband"):
+    if name in ("acc_glasses", "acc_shoes", "acc_bow", "acc_headband", "acc_tiara", "acc_hairclip"):
         tree, boots, htree = body_info()
         {"acc_glasses": lambda: glasses(tree), "acc_shoes": lambda: shoes(boots),
-         "acc_bow": lambda: bow(htree), "acc_headband": lambda: headband(htree)}[name]()
+         "acc_bow": lambda: bow(htree), "acc_headband": lambda: headband(htree),
+         "acc_tiara": lambda: tiara(htree), "acc_hairclip": lambda: hairclip(htree)}[name]()
     else:
         globals()[name[4:]]()

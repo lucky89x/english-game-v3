@@ -3,6 +3,8 @@ import * as Save from '../core/save.js';
 import { speak, stop } from './speech.js';
 import { ADMIN_PASS } from './admin.js';
 import { rankName, rankOf } from '../core/saga.js';
+// Ngọc and her friends on the profile screen (rendered from the game models by tools/chibi05/menu_heroes.py)
+const HEROES = '<div class="heroes"><img src="./assets/ui/menu_heroes.png" alt="Ngọc và các bạn" onerror="this.parentNode.remove()"></div>';
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
@@ -20,7 +22,7 @@ export class UI {
   showMenu(store, onChoose) {
     const card = $('menucard'); $('menu').classList.remove('hidden');
     const list = () => {
-      card.innerHTML = `<h1>English Quest</h1><h2>${store.profiles.length ? 'Ai đang chơi?' : 'Chào mừng! Tạo hồ sơ cho con nhé.'}</h2><div class="list"></div>
+      card.innerHTML = `<h1>English Quest</h1>${HEROES}<h2>${store.profiles.length ? 'Ai đang chơi?' : 'Chào mừng! Tạo hồ sơ cho con nhé.'}</h2><div class="list"></div>
         <button id="mnew">+ Thêm người chơi mới</button>
         <div class="small"><button id="mimport">Nhập hồ sơ (JSON)</button> <input id="mfile" type="file" accept="application/json" class="hidden"> <button id="madmin">🔑 Quản trị</button></div>`;
       const box = card.querySelector('.list');
@@ -45,7 +47,7 @@ export class UI {
     };
     const create = () => {
       let grade = 0;
-      card.innerHTML = `<h1>English Quest</h1><h2>Tên của con</h2><input id="mname" type="text" maxlength="20" placeholder="Ví dụ: Minh">
+      card.innerHTML = `<h1>English Quest</h1>${HEROES}<h2>Tên của con</h2><input id="mname" type="text" maxlength="20" placeholder="Ví dụ: Minh">
         <h2>Con đang học lớp mấy?</h2><div class="grades">${Save.GRADES.map((g) => `<button data-g="${g}">Lớp ${g}</button>`).join('')}</div>
         <button id="mgo" disabled>Bắt đầu phiêu lưu!</button> <button id="mback">Quay lại</button>`;
       card.querySelectorAll('[data-g]').forEach((b) => (b.onclick = () => { grade = Number(b.dataset.g); card.querySelectorAll('[data-g]').forEach((x) => x.classList.toggle('on', x === b)); $('mgo').disabled = false; }));

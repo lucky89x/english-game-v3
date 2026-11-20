@@ -16,7 +16,8 @@ function hullMaterial(color, thick) {
 /** Adds outlines to every mesh under root except those whose material name matches skip (the face decal). */
 export function addOutline(root, { color = 0x3a2010, thick = 0.012, skip = /Face|Eye|Brow|Mouth/i } = {}) {
   const mat = hullMaterial(color, thick), meshes = [];
-  root.traverse((m) => { if (m.isMesh && !m.userData.outline && !skip.test(m.material.name || '') && !skip.test(m.name)) meshes.push(m); });
+  const shown = (m) => { for (let o = m; o && o !== root; o = o.parent) if (!o.visible) return false; return true; };     // no hull for hidden spare pieces
+  root.traverse((m) => { if (m.isMesh && !m.userData.outline && shown(m) && !skip.test(m.material.name || '') && !skip.test(m.name)) meshes.push(m); });
   for (const m of meshes) {
     const o = m.isSkinnedMesh ? new THREE.SkinnedMesh(m.geometry, mat) : new THREE.Mesh(m.geometry, mat);
     if (m.isSkinnedMesh) o.bind(m.skeleton, m.bindMatrix);

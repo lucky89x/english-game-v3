@@ -13,6 +13,10 @@ SHOTS = {  # file: (target, view direction, distance, main colour, trim colour)
     "acc_bag_v01": ((0, .1, .68), (-.7, 1, .35), 2.0, "e3862a", "6a4428"),
     "acc_bracelet_v01": ((.3, 0, .6), (1, -.7, .2), 1.0, "8c64c2", "ffffff"),
     "acc_shoes_v01": ((0, -.02, .12), (.6, -1, .45), 1.4, "d33a3a", "ffffff"),
+    "acc_necklace_v01": ((0, -.05, .78), (.3, -1, .15), 1.2, "e2b04a", "e5487a"),
+    "acc_earrings_v01": ((.2, 0, 1.08), (1, -.8, .1), 1.2, "e2b04a", "5ac8ff"),
+    "acc_tiara_v01": ((0, 0, 1.3), (.4, -1, .45), 1.5, "e2b04a", "e5487a"),
+    "acc_hairclip_v01": ((.2, 0, 1.25), (1, -.6, .3), 1.3, "d8dde4", "f28ab3"),
 }
 
 

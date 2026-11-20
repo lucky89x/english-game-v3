@@ -144,7 +144,8 @@ def build_slime_king():
     white, black = mat("eye_white", "#FFFFFF", rough=.3), mat("eye_black", "#1B1B22", rough=.2)
     gold, gem = mat("gold", "#E2B04A", rough=.25, metal=.85), mat("gem_red", "#E0263A", rough=.1, emit=.6)
     H, W = 2.25, 2.5
-    arm = make_rig("slime_king", [("root", (0, 0, 0), None), ("body", (0, 0, .05), "root"), ("crown", (0, 0, H * .95), "body")])
+    arm = make_rig("slime_king", [("root", (0, 0, 0), None), ("body", (0, 0, .05), "root"), ("crown", (0, 0, H * .95), "body"),
+                                  ("fx", (0, -1.15, .95), "body")])
     s = len(OBJS)
     slime_body(H, W, body, light)
     lid = mat("slime_blue_light", "#A9D2FF")
@@ -165,7 +166,13 @@ def build_slime_king():
         ball(.05, (k * .3, -.31, zc + .08), gem, uv=(8, 5), scale=(1, .6, 1.1))
     tag("crown", s)
     slime_clips(arm, H, W, king=True)
-    finish("slime_king", arm, "boss_slime_king_v01", smooth=True)
+    # v02: Cast = swells up and breathes frost from the mouth (fx bone), Death = melts into a puddle
+    clip(arm, "Cast", 24, lambda t: {"body": (q((1, 0, 0), -.15 * bump(t, 0, 1)), None,
+                                              (1 + .12 * bump(t, 0, .5) - .05 * bump(t, .5, 1), 1 + .12 * bump(t, 0, .5), 1 + .1 * bump(t, 0, .5) - .1 * bump(t, .5, 1))),
+                                     "fx": (None, None, (1 + 1.5 * bump(t, .3, 1),) * 3)})
+    clip(arm, "Death", 29, lambda t: {"body": (None, None, (1 + .5 * ease(t), 1 + .5 * ease(t), max(.12, 1 - .88 * ease(t)))),
+                                      "crown": (q((0, 1, 0), .6 * ease(t)), (0.3 * ease(t), 0, -.2 * ease(t)), None)}, step=1)
+    finish("slime_king", arm, "boss_slime_king_v02", smooth=True)
 
 
 # ------------------------------------------------------------------ golems
@@ -179,6 +186,8 @@ def golem(name, fname, H, m, ancient=False):
     for sd, sn in ((1, "L"), (-1, "R")):
         bones += [("arm_" + sn, P(sd * .62, 0, 1.35), "chest"), ("fore_" + sn, P(sd * .7, 0, 1.0), "arm_" + sn),
                   ("leg_" + sn, P(sd * .22, 0, .62), "hips")]
+    if ancient:
+        bones.append(("fx", P(0, -1.0, .05), "root"))
     arm = make_rig(name, bones)
     seed = [0]
 
@@ -281,6 +290,21 @@ def golem(name, fname, H, m, ancient=False):
     clip(arm, "Walk", 32, walk)
     clip(arm, "Attack", 32, attack)
     clip(arm, "Hit", 14, hit)
+    if ancient:   # v02: Cast = both fists up, slam the ground (fx at the impact point); Death = topples backwards
+        def cast(t):
+            up = ease(t / .5) if t < .5 else 1 - ease((t - .5) / .15)
+            a = -2.6 * up if t < .65 else -1.1 * (1 - ease((t - .65) / .35))
+            if t >= .5 and t < .65:
+                a = -2.6 + 1.5 * ease((t - .5) / .15)
+            return {"arm_L": (arm_x(a), None, None), "arm_R": (arm_x(a), None, None),
+                    "chest": (q((1, 0, 0), .35 * bump(t, .5, 1)), None, None), "fx": (None, None, (1 + 2 * bump(t, .55, 1),) * 3)}
+
+        def death(t):
+            f = ease(t / .85)
+            return {"root": (q((1, 0, 0), -1.4 * f), (0, .3 * k * f, 0), None), "head": (q((0, 1, 0), .3 * f), None, None),
+                    "arm_L": (arm_x(-.8 * f), None, None), "arm_R": (arm_x(-.5 * f), None, None)}
+        clip(arm, "Cast", 24, cast, step=1)
+        clip(arm, "Death", 29, death, step=1)
     finish(name, arm, fname)
 
 
@@ -293,7 +317,7 @@ def build_golem():
 
 def build_golem_ancient():
     reset()
-    golem("golem_ancient", "boss_golem_ancient_v01", 3.2,
+    golem("golem_ancient", "boss_golem_ancient_v02", 3.2,
           dict(main=mat("rock_brown", "#7A5C44", rough=.95), dark=mat("rock_brown", "#7A5C44", rough=.95),
                moss=mat("rock_moss", "#6E8A58", rough=.95), glow=mat("rune_glow", "#5AF0E0", emit=4.0),
                vine=mat("vine_green", "#3F8A3A", rough=.8)), ancient=True)
@@ -446,7 +470,7 @@ def build_queen():
     lip = mat("lip_rose", "#C2416B", rough=.4)
     arm = make_rig("queen", [("root", (0, 0, 0), None), ("body", (0, 0, .1), "root"), ("torso", (0, 0, 1.4), "body"),
                              ("head", (0, 0, 1.95), "torso"), ("arm_L", (.3, 0, 1.82), "torso"), ("arm_R", (-.3, 0, 1.82), "torso"),
-                             ("spores", (0, 0, 1.2), "root")])
+                             ("spores", (0, 0, 1.2), "root"), ("fx", (0, -.35, 2.0), "head")])
     s = len(OBJS)   # layered gill skirt: three frilled tiers, pink over cream
     for i, (z0, z1, r0, r1, m) in enumerate(((0, .75, 1.05, .72, cap), (.55, 1.12, .86, .55, stem), (.95, 1.48, .66, .38, cap))):
         o = lathe([(r0 * .96, z0), (r0, z0 + .04), (r1, z1), (0, z1)], m, seg=28)
@@ -527,7 +551,15 @@ def build_queen():
     clip(arm, "Walk", 32, walk)
     clip(arm, "Attack", 36, attack)
     clip(arm, "Hit", 14, hit)
-    finish("mushroom_queen", arm, "boss_mushroom_queen_v01", smooth=True)
+    # v02: Cast = leans back, arms open, blows a cloud of spores forward; Death = wilts and sinks into her skirt
+    clip(arm, "Cast", 24, lambda t: {"head": (q((1, 0, 0), -.3 * bump(t, 0, .5) + .25 * bump(t, .4, 1)), None, None),
+                                     "arm_L": (side(1, 1.0 * bump(t, 0, 1)), None, None), "arm_R": (side(-1, 1.0 * bump(t, 0, 1)), None, None),
+                                     "spores": (None, (0, -.6 * bump(t, .4, 1), .5 * bump(t, .4, 1)), (max(.001, bump(t, .4, 1)),) * 3),
+                                     "fx": (None, None, (1 + 1.5 * bump(t, .4, 1),) * 3)})
+    clip(arm, "Death", 29, lambda t: {"torso": (q((1, 0, 0), .5 * ease(t)), (0, 0, -.5 * ease(t)), None),
+                                      "head": (q((0, 1, 0), .4 * ease(t)), None, None), "body": (None, None, (1 + .15 * ease(t), 1 + .15 * ease(t), max(.4, 1 - .6 * ease(t)))),
+                                      "spores": (None, None, TINY)}, step=1)
+    finish("mushroom_queen", arm, "boss_mushroom_queen_v02", smooth=True)
 
 
 BUILDERS = {"mob_slime_green": build_slime_green, "mob_slime_red": build_slime_red, "mob_golem_stone": build_golem,

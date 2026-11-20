@@ -13,9 +13,9 @@
   .card { background:var(--paper); border:3px solid var(--line); border-radius:16px; box-shadow:0 4px 0 rgba(74,42,16,.25); }
   #hud { position:fixed; left:14px; top:14px; padding:9px 12px 9px 10px; width:262px; background:linear-gradient(180deg,#fff8e6,#fbe9c4); border:2.5px solid #b07a3c; box-shadow:0 4px 0 #8a5a2a, 0 8px 18px rgba(60,30,0,.28); }
   #hud .top { display:flex; gap:10px; align-items:center; }
-  #hud .portrait { position:relative; width:64px; height:64px; flex:none; border-radius:50%; background:radial-gradient(circle at 50% 38%, #9c5730 0 62%, #5a2b14 100%); border:3px solid #e2b04a; box-shadow:0 0 0 2px #8a5a2a, inset 0 -6px 10px rgba(0,0,0,.25); }
-  #hud .portrait i { position:absolute; inset:5px; border-radius:50%; background:#f6c8a6 url(./assets/tex/ngoc_face_joy.png) 50% 44% / 150% no-repeat; }
-  #hud .portrait::before { content:''; position:absolute; left:3px; right:3px; top:9px; height:11px; border-radius:8px; background:#c9322c; z-index:1; box-shadow:0 2px 0 rgba(0,0,0,.18); }
+  #hud .portrait { position:relative; width:64px; height:64px; flex:none; border-radius:50%; background:radial-gradient(circle at 50% 38%, #9a4824 0 62%, #5a2410 100%); border:3px solid #e2b04a; box-shadow:0 0 0 2px #8a5a2a, inset 0 -6px 10px rgba(0,0,0,.25); }
+  #hud .portrait i { position:absolute; inset:5px; border-radius:50%; background:#fbc59d url(./assets/tex/ngoc_face_joy.png) 50% 44% / 150% no-repeat; }
+  #hud .portrait::before { content:''; position:absolute; left:3px; right:3px; top:9px; height:11px; border-radius:8px; background:#e3352a; z-index:1; box-shadow:0 2px 0 rgba(0,0,0,.18); }
   #hud .lv { position:absolute; right:-7px; bottom:-6px; z-index:2; min-width:26px; height:26px; padding:0 4px; border-radius:13px; background:linear-gradient(180deg,#ffd95a,#e89a1c); border:2px solid #8a5a2a; color:#4a2a10; font-weight:800; font-size:14px; line-height:22px; text-align:center; }
   #hud .who { flex:1; min-width:0; } #hud .who b { font-size:17px; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; } #hud .who small { font-size:11.5px; color:#8a6a48; display:block; margin:-1px 0 4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   #hud .bar { position:relative; height:13px; border-radius:7px; background:#6b4a2e; border:1.5px solid #5a3a1e; overflow:hidden; margin-top:3px; }
@@ -53,6 +53,7 @@
   button:hover, button:focus-visible { background:#ffd97a; outline:none; } button.on { background:var(--gold); color:#fff; }
   #menu { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(20,50,40,.55); }
   #menu .card { width:min(520px, calc(100vw - 32px)); padding:22px 26px; text-align:center; }
+  #menu .heroes img { display:block; width:100%; max-height:190px; object-fit:contain; margin:0 auto 6px; }
   #menu h1 { margin:0 0 4px; font-size:34px; color:#a0541a; } #menu h2 { margin:0 0 12px; font-size:17px; font-weight:700; }
   #menu input[type=text] { font:inherit; font-size:18px; width:100%; padding:8px 12px; border:3px solid var(--line); border-radius:12px; background:#fffaf0; margin:6px 0 10px; }
   #menu .list button { display:block; width:100%; margin:6px 0; font-size:18px; } #menu .grades { display:flex; gap:8px; justify-content:center; margin:6px 0 14px; }

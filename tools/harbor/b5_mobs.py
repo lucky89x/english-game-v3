@@ -58,7 +58,7 @@ def clip(arm, name, length, fn, step=2):
             qq, off, sc = pose.get(pb.name, (None, None, None))
             pb.rotation_quaternion = qq or Quaternion()
             pb.location = lw(off) if off else (0, 0, 0)
-            pb.scale = sc or (1, 1, 1)
+            pb.scale = (sc[0], sc[2], sc[1]) if sc else (1, 1, 1)     # world (x, y, z) -> bone frame (x, z, y)
             pb.keyframe_insert("rotation_quaternion", frame=f + 1)
             pb.keyframe_insert("location", frame=f + 1)
             pb.keyframe_insert("scale", frame=f + 1)
@@ -377,6 +377,7 @@ def build_octopus():
         paths.append((a, pts, rads))
         bones += [("tent_%d_1" % i, pts[0], "body"), ("tent_%d_2" % i, pts[1], "tent_%d_1" % i),
                   ("tent_%d_3" % i, pts[2], "tent_%d_2" % i)]
+    bones.append(("fx", (0, -1.35, 1.45), "body"))
     arm = make_rig("octopus", bones)
     s = len(OBJS)
     lathe([(0.0, 0.95), (0.85, 1.0), (1.05, 1.3), (1.15, 1.7)], skin, seg=18, scale=(1, 0.95, 1))
@@ -443,7 +444,31 @@ def build_octopus():
         return p
     clip(arm, "Idle", 48, idle)
     clip(arm, "Walk", 32, walk)
-    finish_rig("octopus_boss", arm, "harbor_boss_octopus_v01")
+
+    def bump(t, a, b):
+        return 0.0 if t <= a or t >= b else math.sin(math.pi * (t - a) / (b - a))
+
+    def cast(t):   # v02: rears up and squirts burning ink from the siphon (fx bone)
+        up = bump(t, 0, 1)
+        p = {"body": (q((1, 0, 0), -.25 * up), (0, 0, .25 * up), None), "head": (q((1, 0, 0), -.15 * up), None, None),
+             "fx": (None, None, (1 + 2 * bump(t, .35, 1),) * 3)}
+        for i, (a, pts, rads) in enumerate(paths):
+            ax = (-math.sin(a), math.cos(a), 0)
+            p["tent_%d_1" % i] = (q(ax, -.35 * up), None, None)
+        return p
+
+    def death(t):   # deflates and the tentacles go limp
+        f = min(1.0, t / .85)
+        f = f * f * (3 - 2 * f)
+        p = {"body": (None, (0, 0, -.5 * f), (1 + .2 * f, 1 + .2 * f, max(.45, 1 - .55 * f))), "head": (q((0, 1, 0), .35 * f), None, None)}
+        for i, (a, pts, rads) in enumerate(paths):
+            ax = (-math.sin(a), math.cos(a), 0)
+            for seg in range(3):
+                p["tent_%d_%d" % (i, seg + 1)] = (q(ax, .25 * f), None, None)
+        return p
+    clip(arm, "Cast", 24, cast, step=1)
+    clip(arm, "Death", 29, death, step=1)
+    finish_rig("octopus_boss", arm, "harbor_boss_octopus_v02")
 
 
 BUILDERS = {"harbor_mob_crab": build_crab, "harbor_mob_jellyfish": build_jellyfish,
