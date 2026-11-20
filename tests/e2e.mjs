@@ -308,8 +308,9 @@ await view(14, 14, -2.2, 0.4, 14); await wait(1500); await snap('04_village_brid
 await view(0, -12, 0.0, 0.3, 13); await wait(1500); await snap('05_village_hall');
 await view(38, 12, -0.6, 0.35, 13); await wait(1500); await snap('06_orchard');
 await ev((g) => __eq.teleport(g.x, g.z + 1.2), gate); await wait(450);
+console.log('gate state', JSON.stringify(await ev(() => ({ dialog: !!document.querySelector('#dialog:not(.hidden)'), prompt: document.getElementById('prompt').textContent, hp: __eq.profile.stats.hp, pos: __eq.player.pos.toArray().map((v) => +v.toFixed(1)), fishing: __eq.fishing.active, modal: __eq.ui.modal }))));
 await page.keyboard.press('KeyE');
-await page.waitForFunction(() => __eq.region === 'forest' && __eq.started, null, { timeout: 60000 });
+try { await page.waitForFunction(() => __eq.region === 'forest' && __eq.started, null, { timeout: 60000 }); } catch (e) { await page.screenshot({ path: '/tmp/e2e_gate_fail.png' }); console.log('gate fail', JSON.stringify(await ev(() => ({ region: __eq.region, started: __eq.started, prompt: document.getElementById('prompt').textContent, dialog: document.getElementById('dialog').className, errors: __eq.errors }))));  throw e; }
 check(true, 'E at the open gate travels to the Forest of Memories');
 await wait(1200); await snap('07_forest_gate');
 await view(-37, 9.5, -1.57, 0.3, 14); await wait(1200);            // cottage is right behind the camera direction
