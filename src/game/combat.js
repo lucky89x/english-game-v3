@@ -156,7 +156,7 @@ export class Wild {
    *  models are only fetched then. load(key) -> a loaded glTF ({ scene, animations }) or null. Falls back to plain blobs. */
   async addHarbor(load) {
     if (this.harbor) return; this.harbor = true;
-    const src = {}; for (const k of ['crab', 'jelly', 'pirate', 'octopus']) { try { src[k] = await load(k); } catch { src[k] = null; } }
+    const src = {}; for (const k of ['crab', 'jelly', 'pirate', 'octopus', 'gull']) { try { src[k] = await load(k); } catch { src[k] = null; } }
     const eye = new THREE.MeshBasicMaterial({ color: 0x24140c }), white = new THREE.MeshBasicMaterial({ color: 0xffffff });
     HARBOR_SPAWNS.forEach(([kind, x, z], n) => {
       const def = MONSTERS[kind], i = this.mobs.length, gl = src[def.model]; let g, body = null, parts = {}, top = 1.3;
@@ -177,7 +177,7 @@ export class Wild {
    *  load(kind) -> a loaded glTF or null; kinds are the monster keys (slime, red, golem, bat, shroom) and the boss ids (king, ancient, queen).
    *  The health bar, the word shield and the position stay; a model that did not load leaves the old shapes. */
   async addMap1(load) {
-    const src = {}; for (const k of ['slime', 'red', 'golem', 'bat', 'shroom', 'king', 'ancient', 'queen', 'goblin', 'imp', 'orc']) { try { src[k] = await load(k); } catch { src[k] = null; } }
+    const src = {}; for (const k of ['slime', 'red', 'golem', 'bat', 'shroom', 'king', 'ancient', 'queen', 'goblin', 'imp', 'orc', 'bunny', 'wisp', 'fox']) { try { src[k] = await load(k); } catch { src[k] = null; } }
     for (const m of this.mobs) {
       const gl = src[m.kind]; if (!gl || m.region === 'harbor' || m.mixer) continue;
       const keep = new Set([m.bar, m.back, m.shield]); for (const c of [...m.g.children]) if (!keep.has(c)) c.removeFromParent();
@@ -352,6 +352,6 @@ export class Wild {
       if (!h.active || h.got >= q.need) out.push({ x: at.x, z: at.z, text: '!', color: '#ffd23c' });
     }
     for (const b of this.bosses) if (b.g.visible && !b.dead && this.here(b, p)) out.push({ x: b.x, z: b.z, text: '♛', color: ({ boss1: '#8fd8ff', boss2: '#e0c890', boss3: '#f08ac0', boss4: '#d070e0' })[b.def.flag] });
-    return out.concat(this.mobs.filter((m) => !m.dead && !m.boss && this.here(m, p)).map((m) => ({ x: m.x, z: m.z, text: '', color: ({ golem: '#8a8490', red: '#ff6a5a', bat: '#9a7ad0', shroom: '#e2483e', crab: '#ff7a3c', jelly: '#b48ae8', pirate: '#3f6fd0', goblin: '#4f9ad0', imp: '#d8402e', orc: '#6fae3a' })[m.kind] || '#6ad05a', small: true })));
+    return out.concat(this.mobs.filter((m) => !m.dead && !m.boss && this.here(m, p)).map((m) => ({ x: m.x, z: m.z, text: '', color: ({ golem: '#8a8490', red: '#ff6a5a', bat: '#9a7ad0', shroom: '#e2483e', crab: '#ff7a3c', jelly: '#b48ae8', pirate: '#3f6fd0', goblin: '#4f9ad0', imp: '#d8402e', orc: '#6fae3a', bunny: '#bfe8ff', wisp: '#ffe14a', fox: '#ff8a3a', gull: '#c8d4e0' })[m.kind] || '#6ad05a', small: true })));
   }
 }

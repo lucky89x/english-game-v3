@@ -135,10 +135,10 @@ function prepModel(g) {
 }
 const gltf = (name) => { if (!modelCache.has(name)) modelCache.set(name, loader.loadAsync(`./assets/models/${name}.glb`).then(prepModel)); return modelCache.get(name); };
 /** Map 2 monsters (crab, jellyfish, pirate, Captain Octopus): fetched when the hero first sails to the harbor. */
-const SEA_FILES = { crab: 'harbor_mob_crab_v01', jelly: 'harbor_mob_jellyfish_v01', pirate: 'harbor_mob_pirate_v01', octopus: 'harbor_boss_octopus_v01' };
+const SEA_FILES = { crab: 'harbor_mob_crab_v01', jelly: 'harbor_mob_jellyfish_v01', pirate: 'harbor_mob_pirate_v01', octopus: 'harbor_boss_octopus_v02', gull: 'mob_gull_storm_v01' };
 const seaModel = (k) => gltf(SEA_FILES[k]).catch(() => null);
 /** Map 1 monsters and bosses (batch 13): swapped in by the Wild after the game has started. */
-const MAP1_FILES = { goblin: 'mob_goblin_frost_v01', imp: 'mob_imp_fire_v01', orc: 'mob_orc_gale_v01', slime: 'mob_slime_green_v01', red: 'mob_slime_red_v01', golem: 'mob_golem_stone_v01', bat: 'mob_bat_shadow_v01', shroom: 'mob_shroom_angry_v01', king: 'boss_slime_king_v01', ancient: 'boss_golem_ancient_v01', queen: 'boss_mushroom_queen_v01' };
+const MAP1_FILES = { goblin: 'mob_goblin_frost_v01', imp: 'mob_imp_fire_v01', orc: 'mob_orc_gale_v01', slime: 'mob_slime_green_v01', red: 'mob_slime_red_v01', golem: 'mob_golem_stone_v01', bat: 'mob_bat_shadow_v01', shroom: 'mob_shroom_angry_v01', king: 'boss_slime_king_v02', ancient: 'boss_golem_ancient_v02', queen: 'boss_mushroom_queen_v02', bunny: 'mob_bunny_ice_v01', wisp: 'mob_wisp_thunder_v01', fox: 'mob_fox_ember_v01' };
 const map1Model = (k) => gltf(MAP1_FILES[k]).catch(() => null);
 const staticModel = async (name) => (await gltf(name)).scene.clone(true);
 const animatedModel = async (name) => { const g = await gltf(name); return { scene: SkeletonUtils.clone(g.scene), animations: g.animations }; };

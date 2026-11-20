@@ -14,6 +14,11 @@ export const MONSTERS = {
   goblin: { el: 'ice', name: 'Frost Goblin', level: 5, hp: 110, atk: 12, exp: 40, gold: 10, speed: 2.4, color: 0x4f9ad0, size: 1.0, model: 'goblin', fit: 1.35 },
   imp: { el: 'fire', name: 'Ember Imp', level: 9, hp: 210, atk: 19, exp: 80, gold: 16, speed: 2.7, color: 0xd8402e, size: 1.0, model: 'imp', fit: 1.45 },
   orc: { el: 'wind', name: 'Gale Orc', level: 15, hp: 420, atk: 28, exp: 130, gold: 22, speed: 2.1, color: 0x6fae3a, size: 1.15, model: 'orc', fit: 1.6 },
+  // (20/11) lô 22: bunny (Quaternius), wisp / fox / gull (Blender, real size in the file; the wisp and the gull float on their own)
+  bunny: { el: 'ice', name: 'Frost Bunny', level: 2, hp: 50, atk: 8, exp: 16, gold: 4, speed: 2.6, color: 0xbfe8ff, size: 1.0, model: 'bunny', fit: 0.85 },
+  wisp: { el: 'thunder', name: 'Storm Wisp', level: 12, hp: 230, atk: 23, exp: 85, gold: 14, speed: 2.8, color: 0xffe14a, size: 1.0, fly: true, hover: 0.05, model: 'wisp', fit: 1.3 },
+  fox: { el: 'fire', name: 'Ember Fox', level: 13, hp: 270, atk: 25, exp: 95, gold: 15, speed: 3.0, color: 0xff8a3a, size: 1.0, model: 'fox', fit: 1.0 },
+  gull: { el: 'wind', name: 'Storm Gull', level: 23, hp: 320, atk: 36, exp: 140, gold: 25, speed: 3.0, color: 0xc8d4e0, size: 1.0, fly: true, hover: 0.05, model: 'gull', fit: 1.2 },
   // Map 2 (Sunny Harbor, levels 21-30): the Blender models in assets/models/harbor_mob_*; `fit` scales the model, `model` names it
   crab: { el: 'ice', name: 'Beach Crab', level: 21, hp: 300, atk: 34, exp: 130, gold: 24, speed: 2.3, color: 0xe2483e, size: 1.0, model: 'crab', fit: 1.0 },
   jelly: { el: 'thunder', name: 'Glow Jellyfish', level: 24, hp: 340, atk: 38, exp: 150, gold: 26, speed: 1.9, color: 0xb48ae8, size: 1.0, fly: true, model: 'jelly', fit: 1.2 },
@@ -23,18 +28,21 @@ export const MONSTERS = {
 export const FOREST_SPAWNS = [
   ['bat', -25, -43], ['bat', 35, -34], ['bat', -16, -31], ['bat', 38, -19], ['bat', -46, -4],
   ['shroom', 14, -7], ['shroom', -19, 14], ['shroom', 17, 26], ['shroom', -40, 26], ['shroom', 2, 20],
-  ['orc', 18, -10], ['orc', 21, 22], ['orc', 6, 16],      // (20/11) Gale Orcs, wind
+  ['orc', 18, -10], ['orc', 21, 22], ['orc', 6, 16],
+  ['wisp', -30, -22], ['wisp', 26, -26], ['wisp', -8, 22], ['fox', 28, 4], ['fox', -33, 8], ['fox', 10, -36],      // (20/11) lô 22: Storm Wisps (thunder) and Ember Foxes (fire)      // (20/11) Gale Orcs, wind
 ];
 /** Map 2 monsters in Sunny Harbor: crabs on the south beach, jellyfish along the north shore, little pirates round the lighthouse point. */
 export const HARBOR_SPAWNS = [
   ['crab', 9, 41], ['crab', 17, 45], ['crab', 7, 51], ['crab', 21, 48], ['crab', 12, 57],
   ['jelly', 8, -19], ['jelly', 15, -28], ['jelly', 22, -34], ['jelly', 38, -36],
   ['pirate', 32, -29], ['pirate', 14, -40], ['pirate', 40, -40], ['pirate', 12, -46], ['pirate', 26, -37],
+  ['gull', 12, -24], ['gull', 18, -31], ['gull', 30, -33],      // (20/11) Storm Gulls over the north shore
 ];
 /** Where monsters live in the Starter Village region: [kind, x, z]. The Wild Meadow is north-east, golems guard the south-east. */
 export const SPAWNS = [
   ['slime', 36, -14], ['slime', 32, -24], ['slime', 38, -30], ['slime', 34, -8], ['slime', 48, -26],
   ['red', 44, -36], ['red', 50, -16], ['red', 30, -38], ['golem', 52, 30], ['golem', 38, 48],
+  ['bunny', 28, -18], ['bunny', 30, -32], ['bunny', 40, -4],      // (20/11) lô 22: Frost Bunnies near the meadow gate
   ['goblin', 40, -18], ['goblin', 42, -28], ['goblin', 44, -10], ['imp', 48, 26], ['imp', 42, 44], ['imp', 46, 34],      // (20/11) Frost Goblins (ice) in the meadow, Ember Imps (fire) in the golem fields
 ];
 /** The hero's attack: grows with the level, weapon adds on top. */
@@ -194,6 +202,8 @@ export const FOREST_HUNTS = [
   { kind: 'shroom', need: 2, gold: 55, exp: 200, en: { easy: 'Two angry mushrooms are near the camp. Please stop them!', hard: "Two angry mushrooms have been stamping around the camp. Would you mind stopping them?" } },
   { kind: 'bat', need: 5, gold: 65, exp: 260, en: { easy: 'More bats are here tonight. Can you defeat five?', hard: "The bats have come back in a big group. Could you defeat five of them?" } },
   { kind: 'shroom', need: 4, gold: 90, exp: 360, en: { easy: 'Four angry mushrooms are in the forest. Be brave!', hard: "Four angry mushrooms are hiding among the trees. You'll need to be brave!" } },
+  { kind: 'wisp', need: 3, gold: 80, exp: 300, en: { easy: 'Storm wisps are flickering over the trees. Please chase away three!', hard: "Three storm wisps keep flickering over the trees and frightening the deer. Could you chase them away? Wind slows them down!" } },
+  { kind: 'fox', need: 3, gold: 90, exp: 340, en: { easy: 'Ember foxes are running through the camp. Please stop three!', hard: "Some ember foxes keep running through the camp and singeing our blankets. Would you stop three of them? Ice cools them down!" } },
   { kind: 'orc', need: 3, gold: 100, exp: 420, en: { easy: 'Gale orcs are blowing down our tents. Please stop three!', hard: "Three gale orcs keep blowing our tents down at night. Could you stop them? Thunder beats wind!" } },
 ];
 /** Map 2 (Sunny Harbor) board: crabs, jellyfish and pirates (18/11). */
@@ -202,6 +212,7 @@ export const HARBOR_HUNTS = [
   { kind: 'jelly', need: 3, gold: 90, exp: 420, en: { easy: 'Purple jellyfish are floating near the rocks. Please stop three!', hard: "Glowing jellyfish are drifting near the rocks and scaring the swimmers. Would you mind stopping three of them?" } },
   { kind: 'pirate', need: 2, gold: 120, exp: 560, en: { easy: 'Two little pirates are stealing fish by the lighthouse!', hard: "Two little pirates have been stealing fish near the lighthouse. Please put a stop to it!" } },
   { kind: 'crab', need: 5, gold: 130, exp: 650, en: { easy: 'More crabs came with the tide. Can you defeat five?', hard: "The tide has brought a big group of crabs onto the beach. Could you defeat five of them?" } },
+  { kind: 'gull', need: 3, gold: 140, exp: 700, en: { easy: 'Storm gulls are stealing our fish! Please chase away three.', hard: "Three storm gulls keep diving down and stealing the fishermen's lunch. Could you chase them away? Thunder works well on them!" } },
   { kind: 'pirate', need: 4, gold: 190, exp: 900, en: { easy: 'Four pirates are hiding near the rocks. Be brave!', hard: "Four pirates are hiding among the rocks. You'll need to be brave!" } },
 ];
 export const huntsOf = (region) => (region === 'forest' ? FOREST_HUNTS : region === 'harbor' ? HARBOR_HUNTS : HUNTS);
