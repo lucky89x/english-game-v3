@@ -57,3 +57,5 @@ Lệnh chung: `OUT=<thư mục> blender -b -P <script>` (tùy chọn `ONLY=tên,
 ## Đồ rừng lô 18 (tự dựng): `for_*_v01.glb` — `tools/forest/build_forest.py`.
 
 ## Vũ khí/giáp/bùa theo hệ lô 20 (tự dựng): `weapon_*`, `armor_*`, `acc_amulet_*` — `tools/gear/build_gear2.py`; ảnh `assets/ui/item_*.png` — `tools/sprites/icons.py`.
+
+## Hiệu ứng phép lô 21 (tự dựng): `fx_*_v01.glb` — `tools/fx/build_fx.py`; biểu tượng `assets/ui/skill_*.png` — `tools/fx/skill_icons.py`.
