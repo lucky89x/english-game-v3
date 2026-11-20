@@ -226,7 +226,7 @@ check(await ev(() => __eq.arcade.game.title.includes('Slingshot') && __eq.arcade
 await snap('03h_slingshot'); await page.keyboard.press('Escape'); await wait(300);
 check(await ev(() => !__eq.arcade.open && __eq.mini.data.best.sling === undefined), 'Esc quits a board game with no reward');
 // falling blocks: real arrow keys
-await ev(() => __eq.teleport(-30.4, 5.1)); await wait(450); await page.keyboard.press('KeyE'); await wait(800);
+await ev(() => __eq.teleport(-30.4, 5.1)); await wait(450); await page.keyboard.press('KeyE'); await wait(800); await answerGate(); await wait(600);      // (20/11) four words before Blocks too
 const bk0 = await ev(() => JSON.stringify(__eq.arcade.game.piece));
 await page.keyboard.press('ArrowLeft'); await wait(200); await page.keyboard.press('ArrowUp'); await wait(200);
 check(await ev((p0) => JSON.stringify(__eq.arcade.game.piece) !== p0, bk0), 'Falling Blocks: arrow keys move and turn the piece');
