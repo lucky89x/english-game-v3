@@ -12,6 +12,12 @@ export const FISH = [
   { id: 'swordfish', en: 'swordfish', vi: 'cá kiếm', r: 2, price: 35, icon: '🐟' }, { id: 'starfish', en: 'starfish', vi: 'sao biển', r: 2, price: 28, icon: '⭐' },
   { id: 'dolphin', en: 'dolphin', vi: 'cá heo', r: 3, price: 80, icon: '🐬' }, { id: 'turtle', en: 'sea turtle', vi: 'rùa biển', r: 3, price: 90, icon: '🐢' },
 ];
+/** River fish of the village dock (Map 1): paid in gold on the spot (there is no fish market in the village). */
+export const RIVER = [
+  { id: 'minnow', en: 'minnow', vi: 'cá nhỏ', r: 0, price: 2, icon: '🐟' }, { id: 'carp', en: 'carp', vi: 'cá chép', r: 0, price: 3, icon: '🐟' },
+  { id: 'trout', en: 'trout', vi: 'cá hồi suối', r: 1, price: 6, icon: '🐠' }, { id: 'catfish', en: 'catfish', vi: 'cá trê', r: 1, price: 8, icon: '🐟' },
+  { id: 'eel', en: 'eel', vi: 'con lươn', r: 2, price: 15, icon: '🐍' }, { id: 'golden_carp', en: 'golden carp', vi: 'cá chép vàng', r: 3, price: 40, icon: '🐠' },
+];
 /** Things the line brings up besides fish. They sell for pennies and are not in the Dex. */
 export const JUNK = [
   { id: 'boot', en: 'old boot', vi: 'chiếc giày cũ', price: 1, icon: '👢', junk: true }, { id: 'seaweed', en: 'seaweed', vi: 'rong biển', price: 2, icon: '🌿', junk: true },
@@ -36,6 +42,10 @@ export function rollFish(rnd = Math.random, tier = 1) {
   const k = rnd(), w = [0.6 - 0.04 * tier, 0.26, 0.11 + 0.02 * tier, 0.03 + 0.02 * tier];
   let r = 0, acc = 0; for (let i = 0; i < 4; i++) { acc += w[i]; if (k < acc) { r = i; break; } r = i; }
   const pool = FISH.filter((f) => f.r === r); return pool[Math.floor(rnd() * pool.length)];
+}
+export function rollRiver(rnd = Math.random, tier = 1) {
+  if (rnd() < 0.14) return JUNK[Math.floor(rnd() * JUNK.length)];
+  const k = rnd(), r = k < 0.55 ? 0 : k < 0.85 ? 1 : k < 0.85 + 0.1 + 0.01 * tier ? 2 : 3, pool = RIVER.filter((f) => f.r === r); return pool[Math.floor(rnd() * pool.length)];
 }
 export const dex = (p) => p.dex || (p.dex = {});
 export const dexCount = (p) => Object.keys(dex(p)).length;

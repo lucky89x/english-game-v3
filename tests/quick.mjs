@@ -232,9 +232,14 @@ await run('extras', async () => {        // the sea extras (19/11): fishing, Sea
   await ev(() => { __eq.wild.mobs.forEach((m) => { m.dead = 999; m.g.visible = false; }); __eq.teleport(33.2, 28); }); await wait(700);
   check((await page.textContent('#prompt')).includes('Câu cá'), 'The end of the fishing pier offers fishing');
   await page.keyboard.press('KeyE'); await wait(500);
-  check(await ev(() => __eq.arcade.open && __eq.arcade.game.title.includes('Fishing')), 'E starts the fishing game');
+  check(await ev(() => __eq.fishing.active && __eq.fishing.state === 'wait'), 'E puts the rod in hand: the float is in the water and the hero waits');
+  await ev(() => { const f = __eq.fishing; f.biteAt = 0; f.hold = true; }); await page.waitForFunction(() => __eq.fishing.state === 'bite', null, { timeout: 180000 });
+  check((await page.textContent('#fishhud')).includes('BITE'), 'A bite shows BITE and the sliding bar');
+  const fish0 = await ev(() => Object.values(__eq.profile.fish || {}).reduce((a, b) => a + b, 0)); await wait(500); await page.keyboard.press('KeyE'); await wait(400);
+  check(await ev((n) => Object.values(__eq.profile.fish || {}).reduce((a, b) => a + b, 0) === n + 1, fish0), 'The mark in the green zone lands the catch in the bucket');
   await page.keyboard.press('Escape'); await wait(300);
-  await ev(() => __eq.catchFish(['sardine', 'dolphin', 'boot']));
+  check(await ev(() => !__eq.fishing.active), 'Esc puts the rod away');
+  await ev(() => { __eq.profile.fish = {}; __eq.profile.dex = {}; __eq.catchFish(['sardine', 'dolphin', 'boot']); });
   check(await ev(() => { const d = __eq.profile.dex; return !!d.sardine && !!d.dolphin && !d.boot && __eq.profile.fish.boot === 1 && __eq.profile.fish.sardine === 1; }), 'Catches fill the bucket; only creatures enter the Sea Dex');
   await page.keyboard.press('KeyG'); await wait(400);
   check(await page.isVisible('#dexwin') && (await page.textContent('#dexwin')).includes('sardine') && (await page.textContent('#dexwin')).includes('dolphin'), 'G opens the Sea Dex with the found creatures');
@@ -244,7 +249,7 @@ await run('extras', async () => {        // the sea extras (19/11): fishing, Sea
   const g0 = await ev(() => __eq.profile.stats.gold); await page.keyboard.press('KeyE'); await wait(400); await closeDialogs();
   check(await ev((g) => __eq.profile.stats.gold > g && Object.keys(__eq.profile.fish).length === 0, g0), 'Selling pays gold and empties the bucket');
   await ev(() => __eq.gainItems([{ kind: 'hat', color: 'pink' }, { kind: 'shoes', color: 'blue' }])); await closeDialogs();
-  await page.keyboard.press('KeyV'); await wait(400);
+  await page.keyboard.press('KeyU'); await wait(400);
   check(await page.isVisible('#wardwin') && (await page.textContent('#wardwin')).includes('pink hat'), 'V opens the wardrobe with the won pieces');
   await page.click('#wardwin [data-a="wear"][data-v="hat:pink"]'); await wait(300);
   check(await ev(() => __eq.profile.wardrobe.worn.head === 'hat:pink' && __eq.player.root.getObjectByProperty('isMesh', true) !== undefined), 'Clicking a piece wears it');

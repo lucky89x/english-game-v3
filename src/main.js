@@ -59,6 +59,7 @@ import { Walkers } from './game/walkers.js';
 import { ShopWindow } from './ui/shop.js';
 import { ITEMS, bag, wear, buy, eat, shopList, pay, map2Ready, map3Ready, playerAtk, useQuick } from './core/rules.js';
 import { PackUI } from './ui/pack.js';
+import { Fishing } from './game/fishing.js';
 import { payNote } from './game/minigames.js';
 import { SAM_LINES, BRIDGE, BRIDGE_SPOTS, FRIENDS, OPENING } from './game/content.js';
 import { UI } from './ui/ui.js';
@@ -149,7 +150,7 @@ const ui = new UI(), store = Save.load();
 let profile = null, quest = null, story = null, world = null, player = null, cam = null, tom = null, sam = null, ben = null, pip = null, crystals = null, minimap = null, letterProp = null, itemProps = {}, friends = [], mini = null, wild = null, arcade = null, chests = null, spots = null, unitCards = [], cardOfFn = () => null;
 let shopWin = null, walkers = null, talkW = -1, touch = null, quality = localStorage.getItem('eq-quality') || 'medium', perfOn = false, started = false, switching = false, wordIds = {}, jarKey = '';
 const keys = new Set();
-const game = { errors, get tom() { return tom; }, get profile() { return profile; }, get quest() { return quest; }, get story() { return story; }, get player() { return player; }, get cam() { return cam; }, get minimap() { return minimap; }, ui, L, stats: { fps: 0, ms: 0, calls: 0, tris: 0 },
+const game = { errors, get tom() { return tom; }, get fishing() { return fishing; }, get profile() { return profile; }, get quest() { return quest; }, get story() { return story; }, get player() { return player; }, get cam() { return cam; }, get minimap() { return minimap; }, ui, L, stats: { fps: 0, ms: 0, calls: 0, tris: 0 },
   teleport(x, z) { player.place(x, z); cam.target.set(x, player.pos.y + 1.25, z); }, applyLook, syncPet, get digs() { return digMeshes; }, catchFish, gainItems, cardsOfUnit: (n) => cardsOfUnit(n), get pet() { return petObj; }, get petPanel() { return petPanel; },  setQuality, key: (code) => onKey({ code, preventDefault() {} }), get started() { return started && !switching; }, get region() { return L.NAME; }, chooseProfile, enterRegion, MARKET_JARS, BRIDGE_SPOTS, get mini() { return mini; }, get wild() { return wild; }, get scene() { return scene; }, openShop, get sword() { return swordMesh; }, get armor() { return armorShown; }, setWear, openBag: () => openBag(), get arcade() { return arcade; }, get chests() { return chests; }, get spots() { return spots; }, get admin() { return admin; }, get friends() { return friends; }, get walkers() { return walkers; }, get shopWin() { return shopWin; }, get music() { return music; }, get journal() { return journal; }, get spells() { return spells; }, get floaters() { return floaters; }, get skillUI() { return skillUI; }, get intro() { return intro; }, cardOf: (id) => cardOfFn(id), pause: (on) => renderer.setAnimationLoop(on ? null : frame),      // tests: stop drawing while another page is checked
   post, refresh: () => refresh(), refreshGear: () => { setSword(); setWear(); } };
 globalThis.__eq = game;
@@ -367,6 +368,11 @@ function swimHud() {
   swimBar.style.display = deep ? 'block' : 'none';
   if (deep) { $('swimtxt').textContent = '🏊 Bấm chuột liên tục để bơi!'; $('swimfill').style.width = Math.max(0, Math.round(s.breath * 100)) + '%'; }
 }
+/** A fish on the line (20/11, in-world fishing): the harbor sends it to the bucket and the Sea Dex, the village dock pays on the spot. Returns a short note. */
+function onFishCaught(item) {
+  if (L.NAME === 'harbor' || L.NAME === 'isle') { catchFish([item.id]); return item.junk ? '' : 'vào xô cá (bán ở chợ cá)'; }
+  profile.stats.gold += item.price; if (!item.junk) { Save.addExp(profile, 3 + (item.r || 0) * 4); track('sea_fish'); } track('mini'); save(); refresh(); return `+${item.price} vàng`;
+}
 /** Keys 5-8 and the potion slots: drinks or eats what is in the quick slot. */
 function usePotion(i) {
   const r = useQuick(profile, i, Save.maxHp(profile));
@@ -382,6 +388,7 @@ function nearestWalkable(x, z) {
 /** Loads another region: swaps map data, rebuilds the scenery, moves everyone. at = [x, z] or the region's spawn. */
 async function enterRegion(name, at) {
   switching = true; ui.prompt('');
+  if (fishing) fishing.stop();
   if (story) story.leaveMarket();
   L.setRegion(name);
   for (const m of digMeshes.splice(0)) m.removeFromParent(); digMixers.length = 0; if (spells) spells.clear();
@@ -434,6 +441,7 @@ canvas.addEventListener('pointerdown', (e) => { if (e.button === 0 && e.pointerT
 canvas.addEventListener('pointerup', (e) => {
   const c = clickAt; clickAt = null;
   if (!c || e.button !== 0 || !started || switching || ui.modal || (arcade && arcade.open) || (shopWin && shopWin.open)) return;
+  if (fishing && fishing.active) { if (Math.hypot(e.clientX - c.x, e.clientY - c.y) <= 6) fishing.act(); return; }      // a click pulls the rod
   if (Math.hypot(e.clientX - c.x, e.clientY - c.y) > 6) return;          // the mouse moved: that was a camera drag
   const r = canvas.getBoundingClientRect(), ndc = new THREE.Vector2(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
   const ray = new THREE.Raycaster(); ray.setFromCamera(ndc, camera);
@@ -468,7 +476,7 @@ const HALL_DOOR = { x: 0, z: -16.4 }, LILY_DOOR = { x: -17.4, z: -4 };
 const VILLAGE_DOCK = [L.REGIONS.village.riverX(18) - 6.8, 18.6];      // (20/11) was -5.2: that spot is in the river (not walkable), so arriving from the harbor left the hero sinking and stuck
 const homesItems = (p) => (p.home && p.home.items) || [];
 // ---------------------------------------------------------------- the sea extras (19/11): fishing, Sea Dex, fish market
-let packUI = null, dexPanel = null, wardPanel = null, creator = null, tailor = null, spells = null, skillUI = null, floaters = null, petPanel = null, petObj = null, trPanel = null, toolbar = null;
+let fishing = null, packUI = null, dexPanel = null, wardPanel = null, creator = null, tailor = null, spells = null, skillUI = null, floaters = null, petPanel = null, petObj = null, trPanel = null, toolbar = null;
 let digMeshes = [], digMixers = [];
 const seaOpen = () => !!(profile && (profile.flags.map2 || profile.admin));
 /** The pet of this profile (if any) shows in the world; its hunger is brought up to date. */
@@ -919,6 +927,7 @@ function owlReview() {
 }
 const near = (x, z, r) => Math.hypot(player.pos.x - x, player.pos.z - z) < r;
 function interactTarget() {
+  if (fishing) { const f = fishing.interact(player.pos); if (f && (fishing.active || !(arcade && arcade.open))) return f; }      // (20/11) fishing spots and the rod in hand
   const p = player.pos;
   for (const ex of L.EXITS) if (near(ex.x, ex.z, ex.r)) {
     if (ex.flag && !profile.flags[ex.flag]) return { text: 'Cổng rừng còn khóa. Hãy giúp Tom và Ben trước.', run() {} };
@@ -935,7 +944,6 @@ function interactTarget() {
     if (near(H.cafe.door[0] + 1, H.cafe.door[1], 2.0)) return { text: 'E · Seaside Café: trò nấu ăn với đầu bếp Leo', run: () => { const t = tierOf(profile.stats.level); arcade.start(withTier(cafeGame(Math.random, t), t)); } };
     if (near(H.salon.door[0], H.salon.door[1] + 1, 2.0)) return { text: 'E · Beauty Salon: trò làm đẹp với chị Ruby', run: () => { const t = tierOf(profile.stats.level); arcade.start(withTier(salonGame(Math.random, t), t)); } };
     if (near(H.isle.x, H.isle.z, 2.3)) return { text: 'E · Đi thuyền tới Đảo Kho Báu', run: () => enterRegion('isle') };
-    if (near(H.fishing.x, H.fishing.z, 2.4)) return { text: 'E · Câu cá (5 lần thả câu)', run: () => { const t = tierOf(profile.stats.level); arcade.start(withTier(fishGame(Math.random, t), t)); } };
     if (near(H.market.x, H.market.z - 1.2, 3.4)) { const n = Sea.bucketCount(profile); return { text: n ? `E · Bán ${n} món trong xô cá ở chợ cá` : 'E · Chợ cá (xô cá đang trống)', run: sellFish }; }
     if (near(H.shop.x + 1.6, H.shop.z + 0.6, 2.4)) return { text: "E · Quầy của Willow (đồ Map 2)", run: () => { enterRoom('forest'); shopWin.show("Willow's Harbor Stall", ['forest']); } };
     if (near(sam.x, sam.z, 3)) return { text: 'E · Nói chuyện với Sam', run: () => ui.dialogue([{ who: 'Sam', en: 'Welcome to Sunny Harbor! The sea is big and blue.', vi: 'Chào mừng tới Cảng Mặt Trời (Map 2)! Ghé Style Boutique bên trái quảng trường nhé.' }]) };
@@ -1017,6 +1025,7 @@ function onKey(e) {
   if (intro && intro.active) { if (e.code === 'KeyE' || e.code === 'Space' || e.code === 'Escape') endIntro(); e.preventDefault(); return; }
   if (e.code === 'F3') { perfOn = !perfOn; $('perf').classList.toggle('hidden', !perfOn); e.preventDefault(); return; }
   if (admin && admin.key(e.code)) { e.preventDefault(); return; }
+  if (fishing && fishing.active && !ui.modal && fishing.key(e.code)) { e.preventDefault(); return; }      // (20/11) E / Space / Esc with the rod in hand
   if (ui.key(e)) { e.preventDefault(); return; }
   if (ui.modal) return;
   if (e.code === 'KeyE') { const t = interactTarget(); if (t) t.run(); }
@@ -1057,6 +1066,7 @@ async function boot() {
   player = new Player(ngoc, { blink, talk, joy }); player.firstFaces = { ...player.faceMaps }; scene.add(player.root);
   player.swimBlock = (x, z, from) => L.NAME === 'village' && profile && !profile.flags.bridge_fixed && (x < L.riverX(z)) !== (from.x < L.riverX(z));      // the far bank stays closed until the bridge is mended
   player.onSwim = onSwim;
+  fishing = new Fishing({ scene, player, ui, sfx, profile: () => profile, tier: () => tierOf(profile.stats.level), speak: (en) => speak(en, true, 0.85), onCatch: onFishCaught });
   tom = new Npc(tomG, 2.6, 7.6, -0.4); sam = new Npc(samG, 14, 17, 1.2); ben = new Npc(benG, -9.9, 19.5, Math.PI / 2); scene.add(tom.root, sam.root, ben.root);
   pip = new Pip(pipG.scene); scene.add(pip.root);
   const usedFiles = new Set();      // two friends may share a model file (Mia uses Rose's): the second gets its own copy
@@ -1160,7 +1170,7 @@ const AUTO = !navigator.webdriver && !localStorage.getItem('eq-quality-manual');
 function frame() {
   const now = performance.now(), raw = (now - last) / 1000, real = Math.min(0.25, raw); last = now;
   const dt = Math.min(0.05, real); TIME.value += real; const t = TIME.value;
-  const frozen = ui.modal || !started || (arcade && arcade.open) || (shopWin && shopWin.open) || (packUI && packUI.open) || (music && music.open) || (journal && journal.open) || (homePanel && homePanel.open) || (dexPanel && dexPanel.open) || (wardPanel && wardPanel.open) || (creator && creator.open) || (tailor && tailor.open) || (skillUI && skillUI.open) || (petPanel && petPanel.open) || (trPanel && trPanel.open);
+  const frozen = ui.modal || !started || (arcade && arcade.open) || (shopWin && shopWin.open) || (packUI && packUI.open) || (fishing && fishing.active) || (music && music.open) || (journal && journal.open) || (homePanel && homePanel.open) || (dexPanel && dexPanel.open) || (wardPanel && wardPanel.open) || (creator && creator.open) || (tailor && tailor.open) || (skillUI && skillUI.open) || (petPanel && petPanel.open) || (trPanel && trPanel.open);
   if (arcade) arcade.update(real, keys);
   if (touch) touch.update();
   releaseSoftKeys();
@@ -1172,7 +1182,7 @@ function frame() {
   else for (let left = real; left > 1e-4; left -= 0.05) player.update(Math.min(0.05, left), input, cam.yaw, frozen, sfx);
   if (hadRoute && !player.route) minimap.clearRoute();
   if (walkMark && walkMark.visible) { walkMark.userData.t += real; walkMark.scale.setScalar(1 + Math.sin(walkMark.userData.t * 6) * 0.15); if (!player.route) walkMark.visible = false; }
-  cam.update(real, player.pos); guideArrow(real); swimHud();
+  cam.update(real, player.pos); guideArrow(real); swimHud(); if (fishing) fishing.update(real, performance.now() / 1000);
   const talkingTo = ui.busy && ui.pages ? ui.pages[0].who : '';
   tom.update(dt, player.pos, talkingTo === 'Tom'); sam.update(dt, player.pos, talkingTo === 'Sam'); ben.update(dt, player.pos, talkingTo === 'Ben');
   for (const f of friends) f.npc.update(dt, player.pos, talkingTo === f.who);

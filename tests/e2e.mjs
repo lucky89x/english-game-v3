@@ -159,13 +159,14 @@ await ev((p) => __eq.teleport(p[0], p[1]), MG.stars[0]); await wait(500);
 check(await ev((g) => __eq.mini.data.stars.length === 1 && __eq.profile.stats.gold === g + 3, gold0) && (await page.textContent('#hud')).includes('★ 1/12'), 'Walking into a hidden star collects it (HUD shows ★ 1/12)');
 await closeDialog();
 await ev(() => __eq.teleport(18.6, 19.8)); await wait(450); await page.keyboard.press('KeyE'); await wait(300);
-check(await ev(() => __eq.mini.active && __eq.mini.active.id === 'fish') && (await page.textContent('#clue')).includes('◆'), 'Fishing starts: moving marker on the bar');
-for (let c = 0; c < 5; c++) {      // software GL (~1 fps) cannot time a rhythm game: hold the marker inside the zone, then press a real E
-  await ev(() => { const a = __eq.mini.active; if (a) { a.hold = true; a.pos = a.centre; } }); await wait(150);
+check(await ev(() => __eq.fishing.active && __eq.fishing.state === 'wait'), 'Fishing starts: the rod is in hand and the hero waits for a bite');
+for (let c = 0; c < 3; c++) {      // software GL (~1 fps) cannot time a rhythm game: hold the marker inside the zone, then press a real E
+  await ev(() => { const f = __eq.fishing; f.biteAt = 0; f.hold = true; }); await page.waitForFunction(() => __eq.fishing.state === 'bite', null, { timeout: 180000 }); await wait(500);
   if (c === 0) await snap('03c_fishing');
-  await page.keyboard.press('KeyE'); await page.waitForFunction(() => { const a = __eq.mini.active; return !a || a.wait <= 0; }, null, { timeout: 180000 });
+  await page.keyboard.press('KeyE'); await wait(300); await page.waitForFunction(() => __eq.fishing.state === 'wait', null, { timeout: 180000 });
 }
-check(await ev(() => !__eq.mini.active && __eq.mini.data.best.fish >= 1), 'Five casts with real E: fish caught, best score saved');
+check(await ev((g) => __eq.profile.stats.gold > g, gold0), 'Three real-E catches at the dock pay gold');
+await page.keyboard.press('Escape'); await wait(300);
 for (let k = 0; k < 3 && await page.isVisible('#dialog'); k++) { await page.keyboard.press('KeyE'); await wait(200); }
 await ev(() => __eq.teleport(34, 6.6)); await wait(450); await page.keyboard.press('KeyE'); await wait(300);
 check(await ev(() => __eq.mini.active && __eq.mini.active.id === 'apple'), 'Apple catch starts in the orchard');
