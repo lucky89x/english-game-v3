@@ -88,4 +88,6 @@ export default makeRegion({
     { x: SOUTH.fire[0], z: SOUTH.fire[1], r: 1.7 * FIRE_SCALE }, ...SOUTH.dummies.map(([x, z]) => ({ x, z, r: 0.45 })),
   ],
 });
+/** (20/11) orchard trees are taller (4.6 m trunk and crown 2.4 m): apples fall from the crown, about 5.9 m up, slowly. */
+export const ORCHARD_H = 4.6, ORCHARD_R = 2.4, ORCHARD_CROWN = ORCHARD_H + ORCHARD_R * 0.55;
 export const ORCHARD_TREES = [[36, 0], [42, 3], [46, 9], [38, 20], [45, 18], [34, 13]];

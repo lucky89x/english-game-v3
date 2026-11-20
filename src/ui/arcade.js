@@ -93,10 +93,21 @@ export function candyGame(rnd = Math.random, tier = 1) {
       if (g.swap) { const o = i === g.swap.a ? g.swap.b : i === g.swap.b ? g.swap.a : -1; if (o >= 0) { const [ox, oy] = centre(o), k = g.swap.back ? Math.sin(Math.min(1, g.pt / 0.16) * Math.PI) * 0.5 : 1 - Math.min(1, g.pt / 0.16); x += (ox - x) * k; y += (oy - y) * k; } }
       if (g.burst && g.burst.cells.has(i)) s = 1 + g.burst.t * 1.3;
       if (i === g.sel) { s *= 1.08 + Math.sin(t * 9) * 0.05; c.fillStyle = 'rgba(255,255,255,.85)'; c.beginPath(); c.arc(x, y, cell * 0.47, 0, 7); c.fill(); }
-      const img = CANDY_IMG[v % 6], sz = cell * 0.98 * s;
+      const img = CANDY_IMG[v % 6]; let sz = cell * 0.98 * s;
       if (g.burst && g.burst.cells.has(i)) { c.globalAlpha = Math.max(0, 1 - g.burst.t / 0.3); c.fillStyle = 'rgba(255,255,255,.7)'; c.beginPath(); c.arc(x, y, cell * 0.5 * s, 0, 7); c.fill(); }
+      const idle = !(g.burst && g.burst.cells.has(i)) && g.phase !== 'fall';
+      if (idle) {      // (20/11) shadow, a soft coloured glow and a breathing size so the board feels alive
+        const br = 1 + 0.035 * Math.sin(t * 2.4 + i * 0.77), col = CANDY_COL[v % 6];
+        c.save(); c.globalAlpha = 0.28; c.fillStyle = '#2a0a30'; c.beginPath(); c.ellipse(x + cell * 0.04, y + cell * 0.36, cell * 0.34 * s, cell * 0.1 * s, 0, 0, 7); c.fill(); c.restore();
+        const gl = c.createRadialGradient(x, y, cell * 0.1, x, y, cell * 0.55); gl.addColorStop(0, col + '55'); gl.addColorStop(1, col + '00'); c.fillStyle = gl; c.beginPath(); c.arc(x, y, cell * 0.55, 0, 7); c.fill();
+        s *= br; sz = cell * 0.98 * s; y -= Math.sin(t * 2.4 + i * 0.77) * cell * 0.012;
+      }
       if (img && img.complete && img.naturalWidth) c.drawImage(img, x - sz / 2, y - sz / 2, sz, sz);
       else { const [col, sym] = GEMS[v % KINDS]; c.beginPath(); c.arc(x, y, cell * 0.38 * s, 0, 7); c.fillStyle = col; c.fill(); c.fillStyle = '#fff'; c.font = `800 ${Math.round(cell * 0.34)}px sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(sym, x, y + 2); }
+      if (idle) {      // twinkle: a four-point star flashes on a few candies in turn
+        const ph = (t * 1.1 + i * 0.41) % 5;
+        if (ph < 0.7) { const k = Math.sin(ph / 0.7 * Math.PI), r = cell * 0.2 * k, sx = x - cell * 0.17, sy = y - cell * 0.2; c.save(); c.globalAlpha = k; c.fillStyle = '#ffffff'; c.beginPath(); c.moveTo(sx, sy - r); c.quadraticCurveTo(sx, sy, sx + r, sy); c.quadraticCurveTo(sx, sy, sx, sy + r); c.quadraticCurveTo(sx, sy, sx - r, sy); c.quadraticCurveTo(sx, sy, sx, sy - r); c.fill(); c.restore(); }
+      }
       c.globalAlpha = 1;
     }
     for (const p of g.parts) { c.globalAlpha = Math.min(1, p.t * 2.5); c.fillStyle = p.star ? '#fffbe0' : p.col;

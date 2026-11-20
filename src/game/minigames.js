@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import * as L from '../core/layout.js';
 import { pay, FULL_PLAYS } from '../core/rules.js';
 import { today } from '../core/review.js';
+import { ORCHARD_TREES, ORCHARD_CROWN, ORCHARD_R } from '../core/regions/village.js';
 /** Tells the child when today's full pay for this game is used up (T1: skill games are for fun, not for farming gold). */
 export const payNote = (r) => (!r.full ? `Hôm nay trò này chỉ còn thưởng 20%. Đi đánh quái, làm nhiệm vụ để được nhiều hơn!` : r.left === 0 ? `Đã hết ${FULL_PLAYS} lượt thưởng đầy đủ hôm nay của trò này.` : '');
 
@@ -91,10 +92,14 @@ export class MiniGames {
     return null;
   }
   start(id) {
-    const s = STARTS.find((x) => x.id === id); this.api.sfx('tick'); if (s.host && this.api.ui.toast) this.api.ui.toast(`${s.host.name}: ${s.host.hello}`);
+    const s = STARTS.find((x) => x.id === id); this.api.sfx('tick');
+    if (id === 'apple') {      // (20/11) Hana talks first; the apples only fall after her talk, from the crowns of the tall trees, slowly
+      this.api.ui.dialogue([{ who: 'Hana', en: 'Welcome to my orchard! The apples are ripe.', vi: 'Chào mừng tới vườn táo của cô Hana! Táo chín rồi.' }, { who: 'Hana', en: 'Run under the trees and catch the apples. Gold apples are worth three!', vi: 'Chạy dưới các cây để hứng táo trong 30 giây. Táo vàng được 3 điểm.' }], () => { this.active = { id, s, time: 30, score: 0, next: 1.2 }; });
+      return;
+    }
+    if (s.host && this.api.ui.toast) this.api.ui.toast(`${s.host.name}: ${s.host.hello}`);
     if (s.board) return this.api.board(id);
     if (id === 'fish') { this.active = { id, s, cast: 0, caught: 0, pos: 0, centre: 0.5, width: 0.3, speed: 0.6, wait: 0, msg: '' }; this.newCast(); }
-    if (id === 'apple') this.active = { id, s, time: 30, score: 0, next: 0.5 };
     if (id === 'race') { this.active = { id, s, i: 0, time: 0 }; this.rings.forEach((r, k) => { r.m.visible = k === 0; }); }
   }
   newCast() { const a = this.active; a.cast += 1; a.centre = 0.2 + Math.random() * 0.6; a.width = Math.max(0.16, 0.32 - a.cast * 0.03); a.speed = 0.55 + a.cast * 0.12; a.wait = 0; a.hold = false; }     // slower marker (feedback 17/11: too fast)
@@ -133,10 +138,10 @@ export class MiniGames {
       this.say(`🎣 ${a.cast}/5 · 🐟 ${a.caught}   ${a.wait > 0 ? a.msg : fishBar(a.pos, a.centre, a.width)}   (E)`);
     } else if (a.id === 'apple') {
       a.time -= dt; a.next -= dt;
-      if (a.next <= 0) { a.next = 0.55 + Math.random() * 0.5; const f = this.apples.find((x) => !x.live); if (f) { const ang = Math.random() * 6.28, r = Math.sqrt(Math.random()) * ORCHARD.r; f.x = ORCHARD.x + Math.cos(ang) * r; f.z = ORCHARD.z + Math.sin(ang) * r; if (L.walkable(f.x, f.z, 0.5)) { f.live = true; f.y = 7; f.gold = Math.random() < 0.12; f.m.material = f.gold ? f.goldMat || (f.goldMat = this.apples[0].gold) : this.apples[0].red; f.m.visible = true; } } }
+      if (a.next <= 0) { a.next = 0.8 + Math.random() * 0.6; const f = this.apples.find((x) => !x.live); if (f) { const tr = ORCHARD_TREES[Math.floor(Math.random() * ORCHARD_TREES.length)], ang = Math.random() * 6.28, r = Math.sqrt(Math.random()) * ORCHARD_R * 0.8; f.x = tr[0] + Math.cos(ang) * r; f.z = tr[1] + Math.sin(ang) * r; if (L.walkable(f.x, f.z, 0.5)) { f.live = true; f.y = ORCHARD_CROWN - 0.6; f.gold = Math.random() < 0.12; f.m.material = f.gold ? f.goldMat || (f.goldMat = this.apples[0].gold) : this.apples[0].red; f.m.visible = true; } } }
       for (const f of this.apples) if (f.live) {
-        f.y -= dt * 3.4; const g = L.groundHeight(f.x, f.z); f.m.position.set(f.x, g + f.y, f.z);
-        if (f.y < 2.0 && Math.hypot(pos.x - f.x, pos.z - f.z) < 1.25) { a.score += f.gold ? 3 : 1; this.api.sfx('correct'); f.live = false; f.m.visible = false; }
+        f.y -= dt * 1.7;      // slow: about 3 s from the crown const g = L.groundHeight(f.x, f.z); f.m.position.set(f.x, g + f.y, f.z);
+        if (f.y < 2.0 && Math.hypot(pos.x - f.x, pos.z - f.z) < 1.5) { a.score += f.gold ? 3 : 1; this.api.sfx('correct'); f.live = false; f.m.visible = false; }
         else if (f.y <= 0.2) { f.live = false; f.m.visible = false; }
       }
       if (a.time <= 0) return this.finish(appleGold(a.score), `I caught ${a.score} apples!`, 'apple', a.score);

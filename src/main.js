@@ -547,20 +547,21 @@ function adminLevel(n) {
 /** After a word game, its host asks up to three of the words the child met in it (English → meaning, 3 options). */
 /** Before Candy Match and the Kart Race (18/11: "to play you must answer some new words"): three words, new ones first,
  *  each shown as a card before it is asked; a wrong answer is shown and asked again, so the game opens only when all are right. */
-function wordGate(who, then) {
+function wordGate(who, then, N = 4) {      // (20/11) four words, different from the last visit, before Candy, Race and Blocks
   const pool = unitCards.filter((c) => c.word.length <= 22);
   if (pool.length < 4) { then(); return; }
   const known = (c) => profile.words[c.id] && profile.words[c.id].right > 0, mix = (a) => [...a].sort(() => Math.random() - 0.5);
-  const list = [...mix(pool.filter((c) => !known(c))), ...mix(pool.filter(known))].slice(0, 3);
+  const last = (profile.gateLast || {})[who] || [], fresh = pool.filter((c) => !last.includes(c.id)), src = fresh.length >= N ? fresh : pool;
+  const list = [...mix(src.filter((c) => !known(c))), ...mix(src.filter(known))].slice(0, N); (profile.gateLast || (profile.gateLast = {}))[who] = list.map((c) => c.id);
   const ask = (n) => {
-    if (n >= list.length) { sfx('fanfare'); ui.dialogue([{ who, en: "Great! Now let's play!", vi: 'Con trả lời đúng cả 3 từ rồi. Vào chơi thôi!' }], then); return; }
+    if (n >= list.length) { sfx('fanfare'); ui.dialogue([{ who, en: "Great! Now let's play!", vi: `Con trả lời đúng cả ${N} từ rồi. Vào chơi thôi!` }], then); return; }
     const c = list[n], opts = mix([c, ...mix(pool.filter((x) => x.id !== c.id && x.vi !== c.vi)).slice(0, 2)]), t0 = Date.now();
-    ui.choose({ who: `${who} · ${n + 1}/${list.length}`, en: `What does "${c.word}" mean?`, vi: 'Trả lời đúng 3 từ để vào chơi.' }, opts.map((o) => o.vi), (i) => {
+    ui.choose({ who: `${who} · ${n + 1}/${list.length}`, en: `What does "${c.word}" mean?`, vi: `Trả lời đúng ${N} từ để vào chơi.` }, opts.map((o) => o.vi), (i) => {
       const ok = opts[i].id === c.id; Review.record(profile.words, c.id, { correct: ok, hints: 0, ms: Date.now() - t0 }); Save.recordSkill(profile, 'vocabulary', ok, 0); sfx(ok ? 'correct' : 'wrong');
       if (ok) ask(n + 1); else ui.dialogue([{ who, en: `"${c.word}" means "${c.vi}". Try again!`, vi: `${c.word} = ${c.vi}` }], () => ask(n));
     });
   };
-  ui.dialogue([{ who, en: 'Answer three words, then you can play!', vi: `${who}: trả lời đúng 3 từ tiếng Anh thì được vào chơi.` }], () => teach(list, () => ask(0)));
+  ui.dialogue([{ who, en: 'Answer four words, then you can play!', vi: `${who}: trả lời đúng ${N} từ tiếng Anh thì được vào chơi (mỗi lần là bộ từ khác).` }], () => teach(list, () => ask(0)));
 }
 function hostQuiz(who, words) {
   const pool = unitCards.length >= 4 ? unitCards : words, list = [...words].sort(() => Math.random() - 0.5).slice(0, 3); let right = 0;
@@ -1116,7 +1117,7 @@ async function boot() {
   spells = new Spells({ scene, wild, player, profile: () => profile, sfx, ui, onChange: () => {} });      // (20/11) magic skills: keys 1-4, the skill book T
   packUI = new PackUI({ profile: () => profile, sfx, toast: (t) => ui.toast(t), changed: () => { save(); refresh(); }, hpMax: () => Save.maxHp(profile) });
   skillUI = new SkillUI({ profile: () => profile, spells, sfx, usePotion, toast: (t) => ui.toast(t), atk: () => playerAtk(profile), changed: () => { save(); refresh(); } });      // the Blender monsters replace the shapes a moment after the game starts (not awaited: a slow download must not hold the boot)
-  mini = new MiniGames({ scene, player, ui, sfx, track, profile: () => profile, save, onNote: refresh, board: (id) => { const t = tierOf(profile.stats.level), go = () => arcade.start(withTier(({ candy: () => candyGame(Math.random, t), blocks: () => blocksGame(Math.random, unitCards, t), sling: () => slingGame(Math.random, t), race2: () => raceGame(Math.random, [], t) })[id](), t)); if (id === 'candy' || id === 'race2') wordGate(id === 'candy' ? 'Mimi' : 'Leo', go); else go(); } });
+  mini = new MiniGames({ scene, player, ui, sfx, track, profile: () => profile, save, onNote: refresh, board: (id) => { const t = tierOf(profile.stats.level), go = () => arcade.start(withTier(({ candy: () => candyGame(Math.random, t), blocks: () => blocksGame(Math.random, unitCards, t), sling: () => slingGame(Math.random, t), race2: () => raceGame(Math.random, [], t) })[id](), t)); if (id === 'candy' || id === 'race2' || id === 'blocks') wordGate(id === 'candy' ? 'Mimi' : id === 'blocks' ? 'Max' : 'Leo', go); else go(); } });
   await mini.addHosts((name) => loader.loadAsync(`./assets/models/${name}.glb`));      // a host by each mini game
   admin = new AdminPanel({ profile: () => profile, places: adminPlaces, go: adminGo, unlockAll: adminUnlock, setStep: adminStep,
     resetForest: () => { delete profile.quests.forest; if (L.NAME === 'forest') enterRegion('forest'); }, setGrade: (g) => { profile.grade = g; save(); chooseProfile(profile); },

@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import * as L from '../core/layout.js';
-import { ORCHARD_TREES, GATE, SOUTH, POND_SCALE, FIRE_SCALE } from '../core/regions/village.js';
+import { ORCHARD_TREES, ORCHARD_H, ORCHARD_R, GATE, SOUTH, POND_SCALE, FIRE_SCALE } from '../core/regions/village.js';
 import { at, std, windy, label, bake, leafyGeo, lampPost, prop, bunting, smoke, signs } from './common.js';
 
 // ------------------------------------------------------------------ village landmarks
@@ -85,7 +85,7 @@ function fruitMesh(f, s = 1, models = null) {
   return g;
 }
 export function orchard(list, fruitModels = null) {
-  const g = new THREE.Group(), still = new THREE.Group(), H = 3.3, R = 2.25;
+  const g = new THREE.Group(), still = new THREE.Group(), H = ORCHARD_H, R = ORCHARD_R;
   const geo = leafyGeo(0x7a4a26, [0x3f9a3a, 0x5fbe3f, 0x8fd04a], { h: H, r: R, clumps: 12, trunkR: 0.32, seed: 6 }), mat = windy(std(), 0.008);
   const wood = new THREE.MeshStandardMaterial({ color: 0xa8743f, roughness: 0.9 });
   list.forEach(([x, z], k) => {
@@ -103,7 +103,27 @@ export function orchard(list, fruitModels = null) {
   });
   g.add(bake(still));
   list.forEach(([x, z], k) => { const sx = x - 1.6, sz = z + 1.3, b = label(`${FRUITS[k % FRUITS.length].en} tree`, { size: 26, scale: 0.7 }); b.position.set(sx, L.groundHeight(sx, sz) + 1.35, sz); g.add(b); });
+  g.add(orchardFence());
   return g;
+}
+/** (20/11) The orchard is its own place: a low white fence round it with a gate on the west side where Hana waits (decoration, nothing to walk round). */
+export const ORCHARD_BOX = { x0: 30, x1: 53, z0: -5, z1: 25, gate: [4, 9] };
+function orchardFence() {
+  const g = new THREE.Group(), post = new THREE.MeshStandardMaterial({ color: 0xf6efe0, roughness: 0.8 }), rail = new THREE.MeshStandardMaterial({ color: 0xe9dcc0, roughness: 0.85 });
+  const B = ORCHARD_BOX, pts = [];
+  const side = (x0, z0, x1, z1) => { const n = Math.max(1, Math.round(Math.hypot(x1 - x0, z1 - z0) / 1.6)); for (let i = 0; i <= n; i++) pts.push([x0 + (x1 - x0) * i / n, z0 + (z1 - z0) * i / n, Math.atan2(x1 - x0, z1 - z0)]); };
+  side(B.x0, B.z0, B.x1, B.z0); side(B.x1, B.z0, B.x1, B.z1); side(B.x1, B.z1, B.x0, B.z1); side(B.x0, B.z1, B.x0, B.gate[1]); side(B.x0, B.gate[0], B.x0, B.z0);
+  const posts = new THREE.CylinderGeometry(0.07, 0.08, 1.05, 6), bar = new THREE.BoxGeometry(0.06, 0.07, 1.62);
+  for (let i = 0; i < pts.length; i++) {
+    const [x, z, yaw] = pts[i], y = L.groundHeight(x, z), m = new THREE.Mesh(posts, post); m.position.set(x, y + 0.5, z); g.add(m);
+    if (i + 1 < pts.length && Math.hypot(pts[i + 1][0] - x, pts[i + 1][1] - z) < 2.2) for (const h of [0.45, 0.85]) { const nx = (x + pts[i + 1][0]) / 2, nz = (z + pts[i + 1][1]) / 2, r = new THREE.Mesh(bar, rail); r.position.set(nx, y + h, nz); r.rotation.y = Math.atan2(pts[i + 1][0] - x, pts[i + 1][1] - z); g.add(r); }
+  }
+  // the gate: two tall posts with a board across (the gap stays open)
+  const gz = [B.gate[0], B.gate[1]], gy = L.groundHeight(B.x0, (gz[0] + gz[1]) / 2);
+  for (const z of gz) { const t = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.16, 2.6, 8), new THREE.MeshStandardMaterial({ color: 0x8a5a2a, roughness: 0.9 })); t.position.set(B.x0, L.groundHeight(B.x0, z) + 1.3, z); g.add(t); }
+  const board = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.45, gz[1] - gz[0] + 0.5), new THREE.MeshStandardMaterial({ color: 0xb5793a, roughness: 0.85 })); board.position.set(B.x0, gy + 2.45, (gz[0] + gz[1]) / 2); g.add(board);
+  const lb = label("🍎 Hana's Apple Orchard", { size: 30, scale: 0.9 }); lb.position.set(B.x0 - 0.2, gy + 3.2, (gz[0] + gz[1]) / 2); g.add(lb);
+  return bake(g);
 }
 /** The fountain in the middle of the Quest Square: stone basin, a pillar with a bowl, water. */
 export function fountain(x, z) {
