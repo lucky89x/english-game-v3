@@ -15,6 +15,15 @@ OUTFITS = {   # name: (shown pieces, top colour, bottom colour, hair colour)
     "sundress": (("Hair_braids", "Dress_sundress"), "8fd3c7", "8fd3c7", "e58aa6"),
     "party": (("Hair_ponytail", "Dress_party"), "c9a0f2", "c9a0f2", "c2452c"),
 }
+EVENTS = {   # batch 25 event outfits (fixed colours; tint only affects the hair / trousers under them)
+    "ev_tet": (("Hair_long", "Top_aodai_tet", "Bottom_trousers"), "f6f2ea", "f6f2ea", "2b1d16"),
+    "ev_halloween": (("Hair_long", "Dress_halloween_witch", "Hat_witch"), "f6f2ea", "f6f2ea", "2b1d16"),
+    "ev_xmas": (("Hair_short", "Top_xmas_sweater", "Bottom_trousers", "Hat_santa"), "f6f2ea", "3a4f7a", "8c4a22"),
+    "ev_antlers": (("Hair_braids", "Top_xmas_sweater", "Bottom_skirt", "Hat_antlers"), "f6f2ea", "2e8a4a", "e2b860"),
+    "ev_trungthu": (("Hair_ponytail", "Top_tshirt", "Bottom_shorts", "Acc_lantern_hand", "Acc_mask_cat"), "f4e9d2", "cfb487", "8c4a22"),
+}
+if os.environ.get("EVENTS") == "1":
+    OUTFITS = EVENTS
 if BOY:
     OUTFITS = {
         "tshirt_shorts": (("Hair_short", "Top_tshirt", "Bottom_shorts", "Gear_goggles"), "6fa8dc", "3a4f7a", "3a2a20"),
@@ -49,7 +58,7 @@ def setup(shown, top, bottom, hair, clip=None):
             pass
         bpy.context.scene.frame_set(clip[1])
     for o in bpy.data.objects:
-        if o.type == 'MESH' and o.name.split(".")[0] not in ("Ngoc",) and o.name.startswith(("Hair_", "Top_", "Bottom_", "Dress_", "Gear_")):
+        if o.type == 'MESH' and o.name.split(".")[0] not in ("Ngoc",) and o.name.startswith(("Hair_", "Top_", "Bottom_", "Dress_", "Gear_", "Hat_", "Acc_")):
             o.hide_render = o.name.split(".")[0] not in shown
     tints = {"_hair_tint": hair, "_top_tint": top, "_bottom_tint": bottom}
     for m in bpy.data.materials:
@@ -93,6 +102,12 @@ for name, (shown, top, bottom, hair) in OUTFITS.items():
     sc = setup(shown, top, bottom, hair)
     sc.render.filepath = os.path.join(OUT, "o_%s.png" % name)
     bpy.ops.render.render(write_still=True)
+    if name.startswith("ev_"):    # head close-up from the front for hats and the mask
+        t = mathutils.Vector((0, 0, 1.15))
+        sc.camera.location = t + mathutils.Vector((.35, -1, .15)).normalized() * 1.6
+        sc.camera.rotation_euler = (t - sc.camera.location).to_track_quat('-Z', 'Y').to_euler()
+        sc.render.filepath = os.path.join(OUT, "o_%s_head.png" % name)
+        bpy.ops.render.render(write_still=True)
     if POSES:
         for clip in CLIPS:
             sc = setup(shown, top, bottom, hair, clip)

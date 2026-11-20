@@ -88,3 +88,7 @@ Chuẩn hoá bằng `tools/monsters/import_quaternius.py` (cao 1 m, đổi tên 
 ## Lô 24 Map 3 (20/11)
 
 Mọi file `map3_*_v01.glb`, `pet_fennec_v01.glb`, `npc_desert_*_v01.glb` tự dựng bằng Blender (`tools/map3/build_map3.py`, `tools/chibi05/build_ngoc_v03.py`), không dùng tài nguyên ngoài.
+
+## Lô 25 sự kiện (20/11)
+
+Mọi file `ev_*_v01.glb` và đồ sự kiện trên Ngọc v05 / bạn nam tự dựng bằng Blender (`tools/events/build_events.py`, `tools/chibi05/build_ngoc_v03.py`); chữ trên Người Khổng Lồ Chữ Cái dựng từ font mặc định đi kèm Blender (font tự do, cho phép dùng hình chữ trong sản phẩm). Nhãn dán `emote_*.png` vẽ bằng Pillow, không dùng tài nguyên ngoài.

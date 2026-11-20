@@ -58,6 +58,9 @@ PALETTE = {  # name: (sRGB hex, roughness, metallic)
 }
 PALETTE.update({'white': ('fbf8f0', .8, 0), 'bread': ('d9953f', .7, 0), 'bread_light': ('f0c070', .7, 0), 'wicker': ('b98a4a', .85, 0),
                 'crystal': ('58e07a', .1, 0), 'leaf': ('4d9a3a', .8, 0), 'lute': ('c98a48', .5, 0), 'lute_dark': ('7a4a26', .6, 0)})
+PALETTE.update({'ev_red': ('c8202a', .7, 0), 'ev_red_dark': ('8e1620', .75, 0), 'ev_yellow': ('f6c63a', .45, .2), 'ev_purple': ('5a2a8a', .75, 0),
+                'ev_purple_dark': ('3a1a5a', .8, 0), 'ev_orange': ('f08a24', .7, 0), 'ev_green': ('2e8a4a', .75, 0), 'ev_black': ('2a2430', .7, 0),
+                'ev_brown': ('7a4a26', .7, 0), 'ev_pink': ('f2a0b0', .6, 0)})     # event outfits (fixed colours, ngoc_gear material)
 VARIANT = os.environ.get('NGOC_VARIANT', 'ngoc')
 BOY = VARIANT == 'ban_nam'
 HERO = VARIANT in ('ngoc', 'ban_nam')     # playable heroes: swappable hair, clothes, goggles
@@ -1135,8 +1138,13 @@ GOGGLE_PREFIX = ('Ngoc_Bandana', 'Ngoc_Goggle')
 CLOTHES = ['Top_hoodie', 'Top_jacket', 'Top_aodai', 'Bottom_trousers', 'Bottom_skirt', 'Dress_sundress', 'Dress_party']
 if BOY:
     CLOTHES = ['Top_hoodie', 'Top_jacket', 'Top_aodai', 'Bottom_trousers']
+# batch 25 event outfits (Tết, Halloween, Christmas, Mid-Autumn): fixed colours, hidden at start like the other extras
+EVENT = ['Top_aodai_tet', 'Top_xmas_sweater', 'Hat_witch', 'Hat_santa', 'Hat_antlers', 'Acc_lantern_hand', 'Acc_mask_cat']
+if not BOY:
+    EVENT.insert(2, 'Dress_halloween_witch')
+CLOTHES = CLOTHES + EVENT
 SLOT = lambda g: 'hair' if g.startswith('Hair_') else 'dress' if g.startswith('Dress_') else 'top' if g.startswith('Top_') else \
-    'bottom' if g.startswith('Bottom_') else 'gear'
+    'bottom' if g.startswith('Bottom_') else 'hat' if g.startswith('Hat_') else 'acc' if g.startswith('Acc_') else 'gear'
 TORSO = [((0, .005, .455), .150, .118), ((0, .000, .520), .150, .122), ((0, -.004, .600), .146, .122), ((0, -.004, .690), .150, .116),
          ((0, .000, .755), .140, .104), ((0, .004, .800), .100, .080), ((0, .006, .830), .055, .050)]
 
@@ -1269,6 +1277,136 @@ if HERO:
         cpart(st, loft(f'{st}_Leg_{s}', [(Vector(c), a, b) for c, a, b in rings], seg=16, caps=(False, False)), 'shorts',
               ['hips', f'thigh.{side}', f'shin.{side}'])
         cpart(st, torus(f'{st}_Cuff_{s}', Vector((s * .09, .006, .23)), .067, .012, seg=16, rseg=5), 'shorts_cuff', [f'shin.{side}'])
+
+    # ---------------- batch 25: event outfits ----------------
+    def flower(st, c, r, color='ev_yellow', bones=('chest',), ny=-1):
+        for k in range(5):
+            a = k * 2 * math.pi / 5
+            cpart(st, ellipsoid(f'{st}_Petal_{c.x:.2f}_{c.z:.2f}_{k}', c + Vector((r * math.cos(a), 0, r * math.sin(a))), (r * .75, .006, r * .75),
+                                seg=6, rings=3), color, list(bones))
+        cpart(st, ellipsoid(f'{st}_FlowerC_{c.x:.2f}_{c.z:.2f}', c + Vector((0, ny * .003, 0)), (r * .55, .007, r * .55), seg=6, rings=3),
+              'ev_red_dark', list(bones))
+    # -- Top_aodai_tet: red áo dài with a gold collar and gold apricot flowers on the bodice and front panel
+    st = 'Top_aodai_tet'
+    torso_loft(st, 'Body', .455, .84, .007, 'ev_red')
+    cpart(st, loft(f'{st}_Collar', [(Vector((0, .006, .80)), .063, .059), (Vector((0, .006, .86)), .059, .056)], seg=16, caps=(False, False)),
+          'ev_yellow', ['neck', 'chest'])
+    long_sleeves(st, 'ev_red', 'ev_yellow', r=(.058, .046, .04))
+    for side_y, nm in ((-1, 'Front'), (1, 'Back')):
+        rings = [((0, side_y * .095, .5), .14 * BW, .03), ((0, side_y * .11, .4), .15 * BW, .025), ((0, side_y * .12, .3), .16 * BW, .022),
+                 ((0, side_y * .125, .21), .165 * BW, .02)]
+        flare(st, nm, rings, 'ev_red', ['hips', 'thigh.L', 'thigh.R'], seg=16)
+    flower(st, Vector((.07 * BW, -.128, .66)), .022)
+    flower(st, Vector((-.04 * BW, -.126, .55)), .018, bones=('spine',))
+    flower(st, Vector((.03 * BW, -.147, .34)), .026, bones=('hips',))
+    # -- Top_xmas_sweater: knitted red sweater, white stripes and cuffs, a little green tree with a star
+    st = 'Top_xmas_sweater'
+    torso_loft(st, 'Body', .45, .84, .02, 'ev_red', seg=16, extra=[(Vector((0, .006, .435)), .168 * BW, .14)])
+    long_sleeves(st, 'ev_red', 'white', r=(.07, .058, .05), seg=10)
+    cpart(st, torus(f'{st}_Hem', Vector((0, .006, .44)), .163 * BW, .017, seg=24, rseg=6), 'white', ['hips', 'spine'])
+    cpart(st, torus(f'{st}_Stripe', Vector((0, .0, .73)), .17 * BW, .012, seg=24, rseg=4, sy=.134 / (.17 * BW)), 'white', ['chest'])
+    cpart(st, torus(f'{st}_Neck', Vector((0, .004, .81)), .075, .016, seg=18, rseg=5), 'white', ['chest', 'neck'])
+    cpart(st, loft(f'{st}_Tree', [(Vector((0, -.142, .5)), .065, .012), (Vector((0, -.14, .58)), .045, .01), (Vector((0, -.137, .66)), .004, .004)],
+                   seg=4, caps=(True, False), ref=Vector((1, 0, 0))), 'ev_green', ['spine', 'chest'])
+    cpart(st, ellipsoid(f'{st}_Star', Vector((0, -.14, .675)), (.016, .01, .016), seg=6, rings=4), 'ev_yellow', ['chest'])
+    for k, (x, z) in enumerate(((-.09, .56), (.09, .6), (-.08, .66), (.1, .5))):
+        cpart(st, ellipsoid(f'{st}_Snow_{k}', Vector((x * BW, -.14, z)), (.009, .006, .009), seg=6, rings=3), 'white', ['spine'])
+    if not BOY:
+        # -- Dress_halloween_witch: purple dress, flared zigzag skirt with an orange hem, orange belt with a gold buckle
+        st = 'Dress_halloween_witch'
+        torso_loft(st, 'Bodice', .455, .84, .008, 'ev_purple')
+        flare(st, 'Skirt', [((0, .006, .56), .155, .128), ((0, .01, .47), .21, .19), ((0, .014, .36), .28, .26), ((0, .016, .27), .31, .29)],
+              'ev_purple', ['hips', 'thigh.L', 'thigh.R'], seg=24, wave=.07)
+        cpart(st, torus(f'{st}_HemTrim', Vector((0, .016, .272)), .31, .016, seg=32, rseg=5, sy=.29 / .31), 'ev_orange', ['hips', 'thigh.L', 'thigh.R'])
+        long_sleeves(st, 'ev_purple', 'ev_orange', r=(.06, .054, .058), seg=10)
+        cpart(st, torus(f'{st}_Belt', Vector((0, .006, .56)), .157, .017, seg=24, rseg=6), 'ev_orange', ['spine'])
+        cpart(st, ellipsoid(f'{st}_Buckle', Vector((0, -.135, .56)), (.028, .01, .024), seg=8, rings=4), 'ev_yellow', ['spine'])
+        cpart(st, loft(f'{st}_Collar', [(Vector((0, .004, .79)), .11, .095), (Vector((0, .004, .82)), .15, .13)], seg=12, caps=(False, False),
+                       shape=lambda a, i: 1 + .25 * (math.cos(6 * a) > 0) * i), 'ev_purple_dark', ['chest', 'neck'])
+    HAT_Z = HAIR_C.z + HAIR_R[2] - .07
+    # -- Hat_witch: wide brim, tall bent cone, orange band with a gold buckle
+    st = 'Hat_witch'
+    cpart(st, loft(f'{st}_Brim', [(Vector((0, .01, HAT_Z - .015)), .5, .48), (Vector((0, .01, HAT_Z + .005)), .48, .46)], seg=28, caps=(True, True)),
+          'ev_purple_dark', ['head'])
+    rings = []
+    for k in range(8):
+        t = k / 7
+        rings.append((Vector((0, .01 + .16 * t ** 2.5, HAT_Z + .56 * t - .08 * t ** 4)), .27 * (1 - t) + .01, .26 * (1 - t) + .01))
+    cpart(st, loft(f'{st}_Cone', rings, seg=20, caps=(False, True)), 'ev_purple', ['head'])
+    cpart(st, torus(f'{st}_Band', Vector((0, .012, HAT_Z + .05)), .25, .018, seg=24, rseg=5, sy=.24 / .25), 'ev_orange', ['head'])
+    cpart(st, ellipsoid(f'{st}_Buckle', Vector((0, -.235, HAT_Z + .05)), (.04, .01, .032), seg=8, rings=4), 'ev_yellow', ['head'])
+    # -- Hat_santa: red cap flopping to the side, white fur rim and pompom
+    st = 'Hat_santa'
+    rings = []
+    for k in range(8):
+        t = k / 7
+        rings.append((Vector((.2 * t ** 2.2, .012 + .03 * t, HAT_Z + .03 + .32 * t - .14 * t ** 3)), .28 * (1 - t) + .02, .27 * (1 - t) + .02))
+    cpart(st, loft(f'{st}_Cap', rings, seg=20, caps=(False, True)), 'ev_red', ['head'])
+    cpart(st, torus(f'{st}_Rim', Vector((0, .012, HAT_Z + .03)), .29, .045, seg=24, rseg=8, sy=.28 / .29), 'white', ['head'])
+    cpart(st, ellipsoid(f'{st}_Pompom', rings[-1][0] + Vector((.03, 0, -.03)), (.065, .065, .065), seg=10, rings=6), 'white', ['head'])
+    # -- Hat_antlers: brown headband over the hair, two branching antlers, little gold bells with red bows
+    st = 'Hat_antlers'
+    band = [HAIR_C + Vector((math.sin(a) * (HAIR_R[0] + .012), .03, math.cos(a) * (HAIR_R[2] + .012))) for a in
+            [math.radians(d) for d in range(-85, 86, 17)]]
+    cpart(st, tube(f'{st}_Band', band, [.014] * len(band), seg=6), 'ev_brown', ['head'])
+    for sd in (-1, 1):
+        a = math.radians(38 * sd)
+        b0 = HAIR_C + Vector((math.sin(a) * (HAIR_R[0] + .015), .03, math.cos(a) * (HAIR_R[2] + .015)))
+        trunk = [b0, b0 + Vector((sd * .05, 0, .1)), b0 + Vector((sd * .09, .01, .2)), b0 + Vector((sd * .16, .02, .27))]
+        cpart(st, tube(f'{st}_Antler_{sd}', trunk, [.022, .018, .014, .008], seg=6), 'leather_light', ['head'])
+        for k, (i, d) in enumerate(((1, Vector((-sd * .04, -.01, .09))), (2, Vector((-sd * .02, -.01, .1))), (2, Vector((sd * .08, 0, .03))))):
+            cpart(st, tube(f'{st}_Tine_{sd}_{k}', [trunk[i], trunk[i] + d], [.013, .006], seg=5), 'leather_light', ['head'])
+        bell = b0 + Vector((sd * .02, -.03, -.01))
+        cpart(st, ellipsoid(f'{st}_Bell_{sd}', bell, (.026, .026, .03), seg=8, rings=5), 'ev_yellow', ['head'])
+        cpart(st, ellipsoid(f'{st}_Bow_{sd}', bell + Vector((0, -.006, .032)), (.03, .01, .014), seg=8, rings=4), 'ev_red', ['head'])
+    # -- Acc_lantern_hand: Mid-Autumn star lantern on a bamboo stick, held in the right hand
+    st = 'Acc_lantern_hand'
+    HAND_R = Vector((-SHOULDER.x, SHOULDER.y, SHOULDER.z)) + Vector((-ARM_DIR.x, ARM_DIR.y, ARM_DIR.z)) * (UPPER + FORE + .045)
+    tip = HAND_R + Vector((-.06, -.22, .34))
+    cpart(st, tube(f'{st}_Stick', [HAND_R + Vector((0, .0, -.04)), tip], [.009, .007], seg=6), 'ev_brown', ['hand.R'])
+    cpart(st, tube(f'{st}_String', [tip, tip + Vector((0, -.02, -.07))], [.003, .003], seg=4), 'ev_yellow', ['hand.R'])
+    sc = tip + Vector((0, -.02, -.17))
+    verts, faces = [], []
+    for side, yy in ((0, -.03), (1, .03)):
+        verts.append(sc + Vector((0, yy * 1.6, 0)))
+        for k in range(10):
+            a = math.pi / 2 + k * math.pi / 5
+            r = .1 if k % 2 == 0 else .045
+            verts.append(sc + Vector((r * math.cos(a), yy, r * math.sin(a))))
+    for k in range(10):
+        a, b = 1 + k, 1 + (k + 1) % 10
+        faces.append((0, b, a))
+        faces.append((11, 11 + a, 11 + b))
+        faces.append((a, b, 11 + b, 11 + a))
+    cpart(st, mesh_obj(f'{st}_Star', verts, faces), 'ev_red', ['hand.R'], smooth=False)
+    cpart(st, ellipsoid(f'{st}_Glow', sc + Vector((0, -.05, 0)), (.03, .01, .03), seg=8, rings=4), 'ev_yellow', ['hand.R'])
+    cpart(st, tube(f'{st}_Tassel', [sc + Vector((0, 0, -.045)), sc + Vector((0, 0, -.16))], [.008, .014], seg=6), 'ev_yellow', ['hand.R'])
+    # -- Acc_mask_cat: Mid-Autumn style cat mask worn pushed to the side of the head (left), tilted up: white face,
+    #    ears with pink insides, closed happy eyes, pink nose and blush, whiskers
+    st = 'Acc_mask_cat'
+    nrm = Vector((.82, -.5, .3)).normalized()
+    MP = HAIR_C + Vector((nrm.x * (HAIR_R[0] + .02), nrm.y * (HAIR_R[1] + .02), nrm.z * (HAIR_R[2] + .02)))
+    MR = Vector((0, -1, 0)).rotation_difference(nrm) @ Quaternion((0, 1, 0), math.radians(-25))
+
+    def W(x, y, z):          # mask-local (x right, -y out of the face, z up) -> model space
+        return MP + MR @ Vector((x, y, z))
+    cpart(st, ellipsoid(f'{st}_Face', W(0, .0, 0), (.12, .035, .105), seg=18, rings=10, rot=MR,
+                        deform=lambda p_, v: p_ + Vector((0, .02 * (v.x ** 2 + v.z ** 2), 0))), 'white', ['head'])
+    for sd in (-1, 1):
+        cpart(st, loft(f'{st}_Ear_{sd}', [(W(sd * .07, .0, .07), .045, .02), (W(sd * .1, .0, .16), .004, .004)], seg=4, caps=(True, False),
+                       ref=MR @ Vector((1, 0, 0))), 'white', ['head'])
+        cpart(st, loft(f'{st}_EarIn_{sd}', [(W(sd * .072, -.014, .085), .025, .006), (W(sd * .093, -.014, .14), .003, .003)], seg=4,
+                       caps=(True, False), ref=MR @ Vector((1, 0, 0))), 'ev_pink', ['head'])
+        cpart(st, tube(f'{st}_Eye_{sd}', [W(sd * .065, -.036, .02), W(sd * .045, -.04, .035), W(sd * .025, -.036, .02)], [.006, .007, .006], seg=5),
+              'ev_black', ['head'])
+        cpart(st, ellipsoid(f'{st}_Blush_{sd}', W(sd * .07, -.03, -.025), (.022, .006, .013), seg=8, rings=4, rot=MR), 'ev_pink', ['head'])
+        for k in range(2):
+            cpart(st, tube(f'{st}_Whisker_{sd}_{k}', [W(sd * .05, -.038, -.04 - .015 * k), W(sd * .14, -.03, -.03 - .03 * k)], [.003, .002], seg=4),
+                  'ev_black', ['head'])
+    cpart(st, ellipsoid(f'{st}_Nose', W(0, -.04, -.02), (.016, .008, .011), seg=8, rings=4, rot=MR), 'ev_pink', ['head'])
+    cpart(st, tube(f'{st}_Mouth', [W(-.022, -.037, -.05), W(0, -.04, -.04), W(.022, -.037, -.05)], [.003, .003, .003], seg=4), 'ev_black', ['head'])
+    cpart(st, tube(f'{st}_Strap', [W(-.11, .02, 0), HAIR_C + Vector((0, .1, HAIR_R[2] * .55)), HAIR_C + Vector((-HAIR_R[0] * .7, .06, HAIR_R[2] * .4))],
+                   [.006, .006, .006], seg=4), 'ev_red', ['head'])
 
 if BOY:
     # boy hairstyles (the curly updo built above is dropped at join time)
