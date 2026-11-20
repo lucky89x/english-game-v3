@@ -20,6 +20,16 @@ import { compact } from '../world/common.js';
 import { bossWake } from './saga.js';
 import { ELEMENTS, elementFactor, comboOf, powers } from '../core/skills.js';
 
+/** Round badge texture per element, drawn once: a coloured disc with a light rim and the element's emoji (🔥 ❄️ 🌪️ ⚡). */
+const ELTEX = {};
+function elementTex(el) {
+  if (ELTEX[el]) return ELTEX[el];
+  const e = ELEMENTS[el], cv = document.createElement('canvas'); cv.width = cv.height = 96; const c = cv.getContext('2d');
+  c.beginPath(); c.arc(48, 48, 44, 0, 7); c.fillStyle = '#2a1c14'; c.fill();
+  c.beginPath(); c.arc(48, 48, 38, 0, 7); c.fillStyle = e.color; c.fill(); c.lineWidth = 4; c.strokeStyle = '#fff6dc'; c.stroke();
+  c.font = '48px "Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(e.icon, 48, 53);
+  const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; return (ELTEX[el] = t);
+}
 export class Wild {
   /** api: { scene, player, ui, sfx(name), profile() -> profile, save(), onChange(), respawn(), quiz(bossName, done(ok)) } */
   constructor(api) {
@@ -148,9 +158,10 @@ export class Wild {
     const back = new THREE.Sprite(new THREE.SpriteMaterial({ color: 0x3a2410, depthTest: false })); back.center.set(0, 0.5); back.scale.set(1.04, thin ? 0.1 : 0.16, 1); back.position.set(-0.52, top, 0); back.renderOrder = 5; g.add(back);
     return { bar, back };
   }
-  /** (20/11) a small dot left of the health bar in the monster's element colour (the colour of a spell mark while one is on). */
+  /** (20/11) the element badge left of the health bar: a round icon (flame, drop of ice, wind swirl, bolt), not a plain square.
+   *  The badge shows the spell mark's element while one is on. */
   elementDot(m) {
-    if (m.elDot || !m.def.el) return; const d = new THREE.Sprite(new THREE.SpriteMaterial({ color: ELEMENTS[m.def.el].hex, depthTest: false })); d.scale.set(0.26, 0.26, 1); d.position.set(-0.68, m.bar.position.y, 0); d.renderOrder = 7; m.g.add(d); m.elDot = d;
+    if (m.elDot || !m.def.el) return; const d = new THREE.Sprite(new THREE.SpriteMaterial({ map: elementTex(m.def.el), transparent: true, depthTest: false })); d.scale.set(0.46, 0.46, 1); d.position.set(-0.78, m.bar.position.y, 0); d.renderOrder = 7; m.g.add(d); m.elDot = d; m.elShown = m.def.el;
   }
   /** Map 2 (Sunny Harbor): the crabs, jellyfish, pirates and Captain Octopus, built when the hero first sails there so the
    *  models are only fetched then. load(key) -> a loaded glTF ({ scene, animations }) or null. Falls back to plain blobs. */
@@ -310,7 +321,7 @@ export class Wild {
       if (m.mark && (m.mark.t -= dt) <= 0) m.mark = null;
       if (m.burn) { m.burn.t -= dt; m.burnTick = (m.burnTick || 0) + dt; if (m.burnTick >= 1) { m.burnTick = 0; m.hp -= m.burn.dps; m.flash = 0.08; this.api.floater(m.x, m.z, String(m.burn.dps), '#ff8a3a', 0.75); if (m.hp <= 0) { m.burn = null; this.kill(m, p); continue; } } if (m.burn && m.burn.t <= 0) m.burn = null; }
       if (!m.elDot) this.elementDot(m);
-      if (m.elDot) { m.elDot.position.y = m.bar.position.y; const want = m.mark ? ELEMENTS[m.mark.el].hex : ELEMENTS[m.def.el].hex; if (m.elDot.material.color.getHex() !== want) m.elDot.material.color.setHex(want); }
+      if (m.elDot) { m.elDot.position.y = m.bar.position.y; const want = m.mark ? m.mark.el : m.def.el; if (m.elShown !== want) { m.elShown = want; m.elDot.material.map = elementTex(want); m.elDot.material.needsUpdate = true; } }
       const sp = m.def.speed * (m.slow > 0 ? 0.5 : 1), nx = m.x + vx * sp * dt, nz = m.z + vz * sp * dt; if ((vx || vz) && L.walkable(nx, nz, 0.45)) { m.x = nx; m.z = nz; }
       let hop = Math.abs(Math.sin(this.t * (m.kind === 'golem' ? 3 : 5) + m.ph)) * (vx || vz ? 0.22 : 0.08);
       if (m.mixer) {          // Blender monsters walk and idle by their own clips; jellyfish float

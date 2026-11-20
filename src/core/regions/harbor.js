@@ -67,7 +67,7 @@ export default makeRegion({
     const sea = Math.max(smooth(xc - 2, xc + 9, x) * (1 - Math.min(1, point * 1.6)), ring);      // the rocky point stays land
     h *= 0.6;                                                             // gentle ground: a harbour town, not hills
     h += 2.4 * smooth(-10, -40, x) * (1 - sea);                           // the town slope rises to the west
-    h += 6.0 * gauss(Math.hypot(x - 34, z + 40), 7) + 2.5 * gauss(Math.hypot(x - 30, z + 34), 6);      // lighthouse point
+    h += 7.0 * gauss(Math.hypot(x - 34, z + 40), 12) + 3.0 * gauss(Math.hypot(x - 28, z + 33), 9);      // lighthouse point
     h = h * (1 - sea) + (-2.6) * sea;                                     // the sea
     if (onPier(x, z)) h = Math.max(h, 0.05);                              // under the piers: just above the water line
     return h;
@@ -76,7 +76,7 @@ export default makeRegion({
   keepClear: [{ x: -12, z: 2, r: 10 }, { x: -30, z: -8, r: 7 }, { x: -30, z: 14, r: 7 }, { x: -12, z: -24, r: 7 }, { x: 2, z: 16, r: 6 }, { x: 34, z: -40, r: 6 }, { x: 5, z: -9, r: 9 }, { x: 14, z: 40, r: 9 }],
   solids: [
     { x: -30, z: -8, r: 4.6 }, { x: -30, z: 14, r: 4.6 }, { x: -12, z: -24, r: 4.6 },      // the three shops
-    { x: 34, z: -40, r: 3.4 },                                            // lighthouse tower
+    { x: 34, z: -40, r: 5.4 },                                            // lighthouse tower (x1.6)
     { x: 0, z: -8.5, r: 3.4 }, { x: 6.5, z: -8.5, r: 3.4 }, { x: 12, z: -8.5, r: 2.4 },      // container yard
     { x: 14.5, z: -15, r: 2.6 }, { x: 14.5, z: -5, r: 2.6 },              // quay crane legs
     { x: -1, z: 18, r: 1.6 }, { x: 5, z: 18, r: 1.6 },                    // fish market stalls

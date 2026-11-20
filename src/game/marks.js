@@ -68,8 +68,8 @@ export class QuestMarks {
     this.t += dt;
     for (const m of this.pool) if (m.root.visible) {
       const t = this.t + m.phase, k = 0.5 + 0.5 * Math.sin(t * 4.5), y = m.y + Math.sin(t * 2.6) * 0.14;
-      for (const g of [m.bang, m.ask]) { g.position.y = y; g.rotation.y = t * 1.6; g.scale.setScalar(0.95 + 0.08 * k); }
-      m.glow.position.y = y + 0.36; m.glow.scale.setScalar(1.0 + 0.3 * k); m.glow.material.opacity = 0.12 + 0.2 * k;
+      for (const g of [m.bang, m.ask]) { g.position.y = y; g.rotation.y = t * 1.6; g.scale.setScalar(1.3 + 0.1 * k); }
+      m.glow.position.y = y + 0.5; m.glow.scale.setScalar(1.5 + 0.4 * k); m.glow.material.opacity = 0.2 + 0.25 * k;
       m.beam.position.y = m.ground + 4; m.beam.material.opacity = 0.08 + 0.1 * k;
       m.ring.position.y = m.ground + 0.06; m.ring.scale.setScalar(1 + 0.25 * k); m.ring.material.opacity = 0.45 - 0.3 * k;
     }

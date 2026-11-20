@@ -5,7 +5,8 @@ const riverX = (z) => 22 + 3 * Math.sin(z * 0.08);
 const bw = (b) => [b.x - BRIDGE_LEN / 2 - 0.8, b.z], be = (b) => [b.x + BRIDGE_LEN / 2 + 0.8, b.z];
 export const GATE = { x: -30, z: -44 };
 /** D1: things that fill the empty south fields (windmill, pond, training dummies, campsite). */
-export const SOUTH = { mill: [-30, 41], pond: [-6, 50], dummies: [[13, 45], [15, 48], [6, 52]], tent: [-17, 54.5], fire: [-11.5, 50] };
+export const SOUTH = { mill: [-30, 41], pond: [-3, 52], dummies: [[14, 45], [16, 48], [10, 52]], tent: [-21.5, 54.5], fire: [-15.5, 47] };      // (20/11) pond x1.6 and campfire x1.5: "too small" (POND_SCALE, FIRE_SCALE)
+export const POND_SCALE = 1.6, FIRE_SCALE = 1.5;
 /** 18/11: the children's own homes, two lots in the empty west fields, doors facing east (+x) like Lily's house; the
  *  furniture shop stands south of them. Each yard is the strip between the door and the lane at x = -40. */
 export const HOMES = [{ x: -50, z: -5, door: [-45.4, -5], yard: [-42.6, -5] }, { x: -50, z: 10, door: [-45.4, 10], yard: [-42.6, 10] }];
@@ -82,8 +83,8 @@ export default makeRegion({
     ...[[36, 0], [42, 3], [46, 9], [38, 20], [45, 18], [34, 13]].map(([x, z]) => ({ x, z, r: 0.6 })),   // orchard trees
     { x: -31.5, z: 28.5, r: 1.0 },                                            // scarecrow
     ...[-27.6, -23.2, -18.8].flatMap((x) => [26.5, 30.2, 33.9].map((z) => ({ x, z, r: 1.6 }))),      // the nine garden beds
-    { x: SOUTH.mill[0], z: SOUTH.mill[1], r: 2.4 }, { x: SOUTH.pond[0], z: SOUTH.pond[1], r: 4.1 }, { x: SOUTH.tent[0], z: SOUTH.tent[1], r: 1.7 },
-    { x: SOUTH.fire[0], z: SOUTH.fire[1], r: 1.7 }, ...SOUTH.dummies.map(([x, z]) => ({ x, z, r: 0.45 })),
+    { x: SOUTH.mill[0], z: SOUTH.mill[1], r: 2.4 }, { x: SOUTH.pond[0], z: SOUTH.pond[1], r: 4.1 * POND_SCALE * 0.95 }, { x: SOUTH.tent[0], z: SOUTH.tent[1], r: 1.7 },
+    { x: SOUTH.fire[0], z: SOUTH.fire[1], r: 1.7 * FIRE_SCALE }, ...SOUTH.dummies.map(([x, z]) => ({ x, z, r: 0.45 })),
   ],
 });
 export const ORCHARD_TREES = [[36, 0], [42, 3], [46, 9], [38, 20], [45, 18], [34, 13]];

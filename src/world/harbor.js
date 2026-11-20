@@ -25,12 +25,15 @@ const tint = (m, f) => m.traverse((c) => { if (c.isMesh) f(c); });
 async function lighthouse(add, loadModel, shadowed) {
   const { x, z } = HARBOR.lighthouse, y = L.groundHeight(x, z) - 0.2, g = new THREE.Group();
   let m = null; try { m = shadowed(await loadModel('harbor_lighthouse_v01')); } catch { /* falls back to nothing: the beam alone */ }
-  if (m) { m.position.set(x, y, z); g.add(m); }
-  const lampY = y + 12.2;
+  const SC = 1.6;      // (20/11) taller tower and a wider rocky hill; the beam now sweeps down over the sea
+  if (m) { m.position.set(x, y, z); m.scale.setScalar(SC); g.add(m); }
+  const lampY = y + 12.2 * SC;
   const lamp = mesh(g, new THREE.SphereGeometry(0.01, 4, 3), M(0xfff2b0, 0.3, { emissive: 0xffd060, emissiveIntensity: 2.4 }), x, lampY, z);
-  const beam = new THREE.Mesh(new THREE.ConeGeometry(2.2, 14, 20, 1, true), new THREE.MeshBasicMaterial({ color: 0xfff2b0, transparent: true, opacity: 0.18, depthWrite: false, side: THREE.DoubleSide }));
-  beam.geometry.translate(0, -7, 0); beam.geometry.rotateZ(Math.PI / 2); beam.position.set(x, lampY, z); g.add(beam);
-  g.userData.update = (t) => { beam.rotation.y = t * 0.6; lamp.material.emissiveIntensity = 2.2 + Math.sin(t * 3) * 0.3; };
+  const pivot = new THREE.Group(); pivot.position.set(x, lampY, z); g.add(pivot);
+  const geo = new THREE.ConeGeometry(5, 50, 20, 1, true); geo.translate(0, -25, 0); geo.rotateZ(Math.PI / 2);      // apex at the lamp, opening along +x
+  const beam = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: 0xfff2b0, transparent: true, opacity: 0.16, depthWrite: false, side: THREE.DoubleSide }));
+  beam.rotation.z = -Math.atan2(lampY - L.WATER_LEVEL, 50) - 0.02; pivot.add(beam);      // tilted so the far end lands on the water
+  g.userData.update = (t) => { pivot.rotation.y = t * 0.45; lamp.material.emissiveIntensity = 2.2 + Math.sin(t * 3) * 0.3; };
   add(g);
 }
 /** The big Blender cargo ship at anchor off the main pier (hull lies along z, bottom 2 m under the deck line). */

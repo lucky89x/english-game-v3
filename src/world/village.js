@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import * as L from '../core/layout.js';
-import { ORCHARD_TREES, GATE, SOUTH } from '../core/regions/village.js';
+import { ORCHARD_TREES, GATE, SOUTH, POND_SCALE, FIRE_SCALE } from '../core/regions/village.js';
 import { at, std, windy, label, bake, leafyGeo, lampPost, prop, bunting, smoke, signs } from './common.js';
 
 // ------------------------------------------------------------------ village landmarks
@@ -189,8 +189,8 @@ export async function villageExtras(add, loadModel, shadowed) {
   const boards = new THREE.Group(); for (const [x, y, z, yaw, name, sub, size] of HOUSE_SIGNS) boards.add(hangSign(name, sub, x, L.groundHeight(x, z) + y, z, yaw, size));
   add(bake(boards));          // wood and iron merged into one mesh; only the painted faces stay apart
   add(windmill()); add(dummies()); add(campsite(!!fireM));
-  if (pondM) { const [px, pz] = SOUTH.pond; setup(pondM, px, pz, 0, 1); const sh = glow(pondM, ['water'], 0.05, 0.3, 1.4); add(bake(pondM)); add(sh); } else add(pond());
-  if (fireM) { const [fx, fz] = SOUTH.fire; setup(fireM, fx, fz, 0.4, 1); const sh = glow(fireM, ['flame'], 1.2, 3.2, 12); add(bake(fireM)); add(sh); }           // D1: the south fields
+  if (pondM) { const [px, pz] = SOUTH.pond; setup(pondM, px, pz, 0, POND_SCALE); const sh = glow(pondM, ['water'], 0.05, 0.3, 1.4); add(bake(pondM)); add(sh); } else add(pond());
+  if (fireM) { const [fx, fz] = SOUTH.fire; setup(fireM, fx, fz, 0.4, FIRE_SCALE); const sh = glow(fireM, ['flame'], 1.2, 3.2, 12); add(bake(fireM)); add(sh); }           // D1: the south fields
   signs(add, [[-2.5, 37.5, '← Windmill · Campsite\nTraining Yard →']]);
   add(bunting(-5.2, -3.2, 5.2, -3.2)); add(bunting(-6.5, 10.5, -6.5, 15.2, 3.0)); add(bunting(5.4, 9.6, 5.4, 2.2, 3.0));
   for (const [x, y, z] of [[4.0, 14.2, -24.3], [14.6, 9.3, -4.6], [-24, 7.4, -0.9], [-24.8, 10.6, 15.7]]) add(smoke(x, L.groundHeight(x, z) + y, z));

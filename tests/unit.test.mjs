@@ -267,7 +267,7 @@ test('village: no vocabulary for the unit -> Ben says so and the story is not bl
 // ---------------------------------------------------------------- mini games (rules and places)
 test('mini games: stars, race rings and start signs are on reachable ground', async () => {
   const STARS = [[-55, 3], [-38, -34], [-12, -38], [30, -30], [48, -12], [52, 20], [44, 38], [10, 50], [-22, 50], [-48, 30], [-30, 14], [8, -36]];
-  const RACE = [[-20, 2], [-32, 4], [-42, 14], [-40, 28], [-34, 42], [-18, 46], [-6, 44], [-8, 30], [-20, 2]];
+  const RACE = [[-20, 2], [-32, 4], [-42, 14], [-40, 28], [-34, 42], [-22, 47], [-6, 44], [-8, 30], [-20, 2]];
   const STARTS = [[18.4, 19.2], [33.5, 6], [-15, -17], [-6, -33], [10, 28], [-31, 4.5]];
   const src = (await import('node:fs')).readFileSync(new URL('../src/game/minigames.js', import.meta.url), 'utf8');
   assert.ok(src.includes(JSON.stringify(STARS).replace(/,/g, ', ').replace(/\], \[/g, '], [')), 'test list matches the game list');

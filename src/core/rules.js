@@ -34,7 +34,7 @@ export const FOREST_SPAWNS = [
 /** Map 2 monsters in Sunny Harbor: crabs on the south beach, jellyfish along the north shore, little pirates round the lighthouse point. */
 export const HARBOR_SPAWNS = [
   ['crab', 9, 41], ['crab', 17, 45], ['crab', 7, 51], ['crab', 21, 48], ['crab', 12, 57],
-  ['jelly', 8, -19], ['jelly', 15, -28], ['jelly', 22, -34], ['jelly', 38, -36],
+  ['jelly', 8, -19], ['jelly', 15, -28], ['jelly', 22, -34], ['jelly', 44, -32],
   ['pirate', 32, -29], ['pirate', 14, -40], ['pirate', 40, -40], ['pirate', 12, -46], ['pirate', 26, -37],
   ['gull', 12, -24], ['gull', 18, -31], ['gull', 30, -33],      // (20/11) Storm Gulls over the north shore
 ];

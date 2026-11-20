@@ -148,7 +148,7 @@ const ui = new UI(), store = Save.load();
 let profile = null, quest = null, story = null, world = null, player = null, cam = null, tom = null, sam = null, ben = null, pip = null, crystals = null, minimap = null, letterProp = null, itemProps = {}, friends = [], mini = null, wild = null, arcade = null, chests = null, spots = null, unitCards = [], cardOfFn = () => null;
 let shopWin = null, walkers = null, talkW = -1, touch = null, quality = localStorage.getItem('eq-quality') || 'medium', perfOn = false, started = false, switching = false, wordIds = {}, jarKey = '';
 const keys = new Set();
-const game = { errors, get profile() { return profile; }, get quest() { return quest; }, get story() { return story; }, get player() { return player; }, get cam() { return cam; }, get minimap() { return minimap; }, ui, L, stats: { fps: 0, ms: 0, calls: 0, tris: 0 },
+const game = { errors, get tom() { return tom; }, get profile() { return profile; }, get quest() { return quest; }, get story() { return story; }, get player() { return player; }, get cam() { return cam; }, get minimap() { return minimap; }, ui, L, stats: { fps: 0, ms: 0, calls: 0, tris: 0 },
   teleport(x, z) { player.place(x, z); cam.target.set(x, player.pos.y + 1.25, z); }, applyLook, syncPet, get digs() { return digMeshes; }, catchFish, gainItems, cardsOfUnit: (n) => cardsOfUnit(n), get pet() { return petObj; }, get petPanel() { return petPanel; },  setQuality, key: (code) => onKey({ code, preventDefault() {} }), get started() { return started && !switching; }, get region() { return L.NAME; }, chooseProfile, enterRegion, MARKET_JARS, BRIDGE_SPOTS, get mini() { return mini; }, get wild() { return wild; }, get scene() { return scene; }, openShop, get sword() { return swordMesh; }, get armor() { return armorShown; }, setWear, openBag: () => openBag(), get arcade() { return arcade; }, get chests() { return chests; }, get spots() { return spots; }, get admin() { return admin; }, get friends() { return friends; }, get walkers() { return walkers; }, get shopWin() { return shopWin; }, get music() { return music; }, get journal() { return journal; }, get spells() { return spells; }, get floaters() { return floaters; }, get skillUI() { return skillUI; }, get intro() { return intro; }, cardOf: (id) => cardOfFn(id), pause: (on) => renderer.setAnimationLoop(on ? null : frame),      // tests: stop drawing while another page is checked
   post, refresh: () => refresh(), refreshGear: () => { setSword(); setWear(); } };
 globalThis.__eq = game;
@@ -289,24 +289,24 @@ function guideArrow(dt) {
     const sh = new THREE.Shape(); sh.moveTo(0, 0.55); sh.lineTo(0.38, 0.05); sh.lineTo(0.14, 0.05); sh.lineTo(0.14, -0.45); sh.lineTo(-0.14, -0.45); sh.lineTo(-0.14, 0.05); sh.lineTo(-0.38, 0.05); sh.closePath();
     const geo = new THREE.ExtrudeGeometry(sh, { depth: 0.08, bevelEnabled: true, bevelSize: 0.025, bevelThickness: 0.025, bevelSegments: 1 }); geo.rotateX(-Math.PI / 2); geo.translate(0, 0, 0);
     const m = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: 0xffd23c, emissive: 0xffa800, emissiveIntensity: 0.9, roughness: 0.4, transparent: true, opacity: 0.92, depthTest: false }));
-    m.scale.setScalar(1.45); m.renderOrder = 9; guide = { m, sign: null, txt: '', t: 0 }; scene.add(m);
+    m.scale.setScalar(0.85); m.renderOrder = 9; guide = { m, sign: null, txt: '', t: 0 }; scene.add(m);
   }
   const g = guideGoal, show = !!g && started && !room && !switching && !(creator && creator.open) && !(tailor && tailor.open);
   const d = show ? Math.hypot(g.x - player.pos.x, g.z - player.pos.z) : 0;
   guide.m.visible = show && d > 4; if (guide.sign) guide.sign.visible = guide.m.visible;
   if (!guide.m.visible) return;
-  guide.t += dt; const a = Math.atan2(g.x - player.pos.x, g.z - player.pos.z), r = 1.35;
+  guide.t += dt; const a = Math.atan2(g.x - player.pos.x, g.z - player.pos.z), r = 1.2;
   guide.m.position.set(player.pos.x + Math.sin(a) * r, player.pos.y + 0.18 + Math.sin(guide.t * 4) * 0.05, player.pos.z + Math.cos(a) * r);
   guide.m.rotation.y = a + Math.PI;      // the shape points along -z after the rotation; turn it to face the goal
   const txt = `${g.text} · ${Math.round(d)} m`;
-  if (txt !== guide.txt) { guide.txt = txt; if (guide.sign) { scene.remove(guide.sign); guide.sign.material.map.dispose(); guide.sign.material.dispose(); } guide.sign = label(txt, { size: 24, scale: 0.6 }); guide.sign.renderOrder = 9; guide.sign.material.depthTest = false; scene.add(guide.sign); }
-  guide.sign.position.set(guide.m.position.x, guide.m.position.y + 0.6, guide.m.position.z);
+  if (txt !== guide.txt) { guide.txt = txt; if (guide.sign) { scene.remove(guide.sign); guide.sign.material.map.dispose(); guide.sign.material.dispose(); } guide.sign = label(txt, { size: 24, scale: 0.5 }); guide.sign.renderOrder = 9; guide.sign.material.depthTest = false; scene.add(guide.sign); }
+  guide.sign.position.set(guide.m.position.x, guide.m.position.y + 0.45, guide.m.position.z);
 }
 let marks3d = null; const shadowAt = new THREE.Vector3();
 function questMarks(list) {
   // quest givers: the solid spinning "!" / "?" with a light beam (game/marks.js); the owl's review counts as a job
   marks3d = marks3d || new QuestMarks(scene);
-  marks3d.set(list.filter((m) => m.text === '!' || m.text === '?' || m.text === '🦉').map((m) => { const g = L.walkHeight(m.x, m.z); return { x: m.x, z: m.z, text: m.text === '?' ? '?' : '!', ground: g, head: g + 2.05 }; }));
+  marks3d.set(list.filter((m) => m.text === '!' || m.text === '?' || m.text === '🦉').map((m) => { const g = L.walkHeight(m.x, m.z); return { x: m.x, z: m.z, text: m.text === '?' ? '?' : '!', ground: g, head: g + 1.75 }; }));
   const want = list.filter((m) => m.text === '✉');          // the lost letter keeps its small bobbing badge
   while (markPool.length < want.length) {
     const sp = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true })); sp.scale.setScalar(0.8); sp.renderOrder = 5;
@@ -350,6 +350,11 @@ function placeActors() {
     pip.root.visible = true; pip.place(L.ENTRANCE.x + 3.4, L.ENTRANCE.z - 12.5);
   }
 }
+/** The closest walkable point to (x, z), searched in rings, or null. */
+function nearestWalkable(x, z) {
+  for (let r = 0.5; r <= 12; r += 0.5) for (let k = 0; k < 16; k++) { const a = k / 16 * Math.PI * 2, px = x + Math.cos(a) * r, pz = z + Math.sin(a) * r; if (L.walkable(px, pz, 0.4)) return [px, pz]; }
+  return null;
+}
 /** Loads another region: swaps map data, rebuilds the scenery, moves everyone. at = [x, z] or the region's spawn. */
 async function enterRegion(name, at) {
   switching = true; ui.prompt('');
@@ -365,7 +370,8 @@ async function enterRegion(name, at) {
   try { await renderer.compileAsync(scene, camera); } catch { /* older browsers: shaders compile on first sight */ }      // no hitch when new things come into view
   minimap.rebuild(); placeActors(); if (walkers) walkers.setRegion(name); if (mini) mini.setRegion(name); if (wild) { if (name === 'harbor') await wild.addHarbor(seaModel); wild.setRegion(name); } if (chests) chests.setRegion(name); if (spots) spots.setRegion(name); if (homes) homes.setRegion(name); if (forestStall) forestStall.visible = name === 'forest';
   placeHomeDoor(name);
-  const [x, z] = at || [L.SPAWN.x, L.SPAWN.z];
+  let [x, z] = at || [L.SPAWN.x, L.SPAWN.z];
+  if (!L.walkable(x, z, 0.4)) { const o = nearestWalkable(x, z); if (o) [x, z] = o; }      // never arrive in the water or inside a wall
   game.teleport(x, z); player.yaw = Math.PI; cam.tYaw = cam.yaw = 0.25; if (petObj) petObj.snap(x, z);
   if (quest && quest.step === 'seek') quest.clueStart = performance.now();
   switching = false; save(); refresh();
@@ -434,7 +440,7 @@ let forestStall = null, room = null, homes = null, homePanel = null;
 const HALL_DOOR = { x: 0, z: -16.4 }, LILY_DOOR = { x: -17.4, z: -4 };
 /** Inside a house: the room is drawn instead of the world, the window docks on the right (body.inroom). */
 /** Where the boat lands in the village (the dock), and leaves for the harbour. */
-const VILLAGE_DOCK = [L.REGIONS.village.riverX(18) - 5.2, 18.6];
+const VILLAGE_DOCK = [L.REGIONS.village.riverX(18) - 6.8, 18.6];      // (20/11) was -5.2: that spot is in the river (not walkable), so arriving from the harbor left the hero sinking and stuck
 const homesItems = (p) => (p.home && p.home.items) || [];
 // ---------------------------------------------------------------- the sea extras (19/11): fishing, Sea Dex, fish market
 let dexPanel = null, wardPanel = null, creator = null, tailor = null, spells = null, skillUI = null, floaters = null, petPanel = null, petObj = null, trPanel = null, toolbar = null;
