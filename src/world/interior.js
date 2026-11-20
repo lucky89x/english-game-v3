@@ -3,6 +3,7 @@
 // built from simple shapes in the game's warm palette: plank floor, panelled walls, beams, glowing windows and
 // lanterns, a rug, and furniture for each house. The camera drifts slowly so the room feels alive.
 import * as THREE from 'three';
+import { GROUPS, floorPlan } from '../core/house.js';
 
 const M = (color, rough = 0.8, extra = {}) => new THREE.MeshStandardMaterial({ color, roughness: rough, ...extra });
 const box = (g, w, h, d, m, x, y, z, ry = 0) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); o.position.set(x, y, z); o.rotation.y = ry; g.add(o); return o; };
@@ -100,7 +101,79 @@ function compassPedestal(g, pieces, lights) {
   if (pieces.length) { const l = new THREE.PointLight(0xffc040, 1.4, 3.5); l.position.set(0, 1.3, 0); p.add(l); lights.push(l); }
   p.position.set(2.45, 0, -1.25); p.scale.setScalar(0.85); g.add(p);
 }
+
+
+// ---------------------------------------------------------------- the child's house (20/11): 16 x 12 m per floor (four times the old room),
+// up to three floors of the same size joined by stairs, four rooms on each floor. Open towards the camera like a doll's house.
+const FLOOR_H = 3.7;
+function houseFloor(g, f, h, lights) {
+  const y0 = f * FLOOR_H, W = 16, D = 12, villa = !!h.villa, top = f === h.floors - 1;
+  const wallCol = villa ? 0xf4ecdc : 0xf2e6d0, plank = M(villa ? 0xe6dccb : 0xc08a50, villa ? 0.45 : 0.85), plank2 = M(villa ? 0xd8ccb8 : 0xaf7a44, villa ? 0.45 : 0.85);
+  const wall = M(wallCol, 0.9), trim = M(villa ? 0xd9b45a : 0x7a4a24, villa ? 0.35 : 0.8, villa ? { metalness: 0.5 } : {}), beam = M(0x5a3416, 0.85), slab = M(0x6a4020, 0.9);
+  const fl = new THREE.Group(); fl.position.y = y0; g.add(fl);
+  for (let i = 0; i < 16; i++) box(fl, 1.0, 0.08, D + 0.2, i % 2 ? plank : plank2, -7.5 + i, 0, 0);      // the floor boards
+  box(fl, W, 3.4, 0.2, wall, 0, 1.7, -D / 2 - 0.1); box(fl, 0.2, 3.4, D, wall, -W / 2 - 0.1, 1.7, 0); box(fl, 0.2, 3.4, D, wall, W / 2 + 0.1, 1.7, 0);
+  box(fl, W, 1.0, 0.24, trim, 0, 0.5, -D / 2 + 0.02); box(fl, 0.24, 1.0, D, trim, -W / 2 + 0.02, 0.5, 0); box(fl, 0.24, 1.0, D, trim, W / 2 - 0.02, 0.5, 0);      // wainscot
+  // partitions: a full wall at x = 0 with a doorway, a low wall at z = 0 with gaps
+  box(fl, 0.15, 3.4, 4.8, wall, 0, 1.7, -3.6); box(fl, 0.15, 3.4, 4.8, wall, 0, 1.7, 3.6); box(fl, 0.15, 1.0, 2.4, wall, 0, 2.9, 0);
+  for (const [x0, x1] of [[-8, -5.4], [-2.6, 2.6], [5.4, 8]]) box(fl, x1 - x0, 1.0, 0.15, trim, (x0 + x1) / 2, 0.5, 0);
+  // windows (daylight)
+  const glass = M(0xfff2c0, 0.3, { emissive: 0xffe0a0, emissiveIntensity: 0.9 });
+  for (const x of [-6, -2, 2, 6]) { box(fl, 1.5, 1.3, 0.08, glass, x, 2.1, -D / 2 + 0.05); box(fl, 1.65, 0.1, 0.16, trim, x, 1.42, -D / 2 + 0.1); }
+  for (const z of [-3, 3]) for (const sx of [-1, 1]) box(fl, 0.08, 1.3, 1.5, glass, sx * (W / 2 - 0.05), 2.1, z);
+  // the ceiling slab (the next floor's boards) with a stairwell hole on the side of this floor's stairs
+  if (!top) {
+    const left = f % 2 === 0, hx0 = left ? -8 : 6.4, hx1 = left ? -6.4 : 8;
+    box(fl, W - (hx1 - hx0), 0.3, D, slab, left ? (hx1 + 8) / 2 : (-8 + hx0) / 2, 3.55, 0);
+    box(fl, hx1 - hx0, 0.3, 1.7, slab, (hx0 + hx1) / 2, 3.55, -5.15); box(fl, hx1 - hx0, 0.3, 3.5, slab, (hx0 + hx1) / 2, 3.55, 4.25);
+    // the stairs: 20 solid steps from the front (low) to the back (high) along the wall, with a handrail
+    const sx = left ? -7.2 : 7.2, wood = M(0xa8743f, 0.85);
+    for (let i = 0; i < 20; i++) { const hgt = (i + 1) * (FLOOR_H / 20); box(fl, 1.3, hgt, 0.32, i % 2 ? wood : M(0xb98450, 0.85), sx, hgt / 2, 2.4 - i * 0.32); }
+    const rx = left ? -6.45 : 6.45;
+    for (let i = 0; i <= 20; i += 4) cyl(fl, 0.035, 0.035, 0.9, M(0x3a2410), rx, (i + 1) * (FLOOR_H / 20) + 0.45, 2.4 - i * 0.32, 6);
+    const rail = box(fl, 0.06, 0.06, 6.9, M(0x3a2410), rx, 1.9, -0.5); rail.rotation.x = Math.atan2(FLOOR_H, 6.4) ; rail.position.y = 1.85 + 0.0;
+  }
+  if (top) { box(fl, W + 0.3, 0.2, D + 0.3, slab, 0, 3.55, 0); for (const x of [-6, -2, 2, 6]) box(fl, 0.25, 0.25, D, beam, x, 3.35, 0); }
+  // a lantern on each room, one real light per floor (more would slow the shaders)
+  for (const cx of [-4, 4]) for (const cz of [-3, 3]) { cyl(fl, 0.01, 0.01, 0.5, M(0x333333), cx, 3.15, cz, 4); ball(fl, 0.16, M(0xffd27a, 0.4, { emissive: 0xffb040, emissiveIntensity: 1.6 }), cx, 2.85, cz); }
+  for (const x of [-4, 4]) { const l = new THREE.PointLight(0xffd29a, 16, 15, 1.4); l.position.set(x, y0 + 2.7, 0); g.add(l); lights.push(l); }
+  if (villa) {      // stone columns on the open front edge, a golden chandelier
+    for (const x of [-7.7, -3, 3, 7.7]) { cyl(fl, 0.22, 0.26, 3.3, M(0xf0ece4, 0.4), x, 1.65, D / 2 - 0.2, 14); cyl(fl, 0.34, 0.34, 0.12, M(0xd9b45a, 0.35, { metalness: 0.5 }), x, 3.34, D / 2 - 0.2, 14); }
+    const ch = new THREE.Group(); ball(ch, 0.28, M(0xffe6a0, 0.3, { emissive: 0xffc860, emissiveIntensity: 1.5 }), 0, 0, 0); for (let i = 0; i < 6; i++) ball(ch, 0.1, M(0xffe6a0, 0.3, { emissive: 0xffc860, emissiveIntensity: 1.5 }), Math.cos(i * 1.05) * 0.5, -0.1, Math.sin(i * 1.05) * 0.5);
+    cyl(ch, 0.012, 0.012, 0.5, M(0x333333), 0, 0.4, 0, 4); ch.position.set(0, 2.8, 0.6); fl.add(ch);
+  }
+  return fl;
+}
+function buildHome(opts) {
+  const h = { floors: 1, villa: false, garden: 0, ...(opts.house || {}) }, items = opts.items || [], plan = floorPlan(h);
+  const scene = new THREE.Scene(), g = new THREE.Group(), lights = []; scene.add(g);
+  scene.background = new THREE.Color(0x2a1a10);
+  scene.add(new THREE.HemisphereLight(0xfff0d0, 0x5a3a20, 1.3));
+  const sun = new THREE.DirectionalLight(0xfff0d0, 1.1); sun.position.set(-3, 8, 12); scene.add(sun);
+  const CELLS = [[-4, -2.9], [4, -2.9], [-4, 3.1], [4, 3.1]];
+  for (let f = 0; f < h.floors; f++) {
+    houseFloor(g, f, h, lights);
+    plan[f].forEach((room, k) => {
+      if (!room) return; const cell = new THREE.Group(); cell.position.set(CELLS[k][0], f * FLOOR_H, CELLS[k][1]); g.add(cell);
+      const mine = (GROUPS[room] || []).filter((id) => items.includes(id)); if (mine.length) homeThings(cell, mine, lights, opts.model);
+      if (room === 'living') compassPedestal(cell, opts.pieces || [], lights);
+    });
+  }
+  const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 90), N = h.floors, top = FLOOR_H * N;
+  let t = 0;
+  return {
+    scene, camera,
+    update(dt, aspect) {
+      t += dt; if (Math.abs(camera.aspect - aspect) > 1e-3) { camera.aspect = aspect; camera.updateProjectionMatrix(); }
+      camera.position.set(2 + Math.sin(t * 0.15) * 0.8, 4.2 + top * 0.55 + Math.sin(t * 0.2) * 0.1, 19.5 + N * 3.2); camera.lookAt(2.2, top * 0.42 + 0.6, -1);
+      for (const l of lights) if (l.isPointLight && l.userData.base === undefined) l.userData.base = l.intensity;
+      for (const l of lights) if (l.isPointLight) l.intensity = (l.userData.base || 6) * (1 + Math.sin(t * 7 + l.position.x) * 0.03);
+    },
+    dispose() { scene.traverse((o) => { if (o.geometry) o.geometry.dispose(); if (o.material) [].concat(o.material).forEach((m) => m.dispose()); }); },
+  };
+}
 export function buildRoom(kind, opts = {}) {
+  if (kind === 'home') return buildHome(opts);
   const scene = new THREE.Scene(), g = new THREE.Group(), lights = []; scene.add(g);
   scene.background = new THREE.Color(0x2a1a10);
   scene.add(new THREE.HemisphereLight(0xfff0d0, 0x5a3a20, 1.1));

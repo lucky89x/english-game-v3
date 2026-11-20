@@ -60,6 +60,7 @@ import { ShopWindow } from './ui/shop.js';
 import { ITEMS, bag, wear, buy, eat, shopList, pay, map2Ready, map3Ready, playerAtk, useQuick } from './core/rules.js';
 import { PackUI } from './ui/pack.js';
 import { Fishing } from './game/fishing.js';
+import { house as houseOf } from './core/house.js';
 import { payNote } from './game/minigames.js';
 import { SAM_LINES, BRIDGE, BRIDGE_SPOTS, FRIENDS, OPENING } from './game/content.js';
 import { UI } from './ui/ui.js';
@@ -150,7 +151,7 @@ const ui = new UI(), store = Save.load();
 let profile = null, quest = null, story = null, world = null, player = null, cam = null, tom = null, sam = null, ben = null, pip = null, crystals = null, minimap = null, letterProp = null, itemProps = {}, friends = [], mini = null, wild = null, arcade = null, chests = null, spots = null, unitCards = [], cardOfFn = () => null;
 let shopWin = null, walkers = null, talkW = -1, touch = null, quality = localStorage.getItem('eq-quality') || 'medium', perfOn = false, started = false, switching = false, wordIds = {}, jarKey = '';
 const keys = new Set();
-const game = { errors, get tom() { return tom; }, get fishing() { return fishing; }, get profile() { return profile; }, get quest() { return quest; }, get story() { return story; }, get player() { return player; }, get cam() { return cam; }, get minimap() { return minimap; }, ui, L, stats: { fps: 0, ms: 0, calls: 0, tris: 0 },
+const game = { errors, get homes() { return homes; }, get tom() { return tom; }, get fishing() { return fishing; }, get profile() { return profile; }, get quest() { return quest; }, get story() { return story; }, get player() { return player; }, get cam() { return cam; }, get minimap() { return minimap; }, ui, L, stats: { fps: 0, ms: 0, calls: 0, tris: 0 },
   teleport(x, z) { player.place(x, z); cam.target.set(x, player.pos.y + 1.25, z); }, applyLook, syncPet, get digs() { return digMeshes; }, catchFish, gainItems, cardsOfUnit: (n) => cardsOfUnit(n), get pet() { return petObj; }, get petPanel() { return petPanel; },  setQuality, key: (code) => onKey({ code, preventDefault() {} }), get started() { return started && !switching; }, get region() { return L.NAME; }, chooseProfile, enterRegion, MARKET_JARS, BRIDGE_SPOTS, get mini() { return mini; }, get wild() { return wild; }, get scene() { return scene; }, openShop, get sword() { return swordMesh; }, get armor() { return armorShown; }, setWear, openBag: () => openBag(), get arcade() { return arcade; }, get chests() { return chests; }, get spots() { return spots; }, get admin() { return admin; }, get friends() { return friends; }, get walkers() { return walkers; }, get shopWin() { return shopWin; }, get music() { return music; }, get journal() { return journal; }, get spells() { return spells; }, get floaters() { return floaters; }, get skillUI() { return skillUI; }, get intro() { return intro; }, cardOf: (id) => cardOfFn(id), pause: (on) => renderer.setAnimationLoop(on ? null : frame),      // tests: stop drawing while another page is checked
   post, refresh: () => refresh(), refreshGear: () => { setSword(); setWear(); } };
 globalThis.__eq = game;
@@ -662,7 +663,12 @@ function makeBoat(model = null) {
 }
 function startIntro() {
   if (navigator.webdriver && !/[?&]intro=1/.test(location.search)) { profile.flags.arrived = true; return; }
-  ui.dialogue(OPENING(profile.name), async () => {          // the story first, then the boat ride (18/11)
+  ui.dialogue(OPENING(profile.name), async () => {          // the story first, then the boat ride (18/11); (20/11) a hero with a home stands in front of its door
+    const lot = homes && homes.lotOf(profile);
+    if (lot) {
+      profile.flags.arrived = true; game.teleport(lot.h.door[0] + 1.8, lot.h.door[1]); player.yaw = -Math.PI / 2; cam.tYaw = cam.yaw = Math.PI / 2; save(); sfx('fanfare');
+      ui.toast(`🏠 Đây là nhà của ${profile.name}! Tom đang chờ ở quảng trường (theo mũi tên vàng).`); return;
+    }
     if (!intro) { let m = null; try { m = (await gltf('prop_boat_v01')).scene.clone(true); } catch (e) { console.warn('boat model', e); } intro = { boat: makeBoat(m), t: 0, len: 9 }; scene.add(intro.boat); }
     intro.t = 0; intro.boat.visible = true; intro.active = true;
     ui.toast(`${profile.name} đang tới làng bằng thuyền…`);
@@ -933,7 +939,7 @@ function interactTarget() {
     if (ex.flag && !profile.flags[ex.flag]) return { text: 'Cổng rừng còn khóa. Hãy giúp Tom và Ben trước.', run() {} };
     return { text: 'E · ' + ex.label, run: () => { const back = ex.to === 'village' ? (L.NAME === 'harbor' ? VILLAGE_DOCK : [L.REGIONS.village.EXITS[0].x + 0.5, L.REGIONS.village.EXITS[0].z + 5]) : (L.NAME === 'isle' ? [HARBOR.isle.x + 2.2, HARBOR.isle.z - 0.5] : null); enterRegion(ex.to, back); } };
   }
-  if (homeDoor && homeDoor.visible && near(homeDoor.position.x, homeDoor.position.z, 1.9)) return { text: `E · Cửa nhà thần kỳ: về nhà của ${profile.name}`, run: async () => { const items = [...homesItems(profile)]; await loadHomeModels(items); enterRoom('home', { items, model: homeModel, pieces: Saga.pieces(profile) }); homePanel.show(profile, true); } };
+  if (homeDoor && homeDoor.visible && near(homeDoor.position.x, homeDoor.position.z, 1.9)) return { text: `E · Cửa nhà thần kỳ: về nhà của ${profile.name}`, run: async () => { const items = [...homesItems(profile)]; await loadHomeModels(items); enterRoom('home', { items, model: homeModel, pieces: Saga.pieces(profile), house: houseOf(profile) }); homePanel.show(profile, true); } };
   if (L.NAME === 'isle') {          // Treasure Isle (19/11): read the map, walk the steps, dig
     if (!treasureMap()) return { text: 'Hôm nay con đã tìm đủ kho báu. Mai có bản đồ mới!', run() {} };
     return { text: 'E · Đào ở đây (bản đồ kho báu: phím M)', run: digHere };
@@ -980,7 +986,7 @@ function interactTarget() {
   if (homes) {       // the children's homes, Bram's furniture shop and the two stalls (18/11)
     const lot = homes.doorAt(player.pos);
     if (lot) { const o = lot.owner; if (!o) return { text: 'Nhà trống: tạo thêm người chơi để nhận nhà này', run: () => ui.toast('Mỗi bé (tối đa 2) có một ngôi nhà ở đây.') };
-      const mine = o.id === profile.id; return { text: mine ? 'E · Vào nhà của con' : `E · Thăm nhà của ${o.name}`, run: async () => { const items = [...homesItems(o)]; await loadHomeModels(items); enterRoom('home', { items, model: homeModel, pieces: Saga.pieces(o) }); homePanel.show(o, mine); } }; }
+      const mine = o.id === profile.id; return { text: mine ? 'E · Vào nhà của con' : `E · Thăm nhà của ${o.name}`, run: async () => { const items = [...homesItems(o)]; await loadHomeModels(items); enterRoom('home', { items, model: homeModel, pieces: Saga.pieces(o), house: houseOf(o) }); homePanel.show(o, mine); } }; }
     if (near(FURNITURE.door[0] + 0.9, FURNITURE.door[1], 1.9)) return { text: 'E · Cửa hàng nội thất (giường, bàn ghế, vườn)', run: () => { enterRoom('shop'); shopWin.show('Furniture & Garden Shop', ['home', 'garden']); } };
     if (near(STALLS.healer.at[0], STALLS.healer.at[1], 1.9)) return { text: 'E · Quầy của Lily (bình máu, bình mana, đồ đầu game)', run: () => shopWin.show("Lily's Potions & Gear", ['healer', 'forge']) };
     if (near(STALLS.produce.at[0], STALLS.produce.at[1], 1.8)) return { text: 'E · Quầy rau quả của Ben', run: () => shopWin.show("Ben's Fruit & Veg", ['produce']) };
@@ -1078,7 +1084,7 @@ async function boot() {
     const name = label("🌿 Willow's Camp Shop", { size: 28, scale: 0.8 }); name.position.set(0, 3.2, 0); forestStall.add(name); forestStall.visible = false; scene.add(forestStall); }
   { const opt = (n) => staticModel(n).catch(() => null);
     homes = new Homes({ scene, load: staticModel, profiles: () => store.profiles, models: { garden: await opt('prop_vegetable_garden_v01'), tree: await opt('prop_tree_round_v01'), flowers: await opt('yard_flowerbed_v01'), bench: await opt('yard_bench_v01'), mailbox: await opt('yard_mailbox_v01'), garden_lamp: await opt('yard_garden_lamp_v01') } });
-    await homes.build(); homes.setRegion(L.NAME); homePanel = new HomePanel({ onClose: leaveRoom, profile: () => profile, today: () => Review.today(), changed: () => { save(); refresh(); }, sfx, track }); }
+    await homes.build(); homes.setRegion(L.NAME); homePanel = new HomePanel({ onClose: leaveRoom, rebuild: (o) => { const items = [...homesItems(o)]; leaveRoom(); enterRoom('home', { items, model: homeModel, pieces: Saga.pieces(o), house: houseOf(o) }); if (homes) homes.refresh(true); }, profile: () => profile, today: () => Review.today(), changed: () => { save(); refresh(); }, sfx, track }); }
   journal = new Journal({ profile: () => profile, today: () => Review.today(), onClose: leaveRoom,
     store: () => store, claimShip: () => { const r = Family.claim(store, profile); if (r) { sfx('fanfare'); save(); refresh(); ui.toast(`⚓ Thưởng tàu gia đình: +${r.gold} vàng`); } },
     claimMain: (id) => claimReward(Q.claimMain(profile, id), 'Nhiệm vụ chính'), claimDaily: (id) => claimReward(Q.claimDaily(profile, Review.today(), id), 'Nhiệm vụ ngày') });
@@ -1170,7 +1176,7 @@ const AUTO = !navigator.webdriver && !localStorage.getItem('eq-quality-manual');
 function frame() {
   const now = performance.now(), raw = (now - last) / 1000, real = Math.min(0.25, raw); last = now;
   const dt = Math.min(0.05, real); TIME.value += real; const t = TIME.value;
-  const frozen = ui.modal || !started || (arcade && arcade.open) || (shopWin && shopWin.open) || (packUI && packUI.open) || (fishing && fishing.active) || (music && music.open) || (journal && journal.open) || (homePanel && homePanel.open) || (dexPanel && dexPanel.open) || (wardPanel && wardPanel.open) || (creator && creator.open) || (tailor && tailor.open) || (skillUI && skillUI.open) || (petPanel && petPanel.open) || (trPanel && trPanel.open);
+  const frozen = ui.modal || !started || (arcade && arcade.open) || (shopWin && shopWin.open) || (packUI && packUI.open) || (fishing && fishing.active) || (music && music.open) || (journal && journal.open) || (homePanel && homePanel.open) || room || (dexPanel && dexPanel.open) || (wardPanel && wardPanel.open) || (creator && creator.open) || (tailor && tailor.open) || (skillUI && skillUI.open) || (petPanel && petPanel.open) || (trPanel && trPanel.open);
   if (arcade) arcade.update(real, keys);
   if (touch) touch.update();
   releaseSoftKeys();

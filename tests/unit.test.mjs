@@ -875,3 +875,17 @@ test('loot: only elites and bosses drop, rarely, only unowned rare gear near the
   assert.ok(giveLoot(p, id) && p.inv.owned.includes(id) && !giveLoot(p, id));
   for (const [k, it] of Object.entries(ITM2)) if (it.rare) assert.ok(!it.seller, k + ' is not sold');
 });
+
+import { house as HOUSE, UPGRADES as UPG, upgradeState, buyUpgrade, floorPlan, gardenOf, GROUPS } from '../src/core/house.js';
+test('house upgrades: start with one floor, buy in order, level and gold are checked, furniture rooms move up', () => {
+  const p = S.newProfile('An', 6); p.stats.level = 25; p.stats.gold = 10000; const g0 = p.stats.gold;
+  assert.deepEqual(HOUSE(p), { floors: 1, villa: false, garden: 0 });
+  assert.equal(upgradeState(p, 'floor3').why, 'need', 'the third floor needs the second first');
+  assert.equal(upgradeState(p, 'villa').why, 'need');
+  assert.ok(buyUpgrade(p, 'floor2').ok && HOUSE(p).floors === 2 && p.stats.gold === g0 - UPG.find((u) => u.id === 'floor2').cost);
+  assert.equal(buyUpgrade(p, 'floor2').why, 'have'); assert.ok(buyUpgrade(p, 'floor3').ok && buyUpgrade(p, 'villa').ok && HOUSE(p).villa);
+  assert.ok(buyUpgrade(p, 'garden1').ok && buyUpgrade(p, 'garden2').ok); assert.equal(buyUpgrade(p, 'garden2').why, 'have');
+  const q = S.newProfile('Bo', 6); q.stats.level = 1; q.stats.gold = 5000; assert.equal(upgradeState(q, 'floor2').why, 'level'); q.stats.level = 6; q.stats.gold = 10; assert.equal(upgradeState(q, 'floor2').why, 'gold');
+  assert.equal(floorPlan({ floors: 1 }).length, 1); assert.deepEqual(floorPlan({ floors: 2 })[1], ['bedroom', '', '', '']); assert.equal(floorPlan({ floors: 3 }).length, 3);
+  const all = Object.values(GROUPS).flat(); for (const id of all) assert.ok(ITEMS[id] && ITEMS[id].slot === 'home', id); assert.deepEqual(gardenOf({ garden: 0 }), { veg: 2, flowers: 2, trees: 0, pond: false, arch: false }); assert.equal(gardenOf({ garden: 2 }).pond, true);
+});

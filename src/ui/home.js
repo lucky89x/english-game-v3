@@ -1,6 +1,7 @@
 // Inside a child's home (18/11): the room is drawn behind (world/interior.js 'home'); this card lists what stands in
 // the house and the yard, and what can still be bought, with the English name and the shop that sells it.
 import { ITEMS, home } from '../core/rules.js';
+import { house, UPGRADES, upgradeState, buyUpgrade } from '../core/house.js';
 
 const SHOP = { home: "Bram's furniture (west fields)", garden: "Lily's garden corner (furniture shop)", music: "Anna's instruments (stall by Anna's house)" };
 const CSS = `
@@ -12,6 +13,8 @@ const CSS = `
 #homewin .grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); gap:6px; margin:8px 0; }
 #homewin .it { background:#fff; border:2px solid #d9b98a; border-radius:10px; padding:5px 7px; font-size:13px; } #homewin .it b { display:block; font-size:14px; }
 #homewin .it.no { opacity:.5; border-style:dashed; } #homewin .note { font-size:13px; color:#6a4a20; margin:4px 0; }
+#homewin .up { display:flex; gap:8px; align-items:center; background:#fff; border:2px solid #d9b98a; border-radius:10px; padding:5px 8px; margin:5px 0; font-size:13px; } #homewin .up b { font-size:14px; } #homewin .up .t { flex:1; } #homewin .up button:disabled { opacity:.5; cursor:default; }
+#homehint { position:fixed; left:50%; bottom:14px; transform:translateX(-50%); z-index:30; padding:7px 16px; border-radius:20px; background:rgba(40,24,8,.82); color:#fff; font:800 14px system-ui,sans-serif; display:none; pointer-events:none; } #homehint.on { display:block; }
 body.inroom #homewin { background:transparent; justify-content:flex-end; } body.inroom #homewin .book { width:min(560px, 56vw); margin-right:12px; }
 `;
 
@@ -20,24 +23,40 @@ export class HomePanel {
   constructor(api) {
     this.api = api; const st = document.createElement('style'); st.textContent = CSS; document.head.appendChild(st);
     this.el = document.createElement('div'); this.el.id = 'homewin'; this.el.className = 'hidden'; document.body.appendChild(this.el);
+    this.hint = document.createElement('div'); this.hint.id = 'homehint'; this.hint.textContent = 'E · Ra ngoài     L · Mở danh sách (nâng cấp, đồ trong nhà)'; document.body.appendChild(this.hint); this.inside = false;
     this.el.addEventListener('click', (e) => {
-      const b = e.target.closest('button'); if ((b && b.dataset.a === 'close') || e.target === this.el) { this.close(); return; }
+      const b = e.target.closest('button'); if ((b && b.dataset.a === 'close') || e.target === this.el) { this.hide(); return; }
+      if (b && b.dataset.a === 'exit') { this.close(); return; }
+      if (b && b.dataset.a === 'up') { this.upgrade(b.dataset.v); return; }
       if (b && b.dataset.a === 'quiz') this.startQuiz();
       if (b && b.dataset.a === 'ans') this.answer(Number(b.dataset.v));
     });
   }
   get open() { return !this.el.classList.contains('hidden'); }
   /** owner: the profile whose home it is; mine: the child playing now owns it (a visitor only looks). */
-  show(owner, mine) { this.owner = owner; this.mine = mine; this.quiz = null; this.paint(); this.el.classList.remove('hidden'); }
+  show(owner, mine) { this.owner = owner; this.mine = mine; this.quiz = null; this.inside = true; this.paint(); this.el.classList.remove('hidden'); this.hint.classList.remove('on'); }
+  /** The list can be shut while the hero stays inside the house (E leaves). */
+  hide() { this.el.classList.add('hidden'); if (this.inside) this.hint.classList.add('on'); }
+  upgrade(id) {
+    const r = buyUpgrade(this.owner, id), u = UPGRADES.find((x) => x.id === id);
+    if (!r.ok) { this.api.sfx('wrong'); this.msg = r.why === 'gold' ? 'Chưa đủ vàng.' : r.why === 'level' ? `Cần cấp ${u.level}.` : r.why === 'need' ? 'Cần nâng cấp trước đó.' : 'Con đã có rồi.'; this.paint(); return; }
+    this.api.sfx('fanfare'); this.msg = `Đã nâng cấp: ${u.en}! Nhà đang được xây lại…`; this.api.changed(); if (this.api.rebuild) this.api.rebuild(this.owner); this.paint();
+  }
   paint() {
     const owner = this.owner, mine = this.mine;
     const have = home(owner).items, row = (slot) => Object.entries(ITEMS).filter(([, it]) => it.slot === slot)
       .map(([id, it]) => `<div class="it ${have.includes(id) ? '' : 'no'}"><b>${it.en}</b>${it.vi}${have.includes(id) ? ' ✔' : `<br><small>${it.cost} ● · ${SHOP[it.seller] || ''}</small>`}</div>`).join('');
     const n = have.length, total = Object.values(ITEMS).filter((it) => it.slot === 'home' || it.slot === 'yard').length;
-    this.el.innerHTML = `<div class="book"><header><span style="font-size:28px">🏠</span><h2>${mine ? 'My home' : `${owner.name}'s home`} · Nhà của ${owner.name}</h2><button data-a="close">✕</button></header>
+    this.el.innerHTML = `<div class="book"><header><span style="font-size:28px">🏠</span><h2>${mine ? 'My home' : `${owner.name}'s home`} · Nhà của ${owner.name}</h2><button data-a="exit">Ra ngoài (E)</button><button data-a="close" title="Đóng danh sách">✕</button></header>
       <div class="note">${mine ? 'Nhà của con. Mua đồ ở cửa hàng nội thất (phía Tây, cạnh nhà), quầy nhạc cụ của Anna; đồ mua về tự đặt vào nhà hoặc sân.' : `Con đang thăm nhà của ${owner.name}. Chỉ ${owner.name} mới mua được đồ cho nhà này.`} (${n}/${total})</div>
+      ${this.upgradesBox(mine)}
       ${this.quizBox(mine)}
       <h3>In the house · Trong nhà</h3><div class="grid">${row('home')}</div><h3>In the yard · Ngoài sân</h3><div class="grid">${row('yard')}</div></div>`;
+  }
+  upgradesBox(mine) {
+    const o = this.owner, h = house(o); if (!mine) return `<div class="note">🏗 Nhà ${h.floors} tầng${h.villa ? ' (biệt thự)' : ''}, vườn cấp ${h.garden}.</div>`;
+    const rows = UPGRADES.map((u) => { const st = upgradeState(o, u.id), have = st.why === 'have'; return `<div class="up"><div class="t"><b>${u.en}</b> · ${u.vi}<br><small>${have ? '✔ Đã có' : `${u.cost} ● · cần cấp ${u.level}${st.why === 'need' ? ' · cần nâng cấp trước' : ''}`}</small></div>${have ? '' : `<button data-a="up" data-v="${u.id}" ${st.why === 'need' ? 'disabled' : ''}>Mua</button>`}</div>`; }).join('');
+    return `<h3>🏗 Upgrade your home · Nâng cấp nhà <small>(nhà ${h.floors} tầng${h.villa ? ', biệt thự' : ''}, vườn cấp ${h.garden})</small></h3>${this.msg ? `<div class="note"><b>${this.msg}</b></div>` : ''}${rows}`;
   }
   quizBox(mine) {
     if (!mine) return '';
@@ -63,6 +82,13 @@ export class HomePanel {
     const p = this.api.profile(), gold = q.right * 5; p.stats.gold += gold; p.homeQuiz = this.api.today(); this.api.track('shopquest'); this.api.changed();
     q.done = `${q.right}/3 đúng · +${gold} vàng. Mai làm tiếp nhé!`; this.paint();
   }
-  close() { if (!this.open) return; this.el.classList.add('hidden'); if (this.api.onClose) this.api.onClose(); }
-  key(code) { if (this.open && (code === 'Escape' || code === 'KeyE')) { this.close(); return true; } return this.open; }
+  /** Leaves the house. */
+  close() { if (!this.inside) return; this.inside = false; this.msg = ''; this.el.classList.add('hidden'); this.hint.classList.remove('on'); if (this.api.onClose) this.api.onClose(); }
+  key(code) {
+    if (!this.inside) return false;
+    if (code === 'KeyE') { this.close(); return true; }
+    if (code === 'Escape') { if (this.open) this.hide(); else this.close(); return true; }
+    if (code === 'KeyL' && !this.open) { this.paint(); this.el.classList.remove('hidden'); this.hint.classList.remove('on'); return true; }
+    return this.open;
+  }
 }
