@@ -84,3 +84,7 @@ Nguồn: bộ Ultimate Monsters / Animated Dinosaurs của Quaternius, lấy b�
 | `boss_dragon_fire_v01.glb` | Dragon | con bay |
 
 Chuẩn hoá bằng `tools/monsters/import_quaternius.py` (cao 1 m, đổi tên clip).
+
+## Lô 24 Map 3 (20/11)
+
+Mọi file `map3_*_v01.glb`, `pet_fennec_v01.glb`, `npc_desert_*_v01.glb` tự dựng bằng Blender (`tools/map3/build_map3.py`, `tools/chibi05/build_ngoc_v03.py`), không dùng tài nguyên ngoài.

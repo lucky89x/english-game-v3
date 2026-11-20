@@ -62,6 +62,7 @@ VARIANT = os.environ.get('NGOC_VARIANT', 'ngoc')
 BOY = VARIANT == 'ban_nam'
 HERO = VARIANT in ('ngoc', 'ban_nam')     # playable heroes: swappable hair, clothes, goggles
 BW = 1.08 if BOY else 1.0                  # the boy is a little broader in the shoulders
+HEIGHT = {'amira': 1.3, 'karim': 1.35, 'layla': 1.2, 'idris': 1.4}.get(VARIANT)   # desert NPCs: whole model (rig node) scaled to this height
 VARIANTS = {   # friends built on Ngoc's body: (file name, palette overrides)
     'lily': ('npc_lily_druid_v02', {'hair': 'e0702c', 'hair_light': 'f08a3c', 'hair_dark': 'b8531c', 'bandana': '5fa83c', 'bandana_dark': '3f7d2a',
                                     'scarf': '6cb444', 'scarf_dark': '4a8a30', 'shirt': '8cc25a', 'shirt_shade': '6a9e42', 'shorts': 'f0e6cc',
@@ -75,6 +76,18 @@ VARIANTS = {   # friends built on Ngoc's body: (file name, palette overrides)
     'mia': ('npc_mia_tailor_v01', {'hair': '9a3e22', 'hair_light': 'b5502e', 'hair_dark': '6e2a16', 'bandana': '8c64c2', 'bandana_dark': '6a4a9a',
                                    'scarf': 'e2b04a', 'scarf_dark': 'c99a1e', 'shirt': 'f4efe6', 'shirt_shade': 'd8d0c0', 'shorts': '6a4a9a',
                                    'shorts_cuff': '4a3070', 'glass': 'e2b04a', 'ribbon': '8c64c2'}),
+    'amira': ('npc_desert_elder_v01', {'hair': 'd8d0c0', 'hair_light': 'f0ece4', 'hair_dark': 'b0a898', 'bandana': '3fc0b0', 'bandana_dark': '2a8c80',
+                                       'scarf': '3fc0b0', 'scarf_dark': '2a8c80', 'shirt': 'e8dcc0', 'shirt_shade': 'c9b890', 'shorts': '8a6a4a',
+                                       'shorts_cuff': '6a4a2a', 'glass': '3fc0b0', 'ribbon': '3fc0b0'}),
+    'karim': ('npc_desert_merchant_v01', {'hair': '3a2a20', 'hair_light': '5a4232', 'hair_dark': '22180f', 'bandana': 'c9463a', 'bandana_dark': '8e2e28',
+                                          'scarf': 'e2b04a', 'scarf_dark': 'b08a2a', 'shirt': 'f4efe6', 'shirt_shade': 'd8d0c0', 'shorts': '5a4a8a',
+                                          'shorts_cuff': '3a2a6a', 'glass': 'e2b04a', 'ribbon': 'c9463a'}),
+    'layla': ('npc_desert_guide_v01', {'hair': '2a1d16', 'hair_light': '4a3428', 'hair_dark': '1a120c', 'bandana': 'e8a33a', 'bandana_dark': 'b07a2a',
+                                       'scarf': 'e8a33a', 'scarf_dark': 'b07a2a', 'shirt': 'f2e2c2', 'shirt_shade': 'd8c49a', 'shorts': '7a5a3a',
+                                       'shorts_cuff': '5a3a20', 'glass': '5ac8ff', 'ribbon': 'e8a33a'}),
+    'idris': ('npc_desert_smith_v01', {'hair': '4a3222', 'hair_light': '6a4a32', 'hair_dark': '2a1a10', 'bandana': '6a4a3a', 'bandana_dark': '4a3020',
+                                       'scarf': '8a6a4a', 'scarf_dark': '6a4a2a', 'shirt': 'b88a5a', 'shirt_shade': '9a6e44', 'shorts': '4a3a30',
+                                       'shorts_cuff': '2a2018', 'glass': 'e8603a', 'ribbon': '6a4a3a'}),
     'ban_nam': ('chr_ban_nam_v01', {'hair': '3a2a20', 'hair_light': '5a4232', 'hair_dark': '22180f', 'shirt': '6fa8dc', 'shirt_shade': '4a86bf',
                                     'shorts': '3a4f7a', 'shorts_cuff': '2a3a5c'}),
 }
@@ -948,7 +961,7 @@ if HERO:
     br = on_hair(math.radians(11), math.radians(37), .056)
     bridge = tube('Ngoc_GoggleBridge', [bl, (bl + br) / 2 + Vector((0, -.004, .010)), br], [.011, .011, .011], seg=8)
     finish(bridge, 'brass', ['head'])
-elif VARIANT != 'mia':
+elif VARIANT not in ('mia', 'amira', 'karim', 'layla', 'idris'):
     PALETTE_EXTRA = True
     for k in range(11):
         az = math.radians(-100 + k * 20)
@@ -1359,6 +1372,63 @@ elif VARIANT == 'mia':
     for k, a in enumerate((.25, -.25)):
         finish(tube(f'Mia_Blade_{k}', [HAND_R + Vector((0, -.02, .0)), HAND_R + Vector((.04 * a, -.03, -.13))], [.008, .003], seg=4), 'brass', ['hand.R'])
         finish(torus(f'Mia_Ring_{k}', HAND_R + Vector((.025 * (1 if k else -1), -.01, .03)), .018, .005, seg=10, rseg=3), 'bandana_dark', ['hand.R'])
+elif VARIANT == 'amira':
+    # village elder: turquoise headscarf over the hair, palm-wood staff
+    finish(ellipsoid('Amira_Scarf', HAIR_C + Vector((0, .02, .03)), (HAIR_R[0] + .05, HAIR_R[1] + .05, HAIR_R[2] + .05), seg=24, rings=14,
+                     deform=lambda q_, v: q_ if v.y > -.55 or v.z > .45 else q_ * .2), 'bandana', ['head'])
+    finish(loft('Amira_Drape', [(Vector((0, .2, 1.0)), .28, .1), (Vector((0, .22, .8)), .26, .08), (Vector((0, .2, .62)), .22, .05)], seg=12,
+                ref=Vector((1, 0, 0))), 'bandana_dark', ['head', 'chest'])
+    finish(torus('Amira_Band', HAIR_C + Vector((0, .0, .13)), HAIR_R[0] + .055, .02, seg=24, rseg=4, sy=(HAIR_R[1] + .055) / (HAIR_R[0] + .055),
+                 rot=Quaternion((1, 0, 0), math.radians(-14))), 'gold', ['head'])
+    st0, st1 = HAND_L + Vector((0, -.02, -.5)), HAND_L + Vector((.02, -.02, .75))
+    finish(tube('Amira_Staff', [st0, HAND_L, st1], [.025, .022, .02], seg=8), 'leather', ['hand.L'])
+    for k in range(5):
+        a = k * 1.25
+        finish(ellipsoid(f'Amira_Frond_{k}', st1 + Vector((.09 * math.cos(a), .09 * math.sin(a), .03)), (.11, .025, .03), seg=8, rings=4,
+                         rot=Quaternion((0, 0, 1), a) @ Quaternion((0, 1, 0), -.5)), 'leaf', ['hand.L'])
+elif VARIANT == 'karim':
+    # merchant: turban with a jewel, curled moustache, striped cloak, bag of goods
+    for k in range(3):
+        finish(torus(f'Karim_Turban_{k}', HAIR_C + Vector((0, .01, .1 + .07 * k)), HAIR_R[0] - .02 * k, .05, seg=24, rseg=6,
+                     sy=(HAIR_R[1] - .02 * k) / (HAIR_R[0] - .02 * k)), 'bandana' if k % 2 == 0 else 'white', ['head'])
+    finish(ellipsoid('Karim_TurbanTop', HAIR_C + Vector((0, .01, .26)), (.2, .19, .1), seg=16, rings=8), 'bandana', ['head'])
+    finish(ellipsoid('Karim_Jewel', HAIR_C + Vector((0, -HAIR_R[1] - .02, .12)), (.035, .02, .045), seg=8, rings=5), 'crystal', ['head'])
+    for sd in (-1, 1):   # curled moustache under the nose
+        pts = [Vector((sd * .015, -.262, HZ - .1)), Vector((sd * .06, -.262, HZ - .11)), Vector((sd * .1, -.25, HZ - .09)),
+               Vector((sd * .11, -.245, HZ - .06))]
+        finish(tube(f'Karim_Moustache_{sd}', pts, [.016, .018, .012, .006], seg=6), 'hair_dark', ['head'])
+    finish(loft('Karim_Cloak', [(Vector((0, .02, .8)), .19, .14), (Vector((0, .06, .55)), .25, .19), (Vector((0, .07, .3)), .28, .21)],
+                seg=16, caps=(False, False), ref=Vector((1, 0, 0))), 'shorts', ['chest', 'spine', 'hips'])
+    for k in range(6):
+        a = math.pi * .2 + k * math.pi * .6 / 5
+        finish(tube(f'Karim_Stripe_{k}', [Vector((.2 * math.cos(a), .02 + .2 * math.sin(a), .78)), Vector((.29 * math.cos(a), .07 + .22 * math.sin(a), .32))],
+                    [.008, .008], seg=4), 'scarf', ['chest', 'hips'])
+    finish(ellipsoid('Karim_Bag', Vector((.05, .26, .58)), (.16, .1, .17), seg=12, rings=8), 'wicker', ['chest', 'spine'])
+elif VARIANT == 'layla':
+    # young guide: wide-brimmed hat with sand goggles, rolled map in her hand
+    hz = HAIR_C.z + HAIR_R[2] - .06
+    finish(loft('Layla_HatBrim', [(Vector((0, .01, hz - .02)), .48, .46), (Vector((0, .01, hz)), .46, .44)], seg=24, caps=(True, True)), 'leather', ['head'])
+    finish(loft('Layla_HatCrown', [(Vector((0, .01, hz)), .27, .26), (Vector((0, .01, hz + .16)), .24, .23), (Vector((0, .01, hz + .2)), .18, .17)],
+                seg=20, caps=(False, True)), 'leather_light', ['head'])
+    finish(torus('Layla_HatBand', Vector((0, .01, hz + .04)), .265, .02, seg=20, rseg=4), 'bandana', ['head'])
+    for sd in (-1, 1):
+        finish(torus(f'Layla_Goggle_{sd}', Vector((sd * .09, -.25, hz + .07)), .05, .014, seg=12, rseg=4, rot=Quaternion((1, 0, 0), math.radians(70))),
+               'brass', ['head'])
+        finish(ellipsoid(f'Layla_GoggleLens_{sd}', Vector((sd * .09, -.255, hz + .07)), (.045, .01, .045), seg=10, rings=5,
+                         rot=Quaternion((1, 0, 0), math.radians(-20))), 'lens', ['head'])
+    finish(tube('Layla_Map', [HAND_R + Vector((-.1, -.03, .0)), HAND_R + Vector((.1, -.03, .02))], [.03, .03], seg=10), 'parchment', ['hand.R'])
+    finish(torus('Layla_MapTie', HAND_R + Vector((0, -.03, .01)), .032, .006, seg=10, rseg=3, rot=Quaternion((0, 1, 0), math.radians(90))), 'ribbon', ['hand.R'])
+elif VARIANT == 'idris':
+    # blacksmith: leather apron, hammer, bushy beard
+    for k in range(9):
+        a = -1.1 + k * .275
+        finish(ellipsoid(f'Idris_Beard_{k}', Vector((.13 * math.sin(a), -.2 - .05 * math.cos(a), HZ - .17 - .03 * math.cos(a * 1.5))),
+                         (.06, .05, .07), seg=8, rings=5), 'hair_dark' if k % 2 else 'hair', ['head'])
+    finish(ellipsoid('Idris_BeardTip', Vector((0, -.26, HZ - .25)), (.08, .05, .08), seg=10, rings=6), 'hair', ['head'])
+    finish(loft('Idris_Apron', [(Vector((0, -.135, .75)), .12, .012), (Vector((0, -.14, .5)), .16, .015), (Vector((0, -.16, .3)), .17, .015)], seg=8,
+                ref=Vector((0, 1, 0))), 'leather_dark', ['chest', 'spine', 'hips', 'thigh.L', 'thigh.R'])
+    finish(tube('Idris_HammerHandle', [HAND_R + Vector((0, -.02, -.15)), HAND_R + Vector((0, -.02, .2))], [.018, .018], seg=6), 'leather', ['hand.R'])
+    finish(ellipsoid('Idris_HammerHead', HAND_R + Vector((0, -.02, .24)), (.09, .05, .05), seg=10, rings=6), 'brass_dark', ['hand.R'])
 elif VARIANT == 'anna':
     # big yellow bow on the bun and a little lute on her back strap, neck up over the left shoulder
     for sgn in (-1, 1):
@@ -1847,6 +1917,8 @@ print('final triangles', {o.name: sum(len(p.vertices) - 2 for p in o.data.polygo
 for o in bpy.context.view_layer.objects:      # select rig + meshes again: the exporter writes the skin only for selected objects
     o.select_set(o in [rig] + _meshes)
 export_kwargs['export_extras'] = bool(HAIRS)
+if HEIGHT:      # desert NPCs: same skeleton and clips, scaled as a whole by the rig node
+    rig.scale = (HEIGHT / 1.562,) * 3
 bpy.context.view_layer.objects.active = rig
 props = bpy.ops.export_scene.gltf.get_rna_type().properties.keys()
 bpy.ops.export_scene.gltf(**{k: v for k, v in export_kwargs.items() if k in props})
