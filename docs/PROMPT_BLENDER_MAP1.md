@@ -222,3 +222,63 @@ wind_core wind_guard wind_flow whirlwind wind_blade tornado thunder_core thunder
 
 Xuất xong: render tools/fx/preview_fx.py (bảng ảnh mọi hiệu ứng + bảng 24 biểu tượng); commit từng file, đẩy nhánh blender-assets.
 ```
+
+---
+
+## LÔ 22 — Quái theo 4 hệ cho Map 1–3 (20/11)
+
+Đã có trong game (lượt 32): **Frost Goblin** ❄️ (Đồng Hoang), **Ember Imp** 🔥 (cánh đồng golem), **Gale Orc** 🌪️ (Rừng Ký Ức), lấy từ bộ
+**Ultimate Monsters của Quaternius (CC0, dùng tự do)** qua bản sao trên GitHub; script chuẩn hoá `tools/monsters/import_quaternius.py`.
+Máy chủ của em chỉ vào được GitHub, nên phần còn lại anh làm trên máy anh theo **một trong hai cách** (cách A nhanh, nên làm trước).
+
+Mục tiêu: mỗi vùng có đủ 4 hệ để bé dùng tương khắc: Đồng Hoang (thiếu Sét nhỏ), Rừng Ký Ức (thiếu Lửa, Sét), Cảng (thiếu Gió), Map 3 Sa mạc Gió Vàng (chưa có quái).
+
+### Cách A — tải thêm quái CC0 của Quaternius (nhanh, hoạt ảnh sẵn)
+```
+Lô 22A: trên máy có Blender, tải bộ "Ultimate Monsters" (glTF) của Quaternius từ https://quaternius.com (giấy phép CC0).
+Chạy cho từng nhóm (tên file trong bộ có thể khác chút, mở thư mục glTF để xem tên đúng):
+  PACK="Bunny.gltf=mob_bunny_ice_v01,Ghost.gltf=mob_ghost_thunder_v01,Frog.gltf=mob_frog_wind_v01,Dino.gltf=mob_dino_fire_v01,Birb.gltf=mob_bird_wind_v01,Squidle.gltf=mob_squid_ice_v01,Cactoro.gltf=mob_cactus_thunder_v01,Yeti.gltf=mob_yeti_ice_v01,Hywirl.gltf=mob_whirl_wind_v01,Dragon.gltf=boss_dragon_fire_v01" \
+  blender -b -P tools/monsters/import_quaternius.py -- <thư mục glTF của bộ> assets/models
+Kiểm: mỗi file ~0,8 MB, cao 1 m, có clip Idle/Walk/Weapon hoặc Punch/HitReact/Death. Thêm một dòng vào assets/models/CREDITS.md
+(bảng "Quái CC0 của Quaternius"). Commit từng file, đẩy nhánh blender-assets, báo em "đã đẩy lô 22A".
+Nếu bộ không có con nào trong danh sách thì chọn con khác cùng màu/hệ, đặt tên mob_<tên>_<hệ>_v01.
+```
+
+Em sẽ đặt như sau (tên tiếng Anh trong game, cấp, nơi ở):
+
+| File | Tên trong game | Hệ | Nơi | Cấp |
+|---|---|---|---|---|
+| mob_bunny_ice | Snow Bunny | ❄️ | Đồng Hoang (gần làng, quái dễ nhất) | 2 |
+| mob_ghost_thunder | Spark Ghost | ⚡ | Rừng Ký Ức, quanh tàn tích | 12 |
+| mob_dino_fire | Ember Dino | 🔥 | Rừng Ký Ức, quanh khu trại | 13 |
+| mob_frog_wind | Gale Frog | 🌪️ | Rừng Ký Ức, quanh thác | 11 |
+| mob_bird_wind | Storm Gull | 🌪️ | Cảng, bờ Bắc | 23 |
+| mob_squid_ice | Ice Squid | ❄️ | Cảng, cầu tàu nhỏ | 25 |
+| mob_cactus_thunder, mob_whirl_wind, mob_yeti_ice | Cactus Brute, Dust Whirl, Night Yeti | ⚡ 🌪️ ❄️ | Map 3 Sa mạc Gió Vàng | 31–38 |
+| boss_dragon_fire | Sand Dragon (kẻ gác mảnh La Bàn số 3) | 🔥 | Map 3 | 40 |
+
+### Cách B — vẽ quái mới bằng Blender (đẹp theo phong cách riêng, lâu hơn)
+```
+Lô 22B: viết tools/mobs3/build_mobs3.py theo quy ước chung (rig xương cứng, clip Idle 2 s, Walk 1 s, Attack 0.6 s, Hit 0.3 s,
+THÊM clip "Cast" 0.8 s: quái giơ tay/há miệng phun phép — game sẽ cho quái dùng phép theo hệ; THÊM clip "Death" 0.9 s: ngã xuống),
+gốc ở chân, mặt trước −Y Blender. Màu hệ: Lửa #ff6a2a, Băng #6fd0ff, Gió #6fe08a, Sét #ffd23c. Mỗi con ≤ 3.000 tam giác.
+Vật liệu đặt tên: body_main, body_dark, eye_white, eye_dark, glow (phần phát sáng màu hệ, emissive 2) để game nháy sáng và đổi màu.
+Biểu cảm dễ thương, dữ vừa phải (cho học sinh cấp 2), dáng chibi đầu to.
+
+Rừng Ký Ức (Map 1, cấp 11–15):
+- mob_wisp_thunder_v01: đom đóm sét 0,6 m bay (thân tròn vàng, đuôi tia sét, 4 cánh mỏng trong), hover sẵn cao 0,8 m.
+- mob_fox_ember_v01: cáo lửa 0,9 m, đuôi là ngọn lửa (vật liệu glow), mắt xếch tinh nghịch.
+Cảng (Map 2, cấp 22–26):
+- mob_gull_storm_v01: hải âu bão 1,0 m, cánh xám có vệt xanh lá, mây nhỏ trên đầu; bay, hover cao 1,2 m.
+- mob_seal_frost_v01: hải cẩu băng 1,1 m, mũ băng nhọn, ria tinh thể.
+Sa mạc Gió Vàng (Map 3, cấp 31–40):
+- mob_scorpion_sand_v01 (🔥 bọ cạp cát 1,2 m, đuôi lửa), mob_djinn_dust_v01 (🌪️ thần gió cát 1,6 m, phần dưới là lốc xoáy, bay),
+  mob_cactus_spark_v01 (⚡ xương rồng biết đi 1,5 m, gai phát sáng), mob_fox_moon_v01 (❄️ cáo trăng sa mạc 1,0 m, đêm, tai to).
+- boss_sand_dragon_v01: rồng cát 4 m (🔥), kẻ gác mảnh La Bàn số 3; thêm clip "Roar" 1,5 s; 3 vị trí khiên chữ quanh ngực.
+
+Boss cũ thêm clip (sửa tools/mobs1/build_mobs1.py và tools/harbor, KHÔNG đổi tên file, nâng lên _v02):
+- boss_slime_king (❄️ phun hơi băng), boss_mushroom_queen (🌪️ thổi bào tử), boss_golem_ancient (⚡ đập đất ra sét),
+  harbor_boss_octopus (🔥 phun mực lửa): mỗi con thêm "Cast" 1,0 s và "Death" 1,2 s; thêm một xương "fx" ở chỗ phép bay ra (miệng/tay).
+
+Xuất xong: render tools/mobs3/preview_mobs3.py (bảng ảnh mọi quái, mỗi con 3 tư thế Idle/Attack/Cast); commit từng file, đẩy blender-assets.
+```

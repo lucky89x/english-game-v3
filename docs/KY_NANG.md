@@ -35,8 +35,8 @@ Mã: `src/core/skills.js` (luật, có unit test), `src/game/spells.js` (phép t
 ## Hệ của quái
 | Map | Quái (hệ) | Boss (hệ) |
 |---|---|---|
-| Đồng Hoang | slime xanh 🌪️, slime đỏ 🔥, golem đá ⚡ | Vua Slime ❄️, Golem Cổ ⚡ |
-| Rừng Ký Ức | dơi 🌪️, nấm ❄️ | Nữ hoàng Nấm 🌪️ |
+| Đồng Hoang | slime xanh 🌪️, slime đỏ 🔥, golem đá ⚡, Frost Goblin ❄️ (cấp 5), Ember Imp 🔥 (cấp 9) | Vua Slime ❄️, Golem Cổ ⚡ |
+| Rừng Ký Ức | dơi 🌪️, nấm ❄️, Gale Orc 🌪️ (cấp 15) | Nữ hoàng Nấm 🌪️ |
 | Cảng | cua ❄️, sứa ⚡, cướp biển 🔥 | Bạch Tuộc 🔥 |
 
 Đòn của quái mang hệ của nó: nội năng **Kháng** và giáp/bùa cùng hệ giảm sát thương nhận vào (tối đa 60%).

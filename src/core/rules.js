@@ -9,6 +9,11 @@ export const MONSTERS = {
   // The Forest of Memories is the last chapter of Map 1 (19/11): levels 11-16, open once the forest gate is
   bat: { el: 'wind', name: 'Shadow Bat', level: 11, hp: 200, atk: 21, exp: 70, gold: 12, speed: 3.2, color: 0x6a4a9a, size: 1.0, fly: true, hover: 0.05 },      // hover: the Blender bat already floats 0.9 m up in its own file
   shroom: { el: 'ice', name: 'Angry Mushroom', level: 14, hp: 320, atk: 26, exp: 100, gold: 16, speed: 1.8, color: 0xe2483e, size: 1.3 },
+  // (20/11) CC0 monsters from Quaternius' Ultimate Monsters pack (tools/monsters/import_quaternius.py, assets/models/CREDITS.md):
+  // 1 m tall in the file, `fit` is the height in the game; clips Idle, Walk, Weapon (attack), HitReact, Death
+  goblin: { el: 'ice', name: 'Frost Goblin', level: 5, hp: 110, atk: 12, exp: 40, gold: 10, speed: 2.4, color: 0x4f9ad0, size: 1.0, model: 'goblin', fit: 1.35 },
+  imp: { el: 'fire', name: 'Ember Imp', level: 9, hp: 210, atk: 19, exp: 80, gold: 16, speed: 2.7, color: 0xd8402e, size: 1.0, model: 'imp', fit: 1.45 },
+  orc: { el: 'wind', name: 'Gale Orc', level: 15, hp: 420, atk: 28, exp: 130, gold: 22, speed: 2.1, color: 0x6fae3a, size: 1.15, model: 'orc', fit: 1.6 },
   // Map 2 (Sunny Harbor, levels 21-30): the Blender models in assets/models/harbor_mob_*; `fit` scales the model, `model` names it
   crab: { el: 'ice', name: 'Beach Crab', level: 21, hp: 300, atk: 34, exp: 130, gold: 24, speed: 2.3, color: 0xe2483e, size: 1.0, model: 'crab', fit: 1.0 },
   jelly: { el: 'thunder', name: 'Glow Jellyfish', level: 24, hp: 340, atk: 38, exp: 150, gold: 26, speed: 1.9, color: 0xb48ae8, size: 1.0, fly: true, model: 'jelly', fit: 1.2 },
@@ -18,6 +23,7 @@ export const MONSTERS = {
 export const FOREST_SPAWNS = [
   ['bat', -25, -43], ['bat', 35, -34], ['bat', -16, -31], ['bat', 38, -19], ['bat', -46, -4],
   ['shroom', 14, -7], ['shroom', -19, 14], ['shroom', 17, 26], ['shroom', -40, 26], ['shroom', 2, 20],
+  ['orc', 18, -10], ['orc', 21, 22], ['orc', 6, 16],      // (20/11) Gale Orcs, wind
 ];
 /** Map 2 monsters in Sunny Harbor: crabs on the south beach, jellyfish along the north shore, little pirates round the lighthouse point. */
 export const HARBOR_SPAWNS = [
@@ -29,6 +35,7 @@ export const HARBOR_SPAWNS = [
 export const SPAWNS = [
   ['slime', 36, -14], ['slime', 32, -24], ['slime', 38, -30], ['slime', 34, -8], ['slime', 48, -26],
   ['red', 44, -36], ['red', 50, -16], ['red', 30, -38], ['golem', 52, 30], ['golem', 38, 48],
+  ['goblin', 40, -18], ['goblin', 42, -28], ['goblin', 44, -10], ['imp', 48, 26], ['imp', 42, 44], ['imp', 46, 34],      // (20/11) Frost Goblins (ice) in the meadow, Ember Imps (fire) in the golem fields
 ];
 /** The hero's attack: grows with the level, weapon adds on top. */
 export const playerAtk = (profile) => 10 + (profile.stats.level - 1) * 2 + ((profile.gear && profile.gear.atk) || 0) + rankAtk(profile) + powers(profile).atk;      // + skill points (Fire Heart)      // + the Word Keeper rank (saga.js)
@@ -178,6 +185,8 @@ export const HUNTS = [
   { kind: 'red', need: 2, gold: 35, exp: 70, en: { easy: 'Two red slimes are near the river. Please stop them!', hard: "Two red slimes have been seen near the river. Would you mind stopping them?" } },
   { kind: 'slime', need: 5, gold: 35, exp: 70, en: { easy: 'Five green slimes are in the meadow. Can you help?', hard: 'The meadow is full of green slimes again. Could you defeat five of them?' } },
   { kind: 'golem', need: 1, gold: 60, exp: 120, en: { easy: 'A big stone golem is by the farm. Be careful!', hard: "A stone golem is standing near the farm. It's dangerous, so please be careful!" } },
+  { kind: 'goblin', need: 3, gold: 40, exp: 90, en: { easy: 'Frost goblins froze our water bucket! Please stop three of them.', hard: "Three frost goblins have frozen the water in our buckets. Could you chase them away? Fire works well on ice!" } },
+  { kind: 'imp', need: 3, gold: 60, exp: 150, en: { easy: 'Little fire imps are burning the grass. Please stop three!', hard: "Some fire imps keep setting the grass on fire near the golem fields. Would you stop three of them? Wind blows fire out!" } },
 ];
 /** The Forest of Memories (last chapter of Map 1) has its own board by the forest entrance, with its own jobs (17/11, retuned 19/11). */
 export const FOREST_HUNTS = [
@@ -185,6 +194,7 @@ export const FOREST_HUNTS = [
   { kind: 'shroom', need: 2, gold: 55, exp: 200, en: { easy: 'Two angry mushrooms are near the camp. Please stop them!', hard: "Two angry mushrooms have been stamping around the camp. Would you mind stopping them?" } },
   { kind: 'bat', need: 5, gold: 65, exp: 260, en: { easy: 'More bats are here tonight. Can you defeat five?', hard: "The bats have come back in a big group. Could you defeat five of them?" } },
   { kind: 'shroom', need: 4, gold: 90, exp: 360, en: { easy: 'Four angry mushrooms are in the forest. Be brave!', hard: "Four angry mushrooms are hiding among the trees. You'll need to be brave!" } },
+  { kind: 'orc', need: 3, gold: 100, exp: 420, en: { easy: 'Gale orcs are blowing down our tents. Please stop three!', hard: "Three gale orcs keep blowing our tents down at night. Could you stop them? Thunder beats wind!" } },
 ];
 /** Map 2 (Sunny Harbor) board: crabs, jellyfish and pirates (18/11). */
 export const HARBOR_HUNTS = [

@@ -9,6 +9,18 @@ Ba mô hình con vật lấy từ [Poly Pizza](https://poly.pizza), đã chỉnh
 | `animal_chicken_white_v01.glb` | [Chicken](https://poly.pizza/m/1YE8U35HXsI) | jeremy | CC-BY 3.0 |
 | `animal_dog_shiba_v01.glb` | [Shiba Inu](https://poly.pizza/m/y4wdQpg767) | Quaternius | CC0 (không bắt buộc ghi công) |
 
+## Quái CC0 của Quaternius (20/11)
+
+Ba quái từ bộ **Ultimate Monsters** của Quaternius (https://quaternius.com), giấy phép **CC0 1.0** (công cộng, không bắt buộc ghi công;
+vẫn ghi để cảm ơn). Lấy từ bản sao trên GitHub `511action/descent-3d-assets` (thư mục `models/`). Đã chỉnh bằng
+`tools/monsters/import_quaternius.py`: cao 1 m, chân ở gốc, quay mặt +Z, texture 256 px, giữ đủ hoạt ảnh.
+
+| File | Gốc | Trong game |
+|---|---|---|
+| `mob_imp_fire_v01.glb` | Demon.gltf | Ember Imp, hệ Lửa |
+| `mob_goblin_frost_v01.glb` | BlueDemon.gltf | Frost Goblin, hệ Băng |
+| `mob_orc_gale_v01.glb` | Orc.gltf | Gale Orc, hệ Gió |
+
 Giấy phép CC-BY 3.0: https://creativecommons.org/licenses/by/3.0/ — bắt buộc ghi tên tác giả (như bảng trên) và nêu rõ đã chỉnh sửa.
 
 Chó Shiba giữ 4 hoạt ảnh: Idle, Walk, Gallop, Eating. Thỏ và gà không có hoạt ảnh.

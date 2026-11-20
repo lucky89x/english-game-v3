@@ -138,6 +138,8 @@ export class Wild {
     inner.traverse((o) => { if (!o.isMesh) return; o.castShadow = true; o.frustumCulled = false; const c = o.material.clone(); o.material = c; mats.push({ mat: c, e: c.emissive ? c.emissive.clone() : null, k: c.emissiveIntensity === undefined ? 1 : c.emissiveIntensity }); });
     inner.updateMatrixWorld(true); const box = new THREE.Box3().setFromObject(inner); g.add(inner);
     const mixer = new THREE.AnimationMixer(inner), act = {}; for (const c of gltf.animations) act[c.name] = mixer.clipAction(c);
+    if (!act.Attack && (act.Weapon || act.Punch)) act.Attack = act.Weapon || act.Punch;      // (20/11) Quaternius clip names
+    if (!act.Hit && act.HitReact) act.Hit = act.HitReact;
     const idle = act.Idle || Object.values(act)[0] || null, walk = act.Walk || idle; if (idle) idle.play();
     return { g, mats, mixer, idle, walk, acts: act, top: box.max.y, box };
   }
@@ -175,7 +177,7 @@ export class Wild {
    *  load(kind) -> a loaded glTF or null; kinds are the monster keys (slime, red, golem, bat, shroom) and the boss ids (king, ancient, queen).
    *  The health bar, the word shield and the position stay; a model that did not load leaves the old shapes. */
   async addMap1(load) {
-    const src = {}; for (const k of ['slime', 'red', 'golem', 'bat', 'shroom', 'king', 'ancient', 'queen']) { try { src[k] = await load(k); } catch { src[k] = null; } }
+    const src = {}; for (const k of ['slime', 'red', 'golem', 'bat', 'shroom', 'king', 'ancient', 'queen', 'goblin', 'imp', 'orc']) { try { src[k] = await load(k); } catch { src[k] = null; } }
     for (const m of this.mobs) {
       const gl = src[m.kind]; if (!gl || m.region === 'harbor' || m.mixer) continue;
       const keep = new Set([m.bar, m.back, m.shield]); for (const c of [...m.g.children]) if (!keep.has(c)) c.removeFromParent();
@@ -249,7 +251,10 @@ export class Wild {
     return dmg;
   }
   kill(m, p) {
-    m.dead = m.boss ? 300 : m.kind === 'golem' ? 40 : 14; m.g.visible = false;
+    m.dead = m.boss ? 300 : m.kind === 'golem' ? 40 : 14; m.burn = null; m.stun = 0; m.slow = 0; m.mark = null;
+    const death = m.acts && m.acts.Death;      // (20/11) monsters with a Death clip fall down first, then vanish
+    if (death) { death.setLoop(THREE.LoopOnce, 1); death.clampWhenFinished = true; const prev = m.cur; death.reset().play(); if (prev && prev !== death) prev.crossFadeTo(death, 0.1, false); m.cur = death; m.once = null; m.dying = Math.min(1.4, death.getClip().duration); if (m.bar) m.bar.visible = m.back.visible = false; if (m.elDot) m.elDot.visible = false; }
+    else m.g.visible = false;
     const first = m.boss && !p.flags[m.def.flag], k = m.boss && !first ? 0.25 : 1, gold = Math.round(m.def.gold * k * (this.api.goldMul ? this.api.goldMul() : 1)), exp = Math.round(m.def.exp * k);
     p.stats.gold += gold; addExp(p, exp); p.kills = (p.kills || 0) + 1; if (this.api.onKill) this.api.onKill(m);
     if (m.boss) { m.broken = 0; m.shieldOn = false; m.shield.visible = false; p.flags[m.def.flag] = true; }
@@ -293,7 +298,8 @@ export class Wild {
       if (!m.boss && !m.dead && !m.g.visible) { m.g.visible = true; this.place(m); }
       if (m.boss && p.stats.level < m.def.level) { m.g.visible = false; continue; }
       if (m.boss && !m.dead && !m.g.visible) { m.g.visible = true; this.place(m); }
-      if (m.dead) { m.dead -= dt; if (m.dead <= 0) { m.dead = 0; m.hp = m.def.hp; if (m.boss) { m.broken = 0; m.shieldOn = false; m.shield.visible = false; } m.x = m.home.x; m.z = m.home.z; m.g.visible = true; this.place(m); } continue; }
+      if (m.dying > 0) { m.dying -= dt; if (m.mixer) m.mixer.update(dt); if (m.dying <= 0) m.g.visible = false; }
+      if (m.dead) { m.dead -= dt; if (m.dead <= 0) { if (m.acts && m.acts.Death) { m.acts.Death.stop(); if (m.idle) { m.idle.reset().play(); m.cur = m.idle; } } m.dying = 0; m.dead = 0; m.hp = m.def.hp; if (m.boss) { m.broken = 0; m.shieldOn = false; m.shield.visible = false; } m.x = m.home.x; m.z = m.home.z; m.g.visible = true; this.place(m); } continue; }
       const dx = player.pos.x - m.x, dz = player.pos.z - m.z, d = Math.hypot(dx, dz), far = Math.hypot(m.x - m.home.x, m.z - m.home.z);
       let vx = 0, vz = 0;
       if (!frozen && d < 9 && far < 13) { fighting = true; if (d > 0.9) { vx = dx / d; vz = dz / d; } }
@@ -346,6 +352,6 @@ export class Wild {
       if (!h.active || h.got >= q.need) out.push({ x: at.x, z: at.z, text: '!', color: '#ffd23c' });
     }
     for (const b of this.bosses) if (b.g.visible && !b.dead && this.here(b, p)) out.push({ x: b.x, z: b.z, text: '♛', color: ({ boss1: '#8fd8ff', boss2: '#e0c890', boss3: '#f08ac0', boss4: '#d070e0' })[b.def.flag] });
-    return out.concat(this.mobs.filter((m) => !m.dead && !m.boss && this.here(m, p)).map((m) => ({ x: m.x, z: m.z, text: '', color: ({ golem: '#8a8490', red: '#ff6a5a', bat: '#9a7ad0', shroom: '#e2483e', crab: '#ff7a3c', jelly: '#b48ae8', pirate: '#3f6fd0' })[m.kind] || '#6ad05a', small: true })));
+    return out.concat(this.mobs.filter((m) => !m.dead && !m.boss && this.here(m, p)).map((m) => ({ x: m.x, z: m.z, text: '', color: ({ golem: '#8a8490', red: '#ff6a5a', bat: '#9a7ad0', shroom: '#e2483e', crab: '#ff7a3c', jelly: '#b48ae8', pirate: '#3f6fd0', goblin: '#4f9ad0', imp: '#d8402e', orc: '#6fae3a' })[m.kind] || '#6ad05a', small: true })));
   }
 }
