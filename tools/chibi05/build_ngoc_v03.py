@@ -40,18 +40,18 @@ scene.render.fps = 24
 # whole body renders with a single material (+ separate face material).
 # --------------------------------------------------------------------------------------
 PALETTE = {  # name: (sRGB hex, roughness, metallic)
-    'skin': ('f6c8a6', .62, 0), 'skin_dark': ('e8ae8c', .65, 0),
-    'hair': ('8c4a22', .5, 0), 'hair_light': ('a85c2e', .45, 0), 'hair_dark': ('6a3418', .55, 0),
-    'bandana': ('c9322c', .7, 0), 'bandana_dark': ('9a2420', .75, 0),
-    'scarf': ('d23b30', .72, 0), 'scarf_dark': ('a52b24', .75, 0),
+    'skin': ('fbc59d', .62, 0), 'skin_dark': ('efab86', .65, 0),
+    'hair': ('9a4824', .5, 0), 'hair_light': ('b85e30', .45, 0), 'hair_dark': ('6a2e14', .55, 0),
+    'bandana': ('e3352a', .7, 0), 'bandana_dark': ('a82620', .75, 0),
+    'scarf': ('e63a28', .72, 0), 'scarf_dark': ('b02a20', .75, 0),
     'brass': ('d39a42', .32, .75), 'brass_dark': ('9c6a2a', .4, .7), 'lens': ('3f7a8c', .08, .25),
     'lens_shine': ('bfe8f0', .05, .1),
-    'shirt': ('f4e9d2', .8, 0), 'shirt_shade': ('e2d1ae', .82, 0),
-    'shorts': ('cfb487', .8, 0), 'shorts_cuff': ('bb9c6c', .8, 0),
-    'leather': ('8c5631', .55, 0), 'leather_dark': ('5f3519', .6, 0), 'leather_light': ('a96d3e', .55, 0),
+    'shirt': ('f8eed8', .8, 0), 'shirt_shade': ('e8d6b0', .82, 0),
+    'shorts': ('d6c095', .8, 0), 'shorts_cuff': ('bfa272', .8, 0),
+    'leather': ('8e4e2a', .55, 0), 'leather_dark': ('5e2e14', .6, 0), 'leather_light': ('ad6a38', .55, 0),
     'gold': ('e2b04a', .28, .85),
-    'boot': ('8e5631', .5, 0), 'boot_cuff': ('b07240', .55, 0), 'sole': ('4a2a17', .7, 0), 'lace': ('f1e2c2', .8, 0),
-    'glove': ('7d4626', .55, 0),
+    'boot': ('944e28', .5, 0), 'boot_cuff': ('b4703c', .55, 0), 'sole': ('4a2a17', .7, 0), 'lace': ('f1e2c2', .8, 0),
+    'glove': ('7e3e1e', .55, 0),
     'glass': ('2f9be8', .06, .1), 'potion': ('7fd6ff', .1, 0), 'cork': ('c99c62', .8, 0),
     'parchment': ('f0ddb0', .85, 0), 'parchment_edge': ('d9bd86', .85, 0), 'ribbon': ('c2312c', .7, 0),
     'eye_dark': ('2a140a', .3, 0),
@@ -67,14 +67,14 @@ HERO = VARIANT in ('ngoc', 'ban_nam')     # playable heroes: swappable hair, clo
 BW = 1.08 if BOY else 1.0                  # the boy is a little broader in the shoulders
 HEIGHT = {'amira': 1.3, 'karim': 1.35, 'layla': 1.2, 'idris': 1.4}.get(VARIANT)   # desert NPCs: whole model (rig node) scaled to this height
 VARIANTS = {   # friends built on Ngoc's body: (file name, palette overrides)
-    'lily': ('npc_lily_druid_v02', {'hair': 'e0702c', 'hair_light': 'f08a3c', 'hair_dark': 'b8531c', 'bandana': '5fa83c', 'bandana_dark': '3f7d2a',
-                                    'scarf': '6cb444', 'scarf_dark': '4a8a30', 'shirt': '8cc25a', 'shirt_shade': '6a9e42', 'shorts': 'f0e6cc',
+    'lily': ('npc_lily_druid_v02', {'hair': 'e86a28', 'hair_light': 'f6883a', 'hair_dark': 'b84c18', 'bandana': '5fa83c', 'bandana_dark': '3f7d2a',
+                                    'scarf': '6cb444', 'scarf_dark': '4a8a30', 'shirt': '7cb244', 'shirt_shade': '5e9032', 'shorts': 'f6ead0',
                                     'shorts_cuff': 'd9c9a2', 'glass': '4fd06a', 'ribbon': '5fa83c'}),
-    'rose': ('npc_rose_baker_v02', {'hair': 'ee8a94', 'hair_light': 'f8a8b0', 'hair_dark': 'd06a78', 'bandana': 'f6f0e6', 'bandana_dark': 'd8cfc0',
-                                    'scarf': 'c8352e', 'scarf_dark': '9a2620', 'shirt': 'fbf6ec', 'shirt_shade': 'e6dcc8', 'shorts': 'c8352e',
-                                    'shorts_cuff': '9a2620', 'glass': 'f6c62e', 'ribbon': 'c8352e'}),
-    'anna': ('npc_anna_bard_v02', {'hair': '6b3a1e', 'hair_light': '8a5230', 'hair_dark': '4a2612', 'bandana': 'f2c230', 'bandana_dark': 'c99a1e',
-                                   'scarf': 'f2c230', 'scarf_dark': 'c99a1e', 'shirt': '3f6fc6', 'shirt_shade': '2c539a', 'shorts': 'f4efe6',
+    'rose': ('npc_rose_baker_v02', {'hair': 'ea7472', 'hair_light': 'f69490', 'hair_dark': 'c85458', 'bandana': 'f6f0e6', 'bandana_dark': 'd8cfc0',
+                                    'scarf': 'd02c2c', 'scarf_dark': 'a01e1e', 'shirt': 'fbf6ec', 'shirt_shade': 'e6dcc8', 'shorts': 'd02c2c',
+                                    'shorts_cuff': 'a01e1e', 'glass': 'f6c62e', 'ribbon': 'c8352e'}),
+    'anna': ('npc_anna_bard_v02', {'hair': '6b3a1e', 'hair_light': '8a5230', 'hair_dark': '4a2612', 'bandana': 'f4b834', 'bandana_dark': 'cc9020',
+                                   'scarf': 'f4b834', 'scarf_dark': 'cc9020', 'shirt': '2f5bb8', 'shirt_shade': '22468e', 'shorts': 'f4efe6',
                                    'shorts_cuff': 'd8d0c0', 'glass': 'b684e8', 'ribbon': 'f2c230'}),
     'mia': ('npc_mia_tailor_v01', {'hair': '9a3e22', 'hair_light': 'b5502e', 'hair_dark': '6e2a16', 'bandana': '8c64c2', 'bandana_dark': '6a4a9a',
                                    'scarf': 'e2b04a', 'scarf_dark': 'c99a1e', 'shirt': 'f4efe6', 'shirt_shade': 'd8d0c0', 'shorts': '6a4a9a',
@@ -216,6 +216,8 @@ def build_tint_image():
 PAL_TINT = build_tint_image()
 _pre = VARIANT
 MATS = {g: make_material(f'{_pre}_{g}_tint', PAL_TINT, PAL_ORM) for g in TINT_GROUPS}
+for _g, _m in MATS.items():       # glTF material extras: the colour that the grey 0.8 base tone stands for (the game multiplies it in)
+    _m['eq_base'] = '#' + PALETTE[TINT_GROUPS[_g][0]][0]
 if HERO:
     MATS.update({g: make_material(f'ngoc_{g}', PAL_ALB, PAL_ORM) for g in ('skin', 'boots', 'gear')})
 else:
@@ -2054,7 +2056,7 @@ for o in _meshes:
 print('final triangles', {o.name: sum(len(p.vertices) - 2 for p in o.data.polygons) for o in _meshes})
 for o in bpy.context.view_layer.objects:      # select rig + meshes again: the exporter writes the skin only for selected objects
     o.select_set(o in [rig] + _meshes)
-export_kwargs['export_extras'] = bool(HAIRS)
+export_kwargs['export_extras'] = True     # eq_hidden on pieces, eq_base on *_tint materials
 if HEIGHT:      # desert NPCs: same skeleton and clips, scaled as a whole by the rig node
     rig.scale = (HEIGHT / 1.562,) * 3
 bpy.context.view_layer.objects.active = rig

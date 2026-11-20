@@ -115,7 +115,16 @@ const sun = new THREE.DirectionalLight(0xffe6bc, 1.9); sun.castShadow = true; su
 const manager = new THREE.LoadingManager();
 manager.onProgress = (_u, done, total) => { $('loadbar').style.width = Math.round((done / total) * 100) + '%'; };
 const loader = new GLTFLoader(manager), texLoader = new THREE.TextureLoader(manager), modelCache = new Map();
-const gltf = (name) => { if (!modelCache.has(name)) modelCache.set(name, loader.loadAsync(`./assets/models/${name}.glb`)); return modelCache.get(name); };
+// Characters from tools/chibi05 (v04+): pieces marked eq_hidden (spare hair styles, clothes) start hidden, and *_tint
+// materials sample a grey palette whose 0.8 base tone stands for the colour in material extras eq_base (0.6038 = 0.8 sRGB in linear).
+function prepModel(g) {
+  g.scene.traverse((o) => {
+    if (o.userData && o.userData.eq_hidden) o.visible = false;
+    for (const m of o.isMesh ? [].concat(o.material) : []) if (m.userData.eq_base && !m.userData.eqTinted) { m.color.set(m.userData.eq_base).multiplyScalar(1 / 0.6038); m.userData.eqTinted = true; }
+  });
+  return g;
+}
+const gltf = (name) => { if (!modelCache.has(name)) modelCache.set(name, loader.loadAsync(`./assets/models/${name}.glb`).then(prepModel)); return modelCache.get(name); };
 /** Map 2 monsters (crab, jellyfish, pirate, Captain Octopus): fetched when the hero first sails to the harbor. */
 const SEA_FILES = { crab: 'harbor_mob_crab_v01', jelly: 'harbor_mob_jellyfish_v01', pirate: 'harbor_mob_pirate_v01', octopus: 'harbor_boss_octopus_v01' };
 const seaModel = (k) => gltf(SEA_FILES[k]).catch(() => null);
@@ -850,7 +859,7 @@ addEventListener('resize', resize);
 async function boot() {
   resize();
   $('loadtext').textContent = 'Đang gọi Ngọc và các bạn…';
-  const [ngoc, tomG, samG, benG, pipG, blink, talk, joy] = await Promise.all([gltf('chr_ngoc_adventurer_v03'), gltf('npc_tom_elder_v02'), gltf('npc_sam_fisherman_v02'), gltf('npc_ben_merchant_v02'), gltf('npc_pip_spirit_v02'), faceTex('blink'), faceTex('talk'), faceTex('joy')]);
+  const [ngoc, tomG, samG, benG, pipG, blink, talk, joy] = await Promise.all([gltf('chr_ngoc_adventurer_v05'), gltf('npc_tom_elder_v03'), gltf('npc_sam_fisherman_v02'), gltf('npc_ben_merchant_v02'), gltf('npc_pip_spirit_v02'), faceTex('blink'), faceTex('talk'), faceTex('joy')]);
   $('loadtext').textContent = 'Đang dựng ngôi làng…';
   L.setRegion('village');
   world = await buildWorld(scene, staticModel, animatedModel);
