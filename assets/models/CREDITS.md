@@ -65,3 +65,22 @@ Lệnh chung: `OUT=<thư mục> blender -b -P <script>` (tùy chọn `ONLY=tên,
 ## Quái hệ lô 22B (tự dựng): `mob_{wisp_thunder,fox_ember,gull_storm,seal_frost,scorpion_sand,djinn_dust,cactus_spark,fox_moon}_v01`, `boss_sand_dragon_v01` — `tools/mobs3/build_mobs3.py`; boss `_v02` từ `tools/mobs1/build_mobs1.py` và `tools/harbor/b5_mobs.py`.
 
 ## Cốt truyện lô 23 (tự dựng): `npc_hush_lord`, `mob_hush_wraith`, `prop_compass_*`, `prop_magic_door` — `tools/story/build_story.py`; `npc_mia_tailor_v01` — `tools/chibi05/build_ngoc_v03.py`; ảnh `rank_*`, `compass_piece_*`, `badge_word_keeper` — `tools/story/icons_story.py`.
+
+## Quái CC0 của Quaternius (lô 22A)
+
+Nguồn: bộ Ultimate Monsters / Animated Dinosaurs của Quaternius, lấy bản CC0 trên [Poly Pizza](https://poly.pizza) (tác giả Quaternius). CC0: không bắt buộc ghi công, ghi lại để tiện tra.
+
+| File | Gốc (Poly Pizza) | Ghi chú |
+|---|---|---|
+| `mob_bunny_ice_v01.glb` | Bunny | có cà rốt làm vũ khí |
+| `mob_ghost_thunder_v01.glb` | Ghost | con bay |
+| `mob_frog_wind_v01.glb` | Frog | |
+| `mob_dino_fire_v01.glb` | T‑Rex (bộ khủng long) | thay cho Dino |
+| `mob_bird_wind_v01.glb` | Birb (bản blob) | |
+| `mob_squid_ice_v01.glb` | Squidle | con bay |
+| `mob_cactus_thunder_v01.glb` | Cactoro | |
+| `mob_yeti_ice_v01.glb` | Yeti | |
+| `mob_whirl_wind_v01.glb` | Hywirl | con bay |
+| `boss_dragon_fire_v01.glb` | Dragon | con bay |
+
+Chuẩn hoá bằng `tools/monsters/import_quaternius.py` (cao 1 m, đổi tên clip).
