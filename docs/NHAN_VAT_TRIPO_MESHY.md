@@ -139,3 +139,14 @@ Nếu anh vẫn muốn thử Unity: thử một **mini game riêng** (ví dụ b
 2. Nếu ổn: 6 NPC có sẵn (Sam, Ben, Bram, Lily, Rose, Anna), rồi 4–5 NPC mới.
 3. Nữ chính v06 (lô 27) cùng lúc với lô 19, vì hai việc đụng cùng bộ xương, nên **làm lô 27 trước, bỏ lô 19 làm trên v05**, để đỡ làm hai lần (kiểu áo/quần/đầm của lô 19 chuyển sang v06).
 4. Sau khi nhân vật xong mới nâng cây, nhà, địa hình cho cùng phong cách.
+
+## 7. Cách làm tắt: ra lệnh Tripo/Meshy ngay trong Claude Code qua Blender MCP (bổ sung 20/11)
+Nếu bảng cài đặt Blender MCP của anh có ô tích **Tripo3D / Meshy** (nhập API key), Claude Code gọi được thẳng: tạo model từ chữ hoặc ảnh, tự nhập vào cảnh Blender, rồi làm tiếp bước dọn/gắn xương ở mục 2 bước 3. Khi đó bỏ bước tải GLB thủ công.
+Giữ nguyên các quy tắc: ảnh đầu vào nền trắng chữ A, nữ chính dựng theo mô-đun (mục 3), NPC giảm ≤ 8.000 tam giác và gắn xương cũ.
+Lệnh thử (dán cho Claude Code trên máy anh):
+```
+Hãy liệt kê các tool của Blender MCP đang có (đặc biệt phần Tripo3D và Meshy: tạo từ chữ, từ ảnh, kiểm tra trạng thái, nhập model, có hỗ trợ ảnh cục bộ không).
+Rồi làm thử NPC ông Tom: dùng ảnh docs/reference_art/15_redesign_village_elders_3d.jpg (ô 1) hoặc ảnh nền trắng anh cung cấp, tạo model bằng Tripo3D (hoặc Meshy), nhập vào Blender,
+rồi chạy quy trình Lô 26 trong docs/NHAN_VAT_TRIPO_MESHY.md (chuẩn hoá, giảm mặt, gắn xương và clip từ npc_tom_elder_v02, render 4 tư thế). Báo số credit đã dùng. Chưa commit, đợi tôi duyệt ảnh.
+```
+Lưu ý: mỗi lần tạo tốn credit (nên giới hạn 2–3 lần thử cho mỗi nhân vật); ảnh ghép nhiều góc nhìn (như ảnh mẫu) cho kết quả kém, hãy cắt riêng một góc hoặc làm ảnh nền trắng.
