@@ -33,7 +33,7 @@ function elementTex(el) {
 export class Wild {
   /** api: { scene, player, ui, sfx(name), profile() -> profile, save(), onChange(), respawn(), quiz(bossName, done(ok)) } */
   constructor(api) {
-    this.api = api; this.root = new THREE.Group(); api.scene.add(this.root); this.cool = 0; this.t = 0; this.regen = 0;
+    this.api = api; this.shots = []; this.root = new THREE.Group(); api.scene.add(this.root); this.cool = 0; this.t = 0; this.regen = 0;
     const eye = new THREE.MeshBasicMaterial({ color: 0x24140c }), white = new THREE.MeshBasicMaterial({ color: 0xffffff });
     this.mobs = [...SPAWNS.map((r) => [...r, 'village']), ...FOREST_SPAWNS.map((r) => [...r, 'forest'])].map(([kind, x, z, region], i) => {
       const def = MONSTERS[kind], g = new THREE.Group(), mat = new THREE.MeshStandardMaterial({ color: def.color, roughness: kind === 'golem' ? 0.95 : 0.2, transparent: kind !== 'golem', opacity: kind === 'golem' ? 1 : 0.9, emissive: def.color, emissiveIntensity: 0.12, flatShading: kind === 'golem' });
@@ -134,7 +134,7 @@ export class Wild {
   }
   /** Village: meadow monsters, bosses and the board. Forest: Map 2 monsters, only once Map 2 is open. */
   setRegion(name) {
-    this.region = name; this.root.visible = name === 'village' || name === 'forest' || name === 'harbor'; for (const b of this.boards || []) b.g.visible = b.region === name;
+    this.clearShots(); this.region = name; this.root.visible = name === 'village' || name === 'forest' || name === 'harbor'; for (const b of this.boards || []) b.g.visible = b.region === name;
     for (const m of this.mobs) { if (m.region === name) this.place(m); else m.g.visible = false; }
   }
   /** The region's fighting content is on: always in the village; the forest after the crystal quest (last chapter of Map 1); the harbor once Map 2 is open. */
@@ -161,7 +161,7 @@ export class Wild {
   /** (20/11) the element badge left of the health bar: a round icon (flame, drop of ice, wind swirl, bolt), not a plain square.
    *  The badge shows the spell mark's element while one is on. */
   elementDot(m) {
-    if (m.elDot || !m.def.el) return; const d = new THREE.Sprite(new THREE.SpriteMaterial({ map: elementTex(m.def.el), transparent: true, depthTest: false })); d.scale.set(0.46, 0.46, 1); d.position.set(-0.78, m.bar.position.y, 0); d.renderOrder = 7; m.g.add(d); m.elDot = d; m.elShown = m.def.el;
+    if (m.elDot || !m.def.el) return; const d = new THREE.Sprite(new THREE.SpriteMaterial({ map: elementTex(m.def.el), transparent: true, depthTest: false })); d.scale.set(0.34, 0.34, 1); d.position.set(-0.72, m.bar.position.y, 0); d.renderOrder = 7; m.g.add(d); m.elDot = d; m.elShown = m.def.el;
   }
   /** Map 2 (Sunny Harbor): the crabs, jellyfish, pirates and Captain Octopus, built when the hero first sails there so the
    *  models are only fetched then. load(key) -> a loaded glTF ({ scene, animations }) or null. Falls back to plain blobs. */
@@ -315,7 +315,8 @@ export class Wild {
       if (m.dead) { m.dead -= dt; if (m.dead <= 0) { if (m.acts && m.acts.Death) { m.acts.Death.stop(); if (m.idle) { m.idle.reset().play(); m.cur = m.idle; } } m.dying = 0; m.dead = 0; m.hp = m.def.hp; if (m.boss) { m.broken = 0; m.shieldOn = false; m.shield.visible = false; } m.x = m.home.x; m.z = m.home.z; m.g.visible = true; this.place(m); } continue; }
       const dx = player.pos.x - m.x, dz = player.pos.z - m.z, d = Math.hypot(dx, dz), far = Math.hypot(m.x - m.home.x, m.z - m.home.z);
       let vx = 0, vz = 0;
-      if (!frozen && d < 9 && far < 13) { fighting = true; if (d > 0.9) { vx = dx / d; vz = dz / d; } }
+      const keep = m.def.ranged && !m.boss ? 5.5 : 0.9;      // (20/11) ranged monsters stop at about 5.5 m and cast
+      if (!frozen && d < (m.def.ranged ? 11 : 9) && far < 13) { fighting = true; if (d > keep) { vx = dx / d; vz = dz / d; } else if (m.def.ranged && !m.boss) m.g.rotation.y = Math.atan2(dx, dz); }
       else if (far > 0.6) { vx = (m.home.x - m.x) / far; vz = (m.home.z - m.z) / far; if (far > 2) m.hp = Math.min(m.def.hp, m.hp + dt * 12); }
       // (20/11) spells: stunned monsters stand still, slowed ones walk at half speed, burning ones lose health, marks fade
       if (m.stun > 0) { m.stun -= dt; vx = vz = 0; }
@@ -337,6 +338,11 @@ export class Wild {
       if (m.shieldOn) m.shield.rotation.y += dt * 1.5;
       m.bar.scale.x = Math.max(0.001, m.hp / m.def.hp); const show = m.hp < m.def.hp || d < 9; m.bar.visible = m.back.visible = show; if (m.elDot) m.elDot.visible = show;
       m.hitCool = Math.max(0, m.hitCool - dt);
+      if (m.shotCool === undefined) m.shotCool = 1 + (m.ph % 2);      // not all at once
+      m.shotCool -= dt;
+      if (!frozen && !m.dead && !m.stun && (m.def.ranged || m.boss) && m.shotCool <= 0 && d > 2.6 && d < (m.boss ? 14 : 11)) {
+        m.shotCool = m.boss ? 3.6 : 2.4 + (m.ph % 1.2); this.cue(m, m.acts && m.acts.Cast ? 'Cast' : 'Attack'); this.shoot(m, player.pos, m.boss ? 3 : 1);
+      }
       if (!frozen && !this.iframes && d < 0.95 + m.def.size * 0.35 && m.hitCool <= 0) {
         m.hitCool = 1.1; this.cue(m, 'Attack');
         if (m.stun > 0) m.hitCool = 0.3;      // stunned: no hit
@@ -345,8 +351,37 @@ export class Wild {
         if (p.stats.hp <= 0) { p.stats.hp = hpMax; this.api.save(); this.api.respawn(); return; }
       }
     }
+    this.updateShots(dt, p, hpMax, frozen);
     if (!fighting && p.stats.hp < hpMax) { this.regen += dt; if (this.regen > 0.5) { this.regen = 0; p.stats.hp = Math.min(hpMax, p.stats.hp + 3); this.api.onChange(); } }
   }
+  /** (20/11) A monster casts: a glowing ball of its element flies at where the hero stands (n balls in a fan for bosses).
+   *  The hero dodges with K (the roll's invulnerable moment) or by walking away; the ball hurts like the monster's hit at 80%. */
+  shoot(m, at, n = 1) {
+    const el = m.def.el || 'fire', hex = ELEMENTS[el].hex;
+    for (let k = 0; k < n; k++) {
+      const a = Math.atan2(at.x - m.x, at.z - m.z) + (n > 1 ? (k - (n - 1) / 2) * 0.28 : 0);
+      const g = new THREE.Group(), core = new THREE.Mesh(new THREE.SphereGeometry(0.2, 10, 8), new THREE.MeshBasicMaterial({ color: hex, toneMapped: false })), halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: elementTex(el), transparent: true, depthWrite: false }));
+      halo.scale.set(0.9, 0.9, 1); g.add(core, halo);
+      const y = L.groundHeight(m.x, m.z) + (m.def.fly ? 1.2 : 0.9) * (m.def.fit || 1);
+      g.position.set(m.x + Math.sin(a) * 0.5, y, m.z + Math.cos(a) * 0.5); this.root.add(g);
+      this.shots.push({ g, vx: Math.sin(a) * 7, vz: Math.cos(a) * 7, t: 1.9, el, atk: m.def.atk * (m.boss ? 0.7 : 0.8), spin: Math.random() * 6 });
+    }
+    this.api.sfx('tick');
+  }
+  updateShots(dt, p, hpMax, frozen) {
+    const player = this.api.player;
+    for (let i = this.shots.length - 1; i >= 0; i--) {
+      const s = this.shots[i]; s.t -= dt; s.g.position.x += s.vx * dt; s.g.position.z += s.vz * dt; s.spin += dt * 9; s.g.children[1].material.rotation = s.spin;
+      const dx = player.pos.x - s.g.position.x, dz = player.pos.z - s.g.position.z, hit = Math.hypot(dx, dz) < 0.75 && Math.abs(s.g.position.y - (player.pos.y + 0.8)) < 1.4;
+      if (hit && !frozen && !this.iframes) {
+        if (Math.random() < powers(p).dodge) this.api.floater(player.pos.x, player.pos.z, 'Miss!', '#9fe8ff', 0.9);
+        else { if (!p.god) p.stats.hp -= hurt(s.atk, p, s.el); this.api.sfx('wrong'); this.api.onChange(); this.api.floater(player.pos.x, player.pos.z, '💥', ELEMENTS[s.el].color, 0.8); }
+        if (p.stats.hp <= 0) { p.stats.hp = hpMax; this.clearShots(); this.api.save(); this.api.respawn(); return; }
+      }
+      if (hit || s.t <= 0) { s.g.removeFromParent(); s.g.traverse((o) => { if (o.geometry) o.geometry.dispose(); if (o.material) o.material.dispose(); }); this.shots.splice(i, 1); }
+    }
+  }
+  clearShots() { for (const s of this.shots) s.g.removeFromParent(); this.shots.length = 0; }
   /** Where the hunt board sends the hero: the nearest living monster of the asked kind, or the board when the job is done. */
   guide(pos) {
     const p = this.api.profile(); if (!p || !this.root.visible || !this.on(this.region, p)) return null;

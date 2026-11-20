@@ -3,6 +3,8 @@
 // set the level, add gold, unlock everything, move the village story to any step, reset the forest quest, hunts and
 // daily game limits, change the grade, and turn on "no damage". The password only keeps children from opening it
 // by accident: it is not real security (anyone can read the game's files).
+import * as SK from '../core/skills.js';
+import { ITEMS, bag, giveLoot } from '../core/rules.js';
 export const ADMIN_PASS = '321';
 const STEPS = [['arrive', 'Gặp Tom lần đầu'], ['letter_find', 'Tìm bức thư'], ['letter_return', 'Mang thư về'], ['jars', 'Hũ chữ của Ben'], ['tom_bridge', 'Tom báo cầu gãy'],
   ['bridge', 'Gặp Sam ở cầu'], ['gather', 'Tìm dây, gỗ, rìu'], ['plan', 'Pip đọc kế hoạch'], ['open', 'Báo Tom (mở rừng)'], ['done', 'Xong Chương I']];
@@ -39,6 +41,7 @@ export class AdminPanel {
       <h4>Nhân vật</h4><div class="row">Cấp: <input id="adlv" type="number" min="1" max="60" value="${p.stats.level}" style="width:60px"><button data-a="level">Đặt cấp</button>
         <button data-a="gold" data-v="1000">+1000 vàng</button><button data-a="heal">Hồi đầy máu</button>
         <button data-a="god">${p.god ? '✔ ' : ''}Không mất máu</button></div>
+      <div class="row"><button data-a="magic">Học đủ phép (4 hệ) + gán ô 1–4</button><button data-a="mp">Đầy mana</button><button data-a="potions">+10 bình máu/mana (túi V)</button><button data-a="loot">Nhận hết đồ hiếm</button></div>
       <div class="row">Lớp: ${[6, 7, 8, 9].map((g) => `<button data-a="grade" data-v="${g}">${g === p.grade ? '✔ ' : ''}Lớp ${g}</button>`).join('')}</div>
       <h4>Mở khóa</h4><div class="row"><button data-a="unlock">Mở hết (rừng, cầu, Map 2, boss, cổng Cú Mèo)</button><button data-a="limits">Xóa giới hạn mini game hôm nay</button>
         <button data-a="daily">Mở lại rương + bong bóng hôm nay</button></div>
@@ -53,6 +56,10 @@ export class AdminPanel {
     if (a === 'level') { const n = Math.max(1, Math.min(60, Number(this.el.querySelector('#adlv').value) || 1)); api.setLevel(n); api.toast(`Cấp ${n}`); }
     if (a === 'gold') { api.addGold(Number(v)); }
     if (a === 'heal') { p.stats.hp = undefined; api.toast('Đầy máu'); }
+    if (a === 'magic') { const m = SK.magic(p); for (const id of Object.keys(SK.NODES)) m.ranks[id] = SK.MAX_RANK; const outer = SK.EL_IDS.map((el) => SK.TREE[el].find((n) => n.kind === 'outer' && n.range === 'far') || SK.TREE[el].find((n) => n.kind === 'outer')); outer.forEach((n, i) => SK.assign(p, i, n.id)); m.mp = null; api.toast('Đã học đủ phép: dùng phím 1–4, T mở bảng'); }
+    if (a === 'mp') { SK.magic(p).mp = null; api.toast('Đầy mana'); }
+    if (a === 'potions') { const P = bag(p).pantry || (bag(p).pantry = {}); for (const id of ['hp_s', 'hp_m', 'hp_l', 'mp_s', 'mp_m', 'mp_l']) P[id] = (P[id] || 0) + 10; api.toast('+10 mỗi loại bình (mở túi V)'); }
+    if (a === 'loot') { for (const [id, it] of Object.entries(ITEMS)) if (it.rare) giveLoot(p, id); api.toast('Đã nhận đồ hiếm (mở túi V)'); }
     if (a === 'god') { p.god = !p.god; api.toast(p.god ? 'Không mất máu: bật' : 'Không mất máu: tắt'); }
     if (a === 'grade') { api.setGrade(Number(v)); return; }
     if (a === 'unlock') { api.unlockAll(); api.toast('Đã mở hết'); }

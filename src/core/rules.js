@@ -7,22 +7,22 @@ export const MONSTERS = {
   red: { el: 'fire', name: 'Red Slime', level: 4, hp: 70, atk: 11, exp: 26, gold: 7, speed: 2.5, color: 0xff7a6a, size: 1.25 },
   golem: { el: 'thunder', name: 'Stone Golem', level: 8, elite: true, hp: 180, atk: 18, exp: 75, gold: 20, speed: 1.6, color: 0xa49aa6, size: 1.7 },
   // The Forest of Memories is the last chapter of Map 1 (19/11): levels 11-16, open once the forest gate is
-  bat: { el: 'wind', name: 'Shadow Bat', level: 11, hp: 200, atk: 21, exp: 70, gold: 12, speed: 3.2, color: 0x6a4a9a, size: 1.0, fly: true, hover: 0.05 },      // hover: the Blender bat already floats 0.9 m up in its own file
-  shroom: { el: 'ice', name: 'Angry Mushroom', level: 14, elite: true, hp: 320, atk: 26, exp: 100, gold: 16, speed: 1.8, color: 0xe2483e, size: 1.3 },
+  bat: { el: 'wind', name: 'Shadow Bat', level: 11, ranged: true, hp: 200, atk: 21, exp: 70, gold: 12, speed: 3.2, color: 0x6a4a9a, size: 1.0, fly: true, hover: 0.05 },      // hover: the Blender bat already floats 0.9 m up in its own file
+  shroom: { el: 'ice', name: 'Angry Mushroom', level: 14, ranged: true, elite: true, hp: 320, atk: 26, exp: 100, gold: 16, speed: 1.8, color: 0xe2483e, size: 1.3 },
   // (20/11) CC0 monsters from Quaternius' Ultimate Monsters pack (tools/monsters/import_quaternius.py, assets/models/CREDITS.md):
   // 1 m tall in the file, `fit` is the height in the game; clips Idle, Walk, Weapon (attack), HitReact, Death
-  goblin: { el: 'ice', name: 'Frost Goblin', level: 5, hp: 110, atk: 12, exp: 40, gold: 10, speed: 2.4, color: 0x4f9ad0, size: 1.0, model: 'goblin', fit: 1.35 },
-  imp: { el: 'fire', name: 'Ember Imp', level: 9, hp: 210, atk: 19, exp: 80, gold: 16, speed: 2.7, color: 0xd8402e, size: 1.0, model: 'imp', fit: 1.45 },
+  goblin: { el: 'ice', name: 'Frost Goblin', level: 5, ranged: true, hp: 110, atk: 12, exp: 40, gold: 10, speed: 2.4, color: 0x4f9ad0, size: 1.0, model: 'goblin', fit: 1.35 },
+  imp: { el: 'fire', name: 'Ember Imp', level: 9, ranged: true, hp: 210, atk: 19, exp: 80, gold: 16, speed: 2.7, color: 0xd8402e, size: 1.0, model: 'imp', fit: 1.45 },
   orc: { el: 'wind', name: 'Gale Orc', level: 15, elite: true, hp: 420, atk: 28, exp: 130, gold: 22, speed: 2.1, color: 0x6fae3a, size: 1.15, model: 'orc', fit: 1.6 },
   // (20/11) lô 22: bunny (Quaternius), wisp / fox / gull (Blender, real size in the file; the wisp and the gull float on their own)
   bunny: { el: 'ice', name: 'Frost Bunny', level: 2, hp: 50, atk: 8, exp: 16, gold: 4, speed: 2.6, color: 0xbfe8ff, size: 1.0, model: 'bunny', fit: 0.85 },
-  wisp: { el: 'thunder', name: 'Storm Wisp', level: 12, hp: 230, atk: 23, exp: 85, gold: 14, speed: 2.8, color: 0xffe14a, size: 1.0, fly: true, hover: 0.05, model: 'wisp', fit: 1.3 },
+  wisp: { el: 'thunder', name: 'Storm Wisp', level: 12, ranged: true, hp: 230, atk: 23, exp: 85, gold: 14, speed: 2.8, color: 0xffe14a, size: 1.0, fly: true, hover: 0.05, model: 'wisp', fit: 1.3 },
   fox: { el: 'fire', name: 'Ember Fox', level: 13, hp: 270, atk: 25, exp: 95, gold: 15, speed: 3.0, color: 0xff8a3a, size: 1.0, model: 'fox', fit: 1.0 },
-  gull: { el: 'wind', name: 'Storm Gull', level: 23, hp: 320, atk: 36, exp: 140, gold: 25, speed: 3.0, color: 0xc8d4e0, size: 1.0, fly: true, hover: 0.05, model: 'gull', fit: 1.2 },
+  gull: { el: 'wind', name: 'Storm Gull', level: 23, ranged: true, hp: 320, atk: 36, exp: 140, gold: 25, speed: 3.0, color: 0xc8d4e0, size: 1.0, fly: true, hover: 0.05, model: 'gull', fit: 1.2 },
   // Map 2 (Sunny Harbor, levels 21-30): the Blender models in assets/models/harbor_mob_*; `fit` scales the model, `model` names it
   crab: { el: 'ice', name: 'Beach Crab', level: 21, hp: 300, atk: 34, exp: 130, gold: 24, speed: 2.3, color: 0xe2483e, size: 1.0, model: 'crab', fit: 1.0 },
-  jelly: { el: 'thunder', name: 'Glow Jellyfish', level: 24, hp: 340, atk: 38, exp: 150, gold: 26, speed: 1.9, color: 0xb48ae8, size: 1.0, fly: true, model: 'jelly', fit: 1.2 },
-  pirate: { el: 'fire', name: 'Little Pirate', level: 27, elite: true, hp: 520, atk: 44, exp: 210, gold: 36, speed: 2.4, color: 0x2f4f8a, size: 1.2, model: 'pirate', fit: 1.15 },
+  jelly: { el: 'thunder', name: 'Glow Jellyfish', level: 24, ranged: true, hp: 340, atk: 38, exp: 150, gold: 26, speed: 1.9, color: 0xb48ae8, size: 1.0, fly: true, model: 'jelly', fit: 1.2 },
+  pirate: { el: 'fire', name: 'Little Pirate', level: 27, ranged: true, elite: true, hp: 520, atk: 44, exp: 210, gold: 36, speed: 2.4, color: 0x2f4f8a, size: 1.2, model: 'pirate', fit: 1.15 },
 };
 /** Monsters of the Memory Forest, the last chapter of Map 1: [kind, x, z] (open ground away from crystals, paths and the gate). */
 export const FOREST_SPAWNS = [
