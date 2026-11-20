@@ -53,3 +53,5 @@ Lệnh chung: `OUT=<thư mục> blender -b -P <script>` (tùy chọn `ONLY=tên,
 ## Thiên nhiên lô 16 (tự dựng): `nat_*_v01.glb` — `tools/nature/build_nature.py`.
 
 ## Đồ làng lô 17 (tự dựng): `vil_*_v01.glb` — `tools/village/build_village.py`.
+
+## Đồ rừng lô 18 (tự dựng): `for_*_v01.glb` — `tools/forest/build_forest.py`.
