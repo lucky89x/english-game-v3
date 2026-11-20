@@ -51,3 +51,5 @@ Lệnh chung: `OUT=<thư mục> blender -b -P <script>` (tùy chọn `ONLY=tên,
 ## Đồ tương tác lô 15 (tự dựng): `prop_chest_locked`, `prop_star`, `prop_crystal`, `npc_owl`, `prop_board_quest`, `prop_word_jar` — `tools/pickups/build_pickups.py`.
 
 ## Thiên nhiên lô 16 (tự dựng): `nat_*_v01.glb` — `tools/nature/build_nature.py`.
+
+## Đồ làng lô 17 (tự dựng): `vil_*_v01.glb` — `tools/village/build_village.py`.
