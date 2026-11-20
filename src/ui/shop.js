@@ -12,7 +12,8 @@ const ICON = { wood_sword: '🗡️', iron_sword: '⚔️', crystal_blade: '🔷
   oak_blade: '🪵', moon_sword: '🌙', ranger_cloak: '🧥', bark_armor: '🌳', owl_feather: '🪶', forest_stew: '🍲',
   apple: '🍎', carrot: '🥕', banana: '🍌', corn: '🌽', watermelon: '🍉', bed: '🛏️', wardrobe: '🚪', mirror: '🪞', table: '🍽️', sofa: '🛋️', lamp: '💡', bookcase: '📚',
   desk: '✏️', clock: '🕰️', picture: '🖼️', rug: '🟥', plant: '🪴', flowers: '🌷', veg_patch: '🥬', fruit_tree: '🌳', bench: '🪑', mailbox: '📮', garden_lamp: '🏮',
-  guitar: '🎸', piano: '🎹', drum: '🥁', violin: '🎻' };
+  guitar: '🎸', piano: '🎹', drum: '🥁', violin: '🎻', hp_s: '🧪', hp_m: '❤️', hp_l: '💖', mp_s: '💧', mp_m: '🔷', mp_l: '🌀', dawn_blade: '🌅', silver_mail: '🥈', lucky_star: '⭐', tide_blade: '🌊', coral_mail: '🪸', sun_charm: '☀️' };
+export const ICONS = ICON;
 const KEEPERS = {
   forge: { name: 'Bram', img: 'assets/ui/keeper_bram.jpg', title: "⚒️ Bram's counter", sub: 'Weapons & Armour · vũ khí và giáp',
     talk: ['A good sword is a hero\'s best friend.', 'Iron is strong, but crystal is stronger!', 'Wear armour before you visit the Wild Meadow.', 'I make every blade by hand. Clang, clang!'] },
@@ -24,6 +25,8 @@ const KEEPERS = {
     talk: ['Flowers make a yard smile.', 'Water your vegetables every day.', 'A fruit tree grows slowly, but it gives you apples for years.', 'Sit on a bench and listen to the birds.'] },
   produce: { name: 'Ben', img: 'assets/ui/keeper_ben.jpg', title: "🍎 Ben's fruit and vegetables", sub: 'Fruit & veg · rau, hoa quả (phím Q để ăn)',
     talk: ['Fresh apples, fresh carrots! Come and buy!', 'A watermelon is big, sweet and full of water.', 'Eat your vegetables and you will be strong.', 'Bananas are yellow, carrots are orange, apples are red!'] },
+  healer: { name: 'Lily', img: 'assets/ui/keeper_lily.jpg', title: "🧪 Lily's potions and gear", sub: 'Health & mana potions, first weapons · bình máu, bình mana, đồ đầu game',
+    talk: ['Red potions heal you, blue potions give you mana.', 'Keys 5, 6, 7 and 8 drink the potions in your quick slots.', 'Open your bag with V to put potions in the slots.', 'Rest here after a fight. I will take care of you!'] },
   music: { name: 'Anna', img: 'assets/ui/keeper_anna.jpg', title: "🎵 Anna's instruments", sub: 'Instruments · nhạc cụ cho nhà con',
     talk: ['Music makes every room happy.', 'A guitar has six strings.', 'The piano has black keys and white keys.', 'Bang the drum slowly, then quickly!'] },
   forest: { name: 'Willow', img: 'assets/ui/keeper_willow.jpg', title: "🌿 Willow's camp shop", sub: 'Forest gear · đồ của rừng (Map 2)',
@@ -114,7 +117,7 @@ export class ShopWindow {
   card(id) {
     const p = this.api.profile(), it = ITEMS[id], b = bag(p), food = it.slot === 'food', placed = it.slot === 'home' || it.slot === 'yard';
     const own = !food && (placed ? home(p).items.includes(id) : b.owned.includes(id)), on = !food && !placed && b[it.slot] === id, n = food ? foodCount(p, id) : 0;
-    const stat = [it.el && `${ELEMENTS[it.el].icon} ${ELEMENTS[it.el].en}`, it.near && `phép gần +${Math.round(it.near * 100)}%`, it.far && `phép xa +${Math.round(it.far * 100)}%`, it.eldmg && `phép ${ELEMENTS[it.el].vi} +${Math.round(it.eldmg * 100)}%`, it.resist && `kháng ${ELEMENTS[it.el].vi} ${Math.round(it.resist * 100)}%`, it.atk && `ATK +${it.atk}`, it.def && `DEF +${it.def}`, it.hp && `HP +${it.hp}`, it.heal && `+${it.heal} HP (Q)`, placed && (it.slot === 'yard' ? 'Đặt ở sân nhà con' : 'Đặt trong nhà con')].filter(Boolean).join(' · ');
+    const stat = [it.el && `${ELEMENTS[it.el].icon} ${ELEMENTS[it.el].en}`, it.near && `phép gần +${Math.round(it.near * 100)}%`, it.far && `phép xa +${Math.round(it.far * 100)}%`, it.eldmg && `phép ${ELEMENTS[it.el].vi} +${Math.round(it.eldmg * 100)}%`, it.resist && `kháng ${ELEMENTS[it.el].vi} ${Math.round(it.resist * 100)}%`, it.atk && `ATK +${it.atk}`, it.def && `DEF +${it.def}`, it.hp && `HP +${it.hp}`, it.heal && `+${it.heal} HP (${it.potion ? 'phím 5–8' : 'Q'})`, it.mana && `+${it.mana} mana (phím 5–8)`, placed && (it.slot === 'yard' ? 'Đặt ở sân nhà con' : 'Đặt trong nhà con')].filter(Boolean).join(' · ');
     const canBuy = food || !own, lock = p.stats.level < it.level;
     return `<div class="card ${lock ? 'locked' : ''}"><span class="tag">${it.cost} ●</span><span class="ic">${gearIcon(id) ? `<img src="${gearIcon(id)}" alt="">` : ICON[id] || (it.kind === 'staff' ? '🪄' : it.kind === 'sword' ? '⚔️' : it.slot === 'charm' ? '🧿' : it.slot === 'armor' ? '🛡️' : '📦')}</span><b>${it.en}</b><span class="vi">${it.vi}</span><span class="st">${stat}</span>
       ${lock ? `<span class="lock">🔒 Cần cấp ${it.level}</span>` : ''}${food ? `<span class="vi">Trong túi: ${n}</span>` : ''}${placed && own ? '<span class="on">✔ Đã có ở nhà</span>' : ''}

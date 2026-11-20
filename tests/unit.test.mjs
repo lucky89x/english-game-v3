@@ -416,7 +416,7 @@ test('shop: selling pays half, takes the item off, bread one by one, nothing for
   assert.ok(buy(p, 'iron_armor').ok); assert.equal(p.gear.def, 5);
   assert.equal(sell(p, 'iron_armor'), sellPrice('iron_armor')); assert.equal(p.inv.armor, ''); assert.equal(p.gear.def, 0); assert.ok(!p.inv.owned.includes('iron_armor'));
   assert.equal(sell(p, 'iron_armor'), 0, 'already sold');
-  buy(p, 'bread'); buy(p, 'bread'); const g = p.stats.gold; assert.equal(sell(p, 'bread'), 4); assert.equal(p.inv.food, 1); assert.equal(p.stats.gold, g + 4);
+  buy(p, 'bread'); buy(p, 'bread'); const g = p.stats.gold; assert.equal(sell(p, 'bread'), 3); assert.equal(p.inv.food, 1); assert.equal(p.stats.gold, g + 3);
 });
 
 import { spawnSync } from 'node:child_process';
@@ -848,4 +848,30 @@ test('skills: a point per level, more ranks than levels, requirements, hotbar, e
   assert.ok(buy(p, 'ice_amulet').ok); assert.equal(SK.powers(p).resist.ice, 0.15); assert.ok(hurt(40, p, 'ice') < hurt(40, p, 'fire'), 'resistance lowers the hit of that element');
   for (const k of Object.keys(MONSTERS)) assert.ok(SK.ELEMENTS[MONSTERS[k].el], k + ' has an element');
   const r = SK.reset(p); assert.ok(r.ok && r.cost === 0 && SK.spent(p) === 0, 'the first reset is free'); assert.ok(SK.resetCost(p) >= 50);
+});
+
+import { consumables, setQuick, quick, useItem, useQuick, lootRoll, giveLoot, MONSTERS as MON2, ITEMS as ITM2 } from '../src/core/rules.js';
+import * as SK2 from '../src/core/skills.js';
+test('potions: buying stacks them, Q ignores them, health and mana potions refill up to the cap, quick slots 5-8 use them', () => {
+  const p = S.newProfile('An', 6); p.stats.level = 10; p.stats.gold = 500; const hpMax = S.maxHp(p);
+  assert.ok(buy(p, 'hp_s').ok && buy(p, 'hp_s').ok && buy(p, 'mp_s').ok);
+  assert.deepEqual(consumables(p).map((c) => [c.id, c.n]), [['hp_s', 2], ['mp_s', 1]]);
+  p.stats.hp = 10; assert.equal(eat(p, hpMax), 0, 'Q never drinks a potion');
+  assert.ok(setQuick(p, 0, 'hp_s') && setQuick(p, 1, 'mp_s')); assert.ok(setQuick(p, 2, 'hp_s')); assert.deepEqual(quick(p), ['', 'mp_s', 'hp_s', '']);
+  const r = useQuick(p, 2, hpMax); assert.ok(r.ok && r.heal === 40 && p.stats.hp === 50 && consumables(p)[0].n === 1);
+  p.stats.hp = hpMax; assert.equal(useItem(p, 'hp_s', hpMax).why, 'full'); assert.equal(consumables(p)[0].n, 1, 'nothing is spent at full health');
+  SK2.spend(p, 40); const m = useQuick(p, 1, hpMax); assert.ok(m.ok && m.mana === 30 && SK2.mpOf(p) === SK2.powers(p).mpMax - 10);
+  assert.equal(useItem(p, 'mp_s', hpMax).why, 'empty');
+  assert.equal(setQuick(p, 0, 'iron_sword'), false, 'gear cannot be put in a quick slot');
+});
+test('loot: only elites and bosses drop, rarely, only unowned rare gear near the hero level, never sold in shops', () => {
+  const p = S.newProfile('An', 6); p.stats.level = 12;
+  assert.equal(lootRoll(p, { id: 'slime', hp: 30 }, false, () => 0), null, 'plain monsters drop nothing');
+  assert.ok(MON2.golem.elite && !MON2.slime.elite);
+  const id = lootRoll(p, { id: 'golem' }, false, () => 0.01); assert.ok(id && ITM2[id].rare && ITM2[id].level <= 15);
+  assert.equal(lootRoll(p, { id: 'golem' }, false, () => 0.5), null, 'a 5% chance');
+  assert.ok(lootRoll(p, { id: 'king', flag: 'boss1', hp: 600 }, true, () => 0.2), 'first boss defeat: 25%');
+  assert.equal(lootRoll(p, { id: 'king', flag: 'boss1', hp: 600 }, false, () => 0.2), null, 'after that only 12%');
+  assert.ok(giveLoot(p, id) && p.inv.owned.includes(id) && !giveLoot(p, id));
+  for (const [k, it] of Object.entries(ITM2)) if (it.rare) assert.ok(!it.seller, k + ' is not sold');
 });

@@ -57,7 +57,8 @@ import { Chests, CHEST_SPOTS, FOREST_CHESTS, HARBOR_CHESTS } from './game/chests
 import { armorMesh, charmMesh, GEAR_FILE } from './game/gear.js';
 import { Walkers } from './game/walkers.js';
 import { ShopWindow } from './ui/shop.js';
-import { ITEMS, bag, wear, buy, eat, shopList, pay, map2Ready, map3Ready, playerAtk } from './core/rules.js';
+import { ITEMS, bag, wear, buy, eat, shopList, pay, map2Ready, map3Ready, playerAtk, useQuick } from './core/rules.js';
+import { PackUI } from './ui/pack.js';
 import { payNote } from './game/minigames.js';
 import { SAM_LINES, BRIDGE, BRIDGE_SPOTS, FRIENDS, OPENING } from './game/content.js';
 import { UI } from './ui/ui.js';
@@ -350,6 +351,13 @@ function placeActors() {
     pip.root.visible = true; pip.place(L.ENTRANCE.x + 3.4, L.ENTRANCE.z - 12.5);
   }
 }
+/** Keys 5-8 and the potion slots: drinks or eats what is in the quick slot. */
+function usePotion(i) {
+  const r = useQuick(profile, i, Save.maxHp(profile));
+  if (r.why === 'none') { ui.toast('Ô trống: mở túi (V) để đặt bình máu/mana vào.'); return; }
+  if (!r.ok) { ui.toast(r.why === 'full' ? (ITEMS[r.id] && ITEMS[r.id].mana ? 'Mana đã đầy.' : 'Máu đã đầy.') : 'Hết rồi! Mua thêm ở quầy Lily.'); return; }
+  sfx('correct'); ui.toast(r.heal ? `+${r.heal} máu` : `+${r.mana} mana`); save(); refresh();
+}
 /** The closest walkable point to (x, z), searched in rings, or null. */
 function nearestWalkable(x, z) {
   for (let r = 0.5; r <= 12; r += 0.5) for (let k = 0; k < 16; k++) { const a = k / 16 * Math.PI * 2, px = x + Math.cos(a) * r, pz = z + Math.sin(a) * r; if (L.walkable(px, pz, 0.4)) return [px, pz]; }
@@ -443,7 +451,7 @@ const HALL_DOOR = { x: 0, z: -16.4 }, LILY_DOOR = { x: -17.4, z: -4 };
 const VILLAGE_DOCK = [L.REGIONS.village.riverX(18) - 6.8, 18.6];      // (20/11) was -5.2: that spot is in the river (not walkable), so arriving from the harbor left the hero sinking and stuck
 const homesItems = (p) => (p.home && p.home.items) || [];
 // ---------------------------------------------------------------- the sea extras (19/11): fishing, Sea Dex, fish market
-let dexPanel = null, wardPanel = null, creator = null, tailor = null, spells = null, skillUI = null, floaters = null, petPanel = null, petObj = null, trPanel = null, toolbar = null;
+let packUI = null, dexPanel = null, wardPanel = null, creator = null, tailor = null, spells = null, skillUI = null, floaters = null, petPanel = null, petObj = null, trPanel = null, toolbar = null;
 let digMeshes = [], digMixers = [];
 const seaOpen = () => !!(profile && (profile.flags.map2 || profile.admin));
 /** The pet of this profile (if any) shows in the world; its hunger is brought up to date. */
@@ -498,7 +506,7 @@ function adminPlaces() {
   add('village', 'Tom', 2.6, 9.6); add('village', 'Cửa hàng', SHOP_DOOR.x - 1, SHOP_DOOR.z); add('village', 'Cú Mèo', OWL.x, OWL.z + 1.2); add('village', 'Bảng săn quái', BOARD.x + 1.2, BOARD.z + 1);
   for (const st of STARTS) add('village', 'Trò: ' + st.sign.replace(/^\S+\s/, ''), st.x + 0.8, st.z + 0.8);
   add('village', 'Nhà của các con', HOMES[0].door[0] + 2, HOMES[0].door[1] + 1.5); add('village', 'Cửa hàng nội thất', FURNITURE.door[0] + 1.5, FURNITURE.door[1]);
-  add('village', 'Quầy rau quả', STALLS.produce.at[0] + 0.5, STALLS.produce.at[1]); add('village', 'Quầy nhạc cụ', STALLS.music.at[0] + 0.5, STALLS.music.at[1]); add('village', 'Tiệm may cô Mia', STALLS.tailor.at[0], STALLS.tailor.at[1] - 0.6);
+  add('village', 'Quầy bình của Lily', STALLS.healer.at[0] + 0.5, STALLS.healer.at[1]); add('village', 'Quầy rau quả', STALLS.produce.at[0] + 0.5, STALLS.produce.at[1]); add('village', 'Quầy nhạc cụ', STALLS.music.at[0] + 0.5, STALLS.music.at[1]); add('village', 'Tiệm may cô Mia', STALLS.tailor.at[0], STALLS.tailor.at[1] - 0.6);
   add('village', 'Vua Slime', BOSS_AT.x, BOSS_AT.z - 4); add('village', 'Golem Cổ', BOSS2_AT.x, BOSS2_AT.z - 4); add('village', 'Rương Đồng Hoang', CHEST_SPOTS[0][0], CHEST_SPOTS[0][1] - 1.5);
   add('forest', 'Cổng vào rừng', L.REGIONS.forest.SPAWN.x, L.REGIONS.forest.SPAWN.z); add('forest', 'Bảng săn quái rừng', FOREST_BOARD.x + 1.2, FOREST_BOARD.z + 0.6);
   add('forest', 'Nữ hoàng Nấm', BOSS3_AT.x + 6, BOSS3_AT.z); add('forest', 'Rương rừng', FOREST_CHESTS[0][0], FOREST_CHESTS[0][1] - 1.5);
@@ -948,6 +956,7 @@ function interactTarget() {
     if (lot) { const o = lot.owner; if (!o) return { text: 'Nhà trống: tạo thêm người chơi để nhận nhà này', run: () => ui.toast('Mỗi bé (tối đa 2) có một ngôi nhà ở đây.') };
       const mine = o.id === profile.id; return { text: mine ? 'E · Vào nhà của con' : `E · Thăm nhà của ${o.name}`, run: async () => { const items = [...homesItems(o)]; await loadHomeModels(items); enterRoom('home', { items, model: homeModel, pieces: Saga.pieces(o) }); homePanel.show(o, mine); } }; }
     if (near(FURNITURE.door[0] + 0.9, FURNITURE.door[1], 1.9)) return { text: 'E · Cửa hàng nội thất (giường, bàn ghế, vườn)', run: () => { enterRoom('shop'); shopWin.show('Furniture & Garden Shop', ['home', 'garden']); } };
+    if (near(STALLS.healer.at[0], STALLS.healer.at[1], 1.9)) return { text: 'E · Quầy của Lily (bình máu, bình mana, đồ đầu game)', run: () => shopWin.show("Lily's Potions & Gear", ['healer', 'forge']) };
     if (near(STALLS.produce.at[0], STALLS.produce.at[1], 1.8)) return { text: 'E · Quầy rau quả của Ben', run: () => shopWin.show("Ben's Fruit & Veg", ['produce']) };
     if (near(STALLS.music.at[0], STALLS.music.at[1], 1.8)) return { text: 'E · Quầy nhạc cụ của Anna', run: () => shopWin.show("Anna's Instruments", ['music']) };
     if (near(STALLS.tailor.at[0], STALLS.tailor.at[1], 2.0)) return { text: 'E · Tiệm may của cô Mia (quần áo, trang sức)', run: () => tailor.show() };
@@ -974,12 +983,14 @@ function onKey(e) {
   if (creator && creator.key(e.code)) { e.preventDefault(); return; }
   if (tailor && tailor.key(e.code)) { e.preventDefault(); return; }
   if (skillUI && skillUI.open && skillUI.key(e.code)) { e.preventDefault(); return; }
+  if (packUI && packUI.open && packUI.key(e.code)) { e.preventDefault(); return; }
   if (wardPanel && wardPanel.key(e.code)) { e.preventDefault(); return; }
   if (petPanel && petPanel.key(e.code)) { e.preventDefault(); return; }
   if (trPanel && trPanel.key(e.code)) { e.preventDefault(); return; }
   if (e.code === 'KeyM' && profile && trPanel && L.NAME === 'isle') { trPanel.show(); sfx('tick'); e.preventDefault(); return; }
   if (e.code === 'KeyP' && profile && petPanel && seaOpen()) { petPanel.show(); sfx('tick'); e.preventDefault(); return; }
-  if (e.code === 'KeyV' && profile && wardPanel && seaOpen()) { wardPanel.show(); sfx('tick'); e.preventDefault(); return; }
+  if (e.code === 'KeyU' && profile && wardPanel && seaOpen()) { wardPanel.show(); sfx('tick'); e.preventDefault(); return; }      // (20/11) the wardrobe moved from V to U: V is the bag now
+  if (e.code === 'KeyV' && profile && packUI && !(mini && mini.active)) { packUI.show(); e.preventDefault(); return; }
   if (e.code === 'KeyG' && profile && dexPanel && seaOpen()) { openDex(); e.preventDefault(); return; }
   if (intro && intro.active) { if (e.code === 'KeyE' || e.code === 'Space' || e.code === 'Escape') endIntro(); e.preventDefault(); return; }
   if (e.code === 'F3') { perfOn = !perfOn; $('perf').classList.toggle('hidden', !perfOn); e.preventDefault(); return; }
@@ -991,7 +1002,8 @@ function onKey(e) {
   if (e.code === 'KeyI' && profile) openBag();
   if (e.code === 'KeyB' && profile) wordBook();
   if (e.code === 'KeyQ' && profile) { const got = eat(profile, Save.maxHp(profile)); if (got) { sfx('correct'); ui.toast(`+${got} HP`); save(); refresh(); } }
-  if (e.code === 'KeyT' && skillUI && profile && !profile.admin) { skillUI.show(); e.preventDefault(); return; }
+  if (e.code === 'KeyT' && skillUI && profile) { skillUI.show(); e.preventDefault(); return; }
+  { const d5 = /^Digit([5-8])$/.exec(e.code); if (d5 && profile && !(mini && mini.active)) { usePotion(Number(d5[1]) - 5); e.preventDefault(); return; } }      // (20/11) quick slots: potions and food
   { const d = /^Digit([1-4])$/.exec(e.code); if (d && spells && wild && !(mini && mini.active)) { spells.castSlot(Number(d[1]) - 1); e.preventDefault(); return; } }      // (20/11) spells in the hotbar
   if (e.code === 'KeyK' && wild && !(mini && mini.active)) wild.dodge();
   if ((e.code === 'KeyJ' || e.code === 'KeyF') && wild && !(mini && mini.active)) wild.attack();
@@ -1102,7 +1114,8 @@ async function boot() {
     respawn: () => { game.teleport(L.SPAWN.x, L.SPAWN.z); ui.dialogue([{ who: 'Tom', en: 'You fainted, so I carried you home. Rest, then try again!', vi: 'Con hết máu nên được đưa về làng. Máu đã đầy lại. Mua trang bị tốt hơn rồi quay lại nhé.' }]); } });
   wild.addMap1(map1Model).catch((e) => console.warn('map 1 monsters', e));
   spells = new Spells({ scene, wild, player, profile: () => profile, sfx, ui, onChange: () => {} });      // (20/11) magic skills: keys 1-4, the skill book T
-  skillUI = new SkillUI({ profile: () => profile, spells, sfx, toast: (t) => ui.toast(t), atk: () => playerAtk(profile), changed: () => { save(); refresh(); } });      // the Blender monsters replace the shapes a moment after the game starts (not awaited: a slow download must not hold the boot)
+  packUI = new PackUI({ profile: () => profile, sfx, toast: (t) => ui.toast(t), changed: () => { save(); refresh(); }, hpMax: () => Save.maxHp(profile) });
+  skillUI = new SkillUI({ profile: () => profile, spells, sfx, usePotion, toast: (t) => ui.toast(t), atk: () => playerAtk(profile), changed: () => { save(); refresh(); } });      // the Blender monsters replace the shapes a moment after the game starts (not awaited: a slow download must not hold the boot)
   mini = new MiniGames({ scene, player, ui, sfx, track, profile: () => profile, save, onNote: refresh, board: (id) => { const t = tierOf(profile.stats.level), go = () => arcade.start(withTier(({ candy: () => candyGame(Math.random, t), blocks: () => blocksGame(Math.random, unitCards, t), sling: () => slingGame(Math.random, t), race2: () => raceGame(Math.random, [], t) })[id](), t)); if (id === 'candy' || id === 'race2') wordGate(id === 'candy' ? 'Mimi' : 'Leo', go); else go(); } });
   await mini.addHosts((name) => loader.loadAsync(`./assets/models/${name}.glb`));      // a host by each mini game
   admin = new AdminPanel({ profile: () => profile, places: adminPlaces, go: adminGo, unlockAll: adminUnlock, setStep: adminStep,
@@ -1123,7 +1136,7 @@ const AUTO = !navigator.webdriver && !localStorage.getItem('eq-quality-manual');
 function frame() {
   const now = performance.now(), raw = (now - last) / 1000, real = Math.min(0.25, raw); last = now;
   const dt = Math.min(0.05, real); TIME.value += real; const t = TIME.value;
-  const frozen = ui.modal || !started || (arcade && arcade.open) || (shopWin && shopWin.open) || (music && music.open) || (journal && journal.open) || (homePanel && homePanel.open) || (dexPanel && dexPanel.open) || (wardPanel && wardPanel.open) || (creator && creator.open) || (tailor && tailor.open) || (skillUI && skillUI.open) || (petPanel && petPanel.open) || (trPanel && trPanel.open);
+  const frozen = ui.modal || !started || (arcade && arcade.open) || (shopWin && shopWin.open) || (packUI && packUI.open) || (music && music.open) || (journal && journal.open) || (homePanel && homePanel.open) || (dexPanel && dexPanel.open) || (wardPanel && wardPanel.open) || (creator && creator.open) || (tailor && tailor.open) || (skillUI && skillUI.open) || (petPanel && petPanel.open) || (trPanel && trPanel.open);
   if (arcade) arcade.update(real, keys);
   if (touch) touch.update();
   releaseSoftKeys();
@@ -1143,7 +1156,7 @@ function frame() {
   if (pip.root.visible) pip.update(dt, t, player, started && L.NAME === 'forest' && quest && quest.step !== 'intro');
   if (floaters) floaters.update(real); if (spells) spells.update(real);
   if (profile && !profile.admin) SK.regen(profile, real);
-  if (skillUI) skillUI.sync(started && !switching && !room && !profile.admin && !frozen && !(mini && mini.active) && !(intro && intro.active));
+  if (skillUI) skillUI.sync(started && !switching && !room && !frozen && !(mini && mini.active) && !(intro && intro.active));
   crystals.update(t); if (world) world.update(t); if (homeDoor && homeDoor.visible) homeDoor.userData.star.rotation.y = t * 1.6;
   if (mini && started && !switching && !ui.modal && !arcade.open) mini.update(real, player.pos);      // real time, so timers stay honest on slow machines
   if (chests && started) chests.update(real);

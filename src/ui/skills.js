@@ -1,11 +1,14 @@
 // Skill UI (20/11): the hotbar (4 spell slots, keys 1-4, energy bar) and the skill book (key T): four element pages with the
 // inner powers and the spells, the points left, the reset, and a page with the element ring (who beats whom, the combos).
 import * as SK from '../core/skills.js';
+import { quick, consumables, ITEMS } from '../core/rules.js';
+import { itemIcon } from './pack.js';
 
 const CSS = `
 #hotbar { position:fixed; left:50%; bottom:10px; transform:translateX(-50%); z-index:24; display:flex; flex-direction:column; align-items:center; gap:4px; pointer-events:none; }
-#hotbar.hidden { display:none; } #hotbar .mp { width:236px; height:9px; border-radius:5px; background:rgba(20,30,60,.55); overflow:hidden; border:2px solid rgba(255,255,255,.7); }
-#hotbar .mp u { display:block; height:100%; background:linear-gradient(90deg,#3f8cff,#7fd0ff); }
+#hotbar.hidden { display:none; } #hotbar .mp { position:relative; width:330px; max-width:calc(100vw - 20px); height:18px; border-radius:9px; background:rgba(20,30,60,.7); overflow:hidden; border:2px solid rgba(255,255,255,.85); }
+#hotbar .mp u { display:block; height:100%; background:linear-gradient(90deg,#2f6fe8,#7fd0ff); } #hotbar .mp b { position:absolute; inset:0; text-align:center; font:800 12px/16px system-ui,sans-serif; color:#fff; text-shadow:0 1px 2px #000; }
+#hotbar .sep { width:2px; background:rgba(255,255,255,.4); margin:4px 2px; } #hotbar .sl.pt .n { position:absolute; right:3px; bottom:2px; font:900 12px system-ui; background:#5a3410; border-radius:8px; padding:0 5px; } #hotbar .sl.pt .ic { font-size:24px; } #hotbar .sl.pt .ic img { width:30px; height:30px; object-fit:contain; }
 #hotbar .slots { display:flex; gap:6px; pointer-events:auto; }
 #hotbar .sl { position:relative; width:54px; height:54px; border-radius:12px; border:3px solid #fff3d6; background:rgba(40,30,20,.72); color:#fff; font:800 11px system-ui, sans-serif; cursor:pointer; padding:0; overflow:hidden; }
 #hotbar .sl .ic { display:block; font-size:22px; line-height:26px; } #hotbar .sl .k { position:absolute; left:3px; top:1px; font-size:11px; opacity:.85; }
@@ -33,7 +36,7 @@ export class SkillUI {
     const st = document.createElement('style'); st.textContent = CSS; document.head.appendChild(st);
     this.bar = document.createElement('div'); this.bar.id = 'hotbar'; this.bar.className = 'hidden'; document.body.appendChild(this.bar);
     this.el = document.createElement('div'); this.el.id = 'skillbook'; this.el.className = 'hidden'; document.body.appendChild(this.el);
-    this.bar.addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; if (b.dataset.slot) this.api.spells.castSlot(Number(b.dataset.slot)); else if (b.dataset.a === 'book') this.show(); });
+    this.bar.addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; if (b.dataset.q !== undefined) this.api.usePotion(Number(b.dataset.q)); else if (b.dataset.slot) this.api.spells.castSlot(Number(b.dataset.slot)); else if (b.dataset.a === 'book') this.show(); });
     this.el.addEventListener('click', (e) => {
       const b = e.target.closest('button'); if ((!b && e.target === this.el) || (b && b.dataset.a === 'close')) return this.close(); if (!b || b.disabled) return;
       const p = this.api.profile(), a = b.dataset.a, v = b.dataset.v;
@@ -53,11 +56,13 @@ export class SkillUI {
     const p = this.api.profile(); if (!p || !show) { this.bar.classList.add('hidden'); return; }
     this.bar.classList.remove('hidden');
     const m = SK.magic(p), mp = SK.mpOf(p), max = SK.powers(p).mpMax, free = SK.free(p), sp = this.api.spells;
-    const key = JSON.stringify([m.bar, Math.floor(mp), max, free, m.bar.map((id) => (id ? Math.ceil(sp.wait(id) * 4) : 0))]); if (key === this.sig) return; this.sig = key;
+    const q = quick(p), cons = consumables(p), qn = q.map((id) => (id ? (cons.find((c) => c.id === id) || { n: 0 }).n : -1));
+    const key = JSON.stringify([m.bar, Math.floor(mp), max, free, m.bar.map((id) => (id ? Math.ceil(sp.wait(id) * 4) : 0)), q, qn]); if (key === this.sig) return; this.sig = key;
     const slot = (id, i) => { if (!id) return `<button class="sl empty" data-slot="${i}" title="Ô trống"><span class="k">${i + 1}</span><span class="ic">＋</span><span class="nm">trống</span></button>`;
       const n = SK.NODES[id], w = sp.wait(id), cd = w > 0 ? Math.min(100, w / SK.spellCool(p, id) * 100) : 0;
-      return `<button class="sl ${mp < SK.spellCost(id) ? 'low' : ''}" data-slot="${i}" title="${n.en} · ${n.vi} (${SK.spellCost(id)} năng lượng)" style="border-color:${SK.ELEMENTS[n.el].color}"><span class="k">${i + 1}</span><span class="ic">${SK.ELEMENTS[n.el].icon}</span><span class="nm">${n.en}</span>${cd ? `<span class="cd" style="height:${cd}%"></span>` : ''}</button>`; };
-    this.bar.innerHTML = `<div class="mp" title="Năng lượng ${Math.floor(mp)}/${max}"><u style="width:${Math.round(mp / max * 100)}%"></u></div><div class="slots">${m.bar.map(slot).join('')}<button class="book" data-a="book" title="Kỹ năng (phím T)">✨<br>T${free > 0 ? `<span class="dot">${free}</span>` : ''}</button></div>`;
+      return `<button class="sl ${mp < SK.spellCost(id) ? 'low' : ''}" data-slot="${i}" title="${n.en} · ${n.vi} (${SK.spellCost(id)} mana)" style="border-color:${SK.ELEMENTS[n.el].color}"><span class="k">${i + 1}</span><span class="ic">${SK.ELEMENTS[n.el].icon}</span><span class="nm">${n.en}</span>${cd ? `<span class="cd" style="height:${cd}%"></span>` : ''}</button>`; };
+    const pot = (id, i) => `<button class="sl pt ${id && qn[i] <= 0 ? 'low' : ''} ${id ? '' : 'empty'}" data-q="${i}" title="${id ? ITEMS[id].en + ' (phím ' + (i + 5) + ')' : 'Ô nhanh ' + (i + 5) + ': mở túi (V) để đặt bình máu/mana'}"><span class="k">${i + 5}</span><span class="ic">${id ? itemIcon(id) : '＋'}</span>${id ? `<span class="n">${Math.max(0, qn[i])}</span>` : '<span class="nm">trống</span>'}</button>`;
+    this.bar.innerHTML = `<div class="mp" title="Mana ${Math.floor(mp)}/${max}"><u style="width:${Math.round(mp / max * 100)}%"></u><b>MANA ${Math.floor(mp)}/${max}</b></div><div class="slots">${m.bar.map(slot).join('')}<span class="sep"></span>${q.map(pot).join('')}<button class="book" data-a="book" title="Kỹ năng (phím T)">✨<br>T${free > 0 ? `<span class="dot">${free}</span>` : ''}</button></div>`;
   }
   draw() {
     const p = this.api.profile(); if (!p) return;
@@ -67,7 +72,7 @@ export class SkillUI {
     else {
       const el = this.tab, E = SK.ELEMENTS[el], bar = SK.magic(p).bar;
       const node = (n) => { const r = SK.rank(p, n.id), why = SK.blocked(p, n.id);
-        const extra = n.kind === 'outer' ? `<div class="vi">Năng lượng ${n.cost} · chờ ${SK.spellCool(p, n.id)} giây${r ? ` · sát thương bây giờ: ${SK.spellDamage(p, n.id, this.api.atk())}` : ''}</div>` : '';
+        const extra = n.kind === 'outer' ? `<div class="vi">Mana ${n.cost} · chờ ${SK.spellCool(p, n.id)} giây${r ? ` · sát thương bây giờ: ${SK.spellDamage(p, n.id, this.api.atk())}` : ''}</div>` : '';
         const slots = n.kind === 'outer' && r ? `<span class="note">Ô phím:</span>${[0, 1, 2, 3].map((i) => `<button class="${bar[i] === n.id ? 'on' : ''}" data-a="slot" data-i="${i}" data-v="${n.id}">${i + 1}</button>`).join('')}` : '';
         return `<div class="node" style="--c:${E.color}"><b>${n.en}</b> · ${n.vi}${n.range ? ` <small>(${n.range === 'near' ? 'đánh gần' : n.range === 'far' ? 'đánh xa' : 'tuyệt kỹ'})</small>` : ''}<div class="vi">${n.what}</div>${extra}
           <div class="row"><span class="pips">${Array.from({ length: SK.MAX_RANK }, (_, i) => `<i class="${i < r ? 'on' : ''}"></i>`).join('')}</span> <b>${r}/${SK.MAX_RANK}</b>

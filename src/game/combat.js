@@ -5,7 +5,7 @@ import * as THREE from 'three';
 import * as L from '../core/layout.js';
 import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
 import { PLAY } from '../core/regions/harbor.js';
-import { MONSTERS, SPAWNS, FOREST_SPAWNS, HARBOR_SPAWNS, HUNT_KEY, forestChapter, playerAtk, hurt, inArc, huntsOf, hunt, countKill, huntLine, BOSSES, BOSS4, shieldDue } from '../core/rules.js';
+import { ITEMS, lootRoll, giveLoot, MONSTERS, SPAWNS, FOREST_SPAWNS, HARBOR_SPAWNS, HUNT_KEY, forestChapter, playerAtk, hurt, inArc, huntsOf, hunt, countKill, huntLine, BOSSES, BOSS4, shieldDue } from '../core/rules.js';
 
 // BOARD: on the Quest Square since 17/11 (was out at 29, -14), facing the fountain
 export const BOARD = { x: -6.2, z: 0.6 }, BOSS_AT = { x: 40, z: -26 }, BOSS2_AT = { x: 46, z: 40 };
@@ -272,6 +272,8 @@ export class Wild {
     if (countKill(p, m.kind)) this.api.ui.toast('Quest done! Go back to the board');
     else this.api.ui.toast(`+${exp} EXP   +${gold} ●`);
     if (first) { const pages = bossWake(m.def.flag, gold, exp, p.stats.level); if (pages) this.api.ui.dialogue(pages); }      // the boss wakes up from the Dark Wind (saga, 19/11)
+    const drop = lootRoll(p, m.boss ? m.def : { id: m.kind }, first);      // (20/11) rare gear from elites and bosses, low chance
+    if (drop && giveLoot(p, drop)) { this.api.sfx('fanfare'); this.api.ui.toast(`✨ Rớt trang bị hiếm: ${ITEMS[drop].en}! Mở túi (V) để mặc.`); }
     this.api.save(); this.api.onChange();
   }
   /** E near the board, or near the shielded boss. */

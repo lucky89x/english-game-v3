@@ -145,6 +145,8 @@ export const spellCool = (p, id) => +(NODES[id].cool * (1 - powers(p).cdr)).toFi
 /** Energy now (starts full); spend returns false when there is not enough. */
 export function mpOf(p) { const m = magic(p), max = powers(p).mpMax; if (m.mp === null || m.mp === undefined || m.mp > max) m.mp = max; return m.mp; }
 export function spend(p, n) { const now = mpOf(p); if (now < n) return false; magic(p).mp = now - n; return true; }
+/** Mana potion: adds up to n, never past the maximum; returns what was added. */
+export function restoreMp(p, n) { const max = powers(p).mpMax, now = mpOf(p), got = Math.max(0, Math.min(max - now, n)); magic(p).mp = now + got; return got; }
 export function regen(p, dt) { const max = powers(p).mpMax, m = magic(p); m.mp = Math.min(max, mpOf(p) + powers(p).mpRegen * dt); return m.mp; }
 /** Damage a monster's hit does after the element resistance (the plain armour is in rules.hurt). */
 export const resisted = (p, dmg, el) => Math.max(1, Math.round(dmg * (1 - (el ? powers(p).resist[el] : 0))));

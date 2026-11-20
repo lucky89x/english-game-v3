@@ -1,19 +1,19 @@
 // Combat and reward numbers in one place (no three.js, tested in node).
 import { rankAtk } from './saga.js';
-import { powers, resisted } from './skills.js';
+import { powers, resisted, mpOf, restoreMp } from './skills.js';
 // (20/11) el: the monster's element (core/skills.js): it decides which spells hurt it most and which resistance its hits meet
 export const MONSTERS = {
   slime: { el: 'wind', name: 'Green Slime', level: 1, hp: 30, atk: 6, exp: 12, gold: 3, speed: 2.0, color: 0x7fd86a, size: 1.0 },
   red: { el: 'fire', name: 'Red Slime', level: 4, hp: 70, atk: 11, exp: 26, gold: 7, speed: 2.5, color: 0xff7a6a, size: 1.25 },
-  golem: { el: 'thunder', name: 'Stone Golem', level: 8, hp: 180, atk: 18, exp: 75, gold: 20, speed: 1.6, color: 0xa49aa6, size: 1.7 },
+  golem: { el: 'thunder', name: 'Stone Golem', level: 8, elite: true, hp: 180, atk: 18, exp: 75, gold: 20, speed: 1.6, color: 0xa49aa6, size: 1.7 },
   // The Forest of Memories is the last chapter of Map 1 (19/11): levels 11-16, open once the forest gate is
   bat: { el: 'wind', name: 'Shadow Bat', level: 11, hp: 200, atk: 21, exp: 70, gold: 12, speed: 3.2, color: 0x6a4a9a, size: 1.0, fly: true, hover: 0.05 },      // hover: the Blender bat already floats 0.9 m up in its own file
-  shroom: { el: 'ice', name: 'Angry Mushroom', level: 14, hp: 320, atk: 26, exp: 100, gold: 16, speed: 1.8, color: 0xe2483e, size: 1.3 },
+  shroom: { el: 'ice', name: 'Angry Mushroom', level: 14, elite: true, hp: 320, atk: 26, exp: 100, gold: 16, speed: 1.8, color: 0xe2483e, size: 1.3 },
   // (20/11) CC0 monsters from Quaternius' Ultimate Monsters pack (tools/monsters/import_quaternius.py, assets/models/CREDITS.md):
   // 1 m tall in the file, `fit` is the height in the game; clips Idle, Walk, Weapon (attack), HitReact, Death
   goblin: { el: 'ice', name: 'Frost Goblin', level: 5, hp: 110, atk: 12, exp: 40, gold: 10, speed: 2.4, color: 0x4f9ad0, size: 1.0, model: 'goblin', fit: 1.35 },
   imp: { el: 'fire', name: 'Ember Imp', level: 9, hp: 210, atk: 19, exp: 80, gold: 16, speed: 2.7, color: 0xd8402e, size: 1.0, model: 'imp', fit: 1.45 },
-  orc: { el: 'wind', name: 'Gale Orc', level: 15, hp: 420, atk: 28, exp: 130, gold: 22, speed: 2.1, color: 0x6fae3a, size: 1.15, model: 'orc', fit: 1.6 },
+  orc: { el: 'wind', name: 'Gale Orc', level: 15, elite: true, hp: 420, atk: 28, exp: 130, gold: 22, speed: 2.1, color: 0x6fae3a, size: 1.15, model: 'orc', fit: 1.6 },
   // (20/11) lô 22: bunny (Quaternius), wisp / fox / gull (Blender, real size in the file; the wisp and the gull float on their own)
   bunny: { el: 'ice', name: 'Frost Bunny', level: 2, hp: 50, atk: 8, exp: 16, gold: 4, speed: 2.6, color: 0xbfe8ff, size: 1.0, model: 'bunny', fit: 0.85 },
   wisp: { el: 'thunder', name: 'Storm Wisp', level: 12, hp: 230, atk: 23, exp: 85, gold: 14, speed: 2.8, color: 0xffe14a, size: 1.0, fly: true, hover: 0.05, model: 'wisp', fit: 1.3 },
@@ -22,7 +22,7 @@ export const MONSTERS = {
   // Map 2 (Sunny Harbor, levels 21-30): the Blender models in assets/models/harbor_mob_*; `fit` scales the model, `model` names it
   crab: { el: 'ice', name: 'Beach Crab', level: 21, hp: 300, atk: 34, exp: 130, gold: 24, speed: 2.3, color: 0xe2483e, size: 1.0, model: 'crab', fit: 1.0 },
   jelly: { el: 'thunder', name: 'Glow Jellyfish', level: 24, hp: 340, atk: 38, exp: 150, gold: 26, speed: 1.9, color: 0xb48ae8, size: 1.0, fly: true, model: 'jelly', fit: 1.2 },
-  pirate: { el: 'fire', name: 'Little Pirate', level: 27, hp: 520, atk: 44, exp: 210, gold: 36, speed: 2.4, color: 0x2f4f8a, size: 1.2, model: 'pirate', fit: 1.15 },
+  pirate: { el: 'fire', name: 'Little Pirate', level: 27, elite: true, hp: 520, atk: 44, exp: 210, gold: 36, speed: 2.4, color: 0x2f4f8a, size: 1.2, model: 'pirate', fit: 1.15 },
 };
 /** Monsters of the Memory Forest, the last chapter of Map 1: [kind, x, z] (open ground away from crystals, paths and the gate). */
 export const FOREST_SPAWNS = [
@@ -59,46 +59,61 @@ export function inArc(px, pz, yaw, tx, tz, reach = 2.4, minDot = 0.25) {
 /** slot: weapon | armor | charm | food. Names are plain English words the child meets while shopping (no quiz). */
 export const ITEMS = {
   wood_sword: { en: 'Wooden Sword', vi: 'kiếm gỗ', slot: 'weapon', cost: 40, level: 1, atk: 5, color: 0xb98a4a, seller: 'forge' },
-  iron_sword: { en: 'Iron Sword', vi: 'kiếm sắt', slot: 'weapon', cost: 150, level: 5, atk: 12, color: 0xc8ced6, seller: 'forge' },
-  crystal_blade: { en: 'Crystal Blade', vi: 'kiếm pha lê', slot: 'weapon', cost: 400, level: 10, atk: 22, color: 0x7fd6ff, seller: 'forge' },
-  leather_vest: { en: 'Leather Vest', vi: 'áo da', slot: 'armor', cost: 60, level: 2, def: 2, hp: 20, seller: 'forge' },
-  iron_armor: { en: 'Iron Armor', vi: 'giáp sắt', slot: 'armor', cost: 220, level: 7, def: 5, hp: 50, seller: 'forge' },
-  clover: { en: 'Lucky Clover', vi: 'cỏ bốn lá may mắn', slot: 'charm', cost: 120, level: 4, hp: 30, seller: 'rose' },
-  bread: { en: 'Honey Bread', vi: 'bánh mì mật ong (hồi 50 máu, phím Q)', slot: 'food', cost: 8, level: 1, heal: 50, seller: 'rose' },
+  iron_sword: { en: 'Iron Sword', vi: 'kiếm sắt', slot: 'weapon', cost: 110, level: 5, atk: 12, color: 0xc8ced6, seller: 'forge' },
+  crystal_blade: { en: 'Crystal Blade', vi: 'kiếm pha lê', slot: 'weapon', cost: 300, level: 10, atk: 22, color: 0x7fd6ff, seller: 'forge' },
+  leather_vest: { en: 'Leather Vest', vi: 'áo da', slot: 'armor', cost: 45, level: 2, def: 2, hp: 20, seller: 'forge' },
+  iron_armor: { en: 'Iron Armor', vi: 'giáp sắt', slot: 'armor', cost: 160, level: 7, def: 5, hp: 50, seller: 'forge' },
+  clover: { en: 'Lucky Clover', vi: 'cỏ bốn lá may mắn', slot: 'charm', cost: 90, level: 4, hp: 30, seller: 'rose' },
+  bread: { en: 'Honey Bread', vi: 'bánh mì mật ong (hồi 50 máu, phím Q hoặc túi đồ V)', slot: 'food', cost: 6, level: 1, heal: 50, seller: 'rose' },
+  // (20/11) potions: stack in the pantry like food, but Q never drinks them (they are for the quick slots 5-8 and the bag, key V).
+  // Prices are about one fight's gold per small potion; the hero's health is 100 at level 1 and about 450 at level 30.
+  hp_s: { en: 'Small Health Potion', vi: 'bình máu nhỏ (+40 máu)', slot: 'food', potion: true, heal: 40, cost: 6, level: 1, seller: 'healer' },
+  hp_m: { en: 'Health Potion', vi: 'bình máu vừa (+120 máu)', slot: 'food', potion: true, heal: 120, cost: 18, level: 8, seller: 'healer' },
+  hp_l: { en: 'Big Health Potion', vi: 'bình máu lớn (+300 máu)', slot: 'food', potion: true, heal: 300, cost: 45, level: 20, seller: 'healer' },
+  mp_s: { en: 'Small Mana Potion', vi: 'bình mana nhỏ (+30 mana)', slot: 'food', potion: true, mana: 30, cost: 8, level: 1, seller: 'healer' },
+  mp_m: { en: 'Mana Potion', vi: 'bình mana vừa (+80 mana)', slot: 'food', potion: true, mana: 80, cost: 20, level: 8, seller: 'healer' },
+  mp_l: { en: 'Big Mana Potion', vi: 'bình mana lớn (+200 mana)', slot: 'food', potion: true, mana: 200, cost: 50, level: 20, seller: 'healer' },
+  // rare drops of the elite monsters and the bosses (never sold in a shop; selling one back pays half of `cost`)
+  dawn_blade: { en: 'Dawnbreaker Blade', vi: 'kiếm Rạng Đông (hiếm)', slot: 'weapon', rare: true, cost: 360, level: 9, atk: 26, color: 0xffe08a },
+  silver_mail: { en: 'Silverleaf Mail', vi: 'giáp lá bạc (hiếm)', slot: 'armor', rare: true, cost: 340, level: 10, def: 8, hp: 80, color: 0xcfd8e8 },
+  lucky_star: { en: 'Lucky Star Charm', vi: 'bùa Sao May Mắn (hiếm)', slot: 'charm', rare: true, cost: 300, level: 8, hp: 70, color: 0xffd23c },
+  tide_blade: { en: 'Tidecaller Blade', vi: 'kiếm Gọi Thủy Triều (hiếm)', slot: 'weapon', rare: true, cost: 1300, level: 25, atk: 46, color: 0x6fd0ff },
+  coral_mail: { en: 'Coralheart Mail', vi: 'giáp Tim San Hô (hiếm)', slot: 'armor', rare: true, cost: 1250, level: 26, def: 13, hp: 130, color: 0xff8a7a },
+  sun_charm: { en: 'Sunstone Charm', vi: 'bùa Đá Mặt Trời (hiếm)', slot: 'charm', rare: true, cost: 1100, level: 24, hp: 110, color: 0xffb03c },
   // (20/11) element gear, Map 1. Swords (kind: 'sword') make the close spells of their element stronger (near), staffs
   // (kind: 'staff') the far spells and ultimates (far); a weapon also gives its element to the plain J attack.
-  ember_sword: { en: 'Ember Sword', vi: 'kiếm than hồng (hệ Lửa)', slot: 'weapon', kind: 'sword', el: 'fire', near: 0.2, cost: 280, level: 6, atk: 14, color: 0xff6a2a, seller: 'forge' },
-  frost_sword: { en: 'Frost Sword', vi: 'kiếm sương giá (hệ Băng)', slot: 'weapon', kind: 'sword', el: 'ice', near: 0.2, cost: 280, level: 6, atk: 14, color: 0x6fd0ff, seller: 'forge' },
-  gale_sword: { en: 'Gale Sword', vi: 'kiếm gió lốc (hệ Gió)', slot: 'weapon', kind: 'sword', el: 'wind', near: 0.2, cost: 280, level: 6, atk: 14, color: 0x6fe08a, seller: 'forge' },
-  spark_sword: { en: 'Spark Sword', vi: 'kiếm tia lửa điện (hệ Sét)', slot: 'weapon', kind: 'sword', el: 'thunder', near: 0.2, cost: 280, level: 6, atk: 14, color: 0xffd23c, seller: 'forge' },
-  ember_staff: { en: 'Ember Staff', vi: 'gậy phép than hồng (hệ Lửa)', slot: 'weapon', kind: 'staff', el: 'fire', far: 0.25, cost: 320, level: 8, atk: 10, color: 0xff6a2a, seller: 'forge' },
-  frost_staff: { en: 'Frost Staff', vi: 'gậy phép sương giá (hệ Băng)', slot: 'weapon', kind: 'staff', el: 'ice', far: 0.25, cost: 320, level: 8, atk: 10, color: 0x6fd0ff, seller: 'forge' },
-  gale_staff: { en: 'Gale Staff', vi: 'gậy phép gió lốc (hệ Gió)', slot: 'weapon', kind: 'staff', el: 'wind', far: 0.25, cost: 320, level: 8, atk: 10, color: 0x6fe08a, seller: 'forge' },
-  spark_staff: { en: 'Spark Staff', vi: 'gậy phép tia sét (hệ Sét)', slot: 'weapon', kind: 'staff', el: 'thunder', far: 0.25, cost: 320, level: 8, atk: 10, color: 0xffd23c, seller: 'forge' },
-  fire_amulet: { en: 'Fire Amulet', vi: 'bùa Lửa (+15% phép Lửa, kháng Lửa)', slot: 'charm', el: 'fire', eldmg: 0.15, resist: 0.15, cost: 200, level: 5, hp: 20, seller: 'rose' },
-  ice_amulet: { en: 'Ice Amulet', vi: 'bùa Băng (+15% phép Băng, kháng Băng)', slot: 'charm', el: 'ice', eldmg: 0.15, resist: 0.15, cost: 200, level: 5, hp: 20, seller: 'rose' },
-  wind_amulet: { en: 'Wind Amulet', vi: 'bùa Gió (+15% phép Gió, kháng Gió)', slot: 'charm', el: 'wind', eldmg: 0.15, resist: 0.15, cost: 200, level: 5, hp: 20, seller: 'rose' },
-  thunder_amulet: { en: 'Thunder Amulet', vi: 'bùa Sét (+15% phép Sét, kháng Sét)', slot: 'charm', el: 'thunder', eldmg: 0.15, resist: 0.15, cost: 200, level: 5, hp: 20, seller: 'rose' },
+  ember_sword: { en: 'Ember Sword', vi: 'kiếm than hồng (hệ Lửa)', slot: 'weapon', kind: 'sword', el: 'fire', near: 0.2, cost: 220, level: 6, atk: 14, color: 0xff6a2a, seller: 'forge' },
+  frost_sword: { en: 'Frost Sword', vi: 'kiếm sương giá (hệ Băng)', slot: 'weapon', kind: 'sword', el: 'ice', near: 0.2, cost: 220, level: 6, atk: 14, color: 0x6fd0ff, seller: 'forge' },
+  gale_sword: { en: 'Gale Sword', vi: 'kiếm gió lốc (hệ Gió)', slot: 'weapon', kind: 'sword', el: 'wind', near: 0.2, cost: 220, level: 6, atk: 14, color: 0x6fe08a, seller: 'forge' },
+  spark_sword: { en: 'Spark Sword', vi: 'kiếm tia lửa điện (hệ Sét)', slot: 'weapon', kind: 'sword', el: 'thunder', near: 0.2, cost: 220, level: 6, atk: 14, color: 0xffd23c, seller: 'forge' },
+  ember_staff: { en: 'Ember Staff', vi: 'gậy phép than hồng (hệ Lửa)', slot: 'weapon', kind: 'staff', el: 'fire', far: 0.25, cost: 250, level: 8, atk: 10, color: 0xff6a2a, seller: 'forge' },
+  frost_staff: { en: 'Frost Staff', vi: 'gậy phép sương giá (hệ Băng)', slot: 'weapon', kind: 'staff', el: 'ice', far: 0.25, cost: 250, level: 8, atk: 10, color: 0x6fd0ff, seller: 'forge' },
+  gale_staff: { en: 'Gale Staff', vi: 'gậy phép gió lốc (hệ Gió)', slot: 'weapon', kind: 'staff', el: 'wind', far: 0.25, cost: 250, level: 8, atk: 10, color: 0x6fe08a, seller: 'forge' },
+  spark_staff: { en: 'Spark Staff', vi: 'gậy phép tia sét (hệ Sét)', slot: 'weapon', kind: 'staff', el: 'thunder', far: 0.25, cost: 250, level: 8, atk: 10, color: 0xffd23c, seller: 'forge' },
+  fire_amulet: { en: 'Fire Amulet', vi: 'bùa Lửa (+15% phép Lửa, kháng Lửa)', slot: 'charm', el: 'fire', eldmg: 0.15, resist: 0.15, cost: 150, level: 5, hp: 20, seller: 'rose' },
+  ice_amulet: { en: 'Ice Amulet', vi: 'bùa Băng (+15% phép Băng, kháng Băng)', slot: 'charm', el: 'ice', eldmg: 0.15, resist: 0.15, cost: 150, level: 5, hp: 20, seller: 'rose' },
+  wind_amulet: { en: 'Wind Amulet', vi: 'bùa Gió (+15% phép Gió, kháng Gió)', slot: 'charm', el: 'wind', eldmg: 0.15, resist: 0.15, cost: 150, level: 5, hp: 20, seller: 'rose' },
+  thunder_amulet: { en: 'Thunder Amulet', vi: 'bùa Sét (+15% phép Sét, kháng Sét)', slot: 'charm', el: 'thunder', eldmg: 0.15, resist: 0.15, cost: 150, level: 5, hp: 20, seller: 'rose' },
   // Map 2 gear (18/11), sold by Willow at the forest camp once Map 2 is open
-  oak_blade: { en: 'Oakheart Blade', vi: 'kiếm lõi sồi', slot: 'weapon', cost: 700, level: 21, atk: 32, color: 0x9a6a3a, seller: 'forest' },
-  moon_sword: { en: 'Moonlight Sword', vi: 'kiếm ánh trăng', slot: 'weapon', cost: 1500, level: 27, atk: 44, color: 0xbfd8ff, seller: 'forest' },
-  ranger_cloak: { en: 'Ranger Cloak', vi: 'áo choàng kiểm lâm', slot: 'armor', cost: 900, level: 22, def: 9, hp: 90, seller: 'forest' },
-  bark_armor: { en: 'Barkskin Armor', vi: 'giáp vỏ cây', slot: 'armor', cost: 1800, level: 28, def: 14, hp: 140, seller: 'forest' },
-  owl_feather: { en: 'Owl Feather', vi: 'lông cú (bùa)', slot: 'charm', cost: 800, level: 24, hp: 70, seller: 'forest' },
+  oak_blade: { en: 'Oakheart Blade', vi: 'kiếm lõi sồi', slot: 'weapon', cost: 550, level: 21, atk: 32, color: 0x9a6a3a, seller: 'forest' },
+  moon_sword: { en: 'Moonlight Sword', vi: 'kiếm ánh trăng', slot: 'weapon', cost: 1100, level: 27, atk: 44, color: 0xbfd8ff, seller: 'forest' },
+  ranger_cloak: { en: 'Ranger Cloak', vi: 'áo choàng kiểm lâm', slot: 'armor', cost: 700, level: 22, def: 9, hp: 90, seller: 'forest' },
+  bark_armor: { en: 'Barkskin Armor', vi: 'giáp vỏ cây', slot: 'armor', cost: 1300, level: 28, def: 14, hp: 140, seller: 'forest' },
+  owl_feather: { en: 'Owl Feather', vi: 'lông cú (bùa)', slot: 'charm', cost: 600, level: 24, hp: 70, seller: 'forest' },
   // (20/11) element gear, Map 2 (Willow's stall at the harbor)
-  blaze_blade: { en: 'Blaze Blade', vi: 'kiếm hỏa diệm (hệ Lửa)', slot: 'weapon', kind: 'sword', el: 'fire', near: 0.35, eldmg: 0.1, cost: 1600, level: 23, atk: 38, color: 0xff6a2a, seller: 'forest' },
-  glacier_blade: { en: 'Glacier Blade', vi: 'kiếm băng hà (hệ Băng)', slot: 'weapon', kind: 'sword', el: 'ice', near: 0.35, eldmg: 0.1, cost: 1600, level: 23, atk: 38, color: 0x6fd0ff, seller: 'forest' },
-  tempest_blade: { en: 'Tempest Blade', vi: 'kiếm cuồng phong (hệ Gió)', slot: 'weapon', kind: 'sword', el: 'wind', near: 0.35, eldmg: 0.1, cost: 1600, level: 23, atk: 38, color: 0x6fe08a, seller: 'forest' },
-  storm_blade: { en: 'Storm Blade', vi: 'kiếm lôi đình (hệ Sét)', slot: 'weapon', kind: 'sword', el: 'thunder', near: 0.35, eldmg: 0.1, cost: 1600, level: 23, atk: 38, color: 0xffd23c, seller: 'forest' },
-  inferno_staff: { en: 'Inferno Staff', vi: 'trượng hỏa ngục (hệ Lửa)', slot: 'weapon', kind: 'staff', el: 'fire', far: 0.4, eldmg: 0.1, cost: 1700, level: 24, atk: 28, color: 0xff6a2a, seller: 'forest' },
-  glacier_staff: { en: 'Glacier Staff', vi: 'trượng băng hà (hệ Băng)', slot: 'weapon', kind: 'staff', el: 'ice', far: 0.4, eldmg: 0.1, cost: 1700, level: 24, atk: 28, color: 0x6fd0ff, seller: 'forest' },
-  tempest_staff: { en: 'Tempest Staff', vi: 'trượng cuồng phong (hệ Gió)', slot: 'weapon', kind: 'staff', el: 'wind', far: 0.4, eldmg: 0.1, cost: 1700, level: 24, atk: 28, color: 0x6fe08a, seller: 'forest' },
-  storm_staff: { en: 'Storm Staff', vi: 'trượng lôi đình (hệ Sét)', slot: 'weapon', kind: 'staff', el: 'thunder', far: 0.4, eldmg: 0.1, cost: 1700, level: 24, atk: 28, color: 0xffd23c, seller: 'forest' },
-  flame_mail: { en: 'Flame Mail', vi: 'giáp lửa (kháng Lửa 30%)', slot: 'armor', el: 'fire', resist: 0.3, eldmg: 0.05, cost: 1500, level: 25, def: 11, hp: 110, seller: 'forest' },
-  frost_mail: { en: 'Frost Mail', vi: 'giáp băng (kháng Băng 30%)', slot: 'armor', el: 'ice', resist: 0.3, eldmg: 0.05, cost: 1500, level: 25, def: 11, hp: 110, seller: 'forest' },
-  wind_cloak: { en: 'Wind Cloak', vi: 'áo choàng gió (kháng Gió 30%)', slot: 'armor', el: 'wind', resist: 0.3, eldmg: 0.05, cost: 1500, level: 25, def: 11, hp: 110, seller: 'forest' },
-  storm_plate: { en: 'Storm Plate', vi: 'giáp sấm (kháng Sét 30%)', slot: 'armor', el: 'thunder', resist: 0.3, eldmg: 0.05, cost: 1500, level: 25, def: 11, hp: 110, seller: 'forest' },
-  forest_stew: { en: 'Forest Stew', vi: 'súp rừng (hồi 120 máu, phím Q)', slot: 'food', cost: 20, level: 21, heal: 120, seller: 'forest' },
+  blaze_blade: { en: 'Blaze Blade', vi: 'kiếm hỏa diệm (hệ Lửa)', slot: 'weapon', kind: 'sword', el: 'fire', near: 0.35, eldmg: 0.1, cost: 1200, level: 23, atk: 38, color: 0xff6a2a, seller: 'forest' },
+  glacier_blade: { en: 'Glacier Blade', vi: 'kiếm băng hà (hệ Băng)', slot: 'weapon', kind: 'sword', el: 'ice', near: 0.35, eldmg: 0.1, cost: 1200, level: 23, atk: 38, color: 0x6fd0ff, seller: 'forest' },
+  tempest_blade: { en: 'Tempest Blade', vi: 'kiếm cuồng phong (hệ Gió)', slot: 'weapon', kind: 'sword', el: 'wind', near: 0.35, eldmg: 0.1, cost: 1200, level: 23, atk: 38, color: 0x6fe08a, seller: 'forest' },
+  storm_blade: { en: 'Storm Blade', vi: 'kiếm lôi đình (hệ Sét)', slot: 'weapon', kind: 'sword', el: 'thunder', near: 0.35, eldmg: 0.1, cost: 1200, level: 23, atk: 38, color: 0xffd23c, seller: 'forest' },
+  inferno_staff: { en: 'Inferno Staff', vi: 'trượng hỏa ngục (hệ Lửa)', slot: 'weapon', kind: 'staff', el: 'fire', far: 0.4, eldmg: 0.1, cost: 1250, level: 24, atk: 28, color: 0xff6a2a, seller: 'forest' },
+  glacier_staff: { en: 'Glacier Staff', vi: 'trượng băng hà (hệ Băng)', slot: 'weapon', kind: 'staff', el: 'ice', far: 0.4, eldmg: 0.1, cost: 1250, level: 24, atk: 28, color: 0x6fd0ff, seller: 'forest' },
+  tempest_staff: { en: 'Tempest Staff', vi: 'trượng cuồng phong (hệ Gió)', slot: 'weapon', kind: 'staff', el: 'wind', far: 0.4, eldmg: 0.1, cost: 1250, level: 24, atk: 28, color: 0x6fe08a, seller: 'forest' },
+  storm_staff: { en: 'Storm Staff', vi: 'trượng lôi đình (hệ Sét)', slot: 'weapon', kind: 'staff', el: 'thunder', far: 0.4, eldmg: 0.1, cost: 1250, level: 24, atk: 28, color: 0xffd23c, seller: 'forest' },
+  flame_mail: { en: 'Flame Mail', vi: 'giáp lửa (kháng Lửa 30%)', slot: 'armor', el: 'fire', resist: 0.3, eldmg: 0.05, cost: 1100, level: 25, def: 11, hp: 110, seller: 'forest' },
+  frost_mail: { en: 'Frost Mail', vi: 'giáp băng (kháng Băng 30%)', slot: 'armor', el: 'ice', resist: 0.3, eldmg: 0.05, cost: 1100, level: 25, def: 11, hp: 110, seller: 'forest' },
+  wind_cloak: { en: 'Wind Cloak', vi: 'áo choàng gió (kháng Gió 30%)', slot: 'armor', el: 'wind', resist: 0.3, eldmg: 0.05, cost: 1100, level: 25, def: 11, hp: 110, seller: 'forest' },
+  storm_plate: { en: 'Storm Plate', vi: 'giáp sấm (kháng Sét 30%)', slot: 'armor', el: 'thunder', resist: 0.3, eldmg: 0.05, cost: 1100, level: 25, def: 11, hp: 110, seller: 'forest' },
+  forest_stew: { en: 'Forest Stew', vi: 'súp rừng (hồi 120 máu, phím Q)', slot: 'food', cost: 15, level: 21, heal: 120, seller: 'forest' },
   // 18/11: Ben's fruit and vegetables (eaten with Q after the bread runs out)
   apple: { en: 'Apple', vi: 'quả táo (hồi 20 máu)', slot: 'food', cost: 4, level: 1, heal: 20, seller: 'produce' },
   carrot: { en: 'Carrot', vi: 'củ cà rốt (hồi 15 máu)', slot: 'food', cost: 3, level: 1, heal: 15, seller: 'produce' },
@@ -165,7 +180,7 @@ export function buy(profile, id) {
 }
 /** Eats one bread. Returns the health restored (0 when there is none or health is full). */
 export function eat(profile, hpMax) {
-  const b = bag(profile), hp = profile.stats.hp ?? hpMax, P = pantry(b), fruit = Object.keys(P).filter((k) => P[k] > 0 && ITEMS[k]);
+  const b = bag(profile), hp = profile.stats.hp ?? hpMax, P = pantry(b), fruit = Object.keys(P).filter((k) => P[k] > 0 && ITEMS[k] && !ITEMS[k].potion);
   if ((b.food <= 0 && !(b.stew > 0) && !fruit.length) || hp >= hpMax) return 0;
   let heal;
   if (b.stew > 0 && hpMax - hp > ITEMS.bread.heal) { b.stew -= 1; heal = ITEMS.forest_stew.heal; }      // stew for big wounds
@@ -184,6 +199,49 @@ export function sell(profile, id) {
   else { const i = b.owned.indexOf(id); if (i < 0) return 0; b.owned.splice(i, 1); if (b[it.slot] === id) b[it.slot] = ''; wear(profile); }
   const g = sellPrice(id); profile.stats.gold += g; return g;
 }
+
+// ---------------------------------------------------------------- the bag (key V), potions and quick slots 5-8, rare drops (20/11)
+/** Everything that can be used from the bag, stacked: [{ id, n }] (bread and stew first, then fruit, then potions). */
+export function consumables(profile) {
+  const b = bag(profile), P = pantry(b), out = [];
+  if (b.food > 0) out.push({ id: 'bread', n: b.food }); if (b.stew > 0) out.push({ id: 'forest_stew', n: b.stew });
+  for (const k of Object.keys(P)) if (P[k] > 0 && ITEMS[k] && !ITEMS[k].potion) out.push({ id: k, n: P[k] });
+  for (const k of Object.keys(P)) if (P[k] > 0 && ITEMS[k] && ITEMS[k].potion) out.push({ id: k, n: P[k] });
+  return out;
+}
+/** Gear in the bag that is not worn: [{ id }] (what the child owns minus the three worn pieces). */
+export const spareGear = (profile) => { const b = bag(profile); return b.owned.filter((id) => ITEMS[id] && b[ITEMS[id].slot] !== id); };
+/** Quick slots 5-8: item ids (or ''). */
+export const quick = (profile) => { const b = bag(profile); if (!Array.isArray(b.quick)) b.quick = ['', '', '', '']; return b.quick; };
+export function setQuick(profile, i, id) {
+  const q = quick(profile); if (i < 0 || i > 3) return false;
+  if (id && !(ITEMS[id] && ITEMS[id].slot === 'food')) return false;
+  if (id) for (let k = 0; k < 4; k++) if (q[k] === id) q[k] = '';      // one slot per item
+  q[i] = id || ''; return true;
+}
+/** Uses one of an item from the bag. hpMax: the health cap. Mana comes from core/skills.js. Returns { ok, heal, mana, why }. */
+export function useItem(profile, id, hpMax) {
+  const it = ITEMS[id]; if (!it || it.slot !== 'food') return { ok: false, why: 'none' };
+  if (foodCount(profile, id) <= 0) return { ok: false, why: 'empty' };
+  const hp = profile.stats.hp ?? hpMax;
+  if (it.mana) { const max = powers(profile).mpMax, now = mpOf(profile); if (now >= max) return { ok: false, why: 'full' }; const got = Math.min(max - now, it.mana); take(profile, id); restoreMp(profile, got); return { ok: true, heal: 0, mana: got }; }
+  if (hp >= hpMax) return { ok: false, why: 'full' };
+  take(profile, id); const after = Math.min(hpMax, hp + it.heal); profile.stats.hp = after; return { ok: true, heal: after - hp, mana: 0 };
+}
+function take(profile, id) { const b = bag(profile); if (id === 'bread') b.food -= 1; else if (id === 'forest_stew') b.stew -= 1; else pantry(b)[id] -= 1; }
+export const useQuick = (profile, i, hpMax) => { const id = quick(profile)[i]; return id ? { ...useItem(profile, id, hpMax), id } : { ok: false, why: 'none' }; };
+/** Elite monsters (tougher kinds) and bosses drop rare gear, rarely: 5% an elite kill, 25% a boss's first defeat, 12% after that. */
+export const LOOT = { elite: 0.05, boss: 0.25, bossAgain: 0.12 };
+export const isElite = (kind) => !!(MONSTERS[kind] && MONSTERS[kind].elite);
+/** Rolls a rare drop for a defeated monster. def: the monster or boss definition; first: the boss's first defeat. Returns an item id or null. */
+export function lootRoll(profile, def, first = false, rnd = Math.random) {
+  const boss = !!def.hp && !!def.flag, chance = boss ? (first ? LOOT.boss : LOOT.bossAgain) : isElite(def.id || def.kind) ? LOOT.elite : 0;
+  if (!chance || rnd() >= chance) return null;
+  const b = bag(profile), lv = profile.stats.level, pool = Object.keys(ITEMS).filter((id) => ITEMS[id].rare && ITEMS[id].level <= lv + 3 && !b.owned.includes(id));
+  return pool.length ? pool[Math.floor(rnd() * pool.length) % pool.length] : null;
+}
+/** Adds a dropped piece to the bag (not worn: the child decides). */
+export function giveLoot(profile, id) { const b = bag(profile); if (!ITEMS[id] || b.owned.includes(id)) return false; b.owned.push(id); return true; }
 export const shopList = (seller) => Object.entries(ITEMS).filter(([, it]) => it.seller === seller).map(([id]) => id);
 
 // ---------------------------------------------------------------- hunting quests and the boss

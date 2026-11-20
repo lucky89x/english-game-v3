@@ -1,4 +1,4 @@
-// The wardrobe card (phím V, 19/11): the pieces earned at the Style Boutique and the Beauty Salon; click one to put it on Ngọc or take it off.
+// The wardrobe card (phím U, 19/11): the pieces earned at the Style Boutique and the Beauty Salon; click one to put it on Ngọc or take it off.
 import { Panel } from './panel.js';
 import { KINDS, SLOTS, wardrobe, parse, itemName, wear, JEWEL_HEX } from '../core/wardrobe.js';
 import { COLORS } from './style.js';
