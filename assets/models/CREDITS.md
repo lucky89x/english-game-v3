@@ -47,3 +47,5 @@ Lệnh chung: `OUT=<thư mục> blender -b -P <script>` (tùy chọn `ONLY=tên,
 8 file `mob_*_v01.glb`, `boss_*_v01.glb` (slime xanh/đỏ, golem đá, Vua Slime, Golem Cổ, dơi bóng tối, nấm giận dữ, Nữ hoàng Nấm): `tools/mobs1/build_mobs1.py`.
 
 ## Trang bị lô 14 (tự dựng): `gear_*_v01.glb` — `tools/gear/build_gear.py`.
+
+## Đồ tương tác lô 15 (tự dựng): `prop_chest_locked`, `prop_star`, `prop_crystal`, `npc_owl`, `prop_board_quest`, `prop_word_jar` — `tools/pickups/build_pickups.py`.
