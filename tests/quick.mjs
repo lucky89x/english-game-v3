@@ -170,7 +170,7 @@ await run('map2', async () => {        // the forest is the last chapter of Map 
   await ev(() => { __eq.profile.stats.level = 3; __eq.wild.mobs.forEach((m) => { if (m.region === 'forest') m.dead = 0; }); }); await wait(700);
   check(await ev(() => __eq.wild.mobs.filter((m) => m.g.visible).length === 0), 'The crystal quest is not done: the forest is quiet for a young hero');
   await ev(() => { const p = __eq.profile; p.quests.forest = p.quests.forest || {}; p.quests.forest.step = 'done'; p.stats.level = 12; p.stats.hp = 9999; }); await wait(900);
-  check(await ev(() => __eq.wild.mobs.filter((m) => m.g.visible).every((m) => m.region === 'forest') && __eq.wild.mobs.filter((m) => m.g.visible).length === 10), 'Forest chapter of Map 1: 10 monsters before Map 2, none from the meadow ' + await ev(() => __eq.wild.mobs.filter((m) => m.g.visible).map((m) => m.kind).join(',')));
+  check(await ev(() => __eq.wild.mobs.filter((m) => m.g.visible).every((m) => m.region === 'forest') && __eq.wild.mobs.filter((m) => m.g.visible).length === 19), 'Forest chapter of Map 1: 19 monsters (bats, mushrooms, orcs, wisps, foxes) before Map 2, none from the meadow ' + await ev(() => __eq.wild.mobs.filter((m) => m.g.visible).map((m) => m.kind).join(',')));
   const r = await ev(() => { const w = __eq.wild, m = w.mobs.find((m) => m.kind === 'bat' && !m.dead), e0 = __eq.profile.stats.exp, l0 = __eq.profile.stats.level; w.kill(m, __eq.profile); return { exp: __eq.profile.stats.exp !== e0 || __eq.profile.stats.level !== l0, dead: m.dead > 0 }; });
   check(r.exp && r.dead, 'Defeating a Shadow Bat pays EXP');
   await closeDialogs();
@@ -195,8 +195,8 @@ await run('harbor', async () => {        // Map 2 in Sunny Harbor: sea monsters,
   await ev(() => { const p = __eq.profile; p.flags.map2 = true; p.stats.level = 27; p.stats.hp = 9999; p.god = true; __eq.enterRegion('harbor'); });
   await page.waitForFunction(() => __eq.region === 'harbor' && __eq.started, null, { timeout: 180000 }); await wait(1000);
   const vis = await ev(() => __eq.wild.mobs.filter((m) => m.g.visible).map((m) => m.kind));
-  check(vis.length === 14 && vis.every((k) => ['crab', 'jelly', 'pirate'].includes(k)), `Harbor at level 27: 14 sea monsters, no boss yet, none from the other maps (${vis.length})`);
-  check(await ev(() => __eq.wild.mobs.filter((m) => m.region === 'harbor' && m.mixer).length === 15), 'The Blender monsters and the octopus carry their own Idle/Walk clips');
+  check(vis.length === 17 && vis.every((k) => ['crab', 'jelly', 'pirate', 'gull'].includes(k)), `Harbor at level 27: 17 sea monsters (with the storm gulls), no boss yet, none from the other maps (${vis.length})`);
+  check(await ev(() => __eq.wild.mobs.filter((m) => m.region === 'harbor' && m.mixer).length === 18), 'The Blender monsters and the octopus carry their own Idle/Walk clips');
   await ev(() => { __eq.profile.stats.level = 28; }); await wait(900);
   check(await ev(() => __eq.wild.bosses[3].g.visible && __eq.wild.markers().some((m) => m.text === '♛')), 'Level 28: Captain Octopus rises by the lighthouse');
   check(await ev(() => __eq.chests.list.filter((c) => c.region === 'harbor' && c.g.visible).length === 6 && __eq.chests.list.filter((c) => c.region !== 'harbor').every((c) => !c.g.visible)), 'Six word chests in the harbor');
@@ -313,7 +313,7 @@ await run('shop', async () => {         // the shop door opens the inside view: 
   check(!(await page.isVisible('#shopwin')), 'Esc leaves the shop');
 });
 
-await run('intro', async () => {        // a new child arrives by boat (?intro=1 shows it to tests)
+await run('intro', async () => {        // a new child starts in front of their own home (20/11; before: by boat) (?intro=1 shows it to tests)
   await ev(() => __eq.pause(true)); const tp = await browser.newPage({ viewport: { width: 1024, height: 700 } }); tp.setDefaultTimeout(120000); await tp.goto(url + '?intro=1');
   await tp.waitForFunction(() => globalThis.__eq && document.getElementById('loading').classList.contains('hidden') && !document.getElementById('menu').classList.contains('hidden'), null, { timeout: 180000 });
   await tp.click('#mnew'); await tp.fill('#mname', 'Boat'); await tp.click('[data-g="6"]'); await tp.click('#mgo');
@@ -321,9 +321,7 @@ await run('intro', async () => {        // a new child arrives by boat (?intro=1
   check((await tp.textContent('#dialog')).includes('Kingdom of Words') && !(await tp.isVisible('[data-act="skip"]')), 'Opening story first, with no skip button');
   for (let k = 0; k < 6 && await tp.isVisible('#dialog'); k++) { await tp.keyboard.press('KeyE'); await tp.waitForTimeout(250); }
   await tp.waitForTimeout(800);
-  check(await tp.evaluate(() => __eq.intro && __eq.intro.active && __eq.player.pos.y < 0.4), 'New child starts in a boat on the river');
-  await tp.keyboard.press('KeyE'); await tp.waitForTimeout(800);
-  check(await tp.evaluate(() => !__eq.intro.active && __eq.profile.flags.arrived && Math.hypot(__eq.player.pos.x - 18.2, __eq.player.pos.z - 18.6) < 1.5), 'E skips: Ngọc stands on the dock');
+  check(await tp.evaluate(() => { const lot = __eq.homes.lotOf(__eq.profile); return !!lot && __eq.profile.flags.arrived && Math.hypot(__eq.player.pos.x - (lot.h.door[0] + 1.8), __eq.player.pos.z - lot.h.door[1]) < 1.5; }), 'After the story the new child stands in front of their own home door');
   check(await tp.evaluate(() => __eq.errors.length === 0), 'Intro page: no script errors');
   await tp.close(); await ev(() => __eq.pause(false));
 });
