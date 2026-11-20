@@ -7,7 +7,11 @@ export const KINDS = {
   bracelet: { slot: 'wrist', en: 'bracelet', vi: 'vòng tay', icon: '📿' }, shoes: { slot: 'feet', en: 'shoes', vi: 'giày', icon: '👟' },
   // (batch 6, 19/11) clothes and hair colour the body itself: Ngọc v04 has tintable hair / top / bottom materials and 6 hair styles
   top: { slot: 'top', en: 'T-shirt', vi: 'áo phông', icon: '👕' }, skirt: { slot: 'bottom', en: 'skirt', vi: 'váy', icon: '🩳' }, trousers: { slot: 'bottom', en: 'trousers', vi: 'quần dài', icon: '👖' },
-  dress: { slot: 'body', en: 'dress', vi: 'đầm', icon: '👗' }, haircolor: { slot: 'haircolor', en: 'hair', vi: 'màu tóc', icon: '🎨' },
+  dress: { slot: 'body', en: 'dress', vi: 'đầm', icon: '👗' },
+  // (20/11, Blender batch 19) clothes with their own shape on Ngọc v05 (Top_*, Bottom_*, Dress_* objects)
+  hoodie: { slot: 'top', en: 'hoodie', vi: 'áo hoodie', icon: '🧥' }, jacket: { slot: 'top', en: 'jacket', vi: 'áo khoác', icon: '🥼' }, aodai: { slot: 'top', en: 'ao dai', vi: 'áo dài', icon: '👘' },
+  shorts: { slot: 'bottom', en: 'shorts', vi: 'quần short', icon: '🩳' }, gown: { slot: 'body', en: 'party dress', vi: 'đầm công chúa', icon: '👸' },
+  haircolor: { slot: 'haircolor', en: 'hair', vi: 'màu tóc', icon: '🎨' },
   hairstyle: { slot: 'style', en: 'hair', vi: 'kiểu tóc', icon: '💇', vals: ['short', 'long', 'curly', 'wavy', 'ponytail', 'braids'] },
   // (19/11) jewellery sold at Mia's tailor shop in the village: metal or gem colours
   necklace: { slot: 'chain', en: 'necklace', vi: 'dây chuyền', icon: '💎', vals: ['gold', 'silver', 'pink', 'blue', 'green', 'purple'] },
@@ -18,7 +22,7 @@ export const KINDS = {
 /** Colours that are not in the ten clothes colours (the jewellery metals). */
 export const JEWEL_HEX = { gold: '#f2c23a', silver: '#d4d8e0' };
 /** Gold price of each kind at Mia's shop (19/11: "kiếm vàng để mua quần áo trang sức thay thế"). */
-export const PRICE = { top: 50, skirt: 50, trousers: 50, dress: 120, shoes: 70, hat: 60, bow: 30, headband: 40, glasses: 70, scarf: 50, bag: 80, bracelet: 60, haircolor: 40, hairstyle: 80, necklace: 150, earrings: 120, tiara: 220, hairclip: 45 };
+export const PRICE = { hoodie: 70, jacket: 90, aodai: 110, shorts: 40, gown: 160, top: 50, skirt: 50, trousers: 50, dress: 120, shoes: 70, hat: 60, bow: 30, headband: 40, glasses: 70, scarf: 50, bag: 80, bracelet: 60, haircolor: 40, hairstyle: 80, necklace: 150, earrings: 120, tiara: 220, hairclip: 45 };
 export const priceOf = (id) => { const it = parse(id); if (!it) return 0; return PRICE[it.kind] * (it.color === 'gold' ? 2 : it.color === 'silver' ? 1.5 : 1); };
 export const SLOTS = [{ id: 'head', en: 'Head', vi: 'đầu' }, { id: 'hair', en: 'Hair', vi: 'tóc' }, { id: 'style', en: 'Hair style', vi: 'kiểu tóc' }, { id: 'haircolor', en: 'Hair colour', vi: 'màu tóc' }, { id: 'top', en: 'Top', vi: 'áo' }, { id: 'bottom', en: 'Bottom', vi: 'quần, váy' }, { id: 'body', en: 'Dress', vi: 'đầm' }, { id: 'face', en: 'Face', vi: 'mặt' }, { id: 'neck', en: 'Neck', vi: 'cổ' }, { id: 'chain', en: 'Necklace', vi: 'dây chuyền' }, { id: 'ears', en: 'Earrings', vi: 'bông tai' }, { id: 'back', en: 'Back', vi: 'lưng' }, { id: 'wrist', en: 'Wrist', vi: 'cổ tay' }, { id: 'feet', en: 'Feet', vi: 'chân' }];
 export const COLOR_NAMES = ['red', 'blue', 'yellow', 'green', 'pink', 'purple', 'black', 'white', 'orange', 'brown'];

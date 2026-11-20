@@ -30,8 +30,23 @@ export function tintAccessory(root, main, trim) {
   });
 }
 export const HAIR_STYLES = ['short', 'long', 'curly', 'wavy', 'ponytail', 'braids'];
-/** Shows the one Hair_<style> object and hides the others (call syncOutlines(root) afterwards for their outline twins). */
+/** Shows the one Hair_<style> object and hides the others (call syncOutlines(root) afterwards for their outline twins).
+ *  A style the model does not have (the boy has short, spiky, side, buzz) falls back to its first Hair_* object. */
 export function setHairStyle(root, style) {
-  const want = `Hair_${HAIR_STYLES.includes(style) ? style : 'short'}`;
-  root.traverse((o) => { if (o.isMesh && !o.userData.outline && /^Hair_/.test(o.name)) o.visible = o.name === want; });
+  const hairs = []; root.traverse((o) => { if (o.isMesh && !o.userData.outline && /^Hair_/.test(o.name)) hairs.push(o); });
+  const hit = hairs.find((o) => o.name === `Hair_${style}`) || hairs.find((o) => o.name === 'Hair_short') || hairs[0];
+  for (const o of hairs) o.visible = o === hit;
 }
+/** Clothes of Ngọc v05 / the boy (batch 19): exactly one top and one bottom, or one dress. Object names are Top_<x>, Bottom_<x>, Dress_<x>.
+ *  want = { top: 'hoodie', bottom: 'skirt', body: 'sundress' } (missing = the T-shirt and the shorts). */
+export const CLOTH = { top: { top: 'tshirt', hoodie: 'hoodie', jacket: 'jacket', aodai: 'aodai' }, bottom: { shorts: 'shorts', trousers: 'trousers', skirt: 'skirt' }, body: { dress: 'sundress', gown: 'party' } };
+export function setClothes(root, want = {}) {
+  const top = want.body ? null : (want.top || 'tshirt'), bottom = want.body ? null : (want.bottom || 'shorts'), dress = want.body || null;
+  root.traverse((o) => {
+    if (!o.isMesh || o.userData.outline) return;
+    const m = /^(Top|Bottom|Dress)_(.+)$/.exec(o.name); if (!m || /^(aodai_tet|xmas_sweater|halloween_witch)$/.test(m[2])) return;     // event pieces are handled elsewhere
+    o.visible = (m[1] === 'Top' && m[2] === top) || (m[1] === 'Bottom' && m[2] === bottom) || (m[1] === 'Dress' && m[2] === dress);
+  });
+}
+/** The goggles and red scarf of the starting look (Gear_goggles) hide under a hat or a tiara. */
+export function setGoggles(root, on) { root.traverse((o) => { if (o.name === 'Gear_goggles' && !o.userData.outline) o.visible = on; }); }

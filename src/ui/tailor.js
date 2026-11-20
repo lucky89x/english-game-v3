@@ -21,7 +21,7 @@ const CSS = `
 #tailor .note { font-size:12px; color:#8a5070; }`;
 
 const TABS = [
-  { id: 'clothes', en: 'Clothes', vi: 'quần áo', kinds: ['top', 'skirt', 'trousers', 'dress', 'shoes'] },
+  { id: 'clothes', en: 'Clothes', vi: 'quần áo', kinds: ['top', 'hoodie', 'jacket', 'aodai', 'shorts', 'skirt', 'trousers', 'dress', 'gown', 'shoes'] },
   { id: 'acc', en: 'Accessories', vi: 'phụ kiện', kinds: ['hat', 'bow', 'headband', 'glasses', 'scarf', 'bag', 'bracelet'] },
   { id: 'jewel', en: 'Jewellery', vi: 'trang sức', kinds: ['necklace', 'earrings', 'tiara', 'hairclip'] },
   { id: 'hair', en: 'Hair', vi: 'tóc', kinds: ['hairstyle', 'haircolor'] },

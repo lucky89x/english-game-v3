@@ -29,7 +29,7 @@ import { PetPanel } from './ui/petpanel.js';
 import { Pet } from './game/pet.js';
 import * as PETS from './core/pet.js';
 import { outfitParts } from './game/outfit.js';
-import { tintBody, tintAccessory, setHairStyle } from './game/tint.js';
+import { tintBody, tintAccessory, setHairStyle, setClothes, setGoggles, CLOTH } from './game/tint.js';
 import { faceMaps, tintSkin, lookOf } from './game/faces.js';
 import * as Saga from './core/saga.js';
 import { Creator } from './ui/creator.js';
@@ -728,8 +728,9 @@ function creatorCamera(on) {
 /** The wardrobe pieces worn on Ngọc (19/11): rebuilt from profile.wardrobe.worn. Clothes and hair tint her body materials,
  *  the hair style swaps the Hair_* object, and the accessories (acc_*_v01.glb, built in her bind pose) hang on her bones. */
 const NGOC_COLORS = { hair: '#8c4a22', top: '#f4e9d2', bottom: '#cfb487' };
-const ACC_BONE = { hat: /^head$/, bow: /^head$/, headband: /^head$/, glasses: /^head$/, scarf: /^neck$/, bag: /^chest$/, bracelet: /^hand.?L$/ };
-const PROC_ONLY = new Set(['necklace', 'earrings', 'tiara', 'hairclip']);      // jewellery: shapes from outfit.js until Blender batch 19
+const ACC_BONE = { hat: /^head$/, bow: /^head$/, headband: /^head$/, glasses: /^head$/, scarf: /^neck$/, bag: /^chest$/, bracelet: /^hand.?L$/, necklace: /^neck$/, earrings: /^head$/, tiara: /^head$/, hairclip: /^head$/ };
+const PROC_ONLY = new Set();      // kinds drawn only from outfit.js shapes (the jewellery now has Blender files; the shapes are the fallback when a file is missing)
+const JEWEL = new Set(['necklace', 'earrings', 'tiara', 'hairclip']);
 const accScene = {};                       // kind -> loaded glTF scene, or null when the file is missing (the shapes from outfit.js take over)
 let lookShown = [], faceShown = '';
 function applyLook() {
@@ -742,7 +743,11 @@ function applyLook() {
   else if (faceShown) { faceShown = ''; player.setFaces(player.firstFaces); }
   const dress = val('body');
   tintBody(root, { hair: paint(val('haircolor'), NGOC_COLORS.hair), top: paint(dress || val('top'), NGOC_COLORS.top), bottom: paint(dress || val('bottom'), NGOC_COLORS.bottom) });
-  setHairStyle(root, val('style') || 'short'); syncOutlines(root);
+  setHairStyle(root, val('style') || 'short');
+  const kindOf = (slot) => { const it = worn[slot] && WR.parse(worn[slot]); return it ? it.kind : null; };
+  setClothes(root, { top: CLOTH.top[kindOf('top')], bottom: CLOTH.bottom[kindOf('bottom')], body: CLOTH.body[kindOf('body')] });
+  setGoggles(root, !['hat', 'tiara'].includes(kindOf('head')));
+  syncOutlines(root);
   let skinned = null; root.traverse((o) => { if (!skinned && o.isSkinnedMesh) skinned = o; });
   const hang = (obj, b) => { const i = skinned ? skinned.skeleton.bones.indexOf(b) : -1; if (i >= 0) { obj.matrix.copy(skinned.skeleton.boneInverses[i]); obj.matrix.decompose(obj.position, obj.quaternion, obj.scale); } b.add(obj); lookShown.push(obj); };
   for (const id of Object.values(worn)) {
@@ -751,7 +756,8 @@ function applyLook() {
     if (!ACC_BONE[it.kind] && !['shoes'].includes(it.kind)) continue;
     const src = accScene[it.kind];
     if (src) {
-      const clone = src.clone(true); tintAccessory(clone, WCOL[it.color] || '#ffffff');
+      const clone = src.clone(true);
+      if (JEWEL.has(it.kind)) { const metal = WR.JEWEL_HEX[it.color]; tintAccessory(clone, metal || WR.JEWEL_HEX.gold, metal ? new THREE.Color(metal).multiplyScalar(0.8).getStyle() : (WCOL[it.color] || '#ffffff')); } else tintAccessory(clone, WCOL[it.color] || '#ffffff');
       for (const c of [...clone.children]) { const side = /_([LR])$/.exec(c.name); const b = bone(it.kind === 'shoes' ? new RegExp(`^foot.?${side ? side[1] : 'L'}$`) : ACC_BONE[it.kind]); if (b) { c.removeFromParent(); hang(c, b); } }
     } else if (src === undefined) {
       accScene[it.kind] = null;

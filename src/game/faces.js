@@ -5,7 +5,7 @@ import * as THREE from 'three';
 
 export const FACES = ['sweet', 'bright', 'cool', 'gentle', 'sporty', 'dreamy', 'cheeky', 'calm'];
 export const FACE_NAMES = { sweet: 'Sweet', bright: 'Bright', cool: 'Cool', gentle: 'Gentle', sporty: 'Sporty', dreamy: 'Dreamy', cheeky: 'Cheeky', calm: 'Calm' };
-export const SKINS = { light: '#f6c8a6', fair: '#fcdcc4', tan: '#e0ad86', deep: '#bf8a64' };
+export const SKINS = { light: '#fbc59d', fair: '#fcdcc4', tan: '#e0ad86', deep: '#bf8a64' };
 export const SKIN_NAMES = { light: 'light', fair: 'fair', tan: 'tan', deep: 'deep' };
 export const DEFAULT_LOOK = { face: 'sweet', skin: 'light' };
 const EXPR = ['happy', 'blink', 'talk', 'joy'];
@@ -29,7 +29,7 @@ export function faceMaps(face, skin) {
 }
 const BASE = new THREE.Color(SKINS.light);
 const own = new WeakSet();
-/** Body skin (material ngoc_skin, the palette cell #f6c8a6) takes the tone: colour = tone / base. */
+/** Body skin (material ngoc_skin, the palette cell #fbc59d) takes the tone: colour = tone / base. */
 export function tintSkin(root, skin) {
   const want = new THREE.Color(SKINS[skin] || SKINS.light);
   root.traverse((o) => {
