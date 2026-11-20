@@ -25,8 +25,11 @@ OUT_DIR = ROOT / 'assets/characters/models'
 SRC_DIR = ROOT / 'art_source/chibi05'
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 SRC_DIR.mkdir(parents=True, exist_ok=True)
-GLB = OUT_DIR / 'chr_ngoc_adventurer_v03.glb'
-BLEND = SRC_DIR / 'chr_ngoc_adventurer_v03.blend'
+# v04 (2026-11-19): body split into tintable materials (*_tint = grey texture, the game multiplies a colour)
+# and five extra hairstyles (Hair_long/curly/wavy/ponytail/braids) next to Hair_short; the game hides/shows them.
+# v05 (2026-11-20): + swappable clothes (Top_*, Bottom_*, Dress_*), Gear_goggles split out, boy hero variant (ban_nam).
+GLB = OUT_DIR / 'chr_ngoc_adventurer_v05.glb'
+BLEND = SRC_DIR / 'chr_ngoc_adventurer_v05.blend'
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
 scene = bpy.context.scene
@@ -37,35 +40,59 @@ scene.render.fps = 24
 # whole body renders with a single material (+ separate face material).
 # --------------------------------------------------------------------------------------
 PALETTE = {  # name: (sRGB hex, roughness, metallic)
-    'skin': ('f6c8a6', .62, 0), 'skin_dark': ('e8ae8c', .65, 0),
-    'hair': ('8c4a22', .5, 0), 'hair_light': ('a85c2e', .45, 0), 'hair_dark': ('6a3418', .55, 0),
-    'bandana': ('c9322c', .7, 0), 'bandana_dark': ('9a2420', .75, 0),
-    'scarf': ('d23b30', .72, 0), 'scarf_dark': ('a52b24', .75, 0),
+    'skin': ('fbc59d', .62, 0), 'skin_dark': ('efab86', .65, 0),
+    'hair': ('9a4824', .5, 0), 'hair_light': ('b85e30', .45, 0), 'hair_dark': ('6a2e14', .55, 0),
+    'bandana': ('e3352a', .7, 0), 'bandana_dark': ('a82620', .75, 0),
+    'scarf': ('e63a28', .72, 0), 'scarf_dark': ('b02a20', .75, 0),
     'brass': ('d39a42', .32, .75), 'brass_dark': ('9c6a2a', .4, .7), 'lens': ('3f7a8c', .08, .25),
     'lens_shine': ('bfe8f0', .05, .1),
-    'shirt': ('f4e9d2', .8, 0), 'shirt_shade': ('e2d1ae', .82, 0),
-    'shorts': ('cfb487', .8, 0), 'shorts_cuff': ('bb9c6c', .8, 0),
-    'leather': ('8c5631', .55, 0), 'leather_dark': ('5f3519', .6, 0), 'leather_light': ('a96d3e', .55, 0),
+    'shirt': ('f8eed8', .8, 0), 'shirt_shade': ('e8d6b0', .82, 0),
+    'shorts': ('d6c095', .8, 0), 'shorts_cuff': ('bfa272', .8, 0),
+    'leather': ('8e4e2a', .55, 0), 'leather_dark': ('5e2e14', .6, 0), 'leather_light': ('ad6a38', .55, 0),
     'gold': ('e2b04a', .28, .85),
-    'boot': ('8e5631', .5, 0), 'boot_cuff': ('b07240', .55, 0), 'sole': ('4a2a17', .7, 0), 'lace': ('f1e2c2', .8, 0),
-    'glove': ('7d4626', .55, 0),
+    'boot': ('944e28', .5, 0), 'boot_cuff': ('b4703c', .55, 0), 'sole': ('4a2a17', .7, 0), 'lace': ('f1e2c2', .8, 0),
+    'glove': ('7e3e1e', .55, 0),
     'glass': ('2f9be8', .06, .1), 'potion': ('7fd6ff', .1, 0), 'cork': ('c99c62', .8, 0),
     'parchment': ('f0ddb0', .85, 0), 'parchment_edge': ('d9bd86', .85, 0), 'ribbon': ('c2312c', .7, 0),
     'eye_dark': ('2a140a', .3, 0),
 }
 PALETTE.update({'white': ('fbf8f0', .8, 0), 'bread': ('d9953f', .7, 0), 'bread_light': ('f0c070', .7, 0), 'wicker': ('b98a4a', .85, 0),
                 'crystal': ('58e07a', .1, 0), 'leaf': ('4d9a3a', .8, 0), 'lute': ('c98a48', .5, 0), 'lute_dark': ('7a4a26', .6, 0)})
+PALETTE.update({'ev_red': ('c8202a', .7, 0), 'ev_red_dark': ('8e1620', .75, 0), 'ev_yellow': ('f6c63a', .45, .2), 'ev_purple': ('5a2a8a', .75, 0),
+                'ev_purple_dark': ('3a1a5a', .8, 0), 'ev_orange': ('f08a24', .7, 0), 'ev_green': ('2e8a4a', .75, 0), 'ev_black': ('2a2430', .7, 0),
+                'ev_brown': ('7a4a26', .7, 0), 'ev_pink': ('f2a0b0', .6, 0)})     # event outfits (fixed colours, ngoc_gear material)
 VARIANT = os.environ.get('NGOC_VARIANT', 'ngoc')
+BOY = VARIANT == 'ban_nam'
+HERO = VARIANT in ('ngoc', 'ban_nam')     # playable heroes: swappable hair, clothes, goggles
+BW = 1.08 if BOY else 1.0                  # the boy is a little broader in the shoulders
+HEIGHT = {'amira': 1.3, 'karim': 1.35, 'layla': 1.2, 'idris': 1.4}.get(VARIANT)   # desert NPCs: whole model (rig node) scaled to this height
 VARIANTS = {   # friends built on Ngoc's body: (file name, palette overrides)
-    'lily': ('npc_lily_druid_v01', {'hair': 'e0702c', 'hair_light': 'f08a3c', 'hair_dark': 'b8531c', 'bandana': '5fa83c', 'bandana_dark': '3f7d2a',
-                                    'scarf': '6cb444', 'scarf_dark': '4a8a30', 'shirt': '8cc25a', 'shirt_shade': '6a9e42', 'shorts': 'f0e6cc',
+    'lily': ('npc_lily_druid_v02', {'hair': 'e86a28', 'hair_light': 'f6883a', 'hair_dark': 'b84c18', 'bandana': '5fa83c', 'bandana_dark': '3f7d2a',
+                                    'scarf': '6cb444', 'scarf_dark': '4a8a30', 'shirt': '7cb244', 'shirt_shade': '5e9032', 'shorts': 'f6ead0',
                                     'shorts_cuff': 'd9c9a2', 'glass': '4fd06a', 'ribbon': '5fa83c'}),
-    'rose': ('npc_rose_baker_v01', {'hair': 'ee8a94', 'hair_light': 'f8a8b0', 'hair_dark': 'd06a78', 'bandana': 'f6f0e6', 'bandana_dark': 'd8cfc0',
-                                    'scarf': 'c8352e', 'scarf_dark': '9a2620', 'shirt': 'fbf6ec', 'shirt_shade': 'e6dcc8', 'shorts': 'c8352e',
-                                    'shorts_cuff': '9a2620', 'glass': 'f6c62e', 'ribbon': 'c8352e'}),
-    'anna': ('npc_anna_bard_v01', {'hair': '6b3a1e', 'hair_light': '8a5230', 'hair_dark': '4a2612', 'bandana': 'f2c230', 'bandana_dark': 'c99a1e',
-                                   'scarf': 'f2c230', 'scarf_dark': 'c99a1e', 'shirt': '3f6fc6', 'shirt_shade': '2c539a', 'shorts': 'f4efe6',
+    'rose': ('npc_rose_baker_v02', {'hair': 'ea7472', 'hair_light': 'f69490', 'hair_dark': 'c85458', 'bandana': 'f6f0e6', 'bandana_dark': 'd8cfc0',
+                                    'scarf': 'd02c2c', 'scarf_dark': 'a01e1e', 'shirt': 'fbf6ec', 'shirt_shade': 'e6dcc8', 'shorts': 'd02c2c',
+                                    'shorts_cuff': 'a01e1e', 'glass': 'f6c62e', 'ribbon': 'c8352e'}),
+    'anna': ('npc_anna_bard_v02', {'hair': '6b3a1e', 'hair_light': '8a5230', 'hair_dark': '4a2612', 'bandana': 'f4b834', 'bandana_dark': 'cc9020',
+                                   'scarf': 'f4b834', 'scarf_dark': 'cc9020', 'shirt': '2f5bb8', 'shirt_shade': '22468e', 'shorts': 'f4efe6',
                                    'shorts_cuff': 'd8d0c0', 'glass': 'b684e8', 'ribbon': 'f2c230'}),
+    'mia': ('npc_mia_tailor_v01', {'hair': '9a3e22', 'hair_light': 'b5502e', 'hair_dark': '6e2a16', 'bandana': '8c64c2', 'bandana_dark': '6a4a9a',
+                                   'scarf': 'e2b04a', 'scarf_dark': 'c99a1e', 'shirt': 'f4efe6', 'shirt_shade': 'd8d0c0', 'shorts': '6a4a9a',
+                                   'shorts_cuff': '4a3070', 'glass': 'e2b04a', 'ribbon': '8c64c2'}),
+    'amira': ('npc_desert_elder_v01', {'hair': 'd8d0c0', 'hair_light': 'f0ece4', 'hair_dark': 'b0a898', 'bandana': '3fc0b0', 'bandana_dark': '2a8c80',
+                                       'scarf': '3fc0b0', 'scarf_dark': '2a8c80', 'shirt': 'e8dcc0', 'shirt_shade': 'c9b890', 'shorts': '8a6a4a',
+                                       'shorts_cuff': '6a4a2a', 'glass': '3fc0b0', 'ribbon': '3fc0b0'}),
+    'karim': ('npc_desert_merchant_v01', {'hair': '3a2a20', 'hair_light': '5a4232', 'hair_dark': '22180f', 'bandana': 'c9463a', 'bandana_dark': '8e2e28',
+                                          'scarf': 'e2b04a', 'scarf_dark': 'b08a2a', 'shirt': 'f4efe6', 'shirt_shade': 'd8d0c0', 'shorts': '5a4a8a',
+                                          'shorts_cuff': '3a2a6a', 'glass': 'e2b04a', 'ribbon': 'c9463a'}),
+    'layla': ('npc_desert_guide_v01', {'hair': '2a1d16', 'hair_light': '4a3428', 'hair_dark': '1a120c', 'bandana': 'e8a33a', 'bandana_dark': 'b07a2a',
+                                       'scarf': 'e8a33a', 'scarf_dark': 'b07a2a', 'shirt': 'f2e2c2', 'shirt_shade': 'd8c49a', 'shorts': '7a5a3a',
+                                       'shorts_cuff': '5a3a20', 'glass': '5ac8ff', 'ribbon': 'e8a33a'}),
+    'idris': ('npc_desert_smith_v01', {'hair': '4a3222', 'hair_light': '6a4a32', 'hair_dark': '2a1a10', 'bandana': '6a4a3a', 'bandana_dark': '4a3020',
+                                       'scarf': '8a6a4a', 'scarf_dark': '6a4a2a', 'shirt': 'b88a5a', 'shirt_shade': '9a6e44', 'shorts': '4a3a30',
+                                       'shorts_cuff': '2a2018', 'glass': 'e8603a', 'ribbon': '6a4a3a'}),
+    'ban_nam': ('chr_ban_nam_v01', {'hair': '3a2a20', 'hair_light': '5a4232', 'hair_dark': '22180f', 'shirt': '6fa8dc', 'shirt_shade': '4a86bf',
+                                    'shorts': '3a4f7a', 'shorts_cuff': '2a3a5c'}),
 }
 if VARIANT in VARIANTS:
     _name, _over = VARIANTS[VARIANT]
@@ -147,7 +174,56 @@ def make_material(name, albedo_path, orm_path=None, rough=.6):
     return m
 
 
-MAT_BODY = make_material('NgocBody', PAL_ALB, PAL_ORM)
+# v04: the body is split by what the game may recolour. Hair, top and bottom use *_tint materials that sample a
+# GREY copy of the palette (the group's base tone = 0.8 grey, lighter/darker tones keep their ratio), so the game can
+# multiply any colour on top; contact shadows stay in the vertex colours. Ngọc keeps skin, boots and gear apart too;
+# the friends put skin + boots + gear in one '<name>_body' material (fewer draw calls).
+TINT_GROUPS = {'hair': ('hair', 'hair_light', 'hair_dark'), 'top': ('shirt', 'shirt_shade'), 'bottom': ('shorts', 'shorts_cuff')}
+
+
+def group_of(color):
+    for g, names in TINT_GROUPS.items():
+        if color in names:
+            return g
+    if color in ('skin', 'skin_dark', 'eye_dark'):
+        return 'skin'
+    if color in ('boot', 'boot_cuff', 'sole', 'lace'):
+        return 'boots'
+    return 'gear'
+
+
+def build_tint_image():
+    from PIL import Image
+    size = CELL * GRID
+    img = Image.new('RGB', (size, size), (204, 204, 204))
+
+    def lum(h):
+        r, g, b = hex_rgb(h)
+        return .2126 * srgb_to_lin(r / 255) + .7152 * srgb_to_lin(g / 255) + .0722 * srgb_to_lin(b / 255)
+    for g, names in TINT_GROUPS.items():
+        base = lum(PALETTE[names[0]][0])
+        for n in names:
+            lin = min(1.0, srgb_to_lin(.8) * lum(PALETTE[n][0]) / base)     # base tone -> 0.8 grey (sRGB)
+            v = round(255 * (lin * 12.92 if lin <= .0031308 else 1.055 * lin ** (1 / 2.4) - .055))
+            i = NAMES.index(n)
+            x, y = (i % GRID) * CELL, (i // GRID) * CELL
+            img.paste((v, v, v), (x, y, x + CELL, y + CELL))
+    p = SRC_DIR / f'{VARIANT}_palette_tint.png'
+    img.save(p)
+    return p
+
+
+PAL_TINT = build_tint_image()
+_pre = VARIANT
+MATS = {g: make_material(f'{_pre}_{g}_tint', PAL_TINT, PAL_ORM) for g in TINT_GROUPS}
+for _g, _m in MATS.items():       # glTF material extras: the colour that the grey 0.8 base tone stands for (the game multiplies it in)
+    _m['eq_base'] = '#' + PALETTE[TINT_GROUPS[_g][0]][0]
+if HERO:
+    MATS.update({g: make_material(f'ngoc_{g}', PAL_ALB, PAL_ORM) for g in ('skin', 'boots', 'gear')})
+else:
+    _body = make_material(f'{_pre}_body', PAL_ALB, PAL_ORM)
+    MATS.update({g: _body for g in ('skin', 'boots', 'gear')})
+MAT_BODY = MATS['skin']
 MAT_FACE = make_material('NgocFace', FACE_PNGS['happy'], rough=.62)
 
 # --------------------------------------------------------------------------------------
@@ -174,12 +250,17 @@ def paint(obj, color, faces=None):
     me = obj.data
     if not me.uv_layers:
         me.uv_layers.new(name='UVMap')
-    if not me.materials:
-        me.materials.append(MAT_BODY)
+    m = MATS[group_of(color)]
+    names = [x.name for x in me.materials]
+    if m.name not in names:
+        me.materials.append(m)
+        names.append(m.name)
+    idx = names.index(m.name)
     uv = me.uv_layers.active.data
     u = cell_uv(color)
     polys = me.polygons if faces is None else [me.polygons[i] for i in faces]
     for p in polys:
+        p.material_index = idx
         for li in p.loop_indices:
             uv[li].uv = u
     return obj
@@ -425,7 +506,7 @@ def shrink_to(obj, target, offset):
 # --------------------------------------------------------------------------------------
 HZ = 1.105                # head centre
 HA, HB, HC = .285, .255, .258   # head half width / depth / height
-SHOULDER = Vector((.150, 0.0, .770))
+SHOULDER = Vector((.150 * BW, 0.0, .770))
 ARM_DIR = Vector((.60, .03, -.80)).normalized()
 UPPER, FORE, HAND = .125, .115, .075
 HIP_X = .082
@@ -486,6 +567,7 @@ torso = loft('Ngoc_Shirt', [
     ((0, .004, .800), .100, .080),
     ((0, .006, .830), .055, .050),
 ], seg=28, caps=(True, True), ref=Vector((1, 0, 0)))
+torso.scale.x = BW
 finish(torso, 'shirt', ['hips', 'spine', 'chest', 'neck'], subsurf=1)
 # shirt hem flare
 hem = loft('Ngoc_ShirtHem', [((0, .004, .505), .158, .128), ((0, .006, .470), .168, .136), ((0, .006, .452), .166, .134)],
@@ -857,7 +939,7 @@ for k, (dz, sw) in enumerate(((-.11, .03), (-.07, .09))):
     tl = loft(f'Ngoc_BandanaTail_{k}', rings, seg=10, ref=Vector((0, 1, 0)))
     finish(tl, 'bandana' if k else 'bandana_dark', ['head'])
 
-if VARIANT == 'ngoc':
+if HERO:
     # goggle strap around the head, just above the bandana
     GS_N = Vector((0, .25, 1)).normalized()
     gs_c = HAIR_C + Vector((0, 0, .130))
@@ -884,14 +966,481 @@ if VARIANT == 'ngoc':
     br = on_hair(math.radians(11), math.radians(37), .056)
     bridge = tube('Ngoc_GoggleBridge', [bl, (bl + br) / 2 + Vector((0, -.004, .010)), br], [.011, .011, .011], seg=8)
     finish(bridge, 'brass', ['head'])
-else:
-    _fl = {'lily': ('f6f2ea', 'f4d04a'), 'rose': ('e2483e', 'f6f2ea'), 'anna': ('f2c230', 'f6f2ea')}[VARIANT]
+elif VARIANT not in ('mia', 'amira', 'karim', 'layla', 'idris'):
     PALETTE_EXTRA = True
     for k in range(11):
         az = math.radians(-100 + k * 20)
         p = on_hair(az, math.radians(40 - 6 * abs(k - 5) / 5), .030)
         finish(ellipsoid(f'Ngoc_Crown_{k}', p, (.050, .050, .040), seg=10, rings=6), 'lens_shine' if k % 2 else 'parchment', ['head'])
         finish(ellipsoid(f'Ngoc_CrownDot_{k}', p + (p - HAIR_C).normalized() * .034, (.020, .020, .016), seg=6, rings=4), 'gold', ['head'])
+
+# ---------------- v04: extra hairstyles (Ngọc only) ------------------------------------------
+# Each style is its own skinned object (head + bun bones, ngoc_hair_tint) so the game can show one at a time.
+# They are built light (≤ ~1.3k triangles, no decimation) on a slightly smaller copy of the hair cap, so the
+# bandana and goggles, which ride on the original cap surface, sit on top of every style.
+HAIR_SHORT_PREFIX = ('Ngoc_HairCap', 'Ngoc_CrownPuff', 'Ngoc_Curl_', 'Ngoc_Fringe_', 'Ngoc_SideCurl_', 'Ngoc_BackCurl_',
+                     'Ngoc_BunCore', 'Ngoc_BunCoil', 'Ngoc_BunCurl', 'Ngoc_BunBase')
+HAIR_STYLE_OF = {}          # part object name -> hairstyle object name
+HAIR_STYLES = ['Hair_long', 'Hair_curly', 'Hair_wavy', 'Hair_ponytail', 'Hair_braids']
+
+
+def hpart(style, obj, color, bone='head', smooth=True):
+    finish(obj, color, [bone], smooth=smooth)
+    HAIR_STYLE_OF[obj.name] = style
+    return obj
+
+
+def low_cap(style, seg=22, rings=12, back=-.235, shrink=.004, ridges=True):
+    """light hair cap with the same hairline as Hair_short; `back` = how low it reaches at the nape"""
+    def dfm(p, v):
+        if not ridges:
+            return p
+        d = p.normalized() if p.length else p
+        az = math.atan2(d.x, -d.y)
+        el = math.asin(max(-1, min(1, d.z)))
+        return p + d * (.022 * (.5 + .5 * math.cos(11 * az + el * 2)) ** 1.5 * smoothstep(-.9, -.1, el))
+    r = (HAIR_R[0] - shrink, HAIR_R[1] - shrink, HAIR_R[2] - shrink)
+    ob = ellipsoid(f'{style}_Cap', HAIR_C, r, seg=seg, rings=rings, deform=dfm)
+    bm = bmesh.new()
+    bm.from_mesh(ob.data)
+    kill = []
+    for f in bm.faces:
+        c = f.calc_center_median()
+        rel = c - Vector((0, 0, HZ))
+        ang = math.atan2(abs(c.x), -c.y)
+        if (ang < .95 and rel.z < .080 + .045 * smoothstep(.35, .95, ang)) or (ang < 1.45 and rel.z < -.115) \
+                or (rel.z < -.205 and c.y < .10) or rel.z < back:
+            kill.append(f)
+    bmesh.ops.delete(bm, geom=kill, context='FACES')
+    bm.to_mesh(ob.data)
+    bm.free()
+    return hpart(style, ob, 'hair')
+
+
+def strand(style, name, pts, r0, r1, seg=6, flat=1.0, color='hair', bone='head', ref=None, shape=None):
+    n = len(pts)
+    rings = [(Vector(p), (r0 + (r1 - r0) * i / (n - 1)), (r0 + (r1 - r0) * i / (n - 1)) * flat) for i, p in enumerate(pts)]
+    return hpart(style, loft(f'{style}_{name}', rings, seg=seg, ref=ref, shape=shape), color, bone)
+
+
+def fringe(style, spec, seg=5):
+    """side-swept bangs under the bandana: spec = [(az0 deg, sweep deg, el0 deg, radius), ...]"""
+    for i, (az0, da, el0, r0) in enumerate(spec):
+        pts = []
+        for k in range(6):
+            t = k / 5
+            e = el0 - 14 * math.sin(t * math.pi * .7)
+            pts.append(surf(HEAD_TREE, HC_W, hair_dir(math.radians(az0 + da * t), math.radians(e)), .016 - .006 * t)[0])
+        strand(style, f'Fringe_{i}', pts, r0, r0 * .35, seg=seg, flat=.55, color=HAIR_COLS[i % 3],
+               ref=Vector((0, 0, 1)))
+
+
+def path(p0, p1, n, bow=(0, 0, 0), wave=(0, 0, 0), waves=0.0):
+    """n points from p0 to p1, bowed out by `bow` in the middle and waving by `wave` (waves = full cycles)"""
+    p0, p1, bow, wave = Vector(p0), Vector(p1), Vector(bow), Vector(wave)
+    return [p0.lerp(p1, i / (n - 1)) + bow * math.sin(math.pi * i / (n - 1)) + wave * math.sin(2 * math.pi * waves * i / (n - 1))
+            for i in range(n)]
+
+
+if VARIANT == 'ngoc':
+    _rnd.seed(11)
+    # -- Hair_long: straight curtain down to the middle of the back, side locks over the shoulders, swept fringe
+    st = 'Hair_long'
+    low_cap(st, back=-.30)
+    curtain = loft(f'{st}_Back', [(Vector((0, .07, 1.08)), .285, .215), (Vector((0, .115, .93)), .27, .16),
+                                  (Vector((0, .15, .80)), .245, .10), (Vector((0, .175, .69)), .225, .075),
+                                  (Vector((0, .19, .60)), .205, .055), (Vector((0, .195, .54)), .17, .035)],
+                   seg=16, ref=Vector((1, 0, 0)), shape=lambda a, i: 1 + .06 * abs(math.cos(7 * a + .4 * i)) - .03)
+    hpart(st, curtain, 'hair')
+    for s in (-1, 1):
+        top = on_hair(math.radians(84) * s, math.radians(-8), -.02)
+        strand(st, f'Side_{s}', path(top, (s * .19, -.07, .74), 6, bow=(s * .05, -.03, 0)), .055, .03, seg=7, flat=.55,
+               color='hair_light' if s > 0 else 'hair', ref=Vector((0, 1, 0)))
+    fringe(st, [(-50, 60, 30, .040), (-15, 55, 28, .038), (20, 45, 26, .034), (48, 30, 20, .030)])
+
+    # -- Hair_curly: shoulder-length cloud of round curls
+    st = 'Hair_curly'
+    low_cap(st, seg=16, rings=9, back=-.28)
+    k = 0
+    for el, cnt, rr in ((52, 4, .100), (20, 5, .112), (-12, 5, .112), (-38, 4, .106)):
+        for i in range(cnt):
+            az = (i + .5 * (k % 2)) / cnt * 2 * math.pi - math.pi
+            if abs(az) < math.radians(64) and el < 45:
+                continue
+            p = on_hair(az + _rnd.uniform(-.08, .08), math.radians(el + _rnd.uniform(-4, 4)), rr * .35)
+            if el <= -30:
+                p += Vector((0, .02, -.06))
+            q = Vector((0, 0, 1)).rotation_difference((p - HAIR_C).normalized())
+            hpart(st, ellipsoid(f'{st}_Puff_{k}', p, (rr, rr, rr * .82), seg=8, rings=6, rot=q,
+                                deform=lambda q_, v: q_ * (1 + .1 * math.sin(v.x * 9 + v.y * 7))), HAIR_COLS[k % 3])
+            k += 1
+    for i, az in enumerate((-.42, -.05, .32)):     # little curls on the forehead
+        p = surf(HEAD_TREE, HC_W, hair_dir(az, math.radians(22)), .020)[0]
+        hpart(st, ellipsoid(f'{st}_Fringe_{i}', p, (.045, .032, .040), seg=6, rings=4), HAIR_COLS[(i + 1) % 3])
+
+    # -- Hair_wavy: soft waves to the shoulders, wavy side locks, centre-parted fringe
+    st = 'Hair_wavy'
+    low_cap(st, back=-.30)
+    wav = loft(f'{st}_Back', [(Vector((0, .07, 1.08)), .29, .215), (Vector((0, .11, .95)), .285, .16),
+                              (Vector((.0, .14, .84)), .27, .11), (Vector((0, .16, .75)), .255, .075),
+                              (Vector((0, .17, .69)), .24, .05)],
+               seg=18, ref=Vector((1, 0, 0)), shape=lambda a, i: 1 + .07 * math.cos(9 * a + 1.3 * i))
+    hpart(st, wav, 'hair')
+    for s in (-1, 1):
+        for j, (az, ln) in enumerate(((78, .30), (100, .33))):
+            top = on_hair(math.radians(az) * s, math.radians(-6), -.02)
+            strand(st, f'Wave_{s}_{j}', path(top, top + Vector((s * .05, -.03 + .05 * j, -ln)), 8, wave=(s * .025, .012, 0), waves=1.5),
+                   .050, .022, seg=6, flat=.7, color=HAIR_COLS[(j + (s > 0)) % 3], ref=Vector((0, 1, 0)))
+    fringe(st, [(-8, -55, 27, .036), (8, 55, 27, .036), (-36, -40, 22, .030), (36, 40, 22, .030)])
+
+    # -- Hair_ponytail: smooth cap, scrunchie high at the back, a long swinging tail on the bun bone
+    st = 'Hair_ponytail'
+    low_cap(st, back=-.24)
+    PT = on_hair(math.pi, math.radians(38), .0)
+    hpart(st, torus(f'{st}_Tie', PT, .055, .022, seg=12, rseg=5,
+                    rot=Vector((0, 0, 1)).rotation_difference((PT - HAIR_C).normalized())), 'hair_dark')
+    tail = [PT + Vector((0, .04, .03)), PT + Vector((0, .11, .0)), PT + Vector((0, .16, -.10)), PT + Vector((0, .165, -.22)),
+            PT + Vector((0, .14, -.34)), PT + Vector((.0, .11, -.45)), PT + Vector((.015, .10, -.53))]
+    rings = [(p, r, r * .9) for p, r in zip(tail, (.070, .110, .125, .118, .098, .070, .022))]
+    hpart(st, loft(f'{st}_Tail', rings, seg=12, ref=Vector((1, 0, 0)), shape=lambda a, i: 1 + .10 * math.cos(7 * a + i)),
+          'hair', bone='bun')
+    for s in (-1, 1):
+        top = on_hair(math.radians(72) * s, math.radians(4), -.015)
+        strand(st, f'Frame_{s}', path(top, top + Vector((s * .03, -.03, -.20)), 6, wave=(s * .012, 0, 0), waves=1), .030, .012,
+               seg=5, flat=.6, color='hair_light', ref=Vector((0, 1, 0)))
+    fringe(st, [(-30, 50, 28, .036), (5, 45, 27, .034), (35, 30, 22, .030)])
+
+    # -- Hair_braids: two plaits from behind the ears over the shoulders, with ties and tufts
+    st = 'Hair_braids'
+    low_cap(st, back=-.26)
+    for s in (-1, 1):
+        b0 = on_hair(math.radians(112) * s, math.radians(-14), -.03)
+        b1 = Vector((s * .20, -.06, .60))
+        ctr = path(b0, b1, 7, bow=(s * .07, .03, 0))
+        for j in range(6):
+            p = ctr[j].lerp(ctr[j + 1], .5)
+            d = (ctr[j + 1] - ctr[j]).normalized()
+            side = d.cross(Vector((0, 1, 0))).normalized() * (.014 if j % 2 else -.014)
+            r = .052 - .004 * j
+            hpart(st, ellipsoid(f'{st}_Plait_{s}_{j}', p + side, (r, r * .85, (ctr[j + 1] - ctr[j]).length * .62), seg=7, rings=5,
+                                rot=Vector((0, 0, 1)).rotation_difference(d)), HAIR_COLS[j % 3])
+        hpart(st, torus(f'{st}_Tie_{s}', b1 + Vector((0, 0, .015)), .028, .011, seg=10, rseg=4), 'hair_dark')
+        hpart(st, ellipsoid(f'{st}_Tuft_{s}', b1 + Vector((s * .004, -.004, -.045)), (.034, .03, .05), seg=7, rings=5,
+                            deform=lambda q_, v: q_ * (1 + .25 * max(0, -v.z))), 'hair_light')
+    fringe(st, [(-40, 55, 28, .036), (-8, 50, 27, .036), (28, 40, 24, .032)])
+
+# ---------------- v05: swappable clothes for the heroes (Ngọc and the boy) ------------------
+# Each outfit piece is its own skinned object (weights from the same distance falloff as the body), using the grey
+# *_top_tint / *_bottom_tint materials. The default pieces are split off the body: Top_tshirt, Bottom_shorts and
+# Gear_goggles (bandana + goggles); everything else starts hidden (glTF extras eq_hidden: 1). One top + one bottom, or
+# one dress, is shown at a time: each top/dress carries its own torso, each bottom/dress its own hips.
+TOP_PREFIX = ('Ngoc_Shirt', 'Ngoc_Collar_', 'Ngoc_Sleeve_', 'Ngoc_SleeveCuff_')
+BOTTOM_PREFIX = ('Ngoc_Shorts',)
+GOGGLE_PREFIX = ('Ngoc_Bandana', 'Ngoc_Goggle')
+CLOTHES = ['Top_hoodie', 'Top_jacket', 'Top_aodai', 'Bottom_trousers', 'Bottom_skirt', 'Dress_sundress', 'Dress_party']
+if BOY:
+    CLOTHES = ['Top_hoodie', 'Top_jacket', 'Top_aodai', 'Bottom_trousers']
+# batch 25 event outfits (Tết, Halloween, Christmas, Mid-Autumn): fixed colours, hidden at start like the other extras
+EVENT = ['Top_aodai_tet', 'Top_xmas_sweater', 'Hat_witch', 'Hat_santa', 'Hat_antlers', 'Acc_lantern_hand', 'Acc_mask_cat']
+if not BOY:
+    EVENT.insert(2, 'Dress_halloween_witch')
+CLOTHES = CLOTHES + EVENT
+SLOT = lambda g: 'hair' if g.startswith('Hair_') else 'dress' if g.startswith('Dress_') else 'top' if g.startswith('Top_') else \
+    'bottom' if g.startswith('Bottom_') else 'hat' if g.startswith('Hat_') else 'acc' if g.startswith('Acc_') else 'gear'
+TORSO = [((0, .005, .455), .150, .118), ((0, .000, .520), .150, .122), ((0, -.004, .600), .146, .122), ((0, -.004, .690), .150, .116),
+         ((0, .000, .755), .140, .104), ((0, .004, .800), .100, .080), ((0, .006, .830), .055, .050)]
+
+
+def cpart(style, obj, color, bones, smooth=True):
+    finish(obj, color, bones, smooth=smooth)
+    HAIR_STYLE_OF[obj.name] = style
+    return obj
+
+
+def torso_loft(style, name, z0, z1, grow, color, seg=20, caps=(False, True), extra=None):
+    rings = []
+    for (c, ra, rb) in TORSO:
+        if z0 - 1e-6 <= c[2] <= z1 + 1e-6:
+            rings.append((Vector(c), (ra + grow) * BW, rb + grow))
+    if extra:
+        rings = extra + rings
+    return cpart(style, loft(f'{style}_{name}', rings, seg=seg, caps=caps, ref=Vector((1, 0, 0))), color, ['hips', 'spine', 'chest', 'neck'])
+
+
+def arm_frame(s):
+    sh = Vector((s * SHOULDER.x, SHOULDER.y, SHOULDER.z))
+    d = Vector((s * ARM_DIR.x, ARM_DIR.y, ARM_DIR.z))
+    return sh, d, sh + d * UPPER, sh + d * (UPPER + FORE)
+
+
+def long_sleeves(style, color, cuff_color, r=(.062, .052, .047), seg=14):
+    for s in (-1, 1):
+        side = 'L' if s > 0 else 'R'
+        sh, d, el, wr = arm_frame(s)
+        rings = [(sh - d * .03, r[0] * .8, r[0] * .8), (sh + d * .03, r[0], r[0]), (el, r[1], r[1]), (wr - d * .012, r[2], r[2])]
+        cpart(style, loft(f'{style}_Sleeve_{s}', rings, seg=seg, caps=(True, False)), color, ['chest', f'upper_arm.{side}', f'forearm.{side}'])
+        cpart(style, torus(f'{style}_Cuff_{s}', wr - d * .015, r[2], .011, seg=14, rseg=5, rot=Vector((0, 0, 1)).rotation_difference(d)),
+              cuff_color, [f'forearm.{side}'])
+
+
+def hips_piece(style, color, grow=.004):
+    rings = [((0, .006, .53), (.150 + grow) * BW, .122 + grow), ((0, .010, .46), (.158 + grow) * BW, .128 + grow),
+             ((0, .012, .40), (.158 + grow) * BW, .126 + grow), ((0, .012, .37), .12 * BW, .095)]
+    return cpart(style, loft(f'{style}_Hips', [(Vector(c), a, b) for c, a, b in rings], seg=20, caps=(False, True), ref=Vector((1, 0, 0))),
+                 color, ['hips'])
+
+
+def flare(style, name, rings, color, bones, seg=24, wave=0.0):
+    sh = (lambda a, i: 1 + wave * math.cos(8 * a)) if wave else None
+    return cpart(style, loft(f'{style}_{name}', [(Vector(c), a, b) for c, a, b in rings], seg=seg, caps=(False, False),
+                             ref=Vector((1, 0, 0)), shape=sh), color, bones)
+
+
+if HERO:
+    # -- Top_hoodie: roomy torso, long sleeves, hood bunched at the nape, drawstrings, kangaroo pocket, hem band
+    st = 'Top_hoodie'
+    torso_loft(st, 'Body', .45, .84, .02, 'shirt', seg=16, extra=[(Vector((0, .006, .435)), .168 * BW, .14)])
+    long_sleeves(st, 'shirt', 'shirt_shade', r=(.07, .058, .05), seg=10)
+    cpart(st, torus(f'{st}_Hem', Vector((0, .006, .44)), .163 * BW, .016, seg=24, rseg=6), 'shirt_shade', ['hips', 'spine'])
+    cpart(st, ellipsoid(f'{st}_Hood', (0, .105, .815), (.15 * BW, .07, .075), seg=18, rings=10), 'shirt', ['chest', 'neck'])
+    cpart(st, ellipsoid(f'{st}_HoodIn', (0, .09, .835), (.11 * BW, .04, .045), seg=14, rings=8), 'shirt_shade', ['chest', 'neck'])
+    cpart(st, ellipsoid(f'{st}_Pocket', (0, -.133, .51), (.1 * BW, .02, .05), seg=14, rings=8), 'shirt_shade', ['hips', 'spine'])
+    for s in (-1, 1):
+        cpart(st, tube(f'{st}_String_{s}', [(s * .03, -.11, .79), (s * .033, -.135, .7)], [.006, .006], seg=6), 'shirt_shade', ['chest'])
+    # -- Top_jacket: tee underneath + open jacket with turned-down collar and lapels, long sleeves
+    st = 'Top_jacket'
+    torso_loft(st, 'Tee', .45, .84, .0, 'shirt_shade')
+    jk = torso_loft(st, 'Coat', .44, .80, .022, 'shirt', caps=(False, False), extra=[(Vector((0, .006, .43)), .172 * BW, .142)])
+    bm = bmesh.new()
+    bm.from_mesh(jk.data)
+    bmesh.ops.delete(bm, geom=[f for f in bm.faces if f.calc_center_median().y < -.06 and abs(f.calc_center_median().x) < .045 * BW],
+                     context='FACES')
+    bm.to_mesh(jk.data)
+    bm.free()
+    long_sleeves(st, 'shirt', 'shirt_shade', r=(.068, .056, .05))
+    for s in (-1, 1):
+        cpart(st, ellipsoid(f'{st}_Lapel_{s}', (s * .065 * BW, -.125, .72), (.045, .012, .085), seg=10, rings=6,
+                            rot=Euler((math.radians(-12), 0, math.radians(-22 * s))).to_quaternion()), 'shirt_shade', ['chest'])
+        cpart(st, ellipsoid(f'{st}_Collar_{s}', (s * .06 * BW, -.03, .805), (.06, .045, .02), seg=10, rings=6,
+                            rot=Euler((math.radians(-20), math.radians(18 * s), 0)).to_quaternion()), 'shirt_shade', ['chest', 'neck'])
+    # -- Top_aodai: fitted bodice, mandarin collar, slim long sleeves, front and back panels to the knee (slit at the sides)
+    st = 'Top_aodai'
+    torso_loft(st, 'Body', .455, .84, .006, 'shirt')
+    cpart(st, loft(f'{st}_Collar', [(Vector((0, .006, .80)), .062, .058), (Vector((0, .006, .855)), .058, .055)], seg=16, caps=(False, False)),
+          'shirt_shade', ['neck', 'chest'])
+    long_sleeves(st, 'shirt', 'shirt', r=(.058, .046, .04))
+    for side_y, nm in ((-1, 'Front'), (1, 'Back')):
+        rings = [((0, side_y * .095, .5), .14 * BW, .03), ((0, side_y * .11, .4), .15 * BW, .025), ((0, side_y * .12, .3), .16 * BW, .022),
+                 ((0, side_y * .125, .23), .165 * BW, .02)]
+        flare(st, nm, rings, 'shirt', ['hips', 'thigh.L', 'thigh.R'], seg=16)
+    if not BOY:
+        # -- Bottom_skirt: flared to the knee, waistband
+        st = 'Bottom_skirt'
+        hips_piece(st, 'shorts')
+        flare(st, 'Skirt', [((0, .006, .53), .152, .124), ((0, .008, .46), .175, .15), ((0, .012, .36), .24, .21), ((0, .014, .28), .285, .25)],
+              'shorts', ['hips', 'thigh.L', 'thigh.R'], seg=28, wave=.035)
+        cpart(st, torus(f'{st}_Band', Vector((0, .006, .52)), .154, .014, seg=24, rseg=6), 'shorts_cuff', ['hips'])
+        # -- Dress_sundress: bodice with two straps, flared skirt to the knee, bare shoulders
+        st = 'Dress_sundress'
+        torso_loft(st, 'Bodice', .455, .755, .006, 'shirt', caps=(False, False))
+        cpart(st, loft(f'{st}_Neck', [(Vector((0, .0, .755)), .14, .104), (Vector((0, .004, .80)), .1, .08), (Vector((0, .006, .835)), .052, .048)],
+                       seg=20, caps=(False, True), ref=Vector((1, 0, 0))), 'skin', ['chest', 'neck'])
+        flare(st, 'Skirt', [((0, .006, .6), .15, .124), ((0, .008, .5), .19, .16), ((0, .012, .38), .25, .22), ((0, .014, .27), .3, .27)],
+              'shirt', ['hips', 'thigh.L', 'thigh.R'], seg=28, wave=.03)
+        for s in (-1, 1):
+            side = 'L' if s > 0 else 'R'
+            sh, d, el, wr = arm_frame(s)
+            cpart(st, ellipsoid(f'{st}_Shoulder_{s}', sh + d * .02, (.05, .05, .05), seg=12, rings=8), 'skin', ['chest', f'upper_arm.{side}'])
+            cpart(st, tube(f'{st}_Strap_{s}', [(s * .06, -.1, .75), (s * .08, -.02, .8), (s * .07, .08, .76)], [.012, .012, .012], seg=6),
+                  'shirt_shade', ['chest'])
+        cpart(st, torus(f'{st}_Waist', Vector((0, .006, .6)), .152, .013, seg=24, rseg=6), 'shirt_shade', ['spine'])
+        # -- Dress_party: princess dress: bodice, puff sleeves, big petticoat skirt, ruffled hem, bow
+        st = 'Dress_party'
+        torso_loft(st, 'Bodice', .455, .84, .008, 'shirt')
+        flare(st, 'Skirt', [((0, .006, .56), .155, .128), ((0, .01, .48), .26, .23), ((0, .014, .38), .35, .32), ((0, .016, .3), .37, .34),
+                            ((0, .016, .25), .35, .32)], 'shirt', ['hips', 'thigh.L', 'thigh.R'], seg=24, wave=.05)
+        cpart(st, torus(f'{st}_Ruffle', Vector((0, .016, .255)), .35, .03, seg=32, rseg=6, sy=.32 / .35), 'shirt_shade',
+              ['hips', 'thigh.L', 'thigh.R'])
+        for s in (-1, 1):
+            side = 'L' if s > 0 else 'R'
+            sh, d, el, wr = arm_frame(s)
+            cpart(st, ellipsoid(f'{st}_Puff_{s}', sh + d * .04, (.085, .085, .075), seg=10, rings=6,
+                                deform=lambda q_, v: q_ * (1 + .06 * math.cos(8 * math.atan2(v.y, v.x)))), 'shirt', ['chest', f'upper_arm.{side}'])
+            cpart(st, ellipsoid(f'{st}_Bow_{s}', (s * .06, .135, .58), (.06, .02, .04), seg=10, rings=6, rot=Euler((0, s * .3, 0)).to_quaternion()),
+                  'shirt_shade', ['spine'])
+        cpart(st, torus(f'{st}_Waist', Vector((0, .006, .56)), .156, .016, seg=24, rseg=6), 'shirt_shade', ['spine'])
+    # -- Bottom_trousers: hips + long legs tucked into the boot tops
+    st = 'Bottom_trousers'
+    hips_piece(st, 'shorts')
+    for s in (-1, 1):
+        side = 'L' if s > 0 else 'R'
+        rings = [((s * .072, .010, .44), .088, .09), ((s * .088, .010, .34), .078, .08), ((s * .09, .008, .26), .068, .07),
+                 ((s * .09, .006, .225), .066, .068)]
+        cpart(st, loft(f'{st}_Leg_{s}', [(Vector(c), a, b) for c, a, b in rings], seg=16, caps=(False, False)), 'shorts',
+              ['hips', f'thigh.{side}', f'shin.{side}'])
+        cpart(st, torus(f'{st}_Cuff_{s}', Vector((s * .09, .006, .23)), .067, .012, seg=16, rseg=5), 'shorts_cuff', [f'shin.{side}'])
+
+    # ---------------- batch 25: event outfits ----------------
+    def flower(st, c, r, color='ev_yellow', bones=('chest',), ny=-1):
+        for k in range(5):
+            a = k * 2 * math.pi / 5
+            cpart(st, ellipsoid(f'{st}_Petal_{c.x:.2f}_{c.z:.2f}_{k}', c + Vector((r * math.cos(a), 0, r * math.sin(a))), (r * .75, .006, r * .75),
+                                seg=6, rings=3), color, list(bones))
+        cpart(st, ellipsoid(f'{st}_FlowerC_{c.x:.2f}_{c.z:.2f}', c + Vector((0, ny * .003, 0)), (r * .55, .007, r * .55), seg=6, rings=3),
+              'ev_red_dark', list(bones))
+    # -- Top_aodai_tet: red áo dài with a gold collar and gold apricot flowers on the bodice and front panel
+    st = 'Top_aodai_tet'
+    torso_loft(st, 'Body', .455, .84, .007, 'ev_red')
+    cpart(st, loft(f'{st}_Collar', [(Vector((0, .006, .80)), .063, .059), (Vector((0, .006, .86)), .059, .056)], seg=16, caps=(False, False)),
+          'ev_yellow', ['neck', 'chest'])
+    long_sleeves(st, 'ev_red', 'ev_yellow', r=(.058, .046, .04))
+    for side_y, nm in ((-1, 'Front'), (1, 'Back')):
+        rings = [((0, side_y * .095, .5), .14 * BW, .03), ((0, side_y * .11, .4), .15 * BW, .025), ((0, side_y * .12, .3), .16 * BW, .022),
+                 ((0, side_y * .125, .21), .165 * BW, .02)]
+        flare(st, nm, rings, 'ev_red', ['hips', 'thigh.L', 'thigh.R'], seg=16)
+    flower(st, Vector((.07 * BW, -.128, .66)), .022)
+    flower(st, Vector((-.04 * BW, -.126, .55)), .018, bones=('spine',))
+    flower(st, Vector((.03 * BW, -.147, .34)), .026, bones=('hips',))
+    # -- Top_xmas_sweater: knitted red sweater, white stripes and cuffs, a little green tree with a star
+    st = 'Top_xmas_sweater'
+    torso_loft(st, 'Body', .45, .84, .02, 'ev_red', seg=16, extra=[(Vector((0, .006, .435)), .168 * BW, .14)])
+    long_sleeves(st, 'ev_red', 'white', r=(.07, .058, .05), seg=10)
+    cpart(st, torus(f'{st}_Hem', Vector((0, .006, .44)), .163 * BW, .017, seg=24, rseg=6), 'white', ['hips', 'spine'])
+    cpart(st, torus(f'{st}_Stripe', Vector((0, .0, .73)), .17 * BW, .012, seg=24, rseg=4, sy=.134 / (.17 * BW)), 'white', ['chest'])
+    cpart(st, torus(f'{st}_Neck', Vector((0, .004, .81)), .075, .016, seg=18, rseg=5), 'white', ['chest', 'neck'])
+    cpart(st, loft(f'{st}_Tree', [(Vector((0, -.142, .5)), .065, .012), (Vector((0, -.14, .58)), .045, .01), (Vector((0, -.137, .66)), .004, .004)],
+                   seg=4, caps=(True, False), ref=Vector((1, 0, 0))), 'ev_green', ['spine', 'chest'])
+    cpart(st, ellipsoid(f'{st}_Star', Vector((0, -.14, .675)), (.016, .01, .016), seg=6, rings=4), 'ev_yellow', ['chest'])
+    for k, (x, z) in enumerate(((-.09, .56), (.09, .6), (-.08, .66), (.1, .5))):
+        cpart(st, ellipsoid(f'{st}_Snow_{k}', Vector((x * BW, -.14, z)), (.009, .006, .009), seg=6, rings=3), 'white', ['spine'])
+    if not BOY:
+        # -- Dress_halloween_witch: purple dress, flared zigzag skirt with an orange hem, orange belt with a gold buckle
+        st = 'Dress_halloween_witch'
+        torso_loft(st, 'Bodice', .455, .84, .008, 'ev_purple')
+        flare(st, 'Skirt', [((0, .006, .56), .155, .128), ((0, .01, .47), .21, .19), ((0, .014, .36), .28, .26), ((0, .016, .27), .31, .29)],
+              'ev_purple', ['hips', 'thigh.L', 'thigh.R'], seg=24, wave=.07)
+        cpart(st, torus(f'{st}_HemTrim', Vector((0, .016, .272)), .31, .016, seg=32, rseg=5, sy=.29 / .31), 'ev_orange', ['hips', 'thigh.L', 'thigh.R'])
+        long_sleeves(st, 'ev_purple', 'ev_orange', r=(.06, .054, .058), seg=10)
+        cpart(st, torus(f'{st}_Belt', Vector((0, .006, .56)), .157, .017, seg=24, rseg=6), 'ev_orange', ['spine'])
+        cpart(st, ellipsoid(f'{st}_Buckle', Vector((0, -.135, .56)), (.028, .01, .024), seg=8, rings=4), 'ev_yellow', ['spine'])
+        cpart(st, loft(f'{st}_Collar', [(Vector((0, .004, .79)), .11, .095), (Vector((0, .004, .82)), .15, .13)], seg=12, caps=(False, False),
+                       shape=lambda a, i: 1 + .25 * (math.cos(6 * a) > 0) * i), 'ev_purple_dark', ['chest', 'neck'])
+    HAT_Z = HAIR_C.z + HAIR_R[2] - .07
+    # -- Hat_witch: wide brim, tall bent cone, orange band with a gold buckle
+    st = 'Hat_witch'
+    cpart(st, loft(f'{st}_Brim', [(Vector((0, .01, HAT_Z - .015)), .5, .48), (Vector((0, .01, HAT_Z + .005)), .48, .46)], seg=28, caps=(True, True)),
+          'ev_purple_dark', ['head'])
+    rings = []
+    for k in range(8):
+        t = k / 7
+        rings.append((Vector((0, .01 + .16 * t ** 2.5, HAT_Z + .56 * t - .08 * t ** 4)), .27 * (1 - t) + .01, .26 * (1 - t) + .01))
+    cpart(st, loft(f'{st}_Cone', rings, seg=20, caps=(False, True)), 'ev_purple', ['head'])
+    cpart(st, torus(f'{st}_Band', Vector((0, .012, HAT_Z + .05)), .25, .018, seg=24, rseg=5, sy=.24 / .25), 'ev_orange', ['head'])
+    cpart(st, ellipsoid(f'{st}_Buckle', Vector((0, -.235, HAT_Z + .05)), (.04, .01, .032), seg=8, rings=4), 'ev_yellow', ['head'])
+    # -- Hat_santa: red cap flopping to the side, white fur rim and pompom
+    st = 'Hat_santa'
+    rings = []
+    for k in range(8):
+        t = k / 7
+        rings.append((Vector((.2 * t ** 2.2, .012 + .03 * t, HAT_Z + .03 + .32 * t - .14 * t ** 3)), .28 * (1 - t) + .02, .27 * (1 - t) + .02))
+    cpart(st, loft(f'{st}_Cap', rings, seg=20, caps=(False, True)), 'ev_red', ['head'])
+    cpart(st, torus(f'{st}_Rim', Vector((0, .012, HAT_Z + .03)), .29, .045, seg=24, rseg=8, sy=.28 / .29), 'white', ['head'])
+    cpart(st, ellipsoid(f'{st}_Pompom', rings[-1][0] + Vector((.03, 0, -.03)), (.065, .065, .065), seg=10, rings=6), 'white', ['head'])
+    # -- Hat_antlers: brown headband over the hair, two branching antlers, little gold bells with red bows
+    st = 'Hat_antlers'
+    band = [HAIR_C + Vector((math.sin(a) * (HAIR_R[0] + .012), .03, math.cos(a) * (HAIR_R[2] + .012))) for a in
+            [math.radians(d) for d in range(-85, 86, 17)]]
+    cpart(st, tube(f'{st}_Band', band, [.014] * len(band), seg=6), 'ev_brown', ['head'])
+    for sd in (-1, 1):
+        a = math.radians(38 * sd)
+        b0 = HAIR_C + Vector((math.sin(a) * (HAIR_R[0] + .015), .03, math.cos(a) * (HAIR_R[2] + .015)))
+        trunk = [b0, b0 + Vector((sd * .05, 0, .1)), b0 + Vector((sd * .09, .01, .2)), b0 + Vector((sd * .16, .02, .27))]
+        cpart(st, tube(f'{st}_Antler_{sd}', trunk, [.022, .018, .014, .008], seg=6), 'leather_light', ['head'])
+        for k, (i, d) in enumerate(((1, Vector((-sd * .04, -.01, .09))), (2, Vector((-sd * .02, -.01, .1))), (2, Vector((sd * .08, 0, .03))))):
+            cpart(st, tube(f'{st}_Tine_{sd}_{k}', [trunk[i], trunk[i] + d], [.013, .006], seg=5), 'leather_light', ['head'])
+        bell = b0 + Vector((sd * .02, -.03, -.01))
+        cpart(st, ellipsoid(f'{st}_Bell_{sd}', bell, (.026, .026, .03), seg=8, rings=5), 'ev_yellow', ['head'])
+        cpart(st, ellipsoid(f'{st}_Bow_{sd}', bell + Vector((0, -.006, .032)), (.03, .01, .014), seg=8, rings=4), 'ev_red', ['head'])
+    # -- Acc_lantern_hand: Mid-Autumn star lantern on a bamboo stick, held in the right hand
+    st = 'Acc_lantern_hand'
+    HAND_R = Vector((-SHOULDER.x, SHOULDER.y, SHOULDER.z)) + Vector((-ARM_DIR.x, ARM_DIR.y, ARM_DIR.z)) * (UPPER + FORE + .045)
+    tip = HAND_R + Vector((-.06, -.22, .34))
+    cpart(st, tube(f'{st}_Stick', [HAND_R + Vector((0, .0, -.04)), tip], [.009, .007], seg=6), 'ev_brown', ['hand.R'])
+    cpart(st, tube(f'{st}_String', [tip, tip + Vector((0, -.02, -.07))], [.003, .003], seg=4), 'ev_yellow', ['hand.R'])
+    sc = tip + Vector((0, -.02, -.17))
+    verts, faces = [], []
+    for side, yy in ((0, -.03), (1, .03)):
+        verts.append(sc + Vector((0, yy * 1.6, 0)))
+        for k in range(10):
+            a = math.pi / 2 + k * math.pi / 5
+            r = .1 if k % 2 == 0 else .045
+            verts.append(sc + Vector((r * math.cos(a), yy, r * math.sin(a))))
+    for k in range(10):
+        a, b = 1 + k, 1 + (k + 1) % 10
+        faces.append((0, b, a))
+        faces.append((11, 11 + a, 11 + b))
+        faces.append((a, b, 11 + b, 11 + a))
+    cpart(st, mesh_obj(f'{st}_Star', verts, faces), 'ev_red', ['hand.R'], smooth=False)
+    cpart(st, ellipsoid(f'{st}_Glow', sc + Vector((0, -.05, 0)), (.03, .01, .03), seg=8, rings=4), 'ev_yellow', ['hand.R'])
+    cpart(st, tube(f'{st}_Tassel', [sc + Vector((0, 0, -.045)), sc + Vector((0, 0, -.16))], [.008, .014], seg=6), 'ev_yellow', ['hand.R'])
+    # -- Acc_mask_cat: Mid-Autumn style cat mask worn pushed to the side of the head (left), tilted up: white face,
+    #    ears with pink insides, closed happy eyes, pink nose and blush, whiskers
+    st = 'Acc_mask_cat'
+    nrm = Vector((.82, -.5, .3)).normalized()
+    MP = HAIR_C + Vector((nrm.x * (HAIR_R[0] + .02), nrm.y * (HAIR_R[1] + .02), nrm.z * (HAIR_R[2] + .02)))
+    MR = Vector((0, -1, 0)).rotation_difference(nrm) @ Quaternion((0, 1, 0), math.radians(-25))
+
+    def W(x, y, z):          # mask-local (x right, -y out of the face, z up) -> model space
+        return MP + MR @ Vector((x, y, z))
+    cpart(st, ellipsoid(f'{st}_Face', W(0, .0, 0), (.12, .035, .105), seg=18, rings=10, rot=MR,
+                        deform=lambda p_, v: p_ + Vector((0, .02 * (v.x ** 2 + v.z ** 2), 0))), 'white', ['head'])
+    for sd in (-1, 1):
+        cpart(st, loft(f'{st}_Ear_{sd}', [(W(sd * .07, .0, .07), .045, .02), (W(sd * .1, .0, .16), .004, .004)], seg=4, caps=(True, False),
+                       ref=MR @ Vector((1, 0, 0))), 'white', ['head'])
+        cpart(st, loft(f'{st}_EarIn_{sd}', [(W(sd * .072, -.014, .085), .025, .006), (W(sd * .093, -.014, .14), .003, .003)], seg=4,
+                       caps=(True, False), ref=MR @ Vector((1, 0, 0))), 'ev_pink', ['head'])
+        cpart(st, tube(f'{st}_Eye_{sd}', [W(sd * .065, -.036, .02), W(sd * .045, -.04, .035), W(sd * .025, -.036, .02)], [.006, .007, .006], seg=5),
+              'ev_black', ['head'])
+        cpart(st, ellipsoid(f'{st}_Blush_{sd}', W(sd * .07, -.03, -.025), (.022, .006, .013), seg=8, rings=4, rot=MR), 'ev_pink', ['head'])
+        for k in range(2):
+            cpart(st, tube(f'{st}_Whisker_{sd}_{k}', [W(sd * .05, -.038, -.04 - .015 * k), W(sd * .14, -.03, -.03 - .03 * k)], [.003, .002], seg=4),
+                  'ev_black', ['head'])
+    cpart(st, ellipsoid(f'{st}_Nose', W(0, -.04, -.02), (.016, .008, .011), seg=8, rings=4, rot=MR), 'ev_pink', ['head'])
+    cpart(st, tube(f'{st}_Mouth', [W(-.022, -.037, -.05), W(0, -.04, -.04), W(.022, -.037, -.05)], [.003, .003, .003], seg=4), 'ev_black', ['head'])
+    cpart(st, tube(f'{st}_Strap', [W(-.11, .02, 0), HAIR_C + Vector((0, .1, HAIR_R[2] * .55)), HAIR_C + Vector((-HAIR_R[0] * .7, .06, HAIR_R[2] * .4))],
+                   [.006, .006, .006], seg=4), 'ev_red', ['head'])
+
+if BOY:
+    # boy hairstyles (the curly updo built above is dropped at join time)
+    def boy_cap(style, back=-.2, ridges=True, shrink=.004, seg=22, rings=12):
+        return low_cap(style, seg=seg, rings=rings, back=back, shrink=shrink, ridges=ridges)
+    st = 'Hair_short'
+    boy_cap(st)
+    fringe(st, [(-40, 40, 26, .045), (-10, 35, 26, .045), (20, 30, 24, .042), (48, 20, 18, .036)])
+    for s in (-1, 1):
+        p = on_hair(math.radians(95) * s, math.radians(-12), -.01)
+        hpart(st, ellipsoid(f'{st}_Side_{s}', p, (.03, .06, .07), seg=8, rings=5), 'hair_dark')
+    st = 'Hair_spiky'
+    boy_cap(st)
+    for k in range(14):
+        az = (k / 14) * 2 * math.pi - math.pi
+        el = 55 if k % 2 else 30
+        if abs(az) < math.radians(50) and el < 40:
+            el = 50
+        p = on_hair(az, math.radians(el), -.01)
+        n = (p - HAIR_C).normalized()
+        hpart(st, loft(f'{st}_Spike_{k}', [(p, .05, .04), (p + n * .09 + Vector((0, .02, .03)), .004, .004)], seg=6, caps=(True, False)),
+              HAIR_COLS[k % 3])
+    fringe(st, [(-30, 20, 26, .04), (0, 15, 28, .04), (30, 15, 26, .04)])
+    st = 'Hair_side'
+    boy_cap(st, back=-.22)
+    hpart(st, loft(f'{st}_Sweep', [(on_hair(math.radians(-60), math.radians(55), .0), .06, .03),
+                                   (on_hair(math.radians(0), math.radians(48), .03), .09, .04),
+                                   (on_hair(math.radians(55), math.radians(32), .02), .06, .03),
+                                   (on_hair(math.radians(85), math.radians(15), .0), .02, .02)], seg=10, ref=Vector((0, 0, 1))), 'hair_light')
+    fringe(st, [(-45, 60, 28, .045), (-10, 55, 27, .042), (25, 40, 24, .038)])
+    st = 'Hair_buzz'
+    boy_cap(st, back=-.18, ridges=False, shrink=.016, seg=20, rings=10)
 
 # ---------------- friends' own props (v03 round 2) -----------------------------------------
 _D = Vector((ARM_DIR.x, ARM_DIR.y, ARM_DIR.z))
@@ -928,6 +1477,98 @@ elif VARIANT == 'rose':
                          rot=Quaternion((0, 0, 1), math.radians(rz)) @ Quaternion((1, 0, 0), math.radians(18))), 'bread' if k % 2 else 'bread_light', ['hand.L'])
     finish(tube('Rose_BasketHandle', [BK + Vector((-.122, 0, .05)), BK + Vector((-.07, 0, .15)), HAND_L, BK + Vector((.07, 0, .15)),
                                       BK + Vector((.122, 0, .05))], [.010] * 5, seg=8), 'wicker', ['hand.L'])
+elif VARIANT == 'mia':
+    # Mia the tailor: hair pins through the bun, round gold glasses, tape measure round the neck,
+    # purple checked apron, scissors in the right hand
+    for k, (dx, a) in enumerate(((-.05, .5), (.05, -.4))):
+        finish(tube(f'Mia_Pin_{k}', [BUN + Vector((dx - .14 * math.cos(a), .02, .05 - .14 * math.sin(a) * .3)),
+                                     BUN + Vector((dx + .14 * math.cos(a), .02, .05 + .14 * math.sin(a) * .3))], [.008, .008], seg=6), 'gold', ['bun'])
+        finish(ellipsoid(f'Mia_PinBead_{k}', BUN + Vector((dx + .15 * math.cos(a), .02, .05 + .15 * math.sin(a) * .3)), (.018, .018, .018),
+                         seg=8, rings=5), 'bandana', ['bun'])
+    for s in (-1, 1):   # round glasses over the eyes
+        ey = Vector((s * .112, -.272, HZ - .046))
+        finish(torus(f'Mia_Glass_{s}', ey, .06, .007, seg=18, rseg=5, rot=Quaternion((1, 0, 0), math.radians(90))), 'gold', ['head'])
+        finish(tube(f'Mia_Temple_{s}', [ey + Vector((s * .06, .0, .01)), Vector((s * .28, .0, HZ - .02))], [.006, .006], seg=5), 'gold', ['head'])
+    finish(tube('Mia_GlassBridge', [Vector((-.052, -.276, HZ - .035)), Vector((0, -.282, HZ - .025)), Vector((.052, -.276, HZ - .035))],
+                [.006, .006, .006], seg=5), 'gold', ['head'])
+    finish(torus('Mia_Tape', Vector((0, .0, .815)), .115, .012, seg=24, rseg=4, sx=1.05, sy=.95), 'scarf', ['chest', 'neck'])
+    for s in (-1, 1):
+        finish(loft(f'Mia_TapeEnd_{s}', [(Vector((s * .06, -.115, .8)), .02, .004), (Vector((s * .07, -.135, .62)), .02, .004)], seg=6,
+                    ref=Vector((0, 1, 0))), 'scarf', ['chest'])
+    # apron: bib + skirt panel in front, checked with darker stripes
+    finish(loft('Mia_ApronBib', [(Vector((0, -.135, .58)), .1, .012), (Vector((0, -.13, .74)), .085, .012)], seg=8, ref=Vector((0, 1, 0))),
+           'bandana', ['chest', 'spine'])
+    finish(loft('Mia_ApronSkirt', [(Vector((0, -.14, .52)), .15, .02), (Vector((0, -.16, .34)), .17, .02)], seg=10, ref=Vector((0, 1, 0))),
+           'bandana', ['hips', 'thigh.L', 'thigh.R'])
+    for k in range(5):
+        x = -.12 + k * .06
+        finish(tube(f'Mia_Check_{k}', [Vector((x, -.163, .51)), Vector((x * 1.1, -.183, .35))], [.004, .004], seg=4), 'bandana_dark',
+               ['hips', 'thigh.L', 'thigh.R'])
+    for k in range(3):
+        z = .5 - k * .065
+        finish(tube(f'Mia_CheckH_{k}', [Vector((-.15, -.165 - .005 * k, z)), Vector((.15, -.165 - .005 * k, z))], [.004, .004], seg=4),
+               'bandana_dark', ['hips'])
+    # scissors in her right hand
+    for k, a in enumerate((.25, -.25)):
+        finish(tube(f'Mia_Blade_{k}', [HAND_R + Vector((0, -.02, .0)), HAND_R + Vector((.04 * a, -.03, -.13))], [.008, .003], seg=4), 'brass', ['hand.R'])
+        finish(torus(f'Mia_Ring_{k}', HAND_R + Vector((.025 * (1 if k else -1), -.01, .03)), .018, .005, seg=10, rseg=3), 'bandana_dark', ['hand.R'])
+elif VARIANT == 'amira':
+    # village elder: turquoise headscarf over the hair, palm-wood staff
+    finish(ellipsoid('Amira_Scarf', HAIR_C + Vector((0, .02, .03)), (HAIR_R[0] + .05, HAIR_R[1] + .05, HAIR_R[2] + .05), seg=24, rings=14,
+                     deform=lambda q_, v: q_ if v.y > -.55 or v.z > .45 else q_ * .2), 'bandana', ['head'])
+    finish(loft('Amira_Drape', [(Vector((0, .2, 1.0)), .28, .1), (Vector((0, .22, .8)), .26, .08), (Vector((0, .2, .62)), .22, .05)], seg=12,
+                ref=Vector((1, 0, 0))), 'bandana_dark', ['head', 'chest'])
+    finish(torus('Amira_Band', HAIR_C + Vector((0, .0, .13)), HAIR_R[0] + .055, .02, seg=24, rseg=4, sy=(HAIR_R[1] + .055) / (HAIR_R[0] + .055),
+                 rot=Quaternion((1, 0, 0), math.radians(-14))), 'gold', ['head'])
+    st0, st1 = HAND_L + Vector((0, -.02, -.5)), HAND_L + Vector((.02, -.02, .75))
+    finish(tube('Amira_Staff', [st0, HAND_L, st1], [.025, .022, .02], seg=8), 'leather', ['hand.L'])
+    for k in range(5):
+        a = k * 1.25
+        finish(ellipsoid(f'Amira_Frond_{k}', st1 + Vector((.09 * math.cos(a), .09 * math.sin(a), .03)), (.11, .025, .03), seg=8, rings=4,
+                         rot=Quaternion((0, 0, 1), a) @ Quaternion((0, 1, 0), -.5)), 'leaf', ['hand.L'])
+elif VARIANT == 'karim':
+    # merchant: turban with a jewel, curled moustache, striped cloak, bag of goods
+    for k in range(3):
+        finish(torus(f'Karim_Turban_{k}', HAIR_C + Vector((0, .01, .1 + .07 * k)), HAIR_R[0] - .02 * k, .05, seg=24, rseg=6,
+                     sy=(HAIR_R[1] - .02 * k) / (HAIR_R[0] - .02 * k)), 'bandana' if k % 2 == 0 else 'white', ['head'])
+    finish(ellipsoid('Karim_TurbanTop', HAIR_C + Vector((0, .01, .26)), (.2, .19, .1), seg=16, rings=8), 'bandana', ['head'])
+    finish(ellipsoid('Karim_Jewel', HAIR_C + Vector((0, -HAIR_R[1] - .02, .12)), (.035, .02, .045), seg=8, rings=5), 'crystal', ['head'])
+    for sd in (-1, 1):   # curled moustache under the nose
+        pts = [Vector((sd * .015, -.262, HZ - .1)), Vector((sd * .06, -.262, HZ - .11)), Vector((sd * .1, -.25, HZ - .09)),
+               Vector((sd * .11, -.245, HZ - .06))]
+        finish(tube(f'Karim_Moustache_{sd}', pts, [.016, .018, .012, .006], seg=6), 'hair_dark', ['head'])
+    finish(loft('Karim_Cloak', [(Vector((0, .02, .8)), .19, .14), (Vector((0, .06, .55)), .25, .19), (Vector((0, .07, .3)), .28, .21)],
+                seg=16, caps=(False, False), ref=Vector((1, 0, 0))), 'shorts', ['chest', 'spine', 'hips'])
+    for k in range(6):
+        a = math.pi * .2 + k * math.pi * .6 / 5
+        finish(tube(f'Karim_Stripe_{k}', [Vector((.2 * math.cos(a), .02 + .2 * math.sin(a), .78)), Vector((.29 * math.cos(a), .07 + .22 * math.sin(a), .32))],
+                    [.008, .008], seg=4), 'scarf', ['chest', 'hips'])
+    finish(ellipsoid('Karim_Bag', Vector((.05, .26, .58)), (.16, .1, .17), seg=12, rings=8), 'wicker', ['chest', 'spine'])
+elif VARIANT == 'layla':
+    # young guide: wide-brimmed hat with sand goggles, rolled map in her hand
+    hz = HAIR_C.z + HAIR_R[2] - .06
+    finish(loft('Layla_HatBrim', [(Vector((0, .01, hz - .02)), .48, .46), (Vector((0, .01, hz)), .46, .44)], seg=24, caps=(True, True)), 'leather', ['head'])
+    finish(loft('Layla_HatCrown', [(Vector((0, .01, hz)), .27, .26), (Vector((0, .01, hz + .16)), .24, .23), (Vector((0, .01, hz + .2)), .18, .17)],
+                seg=20, caps=(False, True)), 'leather_light', ['head'])
+    finish(torus('Layla_HatBand', Vector((0, .01, hz + .04)), .265, .02, seg=20, rseg=4), 'bandana', ['head'])
+    for sd in (-1, 1):
+        finish(torus(f'Layla_Goggle_{sd}', Vector((sd * .09, -.25, hz + .07)), .05, .014, seg=12, rseg=4, rot=Quaternion((1, 0, 0), math.radians(70))),
+               'brass', ['head'])
+        finish(ellipsoid(f'Layla_GoggleLens_{sd}', Vector((sd * .09, -.255, hz + .07)), (.045, .01, .045), seg=10, rings=5,
+                         rot=Quaternion((1, 0, 0), math.radians(-20))), 'lens', ['head'])
+    finish(tube('Layla_Map', [HAND_R + Vector((-.1, -.03, .0)), HAND_R + Vector((.1, -.03, .02))], [.03, .03], seg=10), 'parchment', ['hand.R'])
+    finish(torus('Layla_MapTie', HAND_R + Vector((0, -.03, .01)), .032, .006, seg=10, rseg=3, rot=Quaternion((0, 1, 0), math.radians(90))), 'ribbon', ['hand.R'])
+elif VARIANT == 'idris':
+    # blacksmith: leather apron, hammer, bushy beard
+    for k in range(9):
+        a = -1.1 + k * .275
+        finish(ellipsoid(f'Idris_Beard_{k}', Vector((.13 * math.sin(a), -.2 - .05 * math.cos(a), HZ - .17 - .03 * math.cos(a * 1.5))),
+                         (.06, .05, .07), seg=8, rings=5), 'hair_dark' if k % 2 else 'hair', ['head'])
+    finish(ellipsoid('Idris_BeardTip', Vector((0, -.26, HZ - .25)), (.08, .05, .08), seg=10, rings=6), 'hair', ['head'])
+    finish(loft('Idris_Apron', [(Vector((0, -.135, .75)), .12, .012), (Vector((0, -.14, .5)), .16, .015), (Vector((0, -.16, .3)), .17, .015)], seg=8,
+                ref=Vector((0, 1, 0))), 'leather_dark', ['chest', 'spine', 'hips', 'thigh.L', 'thigh.R'])
+    finish(tube('Idris_HammerHandle', [HAND_R + Vector((0, -.02, -.15)), HAND_R + Vector((0, -.02, .2))], [.018, .018], seg=6), 'leather', ['hand.R'])
+    finish(ellipsoid('Idris_HammerHead', HAND_R + Vector((0, -.02, .24)), (.09, .05, .05), seg=10, rings=6), 'brass_dark', ['hand.R'])
 elif VARIANT == 'anna':
     # big yellow bow on the bun and a little lute on her back strap, neck up over the left shoulder
     for sgn in (-1, 1):
@@ -1021,28 +1662,61 @@ for obj, bones in PARTS:
             if w / tot > .02:
                 groups[b].add([v.index], w / tot, 'REPLACE')
 
-# join everything into one skinned mesh (2 materials: palette body + painted face)
-objs = [o for o, _ in PARTS]
-for o in bpy.context.view_layer.objects:
-    o.select_set(o in objs)
-bpy.context.view_layer.objects.active = head
-with bpy.context.temp_override(active_object=head, selected_editable_objects=objs, selected_objects=objs):
-    bpy.ops.object.join()
-body = head
-body.name = 'Ngoc'
-body.data.name = 'Ngoc'
-# keep material order deterministic: 0 body, 1 face
-mats = [m.name for m in body.data.materials]
-print('materials', mats)
-body.parent = rig
-mod = body.modifiers.new('NgocRig', 'ARMATURE')
-mod.object = rig
-# merge exactly coincident verts per part isn't needed; just normalise weights
-bpy.context.view_layer.objects.active = body
-with bpy.context.temp_override(object=body, active_object=body):
-    bpy.ops.object.vertex_group_normalize_all(lock_active=False)
-    bpy.ops.object.vertex_group_limit_total(limit=4)
-tri_count = sum(len(p.vertices) - 2 for p in body.data.polygons)
+# join the parts into skinned meshes: the body (+ the friends' hair), and for Ngọc one object per hairstyle
+def _style(o):
+    if not HERO:
+        return None
+    if o.name in HAIR_STYLE_OF:
+        return HAIR_STYLE_OF[o.name]
+    if o.name.startswith(HAIR_SHORT_PREFIX):
+        return '_drop' if BOY else 'Hair_short'      # the boy has his own short cut
+    if o.name.startswith(TOP_PREFIX):
+        return 'Top_tshirt'
+    if o.name.startswith(BOTTOM_PREFIX):
+        return 'Bottom_shorts'
+    if o.name.startswith(GOGGLE_PREFIX):
+        return 'Gear_goggles'
+    return None
+
+
+def _join(objs, active, name):
+    for o in bpy.context.view_layer.objects:
+        o.select_set(o in objs)
+    bpy.context.view_layer.objects.active = active
+    if len(objs) > 1:
+        with bpy.context.temp_override(active_object=active, selected_editable_objects=objs, selected_objects=objs):
+            bpy.ops.object.join()
+    active.name = name
+    active.data.name = name
+    active.parent = rig
+    md = active.modifiers.new('NgocRig', 'ARMATURE')
+    md.object = rig
+    bpy.context.view_layer.objects.active = active
+    with bpy.context.temp_override(object=active, active_object=active):
+        bpy.ops.object.vertex_group_normalize_all(lock_active=False)
+        bpy.ops.object.vertex_group_limit_total(limit=4)
+    print('mesh', name, 'materials', [m.name for m in active.data.materials],
+          'triangles', sum(len(p.vertices) - 2 for p in active.data.polygons))
+    return active
+
+
+_groups = {}
+for o, _ in PARTS:
+    _groups.setdefault(_style(o), []).append(o)
+body = _join(_groups.pop(None), head, 'Ngoc')
+for o in _groups.pop('_drop', []):
+    bpy.data.objects.remove(o)
+HAIRS = {}      # every swappable piece (hair, clothes, goggles), keyed by object name
+DEFAULT_SHOWN = ('Hair_short', 'Top_tshirt', 'Bottom_shorts', 'Gear_goggles')
+_order = ['Hair_short'] + (['Hair_spiky', 'Hair_side', 'Hair_buzz'] if BOY else HAIR_STYLES) + \
+    ['Top_tshirt', 'Bottom_shorts', 'Gear_goggles'] + (CLOTHES if HERO else [])
+for st in _order:
+    if st in _groups:
+        objs = _groups[st]
+        HAIRS[st] = _join(objs, objs[0], st)
+        if st not in DEFAULT_SHOWN:
+            HAIRS[st]['eq_hidden'] = 1          # glTF extras: the game starts with only the default pieces visible
+tri_count = sum(len(p.vertices) - 2 for o in [body] + list(HAIRS.values()) for p in o.data.polygons)
 print('triangles', tri_count, 'vertices', len(body.data.vertices))
 
 # --------------------------------------------------------------------------------------
@@ -1350,10 +2024,41 @@ def _decimate(ob):
     print('decimated to', sum(len(p.vertices) - 2 for p in ob.data.polygons), 'triangles')
 
 _decimate(body)
+for _n in ('Top_tshirt', 'Bottom_shorts', 'Gear_goggles') + (() if BOY else ('Hair_short',)):
+    if _n in HAIRS:
+        _decimate(HAIRS[_n])            # pieces split off the original body; the new pieces are built light
+for _n, _o in HAIRS.items():            # every swappable piece <= 1,500 triangles (the curly updo Hair_short is the old hair, kept as is)
+    _t = sum(len(p.vertices) - 2 for p in _o.data.polygons)
+    if _t > 1500 and _n != 'Hair_short':
+        _m = _o.modifiers.new('Dec', 'DECIMATE')
+        _m.ratio = 1450 / _t
+        _m.use_collapse_triangulate = True
+        while _o.modifiers[0] != _m:
+            with bpy.context.temp_override(object=_o, active_object=_o):
+                bpy.ops.object.modifier_move_up(modifier=_m.name)
+        with bpy.context.temp_override(object=_o, active_object=_o):
+            bpy.ops.object.modifier_apply(modifier=_m.name)
 from bake_ao import bake_ao
-bake_ao(body)
-for o in bpy.context.view_layer.objects:      # select rig + body again: the exporter writes the skin only for selected objects
-    o.select_set(o in (rig, body))
+# contact shadows: each mesh is baked with only the default hair (or its own style) present, so hidden styles
+# don't darken the head of the visible one
+_meshes = [body] + list(HAIRS.values())
+for target in _meshes:
+    tslot = SLOT(target.name) if target is not body else None
+    keep = {body, target}
+    for d in DEFAULT_SHOWN:           # the default outfit stays around, except pieces in the target's own slot
+        if d in HAIRS and (tslot is None or (SLOT(d) != tslot and not (tslot == 'dress' and SLOT(d) in ('top', 'bottom')))):
+            keep.add(HAIRS[d])
+    for o in _meshes:
+        o.hide_render = o not in keep
+    bake_ao(target)
+for o in _meshes:
+    o.hide_render = False
+print('final triangles', {o.name: sum(len(p.vertices) - 2 for p in o.data.polygons) for o in _meshes})
+for o in bpy.context.view_layer.objects:      # select rig + meshes again: the exporter writes the skin only for selected objects
+    o.select_set(o in [rig] + _meshes)
+export_kwargs['export_extras'] = True     # eq_hidden on pieces, eq_base on *_tint materials
+if HEIGHT:      # desert NPCs: same skeleton and clips, scaled as a whole by the rig node
+    rig.scale = (HEIGHT / 1.562,) * 3
 bpy.context.view_layer.objects.active = rig
 props = bpy.ops.export_scene.gltf.get_rna_type().properties.keys()
 bpy.ops.export_scene.gltf(**{k: v for k, v in export_kwargs.items() if k in props})
