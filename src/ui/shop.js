@@ -6,6 +6,7 @@
 import { ITEMS, bag, buy, sell, sellPrice, shopList, wear, home, foodCount } from '../core/rules.js';
 import { speak } from './speech.js';
 import { ELEMENTS } from '../core/skills.js';
+import { gearIcon } from '../game/gear.js';
 
 const ICON = { wood_sword: '🗡️', iron_sword: '⚔️', crystal_blade: '🔷', leather_vest: '🦺', iron_armor: '🛡️', clover: '🍀', bread: '🍞',
   oak_blade: '🪵', moon_sword: '🌙', ranger_cloak: '🧥', bark_armor: '🌳', owl_feather: '🪶', forest_stew: '🍲',
@@ -49,6 +50,7 @@ const CSS = `
 #shopwin .shelf { display:grid; grid-template-columns:repeat(auto-fill, minmax(168px, 1fr)); gap:10px; padding:0 4px 10px;
   border-bottom:14px solid #7a4a1a; box-shadow:0 6px 0 #5a3410; margin-bottom:10px; background:linear-gradient(transparent 85%, rgba(90,52,16,.18)); }
 #shopwin .card { position:relative; background:linear-gradient(#fffaf0, #f6e6c4); border:3px solid #b07a3c; border-radius:12px; padding:8px; display:flex; flex-direction:column; gap:3px; box-shadow:0 3px 0 rgba(90,52,16,.35); }
+#shopwin .card .ic img { width:56px; height:56px; object-fit:contain; }
 #shopwin .card .ic { width:64px; height:64px; margin:0 auto 2px; display:flex; align-items:center; justify-content:center; font-size:40px; border-radius:12px; border:3px solid #e2b04a; background:radial-gradient(#fff, #f6e2b0); }
 #shopwin .card b { font-size:15px; text-align:center; } #shopwin .card .vi { font-size:12px; color:#7a5a30; text-align:center; }
 #shopwin .card .st { font-size:12px; font-weight:800; color:#2f6f2f; text-align:center; }
@@ -114,7 +116,7 @@ export class ShopWindow {
     const own = !food && (placed ? home(p).items.includes(id) : b.owned.includes(id)), on = !food && !placed && b[it.slot] === id, n = food ? foodCount(p, id) : 0;
     const stat = [it.el && `${ELEMENTS[it.el].icon} ${ELEMENTS[it.el].en}`, it.near && `phép gần +${Math.round(it.near * 100)}%`, it.far && `phép xa +${Math.round(it.far * 100)}%`, it.eldmg && `phép ${ELEMENTS[it.el].vi} +${Math.round(it.eldmg * 100)}%`, it.resist && `kháng ${ELEMENTS[it.el].vi} ${Math.round(it.resist * 100)}%`, it.atk && `ATK +${it.atk}`, it.def && `DEF +${it.def}`, it.hp && `HP +${it.hp}`, it.heal && `+${it.heal} HP (Q)`, placed && (it.slot === 'yard' ? 'Đặt ở sân nhà con' : 'Đặt trong nhà con')].filter(Boolean).join(' · ');
     const canBuy = food || !own, lock = p.stats.level < it.level;
-    return `<div class="card ${lock ? 'locked' : ''}"><span class="tag">${it.cost} ●</span><span class="ic">${ICON[id] || (it.kind === 'staff' ? '🪄' : it.kind === 'sword' ? '⚔️' : it.slot === 'charm' ? '🧿' : it.slot === 'armor' ? '🛡️' : '📦')}</span><b>${it.en}</b><span class="vi">${it.vi}</span><span class="st">${stat}</span>
+    return `<div class="card ${lock ? 'locked' : ''}"><span class="tag">${it.cost} ●</span><span class="ic">${gearIcon(id) ? `<img src="${gearIcon(id)}" alt="">` : ICON[id] || (it.kind === 'staff' ? '🪄' : it.kind === 'sword' ? '⚔️' : it.slot === 'charm' ? '🧿' : it.slot === 'armor' ? '🛡️' : '📦')}</span><b>${it.en}</b><span class="vi">${it.vi}</span><span class="st">${stat}</span>
       ${lock ? `<span class="lock">🔒 Cần cấp ${it.level}</span>` : ''}${food ? `<span class="vi">Trong túi: ${n}</span>` : ''}${placed && own ? '<span class="on">✔ Đã có ở nhà</span>' : ''}
       <div class="row">${canBuy ? `<button data-act="buy" data-id="${id}" ${lock || p.stats.gold < it.cost ? 'disabled' : ''}>Buy</button>` : ''}
         ${own && !placed ? `<button data-act="wear" data-id="${id}">${on ? 'Take off' : 'Wear'}</button>` : ''}${on ? '<span class="on">✔ wearing</span>' : ''}

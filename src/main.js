@@ -54,7 +54,7 @@ import { Wild, BOARD, BOSS_AT, BOSS2_AT, FOREST_BOARD, BOSS3_AT, HARBOR_BOARD, B
 import { Arcade, candyGame, blocksGame, slingGame, spellGame, raceGame, withTier } from './ui/arcade.js';
 import { tierOf, TIER_PAY } from './core/tiers.js';
 import { Chests, CHEST_SPOTS, FOREST_CHESTS, HARBOR_CHESTS } from './game/chests.js';
-import { armorMesh, charmMesh } from './game/gear.js';
+import { armorMesh, charmMesh, GEAR_FILE } from './game/gear.js';
 import { Walkers } from './game/walkers.js';
 import { ShopWindow } from './ui/shop.js';
 import { ITEMS, bag, wear, buy, eat, shopList, pay, map2Ready, map3Ready, playerAtk } from './core/rules.js';
@@ -150,7 +150,7 @@ let shopWin = null, walkers = null, talkW = -1, touch = null, quality = localSto
 const keys = new Set();
 const game = { errors, get profile() { return profile; }, get quest() { return quest; }, get story() { return story; }, get player() { return player; }, get cam() { return cam; }, get minimap() { return minimap; }, ui, L, stats: { fps: 0, ms: 0, calls: 0, tris: 0 },
   teleport(x, z) { player.place(x, z); cam.target.set(x, player.pos.y + 1.25, z); }, applyLook, syncPet, get digs() { return digMeshes; }, catchFish, gainItems, cardsOfUnit: (n) => cardsOfUnit(n), get pet() { return petObj; }, get petPanel() { return petPanel; },  setQuality, key: (code) => onKey({ code, preventDefault() {} }), get started() { return started && !switching; }, get region() { return L.NAME; }, chooseProfile, enterRegion, MARKET_JARS, BRIDGE_SPOTS, get mini() { return mini; }, get wild() { return wild; }, get scene() { return scene; }, openShop, get sword() { return swordMesh; }, get armor() { return armorShown; }, setWear, openBag: () => openBag(), get arcade() { return arcade; }, get chests() { return chests; }, get spots() { return spots; }, get admin() { return admin; }, get friends() { return friends; }, get walkers() { return walkers; }, get shopWin() { return shopWin; }, get music() { return music; }, get journal() { return journal; }, get spells() { return spells; }, get floaters() { return floaters; }, get skillUI() { return skillUI; }, get intro() { return intro; }, cardOf: (id) => cardOfFn(id), pause: (on) => renderer.setAnimationLoop(on ? null : frame),      // tests: stop drawing while another page is checked
-  post, refresh: () => refresh() };
+  post, refresh: () => refresh(), refreshGear: () => { setSword(); setWear(); } };
 globalThis.__eq = game;
 
 // Dynamic resolution (18/11: "high graphics without stutter"): all the effects stay on, only the number of pixels
@@ -661,6 +661,8 @@ function setSword() {
   let hand = null; player.root.traverse((o) => { if (!hand && o.isBone && /hand.?R$/i.test(o.name)) hand = o; });
   if (swordMesh) { swordMesh.removeFromParent(); swordMesh = null; }
   const it = ITEMS[bag(profile).weapon]; if (!hand || !it) return;
+  const gl = GEAR_FILE[bag(profile).weapon] && gearScene(GEAR_FILE[bag(profile).weapon], setSword);       // (20/11) the Blender sword or staff (grip at the origin, blade along +Y)
+  if (gl) { const w = new THREE.Group(), m = gl.scene.clone(true); m.traverse((o) => { if (o.isMesh) o.castShadow = true; }); w.add(m); w.rotation.set(Math.PI / 2, 0, 0); w.position.set(0, 0.05, 0.03); hand.add(w); swordMesh = w; return; }
   const g = new THREE.Group(), mat = (c, m = 0) => new THREE.MeshStandardMaterial({ color: c, roughness: m ? 0.3 : 0.7, metalness: m, emissive: it.el ? it.color : it.color === 0x7fd6ff ? 0x2f8fd0 : 0, emissiveIntensity: it.el ? 0.35 : 0.6 });
   if (it.kind === 'staff') {      // (20/11) element staffs: a wooden staff with a glowing orb of the element, until the Blender ones (batch 20)
     const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.03, 1.15, 8), mat(0x6a4020)); pole.position.y = 0.3; g.add(pole);
@@ -677,14 +679,51 @@ function setSword() {
 }
 /** Worn armour on the chest and the charm on the hip (A6). */
 let armorShown = null, charmShown = null;
+const gearCache = new Map();         // file -> loaded glTF, null while loading, false when missing
+function gearScene(file, then) {
+  const v = gearCache.get(file); if (v !== undefined) return v || null;
+  gearCache.set(file, null); gltf(file).then((g) => { gearCache.set(file, g); if (then) then(); }, () => gearCache.set(file, false));
+  return null;
+}
+/** Takes a worn Blender piece off (its outline twins and any extra bones go with it). */
+function dropGear(g) { if (!g) return; for (const b of g.userData.extraBones || []) b.removeFromParent(); g.removeFromParent(); }
+/** Puts a Blender piece on Ngọc. Skinned pieces (the element armours) are re-bound to her own skeleton by bone name; the others
+ *  (vests, cloaks, charms, amulets) are static in her bind pose and hang on one bone. Returns the group or null while the file loads. */
+function gearOnBody(id, boneRe) {
+  const file = GEAR_FILE[id], gl = file && gearScene(file, setWear); if (!gl || !player) return null;
+  const root = player.root, bones = {}; let ref = null;
+  root.traverse((o) => { if (o.isBone) bones[o.name] = o; if (!ref && o.isSkinnedMesh && !o.userData.outline) ref = o; });
+  const grp = new THREE.Group(), src = gl.scene.clone(true); grp.userData.extraBones = [];
+  let skinnedAny = false;
+  src.traverse((o) => { if (o.isSkinnedMesh) skinnedAny = true; });
+  if (skinnedAny) {
+    const list = []; src.traverse((o) => { if (o.isSkinnedMesh) list.push(o); });
+    for (const m of list) {
+      const names = m.skeleton.bones;
+      const mine = names.map((b) => { let pb = bones[b.name]; if (!pb) { const par = b.parent && bones[b.parent.name]; if (par) { b.removeFromParent(); par.add(b); grp.userData.extraBones.push(b); pb = b; } } return pb || b; });
+      m.removeFromParent(); m.bind(new THREE.Skeleton(mine, m.skeleton.boneInverses), m.bindMatrix); m.frustumCulled = false; m.castShadow = true; grp.add(m);
+    }
+    root.add(grp);
+  } else {
+    const b = bones[boneRe] || null; if (!b) return null;
+    const i = ref ? ref.skeleton.bones.indexOf(b) : -1;
+    if (i >= 0) { grp.matrix.copy(ref.skeleton.boneInverses[i]); grp.matrix.decompose(grp.position, grp.quaternion, grp.scale); }
+    src.traverse((o) => { if (o.isMesh) o.castShadow = true; }); grp.add(src); b.add(grp);
+  }
+  addOutline(grp);
+  return grp;
+}
 function setWear() {
   if (!player || !profile) return;
   const bone = (re) => { let b = null; player.root.traverse((o) => { if (!b && o.isBone && re.test(o.name)) b = o; }); return b; };
-  for (const m of [armorShown, charmShown]) if (m) m.removeFromParent();
+  dropGear(armorShown); dropGear(charmShown); for (const m of [armorShown, charmShown]) if (m && !m.userData.extraBones) m.removeFromParent();
   armorShown = charmShown = null; const b = bag(profile);
   const chest = bone(/^chest$/), hips = bone(/^hips$/);
-  const a = armorMesh(b.armor); if (a && chest) { chest.add(a); armorShown = a; }
-  if (b.charm && hips) { const c = charmMesh(); c.position.set(0.13, 0.02, 0.08); hips.add(c); charmShown = c; }
+  const a = gearOnBody(b.armor, 'chest') || armorMesh(b.armor); if (a && chest) { if (!a.parent) chest.add(a); armorShown = a; }
+  if (b.charm) {
+    const amulet = /_amulet$/.test(b.charm), c = gearOnBody(b.charm, amulet ? 'neck' : 'hips');
+    if (c) charmShown = c; else if (hips) { const f = charmMesh(); f.position.set(0.13, 0.02, 0.08); hips.add(f); charmShown = f; }
+  }
   applyLook();
 }
 /** (19/11) "nhà của bé sẽ theo bé đến các Map": outside the village a magic door near the arrival spot opens the hero's own home. */

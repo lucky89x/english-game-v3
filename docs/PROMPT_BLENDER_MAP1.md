@@ -3,7 +3,7 @@
 Cách dùng: dán **QUY ƯỚC CHUNG** một lần ở đầu phiên Claude Code trên máy anh (có Blender MCP), rồi dán từng **Lô**. Mỗi lô xong thì để Claude Code commit và đẩy lên nhánh `blender-assets`; báo em "đã đẩy lô N" là em nối vào game.
 
 Thứ tự ưu tiên (đẹp lên rõ nhất cho các bé): **Lô 13 quái (ĐÃ NỐI)** → Lô 14 vũ khí/giáp → Lô 15 đồ tương tác → Lô 16 thiên nhiên → Lô 17 đồ làng → Lô 18 đồ rừng → Lô 19 trang phục/thân bạn nam → Lô 20 đồ theo hệ → Lô 21 hiệu ứng phép + biểu tượng → Lô 22 quái theo hệ → **Lô 23 phản diện, La Bàn, NPC cốt truyện** → **Lô 24 Map 3 Sa mạc** → **Lô 25 sự kiện và chơi chung**.
-Tình trạng 20/11: nhánh `blender-assets` mới có đến lô 13 (và các lô cũ 1–12: cảng, đảo, nhà, phụ kiện, thú cưng). Lô 14–25 đang chờ anh làm.
+Tình trạng 20/11 (tối): **anh đã làm xong lô 14–25** (nhánh `blender-assets`, đã gộp vào `fable/web-rebuild`); trạng thái nối vào game ghi ở `CLAUDE.md` mục Tiến độ (lượt 41 trở đi). Lô 26–27 (nhân vật theo ảnh mẫu mới bằng Tripo/Meshy) ở `docs/NHAN_VAT_TRIPO_MESHY.md`.
 Không cần vẽ lại: nhà (`bld_*`), NPC, đài phun nước, nông trại, cầu cong, thuyền, thú nuôi, mọi thứ ở Cảng/Đảo/nhà các con (đã là model Blender).
 
 ---

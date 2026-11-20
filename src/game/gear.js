@@ -28,3 +28,18 @@ export function charmMesh() {
   const cord = new THREE.Mesh(new THREE.CylinderGeometry(0.004, 0.004, 0.06, 4), mat(0xe2b04a, 0.6)); cord.position.y = 0.05; g.add(cord);
   return g;
 }
+
+/** Blender models of the equipment (batches 14 and 20), loaded when first worn; until then (or when a file is missing) the shapes above stand in. */
+export const GEAR_FILE = {
+  wood_sword: 'gear_sword_wood_v01', iron_sword: 'gear_sword_iron_v01', crystal_blade: 'gear_sword_crystal_v01', oak_blade: 'gear_sword_oak_v01', moon_sword: 'gear_sword_moon_v01',
+  ember_sword: 'weapon_sword_ember_v01', frost_sword: 'weapon_sword_frost_v01', gale_sword: 'weapon_sword_gale_v01', spark_sword: 'weapon_sword_spark_v01',
+  blaze_blade: 'weapon_sword_blaze_v01', glacier_blade: 'weapon_sword_glacier_v01', tempest_blade: 'weapon_sword_tempest_v01', storm_blade: 'weapon_sword_storm_v01',
+  ember_staff: 'weapon_staff_ember_v01', frost_staff: 'weapon_staff_frost_v01', gale_staff: 'weapon_staff_gale_v01', spark_staff: 'weapon_staff_spark_v01',
+  inferno_staff: 'weapon_staff_inferno_v01', glacier_staff: 'weapon_staff_glacier_v01', tempest_staff: 'weapon_staff_tempest_v01', storm_staff: 'weapon_staff_storm_v01',
+  leather_vest: 'gear_vest_leather_v01', iron_armor: 'gear_armor_iron_v01', ranger_cloak: 'gear_cloak_ranger_v01', bark_armor: 'gear_armor_bark_v01',
+  flame_mail: 'armor_flame_mail_v01', frost_mail: 'armor_frost_mail_v01', wind_cloak: 'armor_wind_cloak_v01', storm_plate: 'armor_storm_plate_v01',
+  clover: 'gear_charm_clover_v01', owl_feather: 'gear_charm_owlfeather_v01',
+  fire_amulet: 'acc_amulet_fire_v01', ice_amulet: 'acc_amulet_ice_v01', wind_amulet: 'acc_amulet_wind_v01', thunder_amulet: 'acc_amulet_thunder_v01',
+};
+/** Shop icon (128 px, rendered in Blender for the batch 20 pieces); null for pieces that only have an emoji. */
+export const gearIcon = (id) => { const f = GEAR_FILE[id]; return f && /^(weapon|armor|acc_amulet)_/.test(f) ? `./assets/ui/item_${f.replace(/_v01$/, '')}.png` : null; };
