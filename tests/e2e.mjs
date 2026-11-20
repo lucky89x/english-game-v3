@@ -169,7 +169,9 @@ check(await ev((g) => __eq.profile.stats.gold > g, gold0), 'Three real-E catches
 await page.keyboard.press('Escape'); await wait(300);
 for (let k = 0; k < 3 && await page.isVisible('#dialog'); k++) { await page.keyboard.press('KeyE'); await wait(200); }
 await ev(() => __eq.teleport(34, 6.6)); await wait(450); await page.keyboard.press('KeyE'); await wait(300);
-check(await ev(() => __eq.mini.active && __eq.mini.active.id === 'apple'), 'Apple catch starts in the orchard');
+check(await page.isVisible('#dialog') && (await page.textContent('#dialog')).includes('Hana') && !(await ev(() => !!__eq.mini.active)), 'Hana talks first: the apples do not fall before her talk');
+for (let k = 0; k < 4 && !(await ev(() => !!__eq.mini.active)); k++) { await page.keyboard.press('KeyE'); await wait(300); }
+check(await ev(() => __eq.mini.active && __eq.mini.active.id === 'apple'), 'Apple catch starts in the orchard after the talk');
 for (let k = 0; k < 40 && await ev(() => __eq.mini.active && __eq.mini.active.score < 3); k++) { await ev(() => { const f = __eq.mini.apples.find((a) => a.live && a.y < 3.5); if (f) __eq.teleport(f.x, f.z); }); await wait(250); }
 check(await ev(() => __eq.mini.active && __eq.mini.active.score >= 3), 'Standing under falling apples catches them');
 await snap('03d_apple_catch');
