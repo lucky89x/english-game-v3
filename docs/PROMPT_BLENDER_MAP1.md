@@ -2,7 +2,8 @@
 
 Cách dùng: dán **QUY ƯỚC CHUNG** một lần ở đầu phiên Claude Code trên máy anh (có Blender MCP), rồi dán từng **Lô**. Mỗi lô xong thì để Claude Code commit và đẩy lên nhánh `blender-assets`; báo em "đã đẩy lô N" là em nối vào game.
 
-Thứ tự ưu tiên (đẹp lên rõ nhất cho các bé): **Lô 13 quái** → Lô 14 vũ khí/giáp → Lô 15 đồ tương tác → Lô 16 thiên nhiên → Lô 17 đồ làng → Lô 18 đồ rừng.
+Thứ tự ưu tiên (đẹp lên rõ nhất cho các bé): **Lô 13 quái (ĐÃ NỐI)** → Lô 14 vũ khí/giáp → Lô 15 đồ tương tác → Lô 16 thiên nhiên → Lô 17 đồ làng → Lô 18 đồ rừng → Lô 19 trang phục/thân bạn nam → Lô 20 đồ theo hệ → Lô 21 hiệu ứng phép + biểu tượng → Lô 22 quái theo hệ → **Lô 23 phản diện, La Bàn, NPC cốt truyện** → **Lô 24 Map 3 Sa mạc** → **Lô 25 sự kiện và chơi chung**.
+Tình trạng 20/11: nhánh `blender-assets` mới có đến lô 13 (và các lô cũ 1–12: cảng, đảo, nhà, phụ kiện, thú cưng). Lô 14–25 đang chờ anh làm.
 Không cần vẽ lại: nhà (`bld_*`), NPC, đài phun nước, nông trại, cầu cong, thuyền, thú nuôi, mọi thứ ở Cảng/Đảo/nhà các con (đã là model Blender).
 
 ---
@@ -281,4 +282,104 @@ Boss cũ thêm clip (sửa tools/mobs1/build_mobs1.py và tools/harbor, KHÔNG �
   harbor_boss_octopus (🔥 phun mực lửa): mỗi con thêm "Cast" 1,0 s và "Death" 1,2 s; thêm một xương "fx" ở chỗ phép bay ra (miệng/tay).
 
 Xuất xong: render tools/mobs3/preview_mobs3.py (bảng ảnh mọi quái, mỗi con 3 tư thế Idle/Attack/Cast); commit từng file, đẩy blender-assets.
+```
+
+---
+
+## LÔ 23 — Phản diện, La Bàn Ngôn Từ, NPC cốt truyện (20/11, cho `docs/COT_TRUYEN.md`)
+
+Cốt truyện xương sống đã chạy trong game nhưng **Chúa tể Im Lặng (Lord Hush)** mới chỉ có lời thoại, **La Bàn** và **cửa nhà thần kỳ** đang vẽ tạm bằng khối, cô **Mia** dùng tạm bản sao của Rose. Lô này vẽ thật cho các thứ đó.
+
+```
+Lô 23: viết tools/story/build_story.py theo quy ước chung, xuất vào assets/models/:
+1) npc_hush_lord_v01.glb — Chúa tể Im Lặng, cao 2,2 m, dáng chibi cao gầy (đầu to), áo choàng đen tím dài chấm đất rách tua, mũ trùm sâu,
+   trong mũ chỉ có hai mắt tím phát sáng và một đường khâu kéo khoá miệng (ý nghĩa: ghét tiếng nói). Cầm một cuộn giấy rách bay lơ lửng.
+   Vật liệu: hush_cloak (đen tím #2a1f3d), hush_trim (tím #7a4bd1), eye_glow (tím sáng, emissive 3), zip_silver, paper_cream.
+   Rig xương cứng; clip: Idle (lặp 3 s, áo choàng đung đưa), Talk (lặp 1 s, tay nhấn nhá), Cast (0,9 s, giơ tay, gió đen xoáy), Laugh (lặp 1,2 s, vai rung, KHÔNG có tiếng),
+   Vanish (1,2 s, thu nhỏ vào xoáy khói). ≤ 3.500 tam giác. Dữ vừa phải, hơi buồn cười, KHÔNG đáng sợ (game cho học sinh cấp 2).
+2) mob_hush_wraith_v01.glb — tay sai của Lord Hush, "Bóng Im Lặng": cao 1,2 m, thân là làn khói đen tím hình giọt nước nhọn đuôi,
+   2 mắt tròn sáng, miệng bị khoá kéo, hai tay mảnh. Bay, hover cao 0,6 m. Vật liệu: smoke_dark, smoke_light (alpha 0,7), eye_glow, zip_silver.
+   Clip Idle, Walk, Attack, Hit, Cast, Death (tan thành khói 0,9 s). ≤ 1.800 tam giác.
+3) prop_compass_whole_v01.glb — La Bàn Ngôn Từ nguyên vẹn, đường kính 0,9 m, nằm nghiêng 20° trên đế nhỏ: viền vàng đồng chạm 10 vạch chữ,
+   mặt kính xanh biển, kim chỉ hai đầu đỏ/trắng phát sáng. Clip Spin (kim quay chậm, lặp 4 s). Vật liệu: gold, glass_blue, needle_red, needle_white, rune_glow.
+4) prop_compass_piece_01_v01 … prop_compass_piece_10_v01 — 10 mảnh vỡ của La Bàn (mỗi mảnh một hình cánh quạt khác nhau, rộng 0,35 m, cao 0,05 m, mép vỡ lởm chởm,
+   cùng viền vàng + mặt kính). Mỗi mảnh MỘT MÀU nhận diện vùng đất, vật liệu piece_main:
+   01 xanh lá (Làng/Rừng), 02 xanh biển (Cảng), 03 vàng cát (Sa mạc), 04 trắng băng, 05 đỏ lửa, 06 tím mây, 07 hồng hoa, 08 xanh ngọc, 09 cam hoàng hôn, 10 vàng kim sao.
+   Clip Float (lặp 2 s, lơ lửng lên xuống 6 cm và xoay chậm). Mảnh ghép lại với nhau thành vòng tròn đúng (khớp mép vỡ).
+5) prop_compass_pedestal_v01.glb — bệ đặt La Bàn trong nhà: đế đá hình trụ 8 cạnh cao 0,9 m, mặt bệ là vòng tròn có 10 ô hình cánh quạt lõm (đúng khớp 10 mảnh),
+   chạm khắc nhẹ, ở giữa có trụ nhỏ đặt kim. Mỗi ô là object riêng slot_01 … slot_10 (game bật phát sáng mảnh nào đã lấy được).
+6) prop_magic_door_v01.glb — cửa nhà thần kỳ đứng giữa đất trống (nhà theo bé tới mọi map): khung cửa gỗ tròn vòm cao 2,2 m rộng 1,3 m, KHÔNG có tường,
+   bên trong là mặt cửa phát sáng xanh tím (vật liệu door_glow, emissive 2,5, alpha 0,8), tay nắm vàng, hai bên có dây leo, hoa nhỏ và 2 ngôi sao lơ lửng.
+   Clip Open (0,8 s, cửa sáng loé và hai cánh mở), Idle (lặp 3 s, sao lơ lửng). Vật liệu door_wood tint_main xám 0,8 (game tô theo màu nhà của bé).
+7) npc_mia_tailor_v01.glb — cô Mia thợ may, cùng chuẩn và xương với npc_rose_baker_v02, người khác hẳn Rose: dáng cao mảnh, tóc nâu đỏ búi cao có kim cài,
+   kính tròn gọng vàng, thước dây quanh cổ, tạp dề kẻ ô tím, tay cầm kéo. Clip Idle, Talk, Wave. Vật liệu có tint như Rose (hair_tint, top_tint, bottom_tint).
+
+Biểu tượng (assets/ui/, PNG 128×128 nền trong suốt): rank_01 … rank_11 (11 hạng Người Giữ Chữ: Tập sự, Thám hiểm, Kiểm lâm, … Đại sư Ngôn Từ,
+huy hiệu tròn viền kim loại tăng dần: đồng → bạc → vàng → bạch kim → pha lê, giữa là biểu tượng: lá, la bàn, sách, ngọn đuốc, mũ, áo choàng, kiếm, khiên, vương miện, ngôi sao, quyển sách vàng),
+compass_piece_01 … compass_piece_10 (hình ảnh 10 mảnh theo màu trên), badge_word_keeper (huy hiệu Người Giữ Chữ ông Tom trao, lá + chữ A).
+
+Xuất xong: render tools/story/preview_story.py (mỗi model một ô 3/4, Lord Hush 3 tư thế, 10 mảnh ghép thành vòng), commit từng file, đẩy blender-assets.
+```
+
+---
+
+## LÔ 24 — Map 3: Sa mạc Gió Vàng (20/11, vùng đất thứ ba, hạng Kiểm lâm, Unit 3)
+
+Map 3 chưa có gì ngoài tên (quái ở lô 22). Lô này là toàn bộ đồ dựng cho vùng: nhà, đồ trang trí, cây, đồ tương tác, 4 NPC. Tông màu **vàng cát ấm, đất nung, lam ngọc (turquoise) làm điểm nhấn**; ban đêm có đèn lồng. Chủ đề: làng ốc đảo, chợ lều, đền cổ đang bị cát vùi, gió vàng thổi bay chữ trên các tấm bia.
+
+```
+Lô 24: viết tools/map3/build_map3.py theo quy ước chung (màu phẳng, vật liệu có tên, gốc ở chân, mặt trước −Y Blender), xuất vào assets/models/ (tiền tố map3_):
+NHÀ (mỗi nhà có cửa hướng +Z glTF, cửa sổ có vật liệu window_glow để game bật sáng ban đêm, mái có vật liệu roof_tint xám 0,8 để game đổi màu):
+- map3_house_sand_a_v01 (nhà đất nung mái bằng 6×5×3,4 m, cầu thang ngoài lên mái, vải che nắng), map3_house_sand_b_v01 (nhà tròn mái vòm 5,5 m),
+  map3_house_tower_v01 (tháp gió cao 8 m, cửa sổ đón gió, cờ vải), map3_tent_bazaar_v01 (lều chợ 4×3 m, quầy hàng, thảm, đèn lồng; 3 màu vải tint),
+  map3_inn_oasis_v01 (quán trọ 8×6×4 m, mái vải, giếng nhỏ bên hông, bảng treo trống để game dán chữ),
+  map3_temple_gate_v01 (cổng đền cổ 6 m cao 7 m, hai cột chạm chữ, nửa dưới vùi cát, lối vào vùng boss),
+  map3_house_home_v01 (nhà của bé phiên bản sa mạc, cùng cỡ bld_house_blue_v01, tô màu được).
+ĐỒ NGOÀI TRỜI:
+- map3_well_v01 (giếng đá có ròng rọc, xô, vòi nước phát sáng xanh), map3_oasis_pool_v01 (hồ ốc đảo bầu dục 7×5 m, mép đá, nước lam ngọc alpha 0,8, 3 cây sậy),
+  map3_palm_date_v01 (cọ chà là 5,5 m, chùm quả; 2 biến thể _a/_b), map3_cactus_a_v01 / map3_cactus_b_v01 / map3_cactus_flower_v01 (xương rồng 1,2–2,5 m, hoa hồng),
+  map3_dune_rock_a/b/c_v01 (đá sa thạch xếp tầng 1–3 m), map3_dry_bush_v01, map3_skeleton_v01 (xương thú cát 2 m, dễ thương không rùng rợn),
+  map3_obelisk_v01 (bia đá 3 m có mặt phẳng khắc chữ trống, vật liệu rune_glow; game dán từ vựng lên mặt bia — Gió Vàng thổi bay chữ),
+  map3_ruin_pillar_v01 (cột đổ gãy 2,5 m), map3_ruin_arch_v01 (vòm đá nửa vùi 4 m), map3_sandstorm_post_v01 (cột cờ báo bão, cờ vàng, clip Wave lặp 2 s),
+  map3_lantern_pole_v01 (cột đèn lồng 3 m, đèn tròn đỏ cam, window_glow), map3_carpet_v01 (thảm bày hàng 2×1,4 m, tint), map3_crate_sack_v01 (rương gỗ + bao tải),
+  map3_chest_v01 (rương kho báu sa mạc, nắp cong, clip Open giống isle_chest_v01), map3_signpost_v01 (biển chỉ đường 3 hướng, mặt biển trống).
+PHƯƠNG TIỆN VÀ THÚ:
+- map3_camel_v01 (lạc đà chibi 1,8 m có yên đỏ, clip Idle, Walk, Sit, Spit lặp 1 s; tint yên), pet_fennec_v01 (cáo tai to 0,4 m làm thú cưng, đủ clip như pet_otter_v01: idle, walk, sit, jump, spin, roll, dance, wave),
+  map3_sand_skiff_v01 (thuyền buồm trượt cát 3 m thay cho thuyền, buồm tam giác).
+NPC (cùng chuẩn xương và clip như npc_anna_bard_v02: Idle, Talk, Wave; vật liệu hair_tint/top_tint/bottom_tint):
+- npc_desert_elder_v01 (bà trưởng làng Amira, khăn lam ngọc, gậy cọ, 1,3 m), npc_desert_merchant_v01 (chú thương nhân Karim, ria cong, áo choàng sọc, túi hàng, 1,35 m),
+  npc_desert_guide_v01 (bạn dẫn đường Layla, mũ rộng vành, kính cát, bản đồ cuộn, 1,2 m), npc_desert_smith_v01 (thợ rèn Idris, tạp dề da, búa, râu xù, 1,4 m).
+
+Biểu tượng: assets/ui/map_3.png (ảnh vùng đất 256×160 trong thẻ Hành trình), ảnh cảnh mẫu preview tổng hợp đặt đủ đồ trong một khung hình 16:9 để em tham khảo bố cục.
+Xuất xong: render tools/map3/preview_map3.py (bảng từng nhóm + 1 ảnh phối cảnh làng ốc đảo), commit từng file, đẩy blender-assets.
+```
+
+---
+
+## LÔ 25 — Sự kiện, mùa lễ và chơi chung (20/11, cho phần mini game đôi và sự kiện cuối tuần)
+
+Dựa trên mục 7 của `docs/COT_TRUYEN.md`: Đấu chữ nhanh, Bếp đôi, Kho báu đôi, Boss sự kiện, Thời trang đôi; sự kiện cuối tuần và theo mùa (Trung thu, Tết, Halloween, Giáng sinh).
+
+```
+Lô 25: viết tools/events/build_events.py theo quy ước chung, xuất vào assets/models/ (tiền tố ev_):
+CHƠI CHUNG:
+- ev_arena_v01 (sàn Đấu chữ nhanh: bục tròn bán kính 4 m chia đôi 2 màu xanh/hồng, hai bục câu hỏi có bảng chữ trống, 4 cột đèn góc, viền chữ A–Z),
+- ev_kitchen_double_v01 (bếp đôi: 2 quầy đối diện 4×1 m, quầy trái có bảng phiếu gọi món trống, quầy phải có 8 ô nguyên liệu, chuông gọi món; object riêng slot_1…slot_8),
+- ev_dig_spot_v01 (điểm đào kho báu: đống đất nhỏ 0,8 m có cắm xẻng, dấu X đỏ, clip Dig 1 s), ev_treasure_map_v01 (bản đồ cuộn trải ra 0,9×0,6 m, mặt trống để game vẽ hướng đi),
+- ev_mannequin_pair_v01 (hai ma-nơ-canh bên nhau cho Thời trang đôi, mỗi con tint được, bục có số 1, 2), ev_scoreboard_v01 (bảng điểm đôi 2×1 m, hai nửa trái/phải, mặt trống),
+- ev_portal_coop_v01 (cổng "Phòng chơi chung" vòm tròn 3 m, mặt cổng phát sáng, hai cột có biểu tượng hai người; clip Idle xoáy sáng lặp 3 s),
+- ev_boss_giant_v01 (BOSS SỰ KIỆN cao 6 m: Chữ Khổng Lồ "Letter Colossus", thân là các khối chữ cái xếp chồng nối bằng khớp phát sáng, mắt là hai chữ O; rig cứng,
+  clip Idle, Walk, Attack, Hit, Cast, Death, Roar; 4 vị trí khiên chữ ở ngực, vai trái, vai phải, lưng, vật liệu shield_slot_1…4; ≤ 5.000 tam giác).
+MÙA LỄ (mỗi bộ là các model nhỏ để game trang trí quảng trường, vật liệu tint_main tô được):
+- Trung thu: ev_lantern_star_v01 (đèn lồng ngôi sao 0,6 m, phát sáng), ev_lantern_fish_v01 (đèn cá chép), ev_mooncake_stall_v01 (quầy bánh trung thu), ev_lion_dance_v01 (múa lân chibi 1,6 m, clip Dance lặp 1,2 s),
+- Tết: ev_peach_blossom_v01 (cành đào 1,8 m), ev_apricot_blossom_v01 (cây mai vàng 2 m), ev_red_envelope_v01 (bao lì xì 0,2 m xoay), ev_banh_chung_v01 (bánh chưng gói lá dong 0,3 m), ev_firecracker_light_v01 (dây pháo đèn LED, không nổ thật),
+- Halloween: ev_pumpkin_lantern_v01 (bí ngô đèn 0,6 m mặt cười dễ thương), ev_ghost_friendly_v01 (ma trắng dễ thương 0,9 m bay, clip Idle, Wave), ev_candy_bucket_v01 (xô kẹo),
+- Giáng sinh: ev_tree_xmas_v01 (cây thông 3 m, đèn dây, quà dưới gốc), ev_snowman_v01 (người tuyết 1,3 m, clip Wave), ev_gift_box_v01 (hộp quà 0,4 m, tint dây ruy băng).
+ĐỒ MẶC SỰ KIỆN (tiếp theo lô 19, cùng xương và vật liệu tint với chr_ngoc_adventurer_v05, đặt object eq_hidden: 1 như các kiểu áo khác):
+- Top_aodai_tet (áo dài Tết có hoa văn dập nổi), Dress_halloween_witch (đầm phù thủy + mũ nhọn là object riêng Hat_witch), Top_xmas_sweater (áo len Giáng sinh), Hat_santa, Hat_antlers (sừng tuần lộc), Acc_lantern_hand (đèn lồng cầm tay, xương hand_R), Acc_mask_cat (mặt nạ mèo gắn tóc).
+
+Biểu tượng (assets/ui/, PNG 128×128 nền trong suốt): ev_season_trungthu, ev_season_tet, ev_season_halloween, ev_season_xmas, ev_weekend_boss,
+emote_1 … emote_8 (8 emoji gặp nhau trong làng: vẫy tay, cười, ngạc nhiên, cảm ơn, giỏi lắm, giúp tôi, đi thôi, chờ tôi; kiểu sticker tròn viền trắng).
+
+Xuất xong: render tools/events/preview_events.py (bảng từng bộ mùa + bảng chơi chung + boss khổng lồ 3 tư thế), commit từng file, đẩy blender-assets.
 ```
