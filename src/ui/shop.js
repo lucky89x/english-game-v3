@@ -7,6 +7,7 @@ import { ITEMS, bag, buy, sell, sellPrice, shopList, wear, home, foodCount } fro
 import { speak } from './speech.js';
 import { ELEMENTS } from '../core/skills.js';
 import { gearIcon } from '../game/gear.js';
+import { sellable, sellGoods } from '../core/goods.js';
 
 const ICON = { wood_sword: '🗡️', iron_sword: '⚔️', crystal_blade: '🔷', leather_vest: '🦺', iron_armor: '🛡️', clover: '🍀', bread: '🍞',
   oak_blade: '🪵', moon_sword: '🌙', ranger_cloak: '🧥', bark_armor: '🌳', owl_feather: '🪶', forest_stew: '🍲',
@@ -29,6 +30,8 @@ const KEEPERS = {
     talk: ['Red potions heal you, blue potions give you mana.', 'Keys 5, 6, 7 and 8 drink the potions in your quick slots.', 'Open your bag with V to put potions in the slots.', 'Rest here after a fight. I will take care of you!'] },
   music: { name: 'Anna', img: 'assets/ui/keeper_anna.jpg', title: "🎵 Anna's instruments", sub: 'Instruments · nhạc cụ cho nhà con',
     talk: ['Music makes every room happy.', 'A guitar has six strings.', 'The piano has black keys and white keys.', 'Bang the drum slowly, then quickly!'] },
+  market: { name: 'Ben', img: 'assets/ui/keeper_ben.jpg', title: '🧺 Market counter', sub: 'Sell your fish, apples, vegetables, eggs and pigs · bán hàng của con',
+    talk: ['I buy fresh fish every day!', 'Golden apples are worth more than red ones.', 'Bring me vegetables from your garden.', 'A big pig sells for a lot of gold.'] },
   forest: { name: 'Willow', img: 'assets/ui/keeper_willow.jpg', title: "🌿 Willow's camp shop", sub: 'Forest gear · đồ của rừng (Map 2)',
     talk: ['The forest is dark. Strong armour keeps you safe.', 'Moonlight makes my swords shine.', 'Owls are wise. Their feathers bring good health.', 'My stew is hot and full of mushrooms. Not angry ones!'] },
 };
@@ -77,7 +80,7 @@ export class ShopWindow {
   }
   show(title = 'Village Shop', counters = ['forge', 'rose']) {
     this.title = title; this.counters = counters; this.open = true; this.quiz = null;
-    this.say = { forge: 'Welcome! Look at my blades.', rose: 'Hello! Fresh bread today!', forest: 'Welcome to my camp, brave explorer!' };
+    this.say = { forge: 'Welcome! Look at my blades.', rose: 'Hello! Fresh bread today!', forest: 'Welcome to my camp, brave explorer!', healer: 'Hello! Potions for health and mana.', market: 'I buy what you catch, pick and grow!' };
     this.msg = 'Buy = mua · Wear = mặc · Sell = bán lại nửa giá. Bấm 📜 để nhận nhiệm vụ từ vựng của chủ quầy.';
     this.render(); this.el.classList.remove('hidden');
   }
@@ -111,6 +114,7 @@ export class ShopWindow {
     if (what === 'ans') { this.answer(Number(id)); this.render(); return; }
     if (what === 'buy') { const r = buy(p, id); this.msg = r.ok ? (it.slot === 'home' || it.slot === 'yard' ? `You bought the ${it.en}! It is in your home now.` : `You bought the ${it.en}!`) : r.why === 'have' ? `You already have a ${it.en} at home.` : r.why === 'gold' ? `Not enough gold: the ${it.en} costs ${it.cost} ●.` : `The ${it.en} is for level ${it.level} heroes.`; this.api.sfx(r.ok ? 'correct' : 'wrong'); }
     if (what === 'wear') { b[it.slot] = b[it.slot] === id ? '' : id; wear(p); this.msg = b[it.slot] === id ? `You are wearing the ${it.en}.` : `You took off the ${it.en}.`; this.api.sfx('tick'); }
+    if (what === 'sellgood') { const r = sellGoods(p, id || null); this.msg = r.n ? `You sold ${r.n} thing${r.n > 1 ? 's' : ''} for ${r.gold} gold. Thank you!` : ''; this.say.market = r.n ? 'Thank you! Come back with more.' : 'Nothing to sell yet.'; this.api.sfx(r.n ? 'coin' : 'wrong'); if (r.n && this.api.track) this.api.track('sell'); }
     if (what === 'sell') { const g = sell(p, id); this.msg = g ? `You sold the ${it.en} for ${g} gold.` : ''; this.api.sfx(g ? 'correct' : 'wrong'); }
     this.api.changed(); this.render();
   }
@@ -125,12 +129,20 @@ export class ShopWindow {
         ${own && !placed ? `<button data-act="wear" data-id="${id}">${on ? 'Take off' : 'Wear'}</button>` : ''}${on ? '<span class="on">✔ wearing</span>' : ''}
         ${own || n > 0 ? `<button class="sell" data-act="sell" data-id="${id}">Sell ${sellPrice(id)} ●</button>` : ''}</div></div>`;
   }
+  /** (21/11) The market counter: everything the child caught, picked, grew or raised, with its price; sell one kind or all. */
+  marketShelf() {
+    const list = sellable(this.api.profile());
+    if (!list.length) return '<p class="vi" style="padding:8px">Túi chưa có gì để bán. Câu cá (E ở bến sông, cầu tàu), hứng táo với cô Hana, trồng rau và nuôi gà, lợn ở nhà rồi mang ra đây nhé.</p>';
+    const total = list.reduce((a, it) => a + it.price * it.n, 0);
+    return list.map((it) => `<div class="card"><span class="tag">${it.price} ●</span><span class="ic">${it.icon}</span><b>${it.en}</b><span class="vi">${it.vi}</span><span class="st">có ${it.n} · được ${it.price * it.n} ●</span><div class="row"><button class="sell" data-act="sellgood" data-id="${it.id}">Sell all ${it.n}</button></div></div>`).join('')
+      + `<div class="card" style="justify-content:center"><b>Total · tổng</b><span class="st" style="font-size:18px">${total} ●</span><div class="row"><button data-act="sellgood" data-id="">💰 Sell everything</button></div></div>`;
+  }
   counter(k) {
     const kp = KEEPERS[k], q = this.quiz && this.quiz.k === k ? this.quiz : null;
     const opts = q ? `<div class="opts">${q.opts.map((id, i) => `<button data-act="ans" data-id="${i}">${i + 1}. ${ITEMS[id].en}</button>`).join('')}</div>` : '';
     return `<div class="counter"><div class="keeper"><img src="${kp.img}" alt="${kp.name}"><b>${kp.name}</b><div class="bubble">${this.say[k] || ''}${opts}</div>
         <button data-act="talk" data-k="${k}">💬 Talk</button> <button class="quest" data-act="quest" data-k="${k}">📜 Word quest</button></div>
-      <div class="shelfbox"><h3>${kp.title} <small>· ${kp.sub}</small></h3><div class="shelf">${shopList(k).map((id) => this.card(id)).join('')}</div></div></div>`;
+      <div class="shelfbox"><h3>${kp.title} <small>· ${kp.sub}</small></h3><div class="shelf">${k === 'market' ? this.marketShelf() : shopList(k).map((id) => this.card(id)).join('')}</div></div></div>`;
   }
   render() {
     const p = this.api.profile();

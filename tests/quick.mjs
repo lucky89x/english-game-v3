@@ -63,9 +63,10 @@ await run('combat', async () => {
   // (20/11) magic skills: T opens the skill book, a learnt spell goes to slot 1, key 1 casts it on a slime (energy spent, element ring)
   await ev(() => { delete __eq.profile.flags.boss2; __eq.profile.flags.map2 = false; }); await closeDialogs();
   await page.keyboard.press('KeyT'); await wait(400);
-  check(await page.isVisible('#skillbook') && (await page.textContent('#skillbook')).includes('Fire Heart'), 'T opens the skill book with the four elements');
-  await page.click('#skillbook [data-a="learn"][data-v="flame_slash"]'); await wait(300);
-  check(await ev(() => __eq.profile.magic.ranks.flame_slash === 1 && __eq.profile.magic.bar[0] === 'flame_slash'), 'Learning Flame Slash puts it in slot 1');
+  check(await page.isVisible('#skillbook') && (await page.textContent('#skillbook')).includes('Fire Heart'), 'T opens the skill book: choose one of the four elements (21/11)');
+  await ev(() => { __eq.ui.confirmOk = true; }); page.once('dialog', (d) => d.accept());
+  await page.click('#skillbook [data-a="el"][data-v="fire"]'); await wait(300);
+  check(await ev(() => __eq.profile.magic.el === 'fire' && __eq.profile.magic.ranks.flame_slash === 1 && __eq.profile.magic.bar[0] === 'flame_slash'), 'Choosing Fire learns Flame Slash (melee) into slot 1');
   await page.keyboard.press('Escape'); await wait(300);
   const sl = await ev(() => { const W = __eq.wild, m = W.mobs.find((x) => x.kind === 'slime'); m.dead = 0; m.g.visible = true; m.hp = m.def.hp; m.x = m.home.x; m.z = m.home.z; __eq.teleport(m.x, m.z - 1.6); __eq.player.yaw = 0; m.stun = 3; return { i: W.mobs.indexOf(m), hp: m.hp }; }); await wait(600);
   const mp0 = await ev(() => __eq.profile.magic.mp);
@@ -302,7 +303,7 @@ await run('bag', async () => {          // A6: bag screen and gear on the body
 await run('shop', async () => {         // the shop door opens the inside view: buy, wear, sell
   if (await ev(() => __eq.region !== 'village')) { await ev(() => __eq.enterRegion('village')); await page.waitForFunction(() => __eq.region === 'village' && __eq.started, null, { timeout: 120000 }); }
   await ev(() => { const p = __eq.profile; p.inv = { owned: [], weapon: '', armor: '', charm: '', food: 0 }; p.stats.gold = 300; p.stats.level = 6; __eq.setWear(); __eq.teleport(7.6, -8); }); await wait(600);
-  check((await page.textContent('#prompt')).includes('Vào cửa hàng'), 'Prompt at the shop door');
+  check((await page.textContent('#prompt')).includes('Vào Village Shop'), 'Prompt at the shop door (21/11: one Village Shop)');
   await page.keyboard.press('KeyE'); await wait(500);
   check(await page.isVisible('#shopwin') && (await page.textContent('#shopwin')).includes('Iron Sword') && (await page.textContent('#shopwin')).includes('Honey Bread'), 'Inside the shop: both counters with their goods');
   await page.click('#shopwin button[data-act="buy"][data-id="wood_sword"]'); await wait(400);

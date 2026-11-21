@@ -7,6 +7,7 @@ import * as L from '../core/layout.js';
 import { HOMES, FURNITURE, STALLS } from '../core/regions/village.js';
 import { home, owners } from '../core/rules.js';
 import { house, gardenOf } from '../core/house.js';
+import { farm, stageOf, eggsReady, pigSize, pigGrown } from '../core/farm.js';
 import { label, bake } from '../world/common.js';
 import { hangSign } from '../world/village.js';
 import { campStall } from '../world/stall.js';
@@ -14,7 +15,7 @@ import { campStall } from '../world/stall.js';
 const M = (color, rough = 0.85) => new THREE.MeshStandardMaterial({ color, roughness: rough });
 const HOUSE_FILE = ['bld_cottage_red_v02', 'bld_house_blue_v02'];
 /** Garden things around the yard centre (dx, dz); the garden path runs along dz = 0. */
-const YARD_AT = { flowers: [-1.0, -2.6], veg_patch: [0.9, -3.3], fruit_tree: [-1.2, 3.4], bench: [1.2, 2.5], mailbox: [2.4, -1.3], garden_lamp: [2.4, 1.3] };
+const YARD_AT = { flowers: [-1.0, -2.6], veg_patch: [-2.4, -3.6], fruit_tree: [-1.2, 3.4], bench: [-2.4, 1.9], mailbox: [2.4, -1.3], garden_lamp: [2.4, 1.3] };      // (21/11) veg patch and bench moved for the coop and the pen
 
 
 function flowerBed() {
@@ -61,8 +62,10 @@ function plotFence(h, gh) {
   return g;
 }
 /** Vegetable bed with rows of cabbages and carrot tops; flower bed reuses flowerBed(). */
-function vegBed() {
+function vegBed(crops = true) {
   const g = new THREE.Group(), soil = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.22, 1.1), M(0x6a4024, 1)); soil.position.y = 0.11; g.add(soil);
+  for (let k = 0; k < 2; k++) { const r = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.05, 0.16), M(0x553018, 1)); r.position.set(0, 0.24, k ? 0.25 : -0.25); g.add(r); }      // two furrows
+  if (!crops) return g;
   for (let i = 0; i < 6; i++) { const x = -0.7 + (i % 3) * 0.7, z = i < 3 ? -0.25 : 0.25; const c = new THREE.Mesh(new THREE.SphereGeometry(0.2, 8, 6), M(i % 2 ? 0x6cc044 : 0x8fd05a, 0.8)); c.scale.y = 0.7; c.position.set(x, 0.32, z); g.add(c);
     const t = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.3, 5), M(0xff8a1a, 0.7)); t.position.set(x + 0.28, 0.3, z + (i < 3 ? 0.18 : -0.18)); t.rotation.z = Math.PI; g.add(t); }
   return g;
@@ -71,12 +74,63 @@ function vegBed() {
 function gardenDecor(h, tier, gh, models) {
   const g = new THREE.Group(), cfg = gardenOf({ garden: tier });
   const xs = [0.6, 3.1, 5.6, 8.1];
-  for (let i = 0; i < cfg.veg; i++) { const o = vegBed(), x = h.x + xs[i], z = h.z - 5.2; o.position.set(x, gh(x, z), z); g.add(o); }
+  for (let i = 0; i < cfg.veg; i++) { const o = vegBed(false), x = h.x + xs[i], z = h.z - 5.2; o.position.set(x, gh(x, z), z); g.add(o); }      // (21/11) the crops are planted by the child (cropsOf)
   for (let i = 0; i < cfg.flowers; i++) { const o = flowerBed(), x = h.x + xs[i], z = h.z + 5.2; o.position.set(x, gh(x, z), z); g.add(o); }
   for (let i = 0; i < cfg.trees; i++) { const x = h.x - 3.6 + i * 0.01, z = h.z + (i ? 4.8 : -4.8); const t = models.tree ? models.tree.clone(true) : null; if (t) { t.scale.setScalar(0.85); t.position.set(x, gh(x, z), z); t.traverse((c) => { if (c.isMesh) c.castShadow = true; }); g.add(t); } }
   if (cfg.pond) { const x = h.x - 3.5, z = h.z; const w = new THREE.Mesh(new THREE.CircleGeometry(1.6, 24), new THREE.MeshStandardMaterial({ color: 0x4fc6e8, roughness: 0.15, transparent: true, opacity: 0.9 })); w.rotation.x = -Math.PI / 2; w.scale.set(1.3, 1, 1); w.position.set(x + 5.4, gh(x + 5.4, z) + 0.08, z + 2.6); g.add(w); }
   if (cfg.arch) { const x = h.x + PLOT.x1 - 0.1; for (const dz of [-PLOT.gate - 0.2, PLOT.gate + 0.2]) { const fl = new THREE.Mesh(new THREE.SphereGeometry(0.28, 8, 6), M(0xff5a8a, 0.6)); fl.position.set(x - 0.3, gh(x, h.z + dz) + 1.9, h.z + dz); g.add(fl); } }
   return g;
+}
+/** (21/11) What grows on a bed: crop and stage (1 seed, 2 sprout, 3 growing, 4 ready to pick), six plants a bed. */
+export const BED_X = [0.6, 3.1, 5.6, 8.1], BED_DZ = -5.2, COOP_AT = [8.6, -3.6], PEN_AT = [8.4, 3.4];
+function cropsOf(crop, stage) {
+  const g = new THREE.Group(); if (!stage) return g;
+  const leaf = M(0x5fb83a, 0.8), dark = M(0x3f8a2a, 0.8);
+  for (let i = 0; i < 6; i++) {
+    const x = -0.62 + (i % 3) * 0.62, z = i < 3 ? -0.25 : 0.25, p = new THREE.Group(); p.position.set(x, 0.24, z); g.add(p);
+    if (stage === 1) { const m = new THREE.Mesh(new THREE.SphereGeometry(0.06, 6, 4), M(0x8a5a30, 1)); m.scale.y = 0.4; p.add(m); continue; }
+    if (stage === 2) { for (const s of [-1, 1]) { const l = new THREE.Mesh(new THREE.SphereGeometry(0.06, 6, 4), leaf); l.scale.set(1, 0.3, 0.5); l.position.set(s * 0.05, 0.06, 0); l.rotation.z = s * 0.5; p.add(l); } continue; }
+    const big = stage === 4;
+    if (crop === 'corn') { const st = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.035, big ? 1.1 : 0.6, 5), dark); st.position.y = big ? 0.55 : 0.3; p.add(st); for (let k = 0; k < 3; k++) { const l = new THREE.Mesh(new THREE.SphereGeometry(0.12, 6, 4), leaf); l.scale.set(0.3, 0.1, 1.4); l.position.y = 0.25 + k * 0.25; l.rotation.y = k * 2.1; p.add(l); } if (big) { const cob = new THREE.Mesh(new THREE.CapsuleGeometry(0.05, 0.16, 4, 8), M(0xf6d040, 0.6)); cob.position.set(0.07, 0.65, 0); cob.rotation.z = -0.3; p.add(cob); } continue; }
+    const bush = new THREE.Mesh(new THREE.SphereGeometry(big ? 0.17 : 0.12, 8, 6), crop === 'cabbage' ? M(0x8fd05a, 0.8) : leaf); bush.scale.y = 0.7; bush.position.y = 0.1; p.add(bush);
+    if (!big) continue;
+    if (crop === 'carrot') { const c = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.2, 6), M(0xff8a1a, 0.7)); c.rotation.z = Math.PI; c.position.set(0.06, 0.04, 0.06); p.add(c); }
+    if (crop === 'tomato') for (let k = 0; k < 3; k++) { const t = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 6), M(0xe2302a, 0.45)); t.position.set(Math.cos(k * 2.1) * 0.12, 0.14, Math.sin(k * 2.1) * 0.12); p.add(t); }
+    if (crop === 'cabbage') { const c = new THREE.Mesh(new THREE.SphereGeometry(0.13, 10, 8), M(0xc8ec9a, 0.7)); c.position.y = 0.16; p.add(c); }
+    if (crop === 'pumpkin') { const c = new THREE.Mesh(new THREE.SphereGeometry(0.15, 12, 8), M(0xf08a1e, 0.6)); c.scale.y = 0.7; c.position.set(0.05, 0.1, 0.05); p.add(c); }
+  }
+  if (stage === 4) { const glow = new THREE.Mesh(new THREE.RingGeometry(0.95, 1.05, 32), new THREE.MeshBasicMaterial({ color: 0xffe14a, transparent: true, opacity: 0.6, side: THREE.DoubleSide })); glow.rotation.x = -Math.PI / 2; glow.scale.set(1.05, 0.62, 1); glow.position.y = 0.26; g.add(glow); g.userData.ready = glow; }
+  return g;
+}
+function coop() {
+  const g = new THREE.Group(), wood = M(0xb8743a), roof = M(0xc0392b, 0.7);
+  const hut = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.9, 1.0), wood); hut.position.y = 0.75; g.add(hut);
+  for (const s of [-1, 1]) { const r = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.06, 0.75), roof); r.position.set(0, 1.38, s * 0.3); r.rotation.x = s * 0.55; g.add(r); }
+  for (const [x, z] of [[-0.6, -0.4], [0.6, -0.4], [-0.6, 0.4], [0.6, 0.4]]) { const l = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.3, 0.08), wood); l.position.set(x, 0.15, z); g.add(l); }
+  const door = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.45, 0.04), M(0x5a3416)); door.position.set(0, 0.62, 0.52); g.add(door);
+  const ramp = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.04, 0.7), wood); ramp.position.set(0, 0.22, 0.85); ramp.rotation.x = 0.55; g.add(ramp);
+  const nest = new THREE.Group(); nest.position.set(-0.9, 0, 0.3); const straw = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.25, 0.14, 12), M(0xe8c46a, 1)); straw.position.y = 0.07; nest.add(straw); g.add(nest); g.userData.nest = nest;
+  return g;
+}
+function chicken() {
+  const g = new THREE.Group(), w = M(0xfaf6ee, 0.8);
+  const b = new THREE.Mesh(new THREE.SphereGeometry(0.14, 10, 8), w); b.scale.set(1, 0.9, 1.25); b.position.y = 0.18; g.add(b);
+  const hd = new THREE.Mesh(new THREE.SphereGeometry(0.08, 8, 6), w); hd.position.set(0, 0.32, 0.12); g.add(hd);
+  const comb = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.06, 0.08), M(0xe2302a)); comb.position.set(0, 0.41, 0.12); g.add(comb);
+  const bk = new THREE.Mesh(new THREE.ConeGeometry(0.025, 0.06, 5), M(0xf0a020)); bk.rotation.x = Math.PI / 2; bk.position.set(0, 0.31, 0.21); g.add(bk);
+  return g;
+}
+function pen() {
+  const g = new THREE.Group(), wood = M(0x9a6436), mud = new THREE.Mesh(new THREE.CircleGeometry(1.25, 20), M(0x7a5a3a, 1)); mud.rotation.x = -Math.PI / 2; mud.position.y = 0.03; mud.scale.set(1.2, 1, 0.9); g.add(mud);
+  for (let k = 0; k < 14; k++) { const a = k / 14 * Math.PI * 2, x = Math.cos(a) * 1.55, z = Math.sin(a) * 1.15; const post = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.7, 0.08), wood); post.position.set(x, 0.35, z); g.add(post); }
+  for (const hh of [0.3, 0.6]) { const r = new THREE.Mesh(new THREE.TorusGeometry(1, 0.025, 4, 28), wood); r.rotation.x = Math.PI / 2; r.scale.set(1.55, 1.15, 1); r.position.y = hh; g.add(r); }
+  const trough = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.18, 0.3), wood); trough.position.set(0.6, 0.12, -0.6); g.add(trough);
+  const pig = new THREE.Group(), pink = M(0xf4a8b8, 0.7), body = new THREE.Mesh(new THREE.SphereGeometry(0.4, 12, 10), pink); body.scale.set(1, 0.85, 1.35); body.position.y = 0.42; pig.add(body);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.25, 10, 8), pink); head.position.set(0, 0.55, 0.5); pig.add(head);
+  const snout = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.08, 10), M(0xe88a9a)); snout.rotation.x = Math.PI / 2; snout.position.set(0, 0.52, 0.75); pig.add(snout);
+  for (const s of [-1, 1]) { const e = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.14, 4), pink); e.position.set(s * 0.14, 0.78, 0.45); pig.add(e); const eye = new THREE.Mesh(new THREE.SphereGeometry(0.03, 6, 4), M(0x1a1a20)); eye.position.set(s * 0.1, 0.62, 0.7); pig.add(eye); }
+  for (const [x, z] of [[-0.2, 0.3], [0.2, 0.3], [-0.2, -0.3], [0.2, -0.3]]) { const l = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.2, 6), pink); l.position.set(x, 0.1, z); pig.add(l); }
+  g.add(pig); g.userData.pig = pig; return g;
 }
 export class Homes {
   /** api: { scene, load(name) -> model, profiles() -> all profiles in the save, current() -> playing profile } */
@@ -100,8 +154,8 @@ export class Homes {
     await place('bld_shop_orange_v02', FURNITURE.x, FURNITURE.z, Math.PI / 2, 1.3, [0.92, 1.05, 1.12]);
     still.add(hangSign('FURNITURE', 'Beds · Tables · Garden', FURNITURE.door[0] - 0.3, gh(FURNITURE.door[0], FURNITURE.door[1]) + 4.9, FURNITURE.door[1], Math.PI / 2));
     for (const [k, t] of Object.entries(STALLS)) {
-      const s = campStall(t.x, gh(t.x, t.z), t.z, t.yaw, k === 'music' ? 0x8a4ad0 : k === 'tailor' ? 0xe06aa8 : k === 'healer' ? 0x2f9ae0 : 0xe2483e, k === 'tailor' ? 'cloth' : 'fruit'); this.root.add(s);
-      const n = label(k === 'music' ? "🎵 Anna's Instruments" : k === 'tailor' ? "🧵 Mia's Tailor Shop" : k === 'healer' ? "🧪 Lily's Potions & Gear" : "🍎 Ben's Fruit & Veg", { size: 28, scale: 0.8 }); n.position.set(t.x, gh(t.x, t.z) + 3.3, t.z); this.root.add(n);
+      const s = campStall(t.x, gh(t.x, t.z), t.z, t.yaw, k === 'music' ? 0x8a4ad0 : k === 'tailor' ? 0xe06aa8 : k === 'healer' ? 0x2f9ae0 : k === 'pets' ? 0xf0a030 : 0xe2483e, k === 'tailor' ? 'cloth' : 'fruit'); this.root.add(s);
+      const n = label(k === 'music' ? "🎵 Anna's Instruments" : k === 'tailor' ? "🧵 Mia's Tailor Shop" : k === 'healer' ? "🧪 Village Shop · Lily" : k === 'pets' ? "🐾 Penny's Pet Shop" : "🍎 Ben's Fruit & Veg", { size: 28, scale: 0.8 }); n.position.set(t.x, gh(t.x, t.z) + 3.3, t.z); this.root.add(n);
       if (k === 'tailor') {      // two mannequins from the harbor boutique beside Mia's stall
         try { const src = await load('harbor_mannequin_v01');
           for (const [dx, keep] of [[-2.6, 'mannequin_dress'], [2.6, 'mannequin_coat']]) { const m = src.clone(true); m.children.forEach((c) => { if (c.name && c.name.startsWith('mannequin') && c.name !== keep) c.visible = false; });
@@ -129,7 +183,14 @@ export class Homes {
         const hh = house(p), up = 1 + 0.38 * (hh.floors - 1), m = hh.villa && lot.models.hall ? lot.models.hall : lot.models.house;
         lot.models.house.visible = m === lot.models.house; if (lot.models.hall) lot.models.hall.visible = m === lot.models.hall;
         m.scale.y = (m === lot.models.hall ? 1.0 : 1.3) * up; lot.garden.add(gardenDecor(h, hh.garden, gh, this.api.models));
-      } else { lot.models.house.visible = true; lot.models.house.scale.y = 1.3; if (lot.models.hall) lot.models.hall.visible = false; }
+        lot.farm = { beds: [], sig: [], coop: null, pen: null, hens: [] };      // (21/11) the farm: crops, coop with hens, pig pen
+        const cfg = gardenOf(hh);
+        for (let b = 0; b < cfg.veg; b++) { const x = h.x + BED_X[b], z = h.z + BED_DZ, grp = new THREE.Group(); grp.position.set(x, gh(x, z), z); lot.garden.add(grp); lot.farm.beds.push(grp); lot.farm.sig.push(''); }
+        if (hh.coop) { const c = coop(), x = h.x + COOP_AT[0], z = h.z + COOP_AT[1]; c.position.set(x, gh(x, z), z); c.rotation.y = -Math.PI / 2; lot.garden.add(c); lot.farm.coop = c;
+          for (let k = 0; k < 3; k++) { const ch = chicken(); lot.garden.add(ch); lot.farm.hens.push({ o: ch, a: k * 2.1, cx: x - 1.4, cz: z, ph: k }); } }
+        if (hh.pen) { const pn = pen(), x = h.x + PEN_AT[0], z = h.z + PEN_AT[1]; pn.position.set(x, gh(x, z), z); lot.garden.add(pn); lot.farm.pen = pn; }
+        this.syncFarm(true);
+      } else { lot.farm = null; lot.models.house.visible = true; lot.models.house.scale.y = 1.3; if (lot.models.hall) lot.models.hall.visible = false; }
       const have = p ? home(p).items : [];
       for (const id of have) {
         const at = YARD_AT[id]; if (!at) continue;
@@ -148,6 +209,34 @@ export class Homes {
         o.traverse((c) => { if (c.isMesh) c.castShadow = true; }); lot.yard.add(o);
       }
     }
+  }
+  /** Redraws the crops, the eggs in the nest and the pig when they changed (called about twice a second). */
+  syncFarm(force = false, now = Date.now()) {
+    for (const lot of this.lots) {
+      const p = lot.owner, F = lot.farm; if (!p || !F) continue; const fm = farm(p);
+      F.beds.forEach((grp, i) => { const b = fm.beds[i], st = stageOf(b, now), sig = b ? `${b.crop}:${st}` : ''; if (!force && sig === F.sig[i]) return; F.sig[i] = sig; grp.clear(); grp.add(cropsOf(b && b.crop, st)); });
+      if (F.coop) { const n = eggsReady(p, now), nest = F.coop.userData.nest; if (nest.userData.n !== n) { nest.userData.n = n; while (nest.children.length > 1) nest.remove(nest.children[1]); for (let k = 0; k < Math.min(n, 8); k++) { const e = new THREE.Mesh(new THREE.SphereGeometry(0.06, 8, 6), M(0xfaf0dc, 0.5)); e.scale.y = 1.3; e.position.set(Math.cos(k * 1.3) * 0.12, 0.17 + Math.floor(k / 5) * 0.06, Math.sin(k * 1.3) * 0.12); nest.add(e); } } }
+      if (F.pen) { const pig = F.pen.userData.pig, s = pigSize(fm.pig, now); pig.visible = !!fm.pig; pig.scale.setScalar(s || 0.5); pig.userData.grown = pigGrown(fm.pig, now); }
+    }
+  }
+  /** Hens peck about, the pig wobbles, the ripe beds glow (every frame while the village is shown). */
+  update(dt) {
+    if (!this.root.visible) return; this.t = (this.t || 0) + dt; this.farmT = (this.farmT || 0) + dt; if (this.farmT > 0.5) { this.farmT = 0; this.syncFarm(); }
+    const gh = (x, z) => L.REGIONS.village.groundHeight(x, z);
+    for (const lot of this.lots) { const F = lot.farm; if (!F) continue;
+      for (const hn of F.hens) { hn.a += dt * 0.5; const x = hn.cx + Math.cos(hn.a + hn.ph) * 0.8, z = hn.cz + Math.sin(hn.a * 1.3 + hn.ph) * 0.9; hn.o.position.set(x, gh(x, z) + Math.abs(Math.sin(this.t * 7 + hn.ph)) * 0.04, z); hn.o.rotation.y = hn.a + hn.ph + Math.PI / 2; hn.o.rotation.x = Math.sin(this.t * 3 + hn.ph) > 0.8 ? 0.5 : 0; }
+      if (F.pen) { const pig = F.pen.userData.pig; pig.rotation.y = Math.sin(this.t * 0.4) * 1.2; pig.position.y = Math.abs(Math.sin(this.t * 2.5)) * 0.02; }
+      for (const grp of F.beds) { const r = grp.children[0] && grp.children[0].userData.ready; if (r) r.material.opacity = 0.35 + 0.35 * Math.sin(this.t * 4); }
+    }
+  }
+  /** The farm spot the hero stands at: { lot, kind: 'bed' | 'coop' | 'pen', i } or null. */
+  farmAt(pos) {
+    for (const lot of this.lots) { const F = lot.farm, h = lot.h; if (!F) continue;
+      for (let i = 0; i < F.beds.length; i++) if (Math.abs(pos.x - (h.x + BED_X[i])) < 1.2 && Math.abs(pos.z - (h.z + BED_DZ)) < 1.35) return { lot, kind: 'bed', i };
+      if (F.coop && Math.hypot(pos.x - (h.x + COOP_AT[0]), pos.z - (h.z + COOP_AT[1])) < 1.9) return { lot, kind: 'coop' };
+      if (F.pen && Math.hypot(pos.x - (h.x + PEN_AT[0]), pos.z - (h.z + PEN_AT[1])) < 2.1) return { lot, kind: 'pen' };
+    }
+    return null;
   }
   setRegion(name) { this.root.visible = name === 'village'; }
   /** The lot that belongs to this profile (or null: a third child, or the admin). */

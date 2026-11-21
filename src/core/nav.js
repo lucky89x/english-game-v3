@@ -58,3 +58,29 @@ export function findPath(ax, az, bx, bz) {
   for (let c = goal; c !== -1; c = came[c]) out.push({ x: cx(c % N), z: cx((c / N) | 0) });
   return out.reverse();
 }
+
+// (21/11) the quest trail's dots (game/trail.js), pure so node tests can check them
+const MAX = 70, GAP = 1.15;
+
+/** Points every `gap` metres along a polyline [{x,z}], starting `skip` metres from its start. Pure, so tests can check it. */
+export function dotsAlong(path, gap = GAP, skip = 1.2, max = MAX) {
+  const out = []; if (!path || path.length < 2) return out;
+  let need = skip;
+  for (let i = 1; i < path.length && out.length < max; i++) {
+    const a = path[i - 1], b = path[i], len = Math.hypot(b.x - a.x, b.z - a.z); let at = 0;
+    while (need <= len - at && out.length < max) { at += need; const k = at / len; out.push({ x: a.x + (b.x - a.x) * k, z: a.z + (b.z - a.z) * k }); need = gap; }
+    need -= len - at;
+  }
+  return out;
+}
+/** Drops the zigzag of the grid path: keeps only the points where the way turns (or every 6th, to follow hills). */
+export function simplify(path) {
+  if (!path || path.length < 3) return path;
+  const out = [path[0]];
+  for (let i = 1; i < path.length - 1; i++) {
+    const a = out[out.length - 1], b = path[i], c = path[i + 1], d1x = b.x - a.x, d1z = b.z - a.z, d2x = c.x - b.x, d2z = c.z - b.z;
+    if (Math.abs(d1x * d2z - d1z * d2x) > 1e-6 || i % 6 === 0) out.push(b);
+  }
+  out.push(path[path.length - 1]); return out;
+}
+

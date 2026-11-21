@@ -3,7 +3,8 @@
 // built from simple shapes in the game's warm palette: plank floor, panelled walls, beams, glowing windows and
 // lanterns, a rug, and furniture for each house. The camera drifts slowly so the room feels alive.
 import * as THREE from 'three';
-import { GROUPS, floorPlan } from '../core/house.js';
+import { GROUPS, floorPlan, paintOf, WALL_COLORS, FLOOR_COLORS } from '../core/house.js';
+import { buildHomeWalk } from './homewalk.js';
 
 const M = (color, rough = 0.8, extra = {}) => new THREE.MeshStandardMaterial({ color, roughness: rough, ...extra });
 const box = (g, w, h, d, m, x, y, z, ry = 0) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); o.position.set(x, y, z); o.rotation.y = ry; g.add(o); return o; };
@@ -50,7 +51,7 @@ const bottle = (g, x, y, z, col) => { cyl(g, 0.08, 0.1, 0.22, M(col, 0.2, { tran
 const pot = (g, x, y, z, s = 1) => { cyl(g, 0.16 * s, 0.12 * s, 0.24 * s, M(0xb8643a), x, y + 0.12 * s, z); for (let i = 0; i < 5; i++) ball(g, 0.12 * s, M([0x4f9a3a, 0x6cc044, 0x3f8a34][i % 3], 0.8), x + Math.cos(i * 1.3) * 0.1 * s, y + (0.32 + (i % 2) * 0.08) * s, z + Math.sin(i * 1.3) * 0.1 * s); };
 
 /** A child's home (18/11): empty walls at first; each thing bought in the shops stands in its own place. */
-function homeThings(g, items, lights, model) {
+export function homeThings(g, items, lights, model) {
   // Blender furniture (home_*_v01.glb, batch 11): drawn when the file is loaded (model(name) -> a private clone or null), else the shapes below
   const put = (file, x, y, z, ry = 0, sc = 1, rx = 0) => {
     const m = model && model(file); if (!m) return false;
@@ -87,7 +88,7 @@ function homeThings(g, items, lights, model) {
 
 /** kind: 'shop' | 'music' | 'hall' | 'herb' | 'forest' | 'home' (opts.items: what the child bought). Returns { scene, camera, update(dt), dispose() }. */
 /** (19/11, the backbone story) the Language Compass pedestal in the hero's home: ten slots, the found pieces glow gold. */
-function compassPedestal(g, pieces, lights) {
+export function compassPedestal(g, pieces, lights) {
   const p = new THREE.Group(), stone = M(0xb8b0a0, 0.85), dark = M(0x4a4440, 0.8);
   cyl(p, 0.32, 0.4, 0.75, stone, 0, 0.375, 0, 12); cyl(p, 0.52, 0.48, 0.1, stone, 0, 0.8, 0, 24);
   for (let i = 0; i < 10; i++) {
@@ -106,9 +107,10 @@ function compassPedestal(g, pieces, lights) {
 // ---------------------------------------------------------------- the child's house (20/11): 16 x 12 m per floor (four times the old room),
 // up to three floors of the same size joined by stairs, four rooms on each floor. Open towards the camera like a doll's house.
 const FLOOR_H = 3.7;
-function houseFloor(g, f, h, lights) {
+export function houseFloor(g, f, h, lights) {
   const y0 = f * FLOOR_H, W = 16, D = 12, villa = !!h.villa, top = f === h.floors - 1;
-  const wallCol = villa ? 0xf4ecdc : 0xf2e6d0, plank = M(villa ? 0xe6dccb : 0xc08a50, villa ? 0.45 : 0.85), plank2 = M(villa ? 0xd8ccb8 : 0xaf7a44, villa ? 0.45 : 0.85);
+  const pt = paintOf(h), fc = h.paint && h.paint.floor ? FLOOR_COLORS[pt.floor].hex : villa ? 0xe6dccb : FLOOR_COLORS[pt.floor].hex, shiny = villa || pt.floor === 'marble';      // (21/11) the child's own colours
+  const wallCol = h.paint && h.paint.wall ? WALL_COLORS[pt.wall].hex : villa ? 0xf4ecdc : WALL_COLORS[pt.wall].hex, plank = M(fc, shiny ? 0.45 : 0.85), plank2 = M(new THREE.Color(fc).multiplyScalar(0.9).getHex(), shiny ? 0.45 : 0.85);
   const wall = M(wallCol, 0.9), trim = M(villa ? 0xd9b45a : 0x7a4a24, villa ? 0.35 : 0.8, villa ? { metalness: 0.5 } : {}), beam = M(0x5a3416, 0.85), slab = M(0x6a4020, 0.9);
   const fl = new THREE.Group(); fl.position.y = y0; g.add(fl);
   for (let i = 0; i < 16; i++) box(fl, 1.0, 0.08, D + 0.2, i % 2 ? plank : plank2, -7.5 + i, 0, 0);      // the floor boards
@@ -136,7 +138,7 @@ function houseFloor(g, f, h, lights) {
   if (top) { box(fl, W + 0.3, 0.2, D + 0.3, slab, 0, 3.55, 0); for (const x of [-6, -2, 2, 6]) box(fl, 0.25, 0.25, D, beam, x, 3.35, 0); }
   // a lantern on each room, one real light per floor (more would slow the shaders)
   for (const cx of [-4, 4]) for (const cz of [-3, 3]) { cyl(fl, 0.01, 0.01, 0.5, M(0x333333), cx, 3.15, cz, 4); ball(fl, 0.16, M(0xffd27a, 0.4, { emissive: 0xffb040, emissiveIntensity: 1.6 }), cx, 2.85, cz); }
-  for (const x of [-4, 4]) { const l = new THREE.PointLight(0xffd29a, 16, 15, 1.4); l.position.set(x, y0 + 2.7, 0); g.add(l); lights.push(l); }
+  for (const x of [-4, 4]) { const l = new THREE.PointLight(0xfff0dc, 13, 15, 1.4); l.position.set(x, y0 + 2.7, 0); g.add(l); lights.push(l); }      // (21/11) whiter, so the chosen wall colour shows
   if (villa) {      // stone columns on the open front edge, a golden chandelier
     for (const x of [-7.7, -3, 3, 7.7]) { cyl(fl, 0.22, 0.26, 3.3, M(0xf0ece4, 0.4), x, 1.65, D / 2 - 0.2, 14); cyl(fl, 0.34, 0.34, 0.12, M(0xd9b45a, 0.35, { metalness: 0.5 }), x, 3.34, D / 2 - 0.2, 14); }
     const ch = new THREE.Group(); ball(ch, 0.28, M(0xffe6a0, 0.3, { emissive: 0xffc860, emissiveIntensity: 1.5 }), 0, 0, 0); for (let i = 0; i < 6; i++) ball(ch, 0.1, M(0xffe6a0, 0.3, { emissive: 0xffc860, emissiveIntensity: 1.5 }), Math.cos(i * 1.05) * 0.5, -0.1, Math.sin(i * 1.05) * 0.5);
@@ -173,7 +175,7 @@ function buildHome(opts) {
   };
 }
 export function buildRoom(kind, opts = {}) {
-  if (kind === 'home') return buildHome(opts);
+  if (kind === 'home') return opts.avatar ? buildHomeWalk(opts) : buildHome(opts);      // (21/11) the hero walks inside
   const scene = new THREE.Scene(), g = new THREE.Group(), lights = []; scene.add(g);
   scene.background = new THREE.Color(0x2a1a10);
   scene.add(new THREE.HemisphereLight(0xfff0d0, 0x5a3a20, 1.1));

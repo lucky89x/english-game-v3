@@ -41,8 +41,9 @@ export class AdminPanel {
       <h4>Nhân vật</h4><div class="row">Cấp: <input id="adlv" type="number" min="1" max="60" value="${p.stats.level}" style="width:60px"><button data-a="level">Đặt cấp</button>
         <button data-a="gold" data-v="1000">+1000 vàng</button><button data-a="heal">Hồi đầy máu</button>
         <button data-a="god">${p.god ? '✔ ' : ''}Không mất máu</button></div>
-      <div class="row"><button data-a="magic">Học đủ phép (4 hệ) + gán ô 1–4</button><button data-a="mp">Đầy mana</button><button data-a="potions">+10 bình máu/mana (túi V)</button><button data-a="loot">Nhận hết đồ hiếm</button></div>
+      <div class="row"><button data-a="magic">Học đủ phép (hệ đang chọn) + gán ô 1–3</button><button data-a="mp">Đầy mana</button><button data-a="potions">+10 bình máu/mana (túi V)</button><button data-a="loot">Nhận hết đồ hiếm</button></div>
       <div class="row">Lớp: ${[6, 7, 8, 9].map((g) => `<button data-a="grade" data-v="${g}">${g === p.grade ? '✔ ' : ''}Lớp ${g}</button>`).join('')}</div>
+      <h4>🏠 Vào nhà từng người chơi (xem đồ đạc, cách bày trí)</h4><div class="row">${(this.api.profiles ? this.api.profiles() : []).filter((o) => !o.admin).map((o) => `<button data-a="visit" data-v="${o.id}">🏠 ${o.name} (lớp ${o.grade}, ${o.stats.gold} vàng)</button>`).join('') || 'Chưa có người chơi nào.'}</div>
       <h4>Mở khóa</h4><div class="row"><button data-a="unlock">Mở hết (rừng, cầu, Map 2, boss, cổng Cú Mèo)</button><button data-a="limits">Xóa giới hạn mini game hôm nay</button>
         <button data-a="daily">Mở lại rương + bong bóng hôm nay</button></div>
       <h4>Nhiệm vụ làng (Chương I)</h4><div class="row">${STEPS.map(([k, t]) => `<button data-a="step" data-v="${k}">${k === step ? '✔ ' : ''}${t}</button>`).join('')}</div>
@@ -53,10 +54,11 @@ export class AdminPanel {
   act(a, v) {
     const p = this.api.profile(), api = this.api;
     if (a === 'close') { this.el.classList.add('hidden'); return; }
+    if (a === 'visit') { const o = (api.profiles ? api.profiles() : []).find((x) => x.id === v); if (o && api.visitHome) { this.el.classList.add('hidden'); api.visitHome(o); } return; }
     if (a === 'level') { const n = Math.max(1, Math.min(60, Number(this.el.querySelector('#adlv').value) || 1)); api.setLevel(n); api.toast(`Cấp ${n}`); }
     if (a === 'gold') { api.addGold(Number(v)); }
     if (a === 'heal') { p.stats.hp = undefined; api.toast('Đầy máu'); }
-    if (a === 'magic') { const m = SK.magic(p); for (const id of Object.keys(SK.NODES)) m.ranks[id] = SK.MAX_RANK; const outer = SK.EL_IDS.map((el) => SK.TREE[el].find((n) => n.kind === 'outer' && n.range === 'far') || SK.TREE[el].find((n) => n.kind === 'outer')); outer.forEach((n, i) => SK.assign(p, i, n.id)); m.mp = null; api.toast('Đã học đủ phép: dùng phím 1–4, T mở bảng'); }
+    if (a === 'magic') { const m = SK.magic(p); if (!m.el) SK.chooseEl(p, 'fire'); for (const n of SK.TREE[m.el]) m.ranks[n.id] = SK.MAX_RANK; SK.spellsOf(m.el).forEach((n, i) => SK.assign(p, i, n.id)); m.mp = null; api.toast(`Đã học đủ phép hệ ${SK.ELEMENTS[m.el].vi}: phím 1–3; T mở bảng để đổi hệ`); }      // (21/11) one element
     if (a === 'mp') { SK.magic(p).mp = null; api.toast('Đầy mana'); }
     if (a === 'potions') { const P = bag(p).pantry || (bag(p).pantry = {}); for (const id of ['hp_s', 'hp_m', 'hp_l', 'mp_s', 'mp_m', 'mp_l']) P[id] = (P[id] || 0) + 10; api.toast('+10 mỗi loại bình (mở túi V)'); }
     if (a === 'loot') { for (const [id, it] of Object.entries(ITEMS)) if (it.rare) giveLoot(p, id); api.toast('Đã nhận đồ hiếm (mở túi V)'); }

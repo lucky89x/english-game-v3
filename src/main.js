@@ -29,7 +29,7 @@ import { PetPanel } from './ui/petpanel.js';
 import { Pet } from './game/pet.js';
 import * as PETS from './core/pet.js';
 import { outfitParts } from './game/outfit.js';
-import { tintBody, tintAccessory, setHairStyle, setClothes, setGoggles, CLOTH } from './game/tint.js';
+import { tintBody, tintAccessory, setHairStyle, setClothes, setGoggles, CLOTH, setPattern, setBoots } from './game/tint.js';
 import { faceMaps, tintSkin, lookOf } from './game/faces.js';
 import * as Saga from './core/saga.js';
 import { Creator } from './ui/creator.js';
@@ -48,6 +48,8 @@ import * as TR from './core/treasure.js';
 import { MARKS as ISLE_MARKS } from './core/regions/isle.js';
 import { buildRoom } from './world/interior.js';
 import { label } from './world/common.js';
+import { GuideTrail } from './game/trail.js';
+import * as Snap from './core/nav.js';
 import * as Q from './core/quests.js';
 import * as Exam from './core/exam.js';
 import { Wild, BOARD, BOSS_AT, BOSS2_AT, FOREST_BOARD, BOSS3_AT, HARBOR_BOARD, BOSS4_AT } from './game/combat.js';
@@ -60,7 +62,8 @@ import { ShopWindow } from './ui/shop.js';
 import { ITEMS, bag, wear, buy, eat, shopList, pay, map2Ready, map3Ready, playerAtk, useQuick } from './core/rules.js';
 import { PackUI } from './ui/pack.js';
 import { Fishing } from './game/fishing.js';
-import { house as houseOf } from './core/house.js';
+import { house as houseOf, setPlace } from './core/house.js';
+import * as Farm from './core/farm.js';
 import { payNote } from './game/minigames.js';
 import { SAM_LINES, BRIDGE, BRIDGE_SPOTS, FRIENDS, OPENING } from './game/content.js';
 import { UI } from './ui/ui.js';
@@ -68,8 +71,8 @@ import { Post } from './render/post.js';
 import { addOutline, showOutlines, syncOutlines } from './render/outline.js';
 import { Minimap } from './ui/minimap.js';
 import { initTouch, touchWanted } from './ui/touch.js';
-import { sfx, setSound, soundOn, unlock } from './audio.js';
-import { voiceOn, setVoice, speak } from './ui/speech.js';
+import { sfx, setSound, soundOn, unlock, setMusic, musicOn, playMusic } from './audio.js';
+import { voiceOn, setVoice, speak, paceOf, nextPace } from './ui/speech.js';
 import { QuestMarks } from './game/marks.js';
 import { keyCode } from './core/keys.js';
 import { WordSpots } from './game/wordspots.js';
@@ -151,8 +154,8 @@ const ui = new UI(), store = Save.load();
 let profile = null, quest = null, story = null, world = null, player = null, cam = null, tom = null, sam = null, ben = null, pip = null, crystals = null, minimap = null, letterProp = null, itemProps = {}, friends = [], mini = null, wild = null, arcade = null, chests = null, spots = null, unitCards = [], cardOfFn = () => null;
 let shopWin = null, walkers = null, talkW = -1, touch = null, quality = localStorage.getItem('eq-quality') || 'medium', perfOn = false, started = false, switching = false, wordIds = {}, jarKey = '';
 const keys = new Set();
-const game = { errors, get homes() { return homes; }, get tom() { return tom; }, get fishing() { return fishing; }, get profile() { return profile; }, get quest() { return quest; }, get story() { return story; }, get player() { return player; }, get cam() { return cam; }, get minimap() { return minimap; }, ui, L, stats: { fps: 0, ms: 0, calls: 0, tris: 0 },
-  teleport(x, z) { player.place(x, z); cam.target.set(x, player.pos.y + 1.25, z); }, applyLook, syncPet, get digs() { return digMeshes; }, catchFish, gainItems, cardsOfUnit: (n) => cardsOfUnit(n), get pet() { return petObj; }, get petPanel() { return petPanel; },  setQuality, key: (code) => onKey({ code, preventDefault() {} }), get started() { return started && !switching; }, get region() { return L.NAME; }, chooseProfile, enterRegion, MARKET_JARS, BRIDGE_SPOTS, get mini() { return mini; }, get wild() { return wild; }, get scene() { return scene; }, openShop, get sword() { return swordMesh; }, get armor() { return armorShown; }, setWear, openBag: () => openBag(), get arcade() { return arcade; }, get chests() { return chests; }, get spots() { return spots; }, get admin() { return admin; }, get friends() { return friends; }, get walkers() { return walkers; }, get shopWin() { return shopWin; }, get music() { return music; }, get journal() { return journal; }, get spells() { return spells; }, get floaters() { return floaters; }, get skillUI() { return skillUI; }, get intro() { return intro; }, cardOf: (id) => cardOfFn(id), pause: (on) => renderer.setAnimationLoop(on ? null : frame),      // tests: stop drawing while another page is checked
+const game = { errors, SK, games: { raceGame, slingGame, candyGame }, goHome: (o, mine) => goHome(o || profile, mine !== false), get room() { return room; }, get homes() { return homes; }, Farm, get trail() { return guide && guide.trail; }, get tom() { return tom; }, get fishing() { return fishing; }, get profile() { return profile; }, get quest() { return quest; }, get story() { return story; }, get player() { return player; }, get cam() { return cam; }, get minimap() { return minimap; }, ui, L, stats: { fps: 0, ms: 0, calls: 0, tris: 0 },
+  teleport(x, z) { player.place(x, z); cam.target.set(x, player.pos.y + 1.25, z); }, applyLook, syncPet, get digs() { return digMeshes; }, catchFish, gainItems, cardsOfUnit: (n) => cardsOfUnit(n), get pet() { return petObj; }, get petPanel() { return petPanel; },  setQuality, key: (code) => onKey({ code, preventDefault() {} }), get started() { return started && !switching; }, get region() { return L.NAME; }, chooseProfile, enterRegion, MARKET_JARS, BRIDGE_SPOTS, get mini() { return mini; }, get wild() { return wild; }, get scene() { return scene; }, openShop, get sword() { return swordMesh; }, get armor() { return armorShown; }, setWear, openBag: () => openBag(), get arcade() { return arcade; }, get chests() { return chests; }, get spots() { return spots; }, get admin() { return admin; }, get friends() { return friends; }, get walkers() { return walkers; }, get shopWin() { return shopWin; }, get music() { return music; }, get journal() { return journal; }, get spells() { return spells; }, get floaters() { return floaters; }, get skillUI() { return skillUI; }, get intro() { return intro; }, cardOf: (id) => cardOfFn(id), pause: (on) => renderer.setAnimationLoop(on ? null : frame), renderNow: () => { post.setSun(camera, sunDir); post.render(scene, camera); },      // tests: stop drawing while another page is checked
   post, refresh: () => refresh(), refreshGear: () => { setSword(); setWear(); } };
 globalThis.__eq = game;
 
@@ -189,9 +192,10 @@ function renderGear() {
   const g = $('gear'); if (!profile) return; g.classList.remove('hidden');
   if (!gearOpen) { g.className = 'card closed'; g.innerHTML = '<button id="gopen" title="Cài đặt">⚙</button>'; $('gopen').onclick = () => { gearOpen = true; renderGear(); }; return; }
   g.className = 'card';
-  g.innerHTML = `<b style="flex-basis:100%">Cài đặt <button id="gclose" style="float:right">✕</button></b>
+  const un = profile && gradeUnits[Save.unitOf(profile) - 1];      // (21/11) each map teaches one Global Success unit
+  g.innerHTML = `<b style="flex-basis:100%">Cài đặt <button id="gclose" style="float:right">✕</button></b>${un ? `<span style="flex-basis:100%;font-size:13px">📘 Đang học: Global Success ${profile.grade} · Unit ${Save.unitOf(profile)} — ${un.title} (Map ${profile.flags && profile.flags.map2 ? 2 : 1} ↔ Unit ${profile.flags && profile.flags.map2 ? 2 : 1})</span>` : ''}
     Đồ họa: <select id="gq">${Object.entries(QUALITY).map(([k, v]) => `<option value="${k}" ${k === quality ? 'selected' : ''}>${v.label}</option>`).join('')}</select>
-    <button id="gs">Âm thanh: ${soundOn() ? 'bật' : 'tắt'}</button><button id="gv" title="Đọc to lời thoại tiếng Anh">Đọc to: ${voiceOn() ? 'bật' : 'tắt'}</button><button id="gb" title="Xem lại các từ đã gặp (phím B)">📖 Sổ từ</button>
+    <button id="gs">Âm thanh: ${soundOn() ? 'bật' : 'tắt'}</button><button id="gv" title="Đọc to lời thoại tiếng Anh">Đọc to: ${voiceOn() ? 'bật' : 'tắt'}</button><button id="gp" title="Tốc độ giọng đọc tiếng Anh">Giọng đọc: ${paceOf().vi}</button><button id="gm" title="Nhạc nền nhẹ">Nhạc nền: ${musicOn() ? 'bật' : 'tắt'}</button><button id="gb" title="Xem lại các từ đã gặp (phím B)">📖 Sổ từ</button>
     <span style="flex-basis:100%;color:#9a8060" title="Để 'theo map' thì Unit đi theo map con đã mở">Phụ huynh · Unit con đang học trên lớp: <select id="gu"><option value="0">theo map (${Save.unitOf({ flags: profile.flags })})</option>${Array.from({ length: 12 }, (_, i) => `<option value="${i + 1}" ${profile.unitPick === i + 1 ? 'selected' : ''}>${i + 1}</option>`).join('')}</select></span>
     <button id="ge">Xuất hồ sơ</button><button id="gp">Đổi người chơi</button><span style="color:#9a8060">F3: hiệu năng</span>`;
   const done = (e) => { if (e && e.target) e.target.blur(); };          // a focused list would eat W/S and the arrows
@@ -199,6 +203,8 @@ function renderGear() {
   $('gq').onchange = (e) => { done(e); localStorage.setItem('eq-quality-manual', '1'); setQuality(e.target.value); };
   $('gu').onchange = (e) => { done(e); const v = Number(e.target.value); if (v) profile.unitPick = v; else delete profile.unitPick; reloadUnit().then(() => ui.toast(`Đang học Unit ${Save.unitOf(profile)}`)); };
   $('gs').onclick = () => { setSound(!soundOn()); renderGear(); };
+  $('gp').onclick = () => { const k = nextPace(); renderGear(); speak('Hello! This is how fast I read.', true); ui.toast('Tốc độ đọc: ' + k.vi); };
+  $('gm').onclick = () => { setMusic(!musicOn()); renderGear(); };
   $('gv').onclick = () => { setVoice(!voiceOn()); renderGear(); };
   $('gb').onclick = () => { gearOpen = false; renderGear(); wordBook(); };
   $('ge').onclick = () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([Save.exportProfile(profile)], { type: 'application/json' })); a.download = `english-quest-${profile.name}.json`; a.click(); };
@@ -295,6 +301,7 @@ function guideArrow(dt) {
     m.scale.setScalar(0.85); m.renderOrder = 9; guide = { m, sign: null, txt: '', t: 0 }; scene.add(m);
   }
   const g = guideGoal, show = !!g && started && !room && !switching && !(creator && creator.open) && !(tailor && tailor.open);
+  guide.trail = guide.trail || new GuideTrail(scene); guide.trail.update(dt, player.pos, g, show && !(mini && mini.active) && !(fishing && fishing.active));      // (21/11) dotted trail along the nearest way
   const d = show ? Math.hypot(g.x - player.pos.x, g.z - player.pos.z) : 0;
   guide.m.visible = show && d > 4; if (guide.sign) guide.sign.visible = guide.m.visible;
   if (!guide.m.visible) return;
@@ -309,7 +316,7 @@ let marks3d = null; const shadowAt = new THREE.Vector3();
 function questMarks(list) {
   // quest givers: the solid spinning "!" / "?" with a light beam (game/marks.js); the owl's review counts as a job
   marks3d = marks3d || new QuestMarks(scene);
-  marks3d.set(list.filter((m) => m.text === '!' || m.text === '?' || m.text === '🦉').map((m) => { const g = L.walkHeight(m.x, m.z); return { x: m.x, z: m.z, text: m.text === '?' ? '?' : '!', ground: g, head: g + 1.75 }; }));
+  marks3d.set(list.filter((m) => m.text === '!' || m.text === '?' || m.text === '🦉').map((m) => { const g = L.walkHeight(m.x, m.z); return { x: m.x, z: m.z, text: m.text === '?' ? '?' : '!', ground: g, head: g + 2.05 }; }));
   const want = list.filter((m) => m.text === '✉');          // the lost letter keeps its small bobbing badge
   while (markPool.length < want.length) {
     const sp = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true })); sp.scale.setScalar(0.8); sp.renderOrder = 5;
@@ -322,10 +329,12 @@ function questMarks(list) {
     sp.position.x = m.x; sp.position.z = m.z; sp.userData.y = L.walkHeight(m.x, m.z) + 1.3;
   });
 }
+/** (21/11) Sam's spot on the bank: the old one (river x − 5.6) stood in the shallow water once the river grew. Kept over 4 m from the fishing spot (E). */
+const SAM_HOME = [L.REGIONS.village.riverX(18) - 7.2, 14.5];
 /** Sam waits at the broken bridge during "Fix the Bridge"; Pip joins him to read the plan. */
 function placeVillageHelpers() {
   const st = story.step, atBridge = st === 'bridge' || st === 'gather' || st === 'plan';
-  const [sx, sz] = atBridge ? BRIDGE_SPOTS.sam : [L.riverX(18) - 5.6, 17.2];
+  const [sx, sz] = atBridge ? BRIDGE_SPOTS.sam : SAM_HOME;
   if (sam.x !== sx || sam.z !== sz) sam.move(sx, sz, atBridge ? 1.4 : 1.2);
   if (st === 'plan' || (st === 'gather' && ['rope', 'log', 'axe'].every((k) => story.items.includes(k)))) { pip.root.visible = true; pip.place(...BRIDGE_SPOTS.pip); }
   else if (!profile.flags.forest_open) pip.root.visible = false;
@@ -338,7 +347,7 @@ function applyBridge() {
 }
 function placeActors() {
   if (L.NAME === 'village') {
-    tom.move(2.6, 7.6, -0.4); ben.move(-9.9, 19.5, Math.PI / 2); sam.move(L.riverX(18) - 5.6, 17.2, 1.2);
+    tom.move(2.6, 7.6, -0.4); ben.move(-9.9, 19.5, Math.PI / 2); sam.move(...SAM_HOME, 1.2);
     const ex = L.EXITS[0]; if (profile && profile.flags.forest_open) { pip.root.visible = true; pip.place(ex.x + 2.2, ex.z + 3); } else pip.root.visible = false;
     if (story) placeVillageHelpers();
     for (const f of friends) f.npc.move(...f.at);
@@ -371,8 +380,9 @@ function swimHud() {
 }
 /** A fish on the line (20/11, in-world fishing): the harbor sends it to the bucket and the Sea Dex, the village dock pays on the spot. Returns a short note. */
 function onFishCaught(item) {
-  if (L.NAME === 'harbor' || L.NAME === 'isle') { catchFish([item.id]); return item.junk ? '' : 'vào xô cá (bán ở chợ cá)'; }
-  profile.stats.gold += item.price; if (!item.junk) { Save.addExp(profile, 3 + (item.r || 0) * 4); track('sea_fish'); } track('mini'); save(); refresh(); return `+${item.price} vàng`;
+  if (L.NAME === 'harbor' || L.NAME === 'isle') { catchFish([item.id]); return item.junk ? 'vào túi (V)' : 'vào túi đồ (V) · bán ở chợ cá hoặc Village Shop'; }
+  // (21/11) "a caught fish goes into the bag; the hero sells it at the shop": the river fish go to the same bucket
+  Sea.keep(profile, item); if (!item.junk) { Save.addExp(profile, 3 + (item.r || 0) * 4); track('sea_fish'); } track('mini'); save(); refresh(); return 'vào túi đồ (V) · bán ở Village Shop';
 }
 /** Keys 5-8 and the potion slots: drinks or eats what is in the quick slot. */
 function usePotion(i) {
@@ -438,12 +448,35 @@ function teach(list, then, most = 5) {
 // A short click (no drag) on the ground plans a route there, the same way the minimap does; a drag still turns the
 // camera. The ray is marched against the height map (cheap, no mesh picking). A gold ring marks the spot.
 let clickAt = null, walkMark = null;
-canvas.addEventListener('pointerdown', (e) => { if (e.button === 0 && e.pointerType !== 'touch') clickAt = { x: e.clientX, y: e.clientY, t: performance.now() }; });
+// (21/11) "left click attacks, right click walks": a short left click swings the weapon (at the monster under the mouse,
+// which becomes the locked target, walking up to it when it is far); with no weapon worn a left click still walks.
+// A short right click walks there. Pointing at a monster and pressing 1-4 casts at it and locks it too.
+const toScreen = (x, y, z) => { const v = new THREE.Vector3(x, y, z).project(camera); if (v.z > 1) return null; const r = canvas.getBoundingClientRect(); return { x: r.left + (v.x + 1) / 2 * r.width, y: r.top + (1 - v.y) / 2 * r.height }; };
+let hoverAt = null, hoverTick = 0;
+const hoverNdc = () => { if (!hoverAt) return null; const r = canvas.getBoundingClientRect(); return new THREE.Vector2(((hoverAt.x - r.left) / r.width) * 2 - 1, -((hoverAt.y - r.top) / r.height) * 2 + 1); };
+canvas.addEventListener('pointermove', (e) => { if (e.pointerType !== 'touch') hoverAt = { x: e.clientX, y: e.clientY }; });
+function hoverPick() { if (!wild || !hoverAt || !wild.root.visible) { if (wild) wild.hover = null; return null; } wild.hover = wild.pick(hoverAt.x, hoverAt.y, toScreen); return wild.hover; }
+function clickMonster(m) {
+  wild.setTarget(m);
+  if (Math.hypot(m.x - player.pos.x, m.z - player.pos.z) <= wild.reach(m)) { player.route = null; wild.autoHit(); }
+  else { const s = Snap.snap(m.x, m.z, 3); if (s) minimap.travelTo(s.x, s.z); }
+}
+canvas.addEventListener('pointerdown', (e) => { if ((e.button === 0 || e.button === 2) && e.pointerType !== 'touch') clickAt = { x: e.clientX, y: e.clientY, t: performance.now(), b: e.button }; });
 canvas.addEventListener('pointerup', (e) => {
   const c = clickAt; clickAt = null;
-  if (!c || e.button !== 0 || !started || switching || ui.modal || (arcade && arcade.open) || (shopWin && shopWin.open)) return;
-  if (fishing && fishing.active) { if (Math.hypot(e.clientX - c.x, e.clientY - c.y) <= 6) fishing.act(); return; }      // a click pulls the rod
+  if (!c || e.button !== c.b || !started || switching || ui.modal || (arcade && arcade.open) || (shopWin && shopWin.open)) return;
+  if (fishing && fishing.active) { if (e.button === 0 && Math.hypot(e.clientX - c.x, e.clientY - c.y) <= 6) fishing.act(); return; }      // a click pulls the rod
   if (Math.hypot(e.clientX - c.x, e.clientY - c.y) > 6) return;          // the mouse moved: that was a camera drag
+  if (room && room.walk) { if (!(homePanel && homePanel.open)) { const r1 = canvas.getBoundingClientRect(); room.click(new THREE.Vector2(((e.clientX - r1.left) / r1.width) * 2 - 1, -((e.clientY - r1.top) / r1.height) * 2 + 1)); } return; }      // (21/11) walking or arranging in the house
+  if (e.button === 0 && !(player && player.swim) && wild && wild.root.visible && profile && !room && !(mini && mini.active)) {
+    const m = wild.pick(e.clientX, e.clientY, toScreen);
+    if (m) { clickMonster(m); return; }
+    if (bag(profile).weapon) {      // a swing towards where the mouse points
+      const r0 = canvas.getBoundingClientRect(), nd = new THREE.Vector2(((e.clientX - r0.left) / r0.width) * 2 - 1, -((e.clientY - r0.top) / r0.height) * 2 + 1), rc = new THREE.Raycaster(); rc.setFromCamera(nd, camera);
+      const o = rc.ray.origin, d = rc.ray.direction; for (let k = 0.5; k < 80; k += 0.5) { const x = o.x + d.x * k, y = o.y + d.y * k, z = o.z + d.z * k; if (y <= L.walkHeight(x, z)) { player.yaw = Math.atan2(x - player.pos.x, z - player.pos.z); break; } }
+      player.route = null; wild.attack(); return;
+    }
+  }
   const r = canvas.getBoundingClientRect(), ndc = new THREE.Vector2(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
   const ray = new THREE.Raycaster(); ray.setFromCamera(ndc, camera);
   const o = ray.ray.origin, d = ray.ray.direction; let hit = null; const swimming = !!(player && player.swim);
@@ -524,7 +557,24 @@ const HOME_FILE = { bed: 'home_bed', wardrobe: 'home_wardrobe', mirror: 'home_mi
 const homeScenes = {};
 const homeModel = (file) => (homeScenes[file] ? homeScenes[file].clone(true) : null);
 const loadHomeModels = (items) => Promise.all(items.map((id) => HOME_FILE[id]).filter((f) => f && homeScenes[f] === undefined).map((f) => { homeScenes[f] = null; return staticModel(`${f}_v01`).then((m) => { homeScenes[f] = m; }, () => {}); }));
-function enterRoom(kind, opts) { leaveRoom(); room = buildRoom(kind, opts); document.body.classList.add('inroom'); sfx('tick'); }
+/** (21/11) Planting: pick a seed (English name, price, minutes to grow). */
+function plantMenu(i) {
+  const ids = Object.keys(Farm.CROPS);
+  ui.choose({ who: 'Garden', en: 'What would you like to plant?', vi: `Vàng: ${profile.stats.gold} ● · rau lớn theo thời gian thật, quay lại thu hoạch rồi mang ra Village Shop bán.` }, [...ids.map((k) => { const c = Farm.CROPS[k]; return `${c.icon} ${c.en} (${c.vi}) · hạt ${c.seed} ● · ${c.grow} phút · được ${c.yield}`; }), 'Not now'], (k) => {
+    if (k >= ids.length) return; const r = Farm.plant(profile, i, ids[k]);
+    if (r.ok) { sfx('tick'); speak(`I planted ${ids[k]} seeds.`, true); save(); refresh(); homes.syncFarm(true); } else ui.toast(r.why === 'gold' ? 'Chưa đủ vàng mua hạt.' : 'Luống này đã có cây.');
+  });
+}
+/** (21/11) Into a child's house: the hero walks inside (world/homewalk.js); the list (L) and the arrange mode (B) are on top.
+ *  keepList: the list stays open (after an upgrade or a new colour, the house is rebuilt around the hero). */
+async function goHome(o, mine, keepList = false) {
+  const items = [...homesItems(o)]; await loadHomeModels(items); const was = room && room.walk ? { ...room.me } : null;
+  enterRoom('home', { items, model: homeModel, pieces: Saga.pieces(o), house: houseOf(o), editable: mine, avatar: { root: player.root, clips: Object.values(player.actions).map((a) => a.getClip()) },
+    onPlace: (id, at) => { setPlace(houseOf(o), id, at); save(); }, hint: (t) => homePanel.setHint(t) });
+  if (room && room.walk) { room.yaw0 = cam.yaw; if (was && was.f < houseOf(o).floors) Object.assign(room.me, { f: was.f, x: was.x, z: was.z, y: was.y, stair: was.stair }); }
+  homePanel.show(o, mine); if (!keepList) homePanel.hide();
+}
+function enterRoom(kind, opts) { leaveRoom(); room = buildRoom(kind, opts); room.kind = kind; document.body.classList.add('inroom'); sfx('tick'); }
 function leaveRoom() { if (!room) return; room.dispose(); room = null; document.body.classList.remove('inroom'); }
 function adminPlaces() {
   const out = [], add = (region, name, x, z) => out.push({ region, name, x, z });
@@ -633,6 +683,9 @@ async function chooseProfile(p) {
   if (L.NAME === 'village' && story.step === 'arrive' && !p.flags.arrived) startIntro();
 }
 
+/** (21/11) "merge the weapon house near Tom with the potion shop, and show the goods like Lily's": every village counter
+ *  opens the same shop window with all the counters (the one you came to first) and the market counter to sell goods. */
+function villageShop(first = 'forge') { const all = ['forge', 'healer', 'rose']; shopWin.show('Village Shop', [first, ...all.filter((k) => k !== first), 'market']); }
 /** Shop: a choice list. Buying puts the item on at once; owned items can be put on again for free. */
 function openShop(who, seller, hello) {
   const b = bag(profile), ids = shopList(seller).filter((id) => !ITEMS[id].el);      // (20/11) element gear is on the shelves inside the Village Shop (the talk list keys only 1-9)
@@ -830,7 +883,15 @@ function applyLook() {
   tintBody(root, { hair: paint(val('haircolor'), NGOC_COLORS.hair), top: paint(dress || val('top'), NGOC_COLORS.top), bottom: paint(dress || val('bottom'), NGOC_COLORS.bottom) });
   setHairStyle(root, val('style') || 'short');
   const kindOf = (slot) => { const it = worn[slot] && WR.parse(worn[slot]); return it ? it.kind : null; };
-  setClothes(root, { top: CLOTH.top[kindOf('top')], bottom: CLOTH.bottom[kindOf('bottom')], body: CLOTH.body[kindOf('body')] });
+  const baseK = (slot) => WR.baseOf(kindOf(slot));
+  setClothes(root, { top: CLOTH.top[baseK('top')], bottom: CLOTH.bottom[baseK('bottom')], body: CLOTH.body[baseK('body')] });
+  { // (21/11) prints: the second colour is white on a dark piece, a deep navy on a white or pale one
+    const second = (slot) => { const c = val(slot); return c === 'white' || c === 'yellow' ? '#2a3a6a' : '#ffffff'; };
+    const upper = kindOf('body') ? 'body' : 'top';
+    setPattern(root, 'top', WR.patOf(kindOf(upper)), second(upper)); setPattern(root, 'bottom', kindOf('body') ? '' : WR.patOf(kindOf('bottom')), second('bottom'));
+    const feet = kindOf('feet'), skinCol = (() => { let c = null; root.traverse((o) => { if (!c && o.isMesh && o.material && o.material.name === 'ngoc_skin') c = o.material.color; }); return c; })();
+    setBoots(root, feet === 'boots' || feet === 'hightops' ? 'colour' : feet === 'sandals' || feet === 'flats' ? 'skin' : '', paint(val('feet'), '#8a5a30'), skinCol);
+  }
   setGoggles(root, !['hat', 'tiara'].includes(kindOf('head')));
   syncOutlines(root);
   let skinned = null; root.traverse((o) => { if (!skinned && o.isSkinnedMesh) skinned = o; });
@@ -838,12 +899,15 @@ function applyLook() {
   for (const id of Object.values(worn)) {
     const it = id && WR.parse(id); if (!it) continue;
     if (PROC_ONLY.has(it.kind)) { for (const part of outfitParts(it.kind, it.color)) { const b = bone(part.bone); if (b) { b.add(part.obj); lookShown.push(part.obj); } } continue; }
-    if (!ACC_BONE[it.kind] && !['shoes'].includes(it.kind)) continue;
-    const src = accScene[it.kind];
+    if (it.kind === 'boots') continue;      // (21/11) the body's own boots, recoloured above
+    const shoeLike = { hightops: [1.12, 1.05, 1.08], flats: [1.0, 0.55, 1.0], sandals: [1.04, 0.3, 1.04] }[it.kind];      // the sneaker file, reshaped
+    if (!ACC_BONE[it.kind] && !['shoes'].includes(it.kind) && !shoeLike) continue;
+    const src = accScene[shoeLike ? 'shoes' : it.kind];
+    if (shoeLike && !src) continue;
     if (src) {
       const clone = src.clone(true);
       if (JEWEL.has(it.kind)) { const metal = WR.JEWEL_HEX[it.color]; tintAccessory(clone, metal || WR.JEWEL_HEX.gold, metal ? new THREE.Color(metal).multiplyScalar(0.8).getStyle() : (WCOL[it.color] || '#ffffff')); } else tintAccessory(clone, WCOL[it.color] || '#ffffff');
-      for (const c of [...clone.children]) { const side = /_([LR])$/.exec(c.name); const b = bone(it.kind === 'shoes' ? new RegExp(`^foot.?${side ? side[1] : 'L'}$`) : ACC_BONE[it.kind]); if (b) { c.removeFromParent(); hang(c, b); } }
+      for (const c of [...clone.children]) { const side = /_([LR])$/.exec(c.name); const b = bone(it.kind === 'shoes' || shoeLike ? new RegExp(`^foot.?${side ? side[1] : 'L'}$`) : ACC_BONE[it.kind]); if (b) { c.removeFromParent(); hang(c, b); if (shoeLike) { const sc = new THREE.Group(); c.parent.add(sc); sc.position.copy(c.position); sc.quaternion.copy(c.quaternion); c.position.set(0, 0, 0); c.quaternion.identity(); sc.add(c); sc.scale.set(...shoeLike); lookShown.push(sc); } } }
     } else if (src === undefined) {
       accScene[it.kind] = null;
       staticModel(`acc_${it.kind}_v01`).then((m) => { accScene[it.kind] = m; applyLook(); }, () => {});
@@ -939,7 +1003,7 @@ function interactTarget() {
     if (ex.flag && !profile.flags[ex.flag]) return { text: 'Cổng rừng còn khóa. Hãy giúp Tom và Ben trước.', run() {} };
     return { text: 'E · ' + ex.label, run: () => { const back = ex.to === 'village' ? (L.NAME === 'harbor' ? VILLAGE_DOCK : [L.REGIONS.village.EXITS[0].x + 0.5, L.REGIONS.village.EXITS[0].z + 5]) : (L.NAME === 'isle' ? [HARBOR.isle.x + 2.2, HARBOR.isle.z - 0.5] : null); enterRegion(ex.to, back); } };
   }
-  if (homeDoor && homeDoor.visible && near(homeDoor.position.x, homeDoor.position.z, 1.9)) return { text: `E · Cửa nhà thần kỳ: về nhà của ${profile.name}`, run: async () => { const items = [...homesItems(profile)]; await loadHomeModels(items); enterRoom('home', { items, model: homeModel, pieces: Saga.pieces(profile), house: houseOf(profile) }); homePanel.show(profile, true); } };
+  if (homeDoor && homeDoor.visible && near(homeDoor.position.x, homeDoor.position.z, 1.9)) return { text: `E · Cửa nhà thần kỳ: về nhà của ${profile.name}`, run: () => goHome(profile, true) };
   if (L.NAME === 'isle') {          // Treasure Isle (19/11): read the map, walk the steps, dig
     if (!treasureMap()) return { text: 'Hôm nay con đã tìm đủ kho báu. Mai có bản đồ mới!', run() {} };
     return { text: 'E · Đào ở đây (bản đồ kho báu: phím M)', run: digHere };
@@ -984,22 +1048,36 @@ function interactTarget() {
   if (near(sam.x, sam.z, 3)) return { text: 'E · Nói chuyện với Sam', run: () => story.talkSam() };
   if (L.NAME === 'village' && near(VILLAGE_DOCK[0], VILLAGE_DOCK[1], 2.4)) return profile.flags.map2 ? { text: 'E · Đi thuyền tới Cảng Mặt Trời (Map 2)', run: () => enterRegion('harbor') } : { text: 'Bến thuyền: mở Map 2 để đi Cảng Mặt Trời', run: () => ui.toast('Lên cấp 20 và qua bài kiểm tra của Cú Mèo để mở Map 2.') };
   if (homes) {       // the children's homes, Bram's furniture shop and the two stalls (18/11)
+    const fa = homes.farmAt(player.pos);      // (21/11) the home farm: beds, the coop, the pig pen
+    if (fa) { const o = fa.lot.owner, mine = o && o.id === profile.id;
+      if (!mine) return { text: `Vườn của ${o ? o.name : 'nhà trống'}`, run() {} };
+      if (fa.kind === 'bed') { const b = Farm.farm(profile).beds[fa.i], st = Farm.stageOf(b);
+        if (!b) return { text: 'E · Gieo hạt (cà rốt, cà chua, bắp cải, ngô, bí ngô)', run: () => plantMenu(fa.i) };
+        if (st < 4) return { text: `${Farm.CROPS[b.crop].icon} ${Farm.CROPS[b.crop].en} đang lớn · còn ${Farm.minutesLeft(b)} phút`, run() {} };
+        return { text: `E · Thu hoạch ${Farm.CROPS[b.crop].en} ${Farm.CROPS[b.crop].icon}`, run: () => { const r = Farm.harvest(profile, fa.i); if (r.ok) { sfx('pickup'); ui.toast(`${Farm.CROPS[r.crop].icon} +${r.n} ${r.crop} vào túi (V) · bán ở Village Shop`); speak(r.crop + 's', true); track('farm'); save(); refresh(); homes.syncFarm(true); } } }; }
+      if (fa.kind === 'coop') { const n = Farm.eggsReady(profile); return { text: n ? `E · Nhặt ${n} quả trứng 🥚` : `Gà đang đẻ trứng · ${Farm.EGG_EVERY} phút một quả`, run: () => { const k = Farm.collectEggs(profile); if (k) { sfx('pickup'); ui.toast(`🥚 +${k} trứng vào túi (V)`); speak('eggs', true); track('farm'); save(); refresh(); homes.syncFarm(true); } } }; }
+      if (fa.kind === 'pen') { const pig = Farm.farm(profile).pig;
+        if (!pig) return { text: `E · Mua lợn con (${Farm.PIGLET} vàng)`, run: () => { const r = Farm.buyPiglet(profile); if (r.ok) { sfx('fanfare'); ui.toast('🐷 Lợn con về chuồng! Cho ăn 4 lần (rau trong túi hoặc 2 vàng) để lợn lớn.'); save(); refresh(); homes.syncFarm(true); } else ui.toast(r.why === 'gold' ? `Cần ${Farm.PIGLET} vàng.` : 'Chưa có chuồng.'); } };
+        if (Farm.pigGrown(pig)) return { text: 'E · Lợn đã lớn: đưa ra chợ bán 🐖', run: () => { if (Farm.takePig(profile)) { sfx('fanfare'); ui.toast('🐖 Con lợn vào túi (V): mang ra Village Shop bán được 60 vàng.'); track('farm'); save(); refresh(); homes.syncFarm(true); } } };
+        return { text: `E · Cho lợn ăn (${pig.feeds}/${Farm.PIG_FEEDS} bữa)`, run: () => { const r = Farm.feedPig(profile); if (r.ok) { sfx('correct'); ui.toast(r.food === 'gold' ? '🐷 Cho ăn cám (−2 vàng). Ụt ịt!' : `🐷 Cho ăn ${r.food}. Ụt ịt!`); save(); refresh(); homes.syncFarm(true); } else ui.toast(r.why === 'full' ? `Lợn còn no, ${r.left} phút nữa cho ăn tiếp.` : r.why === 'gold' ? 'Cần rau trong túi hoặc 2 vàng.' : 'Lợn đã lớn.'); } }; }
+    }
     const lot = homes.doorAt(player.pos);
     if (lot) { const o = lot.owner; if (!o) return { text: 'Nhà trống: tạo thêm người chơi để nhận nhà này', run: () => ui.toast('Mỗi bé (tối đa 2) có một ngôi nhà ở đây.') };
-      const mine = o.id === profile.id; return { text: mine ? 'E · Vào nhà của con' : `E · Thăm nhà của ${o.name}`, run: async () => { const items = [...homesItems(o)]; await loadHomeModels(items); enterRoom('home', { items, model: homeModel, pieces: Saga.pieces(o), house: houseOf(o) }); homePanel.show(o, mine); } }; }
+      const mine = o.id === profile.id; return { text: mine ? 'E · Vào nhà của con' : `E · Thăm nhà của ${o.name}`, run: () => goHome(o, mine) }; }
     if (near(FURNITURE.door[0] + 0.9, FURNITURE.door[1], 1.9)) return { text: 'E · Cửa hàng nội thất (giường, bàn ghế, vườn)', run: () => { enterRoom('shop'); shopWin.show('Furniture & Garden Shop', ['home', 'garden']); } };
-    if (near(STALLS.healer.at[0], STALLS.healer.at[1], 1.9)) return { text: 'E · Quầy của Lily (bình máu, bình mana, đồ đầu game)', run: () => shopWin.show("Lily's Potions & Gear", ['healer', 'forge']) };
+    if (near(STALLS.pets.at[0], STALLS.pets.at[1], 1.9)) return { text: "E · Penny's Pet Shop (mua chó con, mèo con, thỏ, vịt con)", run: () => { petPanel.show(true); sfx('tick'); speak('Welcome to my pet shop! Who would you like to take home?'); } };
+    if (near(STALLS.healer.at[0], STALLS.healer.at[1], 1.9)) return { text: 'E · Quầy của Lily (bình máu, bình mana, vũ khí, bán hàng)', run: () => villageShop('healer') };
     if (near(STALLS.produce.at[0], STALLS.produce.at[1], 1.8)) return { text: 'E · Quầy rau quả của Ben', run: () => shopWin.show("Ben's Fruit & Veg", ['produce']) };
     if (near(STALLS.music.at[0], STALLS.music.at[1], 1.8)) return { text: 'E · Quầy nhạc cụ của Anna', run: () => shopWin.show("Anna's Instruments", ['music']) };
     if (near(STALLS.tailor.at[0], STALLS.tailor.at[1], 2.0)) return { text: 'E · Tiệm may của cô Mia (quần áo, trang sức)', run: () => tailor.show() };
   }
-  if (near(SHOP_DOOR.x, SHOP_DOOR.z, 1.7)) return { text: 'E · Vào cửa hàng (xem và mua bán đồ)', run: () => { enterRoom('shop'); shopWin.show('Village Shop'); } };
+  if (near(SHOP_DOOR.x, SHOP_DOOR.z, 1.7)) return { text: 'E · Vào Village Shop (vũ khí, bình máu/mana, bánh, bán hàng)', run: () => { enterRoom('shop'); villageShop('forge'); } };
   if (near(HALL_DOOR.x, HALL_DOOR.z, 1.8)) return { text: 'E · Vào nhà trưởng làng (sổ nhiệm vụ chính tuyến)', run: () => { enterRoom('hall'); journal.show('main'); speak('Welcome to my office! Here is your quest book.'); } };
   if (near(LILY_DOOR.x, LILY_DOOR.z, 1.8)) return { text: 'E · Vào nhà Lily (nhiệm vụ hằng ngày)', run: () => { enterRoom('herb'); journal.show('daily'); speak('Hello! Here are your tasks for today.'); } };
   if (near(ANNA_DOOR.x, ANNA_DOOR.z, 1.9)) return { text: 'E · Vào phòng nhạc của Anna (nghe hát, học lời)', run: () => { enterRoom('music'); music.show(); } };
   { const wi = walkers ? walkers.near(p) : -1; if (wi >= 0) return { text: 'E · Chào dân làng', run: () => { talkW = wi; ui.dialogue([{ who: 'Villager', en: walkers.greet(wi) }]); } }; }
   for (const f of friends) if (near(f.npc.x, f.npc.z, 2.6)) {
-    if (f.shop) return { text: 'E · Cửa hàng của ' + f.who, run: () => openShop(f.who, f.shop, f.lines[0]) };
+    if (f.shop) return { text: 'E · Cửa hàng của ' + f.who + ' (Village Shop: vũ khí, máu, mana, bán hàng)', run: () => villageShop(f.shop) };      // (21/11) one shop for all
     return { text: 'E · Nói chuyện với ' + f.who, run: () => ui.dialogue(f.lines.map((en) => ({ who: f.who, en }))) };
   }
   return null;
@@ -1014,6 +1092,7 @@ function onKey(e) {
   if (shopWin && shopWin.key(e.code)) { e.preventDefault(); return; }
   if (music && music.key(e.code)) { e.preventDefault(); return; }
   if (journal && !ui.busy && journal.key(e.code)) { e.preventDefault(); return; }
+  if (room && room.walk && !(homePanel && homePanel.open) && room.key(e.code)) { e.preventDefault(); return; }      // B arrange, R turn, Esc
   if (homePanel && homePanel.key(e.code)) { e.preventDefault(); return; }
   if (dexPanel && dexPanel.key(e.code)) { e.preventDefault(); return; }
   if (creator && creator.key(e.code)) { e.preventDefault(); return; }
@@ -1024,7 +1103,7 @@ function onKey(e) {
   if (petPanel && petPanel.key(e.code)) { e.preventDefault(); return; }
   if (trPanel && trPanel.key(e.code)) { e.preventDefault(); return; }
   if (e.code === 'KeyM' && profile && trPanel && L.NAME === 'isle') { trPanel.show(); sfx('tick'); e.preventDefault(); return; }
-  if (e.code === 'KeyP' && profile && petPanel && seaOpen()) { petPanel.show(); sfx('tick'); e.preventDefault(); return; }
+  if (e.code === 'KeyP' && profile && petPanel) { petPanel.show(); sfx('tick'); e.preventDefault(); return; }      // (21/11) pets from Map 1 too
   if (e.code === 'KeyU' && profile && wardPanel && seaOpen()) { wardPanel.show(); sfx('tick'); e.preventDefault(); return; }      // (20/11) the wardrobe moved from V to U: V is the bag now
   if (e.code === 'KeyV' && profile && packUI && !(mini && mini.active)) { packUI.show(); e.preventDefault(); return; }
   if (e.code === 'KeyG' && profile && dexPanel && seaOpen()) { openDex(); e.preventDefault(); return; }
@@ -1041,9 +1120,10 @@ function onKey(e) {
   if (e.code === 'KeyQ' && profile) { const got = eat(profile, Save.maxHp(profile)); if (got) { sfx('correct'); ui.toast(`+${got} HP`); save(); refresh(); } }
   if (e.code === 'KeyT' && skillUI && profile) { skillUI.show(); e.preventDefault(); return; }
   { const d5 = /^Digit([5-8])$/.exec(e.code); if (d5 && profile && !(mini && mini.active)) { usePotion(Number(d5[1]) - 5); e.preventDefault(); return; } }      // (20/11) quick slots: potions and food
-  { const d = /^Digit([1-4])$/.exec(e.code); if (d && spells && wild && !(mini && mini.active)) { spells.castSlot(Number(d[1]) - 1); e.preventDefault(); return; } }      // (20/11) spells in the hotbar
-  if (e.code === 'KeyK' && wild && !(mini && mini.active)) wild.dodge();
-  if ((e.code === 'KeyJ' || e.code === 'KeyF') && wild && !(mini && mini.active)) wild.attack();
+  { const d = /^Digit([1-4])$/.exec(e.code); if (d && spells && wild && !room && !(mini && mini.active)) { const hv = hoverPick(); if (hv) wild.setTarget(hv); spells.castSlot(Number(d[1]) - 1); e.preventDefault(); return; } }      // (21/11) pointing at a monster locks it first
+  if (e.code === 'Tab' && wild && wild.root.visible && !room && !(mini && mini.active)) { const list = wild.targets().filter((m) => Math.hypot(m.x - player.pos.x, m.z - player.pos.z) < 14).sort((a, b) => Math.hypot(a.x - player.pos.x, a.z - player.pos.z) - Math.hypot(b.x - player.pos.x, b.z - player.pos.z)); if (list.length) { const i = list.indexOf(wild.target); wild.setTarget(list[(i + 1) % list.length]); } e.preventDefault(); return; }      // (21/11) Tab: next monster nearby      // (20/11) spells in the hotbar
+  if (e.code === 'KeyK' && wild && !room && !(mini && mini.active)) wild.dodge();
+  if ((e.code === 'KeyJ' || e.code === 'KeyF') && wild && !room && !(mini && mini.active)) wild.attack();
   if (e.code === 'Space') e.preventDefault();
 }
 // Keys typed through a Vietnamese input method arrive as letters with no key code and an instant key-up: they are
@@ -1084,7 +1164,7 @@ async function boot() {
     const name = label("🌿 Willow's Camp Shop", { size: 28, scale: 0.8 }); name.position.set(0, 3.2, 0); forestStall.add(name); forestStall.visible = false; scene.add(forestStall); }
   { const opt = (n) => staticModel(n).catch(() => null);
     homes = new Homes({ scene, load: staticModel, profiles: () => store.profiles, models: { garden: await opt('prop_vegetable_garden_v01'), tree: await opt('prop_tree_round_v01'), flowers: await opt('yard_flowerbed_v01'), bench: await opt('yard_bench_v01'), mailbox: await opt('yard_mailbox_v01'), garden_lamp: await opt('yard_garden_lamp_v01') } });
-    await homes.build(); homes.setRegion(L.NAME); homePanel = new HomePanel({ onClose: leaveRoom, rebuild: (o) => { const items = [...homesItems(o)]; leaveRoom(); enterRoom('home', { items, model: homeModel, pieces: Saga.pieces(o), house: houseOf(o) }); if (homes) homes.refresh(true); }, profile: () => profile, today: () => Review.today(), changed: () => { save(); refresh(); }, sfx, track }); }
+    await homes.build(); homes.setRegion(L.NAME); homePanel = new HomePanel({ onClose: leaveRoom, rebuild: (o) => { goHome(o, homePanel.mine, true); if (homes) homes.refresh(true); }, setEditing: (on) => room && room.walk && room.setEditing(on), profile: () => profile, today: () => Review.today(), changed: () => { save(); refresh(); }, sfx, track }); }
   journal = new Journal({ profile: () => profile, today: () => Review.today(), onClose: leaveRoom,
     store: () => store, claimShip: () => { const r = Family.claim(store, profile); if (r) { sfx('fanfare'); save(); refresh(); ui.toast(`⚓ Thưởng tàu gia đình: +${r.gold} vàng`); } },
     claimMain: (id) => claimReward(Q.claimMain(profile, id), 'Nhiệm vụ chính'), claimDaily: (id) => claimReward(Q.claimDaily(profile, Review.today(), id), 'Nhiệm vụ ngày') });
@@ -1100,7 +1180,7 @@ async function boot() {
   toolbar = new Toolbar([
     { id: 'dex', icon: '🐠', tip: 'Album biển (G)', show: seaOpen, click: () => { if (profile) openDex(); } },
     { id: 'map', icon: '🗺️', tip: 'Bản đồ kho báu (M)', show: () => L.NAME === 'isle', click: () => { if (profile) { trPanel.show(); sfx('tick'); } } },
-    { id: 'pet', icon: '🐾', tip: 'Thú cưng (P)', show: seaOpen, click: () => { if (profile) { petPanel.show(); sfx('tick'); } } },
+    { id: 'pet', icon: '🐾', tip: 'Thú cưng (P)', show: () => !!profile, click: () => { if (profile) { petPanel.show(); sfx('tick'); } } },
     { id: 'ward', icon: '👗', tip: 'Tủ đồ (V)', show: seaOpen, badge: (p) => 0, click: () => { if (profile) { wardPanel.show(); sfx('tick'); } } },
   ]);
   walkers = new Walkers(scene, (name) => loader.loadAsync(`./assets/models/${name}.glb`)); await walkers.init();      // villagers on the roads
@@ -1153,12 +1233,12 @@ async function boot() {
     },
     respawn: () => { game.teleport(L.SPAWN.x, L.SPAWN.z); ui.dialogue([{ who: 'Tom', en: 'You fainted, so I carried you home. Rest, then try again!', vi: 'Con hết máu nên được đưa về làng. Máu đã đầy lại. Mua trang bị tốt hơn rồi quay lại nhé.' }]); } });
   wild.addMap1(map1Model).catch((e) => console.warn('map 1 monsters', e));
-  spells = new Spells({ scene, wild, player, profile: () => profile, sfx, ui, onChange: () => {} });      // (20/11) magic skills: keys 1-4, the skill book T
-  packUI = new PackUI({ profile: () => profile, sfx, toast: (t) => ui.toast(t), changed: () => { save(); refresh(); }, hpMax: () => Save.maxHp(profile) });
+  spells = new Spells({ scene, wild, player, camera, canvas, profile: () => profile, sfx, ui, onChange: () => {} });      // (20/11) magic skills: keys 1-4, the skill book T
+  packUI = new PackUI({ profile: () => profile, sfx, toast: (t) => ui.toast(t), changed: () => { save(); refresh(); }, hpMax: () => Save.maxHp(profile), focus: creatorCamera, look: () => { setSword(); setWear(); }, swing: () => player.swing() });      // (21/11) the hero stands beside the bag and shows each piece
   skillUI = new SkillUI({ profile: () => profile, spells, sfx, usePotion, toast: (t) => ui.toast(t), atk: () => playerAtk(profile), changed: () => { save(); refresh(); } });      // the Blender monsters replace the shapes a moment after the game starts (not awaited: a slow download must not hold the boot)
   mini = new MiniGames({ scene, player, ui, sfx, track, profile: () => profile, save, onNote: refresh, board: (id) => { const t = tierOf(profile.stats.level), go = () => arcade.start(withTier(({ candy: () => candyGame(Math.random, t), blocks: () => blocksGame(Math.random, unitCards, t), sling: () => slingGame(Math.random, t), race2: () => raceGame(Math.random, [], t) })[id](), t)); if (id === 'candy' || id === 'race2' || id === 'blocks') wordGate(id === 'candy' ? 'Mimi' : id === 'blocks' ? 'Max' : 'Leo', go); else go(); } });
   await mini.addHosts((name) => loader.loadAsync(`./assets/models/${name}.glb`));      // a host by each mini game
-  admin = new AdminPanel({ profile: () => profile, places: adminPlaces, go: adminGo, unlockAll: adminUnlock, setStep: adminStep,
+  admin = new AdminPanel({ profile: () => profile, profiles: () => store.profiles, visitHome: (o) => goHome(o, false), places: adminPlaces, go: adminGo, unlockAll: adminUnlock, setStep: adminStep,
     resetForest: () => { delete profile.quests.forest; if (L.NAME === 'forest') enterRegion('forest'); }, setGrade: (g) => { profile.grade = g; save(); chooseProfile(profile); },
     setLevel: adminLevel, addGold: (n) => { profile.stats.gold += n; }, changed: () => { save(); refresh(); setSword(); setWear(); }, toast: (t) => ui.toast(t) });
   minimap = new Minimap($('minimap'), (path) => { player.route = path.slice(1); });
@@ -1181,6 +1261,7 @@ function frame() {
   if (touch) touch.update();
   releaseSoftKeys();
   const input = { x: (keys.has('KeyD') || keys.has('ArrowRight') ? 1 : 0) - (keys.has('KeyA') || keys.has('ArrowLeft') ? 1 : 0), z: (keys.has('KeyW') || keys.has('ArrowUp') ? 1 : 0) - (keys.has('KeyS') || keys.has('ArrowDown') ? 1 : 0), run: keys.has('ShiftLeft') || keys.has('ShiftRight'), jump: keys.has('Space') };
+  const rawInput = { x: input.x, z: input.z, run: input.run };      // (21/11) the house walker reads the keys while the village hero is frozen
   if (frozen) { input.x = input.z = 0; input.jump = false; }
   const hadRoute = !!player.route;
   // slow machines: several fixed physics steps per frame so the game never runs in slow motion
@@ -1195,20 +1276,26 @@ function frame() {
   if (walkers && started) walkers.update(real, player.pos, ui.busy ? talkW : -1);
   if (pip.root.visible) pip.update(dt, t, player, started && L.NAME === 'forest' && quest && quest.step !== 'intro');
   if (floaters) floaters.update(real); if (spells) spells.update(real);
-  if (profile && !profile.admin) SK.regen(profile, real);
+  if (profile && !profile.admin) SK.regen(profile, real, !(wild && wild.fighting));      // (21/11) faster out of a fight
   if (skillUI) skillUI.sync(started && !switching && !room && !frozen && !(mini && mini.active) && !(intro && intro.active));
   crystals.update(t); if (world) world.update(t); if (homeDoor && homeDoor.visible) homeDoor.userData.star.rotation.y = t * 1.6;
   if (mini && started && !switching && !ui.modal && !arcade.open) mini.update(real, player.pos);      // real time, so timers stay honest on slow machines
   if (chests && started) chests.update(real);
   if (petObj && started && !switching) petObj.update(real, player.pos, player.yaw);
+  if (homes && started && !switching) homes.update(real);      // (21/11) hens, the pig, ripe crops
   for (const mx of digMixers) mx.update(real);
   if (spots && started) spots.update(real);
-  if (wild && started && !switching) wild.update(real, !!ui.modal || arcade.open);
+  if (started && !switching) {      // (21/11) background music: the region's tune, the home tune indoors, the boss tune near an awake boss
+    const boss = wild && wild.root.visible && wild.bosses.some((b) => b.g.visible && !b.dead && b.region === L.NAME && Math.hypot(b.x - player.pos.x, b.z - player.pos.z) < 16);
+    playMusic(room ? (room.kind === 'home' ? 'home' : room.kind === 'music' ? null : L.NAME === 'forest' ? 'forest' : 'village') : boss ? 'boss' : ({ village: 'village', forest: 'forest', harbor: 'harbor', isle: 'isle' })[L.NAME] || 'village');
+  }
+  if (wild && started && !switching && wild.root.visible) { hoverTick = (hoverTick || 0) + real; if (hoverTick > 0.1) { hoverTick = 0; hoverPick(); } if (!frozen && !(player && player.swim) && !(input.x || input.z)) wild.autoHit(); }      // (21/11) hover ring; auto attack the locked target in reach
+  if (wild && started && !switching) wild.update(real, !!ui.modal || arcade.open || !!(mini && mini.active) || !!(fishing && fishing.active));      // (21/11) no monster bites during a mini game
   if (marks3d) marks3d.update(real);
   for (const sp of markPool) if (sp.visible) {      // bob, pulse and glow so the eye finds them (feedback 17/11)
     const k = 0.5 + 0.5 * Math.sin(t * 5 + sp.position.x), h = sp.userData.halo;
-    sp.position.y = sp.userData.y + Math.sin(t * 3 + sp.position.x) * 0.1; sp.scale.setScalar(0.74 + 0.14 * k);
-    h.position.copy(sp.position); h.material.opacity = 0.35 + 0.65 * k; h.scale.setScalar(1.4 + 0.6 * k);
+    sp.position.y = sp.userData.y + Math.sin(t * 3 + sp.position.x) * 0.06; sp.scale.setScalar(0.3 + 0.05 * k);      // (21/11) a third of the old size
+    h.position.copy(sp.position); h.material.opacity = 0.35 + 0.65 * k; h.scale.setScalar(0.5 + 0.2 * k);
   }
   if (letterProp.visible) { letterProp.rotation.y = t * 1.5; letterProp.position.y += Math.sin(t * 2.2) * 0.002; }
   { // shadows follow Ngọc in whole shadow-map texels, so their edges do not crawl and shimmer as she walks
@@ -1257,7 +1344,7 @@ function frame() {
     autosave += dt; if (autosave > 20) { autosave = 0; save(); }
   }
   renderer.info.reset();
-  if (room) { room.update(real, camera.aspect); post.setSun(room.camera, sunDir); post.render(room.scene, room.camera); }
+  if (room) { room.update(real, camera.aspect, room.walk ? { input: homePanel && homePanel.open || ui.modal ? {} : rawInput, yaw: cam.yaw - (room.yaw0 || 0), mouse: hoverNdc() } : undefined); post.setSun(room.camera, sunDir); post.render(room.scene, room.camera); }
   else { post.setSun(camera, sunDir); post.render(scene, camera); }
   acc += raw; frames++; worstNow = Math.max(worstNow, raw * 1000);
   if (acc >= 0.5) { game.stats = { gpu: GPU, software: SOFTWARE_GL, worst: Math.round(worstNow), fps: +(frames / acc).toFixed(1), ms: +(acc / frames * 1000).toFixed(1), calls: renderer.info.render.calls, tris: renderer.info.render.triangles };

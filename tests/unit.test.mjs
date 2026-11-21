@@ -821,18 +821,19 @@ test('saga: badge and exams give ranks with bonuses, bosses give compass pieces'
 
 // ---------------------------------------------------------------- magic skills (20/11)
 import * as SK from '../src/core/skills.js';
-test('skills: a point per level, more ranks than levels, requirements, hotbar, elements beat and feed each other', () => {
+test('skills (21/11): one element, a point per level from level 1, passives + melee/single/aoe, element change, mana', () => {
   const p = S.newProfile('An', 6); p.stats.level = 13; p.stats.gold = 500;
-  assert.equal(SK.earned(p), 12); assert.equal(SK.free(p), 12); assert.ok(SK.TOTAL_RANKS === 240 && SK.TOTAL_RANKS > 179, 'more ranks than a level-180 hero has points');
+  assert.equal(SK.earned(p), 13); assert.equal(SK.free(p), 13); assert.equal(SK.elOf(p), '');
   assert.equal(SK.EL_IDS.length, 4); for (const el of SK.EL_IDS) assert.equal(SK.TREE[el].filter((n) => n.kind === 'inner').length, 3);
-  for (const el of SK.EL_IDS) assert.deepEqual(SK.TREE[el].filter((n) => n.kind === 'outer').map((n) => n.range), ['near', 'far', 'ult']);
+  for (const el of SK.EL_IDS) assert.deepEqual(SK.spellsOf(el).map((n) => n.type), ['melee', 'single', 'aoe']);
+  assert.equal(SK.blocked(p, 'fire_core'), 'chọn hệ trước');
+  assert.ok(SK.chooseEl(p, 'fire').ok); assert.equal(SK.elOf(p), 'fire'); assert.equal(SK.blocked(p, 'ice_core'), 'khác hệ', 'only the chosen element');
   const atk0 = playerAtk(p);
   assert.ok(SK.learn(p, 'fire_core')); assert.equal(playerAtk(p), atk0 + 2, 'Fire Heart adds attack');
   assert.ok(SK.learn(p, 'flame_slash')); assert.deepEqual(SK.magic(p).bar, ['flame_slash', null, null, null], 'a new spell goes to the hotbar');
-  assert.equal(SK.blocked(p, 'meteor'), 'cần 10 điểm hệ Lửa'); for (let i = 0; i < 8; i++) SK.learn(p, 'fire_core');
-  assert.equal(SK.rank(p, 'fire_core'), 9); assert.ok(SK.learn(p, 'meteor'), 'ultimate opens after 10 fire points and level 12'); assert.equal(SK.free(p), 1);
-  assert.ok(SK.learn(p, 'fire_core')); assert.equal(SK.blocked(p, 'fire_core'), 'đã tối đa');
-  assert.equal(SK.free(p), 0); assert.equal(SK.blocked(p, 'ice_core'), 'hết điểm');
+  assert.equal(SK.blocked(p, 'meteor'), 'cần 4 điểm hệ Lửa'); for (let i = 0; i < 2; i++) SK.learn(p, 'fire_core');
+  assert.ok(SK.learn(p, 'meteor'), 'the area spell opens after 4 fire points and level 6');
+  for (let i = 0; i < 7; i++) SK.learn(p, 'fire_core'); assert.equal(SK.blocked(p, 'fire_core'), 'đã tối đa');
   assert.ok(SK.assign(p, 3, 'flame_slash')); assert.deepEqual(SK.magic(p).bar, [null, 'meteor', null, 'flame_slash'], 'a spell moves between slots');
   assert.ok(!SK.assign(p, 0, 'fire_core'), 'only spells go on the bar');
   // the ring
@@ -840,14 +841,22 @@ test('skills: a point per level, more ranks than levels, requirements, hotbar, e
   assert.equal(SK.elementFactor('', 'fire'), 1);
   for (const el of SK.EL_IDS) { assert.equal(SK.FEEDS[SK.BEATS[el]], el, 'the beaten element feeds its beater'); assert.ok(SK.comboOf(SK.BEATS[el], el)); }
   assert.equal(SK.comboOf('ice', 'fire').en, 'Steam Burst'); assert.equal(SK.comboOf('fire', 'ice'), null);
-  // damage, energy, gear
-  assert.ok(SK.spellDamage(p, 'meteor', 100) > SK.spellDamage(p, 'flame_slash', 100));
-  assert.equal(SK.mpOf(p), SK.powers(p).mpMax); assert.ok(SK.spend(p, 40)); assert.ok(!SK.spend(p, 1000)); SK.regen(p, 1000); assert.equal(SK.mpOf(p), SK.powers(p).mpMax);
+  // mana: a level-10 bar holds well over 10 spells and comes back three times as fast out of a fight
+  const p10 = S.newProfile('B', 8); p10.stats.level = 10; const max = SK.powers(p10).mpMax; assert.ok(max / SK.spellCost('fireball') >= 15, 'about 16 single spells per bar');
+  SK.spend(p10, 60); const a = SK.regen(p10, 1); SK.spend(p10, a - (max - 60)); SK.magic(p10).mp = max - 60; const b = SK.regen(p10, 1, true); assert.ok(b - (max - 60) > 2.5 * (a - (max - 60)));
+  assert.ok(SK.spellDamage(p, 'meteor', 100) > 0 && SK.spellDamage(p, 'fireball', 100) > SK.spellDamage(p, 'meteor', 100) * 0.9, 'the single spell hits one monster hard, the area spell many');
+  assert.equal(SK.mpOf(p), SK.powers(p).mpMax); assert.ok(SK.spend(p, 40)); assert.ok(!SK.spend(p, 10000)); SK.regen(p, 1000); assert.equal(SK.mpOf(p), SK.powers(p).mpMax);
   p.stats.gold = 2000; p.stats.level = 8; assert.ok(buy(p, 'ember_staff').ok); assert.equal(p.gear.el, 'fire'); assert.equal(p.gear.far, 0.25);
-  const before = SK.spellDamage({ ...p, gear: {} }, 'meteor', 100); assert.ok(SK.spellDamage(p, 'meteor', 100) > before, 'a fire staff makes fire ultimates stronger');
+  const before = SK.spellDamage({ ...p, gear: {} }, 'fireball', 100); assert.ok(SK.spellDamage(p, 'fireball', 100) > before, 'a fire staff makes fire spells stronger');
   assert.ok(buy(p, 'ice_amulet').ok); assert.equal(SK.powers(p).resist.ice, 0.15); assert.ok(hurt(40, p, 'ice') < hurt(40, p, 'fire'), 'resistance lowers the hit of that element');
   for (const k of Object.keys(MONSTERS)) assert.ok(SK.ELEMENTS[MONSTERS[k].el], k + ' has an element');
-  const r = SK.reset(p); assert.ok(r.ok && r.cost === 0 && SK.spent(p) === 0, 'the first reset is free'); assert.ok(SK.resetCost(p) >= 50);
+  const r = SK.reset(p); assert.ok(r.ok && r.cost === 0 && SK.spent(p) === 0 && SK.elOf(p) === 'fire', 'the first reset is free and keeps the element'); assert.ok(SK.resetCost(p) >= 50);
+  // changing element: the first change is free, every point comes back; then it costs gold
+  SK.learn(p, 'fire_core'); assert.equal(SK.changeCost(p), 0); assert.ok(SK.chooseEl(p, 'ice').ok); assert.equal(SK.spent(p), 0); assert.equal(SK.elOf(p), 'ice');
+  assert.ok(SK.changeCost(p) >= 100); p.stats.gold = 0; assert.equal(SK.chooseEl(p, 'wind').why, 'gold');
+  // an old save with points in two elements keeps the bigger one
+  const old = S.newProfile('C', 6); old.stats.level = 20; old.magic = { ranks: { fire_core: 3, ice_core: 5, ice_spear: 1 }, bar: ['ice_spear', 'fireball', null, null], mp: null };
+  assert.equal(SK.elOf(old), 'ice'); assert.deepEqual(SK.magic(old).ranks, { ice_core: 5, ice_spear: 1 }); assert.deepEqual(SK.magic(old).bar, ['ice_spear', null, null, null]);
 });
 
 import { consumables, setQuick, quick, useItem, useQuick, lootRoll, giveLoot, MONSTERS as MON2, ITEMS as ITM2 } from '../src/core/rules.js';
@@ -860,7 +869,7 @@ test('potions: buying stacks them, Q ignores them, health and mana potions refil
   assert.ok(setQuick(p, 0, 'hp_s') && setQuick(p, 1, 'mp_s')); assert.ok(setQuick(p, 2, 'hp_s')); assert.deepEqual(quick(p), ['', 'mp_s', 'hp_s', '']);
   const r = useQuick(p, 2, hpMax); assert.ok(r.ok && r.heal === 40 && p.stats.hp === 50 && consumables(p)[0].n === 1);
   p.stats.hp = hpMax; assert.equal(useItem(p, 'hp_s', hpMax).why, 'full'); assert.equal(consumables(p)[0].n, 1, 'nothing is spent at full health');
-  SK2.spend(p, 40); const m = useQuick(p, 1, hpMax); assert.ok(m.ok && m.mana === 30 && SK2.mpOf(p) === SK2.powers(p).mpMax - 10);
+  SK2.spend(p, 80); const m = useQuick(p, 1, hpMax); assert.ok(m.ok && m.mana === 60 && SK2.mpOf(p) === SK2.powers(p).mpMax - 20);
   assert.equal(useItem(p, 'mp_s', hpMax).why, 'empty');
   assert.equal(setQuick(p, 0, 'iron_sword'), false, 'gear cannot be put in a quick slot');
 });
@@ -878,15 +887,16 @@ test('loot: only elites and bosses drop, rarely, only unowned rare gear near the
 
 import { house as HOUSE, UPGRADES as UPG, upgradeState, buyUpgrade, floorPlan, gardenOf, GROUPS } from '../src/core/house.js';
 test('house upgrades: start with one floor, buy in order, level and gold are checked, furniture rooms move up', () => {
-  const p = S.newProfile('An', 6); p.stats.level = 25; p.stats.gold = 10000; const g0 = p.stats.gold;
+  const p = S.newProfile('An', 6); p.stats.level = 25; p.stats.gold = 20000; const g0 = p.stats.gold;
   assert.deepEqual(HOUSE(p), { floors: 1, villa: false, garden: 0 });
+  assert.ok(UPG.find((u) => u.id === 'floor2').cost >= 1500 && UPG.find((u) => u.id === 'villa').cost >= 5000, '(21/11) upgrades cost more');
   assert.equal(upgradeState(p, 'floor3').why, 'need', 'the third floor needs the second first');
   assert.equal(upgradeState(p, 'villa').why, 'need');
   assert.ok(buyUpgrade(p, 'floor2').ok && HOUSE(p).floors === 2 && p.stats.gold === g0 - UPG.find((u) => u.id === 'floor2').cost);
   assert.equal(buyUpgrade(p, 'floor2').why, 'have'); assert.ok(buyUpgrade(p, 'floor3').ok && buyUpgrade(p, 'villa').ok && HOUSE(p).villa);
   assert.ok(buyUpgrade(p, 'garden1').ok && buyUpgrade(p, 'garden2').ok); assert.equal(buyUpgrade(p, 'garden2').why, 'have');
-  const q = S.newProfile('Bo', 6); q.stats.level = 1; q.stats.gold = 5000; assert.equal(upgradeState(q, 'floor2').why, 'level'); q.stats.level = 6; q.stats.gold = 10; assert.equal(upgradeState(q, 'floor2').why, 'gold');
-  assert.equal(floorPlan({ floors: 1 }).length, 1); assert.deepEqual(floorPlan({ floors: 2 })[1], ['bedroom', '', '', '']); assert.equal(floorPlan({ floors: 3 }).length, 3);
+  const q = S.newProfile('Bo', 6); q.stats.level = 1; q.stats.gold = 5000; assert.equal(upgradeState(q, 'floor2').why, 'level'); q.stats.level = 8; q.stats.gold = 10; assert.equal(upgradeState(q, 'floor2').why, 'gold');
+  assert.equal(floorPlan({ floors: 1 }).length, 1); assert.deepEqual(floorPlan({ floors: 2 })[1], ['', 'bedroom', '', '']); assert.equal(floorPlan({ floors: 3 }).length, 3);
   const all = Object.values(GROUPS).flat(); for (const id of all) assert.ok(ITEMS[id] && ITEMS[id].slot === 'home', id); assert.deepEqual(gardenOf({ garden: 0 }), { veg: 2, flowers: 2, trees: 0, pond: false, arch: false }); assert.equal(gardenOf({ garden: 2 }).pond, true);
 });
 
@@ -908,4 +918,64 @@ test('the village pond is water: not walkable, deep in the middle, shallow at th
     assert.ok(L2.waterDepth(pond.x, pond.z) > 1.1 && L2.waterDepth(pond.x + pond.r * 0.97, pond.z) < 0.6);
     assert.ok(L2.waterSurface(pond.x, pond.z) > L2.WATER_LEVEL + 0.1, 'a pond sits on the ground'); assert.equal(L2.waterSurface(0, 0), L2.WATER_LEVEL);
   } finally { L2.setRegion('forest'); }
+});
+
+// ---------------------------------------------------------------- 21/11: playtest 5
+import { SAFE, inSafe, CHASE, RESPAWN, SPAWNS as SP21 } from '../src/core/rules.js';
+import { dotsAlong, simplify } from '../src/core/nav.js';
+import { GOODS, addGood, sellable, sellGoods } from '../src/core/goods.js';
+import * as FARM from '../src/core/farm.js';
+import { freeAt, stairY, stairX, STAIR, FLOOR_H as FH, paintOf, setPlace, placeOf, house as HOUSE2 } from '../src/core/house.js';
+import * as PET2 from '../src/core/pet.js';
+import { KINDS as WK, baseOf, patOf, parse as wparse, priceOf as wprice } from '../src/core/wardrobe.js';
+test('safe places: no monster lives in one; the orchard, the mini games and the shops are safe; chase is slower, respawn later', () => {
+  for (const [kind, x, z] of SP21) assert.ok(!inSafe('village', x, z, 1), `${kind} at ${x},${z} spawns outside the safe places`);
+  for (const [x, z] of [[40, 11], [36, 0], [45, 18], [-15, -17], [-6, -33], [10, 28], [-31, 4.5], [0, 0], [-50, -5]]) assert.ok(inSafe('village', x, z), `${x},${z} is safe`);
+  assert.ok(inSafe('harbor', -12, 2) && !inSafe('harbor', 12, 45));
+  assert.ok(CHASE < 0.8 && RESPAWN.normal >= 30 && RESPAWN.elite > RESPAWN.normal);
+});
+test('quest trail: dots every metre or so along the path, the zigzag of the grid removed', () => {
+  const path = [{ x: 0, z: 0 }, { x: 1, z: 0 }, { x: 2, z: 0 }, { x: 3, z: 0 }, { x: 3, z: 1 }, { x: 3, z: 2 }];
+  assert.equal(simplify(path).length, 3);
+  const d = dotsAlong(path, 1, 0.5); assert.ok(d.length === 5 && Math.abs(d[0].x - 0.5) < 1e-9 && Math.abs(d[4].z - 1.5) < 1e-9);
+});
+test('goods: apples, vegetables, eggs, pigs and fish go into the bag and sell at the shop', () => {
+  const p = S.newProfile('An', 6); p.stats.gold = 0;
+  addGood(p, 'apple', 5); addGood(p, 'gold_apple', 2); addGood(p, 'nope', 3); p.fish = { carp: 2, sardine: 1, boot: 1 };
+  const list = sellable(p); assert.deepEqual(list.map((x) => x.id).sort(), ['apple', 'boot', 'carp', 'gold_apple', 'sardine']);
+  assert.equal(sellGoods(p, 'apple').gold, 5 * GOODS.apple.price); assert.equal(p.goods.apple, undefined);
+  const r = sellGoods(p); assert.ok(r.n === 6 && p.stats.gold === 5 + r.gold && !sellable(p).length);
+});
+test('farm: plant, wait, harvest; hens lay eggs; a piglet fed four times grows and sells', () => {
+  const p = S.newProfile('An', 6); p.stats.gold = 500; const t0 = 1e12, min = 60000;
+  assert.equal(FARM.bedCount(p), 2); assert.ok(FARM.plant(p, 0, 'carrot', t0).ok && p.stats.gold === 498); assert.equal(FARM.plant(p, 0, 'corn', t0).why, 'busy'); assert.equal(FARM.plant(p, 5, 'corn', t0).why, 'none');
+  assert.equal(FARM.stageOf(FARM.farm(p).beds[0], t0 + min), 2); assert.equal(FARM.harvest(p, 0, t0 + min).why, 'young');
+  const h = FARM.harvest(p, 0, t0 + 3 * min); assert.ok(h.ok && p.goods.carrot === 3 && !FARM.farm(p).beds[0]);
+  assert.equal(FARM.eggsReady(p, t0), 0, 'no coop, no eggs'); HOUSE2(p).coop = true; FARM.eggsReady(p, t0); assert.equal(FARM.eggsReady(p, t0 + 9 * min), 3); assert.equal(FARM.collectEggs(p, t0 + 9 * min), 3); assert.equal(p.goods.egg, 3);
+  assert.equal(FARM.eggsReady(p, t0 + 999 * min), FARM.EGG_MAX);
+  assert.equal(FARM.buyPiglet(p, t0).why, 'pen'); HOUSE2(p).pen = true; assert.ok(FARM.buyPiglet(p, t0).ok);
+  let t = t0; for (let i = 0; i < 4; i++) { t += FARM.FEED_GAP * min; assert.ok(FARM.feedPig(p, t).ok); }
+  assert.equal(p.goods.carrot, 0, 'the pig ate the carrots first, then gold'); assert.ok(!FARM.pigGrown(FARM.farm(p).pig, t0 + 5 * min));
+  assert.ok(FARM.pigGrown(FARM.farm(p).pig, t0 + 30 * min) && FARM.takePig(p, t0 + 30 * min) && p.goods.pig === 1);
+});
+test('house walking: walls, the doorway, the stairs between floors, colours and saved furniture places', () => {
+  const h = { floors: 2 };
+  assert.ok(freeAt(h, 0, -4, 3) && freeAt(h, 0, 0, 0.5) && !freeAt(h, 0, 0, 3), 'the middle wall has a doorway');
+  assert.ok(!freeAt(h, 0, -1, 0) && freeAt(h, 0, -4, 0), 'the low wall has gaps');
+  assert.ok(!freeAt(h, 0, stairX(0), 0), 'the stair block'); assert.ok(!freeAt(h, 1, stairX(0), 0), 'the stairwell above it'); assert.ok(freeAt(h, 1, stairX(0), -4.6), 'the landing at the top');
+  assert.equal(stairY(0, STAIR.z0), 0); assert.equal(stairY(0, STAIR.z1), FH); assert.ok(Math.abs(stairY(1, (STAIR.z0 + STAIR.z1) / 2) - 1.5 * FH) < 1e-9);
+  assert.deepEqual(paintOf({}), { wall: 'cream', floor: 'oak' }); assert.deepEqual(paintOf({ paint: { wall: 'mint', floor: 'bad' } }), { wall: 'mint', floor: 'oak' });
+  const hh = {}; setPlace(hh, 'sofa', { f: 1, x: 2.123, z: -1, ry: Math.PI / 2 }); assert.deepEqual(placeOf(hh, 'sofa'), { f: 1, x: 2.12, z: -1, ry: 1.571 }); assert.equal(placeOf(hh, 'bed'), null);
+});
+test('pets: buy puppies and kittens in the village shop, keep several, take one along', () => {
+  const p = S.newProfile('An', 6); p.stats.gold = 300;
+  assert.equal(PET2.buyPet(p, 'gull').why, 'none', 'sea pets are adopted, not sold');
+  assert.ok(PET2.buyPet(p, 'puppy').ok && p.pet.kind === 'puppy' && p.stats.gold === 180); assert.equal(PET2.buyPet(p, 'puppy').why, 'have');
+  assert.ok(PET2.buyPet(p, 'kitten').ok && p.pet.kind === 'kitten' && p.pets.puppy); assert.equal(PET2.buyPet(p, 'bunny').why, 'gold');
+  assert.deepEqual(PET2.owned(p).sort(), ['kitten', 'puppy']); assert.ok(PET2.switchPet(p, 'puppy') && p.pet.kind === 'puppy' && p.pets.kitten && !p.pets.puppy);
+});
+test('fashion: printed tops, skirts and dresses wear as their base shape; four new kinds of shoes; English names', () => {
+  for (const [k, v] of Object.entries(WK)) if (v.base) { assert.ok(WK[v.base], `${k} has a base`); assert.ok(patOf(k)); assert.equal(WK[v.base].slot === 'top' || WK[v.base].slot === 'bottom' || WK[v.base].slot === 'body', true); }
+  assert.equal(baseOf('tee_stripe'), 'top'); assert.equal(baseOf('hoodie'), 'hoodie'); assert.ok(wparse('tee_dots:red') && wprice('tee_dye:blue') > 0);
+  for (const k of ['hightops', 'boots', 'sandals', 'flats']) assert.equal(WK[k].slot, 'feet'); assert.ok(!/[ăâđêôơưáàảãạ]/i.test(WK.aodai.en), 'the áo dài has an English name');
 });

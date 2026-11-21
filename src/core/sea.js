@@ -32,7 +32,7 @@ export const CREATURES = [...FISH, ...MONSTER_ENTRIES];
 export const DEX_TOTAL = CREATURES.length;
 /** The picture of a creature (Blender render, 256 px); the junk items have none and keep their emoji. */
 export const dexImage = (e) => (e && !e.junk ? `./assets/ui/dex_${e.id}.png` : null);
-export const entry = (id) => CREATURES.find((c) => c.id === id) || JUNK.find((c) => c.id === id) || null;
+export const entry = (id) => CREATURES.find((c) => c.id === id) || JUNK.find((c) => c.id === id) || RIVER.find((c) => c.id === id) || null;      // (21/11) river fish ride in the same bucket
 /** Dex milestones: found this many different creatures, get a bonus once. */
 export const MILESTONES = [{ n: 5, gold: 50 }, { n: 10, gold: 120 }, { n: 15, gold: 250 }, { n: DEX_TOTAL, gold: 500 }];
 

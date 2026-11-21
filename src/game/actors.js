@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import * as L from '../core/layout.js';
 
-const WALK = 3.4, RUN = 6.3, JUMP = 6.6, GRAVITY = 19;
+const WALK = 6.4, RUN = 9.2, JUMP = 6.6, GRAVITY = 19;      // (21/11) "the hero walks slowly next to the monsters: twice as fast" (was 3.4 / 6.3)
 
 export class Player {
   constructor(gltf, faceTextures) {
@@ -13,16 +13,30 @@ export class Player {
     this.faceMaps = { happy: this.face ? this.face.map : null, ...faceTextures };
     this.blink = 2.5; this.faceHold = 0;
     this.pos = new THREE.Vector3(); this.vy = 0; this.grounded = true; this.yaw = Math.PI; this.current = ''; this.route = null; this.lock = 0; this.stepTimer = 0; this.swim = null; this.noSwim = false; this.onSwim = null; this.swimBlock = null;
+    this.bones = {}; this.root.traverse((o) => { if (o.isBone && ['upper_arm.R', 'forearm.R', 'chest', 'spine'].includes(o.name)) this.bones[o.name] = o; }); this.swingT = 0; this.swingDir = 1;
     this.play('Idle');
     this.mixer.addEventListener('finished', (e) => { if (['Land', 'Wave', 'Celebrate', 'Interact'].includes(e.action.getClip().name)) this.play('Idle'); });
   }
-  place(x, z) { this.swim = null; this.pos.set(x, L.walkHeight(x, z), z); this.vy = 0; this.grounded = true; this.route = null; this.sync(); }
+  place(x, z) { this.swim = null; this.seat = null; this.pos.set(x, L.walkHeight(x, z), z); this.vy = 0; this.grounded = true; this.route = null; this.sync(); }
   play(name, fade = 0.16) {
     if (this.current === name || !this.actions[name]) return;
     const next = this.actions[name], prev = this.actions[this.current];
     next.reset().setEffectiveWeight(1).play();
     if (prev) prev.crossFadeTo(next, fade, false);
     this.current = name;
+  }
+  /** (21/11) Left click with a weapon: a sword swing laid over whatever clip plays (wind up, strike across, recover).
+   *  The file has no attack clip, so the right arm and the chest are turned by hand after the mixer. */
+  swing() { this.swingT = 0.42; this.swingDir = -this.swingDir; this.lock = Math.max(this.lock, 0.18); }
+  applySwing(dt) {
+    if (this.swingT <= 0) return; this.swingT = Math.max(0, this.swingT - dt);
+    const k = 1 - this.swingT / 0.42, e = (a, b, t) => a + (b - a) * (t < 0 ? 0 : t > 1 ? 1 : t * t * (3 - 2 * t));
+    const up = k < 0.32 ? e(0, 1, k / 0.32) : k < 0.62 ? e(1, -0.35, (k - 0.32) / 0.3) : e(-0.35, 0, (k - 0.62) / 0.38);      // 1 = arm raised, -0.35 = struck through
+    const turn = k < 0.32 ? e(0, 0.45, k / 0.32) : k < 0.62 ? e(0.45, -0.5, (k - 0.32) / 0.3) : e(-0.5, 0, (k - 0.62) / 0.38);
+    const q = new THREE.Quaternion(), ax = new THREE.Vector3(), b = this.bones;
+    if (b['upper_arm.R']) { b['upper_arm.R'].quaternion.multiply(q.setFromAxisAngle(ax.set(1, 0, 0), -up * 1.9)); b['upper_arm.R'].quaternion.multiply(q.setFromAxisAngle(ax.set(0, 0, 1), up * 0.5 * this.swingDir)); }
+    if (b['forearm.R']) b['forearm.R'].quaternion.multiply(q.setFromAxisAngle(ax.set(1, 0, 0), -Math.max(0, up) * 0.6));
+    if (b.chest) b.chest.quaternion.multiply(q.setFromAxisAngle(ax.set(0, 1, 0), turn * this.swingDir));
   }
   emote(name) { this.play(name, 0.1); this.lock = name === 'Celebrate' ? 1.2 : 0.7; if (name === 'Celebrate') this.setFace('joy', 1.4); }
   /** A face from the character creator: { happy, blink, talk, joy } textures (src/game/faces.js). */
@@ -61,7 +75,7 @@ export class Player {
     const depth = this.depthAt(this.pos.x, this.pos.z), deep = depth > 0.55;
     if (!deep && !frozen && (input.x || input.z)) {      // wading in the shallows: the keys walk, slowly
       const fx = -Math.sin(camYaw), fz = -Math.cos(camYaw), rx = Math.cos(camYaw), rz = -Math.sin(camYaw);
-      let mx = fx * input.z + rx * input.x, mz = fz * input.z + rz * input.x; const len = Math.hypot(mx, mz) || 1; mx /= len; mz /= len; s.vx = mx * WALK * 0.6; s.vz = mz * WALK * 0.6;
+      let mx = fx * input.z + rx * input.x, mz = fz * input.z + rz * input.x; const len = Math.hypot(mx, mz) || 1; mx /= len; mz /= len; s.vx = mx * 2.0; s.vz = mz * 2.0;
     } else if (!deep) { s.vx *= Math.exp(-8 * dt); s.vz *= Math.exp(-8 * dt); }
     else { s.vx *= Math.exp(-2.4 * dt); s.vz *= Math.exp(-2.4 * dt); }
     const sp = Math.hypot(s.vx, s.vz);
@@ -86,6 +100,7 @@ export class Player {
   }
   /** input: {x, z} in camera space (z forward), run, jump. camYaw: camera orbit yaw. */
   update(dt, input, camYaw, frozen, sfx) {
+    if (this.seat) { this.pos.set(this.seat.x, this.seat.y, this.seat.z); this.yaw = this.seat.yaw; this.route = null; if (this.current !== 'Idle' && this.lock <= 0) this.play('Idle'); this.lock = Math.max(0, this.lock - dt); this.mixer.update(dt); this.applySwing(dt); this.sync(); return 0; }      // (21/11) sitting in the fishing boat
     if (this.swim) return this.updateSwim(dt, input, camYaw, frozen, sfx);
     let mx = 0, mz = 0, speed = 0;
     this.lock = Math.max(0, this.lock - dt);
@@ -99,7 +114,7 @@ export class Player {
       } else if (this.route && this.route.length) {
         const t = this.route[0], dx = t.x - this.pos.x, dz = t.z - this.pos.z, d = Math.hypot(dx, dz);
         if (d < 0.45) { this.route.shift(); if (!this.route.length) this.route = null; }
-        else { mx = dx / d; mz = dz / d; speed = RUN * 0.92; }
+        else { mx = dx / d; mz = dz / d; speed = WALK; }
       }
       if (input.jump && this.grounded) { this.vy = JUMP; this.grounded = false; this.play('Jump', 0.08); }
     }
@@ -123,7 +138,7 @@ export class Player {
       if (this.vy < -1.5 && this.current !== 'Fall') this.play('Fall', 0.12);
       if (this.pos.y <= ground) { this.pos.y = ground; this.grounded = true; this.vy = 0; this.play('Land', 0.06); this.lock = 0.12; if (sfx) sfx('step'); }
     } else if (speed > 0) {
-      this.play(speed > WALK + 0.5 ? 'Run' : 'Walk');
+      this.play('Run'); if (this.actions.Run) this.actions.Run.timeScale = speed / 6.3;      // (21/11) at the new pace the run clip fits; faster with Shift
       this.stepTimer -= dt * speed; if (this.stepTimer <= 0) { this.stepTimer = 2.1; if (sfx) sfx('step'); }
     } else if (this.lock <= 0 && !['Wave', 'Celebrate', 'Interact', 'Land', 'Talk'].includes(this.current)) this.play('Idle');
     else if (this.current === 'Talk' && !frozen) this.play('Idle');
@@ -132,7 +147,7 @@ export class Player {
       if (this.faceHold > 0) { this.faceHold -= dt; if (this.faceHold <= 0) this.face.map = this.faceMaps.happy; }
       else { this.blink -= dt; if (this.blink <= 0) { this.setFace('blink', 0.12); this.blink = 2.4 + Math.random() * 2.6; } }
     }
-    this.mixer.update(dt); this.sync();
+    this.mixer.update(dt); this.applySwing(dt); this.sync();
     return speed;
   }
 }

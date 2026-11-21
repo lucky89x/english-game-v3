@@ -5,7 +5,7 @@ import * as THREE from 'three';
 import * as L from '../core/layout.js';
 import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
 import { PLAY } from '../core/regions/harbor.js';
-import { ITEMS, lootRoll, giveLoot, lootCloth, MONSTERS, SPAWNS, FOREST_SPAWNS, HARBOR_SPAWNS, HUNT_KEY, forestChapter, playerAtk, hurt, inArc, huntsOf, hunt, countKill, huntLine, BOSSES, BOSS4, shieldDue } from '../core/rules.js';
+import { ITEMS, bag, lootRoll, giveLoot, lootCloth, MONSTERS, SPAWNS, FOREST_SPAWNS, HARBOR_SPAWNS, HUNT_KEY, forestChapter, inSafe, CHASE, RESPAWN, playerAtk, hurt, inArc, huntsOf, hunt, countKill, huntLine, BOSSES, BOSS4, shieldDue } from '../core/rules.js';
 
 // BOARD: on the Quest Square since 17/11 (was out at 29, -14), facing the fountain
 export const BOARD = { x: -6.2, z: 0.6 }, BOSS_AT = { x: 40, z: -26 }, BOSS2_AT = { x: 46, z: 40 };
@@ -80,7 +80,30 @@ export class Wild {
     }
     // sword slash arc shown for a moment in front of Ngọc
     this.slash = new THREE.Mesh(new THREE.TorusGeometry(1.5, 0.09, 6, 20, Math.PI * 0.9), new THREE.MeshBasicMaterial({ color: 0xfff2a0, transparent: true, opacity: 0.9, depthWrite: false })); this.slash.rotation.x = Math.PI / 2; this.slash.visible = false; api.scene.add(this.slash);
+    // (21/11) target lock: a red ring under the locked monster, a soft white one under the monster the mouse points at
+    const ringOf = (hex, o) => { const r = new THREE.Mesh(new THREE.RingGeometry(0.7, 0.9, 36), new THREE.MeshBasicMaterial({ color: hex, transparent: true, opacity: o, depthWrite: false, side: THREE.DoubleSide, toneMapped: false })); r.rotation.x = -Math.PI / 2; r.visible = false; r.renderOrder = 3; api.scene.add(r); return r; };
+    this.target = null; this.hover = null; this.tRing = ringOf(0xff4a3a, 0.85); this.hRing = ringOf(0xffffff, 0.45);
     this.setRegion(L.NAME);
+  }
+  /** Locks a monster as the target (null clears). Spells aim at it and the hero keeps hitting it while in reach. */
+  setTarget(m) { this.target = m && !m.dead ? m : null; }
+  /** The monster closest to screen point (sx, sy) in pixels, within 60 px, or null. project(v) -> {x, y} in pixels. */
+  pick(sx, sy, project) {
+    let best = null, bd = 60; const p = this.api.profile();
+    for (const m of this.targets(p)) { const s = project(m.x, L.groundHeight(m.x, m.z) + 0.7 * m.def.size * (m.def.fit || 1), m.z); if (!s) continue; const d = Math.hypot(s.x - sx, s.y - sy); if (d < bd) { bd = d; best = m; } }
+    return best;
+  }
+  /** Reach of the hero's sword against this monster. */
+  reach(m) { return 2.3 + m.def.size * 0.3; }
+  /** Swings at the locked target when it is in reach (auto attack), turning the hero to face it. Returns true when it swung. */
+  autoHit() {
+    const m = this.target, { player } = this.api; if (!m || m.dead || this.cool > 0) return false;
+    const d = Math.hypot(m.x - player.pos.x, m.z - player.pos.z); if (d > this.reach(m)) return false;
+    player.yaw = Math.atan2(m.x - player.pos.x, m.z - player.pos.z); this.attack(); return true;
+  }
+  syncRings() {
+    const t = this.target, h = this.hover && this.hover !== t ? this.hover : null, k = 1 + Math.sin(this.t * 6) * 0.06;
+    for (const [r, m] of [[this.tRing, t], [this.hRing, h]]) { r.visible = !!m && m.g.visible && !m.dead; if (r.visible) { r.position.set(m.x, L.groundHeight(m.x, m.z) + 0.06, m.z); r.scale.setScalar(m.def.size * (m.boss ? 1.1 : 0.85) * k); } }
   }
   /** Captain Octopus (Blender model with a word shield) or, when it did not load, a purple blob with a captain's hat. */
   glbBoss(def, at, gl, eye) {
@@ -134,7 +157,7 @@ export class Wild {
   }
   /** Village: meadow monsters, bosses and the board. Forest: Map 2 monsters, only once Map 2 is open. */
   setRegion(name) {
-    this.clearShots(); this.region = name; this.root.visible = name === 'village' || name === 'forest' || name === 'harbor'; for (const b of this.boards || []) b.g.visible = b.region === name;
+    this.clearShots(); this.target = this.hover = null; this.region = name; this.root.visible = name === 'village' || name === 'forest' || name === 'harbor'; for (const b of this.boards || []) b.g.visible = b.region === name;
     for (const m of this.mobs) { if (m.region === name) this.place(m); else m.g.visible = false; }
   }
   /** The region's fighting content is on: always in the village; the forest after the crystal quest (last chapter of Map 1); the harbor once Map 2 is open. */
@@ -225,7 +248,7 @@ export class Wild {
   /** The hero swings (J / F). Returns the number of monsters hit. The worn weapon's element rides on the swing (20/11). */
   attack() {
     const { player, profile } = this.api, p = profile(); if (!this.root.visible || this.cool > 0 || !p) return 0;
-    this.cool = 0.42; player.emote('Interact'); this.api.sfx('tick');
+    this.cool = 0.42; if (player.swing && bag(p).weapon) player.swing(); else player.emote('Interact'); this.api.sfx('swish');
     const el = (p.gear && p.gear.el) || '';
     this.slash.material.color.set(el ? ELEMENTS[el].hex : 0xfff2a0);
     this.slash.visible = true; this.slashT = 0.16; this.slash.position.set(player.pos.x, player.pos.y + 0.9, player.pos.z); this.slash.rotation.z = -player.yaw + Math.PI * 0.05;
@@ -262,7 +285,7 @@ export class Wild {
     return dmg;
   }
   kill(m, p) {
-    m.dead = m.boss ? 300 : m.kind === 'golem' ? 40 : 14; m.burn = null; m.stun = 0; m.slow = 0; m.mark = null;
+    m.dead = m.boss ? RESPAWN.boss : m.def.elite ? RESPAWN.elite : RESPAWN.normal; m.burn = null; m.stun = 0; m.slow = 0; m.mark = null;      // (21/11) slower comeback
     const death = m.acts && m.acts.Death;      // (20/11) monsters with a Death clip fall down first, then vanish
     if (death) { death.setLoop(THREE.LoopOnce, 1); death.clampWhenFinished = true; const prev = m.cur; death.reset().play(); if (prev && prev !== death) prev.crossFadeTo(death, 0.1, false); m.cur = death; m.once = null; m.dying = Math.min(1.4, death.getClip().duration); if (m.bar) m.bar.visible = m.back.visible = false; if (m.elDot) m.elDot.visible = false; }
     else m.g.visible = false;
@@ -307,7 +330,7 @@ export class Wild {
     this.t += dt; this.cool = Math.max(0, this.cool - dt); this.rollCool = Math.max(0, (this.rollCool || 0) - dt); this.iframes = Math.max(0, (this.iframes || 0) - dt);
     if (this.slash.visible) { this.slashT -= dt; this.slash.material.opacity = Math.max(0, this.slashT / 0.16); if (this.slashT <= 0) this.slash.visible = false; }
     const hpMax = maxHp(p); if (p.stats.hp === undefined || p.stats.hp > hpMax) p.stats.hp = hpMax;
-    let fighting = false;
+    let fighting = false; const safe = inSafe(this.region, player.pos.x, player.pos.z);      // (21/11) no fights in the safe places
     for (const m of this.mobs) {
       if (!this.here(m, p)) { if (m.g.visible) m.g.visible = false; continue; }
       if (!m.boss && !m.dead && !m.g.visible) { m.g.visible = true; this.place(m); }
@@ -316,9 +339,9 @@ export class Wild {
       if (m.dying > 0) { m.dying -= dt; if (m.mixer) m.mixer.update(dt); if (m.dying <= 0) m.g.visible = false; }
       if (m.dead) { m.dead -= dt; if (m.dead <= 0) { if (m.acts && m.acts.Death) { m.acts.Death.stop(); if (m.idle) { m.idle.reset().play(); m.cur = m.idle; } } m.dying = 0; m.dead = 0; m.hp = m.def.hp; if (m.boss) { m.broken = 0; m.shieldOn = false; m.shield.visible = false; } m.x = m.home.x; m.z = m.home.z; m.g.visible = true; this.place(m); } continue; }
       const dx = player.pos.x - m.x, dz = player.pos.z - m.z, d = Math.hypot(dx, dz), far = Math.hypot(m.x - m.home.x, m.z - m.home.z);
-      let vx = 0, vz = 0;
+      let vx = 0, vz = 0, chasing = false;
       const keep = m.def.ranged && !m.boss ? 5.5 : 0.9;      // (20/11) ranged monsters stop at about 5.5 m and cast
-      if (!frozen && d < (m.def.ranged ? 11 : 9) && far < 13) { fighting = true; if (d > keep) { vx = dx / d; vz = dz / d; } else if (m.def.ranged && !m.boss) m.g.rotation.y = Math.atan2(dx, dz); }
+      if (!frozen && !safe && d < (m.def.ranged ? 10 : 8) && far < 13) { fighting = chasing = true; if (d > keep) { vx = dx / d; vz = dz / d; } else if (m.def.ranged && !m.boss) m.g.rotation.y = Math.atan2(dx, dz); }
       else if (far > 0.6) { vx = (m.home.x - m.x) / far; vz = (m.home.z - m.z) / far; if (far > 2) m.hp = Math.min(m.def.hp, m.hp + dt * 12); }
       // (20/11) spells: stunned monsters stand still, slowed ones walk at half speed, burning ones lose health, marks fade
       if (m.stun > 0) { m.stun -= dt; vx = vz = 0; }
@@ -327,7 +350,7 @@ export class Wild {
       if (m.burn) { m.burn.t -= dt; m.burnTick = (m.burnTick || 0) + dt; if (m.burnTick >= 1) { m.burnTick = 0; m.hp -= m.burn.dps; m.flash = 0.08; this.api.floater(m.x, m.z, String(m.burn.dps), '#ff8a3a', 0.75); if (m.hp <= 0) { m.burn = null; this.kill(m, p); continue; } } if (m.burn && m.burn.t <= 0) m.burn = null; }
       if (!m.elDot) this.elementDot(m);
       if (m.elDot) { m.elDot.position.y = m.bar.position.y; const want = m.mark ? m.mark.el : m.def.el; if (m.elShown !== want) { m.elShown = want; m.elDot.material.map = elementTex(want); m.elDot.material.needsUpdate = true; } }
-      const sp = m.def.speed * (m.slow > 0 ? 0.5 : 1), nx = m.x + vx * sp * dt, nz = m.z + vz * sp * dt; if ((vx || vz) && L.walkable(nx, nz, 0.45)) { m.x = nx; m.z = nz; }
+      const sp = m.def.speed * (chasing ? CHASE : 1) * (m.slow > 0 ? 0.5 : 1), nx = m.x + vx * sp * dt, nz = m.z + vz * sp * dt; if ((vx || vz) && L.walkable(nx, nz, 0.45) && !inSafe(this.region, nx, nz, 1)) { m.x = nx; m.z = nz; }
       let hop = Math.abs(Math.sin(this.t * (m.kind === 'golem' ? 3 : 5) + m.ph)) * (vx || vz ? 0.22 : 0.08);
       if (m.mixer) {          // Blender monsters walk and idle by their own clips; jellyfish float
         if (m.once) { m.once.t += dt; if (m.once.t >= m.once.a.getClip().duration) m.once = null; }
@@ -342,10 +365,10 @@ export class Wild {
       m.hitCool = Math.max(0, m.hitCool - dt);
       if (m.shotCool === undefined) m.shotCool = 1 + (m.ph % 2);      // not all at once
       m.shotCool -= dt;
-      if (!frozen && !m.dead && !m.stun && (m.def.ranged || m.boss) && m.shotCool <= 0 && d > 2.6 && d < (m.boss ? 14 : 11)) {
+      if (!frozen && !safe && !m.dead && !m.stun && (m.def.ranged || m.boss) && m.shotCool <= 0 && d > 2.6 && d < (m.boss ? 14 : 11)) {
         m.shotCool = m.boss ? 3.6 : 2.4 + (m.ph % 1.2); this.cue(m, m.acts && m.acts.Cast ? 'Cast' : 'Attack'); this.shoot(m, player.pos, m.boss ? 3 : 1);
       }
-      if (!frozen && !this.iframes && d < 0.95 + m.def.size * 0.35 && m.hitCool <= 0) {
+      if (!frozen && !safe && !this.iframes && d < 0.95 + m.def.size * 0.35 && m.hitCool <= 0) {
         m.hitCool = 1.1; this.cue(m, 'Attack');
         if (m.stun > 0) m.hitCool = 0.3;      // stunned: no hit
         else if (Math.random() < powers(p).dodge) this.api.floater(player.pos.x, player.pos.z, 'Miss!', '#9fe8ff', 0.9);      // Wind Steps: a dodge
@@ -353,6 +376,9 @@ export class Wild {
         if (p.stats.hp <= 0) { p.stats.hp = hpMax; this.api.save(); this.api.respawn(); return; }
       }
     }
+    if (this.target && (this.target.dead || !this.here(this.target, p) || !this.target.g.visible || Math.hypot(this.target.x - player.pos.x, this.target.z - player.pos.z) > 25)) this.target = null;
+    if (this.hover && (this.hover.dead || !this.hover.g.visible)) this.hover = null;
+    this.syncRings(); this.fighting = fighting;
     this.updateShots(dt, p, hpMax, frozen);
     if (!fighting && p.stats.hp < hpMax) { this.regen += dt; if (this.regen > 0.5) { this.regen = 0; p.stats.hp = Math.min(hpMax, p.stats.hp + 3); this.api.onChange(); } }
   }
@@ -375,7 +401,7 @@ export class Wild {
     for (let i = this.shots.length - 1; i >= 0; i--) {
       const s = this.shots[i]; s.t -= dt; s.g.position.x += s.vx * dt; s.g.position.z += s.vz * dt; s.spin += dt * 9; s.g.children[1].material.rotation = s.spin;
       const dx = player.pos.x - s.g.position.x, dz = player.pos.z - s.g.position.z, hit = Math.hypot(dx, dz) < 0.75 && Math.abs(s.g.position.y - (player.pos.y + 0.8)) < 1.4;
-      if (hit && !frozen && !this.iframes) {
+      if (hit && !frozen && !this.iframes && !inSafe(this.region, player.pos.x, player.pos.z)) {
         if (Math.random() < powers(p).dodge) this.api.floater(player.pos.x, player.pos.z, 'Miss!', '#9fe8ff', 0.9);
         else { if (!p.god) p.stats.hp -= hurt(s.atk, p, s.el); this.api.sfx('wrong'); this.api.onChange(); this.api.floater(player.pos.x, player.pos.z, '💥', ELEMENTS[s.el].color, 0.8); }
         if (p.stats.hp <= 0) { p.stats.hp = hpMax; this.clearShots(); this.api.save(); this.api.respawn(); return; }

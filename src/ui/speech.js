@@ -12,6 +12,12 @@ function pickVoice() {
 }
 if (synth()) synth().addEventListener?.('voiceschanged', () => { voice = pickVoice(); });
 
+/** (21/11) "the English voice reads a bit fast for the children": every line is read at this share of its rate. Set in ⚙. */
+export const PACES = [{ id: 'slow', vi: 'chậm', k: 0.78 }, { id: 'mid', vi: 'vừa', k: 0.9 }, { id: 'normal', vi: 'thường', k: 1.05 }];
+let pace = 'slow';
+try { pace = localStorage.getItem('eq-pace') || 'slow'; } catch { /* private window */ }
+export const paceOf = () => PACES.find((p) => p.id === pace) || PACES[0];
+export function nextPace() { pace = PACES[(PACES.indexOf(paceOf()) + 1) % PACES.length].id; try { localStorage.setItem('eq-pace', pace); } catch { /* ignore */ } return paceOf(); }
 export const voiceOn = () => on;
 export function setVoice(v) { on = !!v; try { localStorage.setItem('eq-voice', on ? '1' : '0'); } catch { /* ignore */ } if (!on) stop(); }
 export function stop() { const s = synth(); if (s) s.cancel(); }
@@ -19,6 +25,6 @@ export function stop() { const s = synth(); if (s) s.cancel(); }
 export function speak(text, force = false, rate = 0.85) {
   const s = synth(); if (!s || (!on && !force) || !text) return;
   s.cancel(); voice = voice || pickVoice();
-  const u = new SpeechSynthesisUtterance(String(text).replace(/[★✉●▸…]/g, ' ')); u.lang = 'en-US'; u.rate = rate; if (voice) u.voice = voice;
+  const u = new SpeechSynthesisUtterance(String(text).replace(/[★✉●▸…]/g, ' ')); u.lang = 'en-US'; u.rate = Math.max(0.5, rate * paceOf().k); if (voice) u.voice = voice;
   s.speak(u);
 }

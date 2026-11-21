@@ -1,5 +1,5 @@
-// Skill UI (20/11): the hotbar (4 spell slots, keys 1-4, energy bar) and the skill book (key T): four element pages with the
-// inner powers and the spells, the points left, the reset, and a page with the element ring (who beats whom, the combos).
+// Skill UI (20/11, one element since 21/11): the hotbar (spell slots, keys 1-4, mana bar) and the skill book (key T): the
+// element choice, the chosen element's passives and skills, a page to change element, the element ring (who beats whom).
 import * as SK from '../core/skills.js';
 import { quick, consumables, ITEMS } from '../core/rules.js';
 import { itemIcon } from './pack.js';
@@ -32,7 +32,7 @@ const CSS = `
 export class SkillUI {
   /** api: { profile(), spells, sfx(name), changed(), toast(text) } */
   constructor(api) {
-    this.api = api; this.tab = 'fire';
+    this.api = api; this.tab = 'mine';
     const st = document.createElement('style'); st.textContent = CSS; document.head.appendChild(st);
     this.bar = document.createElement('div'); this.bar.id = 'hotbar'; this.bar.className = 'hidden'; document.body.appendChild(this.bar);
     this.el = document.createElement('div'); this.el.id = 'skillbook'; this.el.className = 'hidden'; document.body.appendChild(this.el);
@@ -41,6 +41,7 @@ export class SkillUI {
       const b = e.target.closest('button'); if ((!b && e.target === this.el) || (b && b.dataset.a === 'close')) return this.close(); if (!b || b.disabled) return;
       const p = this.api.profile(), a = b.dataset.a, v = b.dataset.v;
       if (a === 'tab') this.tab = v;
+      if (a === 'el') { const had = SK.elOf(p); if (had && !confirm(`Đổi sang hệ ${SK.ELEMENTS[v].vi}? Mọi điểm kỹ năng được trả lại.`)) return; const r = SK.chooseEl(p, v); if (!r.ok) this.api.toast(`Cần ${r.cost} vàng để đổi hệ.`); else { const melee = SK.spellsOf(v)[0]; if (melee && SK.learn(p, melee.id)) SK.assign(p, 0, melee.id); this.tab = 'mine'; this.api.sfx('fanfare'); this.api.toast(`${SK.ELEMENTS[v].icon} Con đã chọn hệ ${SK.ELEMENTS[v].vi}! Phím 1: ${melee.en}`); this.api.changed(); } }
       if (a === 'learn' && SK.learn(p, v)) { this.api.sfx('correct'); this.api.changed(); }
       if (a === 'slot') { SK.assign(p, Number(b.dataset.i), v); this.api.sfx('tick'); this.api.changed(); }
       if (a === 'reset') { if (!confirm(`Lấy lại toàn bộ điểm kỹ năng? (${SK.resetCost(p) ? SK.resetCost(p) + ' vàng' : 'lần đầu miễn phí'})`)) return; const r = SK.reset(p); if (!r.ok) this.api.toast(`Cần ${r.cost} vàng để tẩy điểm.`); else { this.api.sfx('fanfare'); this.api.changed(); } }
@@ -66,25 +67,36 @@ export class SkillUI {
   }
   draw() {
     const p = this.api.profile(); if (!p) return;
-    const free = SK.free(p), tabs = [...SK.EL_IDS.map((el) => ({ id: el, t: `${SK.ELEMENTS[el].icon} ${SK.ELEMENTS[el].en} · ${SK.ELEMENTS[el].vi} (${SK.spentIn(p, el)})` })), { id: 'ring', t: '☯ Tương sinh – tương khắc' }];
-    let body = '';
-    if (this.tab === 'ring') body = this.ringHtml();
+    const free = SK.free(p), mine = SK.elOf(p), E = SK.ELEMENTS, cost = SK.resetCost(p);
+    const TYPE = { melee: '⚔️ cận chiến', single: '🎯 đánh đơn', aoe: '💥 diện rộng' };
+    const pick = (el, cur) => { const c = SK.changeCost(p); return `<div class="node" style="--c:${E[el].color};border-color:${E[el].color}"><b style="font-size:18px">${E[el].icon} ${E[el].en} · ${E[el].vi}</b>
+      <div class="vi">Khắc ${E[SK.BEATS[el]].icon} ${E[SK.BEATS[el]].vi} · ${SK.BEAT_WHY[el]}</div>
+      <div class="vi">${SK.spellsOf(el).map((n) => `${TYPE[n.type]}: <b>${n.en}</b>`).join(' · ')}</div>
+      <div class="vi">Nội tại: ${SK.TREE[el].filter((n) => n.kind === 'inner').map((n) => n.en).join(', ')}</div>
+      <div class="row">${cur ? '<b>✔ Hệ của con</b>' : `<button data-a="el" data-v="${el}">${mine ? `Đổi sang hệ này (${c ? c + ' vàng' : 'miễn phí'})` : 'Chọn hệ này'}</button>`}</div></div>`; };
+    let body = '', tabs = '';
+    if (!mine) body = `<h3>Chọn hệ phép của con</h3><div class="note">Mỗi nhân vật học <b>một hệ</b>. Hệ nào cũng có nội tại (mạnh lên bản thân), một chiêu cận chiến, một chiêu đánh đơn bay theo mục tiêu và một chiêu diện rộng. Sau này đổi hệ được (lần đổi đầu miễn phí), điểm được trả lại hết.</div><div class="cols">${SK.EL_IDS.map((el) => pick(el, false)).join('')}</div>`;
     else {
-      const el = this.tab, E = SK.ELEMENTS[el], bar = SK.magic(p).bar;
-      const node = (n) => { const r = SK.rank(p, n.id), why = SK.blocked(p, n.id);
-        const extra = n.kind === 'outer' ? `<div class="vi">Mana ${n.cost} · chờ ${SK.spellCool(p, n.id)} giây${r ? ` · sát thương bây giờ: ${SK.spellDamage(p, n.id, this.api.atk())}` : ''}</div>` : '';
-        const slots = n.kind === 'outer' && r ? `<span class="note">Ô phím:</span>${[0, 1, 2, 3].map((i) => `<button class="${bar[i] === n.id ? 'on' : ''}" data-a="slot" data-i="${i}" data-v="${n.id}">${i + 1}</button>`).join('')}` : '';
-        return `<div class="node" style="--c:${E.color}"><b>${n.en}</b> · ${n.vi}${n.range ? ` <small>(${n.range === 'near' ? 'đánh gần' : n.range === 'far' ? 'đánh xa' : 'tuyệt kỹ'})</small>` : ''}<div class="vi">${n.what}</div>${extra}
-          <div class="row"><span class="pips">${Array.from({ length: SK.MAX_RANK }, (_, i) => `<i class="${i < r ? 'on' : ''}"></i>`).join('')}</span> <b>${r}/${SK.MAX_RANK}</b>
-          <button data-a="learn" data-v="${n.id}" ${why ? 'disabled' : ''} title="${why}">＋ Học</button>${why && why !== 'đã tối đa' && why !== 'hết điểm' ? `<span class="note">${why}</span>` : ''} ${slots}</div></div>`; };
-      body = `<div class="note">${E.icon} Hệ ${E.vi}: khắc hệ <b>${SK.ELEMENTS[SK.BEATS[el]].vi}</b> (${SK.BEAT_WHY[el]}, sát thương ×1,5), bị hệ <b>${SK.ELEMENTS[Object.keys(SK.BEATS).find((k) => SK.BEATS[k] === el)].vi}</b> khắc (×0,7).</div>
-        <div class="cols"><div><h3>Nội năng · Inner power <small>(mạnh lên bản thân)</small></h3>${SK.TREE[el].filter((n) => n.kind === 'inner').map(node).join('')}</div>
-        <div><h3>Ngoại năng · Spells <small>(phép đánh ra)</small></h3>${SK.TREE[el].filter((n) => n.kind === 'outer').map(node).join('')}</div></div>`;
+      tabs = [{ id: 'mine', t: `${E[mine].icon} Hệ ${E[mine].vi}` }, { id: 'change', t: '🔄 Đổi hệ' }, { id: 'ring', t: '☯ Tương sinh – tương khắc' }].map((t) => `<button class="${t.id === this.tab ? 'on' : ''}" data-a="tab" data-v="${t.id}">${t.t}</button>`).join('');
+      if (!['mine', 'change', 'ring'].includes(this.tab)) this.tab = 'mine';
+      if (this.tab === 'ring') body = this.ringHtml();
+      else if (this.tab === 'change') body = `<div class="note">Đổi hệ: mọi điểm kỹ năng được trả lại để học hệ mới. Lần đổi đầu miễn phí, sau đó tốn vàng.</div><div class="cols">${SK.EL_IDS.map((el) => pick(el, el === mine)).join('')}</div>`;
+      else {
+        const el = mine, bar = SK.magic(p).bar;
+        const node = (n) => { const r = SK.rank(p, n.id), why = SK.blocked(p, n.id);
+          const extra = n.kind === 'outer' ? `<div class="vi">Mana ${n.cost} · chờ ${SK.spellCool(p, n.id)} giây${r ? ` · sát thương bây giờ: ${SK.spellDamage(p, n.id, this.api.atk())}` : ''}</div>` : '';
+          const slots = n.kind === 'outer' && r ? `<span class="note">Ô phím:</span>${[0, 1, 2, 3].map((i) => `<button class="${bar[i] === n.id ? 'on' : ''}" data-a="slot" data-i="${i}" data-v="${n.id}">${i + 1}</button>`).join('')}` : '';
+          return `<div class="node" style="--c:${E[el].color}"><b>${n.en}</b> · ${n.vi} <small>(${n.type ? TYPE[n.type] : '🛡 nội tại'})</small><div class="vi">${n.what}</div>${extra}
+            <div class="row"><span class="pips">${Array.from({ length: SK.MAX_RANK }, (_, i) => `<i class="${i < r ? 'on' : ''}"></i>`).join('')}</span> <b>${r}/${SK.MAX_RANK}</b>
+            <button data-a="learn" data-v="${n.id}" ${why ? 'disabled' : ''} title="${why}">＋ Học</button>${why && why !== 'đã tối đa' && why !== 'hết điểm' ? `<span class="note">${why}</span>` : ''} ${slots}</div></div>`; };
+        body = `<div class="note">${E[el].icon} Hệ ${E[el].vi}: khắc hệ <b>${E[SK.BEATS[el]].vi}</b> (${SK.BEAT_WHY[el]}, sát thương ×1,5), bị hệ <b>${E[Object.keys(SK.BEATS).find((k) => SK.BEATS[k] === el)].vi}</b> khắc (×0,7).</div>
+          <div class="cols"><div><h3>Nội tại · Passives <small>(mạnh lên bản thân)</small></h3>${SK.TREE[el].filter((n) => n.kind === 'inner').map(node).join('')}</div>
+          <div><h3>Chiêu thức · Skills <small>(phím 1 2 3)</small></h3>${SK.TREE[el].filter((n) => n.kind === 'outer').map(node).join('')}</div></div>`;
+      }
     }
-    const cost = SK.resetCost(p);
     this.el.innerHTML = `<div class="bk"><header><span style="font-size:28px">✨</span><h2>Skills · Kỹ năng phép thuật</h2><b>Điểm còn: ${free}</b> <button data-a="reset" ${SK.spent(p) ? '' : 'disabled'}>Tẩy điểm (${cost ? cost + ' vàng' : 'miễn phí'})</button><button data-a="close">✕</button></header>
-      <div class="note">Mỗi lần lên cấp được <b>1 điểm</b>. Có tất cả ${SK.TOTAL_RANKS} bậc kỹ năng, nhiều hơn số điểm cả đời nhân vật có, nên con phải chọn hệ mình thích. Phép trong ô 1–4 dùng bằng phím <b>1 2 3 4</b> (hoặc bấm ô) khi đánh quái. J vẫn là chém thường.</div>
-      <div class="row" style="display:flex;gap:5px;flex-wrap:wrap;margin:6px 0">${tabs.map((t) => `<button class="${t.id === this.tab ? 'on' : ''}" data-a="tab" data-v="${t.id}">${t.t}</button>`).join('')}</div>${body}</div>`;
+      <div class="note">Mỗi lần lên cấp được <b>1 điểm</b>. Đánh: <b>chuột trái</b> chém (bấm vào quái để chọn làm mục tiêu, vòng đỏ dưới chân), <b>chuột phải</b> đi tới. Rê chuột vào quái rồi bấm <b>1 2 3</b> để đánh phép vào đúng con đó; nhân vật tự chém tiếp mục tiêu khi đứng gần. <b>Tab</b> đổi sang con quái gần khác.</div>
+      ${tabs ? `<div class="row" style="display:flex;gap:5px;flex-wrap:wrap;margin:6px 0">${tabs}</div>` : ''}${body}</div>`;
   }
   ringHtml() {
     const E = SK.ELEMENTS, ids = SK.EL_IDS;

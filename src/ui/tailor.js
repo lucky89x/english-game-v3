@@ -21,7 +21,10 @@ const CSS = `
 #tailor .note { font-size:12px; color:#8a5070; }`;
 
 const TABS = [
-  { id: 'clothes', en: 'Clothes', vi: 'quần áo', kinds: ['top', 'hoodie', 'jacket', 'aodai', 'shorts', 'skirt', 'trousers', 'dress', 'gown', 'shoes'] },
+  { id: 'tops', en: 'Tops', vi: 'áo', kinds: ['top', 'tee_stripe', 'tee_dots', 'tee_raglan', 'tee_block', 'tee_dye', 'shirt_check', 'hoodie', 'hoodie_block', 'jacket', 'aodai'] },
+  { id: 'bottoms', en: 'Bottoms', vi: 'quần, váy', kinds: ['shorts', 'trousers', 'trackpants', 'skirt', 'skirt_check', 'skirt_dots'] },
+  { id: 'dresses', en: 'Dresses', vi: 'đầm', kinds: ['dress', 'dress_dots', 'dress_stripe', 'dress_dye', 'gown'] },
+  { id: 'shoes', en: 'Shoes', vi: 'giày dép', kinds: ['shoes', 'hightops', 'boots', 'flats', 'sandals'] },
   { id: 'acc', en: 'Accessories', vi: 'phụ kiện', kinds: ['hat', 'bow', 'headband', 'glasses', 'scarf', 'bag', 'bracelet'] },
   { id: 'jewel', en: 'Jewellery', vi: 'trang sức', kinds: ['necklace', 'earrings', 'tiara', 'hairclip'] },
   { id: 'hair', en: 'Hair', vi: 'tóc', kinds: ['hairstyle', 'haircolor'] },
@@ -33,13 +36,13 @@ export function phrase(id) {
   const it = parse(id); if (!it) return id;
   if (it.kind === 'hairstyle') return it.color === 'ponytail' ? 'a ponytail' : it.color === 'braids' ? 'braids' : `${it.color} hair`;
   if (it.kind === 'haircolor') return `${it.color} hair`;
-  const n = itemName(id); return /trousers|earrings|glasses|shoes/.test(n) ? n : `${/^[aeiou]/.test(n) ? 'an' : 'a'} ${n}`;
+  const n = itemName(id); return /trousers|pants|earrings|glasses|shoes|sneakers|boots|sandals|flats/.test(n) ? n : `${/^[aeiou]/.test(n) ? 'an' : 'a'} ${n}`;
 }
 
 export class Tailor {
   /** api: { profile(), apply(), focus(on), sfx(name), changed(), toast(text) } */
   constructor(api) {
-    this.api = api; this.tab = 'clothes'; this.kind = 'top'; this.sel = null;
+    this.api = api; this.tab = 'tops'; this.kind = 'top'; this.sel = null;
     const st = document.createElement('style'); st.textContent = CSS; document.head.appendChild(st);
     this.el = document.createElement('div'); this.el.id = 'tailor'; this.el.className = 'hidden'; document.body.appendChild(this.el);
     this.el.addEventListener('click', (e) => { const b = e.target.closest('button'); if (b && b.dataset.a && !b.disabled) this.act(b.dataset.a, b.dataset.v); });

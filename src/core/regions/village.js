@@ -14,7 +14,8 @@ export const FURNITURE = { x: -40, z: -18, door: [-35.1, -18] };
 /** Two market stalls (18/11): Ben's fruit and vegetables south of his jar stall, Anna's instruments near her house. at: where E works. */
 export const STALLS = { produce: { x: -7.5, z: 24.8, yaw: Math.PI / 2, at: [-4.6, 24.8] }, music: { x: -19, z: 21.5, yaw: Math.PI / 2, at: [-16.4, 21.5] },
   tailor: { x: 9.5, z: 21.5, yaw: Math.PI, at: [9.5, 18.9] },
-  healer: { x: -5.6, z: 15.2, yaw: Math.PI / 2, at: [-3.0, 15.2] } };      // (20/11) potions and basic gear, beside the square where a fainted hero wakes up      // Mia's tailor shop (19/11), on the grass east of the square-to-market road, facing the square
+  healer: { x: -5.6, z: 15.2, yaw: Math.PI / 2, at: [-3.0, 15.2] },
+  pets: { x: 13.6, z: 2, yaw: -Math.PI / 2, at: [11.0, 2] } };      // (21/11) Penny's pet shop east of the square: puppies, kittens, bunnies      // (20/11) potions and basic gear, beside the square where a fainted hero wakes up      // Mia's tailor shop (19/11), on the grass east of the square-to-market road, facing the square
 /** The pond is water the hero can swim in (20/11); the model's stone rim is the ring beyond this radius. */
 export const PONDS = [{ x: SOUTH.pond[0], z: SOUTH.pond[1], r: 4.1 * POND_SCALE * 0.72 }];
 export default makeRegion({

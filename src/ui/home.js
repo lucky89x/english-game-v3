@@ -1,7 +1,7 @@
 // Inside a child's home (18/11): the room is drawn behind (world/interior.js 'home'); this card lists what stands in
 // the house and the yard, and what can still be bought, with the English name and the shop that sells it.
 import { ITEMS, home } from '../core/rules.js';
-import { house, UPGRADES, upgradeState, buyUpgrade } from '../core/house.js';
+import { house, UPGRADES, upgradeState, buyUpgrade, WALL_COLORS, FLOOR_COLORS, paintOf } from '../core/house.js';
 
 const SHOP = { home: "Bram's furniture (west fields)", garden: "Lily's garden corner (furniture shop)", music: "Anna's instruments (stall by Anna's house)" };
 const CSS = `
@@ -23,16 +23,20 @@ export class HomePanel {
   constructor(api) {
     this.api = api; const st = document.createElement('style'); st.textContent = CSS; document.head.appendChild(st);
     this.el = document.createElement('div'); this.el.id = 'homewin'; this.el.className = 'hidden'; document.body.appendChild(this.el);
-    this.hint = document.createElement('div'); this.hint.id = 'homehint'; this.hint.textContent = 'E · Ra ngoài     L · Mở danh sách (nâng cấp, đồ trong nhà)'; document.body.appendChild(this.hint); this.inside = false;
+    this.hint = document.createElement('div'); this.hint.id = 'homehint'; this.base = 'WASD / bấm chuột: đi lại · L: danh sách, nâng cấp, màu nhà · B: sắp xếp đồ · E: ra ngoài'; this.hint.textContent = this.base; document.body.appendChild(this.hint); this.inside = false;
     this.el.addEventListener('click', (e) => {
       const b = e.target.closest('button'); if ((b && b.dataset.a === 'close') || e.target === this.el) { this.hide(); return; }
       if (b && b.dataset.a === 'exit') { this.close(); return; }
       if (b && b.dataset.a === 'up') { this.upgrade(b.dataset.v); return; }
+      if (b && (b.dataset.a === 'wall' || b.dataset.a === 'floor')) { const h = house(this.owner); h.paint = { ...paintOf(h), [b.dataset.a]: b.dataset.v }; this.api.sfx('tick'); this.api.changed(); if (this.api.rebuild) this.api.rebuild(this.owner); this.paint(); return; }
+      if (b && b.dataset.a === 'arrange') { this.hide(); if (this.api.setEditing) this.api.setEditing(true); return; }
       if (b && b.dataset.a === 'quiz') this.startQuiz();
       if (b && b.dataset.a === 'ans') this.answer(Number(b.dataset.v));
     });
   }
   get open() { return !this.el.classList.contains('hidden'); }
+  /** The line at the bottom while inside: the arrange-mode help, or the keys. */
+  setHint(t) { this.hint.textContent = t || this.base; }
   /** owner: the profile whose home it is; mine: the child playing now owns it (a visitor only looks). */
   show(owner, mine) { this.owner = owner; this.mine = mine; this.quiz = null; this.inside = true; this.paint(); this.el.classList.remove('hidden'); this.hint.classList.remove('on'); }
   /** The list can be shut while the hero stays inside the house (E leaves). */
@@ -49,9 +53,16 @@ export class HomePanel {
     const n = have.length, total = Object.values(ITEMS).filter((it) => it.slot === 'home' || it.slot === 'yard').length;
     this.el.innerHTML = `<div class="book"><header><span style="font-size:28px">🏠</span><h2>${mine ? 'My home' : `${owner.name}'s home`} · Nhà của ${owner.name}</h2><button data-a="exit">Ra ngoài (E)</button><button data-a="close" title="Đóng danh sách">✕</button></header>
       <div class="note">${mine ? 'Nhà của con. Mua đồ ở cửa hàng nội thất (phía Tây, cạnh nhà), quầy nhạc cụ của Anna; đồ mua về tự đặt vào nhà hoặc sân.' : `Con đang thăm nhà của ${owner.name}. Chỉ ${owner.name} mới mua được đồ cho nhà này.`} (${n}/${total})</div>
+      ${mine ? this.paintBox() : ''}
       ${this.upgradesBox(mine)}
       ${this.quizBox(mine)}
       <h3>In the house · Trong nhà</h3><div class="grid">${row('home')}</div><h3>In the yard · Ngoài sân</h3><div class="grid">${row('yard')}</div></div>`;
+  }
+  /** (21/11) "change the colours as the owner likes; arrange the furniture" */
+  paintBox() {
+    const pt = paintOf(house(this.owner)), sw = (kind, list, on) => Object.entries(list).map(([k, v]) => `<button data-a="${kind}" data-v="${k}" title="${v.vi}" style="width:30px;height:30px;padding:0;border-radius:50%;background:#${v.hex.toString(16).padStart(6, '0')};${k === on ? 'box-shadow:0 0 0 3px #fff inset, 0 0 0 2px #7a4a1a' : ''}"></button>`).join(' ');
+    return `<h3>🎨 Colours & furniture · Màu nhà, sắp xếp đồ</h3><div class="note">Tường: ${sw('wall', WALL_COLORS, pt.wall)}</div><div class="note">Sàn: ${sw('floor', FLOOR_COLORS, pt.floor)}</div>
+      <div class="note"><button data-a="arrange">🛠 Sắp xếp đồ (phím B)</button> bấm vào một đồ trong nhà để nhấc lên, di chuột tới chỗ mới, R để xoay, bấm để đặt.</div>`;
   }
   upgradesBox(mine) {
     const o = this.owner, h = house(o); if (!mine) return `<div class="note">🏗 Nhà ${h.floors} tầng${h.villa ? ' (biệt thự)' : ''}, vườn cấp ${h.garden}.</div>`;

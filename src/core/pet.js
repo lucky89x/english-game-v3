@@ -6,7 +6,26 @@ export const PETS = {
   gull: { en: 'seagull', vi: 'hải âu', icon: '🕊️', name: 'Skye', says: 'Squawk! Hello, friend!' },
   otter: { en: 'otter', vi: 'rái cá', icon: '🐾', name: 'Ollie', says: 'Eek eek! Let us play!' },
   crab: { en: 'hermit crab', vi: 'cua ẩn sĩ', icon: '🦀', name: 'Coral', says: 'Click clack! Hi there!' },
+  // (21/11) "a pet shop where the hero buys a pet to keep and care for every day": Penny's shop in the village (Map 1)
+  puppy: { en: 'puppy', vi: 'chó con', icon: '🐶', name: 'Buddy', says: 'Woof woof! Let us go!', price: 120, shop: true },
+  kitten: { en: 'kitten', vi: 'mèo con', icon: '🐱', name: 'Mimi', says: 'Meow! Nice to meet you!', price: 120, shop: true },
+  bunny: { en: 'bunny', vi: 'thỏ con', icon: '🐰', name: 'Hoppy', says: 'Hop hop! Hello!', price: 90, shop: true },
+  duckling: { en: 'duckling', vi: 'vịt con', icon: '🐥', name: 'Ducky', says: 'Quack quack!', price: 70, shop: true },
 };
+/** The pets the hero owns (the one following is p.pet; the others wait at home in p.pets[kind]). */
+export const owned = (p) => [...new Set([...(p.pet ? [p.pet.kind] : []), ...Object.keys(p.pets || {})])];
+/** Buys a shop pet: { ok, why: 'have' | 'gold' | 'none' }. It starts following at once (the old one goes home). */
+export function buyPet(p, kind, day = 0, now = Date.now()) {
+  const info = PETS[kind]; if (!info || !info.shop) return { ok: false, why: 'none' };
+  if (owned(p).includes(kind)) return { ok: false, why: 'have' };
+  if ((p.stats.gold || 0) < info.price) return { ok: false, why: 'gold' };
+  p.stats.gold -= info.price; if (p.pet) (p.pets || (p.pets = {}))[p.pet.kind] = p.pet; p.pet = null; adopt(p, kind, day, now); return { ok: true };
+}
+/** Takes another owned pet along; the current one waits at home with its bars and tricks. */
+export function switchPet(p, kind) {
+  if (!p.pets || !p.pets[kind]) return false; const next = p.pets[kind]; delete p.pets[kind];
+  if (p.pet) p.pets[p.pet.kind] = p.pet; p.pet = next; return true;
+}
 export const FOODS = [
   { id: 'fish', en: 'fish', vi: 'cá', icon: '🐟' }, { id: 'apple', en: 'apple', vi: 'quả táo', icon: '🍎' }, { id: 'bread', en: 'bread', vi: 'bánh mì', icon: '🍞' },
   { id: 'carrot', en: 'carrot', vi: 'cà rốt', icon: '🥕' }, { id: 'cheese', en: 'cheese', vi: 'phô mai', icon: '🧀' }, { id: 'shrimp', en: 'shrimp', vi: 'con tôm', icon: '🦐' },

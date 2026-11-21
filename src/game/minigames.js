@@ -4,6 +4,8 @@ import * as THREE from 'three';
 import * as L from '../core/layout.js';
 import { pay, FULL_PLAYS } from '../core/rules.js';
 import { today } from '../core/review.js';
+import { gameMusic, endMusic } from '../audio.js';
+import { addGood } from '../core/goods.js';
 import { ORCHARD_TREES, ORCHARD_CROWN, ORCHARD_R } from '../core/regions/village.js';
 /** Tells the child when today's full pay for this game is used up (T1: skill games are for fun, not for farming gold). */
 export const payNote = (r) => (!r.full ? `Hôm nay trò này chỉ còn thưởng 20%. Đi đánh quái, làm nhiệm vụ để được nhiều hơn!` : r.left === 0 ? `Đã hết ${FULL_PLAYS} lượt thưởng đầy đủ hôm nay của trò này.` : '');
@@ -42,14 +44,16 @@ export class MiniGames {
     const starGold = new THREE.MeshStandardMaterial({ color: 0xffc928, emissive: 0xff9a00, emissiveIntensity: 0.35, metalness: 0.55, roughness: 0.28 });
     const rim = new THREE.MeshBasicMaterial({ color: 0x7a4300, side: THREE.BackSide });
     const cv = document.createElement('canvas'); cv.width = cv.height = 64; const c = cv.getContext('2d'), gr = c.createRadialGradient(32, 32, 2, 32, 32, 32);
-    gr.addColorStop(0, 'rgba(255,240,170,0.9)'); gr.addColorStop(0.5, 'rgba(255,200,60,0.3)'); gr.addColorStop(1, 'rgba(255,200,60,0)'); c.fillStyle = gr; c.fillRect(0, 0, 64, 64);
+    gr.addColorStop(0, 'rgba(255,240,170,0.9)'); gr.addColorStop(0.35, 'rgba(255,200,60,0.25)'); gr.addColorStop(1, 'rgba(255,200,60,0)'); c.fillStyle = gr; c.fillRect(0, 0, 64, 64);
+    c.fillStyle = 'rgba(255,250,220,0.95)'; for (const [w, h] of [[2.2, 30], [30, 2.2]]) { c.beginPath(); c.ellipse(32, 32, w, h, 0, 0, 7); c.fill(); }      // a four-point sparkle
     const halo = new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(cv), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
     const ringG = new THREE.RingGeometry(0.5, 0.62, 28), ringM = new THREE.MeshBasicMaterial({ color: 0xffd23c, transparent: true, opacity: 0.5, depthWrite: false, side: THREE.DoubleSide });
     this.stars = STARS.map(([x, z], i) => {
       const m = new THREE.Group(), star = new THREE.Mesh(sg, starGold), edge = new THREE.Mesh(sg, rim); edge.scale.setScalar(1.08); star.castShadow = true; m.add(star, edge);
-      const h = new THREE.Sprite(halo); h.scale.setScalar(1.8); m.add(h);
-      const ring = new THREE.Mesh(ringG, ringM); ring.rotation.x = -Math.PI / 2; ring.position.set(x, V.groundHeight(x, z) + 0.05, z); this.root.add(ring);
-      m.position.set(x, V.groundHeight(x, z) + 1.2, z); this.root.add(m); return { m, x, z, i, ring, spin: star, edge };
+      const h = new THREE.Sprite(halo.clone()); h.scale.setScalar(1.8); m.add(h);
+      const ring = new THREE.Mesh(ringG, ringM); ring.rotation.x = -Math.PI / 2; ring.scale.setScalar(0.45); ring.position.set(x, V.groundHeight(x, z) + 0.05, z); this.root.add(ring);
+      m.scale.setScalar(0.42);      // (21/11) "the stars are too big: small and sparkling"
+      m.position.set(x, V.groundHeight(x, z) + 0.9, z); this.root.add(m); return { m, x, z, i, ring, spin: star, edge, halo: h, y0: m.position.y };
     });
     // race rings
     const rg = new THREE.TorusGeometry(1.25, 0.11, 8, 28);
@@ -81,7 +85,7 @@ export class MiniGames {
   setRegion(name) { this.root.visible = name === 'village'; if (name !== 'village') this.stop(); this.syncStars(); }
   syncStars() { const got = this.data.stars; for (const s of this.stars) s.m.visible = s.ring.visible = !got.includes(s.i); }
   say(text) { if (text !== this.note) { this.note = text; this.api.onNote(); } }
-  stop() { if (!this.active) return; this.active = null; for (const r of this.rings) r.m.visible = false; for (const a of this.apples) { a.live = false; a.m.visible = false; } this.say(''); }
+  stop() { if (!this.active) return; if (this.active.id === 'apple') endMusic(); this.active = null; for (const r of this.rings) r.m.visible = false; for (const a of this.apples) { a.live = false; a.m.visible = false; } this.say(''); }
 
   /** Interaction offered at the player's position, or null. */
   interact(pos) {
@@ -94,7 +98,7 @@ export class MiniGames {
   start(id) {
     const s = STARTS.find((x) => x.id === id); this.api.sfx('tick');
     if (id === 'apple') {      // (20/11) Hana talks first; the apples only fall after her talk, from the crowns of the tall trees, slowly
-      this.api.ui.dialogue([{ who: 'Hana', en: 'Welcome to my orchard! The apples are ripe.', vi: 'Chào mừng tới vườn táo của cô Hana! Táo chín rồi.' }, { who: 'Hana', en: 'Run under the trees and catch the apples. Gold apples are worth three!', vi: 'Chạy dưới các cây để hứng táo trong 30 giây. Táo vàng được 3 điểm.' }], () => { this.active = { id, s, time: 30, score: 0, next: 1.2 }; });
+      this.api.ui.dialogue([{ who: 'Hana', en: 'Welcome to my orchard! The apples are ripe.', vi: 'Chào mừng tới vườn táo của cô Hana! Táo chín rồi.' }, { who: 'Hana', en: 'Run under the trees and catch the apples. Gold apples are worth three!', vi: 'Chạy dưới các cây để hứng táo trong 30 giây. Táo vàng được 3 điểm.' }], () => { this.active = { id, s, time: 30, score: 0, next: 1.2 }; gameMusic('apple'); });
       return;
     }
     if (s.host && this.api.ui.toast) this.api.ui.toast(`${s.host.name}: ${s.host.hello}`);
@@ -117,6 +121,15 @@ export class MiniGames {
     this.api.ui.dialogue([{ who: 'Ngọc', en: `${text} (+${r.gold} gold)`, vi: [record ? 'Kỷ lục mới của con!' : '', payNote(r)].filter(Boolean).join(' ') || undefined }]);
   }
 
+  /** (21/11) "picked apples go into the bag, sold at the shop": the apples themselves are the reward (a fifth of them after
+   *  today's three full plays), plus a little EXP. */
+  finishApples(a) {
+    if (this.api.track) this.api.track('mini');
+    const p = this.api.profile(), best = this.data.best, record = best.apple === undefined || a.score > best.apple; if (record) best.apple = a.score;
+    const n = (a.reds || 0) + (a.golds || 0), r = pay(p, 'apple', today(), n), k = n ? r.gold / n : 0, reds = Math.round((a.reds || 0) * k), golds = Math.round((a.golds || 0) * k);
+    addGood(p, 'apple', reds); addGood(p, 'gold_apple', golds); this.stop(); this.api.sfx('fanfare'); this.api.save();
+    this.api.ui.dialogue([{ who: 'Ngọc', en: `I picked ${reds} apples${golds ? ` and ${golds} golden apples` : ''}! They are in my bag.`, vi: [`Táo nằm trong túi đồ (phím V). Mang ra Village Shop bán lấy vàng nhé.`, record ? 'Kỷ lục mới của con!' : '', payNote(r)].filter(Boolean).join(' ') }]);
+  }
   update(dt, pos) {
     if (!this.root.visible) return;
     this.t += dt;
@@ -127,7 +140,9 @@ export class MiniGames {
       if (d < 30) h.mixer.update(dt);
     }
     for (const s of this.stars) if (s.m.visible) {
-      s.spin.rotation.y = s.edge.rotation.y = this.t * 1.8 + s.i; s.m.position.y += Math.sin(this.t * 2.4 + s.i) * 0.003;
+      s.spin.rotation.y = s.edge.rotation.y = this.t * 1.8 + s.i; s.m.position.y = s.y0 + Math.sin(this.t * 2.4 + s.i) * 0.08;
+      const tw = Math.pow(0.5 + 0.5 * Math.sin(this.t * 7.3 + s.i * 2.1), 6), sp = 0.5 + 0.5 * Math.sin(this.t * 3.1 + s.i);      // twinkle: a quick flash now and then over a soft glow
+      s.halo.material.opacity = 0.35 + 0.65 * tw; s.halo.scale.setScalar(1.4 + 1.8 * tw + 0.3 * sp); s.halo.material.rotation = this.t * 0.8;
       if (Math.hypot(pos.x - s.x, pos.z - s.z) < 1.3) this.takeStar(s);
     }
     const a = this.active; if (!a) return;
@@ -140,11 +155,11 @@ export class MiniGames {
       a.time -= dt; a.next -= dt;
       if (a.next <= 0) { a.next = 0.8 + Math.random() * 0.6; const f = this.apples.find((x) => !x.live); if (f) { const tr = ORCHARD_TREES[Math.floor(Math.random() * ORCHARD_TREES.length)], ang = Math.random() * 6.28, r = Math.sqrt(Math.random()) * ORCHARD_R * 0.8; f.x = tr[0] + Math.cos(ang) * r; f.z = tr[1] + Math.sin(ang) * r; if (L.walkable(f.x, f.z, 0.5)) { f.live = true; f.y = ORCHARD_CROWN - 0.6; f.gold = Math.random() < 0.12; f.m.material = f.gold ? f.goldMat || (f.goldMat = this.apples[0].gold) : this.apples[0].red; f.m.visible = true; } } }
       for (const f of this.apples) if (f.live) {
-        f.y -= dt * 1.7;      // slow: about 3 s from the crown const g = L.groundHeight(f.x, f.z); f.m.position.set(f.x, g + f.y, f.z);
-        if (f.y < 2.0 && Math.hypot(pos.x - f.x, pos.z - f.z) < 1.5) { a.score += f.gold ? 3 : 1; this.api.sfx('correct'); f.live = false; f.m.visible = false; }
+        f.y -= dt * 1.7; const g = L.groundHeight(f.x, f.z); f.m.position.set(f.x, g + f.y, f.z);      // slow: about 3 s from the crown
+        if (f.y < 2.0 && Math.hypot(pos.x - f.x, pos.z - f.z) < 1.5) { a.score += f.gold ? 3 : 1; if (f.gold) a.golds = (a.golds || 0) + 1; else a.reds = (a.reds || 0) + 1; this.api.sfx('correct'); f.live = false; f.m.visible = false; }
         else if (f.y <= 0.2) { f.live = false; f.m.visible = false; }
       }
-      if (a.time <= 0) return this.finish(appleGold(a.score), `I caught ${a.score} apples!`, 'apple', a.score);
+      if (a.time <= 0) return this.finishApples(a);
       this.say(`🍎 ${a.score}   ⏱ ${Math.ceil(a.time)} s`);
     } else if (a.id === 'race') {
       a.time += dt; const r = this.rings[a.i];

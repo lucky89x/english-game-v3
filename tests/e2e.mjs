@@ -219,11 +219,11 @@ check(await ev(() => __eq.arcade.open && __eq.arcade.game.score >= 30 && __eq.ar
 await snap('03g_candy'); await ev(() => { __eq.arcade.game.moves = 0; }); for (let k = 0; k < 30 && await ev(() => __eq.arcade.open); k++) await wait(500);      // the last cascade may still be falling (slow frames without a GPU)
 check(await ev(() => !__eq.arcade.open && __eq.mini.data.best.candy >= 30) && (await page.textContent('#dialog')).includes('Candy Match'), 'Board ends: gold and EXP paid, record saved');
 for (let k = 0; k < 3 && await page.isVisible('#dialog'); k++) { await page.keyboard.press('KeyE'); await wait(200); }
-// slingshot: drag back from the sling with the real mouse and let go
+// archery (21/11, was the slingshot): drag back from the bow with the real mouse and let go
 await ev(() => __eq.teleport(-5.4, -32.4)); await wait(450); await page.keyboard.press('KeyE'); await wait(800);
 const sbox = await page.locator('#arccv').boundingBox(), sk = sbox.width / 560;
 await page.mouse.move(sbox.x + 280 * sk, sbox.y + 470 * sk); await page.mouse.down(); await page.mouse.move(sbox.x + 300 * sk, sbox.y + 560 * sk, { steps: 4 }); await page.mouse.up(); await wait(300);
-check(await ev(() => __eq.arcade.game.title.includes('Slingshot') && __eq.arcade.game.shots === 11), 'Slingshot: a real drag-and-release fires a pebble');
+check(await ev(() => __eq.arcade.game.title.includes('Archery') && __eq.arcade.game.shots === 11), 'Archery (was Slingshot): a real drag-and-release shoots an arrow');
 await snap('03h_slingshot'); await page.keyboard.press('Escape'); await wait(300);
 check(await ev(() => !__eq.arcade.open && __eq.mini.data.best.sling === undefined), 'Esc quits a board game with no reward');
 // falling blocks: real arrow keys

@@ -42,9 +42,20 @@ export const HARBOR_SPAWNS = [
 export const SPAWNS = [
   ['slime', 36, -14], ['slime', 32, -24], ['slime', 38, -30], ['slime', 34, -8], ['slime', 48, -26],
   ['red', 44, -36], ['red', 50, -16], ['red', 30, -38], ['golem', 52, 30], ['golem', 38, 48],
-  ['bunny', 28, -18], ['bunny', 30, -32], ['bunny', 40, -4],      // (20/11) lô 22: Frost Bunnies near the meadow gate
+  ['bunny', 28, -18], ['bunny', 30, -32], ['bunny', 40, -9],      // (20/11) lô 22: Frost Bunnies near the meadow gate
   ['goblin', 40, -18], ['goblin', 42, -28], ['goblin', 44, -10], ['imp', 48, 26], ['imp', 42, 44], ['imp', 46, 34],      // (20/11) Frost Goblins (ice) in the meadow, Ember Imps (fire) in the golem fields
 ];
+/** (21/11) Safe places: monsters never walk in and do not chase or shoot a hero standing inside (the village streets and
+ *  shops, the players' homes, the apple orchard and every mini game; the harbour town, the market and the fishing pier). */
+export const SAFE = {
+  village: [{ x: 2, z: 4, r: 24 }, { x: 40, z: 10, r: 13 }, ...[[-15, -17], [-6, -33], [10, 28], [-31, 4.5], [18.4, 19.2], [33.5, 6]].map(([x, z]) => ({ x, z, r: 7 })),      // the town, the orchard, each mini game
+    { x: -46, z: 2, r: 15 }, { x: -40, z: -18, r: 7 }, { x: -3, z: 50, r: 9 }, { x: -18, z: 50, r: 8 }],
+  harbor: [{ x: -12, z: 2, r: 22 }, { x: 2, z: 16, r: 9 }, { x: 34, z: 28, r: 6 }, { x: 22, z: 28.6, r: 5 }],
+  forest: [{ x: -30, z: 50, r: 9 }],
+};
+export const inSafe = (region, x, z, pad = 0) => (SAFE[region] || []).some((s) => Math.hypot(x - s.x, z - s.z) < s.r + pad);
+/** (21/11) Monsters walk towards the hero at this share of their speed ("they rush in too fast"); they come back to life after RESPAWN seconds. */
+export const CHASE = 0.62, RESPAWN = { normal: 35, elite: 70, boss: 300 };
 /** The hero's attack: grows with the level, weapon adds on top. */
 export const playerAtk = (profile) => 10 + (profile.stats.level - 1) * 2 + ((profile.gear && profile.gear.atk) || 0) + rankAtk(profile) + powers(profile).atk;      // + skill points (Fire Heart)      // + the Word Keeper rank (saga.js)
 /** Damage a monster deals after armour (never below 1). */
@@ -70,9 +81,9 @@ export const ITEMS = {
   hp_s: { en: 'Small Health Potion', vi: 'bình máu nhỏ (+40 máu)', slot: 'food', potion: true, heal: 40, cost: 6, level: 1, seller: 'healer' },
   hp_m: { en: 'Health Potion', vi: 'bình máu vừa (+120 máu)', slot: 'food', potion: true, heal: 120, cost: 18, level: 8, seller: 'healer' },
   hp_l: { en: 'Big Health Potion', vi: 'bình máu lớn (+300 máu)', slot: 'food', potion: true, heal: 300, cost: 45, level: 20, seller: 'healer' },
-  mp_s: { en: 'Small Mana Potion', vi: 'bình mana nhỏ (+30 mana)', slot: 'food', potion: true, mana: 30, cost: 8, level: 1, seller: 'healer' },
-  mp_m: { en: 'Mana Potion', vi: 'bình mana vừa (+80 mana)', slot: 'food', potion: true, mana: 80, cost: 20, level: 8, seller: 'healer' },
-  mp_l: { en: 'Big Mana Potion', vi: 'bình mana lớn (+200 mana)', slot: 'food', potion: true, mana: 200, cost: 50, level: 20, seller: 'healer' },
+  mp_s: { en: 'Small Mana Potion', vi: 'bình mana nhỏ (+60 mana)', slot: 'food', potion: true, mana: 60, cost: 6, level: 1, seller: 'healer' },
+  mp_m: { en: 'Mana Potion', vi: 'bình mana vừa (+150 mana)', slot: 'food', potion: true, mana: 150, cost: 14, level: 8, seller: 'healer' },
+  mp_l: { en: 'Big Mana Potion', vi: 'bình mana lớn (+400 mana)', slot: 'food', potion: true, mana: 400, cost: 35, level: 20, seller: 'healer' },
   // rare drops of the elite monsters and the bosses (never sold in a shop; selling one back pays half of `cost`)
   dawn_blade: { en: 'Dawnbreaker Blade', vi: 'kiếm Rạng Đông (hiếm)', slot: 'weapon', rare: true, cost: 360, level: 9, atk: 26, color: 0xffe08a },
   silver_mail: { en: 'Silverleaf Mail', vi: 'giáp lá bạc (hiếm)', slot: 'armor', rare: true, cost: 340, level: 10, def: 8, hp: 80, color: 0xcfd8e8 },

@@ -5,9 +5,12 @@
 // Commercial songs (BLACKPINK and others) are protected by copyright, so their lyrics are not copied into the game:
 // a button opens the artist's official YouTube channel instead (internet needed).
 import { speak } from './speech.js';
+import { STYLES, GENRES, gameMusic, endMusic, musicStyle } from '../audio.js';
 
 const NOTE = (n) => { const m = /^([A-G])(#?)(\d)$/.exec(n); const k = { C: -9, D: -7, E: -5, F: -4, G: -2, A: 0, B: 2 }[m[1]] + (m[2] ? 1 : 0) + (Number(m[3]) - 4) * 12; return 440 * 2 ** (k / 12); };
 const seq = (s) => s.trim().split(/\s+/).map((t) => { const [n, b] = t.split(':'); return [n, Number(b || 1)]; });
+// (21/11) "children's songs do not suit grades 6 and 8": three pop-style songs written for this game, sung over a backing
+// loop of their genre (audio.js STYLES), with everyday teen topics: a new start, the weekend, never giving up.
 export const SONGS = [
   { id: 'row', title: 'Row, Row, Row Your Boat', by: 'Traditional (public domain)', bpm: 108, lines: [
     { en: 'Row, row, row your boat,', vi: 'Chèo, chèo, chèo thuyền đi,', m: seq('C4 C4 C4:0.75 D4:0.25 E4') },
@@ -29,6 +32,21 @@ export const SONGS = [
     { en: 'Every voice deserves to be heard.', vi: 'Mỗi giọng nói đều xứng đáng được lắng nghe.', m: seq('C4:0.5 D4:0.5 E4 G4:0.5 A4:0.5 G4 E4:0.5 D4:0.5 E4:2') },
     { en: 'If I fall, I try again,', vi: 'Nếu ngã, tớ lại thử lần nữa,', m: seq('A3:0.5 C4:0.5 E4 A4 G4:0.5 E4:0.5 D4:2') },
     { en: 'One more word, and one more friend!', vi: 'Thêm một từ mới, thêm một người bạn!', m: seq('E4:0.5 G4:0.5 A4 C5:0.5 B4:0.5 A4 G4:0.5 E4:0.5 A4:2') }] },
+  { id: 'newday', title: 'Brand New Day', by: 'English Quest song · Pop / Synthwave', teen: true, style: 'synthwave', bpm: 108, lines: [
+    { en: 'Woke up early, the sky is blue,', vi: 'Thức dậy sớm, bầu trời xanh trong,', m: seq('E4:0.5 E4:0.5 A4 A4:0.5 G4:0.5 E4 C5:0.5 B4:0.5 A4:2') },
+    { en: "I've got a feeling something's new.", vi: 'Mình có cảm giác điều gì đó mới mẻ.', m: seq('C5:0.5 C5:0.5 B4 A4:0.5 G4:0.5 E4 G4:0.5 A4:0.5 E4:2') },
+    { en: "It's a brand new day, I'm on my way,", vi: 'Một ngày hoàn toàn mới, mình đang lên đường,', m: seq('A4:0.5 C5:0.5 E5 D5:0.5 C5:0.5 A4 C5:0.5 D5:0.5 E5:2') },
+    { en: "Nothing's gonna stop me today!", vi: 'Hôm nay chẳng gì cản được mình!', m: seq('E5:0.5 D5:0.5 C5 B4:0.5 A4:0.5 G4 B4:0.5 G4:0.5 A4:2') }] },
+  { id: 'weekend', title: 'Weekend Plans', by: 'English Quest song · Lo-fi', teen: true, style: 'lofi', bpm: 78, lines: [
+    { en: 'On Saturday I sleep until ten,', vi: 'Thứ Bảy mình ngủ tới mười giờ,', m: seq('A4:0.5 A4:0.5 G4 F4:0.5 A4:0.5 C5 A4:0.5 G4:0.5 F4:2') },
+    { en: 'Then I hang out with all my friends.', vi: 'Rồi mình đi chơi với tất cả bạn bè.', m: seq('G4:0.5 G4:0.5 F4 D4:0.5 F4:0.5 B4 A4:0.5 G4:0.5 E4:2') },
+    { en: 'We watch a film and share some snacks,', vi: 'Tụi mình xem phim và chia nhau đồ ăn vặt,', m: seq('E4:0.5 G4:0.5 B4 A4:0.5 G4:0.5 E4 G4:0.5 A4:0.5 B4:2') },
+    { en: 'On Sunday night I do my homework, relax.', vi: 'Tối Chủ nhật mình làm bài tập, rồi thư giãn.', m: seq('A4:0.5 G4:0.5 E4 C4:0.5 E4:0.5 G4 E4:0.5 D4:0.5 C4:2') }] },
+  { id: 'rise', title: 'We Rise', by: 'English Quest song · EDM', teen: true, style: 'edm', bpm: 126, lines: [
+    { en: 'When the test is hard and the night is long,', vi: 'Khi bài kiểm tra khó và đêm thật dài,', m: seq('A4:0.5 A4:0.5 C5 A4:0.5 G4:0.5 F4 G4:0.5 A4:0.5 C5:2') },
+    { en: 'I sing it loud, I sing my song.', vi: 'Mình hát thật to, hát bài ca của mình.', m: seq('B4:0.5 B4:0.5 D5 B4:0.5 A4:0.5 G4 A4:0.5 B4:0.5 G4:2') },
+    { en: 'We fall, we learn, we try again,', vi: 'Tụi mình ngã, tụi mình học, rồi thử lại,', m: seq('G4:0.5 B4:0.5 D5 E5:0.5 D5:0.5 B4 G4:0.5 A4:0.5 B4:2') },
+    { en: 'We rise together, side by side, my friends!', vi: 'Chúng ta cùng vươn lên, sát cánh bên nhau, các bạn ơi!', m: seq('C5:0.5 C5:0.5 E5 C5:0.5 B4:0.5 A4 C5:0.5 B4:0.5 A4:2') }] },
 ];
 const CSS = `
 #music { position:fixed; inset:0; z-index:40; display:flex; align-items:center; justify-content:center; background:rgba(20,12,30,.6); }
@@ -64,7 +82,7 @@ async function familySongs() {
 export class MusicRoom {
   /** api: { profile(), sfx(name), changed() } */
   constructor(api) {
-    this.api = api; this.open = false; this.song = SONGS[0]; this.now = -1; this.timers = [];
+    this.api = api; this.open = false; this.song = SONGS.find((x) => x.teen) || SONGS[0]; this.now = -1; this.timers = [];
     const st = document.createElement('style'); st.textContent = CSS; document.head.appendChild(st);
     this.el = document.createElement('div'); this.el.id = 'music'; this.el.className = 'hidden'; document.body.appendChild(this.el);
     this.el.addEventListener('click', (e) => {
@@ -79,15 +97,17 @@ export class MusicRoom {
       if (a === 'own') { this.stop(); this.pick = this.songs[Number(b.dataset.v)]; this.render(); }
       if (a === 'learn') { this.stop(); this.pick = null; this.render(); }
       if (a === 'buy') this.playOwn();
+      if (a === 'radio') { this.stop(); this.radio = b.dataset.v; gameMusic(this.radio); this.say = `📻 ${STYLES[this.radio].name}: nhạc tự soạn cho game, nghe miễn phí.`; this.render(); }
+      if (a === 'radiooff') { this.stop(); this.render(); }
     });
   }
   show() { familySongs().then((l) => { this.songs = l; this.render(); }); this.open = true; this.say = 'Hi! I\'m Anna. Pick a song and sing with me!'; this.render(); this.el.classList.remove('hidden'); speak(this.say); }
   close() { this.stop(); this.open = false; this.el.classList.add('hidden'); if (this.api.onClose) this.api.onClose(); }
   key(code) { if (!this.open) return false; if (code === 'Escape' || code === 'KeyE') this.close(); return true; }
-  stop() { if (this.audio) { this.audio.pause(); this.audio = null; } for (const t of this.timers) clearTimeout(t); this.timers = []; this.now = -1; if (this.ctx) { try { this.ctx.close(); } catch { /* closed */ } this.ctx = null; } }
+  stop() { if (this.radio || (this.song && this.song.style && this.timers.length)) { endMusic(); this.radio = null; } if (this.audio) { this.audio.pause(); this.audio = null; } for (const t of this.timers) clearTimeout(t); this.timers = []; this.now = -1; if (this.ctx) { try { this.ctx.close(); } catch { /* closed */ } this.ctx = null; } }
   /** Plays the melody with a soft plucked sound and lights up each line as it is sung. */
   play() {
-    this.stop(); const song = this.song, beat = 60 / song.bpm;
+    this.stop(); const song = this.song, beat = 60 / song.bpm; if (song.style) gameMusic(song.style);      // the backing loop under the tune
     let ctx = null; try { ctx = new (globalThis.AudioContext || globalThis.webkitAudioContext)(); } catch { ctx = null; }
     this.ctx = ctx; let t = 0.15;
     song.lines.forEach((ln, i) => {
@@ -100,7 +120,7 @@ export class MusicRoom {
       }
       t += beat * 0.5;
     });
-    this.timers.push(setTimeout(() => this.finish(), t * 1000));
+    this.timers.push(setTimeout(() => { if (song.style) endMusic(); this.finish(); }, t * 1000));
     this.render();
   }
   /** A whole song from the family's music, paid in gold; the words (if the family added them) are shown while it plays. */
@@ -131,7 +151,9 @@ export class MusicRoom {
         ${s.lines.map((ln, i) => `<div class="line ${i === this.now ? 'now' : ''}"><button data-a="say" data-v="${i}">🔊</button><div class="en">${ln.en}</div><div class="vi">${ln.vi}</div></div>`).join('')}`;
     this.el.innerHTML = `<div class="room"><header><span style="font-size:28px">🎵</span><h2>Anna's Music Room</h2><span class="gold" style="font-weight:800">● ${p.stats.gold}</span><button data-a="close">Leave (Esc)</button></header>
       <div class="body"><div class="anna"><img src="assets/ui/keeper_anna.jpg" alt="Anna"><b>Anna</b><p style="font-weight:700;font-size:13px">${this.say || ''}</p>
-        <div class="list"><b style="font-size:13px">Học hát (miễn phí)</b>${SONGS.map((x) => `<button data-a="song" data-v="${x.id}" class="${!pk && x.id === s.id ? 'on' : ''}">${heard[x.id] ? '✔' : '♪'} ${x.title}</button>`).join('')}
+        <div class="list"><b style="font-size:13px">🎤 Bài hát cho tuổi teen</b>${SONGS.filter((x) => x.teen).map((x) => `<button data-a="song" data-v="${x.id}" class="${!pk && x.id === s.id ? 'on' : ''}">${heard[x.id] ? '✔' : '♪'} ${x.title}</button>`).join('')}
+        <b style="font-size:13px">🧸 Bài hát thiếu nhi</b>${SONGS.filter((x) => !x.teen).map((x) => `<button data-a="song" data-v="${x.id}" class="${!pk && x.id === s.id ? 'on' : ''}">${heard[x.id] ? '✔' : '♪'} ${x.title}</button>`).join('')}
+        <b style="font-size:13px;margin-top:6px">📻 Đài nhạc theo thể loại</b>${GENRES.map((gid) => `<button data-a="radio" data-v="${gid}" class="${this.radio === gid ? 'on' : ''}">📻 ${STYLES[gid].name}</button>`).join('')}${this.radio ? '<button data-a="radiooff">■ Tắt đài</button>' : ''}
         <b style="font-size:13px;margin-top:6px">🎧 Nghe nhạc (${PLAY_PRICE} ● / bài)</b>${own.length ? own.map((x, i) => `<button data-a="own" data-v="${i}" class="${pk === x ? 'on' : ''}">🎧 ${x.title}</button>`).join('') : `<small>Chưa có bài nào. Phụ huynh chép file nhạc (.mp3) vào thư mục: <b>${folder}</b></small>`}</div></div>
       <div class="sheet">${sheet}
         <div class="kpop">🎤 <b>Nhạc K-pop (BLACKPINK…)</b>: game không tự chép bài hay lời có bản quyền. Phụ huynh có file nhạc thì chép vào thư mục nhạc ở trên (lời bài hát để file .txt cùng tên) là con nghe được ở đây. Hoặc nghe bản chính thức: <button data-a="kpop">Mở kênh BLACKPINK</button></div></div></div></div>`;

@@ -20,6 +20,23 @@ function build(kind) {
     add(new THREE.CapsuleGeometry(0.14, 0.34, 6, 12), brown, 0, 0.24, 0).rotation.x = Math.PI / 2; add(new THREE.SphereGeometry(0.14, 12, 10), brown, 0, 0.34, 0.3); add(new THREE.SphereGeometry(0.08, 10, 8), tan, 0, 0.3, 0.4, 1.1, 0.8, 1);
     add(new THREE.SphereGeometry(0.02, 8, 6), eye, 0, 0.32, 0.47); eyes(0.4, 0.4, 0.06); for (const s of [-1, 1]) add(new THREE.SphereGeometry(0.035, 8, 6), brown, s * 0.1, 0.47, 0.27);
     const tail = add(new THREE.CapsuleGeometry(0.05, 0.3, 4, 8), brown, 0, 0.2, -0.42); tail.rotation.x = Math.PI / 2 - 0.2; for (const [x, z] of [[-0.1, 0.12], [0.1, 0.12], [-0.1, -0.14], [0.1, -0.14]]) add(new THREE.SphereGeometry(0.05, 8, 6), brown, x, 0.06, z, 1, 1.1, 1.3);
+  } else if (kind === 'puppy' || kind === 'kitten') {      // (21/11) the village pets: a round chibi body, big head, ears, tail
+    const dog = kind === 'puppy', fur = M(dog ? 0xd8a060 : 0xb8b0a8), light = M(dog ? 0xf6e2c0 : 0xf2eee8), pink = M(0xf09aa8), nose = M(0x2a2024, 0.4);
+    add(new THREE.SphereGeometry(0.17, 14, 10), fur, 0, 0.24, 0, 1, 0.9, 1.3); add(new THREE.SphereGeometry(0.16, 14, 12), fur, 0, 0.44, 0.2); add(new THREE.SphereGeometry(0.08, 10, 8), light, 0, 0.4, 0.33, 1.1, 0.8, 0.9);
+    add(new THREE.SphereGeometry(0.025, 8, 6), dog ? nose : pink, 0, 0.42, 0.4); eyes(0.47, 0.33, 0.065, 0.028);
+    for (const sx of [-1, 1]) { if (dog) { const e = add(new THREE.SphereGeometry(0.07, 10, 8), M(0x8a5a30), sx * 0.13, 0.5, 0.17, 0.6, 1.3, 0.8); e.rotation.z = sx * 0.6; } else { const e = add(new THREE.ConeGeometry(0.055, 0.12, 4), fur, sx * 0.09, 0.6, 0.18); e.rotation.z = -sx * 0.25; } }
+    for (const [x, z] of [[-0.09, 0.14], [0.09, 0.14], [-0.09, -0.14], [0.09, -0.14]]) add(new THREE.CylinderGeometry(0.04, 0.045, 0.14, 8), light, x, 0.07, z);
+    const tail = add(new THREE.CapsuleGeometry(0.03, dog ? 0.12 : 0.22, 4, 8), fur, 0, 0.32, -0.24); tail.rotation.x = dog ? -0.6 : -1.0; g.userData.tail = tail;
+  } else if (kind === 'bunny') {
+    const fur = M(0xf6f2ee), pink = M(0xf4a0b4);
+    add(new THREE.SphereGeometry(0.16, 14, 10), fur, 0, 0.2, 0, 1, 0.95, 1.15); add(new THREE.SphereGeometry(0.13, 14, 12), fur, 0, 0.38, 0.14); add(new THREE.SphereGeometry(0.06, 8, 6), fur, 0, 0.22, -0.18);
+    add(new THREE.SphereGeometry(0.02, 8, 6), pink, 0, 0.37, 0.27); eyes(0.42, 0.24, 0.055, 0.024);
+    for (const sx of [-1, 1]) { const e = add(new THREE.CapsuleGeometry(0.035, 0.18, 4, 8), fur, sx * 0.05, 0.6, 0.1); e.rotation.z = sx * 0.15; add(new THREE.CapsuleGeometry(0.015, 0.13, 4, 6), pink, sx * 0.05, 0.6, 0.13).rotation.z = sx * 0.15; }
+  } else if (kind === 'duckling') {
+    const y = M(0xffd84a), o = M(0xf08a1e);
+    add(new THREE.SphereGeometry(0.14, 14, 10), y, 0, 0.17, 0, 1, 0.9, 1.2); add(new THREE.SphereGeometry(0.1, 12, 10), y, 0, 0.34, 0.1);
+    const bk = add(new THREE.ConeGeometry(0.035, 0.08, 6), o, 0, 0.33, 0.21); bk.rotation.x = Math.PI / 2; bk.scale.set(1.4, 1, 0.6); eyes(0.37, 0.18, 0.05, 0.02);
+    for (const s of [-1, 1]) { const w = add(new THREE.SphereGeometry(0.07, 8, 6), y, s * 0.13, 0.19, 0, 0.4, 0.6, 1); g.userData.wing = (g.userData.wing || []).concat(w); add(new THREE.BoxGeometry(0.06, 0.015, 0.08), o, s * 0.05, 0.01, 0.03); }
   } else {
     const shell = M(0xf08a3c, 0.5), claw = M(0xe2483e), cream = M(0xf6e2c0);
     add(new THREE.SphereGeometry(0.2, 14, 10, 0, Math.PI * 2, 0, Math.PI / 2), shell, 0, 0.12, 0, 1, 0.9, 1); add(new THREE.SphereGeometry(0.2, 12, 8), cream, 0, 0.1, 0, 1, 0.45, 1); add(new THREE.TorusGeometry(0.17, 0.02, 6, 20), M(0xffffff), 0, 0.2, 0).rotation.x = Math.PI / 2;
@@ -71,6 +88,7 @@ export class Pet {
       return;
     }
     this.place(); const b = this.body; b.rotation.set(0, this.yaw, 0); b.position.y = this.moving && !fly ? Math.abs(Math.sin(this.t * 10)) * 0.05 : 0; b.scale.set(1, 1 + Math.sin(this.t * 2.4) * 0.015, 1);
+    if (b.userData.tail) b.userData.tail.rotation.z = Math.sin(this.t * (this.moving ? 14 : 6)) * 0.5;
     if (b.userData.wing) b.userData.wing.forEach((w, i) => { w.rotation.z = (i ? 1 : -1) * (-0.25 - (this.moving ? Math.sin(this.t * 16) * 0.5 : 0)); });
     if (this.trick) {          // a trick: about 1.2 seconds
       this.trickT += dt; const k = this.trickT / 1.2; if (k >= 1) this.trick = ''; else {
