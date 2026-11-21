@@ -180,7 +180,7 @@ function setQuality(name) {
   renderer.shadowMap.enabled = q.shadow > 0; sun.castShadow = q.shadow > 0;
   if (q.shadow) { sun.shadow.mapSize.set(q.shadow, q.shadow); if (sun.shadow.map) { sun.shadow.map.dispose(); sun.shadow.map = null; }
     const c = sun.shadow.camera, d = q.shadowDist / 2; c.left = -d; c.right = d; c.top = d; c.bottom = -d; c.near = 1; c.far = 220; c.updateProjectionMatrix(); }
-  scene.traverse((o) => { if (o.material) [].concat(o.material).forEach((m) => (m.needsUpdate = true)); });
+  scene.traverse((o) => { if (o.material) [].concat(o.material).forEach((m) => { if (m && typeof m === "object") m.needsUpdate = true; }); });
   post.set(q.post, q.samples);
   showOutlines(q.post); post.shafts = quality === 'high';      // light shafts only on the high level
   PAINT.on = q.post;                 // painted surfaces follow the same switch (materials are recompiled just below)
@@ -409,7 +409,7 @@ async function enterRegion(name, at) {
   jarKey = '';
   world = await buildWorld(scene, staticModel, animatedModel);
   const q = QUALITY[quality]; world.setDetail(q.density, q.particles, q.far);
-  scene.traverse((o) => { if (o.material) [].concat(o.material).forEach((m) => (m.needsUpdate = true)); });
+  scene.traverse((o) => { if (o.material) [].concat(o.material).forEach((m) => { if (m && typeof m === "object") m.needsUpdate = true; }); });
   try { await renderer.compileAsync(scene, camera); } catch { /* older browsers: shaders compile on first sight */ }      // no hitch when new things come into view
   minimap.rebuild(); placeActors(); if (walkers) walkers.setRegion(name); if (mini) mini.setRegion(name); if (wild) { if (name === 'harbor') await wild.addHarbor(seaModel); wild.setRegion(name); } if (chests) chests.setRegion(name); if (spots) spots.setRegion(name); if (homes) homes.setRegion(name); if (forestStall) forestStall.visible = name === 'forest';
   placeHomeDoor(name);

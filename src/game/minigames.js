@@ -60,7 +60,7 @@ export class MiniGames {
     this.rings = RACE.slice(1).map(([x, z], i) => { const m = new THREE.Mesh(rg, glow(0x58c8ff, 1.2)); const [px, pz] = RACE[i]; m.position.set(x, V.groundHeight(x, z) + 1.45, z); m.rotation.y = Math.atan2(x - px, z - pz); m.visible = false; this.root.add(m); return { m, x, z }; });
     // falling apples (pool)
     const ag = new THREE.SphereGeometry(0.26, 12, 9), red = new THREE.MeshStandardMaterial({ color: 0xe23a2a, roughness: 0.45 }), gold = glow(0xffc83c, 1.2);
-    this.apples = Array.from({ length: 8 }, () => { const m = new THREE.Mesh(ag, red); m.visible = false; m.castShadow = true; this.root.add(m); return { m, live: false, red, gold }; });
+    this.apples = Array.from({ length: 8 }, () => { const m = new THREE.Mesh(ag, red); m.visible = false; m.castShadow = true; this.root.add(m); return { m, live: false, redMat: red, goldMat: gold }; });      // (21/11) not 'gold': that name is the golden-apple flag below
     // start signs
     for (const s of STARTS) {
       const y = V.groundHeight(s.x, s.z), post = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.09, 1.9, 6), new THREE.MeshStandardMaterial({ color: 0x8a5a30 })); post.position.set(s.x + 0.9, y + 0.95, s.z - 0.9); post.castShadow = true; this.root.add(post);
@@ -153,7 +153,7 @@ export class MiniGames {
       this.say(`🎣 ${a.cast}/5 · 🐟 ${a.caught}   ${a.wait > 0 ? a.msg : fishBar(a.pos, a.centre, a.width)}   (E)`);
     } else if (a.id === 'apple') {
       a.time -= dt; a.next -= dt;
-      if (a.next <= 0) { a.next = 0.8 + Math.random() * 0.6; const f = this.apples.find((x) => !x.live); if (f) { const tr = ORCHARD_TREES[Math.floor(Math.random() * ORCHARD_TREES.length)], ang = Math.random() * 6.28, r = Math.sqrt(Math.random()) * ORCHARD_R * 0.8; f.x = tr[0] + Math.cos(ang) * r; f.z = tr[1] + Math.sin(ang) * r; if (L.walkable(f.x, f.z, 0.5)) { f.live = true; f.y = ORCHARD_CROWN - 0.6; f.gold = Math.random() < 0.12; f.m.material = f.gold ? f.goldMat || (f.goldMat = this.apples[0].gold) : this.apples[0].red; f.m.visible = true; } } }
+      if (a.next <= 0) { a.next = 0.8 + Math.random() * 0.6; const f = this.apples.find((x) => !x.live); if (f) { const tr = ORCHARD_TREES[Math.floor(Math.random() * ORCHARD_TREES.length)], ang = Math.random() * 6.28, r = Math.sqrt(Math.random()) * ORCHARD_R * 0.8; f.x = tr[0] + Math.cos(ang) * r; f.z = tr[1] + Math.sin(ang) * r; if (L.walkable(f.x, f.z, 0.5)) { f.live = true; f.y = ORCHARD_CROWN - 0.6; f.gold = Math.random() < 0.12; f.m.material = f.gold ? f.goldMat : f.redMat; f.m.visible = true; } } }
       for (const f of this.apples) if (f.live) {
         f.y -= dt * 1.7; const g = L.groundHeight(f.x, f.z); f.m.position.set(f.x, g + f.y, f.z);      // slow: about 3 s from the crown
         if (f.y < 2.0 && Math.hypot(pos.x - f.x, pos.z - f.z) < 1.5) { a.score += f.gold ? 3 : 1; if (f.gold) a.golds = (a.golds || 0) + 1; else a.reds = (a.reds || 0) + 1; this.api.sfx('correct'); f.live = false; f.m.visible = false; }
