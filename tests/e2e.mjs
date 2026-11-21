@@ -194,16 +194,16 @@ check(await ev(() => __eq.profile.stats.hp > 0 && __eq.profile.stats.hp <= 100 +
 // ---------------------------------------------------------------- shop, equipment, bread, candy board
 await ev(() => { __eq.profile.stats.gold += 100; __eq.teleport(5.2, -12.2); }); await wait(500);
 check((await page.textContent('#prompt')).includes('Cửa hàng'), 'Prompt at Bram the blacksmith: shop');
-await page.keyboard.press('KeyE'); await wait(300);
-check((await page.textContent('#dialog')).includes('Wooden Sword'), 'Shop list shows items with prices');
+await page.keyboard.press('KeyE'); await wait(600);
+check(await page.isVisible('#shopwin') && (await page.textContent('#shopwin')).includes('Wooden Sword') && (await page.textContent('#shopwin')).includes('Market counter'), '(21/11) Bram opens the one Village Shop: goods with prices and the market counter');
 const shopGold = await ev(() => __eq.profile.stats.gold);
-await page.keyboard.press('Digit1'); await wait(350);
+await page.click('#shopwin button[data-act="buy"][data-id="wood_sword"]'); await wait(400);
 check(await ev((g) => __eq.profile.stats.gold === g - 40 && __eq.profile.inv.weapon === 'wood_sword' && __eq.profile.gear.atk === 5 && !!__eq.sword, shopGold), 'Buying the wooden sword: gold paid, attack up, sword in her hand');
-await snap('03f_shop'); await page.keyboard.press('Digit6'); await wait(250);
+await snap('03f_shop'); await page.keyboard.press('Escape'); await wait(300);
 await ev(() => __eq.teleport(5.0, -8.0)); await wait(450);
 check((await page.textContent('#prompt')).includes('Rose'), 'Next to Rose the prompt is her shop, not a game sign');
-await page.keyboard.press('KeyE'); await wait(300);
-await page.keyboard.press('Digit2'); await wait(300); await page.keyboard.press('Digit3'); await wait(250);
+await page.keyboard.press('KeyE'); await wait(600);
+await page.click('#shopwin button[data-act="buy"][data-id="bread"]'); await wait(300); await page.keyboard.press('Escape'); await wait(250);
 check(await ev(() => __eq.profile.inv.food === 1) && (await page.innerHTML('#hud')).includes('chip food'), 'Rose sells honey bread; the HUD shows it');
 await ev(() => { __eq.profile.stats.hp = 40; }); await page.keyboard.press('KeyQ'); await wait(250);
 check(await ev(() => __eq.profile.stats.hp >= 90 && __eq.profile.stats.hp <= 99 && __eq.profile.inv.food === 0), 'Q eats the bread: +50 health (plus slow natural healing)');
