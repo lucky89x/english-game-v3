@@ -84,8 +84,9 @@ const QUALITY = {
   high: { label: 'Cao', ratio: 1.5, shadow: 4096, shadowDist: 85, density: 1.0, particles: true, far: true, post: true, samples: 4 },
 };
 const errors = [];
-addEventListener('error', (e) => errors.push(String(e.message)));
-addEventListener('unhandledrejection', (e) => errors.push(String(e.reason)));
+const where = (x) => (x && x.stack ? ' @ ' + String(x.stack).split('\n').slice(1, 4).map((l) => l.trim().replace(/^at /, '').replace(/https?:\/\/[^/]+\//, '')).join(' < ') : '');      // (21/11) the first frames, so a test report says where
+addEventListener('error', (e) => errors.push(String(e.message) + where(e.error)));
+addEventListener('unhandledrejection', (e) => errors.push(String(e.reason) + where(e.reason)));
 
 const canvas = $('view');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
