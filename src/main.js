@@ -75,6 +75,7 @@ import { Minimap } from './ui/minimap.js';
 import { initTouch, touchWanted } from './ui/touch.js';
 import { sfx, setSound, soundOn, unlock, setMusic, musicOn, playMusic } from './audio.js';
 import { voiceOn, setVoice, speak, paceOf, nextPace } from './ui/speech.js';
+import { ReadAloud, disable as voiceDisable } from './ui/voice.js';
 import { QuestMarks } from './game/marks.js';
 import { keyCode } from './core/keys.js';
 import { WordSpots } from './game/wordspots.js';
@@ -165,7 +166,7 @@ let profile = null, quest = null, story = null, world = null, player = null, cam
 let shopWin = null, walkers = null, talkW = -1, touch = null, quality = localStorage.getItem('eq-quality') || 'medium', perfOn = false, started = false, switching = false, wordIds = {}, jarKey = '';
 const keys = new Set();
 let raceAssets = null;
-const game = { errors, SK, games: { raceGame, raceGame3d, slingGame, candyGame }, goHome: (o, mine) => goHome(o || profile, mine !== false), get room() { return room; }, get homes() { return homes; }, Farm, get trail() { return guide && guide.trail; }, get tom() { return tom; }, get fishing() { return fishing; }, get profile() { return profile; }, get quest() { return quest; }, get story() { return story; }, get player() { return player; }, get cam() { return cam; }, get minimap() { return minimap; }, ui, L, stats: { fps: 0, ms: 0, calls: 0, tris: 0 },
+const game = { errors, voiceDisable, get reader() { return reader; }, SK, games: { raceGame, raceGame3d, slingGame, candyGame }, goHome: (o, mine) => goHome(o || profile, mine !== false), get room() { return room; }, get homes() { return homes; }, Farm, get trail() { return guide && guide.trail; }, get tom() { return tom; }, get fishing() { return fishing; }, get profile() { return profile; }, get quest() { return quest; }, get story() { return story; }, get player() { return player; }, get cam() { return cam; }, get minimap() { return minimap; }, ui, L, stats: { fps: 0, ms: 0, calls: 0, tris: 0 },
   teleport(x, z) { player.place(x, z); cam.target.set(x, player.pos.y + 1.25, z); }, applyLook, syncPet, get dayNight() { return dayNight; }, get digs() { return digMeshes; }, catchFish, gainItems, cardsOfUnit: (n) => cardsOfUnit(n), get pet() { return petObj; }, get petPanel() { return petPanel; },  setQuality, key: (code) => onKey({ code, preventDefault() {} }), get started() { return started && !switching; }, get region() { return L.NAME; }, chooseProfile, enterRegion, MARKET_JARS, BRIDGE_SPOTS, get mini() { return mini; }, get wild() { return wild; }, get scene() { return scene; }, openShop, get sword() { return swordMesh; }, get armor() { return armorShown; }, setWear, openBag: () => openBag(), get arcade() { return arcade; }, get chests() { return chests; }, get spots() { return spots; }, get admin() { return admin; }, get friends() { return friends; }, get walkers() { return walkers; }, get shopWin() { return shopWin; }, get music() { return music; }, get journal() { return journal; }, get spells() { return spells; }, get floaters() { return floaters; }, get skillUI() { return skillUI; }, get intro() { return intro; }, cardOf: (id) => cardOfFn(id), pause: (on) => renderer.setAnimationLoop(on ? null : frame), renderNow: () => { post.setSun(camera, sunDir); post.render(scene, camera); },      // tests: stop drawing while another page is checked
   post, refresh: () => refresh(), refreshGear: () => { setSword(); setWear(); } };
 globalThis.__eq = game;
@@ -633,6 +634,10 @@ function adminLevel(n) {
 /** After a word game, its host asks up to three of the words the child met in it (English → meaning, 3 options). */
 /** Before Candy Match and the Kart Race (18/11: "to play you must answer some new words"): three words, new ones first,
  *  each shown as a card before it is asked; a wrong answer is shown and asked again, so the game opens only when all are right. */
+/** (24/11) A word counts only when the child also reads it aloud well (speech recognition). Where the machine cannot check a
+ *  reading (the .exe, no microphone) the card resolves with skipped:true and the old flow goes on. */
+let reader = null;
+function readOut(card, good, bad, title) { reader = reader || new ReadAloud({ speak: (w) => speak(w, true, 0.8) }); reader.read(card, { title }).then((r) => { if (r.ok) good(r); else bad(r); }); }
 function wordGate(who, then, N = 4) {      // (20/11) four words, different from the last visit, before Candy, Race and Blocks
   const pool = unitCards.filter((c) => c.word.length <= 22);
   if (pool.length < 4) { then(); return; }
@@ -644,7 +649,7 @@ function wordGate(who, then, N = 4) {      // (20/11) four words, different from
     const c = list[n], opts = mix([c, ...mix(pool.filter((x) => x.id !== c.id && x.vi !== c.vi)).slice(0, 2)]), t0 = Date.now();
     ui.choose({ who: `${who} · ${n + 1}/${list.length}`, en: `What does "${c.word}" mean?`, vi: `Trả lời đúng ${N} từ để vào chơi.` }, opts.map((o) => o.vi), (i) => {
       const ok = opts[i].id === c.id; Review.record(profile.words, c.id, { correct: ok, hints: 0, ms: Date.now() - t0 }); Save.recordSkill(profile, 'vocabulary', ok, 0); sfx(ok ? 'correct' : 'wrong');
-      if (ok) ask(n + 1); else ui.dialogue([{ who, en: `"${c.word}" means "${c.vi}". Try again!`, vi: `${c.word} = ${c.vi}` }], () => ask(n));
+      if (ok) readOut(c, () => ask(n + 1), () => ask(n)); else ui.dialogue([{ who, en: `"${c.word}" means "${c.vi}". Try again!`, vi: `${c.word} = ${c.vi}` }], () => ask(n));
     });
   };
   ui.dialogue([{ who, en: 'Answer four words, then you can play!', vi: `${who}: trả lời đúng ${N} từ tiếng Anh thì được vào chơi (mỗi lần là bộ từ khác).` }], () => teach(list, () => ask(0)));
@@ -663,11 +668,16 @@ function hostQuiz(who, words) {
   ui.dialogue([{ who, en: 'Before you go: do you remember the words from the game?', vi: `${who} hỏi lại ${list.length} từ con vừa gặp. Đúng mỗi từ +4 vàng.` }], () => ask(0));
 }
 /** A word sparkle was touched: teach one word (a new one first, else one met before), with a small reward. */
-function learnWord(card, isNew) {
+function learnWord(card, isNew, use) {
   if (!card) { ui.dialogue([{ who: 'Pip', en: 'This bubble is empty…', vi: `Từ vựng Unit ${Save.unitOf(profile)} lớp ${profile.grade} chưa có.` }]); save(); return; }
-  (profile.seen || (profile.seen = {}))[card.id] = Review.today(); track('bubble'); if (L.NAME === 'harbor') track('sea_bubble');
-  const exp = isNew ? 6 : 3, gold = isNew ? 2 : 1; profile.stats.gold += gold; Save.addExp(profile, exp); sfx('correct'); save(); refresh();
-  ui.dialogue([{ who: isNew ? '✨ Từ mới' : '🔁 Ôn lại', card, vi: `${isNew ? 'Nghe, đọc theo rồi nhớ nghĩa nhé.' : 'Con nhớ từ này chứ? Nghe và đọc lại nhé.'} (+${exp} EXP, +${gold} vàng)` }]);
+  (profile.seen || (profile.seen = {}))[card.id] = Review.today();
+  const exp = isNew ? 6 : 3, gold = isNew ? 2 : 1, who = isNew ? '✨ Từ mới' : '🔁 Ôn lại';
+  const reward = (note) => { track('bubble'); if (L.NAME === 'harbor') track('sea_bubble'); profile.stats.gold += gold; Save.addExp(profile, exp); sfx('correct'); save(); refresh(); if (use) use(); return `${note} (+${exp} EXP, +${gold} vàng)`; };
+  // (24/11) the reward comes only after the child reads the word aloud well; the bubble stays until then
+  ui.dialogue([{ who, card, vi: isNew ? 'Nghe kỹ rồi sắp phải đọc to từ này nhé.' : 'Con nhớ từ này chứ? Nghe rồi đọc to lên nhé.' }], () => readOut(card,
+    (r) => ui.dialogue([{ who, card, vi: reward(r.skipped ? 'Nghe và đọc lại nhé.' : 'Đọc chuẩn rồi, giỏi quá!') }]),
+    () => ui.dialogue([{ who: 'Pip', en: 'Almost! Try again.', vi: 'Chưa chuẩn nên chưa có thưởng. Bong bóng vẫn còn, con quay lại đọc lại nhé!' }]), isNew ? 'Từ mới: đọc to nhé!' : 'Ôn lại: đọc to nhé!'));
+  return 'wait';
 }
 /** Word book (B key, 📖 button): every word of the unit as a card, read aloud; Esc closes it. */
 function wordBook() {

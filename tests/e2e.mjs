@@ -19,7 +19,7 @@ const view = (x, z, yaw, pitch, dist) => ev(([x, z, yaw, pitch, dist]) => { cons
 check(await ev(() => __eq.errors.length === 0), 'Boot: no script errors');
 check(await page.isVisible('#menu'), 'Profile menu shown on start');
 await page.click('#mnew'); await page.fill('#mname', 'An'); await page.click('[data-g="6"]'); await page.click('#mgo');
-await page.waitForFunction(() => __eq.started, null, { timeout: 60000 });
+await page.waitForFunction(() => __eq.started, null, { timeout: 60000 }); await page.evaluate(() => __eq.voiceDisable(true));
 check(await ev(() => __eq.profile.name === 'An' && __eq.profile.grade === 6), 'Profile An (grade 6) created');
 check(await ev(() => __eq.region === 'village' && __eq.story.step === 'arrive'), 'A new child starts in the Starter Village');
 await wait(1500); await snap('01_village_square');
@@ -383,7 +383,7 @@ for (let k = 0; k < 4; k++) { await page.keyboard.press('KeyE'); await wait(200)
 const before = await ev(() => ({ gold: __eq.profile.stats.gold, words: Object.keys(__eq.profile.words).length }));
 await page.reload(); await page.waitForFunction(() => globalThis.__eq && !document.getElementById('menu').classList.contains('hidden'), null, { timeout: 120000 });
 check((await page.textContent('#menucard')).includes('An · Lớp 6'), 'After reload the profile is listed');
-await page.click('[data-profile]'); await page.waitForFunction(() => __eq.started, null, { timeout: 60000 });
+await page.click('[data-profile]'); await page.waitForFunction(() => __eq.started, null, { timeout: 60000 }); await page.evaluate(() => __eq.voiceDisable(true));
 check(await ev((b) => __eq.region === 'forest' && __eq.quest.step === 'done' && __eq.profile.stats.gold === b.gold && Object.keys(__eq.profile.words).length === b.words, before), 'Progress, gold and review words survive a reload');
 const saved = await ev(() => JSON.parse(localStorage.getItem('english-quest-web')));
 check(saved.version === 2 && saved.profiles.length === 1, 'Save is versioned JSON in localStorage');

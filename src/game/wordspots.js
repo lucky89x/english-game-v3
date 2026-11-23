@@ -47,7 +47,7 @@ export class WordSpots {
   interact(pos) {
     if (!this.root.visible) return null;
     for (const s of this.list) if (s.region === this.region && !this.used(s) && Math.hypot(pos.x - s.x, pos.z - s.z) < 1.8) {
-      return { text: 'E · Học từ mới (bong bóng chữ)', run: () => { const w = this.pick(); this.data[s.i] = today(); this.sync(); this.api.learn(w && w.card, w ? w.isNew : false); } };
+      return { text: 'E · Học từ mới (bong bóng chữ)', run: () => { const w = this.pick(), use = () => { this.data[s.i] = today(); this.sync(); }; const r = this.api.learn(w && w.card, w ? w.isNew : false, use); if (r !== 'wait') use(); } };      // (24/11) learn() may answer 'wait': the bubble is used up only once the child read the word aloud well
     }
     return null;
   }

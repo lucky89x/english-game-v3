@@ -20,7 +20,7 @@ const closeDialogs = async () => { for (let k = 0; k < 14 && await page.isVisibl
 const run = async (name, fn) => { if (only && !only.includes(name)) return; const t = Date.now(); await fn(); console.log(`  [${name}] ${((Date.now() - t) / 1000).toFixed(0)} s`); };
 
 await page.click('#mnew'); await page.fill('#mname', 'Quick'); await page.click('[data-g="8"]'); await page.click('#mgo');
-await page.waitForFunction(() => __eq.started, null, { timeout: 90000 });
+await page.waitForFunction(() => __eq.started, null, { timeout: 90000 }); await page.evaluate(() => __eq.voiceDisable(true));      // headless Chromium has no speech service: the reading check is tested in its own group
 await ev(() => { const p = __eq.profile; p.flags.forest_open = true; p.flags.bridge_fixed = true; p.stats.hp = 9999; __eq.wild.mobs.forEach((m) => { if (!m.boss) { m.dead = 999; m.g.visible = false; } }); __eq.refresh(); });
 
 await run('boot', async () => {
@@ -355,6 +355,25 @@ await run('admin', async () => {        // admin account (password 321) and clic
   await tp.close(); await ev(() => __eq.pause(false));
 });
 
+await run('voice', async () => {         // (24/11) a word bubble pays only after the child reads the word aloud well (a fake speech service stands in for the browser's)
+  await ev(() => { window.__heard = ['nothing']; window.SpeechRecognition = class { start() { setTimeout(() => this.onresult({ results: [window.__heard.map((t) => ({ transcript: t }))] }), 60); } stop() {} }; __eq.voiceDisable(false); });
+  await ev(() => __eq.enterRegion('village')); await page.waitForFunction(() => __eq.region === 'village' && __eq.started, null, { timeout: 120000 }); await wait(600);
+  const sp = await ev(() => { const s = __eq.spots.list.find((s) => s.region === 'village' && s.sp.visible); return s ? { x: s.x, z: s.z, i: s.i } : null; });
+  check(!!sp, 'A word bubble is waiting in the village');
+  await ev((sp) => { __eq.teleport(sp.x, sp.z); const it = __eq.spots.interact({ x: sp.x, z: sp.z }); it.run(); }, sp); await wait(400);
+  const gold0 = await ev(() => __eq.profile.stats.gold);
+  await closeDialogs(); await wait(300);
+  check(await page.isVisible('#readcard:not(.hidden)'), 'After the card, the reading card asks the child to read aloud');
+  const word = await page.textContent('#readcard .w');
+  await page.click('#readcard button.mic'); await wait(500);
+  check(await ev((g) => __eq.profile.stats.gold === g, gold0) && await ev((i) => __eq.spots.list.find((s) => s.i === i).sp.visible, sp.i), 'A wrong reading earns nothing and the bubble stays');
+  await ev((w) => { window.__heard = ['xx', w]; }, word); await page.click('#readcard button.mic'); await wait(1500);
+  check(await ev((g) => __eq.profile.stats.gold > g, gold0) && !(await ev((i) => __eq.spots.list.find((s) => s.i === i).sp.visible, sp.i)), 'A good reading pays out and uses the bubble up');
+  await closeDialogs();
+  await ev(() => __eq.voiceDisable(true)); await ev((sp2) => { const s = __eq.spots.list.find((s) => s.region === 'village' && s.sp.visible); if (s) { __eq.teleport(s.x, s.z); __eq.spots.interact({ x: s.x, z: s.z }).run(); } }, null); await wait(300); await closeDialogs(); await wait(400);
+  check(!(await page.isVisible('#readcard:not(.hidden)')), 'Where speech cannot be checked the old flow runs (no reading card)');
+  await closeDialogs(); check(await ev(() => __eq.errors.length === 0), 'No script errors in the reading flow ' + await ev(() => __eq.errors.join(' | ').slice(0, 300)));
+});
 await run('touch', async () => {         // T4: a tablet page (?touch=1) with the joystick and buttons
   await ev(() => __eq.pause(true)); const tp = await browser.newPage({ viewport: { width: 1024, height: 700 } }); await tp.goto(url + '?touch=1');
   await tp.waitForFunction(() => globalThis.__eq && document.getElementById('loading').classList.contains('hidden') && !document.getElementById('menu').classList.contains('hidden'), null, { timeout: 180000 });

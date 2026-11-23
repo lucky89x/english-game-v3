@@ -34,6 +34,8 @@ const Rec = () => (typeof window !== 'undefined' ? window.SpeechRecognition || w
 let broken = false;      // set when the service answers "network"/"service-not-allowed": the rest of the session skips the check
 /** Can this machine check a reading? (false after the speech service failed once.) */
 export const available = () => !!Rec() && !broken;
+/** Tests and machines without a microphone: turn the check off (true) or on again (false). */
+export const disable = (off = true) => { broken = off; };
 
 /** Listens once. Resolves { ok, score, heard, error } — error: 'denied' | 'none' (heard nothing) | 'unavailable' | 'busy'. */
 export function listen(target, { seconds = 6 } = {}) {
