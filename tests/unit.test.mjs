@@ -676,7 +676,7 @@ test('Sea Dex: fish are rolled by rarity, first finds pay once, milestones pay o
   assert.ok(by[0] > by[1] && by[1] > by[2] && by[2] > by[3] && by[3] > 0, 'commoner fish bite more often: ' + by);
   for (const f of SEA.FISH) assert.ok(seen.has(f.id), f.id + ' can be caught');
   for (const e of [...SEA.CREATURES, ...SEA.JUNK]) { assert.ok(e.en && e.vi && e.icon); assert.ok(!/[àáảãạăâđêôơư]/i.test(e.en)); }
-  assert.equal(SEA.DEX_TOTAL, 18);
+  assert.equal(SEA.DEX_TOTAL, 20);
   const p = { stats: { gold: 0 } }, r1 = SEA.discover(p, 'sardine', 1), r2 = SEA.discover(p, 'sardine', 1);
   assert.ok(r1.isNew && r1.gold === 10 && !r2.isNew && r2.gold === 0 && SEA.dex(p).sardine.n === 2);
   let bonus = 0; for (const f of SEA.FISH.slice(1, 5)) bonus += SEA.discover(p, f.id, 1).bonus; assert.equal(bonus, 50, 'five different creatures: the first milestone, once');

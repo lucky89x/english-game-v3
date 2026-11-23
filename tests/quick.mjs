@@ -233,7 +233,7 @@ await run('extras', async () => {        // the sea extras (19/11): fishing, Sea
   await page.waitForFunction(() => __eq.region === 'harbor' && __eq.started, null, { timeout: 180000 }); await wait(900);
   await ev(() => { __eq.wild.mobs.forEach((m) => { m.dead = 999; m.g.visible = false; }); __eq.teleport(33.2, 28); }); await wait(700);
   check((await page.textContent('#prompt')).includes('Câu cá'), 'The end of the fishing pier offers fishing');
-  await page.keyboard.press('KeyE'); await wait(500);
+  await page.keyboard.press('KeyE'); await wait(500); await answerGate(); await page.waitForFunction(() => __eq.fishing.active, null, { timeout: 120000 }); await wait(300);      // (23/11) four new words first
   check(await ev(() => __eq.fishing.active && __eq.fishing.state === 'wait'), 'E puts the rod in hand: the float is in the water and the hero waits');
   await ev(() => { const f = __eq.fishing; f.biteAt = 0; f.hold = true; }); await page.waitForFunction(() => __eq.fishing.state === 'bite', null, { timeout: 180000 });
   check((await page.textContent('#fishhud')).includes('BITE'), 'A bite shows BITE and the sliding bar');

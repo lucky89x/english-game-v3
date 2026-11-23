@@ -1155,7 +1155,7 @@ async function boot() {
   player = new Player(ngoc, { blink, talk, joy }); player.firstFaces = { ...player.faceMaps }; scene.add(player.root);
   player.swimBlock = (x, z, from) => L.NAME === 'village' && profile && !profile.flags.bridge_fixed && (x < L.riverX(z)) !== (from.x < L.riverX(z));      // the far bank stays closed until the bridge is mended
   player.onSwim = onSwim;
-  fishing = new Fishing({ scene, player, ui, sfx, profile: () => profile, tier: () => tierOf(profile.stats.level), speak: (en) => speak(en, true, 0.85), onCatch: onFishCaught });
+  fishing = new Fishing({ scene, player, ui, sfx, profile: () => profile, tier: () => tierOf(profile.stats.level), speak: (en) => speak(en, true, 0.85), onCatch: onFishCaught, gate: (go) => wordGate('Sam', go, 4), loadStatic: staticModel, loadAnimated: animatedModel });      // (23/11) four new words before fishing, the user's boat, rod, float and fish
   tom = new Npc(tomG, 2.6, 7.6, -0.4); sam = new Npc(samG, 14, 17, 1.2); ben = new Npc(benG, -9.9, 19.5, Math.PI / 2); scene.add(tom.root, sam.root, ben.root);
   pip = new Pip(pipG.scene); scene.add(pip.root);
   const usedFiles = new Set();      // two friends may share a model file (Mia uses Rose's): the second gets its own copy

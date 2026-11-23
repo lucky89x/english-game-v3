@@ -11,13 +11,24 @@ export const FISH = [
   { id: 'pufferfish', en: 'pufferfish', vi: 'cá nóc', r: 2, price: 25, icon: '🐡' }, { id: 'seahorse', en: 'seahorse', vi: 'cá ngựa', r: 2, price: 30, icon: '🐴' },
   { id: 'swordfish', en: 'swordfish', vi: 'cá kiếm', r: 2, price: 35, icon: '🐟' }, { id: 'starfish', en: 'starfish', vi: 'sao biển', r: 2, price: 28, icon: '⭐' },
   { id: 'dolphin', en: 'dolphin', vi: 'cá heo', r: 3, price: 80, icon: '🐬' }, { id: 'turtle', en: 'sea turtle', vi: 'rùa biển', r: 3, price: 90, icon: '🐢' },
+  { id: 'sea_bass', en: 'sea bass', vi: 'cá vược', r: 0, price: 4, icon: '🐟' }, { id: 'clownfish', en: 'clownfish', vi: 'cá hề', r: 2, price: 28, icon: '🐠' },      // (23/11) from the user's fishing pack
 ];
 /** River fish of the village dock (Map 1): paid in gold on the spot (there is no fish market in the village). */
 export const RIVER = [
   { id: 'minnow', en: 'minnow', vi: 'cá nhỏ', r: 0, price: 2, icon: '🐟' }, { id: 'carp', en: 'carp', vi: 'cá chép', r: 0, price: 3, icon: '🐟' },
   { id: 'trout', en: 'trout', vi: 'cá hồi suối', r: 1, price: 6, icon: '🐠' }, { id: 'catfish', en: 'catfish', vi: 'cá trê', r: 1, price: 8, icon: '🐟' },
   { id: 'eel', en: 'eel', vi: 'con lươn', r: 2, price: 15, icon: '🐍' }, { id: 'golden_carp', en: 'golden carp', vi: 'cá chép vàng', r: 3, price: 40, icon: '🐠' },
+  { id: 'tilapia', en: 'tilapia', vi: 'cá rô phi', r: 0, price: 3, icon: '🐟' }, { id: 'goldfish', en: 'goldfish', vi: 'cá vàng', r: 1, price: 7, icon: '🐠' },
+  { id: 'rainbow_trout', en: 'rainbow trout', vi: 'cá hồi vân', r: 2, price: 18, icon: '🐠' }, { id: 'koi', en: 'koi', vi: 'cá koi', r: 3, price: 60, icon: '🎏' },      // (23/11) from the user's fishing pack
 ];
+/** The 3D fish of the user's pack (assets/models/fishing, clip Swim, the head points to -X) for each species: [file, length in metres when caught].
+ *  Species with no model (squid, shrimp, lobster, seahorse, starfish, dolphin, turtle, eel, minnow) show their emoji card. */
+export const FISH_MODEL = {
+  carp: ['fish_carp', 0.8], catfish: ['fish_catfish', 0.8], tilapia: ['fish_tilapia', 0.55], goldfish: ['fish_goldfish', 0.5], rainbow_trout: ['fish_rainbow_trout', 0.85], trout: ['fish_rainbow_trout', 0.7], koi: ['fish_koi', 1.0], golden_carp: ['fish_koi', 0.95], minnow: ['fish_tilapia', 0.35],
+  sardine: ['fish_mackerel', 0.4], anchovy: ['fish_mackerel', 0.32], mackerel: ['fish_mackerel', 0.7], salmon: ['fish_rainbow_trout', 0.95], tuna: ['fish_mackerel', 1.2], swordfish: ['fish_sea_bass', 1.3], sea_bass: ['fish_sea_bass', 0.85], clownfish: ['fish_clownfish', 0.45], pufferfish: ['fish_pufferfish', 0.55],
+};
+/** Species that swim about under the water near the fishing spots (a mix of common and a few rare ones). */
+export const SWIMMERS = { village: ['carp', 'tilapia', 'goldfish', 'catfish', 'carp', 'rainbow_trout', 'koi'], harbor: ['mackerel', 'sea_bass', 'clownfish', 'mackerel', 'pufferfish', 'sea_bass'] };
 /** Things the line brings up besides fish. They sell for pennies and are not in the Dex. */
 export const JUNK = [
   { id: 'boot', en: 'old boot', vi: 'chiếc giày cũ', price: 1, icon: '👢', junk: true }, { id: 'seaweed', en: 'seaweed', vi: 'rong biển', price: 2, icon: '🌿', junk: true },

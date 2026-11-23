@@ -158,7 +158,7 @@ const gold0 = await ev(() => __eq.profile.stats.gold);
 await ev((p) => __eq.teleport(p[0], p[1]), MG.stars[0]); await wait(500);
 check(await ev((g) => __eq.mini.data.stars.length === 1 && __eq.profile.stats.gold === g + 3, gold0) && (await page.textContent('#hud')).includes('★ 1/12'), 'Walking into a hidden star collects it (HUD shows ★ 1/12)');
 await closeDialog();
-await ev(() => __eq.teleport(18.6, 19.8)); await wait(450); await page.keyboard.press('KeyE'); await wait(300);
+await ev(() => __eq.teleport(18.6, 19.8)); await wait(450); await page.keyboard.press('KeyE'); await wait(400); await answerGate(); await page.waitForFunction(() => __eq.fishing.active, null, { timeout: 120000 }); await wait(300);      // (23/11) four new words first
 check(await ev(() => __eq.fishing.active && __eq.fishing.state === 'wait'), 'Fishing starts: the rod is in hand and the hero waits for a bite');
 for (let c = 0; c < 3; c++) {      // software GL (~1 fps) cannot time a rhythm game: hold the marker inside the zone, then press a real E
   await ev(() => { const f = __eq.fishing; f.biteAt = 0; f.hold = true; }); await page.waitForFunction(() => __eq.fishing.state === 'bite', null, { timeout: 180000 }); await wait(500);
