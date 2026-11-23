@@ -39,8 +39,6 @@ import { Floaters } from './game/floaters.js';
 import { SkillUI } from './ui/skills.js';
 import { Tailor } from './ui/tailor.js';
 import * as WR from './core/wardrobe.js';
-import { heroOf, heroFile, heroBodyFile } from './core/heroes.js';
-import { donorParts, wearParts, buildClips, rigOf, heldQuat } from './game/hero.js';
 import { DexPanel } from './ui/dex.js';
 import { Toolbar } from './ui/toolbar.js';
 import * as Sea from './core/sea.js';
@@ -158,7 +156,7 @@ let profile = null, quest = null, story = null, world = null, player = null, cam
 let shopWin = null, walkers = null, talkW = -1, touch = null, quality = localStorage.getItem('eq-quality') || 'medium', perfOn = false, started = false, switching = false, wordIds = {}, jarKey = '';
 const keys = new Set();
 const game = { errors, SK, games: { raceGame, slingGame, candyGame }, goHome: (o, mine) => goHome(o || profile, mine !== false), get room() { return room; }, get homes() { return homes; }, Farm, get trail() { return guide && guide.trail; }, get tom() { return tom; }, get fishing() { return fishing; }, get profile() { return profile; }, get quest() { return quest; }, get story() { return story; }, get player() { return player; }, get cam() { return cam; }, get minimap() { return minimap; }, ui, L, stats: { fps: 0, ms: 0, calls: 0, tris: 0 },
-  teleport(x, z) { player.place(x, z); cam.target.set(x, player.pos.y + 1.25, z); }, applyLook, syncPet, get heroShown() { return heroShown; }, get tailor() { return tailor; }, get creator() { return creator; }, get wardPanel() { return wardPanel; }, get digs() { return digMeshes; }, catchFish, gainItems, cardsOfUnit: (n) => cardsOfUnit(n), get pet() { return petObj; }, get petPanel() { return petPanel; },  setQuality, key: (code) => onKey({ code, preventDefault() {} }), get started() { return started && !switching; }, get region() { return L.NAME; }, chooseProfile, enterRegion, MARKET_JARS, BRIDGE_SPOTS, get mini() { return mini; }, get wild() { return wild; }, get scene() { return scene; }, openShop, get sword() { return swordMesh; }, get armor() { return armorShown; }, setWear, openBag: () => openBag(), get arcade() { return arcade; }, get chests() { return chests; }, get spots() { return spots; }, get admin() { return admin; }, get friends() { return friends; }, get walkers() { return walkers; }, get shopWin() { return shopWin; }, get music() { return music; }, get journal() { return journal; }, get spells() { return spells; }, get floaters() { return floaters; }, get skillUI() { return skillUI; }, get intro() { return intro; }, cardOf: (id) => cardOfFn(id), pause: (on) => renderer.setAnimationLoop(on ? null : frame), renderNow: () => { post.setSun(camera, sunDir); post.render(scene, camera); },      // tests: stop drawing while another page is checked
+  teleport(x, z) { player.place(x, z); cam.target.set(x, player.pos.y + 1.25, z); }, applyLook, syncPet, get digs() { return digMeshes; }, catchFish, gainItems, cardsOfUnit: (n) => cardsOfUnit(n), get pet() { return petObj; }, get petPanel() { return petPanel; },  setQuality, key: (code) => onKey({ code, preventDefault() {} }), get started() { return started && !switching; }, get region() { return L.NAME; }, chooseProfile, enterRegion, MARKET_JARS, BRIDGE_SPOTS, get mini() { return mini; }, get wild() { return wild; }, get scene() { return scene; }, openShop, get sword() { return swordMesh; }, get armor() { return armorShown; }, setWear, openBag: () => openBag(), get arcade() { return arcade; }, get chests() { return chests; }, get spots() { return spots; }, get admin() { return admin; }, get friends() { return friends; }, get walkers() { return walkers; }, get shopWin() { return shopWin; }, get music() { return music; }, get journal() { return journal; }, get spells() { return spells; }, get floaters() { return floaters; }, get skillUI() { return skillUI; }, get intro() { return intro; }, cardOf: (id) => cardOfFn(id), pause: (on) => renderer.setAnimationLoop(on ? null : frame), renderNow: () => { post.setSun(camera, sunDir); post.render(scene, camera); },      // tests: stop drawing while another page is checked
   post, refresh: () => refresh(), refreshGear: () => { setSword(); setWear(); } };
 globalThis.__eq = game;
 
@@ -682,7 +680,7 @@ async function chooseProfile(p) {
   await enterRegion(p.region === 'forest' && p.flags.forest_open ? 'forest' : (p.region === 'harbor' || p.region === 'isle') && p.flags.map2 ? p.region : 'village');
   started = true; renderGear(); if (admin) admin.sync();
   // (19/11) a new hero, or a save from before the creator: pick a face, hair and clothes first (tests skip it unless ?creator=1)
-  if (!p.admin && !heroOf(p) && (!navigator.webdriver || /[?&]creator=1/.test(location.search))) { await creator.show('hero'); save(); refresh(); }      // (22/11) the three modular heroes replace the chibi: everyone picks one once
+  if (!p.admin && (!p.look || p.lookPending) && (!navigator.webdriver || /[?&]creator=1/.test(location.search))) { await creator.show('new'); save(); refresh(); }
   if (L.NAME === 'village' && story.step === 'arrive' && !p.flags.arrived) startIntro();
 }
 
@@ -760,26 +758,24 @@ const playerAtkOf = () => playerAtk(profile);
 let swordMesh = null;
 function setSword() {
   if (!player || !profile) return;
-  let hand = null; player.root.traverse((o) => { if (!hand && o.isBone && (player.rig ? o.name === 'JianSocketR' : /hand.?R$/i.test(o.name))) hand = o; });
+  let hand = null; player.root.traverse((o) => { if (!hand && o.isBone && /hand.?R$/i.test(o.name)) hand = o; });
   if (swordMesh) { swordMesh.removeFromParent(); swordMesh = null; }
   const it = ITEMS[bag(profile).weapon]; if (!hand || !it) return;
-  const HOLD_SWORD = new THREE.Vector3(0, 0.55, 0.85), HOLD_STAFF = new THREE.Vector3(0, 1, 0.12);      // (22/11) how the modular heroes hold it, in the model's axes
-  const hold = (o) => { if (player.rig) { o.quaternion.copy(heldQuat(player.rig, hand, it.kind === 'staff' ? HOLD_STAFF : HOLD_SWORD)); o.position.set(0, 0, 0); } else { o.rotation.set(Math.PI / 2, 0, 0); o.position.set(0, 0.05, 0.03); } };
   const gl = GEAR_FILE[bag(profile).weapon] && gearScene(GEAR_FILE[bag(profile).weapon], setSword);       // (20/11) the Blender sword or staff (grip at the origin, blade along +Y)
-  if (gl) { const w = new THREE.Group(), m = gl.scene.clone(true); m.traverse((o) => { if (o.isMesh) o.castShadow = true; }); w.add(m); hold(w); hand.add(w); swordMesh = w; return; }
+  if (gl) { const w = new THREE.Group(), m = gl.scene.clone(true); m.traverse((o) => { if (o.isMesh) o.castShadow = true; }); w.add(m); w.rotation.set(Math.PI / 2, 0, 0); w.position.set(0, 0.05, 0.03); hand.add(w); swordMesh = w; return; }
   const g = new THREE.Group(), mat = (c, m = 0) => new THREE.MeshStandardMaterial({ color: c, roughness: m ? 0.3 : 0.7, metalness: m, emissive: it.el ? it.color : it.color === 0x7fd6ff ? 0x2f8fd0 : 0, emissiveIntensity: it.el ? 0.35 : 0.6 });
   if (it.kind === 'staff') {      // (20/11) element staffs: a wooden staff with a glowing orb of the element, until the Blender ones (batch 20)
     const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.03, 1.15, 8), mat(0x6a4020)); pole.position.y = 0.3; g.add(pole);
     const orb = new THREE.Mesh(new THREE.IcosahedronGeometry(0.09, 1), new THREE.MeshStandardMaterial({ color: it.color, emissive: it.color, emissiveIntensity: 1.3, roughness: 0.2 })); orb.position.y = 0.92; g.add(orb);
     for (let k = 0; k < 3; k++) { const prong = new THREE.Mesh(new THREE.ConeGeometry(0.018, 0.16, 4), mat(0xe2b04a, 0.8)); const a = k / 3 * Math.PI * 2; prong.position.set(Math.cos(a) * 0.07, 0.86, Math.sin(a) * 0.07); prong.rotation.set(Math.sin(a) * 0.5, 0, -Math.cos(a) * 0.5); g.add(prong); }
-    g.traverse((o) => { if (o.isMesh) o.castShadow = true; }); hold(g); hand.add(g); swordMesh = g; return;
+    g.traverse((o) => { if (o.isMesh) o.castShadow = true; }); g.rotation.set(Math.PI / 2, 0, 0); g.position.set(0, 0.05, 0.03); hand.add(g); swordMesh = g; return;
   }
   const blade = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.6, 0.022), mat(it.color, it.atk > 5 ? 0.7 : 0)); blade.position.y = 0.4; g.add(blade);
   const tip = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.12, 4), blade.material); tip.position.y = 0.76; tip.scale.z = 0.45; g.add(tip);
   const guard = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.04, 0.05), mat(0xe2b04a, 0.8)); guard.position.y = 0.09; g.add(guard);
   const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.16, 8), mat(0x5f3519)); g.add(grip);
   g.traverse((o) => { if (o.isMesh) o.castShadow = true; });
-  hold(g); hand.add(g); swordMesh = g;
+  g.rotation.set(Math.PI / 2, 0, 0); g.position.set(0, 0.05, 0.03); hand.add(g); swordMesh = g;
 }
 /** Worn armour on the chest and the charm on the hip (A6). */
 let armorShown = null, charmShown = null;
@@ -822,7 +818,6 @@ function setWear() {
   const bone = (re) => { let b = null; player.root.traverse((o) => { if (!b && o.isBone && re.test(o.name)) b = o; }); return b; };
   dropGear(armorShown); dropGear(charmShown); for (const m of [armorShown, charmShown]) if (m && !m.userData.extraBones) m.removeFromParent();
   armorShown = charmShown = null; const b = bag(profile);
-  if (player.rig) { applyLook(); return; }      // (22/11) the armour pieces are built for the chibi's skeleton: the modular heroes wear their outfit only
   const chest = bone(/^chest$/), hips = bone(/^hips$/);
   const a = gearOnBody(b.armor, 'chest') || armorMesh(b.armor); if (a && chest) { if (!a.parent) chest.add(a); armorShown = a; }
   if (b.charm) {
@@ -875,37 +870,11 @@ const NGOC_COLORS = { hair: '#8c4a22', top: '#f4e9d2', bottom: '#cfb487' };
 const ACC_BONE = { hat: /^head$/, bow: /^head$/, headband: /^head$/, glasses: /^head$/, scarf: /^neck$/, bag: /^chest$/, bracelet: /^hand.?L$/, necklace: /^neck$/, earrings: /^head$/, tiara: /^head$/, hairclip: /^head$/ };
 const PROC_ONLY = new Set();      // kinds drawn only from outfit.js shapes (the jewellery now has Blender files; the shapes are the fallback when a file is missing)
 const JEWEL = new Set(['necklace', 'earrings', 'tiara', 'hairclip']);
-/** (22/11) The modular heroes (core/heroes.js, game/hero.js): one body per hero, built once with its hand-made clips; an outfit
- *  swaps the clothing pieces onto the body. Loading is async, so the look is applied when the files arrive (heroWant guards races). */
-const heroBodies = new Map(), heroDonors = new Map(); let heroShown = '', heroWant = '';
-const HERO_SCALE = 1.0;
-const heroBody = (id) => {
-  if (!heroBodies.has(id)) heroBodies.set(id, gltf(heroBodyFile(id)).then((g) => {
-    const group = new THREE.Group(); group.add(g.scene); group.scale.setScalar(HERO_SCALE);
-    g.scene.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.frustumCulled = false; } });
-    const rig = rigOf(g.scene); return { group, body: g.scene, rig, clips: buildClips(g.scene, rig), outfit: -1 };
-  }));
-  return heroBodies.get(id);
-};
-const heroOutfit = (id, i) => { const k = id + ':' + i; if (!heroDonors.has(k)) heroDonors.set(k, gltf(heroFile(id, i)).then((g) => donorParts(g.scene))); return heroDonors.get(k); };
-function applyHero(h) {
-  const want = h.id + ':' + h.outfit; heroWant = want; if (heroShown === want && player.rig) return;
-  heroBody(h.id).then(async (b) => {
-    const donors = await heroOutfit(h.id, h.outfit);
-    if (heroWant !== want || !player) return;
-    if (b.outfit !== h.outfit) { wearParts(b.body, donors); b.outfit = h.outfit; }
-    player.useModel('hero_' + h.id, b.group, b.clips, b.rig);
-    heroShown = want; setSword();
-  }, (e) => console.warn('hero: ' + e.message));
-}
 const accScene = {};                       // kind -> loaded glTF scene, or null when the file is missing (the shapes from outfit.js take over)
 let lookShown = [], faceShown = '';
 function applyLook() {
   if (!player || !profile) return;
   for (const o of lookShown) o.removeFromParent(); lookShown = [];
-  const hero = heroOf(profile);
-  if (hero) { applyHero(hero); return; }
-  heroWant = heroShown = ''; if (player.modelKey && player.modelKey !== 'classic') { player.useModel('classic'); setSword(); }      // a profile with the little classic Ngọc
   const root = player.root, bone = (re) => { let b = null; root.traverse((o) => { if (!b && o.isBone && re.test(o.name)) b = o; }); return b; };
   const worn = WR.wardrobe(profile).worn, val = (slot) => { const it = worn[slot] && WR.parse(worn[slot]); return it ? it.color : null; }, paint = (n, d) => (n && (WCOL[n] || WR.JEWEL_HEX[n])) || d;
   const look = lookOf(profile); tintSkin(root, look.skin);

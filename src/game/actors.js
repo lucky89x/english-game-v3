@@ -1,43 +1,21 @@
 // Player (Ngọc, skinned GLB with 10 clips), orbit camera with collision, NPCs and memory crystals.
 import * as THREE from 'three';
 import * as L from '../core/layout.js';
-import { swingPose } from './hero.js';
 
 const WALK = 6.4, RUN = 9.2, JUMP = 6.6, GRAVITY = 19;      // (21/11) "the hero walks slowly next to the monsters: twice as fast" (was 3.4 / 6.3)
 
 export class Player {
   constructor(gltf, faceTextures) {
-    this.root = gltf.scene; this.classicClips = gltf.animations; this.modelKey = ''; this.models = null; this.rig = null;
-    this.bindClips(gltf.animations);
+    this.root = gltf.scene; this.mixer = new THREE.AnimationMixer(this.root); this.actions = {};
+    for (const clip of gltf.animations) this.actions[clip.name] = this.mixer.clipAction(clip);
+    for (const once of ['Jump', 'Land', 'Wave', 'Celebrate', 'Interact']) if (this.actions[once]) { this.actions[once].setLoop(THREE.LoopOnce); this.actions[once].clampWhenFinished = true; }
     this.root.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.frustumCulled = false; if (o.material.name === 'NgocFace') this.face = o.material; } });
     this.faceMaps = { happy: this.face ? this.face.map : null, ...faceTextures };
     this.blink = 2.5; this.faceHold = 0;
     this.pos = new THREE.Vector3(); this.vy = 0; this.grounded = true; this.yaw = Math.PI; this.current = ''; this.route = null; this.lock = 0; this.stepTimer = 0; this.swim = null; this.noSwim = false; this.onSwim = null; this.swimBlock = null;
     this.bones = {}; this.root.traverse((o) => { if (o.isBone && ['upper_arm.R', 'forearm.R', 'chest', 'spine'].includes(o.name)) this.bones[o.name] = o; }); this.swingT = 0; this.swingDir = 1;
     this.play('Idle');
-  }
-  /** (Re)builds the mixer for the model now under root: one action per clip, the one-shot clips play once. */
-  bindClips(clips) {
-    if (this.mixer) { this.mixer.stopAllAction(); this.mixer.uncacheRoot(this.root); }
-    this.mixer = new THREE.AnimationMixer(this.root); this.actions = {}; this.current = '';
-    for (const clip of clips) this.actions[clip.name] = this.mixer.clipAction(clip);
-    for (const once of ['Jump', 'Land', 'Wave', 'Celebrate', 'Interact']) if (this.actions[once]) { this.actions[once].setLoop(THREE.LoopOnce); this.actions[once].clampWhenFinished = true; }
     this.mixer.addEventListener('finished', (e) => { if (['Land', 'Wave', 'Celebrate', 'Interact'].includes(e.action.getClip().name)) this.play('Idle'); });
-  }
-  /** (22/11) Shows another body under the same root: key 'classic' is the little chibi Ngọc, others are the modular heroes
-   *  (src/game/hero.js: group = the body, clips = their hand-made clips, rig = the posing info used by the sword swing). */
-  useModel(key, group, clips, rig) {
-    if (this.modelKey === key && !group) return false;
-    if (!this.models) {      // the first swap: the chibi's own children become a group that can come back
-      const g = new THREE.Group(); for (const c of [...this.root.children]) g.add(c);
-      this.models = { classic: { group: g, clips: this.classicClips, face: this.face, faceMaps: this.faceMaps, bones: this.bones, rig: null } }; this.modelKey = 'classic';
-    }
-    if (this.modelKey === key) return false;
-    const left = this.models[this.modelKey]; left.faceMaps = this.faceMaps; left.face = this.face;      // the face maps may have been replaced since
-    this.root.remove(left.group);
-    const e = this.models[key] || (this.models[key] = { group, clips, face: null, faceMaps: {}, bones: {}, rig: rig || null });
-    this.root.add(e.group); this.modelKey = key; this.face = e.face; this.faceMaps = e.faceMaps; this.bones = e.bones; this.rig = e.rig;
-    this.bindClips(e.clips); this.play('Idle'); return true;
   }
   place(x, z) { this.swim = null; this.seat = null; this.pos.set(x, L.walkHeight(x, z), z); this.vy = 0; this.grounded = true; this.route = null; this.sync(); }
   play(name, fade = 0.16) {
@@ -55,7 +33,6 @@ export class Player {
     const k = 1 - this.swingT / 0.42, e = (a, b, t) => a + (b - a) * (t < 0 ? 0 : t > 1 ? 1 : t * t * (3 - 2 * t));
     const up = k < 0.32 ? e(0, 1, k / 0.32) : k < 0.62 ? e(1, -0.35, (k - 0.32) / 0.3) : e(-0.35, 0, (k - 0.62) / 0.38);      // 1 = arm raised, -0.35 = struck through
     const turn = k < 0.32 ? e(0, 0.45, k / 0.32) : k < 0.62 ? e(0.45, -0.5, (k - 0.32) / 0.3) : e(-0.5, 0, (k - 0.62) / 0.38);
-    if (this.rig) return swingPose(this.rig, up, turn, this.swingDir);      // the modular heroes: poses in model axes
     const q = new THREE.Quaternion(), ax = new THREE.Vector3(), b = this.bones;
     if (b['upper_arm.R']) { b['upper_arm.R'].quaternion.multiply(q.setFromAxisAngle(ax.set(1, 0, 0), -up * 1.9)); b['upper_arm.R'].quaternion.multiply(q.setFromAxisAngle(ax.set(0, 0, 1), up * 0.5 * this.swingDir)); }
     if (b['forearm.R']) b['forearm.R'].quaternion.multiply(q.setFromAxisAngle(ax.set(1, 0, 0), -Math.max(0, up) * 0.6));
