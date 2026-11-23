@@ -1,0 +1,35 @@
+<!doctype html><meta charset="utf-8"><title>Hero viewer</title>
+<script type="importmap">{ "imports": { "three": "../../vendor/three.module.min.js", "three/addons/": "../../vendor/addons/" } }</script>
+<body style="margin:0;background:transparent"><canvas id="c"></canvas>
+<script type="module">
+// Contact sheet of a hero clip: ?hero=ngoc&outfit=1&clip=Run&view=side|front|back&n=8&w=1400&h=420
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { donorParts, wearParts, buildClips, rigOf, swingPose } from '../../src/game/hero.js';
+const q = new URLSearchParams(location.search), hero = q.get('hero') || 'ngoc', outfit = +(q.get('outfit') || 0), clipName = q.get('clip') || 'Idle', view = q.get('view') || 'front';
+const N = +(q.get('n') || 8), W = +(q.get('w') || 1400), H = +(q.get('h') || 420), sw = q.get('swing');
+const canvas = document.getElementById('c'); canvas.width = W; canvas.height = H;
+const alpha = q.get('alpha') === '1';
+const r = new THREE.WebGLRenderer({ canvas, antialias: true, alpha, preserveDrawingBuffer: true }); r.setClearColor(0x000000, 0); r.setSize(W, H, false); r.autoClear = false; r.setScissorTest(true);
+r.outputColorSpace = THREE.SRGBColorSpace; r.toneMapping = THREE.ACESFilmicToneMapping; r.toneMappingExposure = 1.0;
+const scene = new THREE.Scene(); if (!alpha) scene.background = new THREE.Color(0xcfd8e0);
+scene.add(new THREE.HemisphereLight(0xdfeeff, 0x8a7a66, 1.5)); const sun = new THREE.DirectionalLight(0xfff0d8, 2.2); sun.position.set(3, 6, 4); scene.add(sun);
+const ground = new THREE.Mesh(new THREE.CircleGeometry(30, 32).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0x9aa08a })); if (!alpha) scene.add(ground);
+const L = new GLTFLoader();
+const body = (await L.loadAsync(`../../assets/models/hero/${hero}_0.glb`)).scene;
+if (outfit) wearParts(body, donorParts((await L.loadAsync(`../../assets/models/hero/${hero}_${outfit}.glb`)).scene));
+scene.add(body);
+const rig = rigOf(body), clips = buildClips(body, rig), clip = clips.find((c) => c.name === clipName);
+const mixer = new THREE.AnimationMixer(body), act = mixer.clipAction(clip).play();
+const cam = new THREE.PerspectiveCamera(28, (W / N) / H, 0.1, 50);
+const yaw = { front: 0, side: Math.PI / 2, back: Math.PI, three: 0.7 }[view], dist = +(q.get('dist') || 5.2), cy = +(q.get('cy') || 0.85);
+const info = { clip: clip.name, dur: clip.duration, tracks: clip.tracks.length };
+for (let i = 0; i < N; i++) {
+  const u = i / N; mixer.setTime(u * clip.duration); body.updateMatrixWorld(true);
+  if (sw) { const k = u; const up = k < 0.32 ? k / 0.32 : k < 0.62 ? 1 - (k - 0.32) / 0.3 * 1.35 : -0.35 * (1 - (k - 0.62) / 0.38); swingPose(rig, up, k < 0.32 ? 0.45 * k / 0.32 : -0.5, 1); body.updateMatrixWorld(true); }
+  cam.position.set(Math.sin(yaw) * dist, cy + 0.35, Math.cos(yaw) * dist); cam.lookAt(0, cy, 0);
+  const x = Math.round(i * W / N), w = Math.round((i + 1) * W / N) - x;
+  r.setViewport(x, 0, w, H); r.setScissor(x, 0, w, H); r.clear(); r.render(scene, cam);
+}
+window.INFO = info; window.DONE = true;
+</script>

@@ -4,6 +4,7 @@
 import { KINDS, COLOR_NAMES, JEWEL_HEX, wardrobe, parse, itemId, itemName, priceOf, buyPiece } from '../core/wardrobe.js';
 import { COLORS } from './style.js';
 import { speak } from './speech.js';
+import { HEROES, heroOf, owns, priceOfOutfit, buyOutfit } from '../core/heroes.js';
 
 const CSS = `
 #tailor { position:fixed; left:12px; top:12px; bottom:12px; width:min(410px, calc(100vw - 24px)); z-index:44; overflow:auto; background:linear-gradient(#fff6fb,#ffe0ef); border:6px solid #c0508a; border-radius:18px; padding:12px 14px; color:#3a1028; box-shadow:0 12px 36px rgba(0,0,0,.4); }
@@ -18,6 +19,11 @@ const CSS = `
 #tailor .txt { min-width:70px; }
 #tailor .buy { position:sticky; bottom:-12px; background:#ffe0ef; padding:8px 0 4px; margin-top:10px; display:flex; gap:8px; align-items:center; }
 #tailor .buy b { flex:1; font-size:15px; } #tailor .buy .main { background:#7cc46a; border-color:#3f8a33; color:#fff; font-size:16px; padding:7px 12px; }
+#tailor .outfits { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px; }
+#tailor .of { display:block; text-align:center; padding:6px 4px; font-size:13px; }
+#tailor .of img { display:block; width:96px; height:144px; object-fit:contain; margin:0 auto 2px; }
+#tailor .of b { display:block; } #tailor .of small { display:block; font-weight:600; color:#8a5070; }
+#tailor .of .st { font-size:12px; margin-top:2px; }
 #tailor .note { font-size:12px; color:#8a5070; }`;
 
 const TABS = [
@@ -50,17 +56,50 @@ export class Tailor {
   get open() { return !this.el.classList.contains('hidden'); }
   key(code) { if (!this.open) return false; if (code === 'Escape' || code === 'KeyE') this.close(); return true; }
   show() {
+    const hh = heroOf(this.api.profile());
+    if (hh) {      // (22/11) the modular heroes: five outfits each
+      this.heroMode = true; this.orig = hh.outfit; this.sel = hh.outfit;
+      this.say = { en: "Hello! I'm Mia. Look at these outfits! Which one do you like?", vi: 'Bấm một bộ để thử ngay lên người. Thích thì mua bằng vàng.' };
+      this.el.classList.remove('hidden'); this.api.focus(true); this.drawHero(); speak(this.say.en); return;
+    }
+    this.heroMode = false;
     const w = wardrobe(this.api.profile()); this.orig = { ...w.worn }; this.sel = null; this.say = { en: "Hello! I'm Mia. I make clothes and jewellery. What would you like?", vi: 'Chọn món, chọn màu để thử. Thích thì mua bằng vàng.' };
     this.el.classList.remove('hidden'); this.api.focus(true); this.draw(); speak(this.say.en);
   }
-  close() { if (!this.open) return; const w = wardrobe(this.api.profile()); w.worn = { ...this.orig }; this.api.apply(); this.el.classList.add('hidden'); this.api.focus(false); this.api.sfx('tick'); }
+  close() {
+    if (!this.open) return;
+    if (this.heroMode) { const h = heroOf(this.api.profile()); if (h) h.outfit = this.orig; this.api.apply(); this.el.classList.add('hidden'); this.api.focus(false); this.api.sfx('tick'); return; }
+    const w = wardrobe(this.api.profile()); w.worn = { ...this.orig }; this.api.apply(); this.el.classList.add('hidden'); this.api.focus(false); this.api.sfx('tick'); }
   /** Try a piece on: what was worn when the shop opened, plus this one piece. */
   tryOn(id) {
     const w = wardrobe(this.api.profile()), it = parse(id); w.worn = { ...this.orig }; this.sel = id;
     w.worn[it.slot] = id; if (it.slot === 'body') w.worn.top = w.worn.bottom = null; else if (it.slot === 'top' || it.slot === 'bottom') w.worn.body = null;
     this.api.apply();
   }
+  /** (22/11) The outfits of the chosen hero: a grid of pictures, try one on by pressing it, buy it with gold. */
+  actHero(a, v) {
+    const p = this.api.profile(), h = heroOf(p); if (!h) return;
+    if (a === 'close') return this.close();
+    if (a === 'of') { this.sel = +v; h.outfit = this.sel; this.api.apply(); this.api.sfx('tick'); speak(HEROES[h.id].outfits[this.sel].en); }
+    else if (a === 'buy') {
+      const i = this.sel, r = buyOutfit(p, i), nm = HEROES[h.id].outfits[i].en;
+      if (!r.ok) { h.outfit = this.orig; this.api.apply(); this.api.sfx('wrong'); this.say = { en: `Sorry, ${nm} costs ${r.cost} gold.`, vi: `Chưa đủ vàng (cần ${r.cost} ●). Đánh quái, chơi mini game, làm nhiệm vụ để kiếm thêm.` }; speak(this.say.en); h.outfit = this.sel; this.api.apply(); }
+      else { this.orig = i; this.api.apply(); this.api.sfx(r.why === 'new' ? 'correct' : 'tick'); this.say = { en: r.why === 'new' ? `Here you are: ${nm}. You look great!` : `You are wearing ${nm} now.`, vi: r.why === 'new' ? `Đã mua (−${r.cost} ●) và mặc luôn.` : 'Đã mặc.' }; speak(this.say.en); this.api.changed(); }
+    }
+    this.drawHero();
+  }
+  drawHero() {
+    const p = this.api.profile(), h = heroOf(p), H = HEROES[h.id], sel = this.sel, cost = priceOfOutfit(sel), own = owns(p, sel);
+    const tile = (o, i) => { const st = i === this.orig ? '<span class="st" style="color:#2a8a3a">✔ Đang mặc</span>' : owns(p, i) ? '<span class="st" style="color:#2a8a3a">Đã có</span>' : `<span class="st">${priceOfOutfit(i)} ●</span>`;
+      return `<button class="of${i === sel ? ' on' : ''}" data-a="of" data-v="${i}"><img src="./assets/ui/hero_${h.id}_${i}.png" alt=""><b>${o.en}</b><small>${o.vi}</small>${st}</button>`; };
+    this.el.innerHTML = `<header><span style="font-size:28px">🧵</span><h2>Mia's Tailor Shop</h2><button data-a="close">✕</button></header>
+      <div class="say">💬 <b>Mia:</b> ${this.say.en}<br><small>${this.say.vi}</small></div>
+      <div class="note">Vàng của con: <b>${p.stats.gold} ●</b> · Nhân vật: <b>${H.name}</b> (đổi ở Gương thần 🪞 trong Tủ đồ)</div>
+      <div class="outfits">${H.outfits.map(tile).join('')}</div>
+      <div class="buy"><b>${H.outfits[sel].en} <small>(${H.outfits[sel].vi})</small></b>${sel === this.orig ? '<span class="note">Đang mặc</span>' : `<button class="main" data-a="buy">${own ? 'Mặc' : `Mua · ${cost} ●`}</button>`}</div>`;
+  }
   act(a, v) {
+    if (this.heroMode) return this.actHero(a, v);
     const p = this.api.profile(), w = wardrobe(p);
     if (a === 'close') return this.close();
     if (a === 'tab') { this.tab = v; this.kind = TABS.find((t) => t.id === v).kinds[0]; this.api.sfx('tick'); }
@@ -75,6 +114,7 @@ export class Tailor {
     this.draw();
   }
   draw() {
+    if (this.heroMode) return this.drawHero();
     const p = this.api.profile(), w = wardrobe(p), tab = TABS.find((t) => t.id === this.tab), K = KINDS[this.kind], vals = K.vals || COLOR_NAMES, owned = new Set(w.owned);
     const kindBtn = (k) => `<button class="k${k === this.kind ? ' on' : ''}" data-a="kind" data-v="${k}"><i>${KINDS[k].icon}</i>${k === 'hairstyle' ? 'hair style' : k === 'haircolor' ? 'hair colour' : KINDS[k].en}<br><small>${KINDS[k].vi}</small></button>`;
     const valBtn = (c) => { const id = itemId(this.kind, c), cls = `${id === this.sel ? ' on' : ''}${owned.has(id) ? ' own' : ''}`;

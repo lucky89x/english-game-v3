@@ -979,3 +979,22 @@ test('fashion: printed tops, skirts and dresses wear as their base shape; four n
   assert.equal(baseOf('tee_stripe'), 'top'); assert.equal(baseOf('hoodie'), 'hoodie'); assert.ok(wparse('tee_dots:red') && wprice('tee_dye:blue') > 0);
   for (const k of ['hightops', 'boots', 'sandals', 'flats']) assert.equal(WK[k].slot, 'feet'); assert.ok(!/[ăâđêôơưáàảãạ]/i.test(WK.aodai.en), 'the áo dài has an English name');
 });
+
+test('heroes: three modular heroes, five outfits each, the first free, buying keeps what was bought per hero', async () => {
+  const H = await import('../src/core/heroes.js');
+  assert.deepEqual(H.HERO_IDS, ['ngoc', 'honglien', 'haothien']);
+  for (const id of H.HERO_IDS) { assert.equal(H.HEROES[id].outfits.length, 5, id); assert.equal(H.OUTFIT_PRICES.length, 5); for (const o of H.HEROES[id].outfits) assert.ok(o.en && o.vi); }
+  assert.equal(H.heroFile('ngoc', 0), 'hero/ngoc_1'); assert.equal(H.heroFile('haothien', 4), 'hero/haothien_5'); assert.equal(H.heroBodyFile('honglien'), 'hero/honglien_0');
+  const p = { stats: { gold: 500 } };
+  assert.equal(H.heroOf(p), null);
+  assert.ok(H.chooseHero(p, 'ngoc')); assert.deepEqual(p.hero, { id: 'ngoc', outfit: 0, owned: [0] });
+  assert.ok(!H.chooseHero(p, 'nobody'));
+  assert.ok(H.owns(p, 0) && !H.owns(p, 2));
+  let r = H.buyOutfit(p, 2); assert.ok(r.ok && r.why === 'new' && r.cost === H.OUTFIT_PRICES[2]); assert.equal(p.stats.gold, 500 - H.OUTFIT_PRICES[2]); assert.equal(p.hero.outfit, 2);
+  r = H.buyOutfit(p, 2); assert.ok(r.ok && r.why === 'owned' && r.cost === 0, 'buying twice is free');
+  r = H.buyOutfit(p, 4); assert.ok(!r.ok && r.why === 'broke' && p.hero.outfit === 2, 'not enough gold: nothing changes');
+  assert.ok(!H.buyOutfit(p, 9).ok);
+  assert.ok(H.wearOutfit(p, 0) && p.hero.outfit === 0); assert.ok(!H.wearOutfit(p, 3));
+  H.chooseHero(p, 'honglien'); assert.deepEqual(p.hero, { id: 'honglien', outfit: 0, owned: [0] });
+  H.chooseHero(p, 'ngoc'); assert.deepEqual(p.hero.owned, [0, 2], 'the outfits bought for Ngoc are still hers after a detour');
+});

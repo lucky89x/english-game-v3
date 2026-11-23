@@ -1,0 +1,17 @@
+<!doctype html><meta charset="utf-8"><script type="importmap">{ "imports": { "three": "../../vendor/three.module.min.js", "three/addons/": "../../vendor/addons/" } }</script>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+const l = new GLTFLoader();
+const g = await l.loadAsync('../../assets/models/hero/ngoc_1.glb');
+g.scene.updateMatrixWorld(true);
+const out = { top: g.scene.children.map(c => c.type + ':' + c.name), bones: [], parts: [] };
+const wp = new THREE.Vector3();
+g.scene.traverse(o => {
+  if (o.isBone) { o.getWorldPosition(wp); out.bones.push(o.name + ' p=' + wp.toArray().map(v => +v.toFixed(2)).join(',') + ' par=' + (o.parent && o.parent.name)); }
+  if (o.isMesh && !o.isBone) out.parts.push(o.type + ':' + o.name + ' parent=' + o.parent.name + ' mat=' + [].concat(o.material).map(m => m.name + (m.map ? '(' + m.map.image.width + 'x' + m.map.image.height + ')' : '')).join('|'));
+});
+const sk = []; g.scene.traverse(o => { if (o.isSkinnedMesh && sk.length < 1) sk.push(o.skeleton.bones.length + ' bm=' + o.bindMode); });
+out.sk = sk; out.anims = g.animations.length;
+window.OUT = out;
+</script>

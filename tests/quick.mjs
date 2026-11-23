@@ -374,6 +374,32 @@ await run('touch', async () => {         // T4: a tablet page (?touch=1) with th
   await tp.close(); await ev(() => __eq.pause(false));
 });
 
+await run('hero', async () => {      // (22/11) the three modular heroes: body + swapped outfit, hand-made clips, shop, back to the classic Ngoc
+  await ev(() => { const p = __eq.profile; p.hero = { id: 'ngoc', outfit: 0, owned: [0] }; p.inv = { owned: ['ember_sword'], weapon: 'ember_sword', armor: '', charm: '', food: 0 }; __eq.applyLook(); __eq.setWear(); __eq.teleport(0, 13); });
+  await page.waitForFunction(() => __eq.heroShown === 'ngoc:0', null, { timeout: 120000 });
+  check(await ev(() => __eq.player.modelKey === 'hero_ngoc' && !!__eq.player.rig), 'Hero: Ngoc is the model under the player');
+  check(await ev(() => ['Idle', 'Walk', 'Run', 'Talk', 'Wave', 'Jump', 'Fall', 'Land', 'Interact', 'Celebrate'].every((n) => __eq.player.actions[n])), 'Hero: all ten clips exist');
+  check(await ev(() => { let n = 0; __eq.player.root.traverse((o) => { if (o.isSkinnedMesh && /^(Coat|Tunic|Boots)$/.test(o.name)) n++; }); return n === 3; }), 'Hero: the first outfit has its Coat, Tunic and Boots');
+  check(await ev(() => { let hand = null; __eq.player.root.traverse((o) => { if (o.name === 'JianSocketR') hand = o; }); return !!__eq.sword && __eq.sword.parent === hand; }), 'Hero: the sword is in the right hand socket');
+  await ev(() => { __eq.player.swing(); }); await wait(700);
+  check(await ev(() => __eq.errors.length === 0), 'Hero: a sword swing runs without errors');
+  await ev(() => { __eq.profile.hero.outfit = 3; __eq.profile.hero.owned.push(3); __eq.applyLook(); });
+  await page.waitForFunction(() => __eq.heroShown === 'ngoc:3', null, { timeout: 120000 });
+  check(await ev(() => { const names = []; __eq.player.root.traverse((o) => { if (o.isSkinnedMesh && o.name === 'Coat') names.push([].concat(o.material).map((m) => m.name).join('|')); }); return names.length === 1 && /NGOC_04/.test(names[0]); }), 'Hero: outfit 4 replaced the coat (one coat, the right file)');
+  await ev(() => { __eq.profile.hero = { id: 'haothien', outfit: 1, owned: [0, 1] }; __eq.applyLook(); });
+  await page.waitForFunction(() => __eq.heroShown === 'haothien:1', null, { timeout: 120000 });
+  check(await ev(() => __eq.player.modelKey === 'hero_haothien'), 'Hero: switching to Hao Thien swaps the body');
+  await ev(() => { __eq.profile.stats.gold = 1000; __eq.tailor.show(); }); await wait(500);
+  check(await page.isVisible('#tailor .outfits') && (await page.locator('#tailor .of').count()) === 5, "Hero: Mia's shop shows the five outfits");
+  await page.click('.of[data-v="3"]'); await page.waitForFunction(() => __eq.heroShown === 'haothien:3', null, { timeout: 120000 });
+  await page.click('[data-a="buy"]'); await wait(300);
+  check(await ev(() => __eq.profile.hero.owned.includes(3) && __eq.profile.hero.outfit === 3 && __eq.profile.stats.gold === 1000 - 400), 'Hero: buying an outfit takes the gold and wears it');
+  await page.click('[data-a="close"]'); await wait(300);
+  await ev(() => { delete __eq.profile.hero; __eq.applyLook(); }); await wait(600);
+  check(await ev(() => __eq.player.modelKey === 'classic' && __eq.player.actions.Idle && !!__eq.sword), 'Hero: a profile without a hero shows the classic Ngoc again, sword and all');
+  check(await ev(() => __eq.errors.length === 0), 'Hero: no script errors ' + await ev(() => __eq.errors.join(' | ').slice(0, 300)));
+});
+
 check(await ev(() => __eq.errors.length === 0), 'No script errors at the end');
 console.log(failed ? `${failed} FAILED` : 'ALL PASS', logs.filter((l) => !/ReadPixels|GPU stall/.test(l)).slice(0, 5));
 await browser.close(); server.close(); process.exit(failed ? 1 : 0);

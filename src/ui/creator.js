@@ -7,6 +7,7 @@ import { COLORS } from './style.js';
 import { HAIR_STYLES } from '../game/tint.js';
 import { wardrobe, starterLook, parse, COLOR_NAMES } from '../core/wardrobe.js';
 import { speak } from './speech.js';
+import { HEROES, HERO_IDS, heroOf, chooseHero } from '../core/heroes.js';
 
 const CSS = `
 #creator { position:fixed; left:12px; top:12px; bottom:12px; width:min(410px, calc(100vw - 24px)); z-index:44; overflow:auto; background:linear-gradient(#fffaf0,#ffeccc); border:6px solid #c8782a; border-radius:18px; padding:12px 14px; color:#3a2410; box-shadow:0 12px 36px rgba(0,0,0,.4); }
@@ -20,6 +21,10 @@ const CSS = `
 #creator .go { display:flex; gap:8px; margin-top:12px; position:sticky; bottom:-12px; background:#ffeccc; padding:8px 0 4px; }
 #creator .go button { flex:1; font-size:17px; padding:8px; } #creator .go .main { background:#7cc46a; border-color:#3f8a33; color:#fff; }
 #creator .hint { font-size:12px; color:#8a6a4a; margin-top:4px; }
+#creator .hero { display:flex; gap:10px; align-items:center; text-align:left; width:100%; padding:6px 8px; margin-bottom:8px; }
+#creator .hero img { width:84px; height:126px; object-fit:contain; flex:none; }
+#creator .hero small { display:block; font-weight:600; color:#8a6a4a; font-size:12px; }
+#creator .hero b { font-size:17px; display:block; }
 body.creating #hud, body.creating #clue, body.creating #prompt, body.creating #mapbox, body.creating #gear, body.creating #xbar { visibility:hidden; }
 @media (max-width:700px) { #creator { top:auto; height:52vh; } }`;
 
@@ -41,6 +46,7 @@ export class Creator {
   /** Keys go nowhere else while the card is open; Esc closes the mirror (the first creation needs the button). */
   key(code) { if (!this.open) return false; if (code === 'Escape' && this.mode === 'mirror') this.finish(); return true; }
   show(mode = 'new') {
+    if (!this.api.profile().admin) return this.showHero(mode === 'mirror' ? 'mirror' : 'new');      // (22/11) the three modular heroes replace the chibi (the admin keeps the old card)
     const p = this.api.profile(), w = wardrobe(p), val = (slot, d) => { const it = w.worn[slot] && parse(w.worn[slot]); return it ? it.color : d; };
     const body = w.worn.body && parse(w.worn.body), bottom = w.worn.bottom && parse(w.worn.bottom);
     if (mode === 'new') p.lookPending = true;      // closed half way (the game shut): the creator opens again next time
@@ -59,7 +65,28 @@ export class Creator {
     }
     this.api.apply();
   }
+  /** (22/11) Choose one of the three modular heroes (core/heroes.js). The pick is put on the hero at once; cancel restores the old record. */
+  showHero(mode) {
+    const p = this.api.profile(); this.hero = true; this.mode = mode; this.before = JSON.stringify({ hero: p.hero || null, store: p.heroStore || null });
+    if (!heroOf(p)) chooseHero(p, HERO_IDS[0]);
+    this.el.classList.remove('hidden'); this.api.focus(true); this.api.apply(); this.draw();
+    return new Promise((ok) => (this.resolve = ok));
+  }
+  actHero(a, v) {
+    const p = this.api.profile(); this.api.sfx('tick');
+    if (a === 'hero') { chooseHero(p, v); this.api.apply(); speak(HEROES[v].en); }
+    else if (a === 'done') return this.finish();
+    else if (a === 'cancel') return this.cancel();
+    this.draw();
+  }
+  drawHero() {
+    const p = this.api.profile(), cur = heroOf(p), name = String(p.name).replace(/[&<>"]/g, '');
+    const cards = HERO_IDS.map((id) => { const h = HEROES[id]; return `<button class="hero${cur && cur.id === id ? ' on' : ''}" data-a="hero" data-v="${id}"><img src="./assets/ui/hero_${id}_0.png" alt=""><span><b>${h.name}</b>${h.en}<small>${h.vi}</small></span></button>`; }).join('');
+    this.el.innerHTML = `<h2>${this.mode === 'mirror' ? '🪞 Magic mirror' : '✨ Choose your hero'}</h2><div class="sub">${this.mode === 'mirror' ? 'Đổi nhân vật (miễn phí, đồ đã mua của từng nhân vật vẫn còn).' : `Chọn nhân vật cho <b>${name}</b>. Bấm để chọn, nhân vật bên phải đổi ngay. Kéo chuột để xoay.`}</div>${cards}<div class="hint">Quần áo đổi ở <b>Tiệm may của cô Mia</b> trong làng: mỗi nhân vật có 5 bộ trang phục để mua bằng vàng.</div>
+      <div class="go">${this.mode === 'mirror' ? '<button data-a="cancel">Thôi</button>' : ''}<button class="main" data-a="done">${this.mode === 'mirror' ? 'Xong ✔' : 'Xong! Bắt đầu ▶'}</button></div>`;
+  }
   act(a, v) {
+    if (this.hero) return this.actHero(a, v);
     const d = this.d; this.api.sfx('tick');
     if (a === 'face') { d.face = v; speak(`a ${FACE_NAMES[v].toLowerCase()} face`); }
     else if (a === 'skin') d.skin = v;
@@ -75,15 +102,20 @@ export class Creator {
     this.preview(); this.draw();
   }
   finish() {
+    if (this.hero) { delete this.api.profile().lookPending; return this.close(true); }
     const p = this.api.profile(), d = this.d;
     p.look = { face: d.face, skin: d.skin };
     delete p.lookPending;
     if (this.mode === 'new') starterLook(p, [['hairstyle', d.style], ['haircolor', d.hair], ...(d.outfit === 'dress' ? [['dress', d.dress]] : [['top', d.top], [d.outfit, d.bottom]])]);
     this.close(true);
   }
-  cancel() { const p = this.api.profile(), b = JSON.parse(this.before); if (b.look) p.look = b.look; else delete p.look; wardrobe(p).worn = b.worn; this.api.apply(); this.close(false); }
-  close(saved) { this.el.classList.add('hidden'); this.api.focus(false); this.api.sfx(saved ? 'correct' : 'tick'); const r = this.resolve; this.resolve = null; if (r) r(saved); }
+  cancel() {
+    const p = this.api.profile(), b = JSON.parse(this.before);
+    if (this.hero) { if (b.hero) p.hero = b.hero; else delete p.hero; if (b.store) p.heroStore = b.store; else delete p.heroStore; this.api.apply(); return this.close(false); }
+    if (b.look) p.look = b.look; else delete p.look; wardrobe(p).worn = b.worn; this.api.apply(); this.close(false); }
+  close(saved) { this.hero = false; this.el.classList.add('hidden'); this.api.focus(false); this.api.sfx(saved ? 'correct' : 'tick'); const r = this.resolve; this.resolve = null; if (r) r(saved); }
   draw() {
+    if (this.hero) return this.drawHero();
     const d = this.d, p = this.api.profile(), on = (x, y) => (x === y ? ' on' : '');
     const swatches = (act, cur) => `<div class="row">${COLOR_NAMES.map((c) => `<button class="sw${on(c, cur)}" data-a="${act}" data-v="${c}" title="${c} · ${COL_VI[c]}" style="background:${COLORS[c]}"></button>`).join('')}</div>`;
     const name = String(p.name).replace(/[&<>"]/g, '');
