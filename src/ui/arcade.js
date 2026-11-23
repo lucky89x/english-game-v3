@@ -14,8 +14,8 @@ export class Arcade {
     el.innerHTML = '<div class="card box"><div class="head"><b id="arctitle"></b><span id="arcinfo"></span><button id="arcquit">Thoát ✕</button></div><canvas id="arccv" width="560" height="560"></canvas><div class="help" id="archelp"></div></div>';
     document.body.appendChild(el); this.el = el; this.cv = el.querySelector('#arccv'); this.ctx = this.cv.getContext('2d');
     // (21/11) "Candy Match looks blurry": the board is drawn at the screen's pixel density (560 logical units, up to 3× pixels)
-    this.W = 560; const sharp = () => { const k = Math.min(3, Math.max(1, (globalThis.devicePixelRatio || 1) * 1.15)); const n = Math.round(this.W * k); if (this.cv.width !== n) { this.cv.width = this.cv.height = n; } this.k = n / this.W; }; sharp(); this.sharp = sharp;
-    const at = (e) => { const r = this.cv.getBoundingClientRect(); return [(e.clientX - r.left) * this.W / r.width, (e.clientY - r.top) * this.W / r.height]; };
+    this.W = 560; this.H = 560; const sharp = () => { const k = Math.min(3, Math.max(1, (globalThis.devicePixelRatio || 1) * 1.15)), n = Math.round(this.W * k), m = Math.round(this.H * k); if (this.cv.width !== n || this.cv.height !== m) { this.cv.width = n; this.cv.height = m; } this.k = n / this.W; }; sharp(); this.sharp = sharp;
+    const at = (e) => { const r = this.cv.getBoundingClientRect(); return [(e.clientX - r.left) * this.W / r.width, (e.clientY - r.top) * this.H / r.height]; };
     this.cv.addEventListener('click', (e) => { if (this.game && this.game.click) this.game.click(...at(e)); });
     this.cv.addEventListener('pointerdown', (e) => { if (this.game && this.game.down) { this.cv.setPointerCapture(e.pointerId); this.game.down(...at(e)); } });
     this.cv.addEventListener('pointermove', (e) => { if (this.game && this.game.drag) this.game.drag(...at(e)); });
@@ -24,13 +24,13 @@ export class Arcade {
   }
   get open() { return !!this.game; }
   start(game) { const tune = game.music || [['🍬', 'candy'], ['🧱', 'blocks'], ['🎯', 'sling'], ['🏎', 'race'], ['🍳', 'jazz'], ['💇', 'lofi'], ['👗', 'synthwave'], ['🎣', 'fish'], ['🔒', 'chiptune']].find(([k]) => game.title.startsWith(k))?.[1]; if (tune) gameMusic(tune);      // (21/11) each mini game has its own tune
-    this.game = game; this.t = 0; this.el.classList.remove('hidden'); this.el.querySelector('#arctitle').textContent = game.title; this.el.querySelector('#archelp').textContent = game.help; }
-  close(result) { const g = this.game; this.game = null; endMusic(); stopEngine(); this.el.classList.add('hidden'); if (g) this.onFinish(g, result); }
+    this.H = this.W / (game.aspect || 1); this.el.style.setProperty('--ar', String(game.aspect || 1)); this.game = game; this.t = 0; this.el.classList.toggle('big', !!game.big); this.el.classList.remove('hidden'); this.el.querySelector('#arctitle').textContent = game.title; this.el.querySelector('#archelp').textContent = game.help; }
+  close(result) { const g = this.game; this.game = null; endMusic(); stopEngine(); if (g && g.dispose) g.dispose(); this.el.classList.add('hidden'); if (g) this.onFinish(g, result); }
   key(code) { if (!this.game) return false; if (code === 'Escape') this.close(null); else if (this.game.key) this.game.key(code); return true; }
   update(dt, held = new Set()) {
     const g = this.game; if (!g) return;
     this.t += dt;
-    try { g.update(dt, held); this.sharp(); this.ctx.setTransform(this.k, 0, 0, this.k, 0, 0); this.ctx.imageSmoothingQuality = 'high'; g.draw(this.ctx, this.W, this.W, this.t); }
+    try { g.update(dt, held); this.sharp(); this.ctx.setTransform(this.k, 0, 0, this.k, 0, 0); this.ctx.imageSmoothingQuality = 'high'; g.draw(this.ctx, this.W, this.H, this.t); }
     catch (e) { console.error('arcade game failed', e); this.close(null); return; }      // a broken game closes instead of freezing the screen (18/11)
     this.el.querySelector('#arcinfo').textContent = g.info();
     const res = g.done(); if (res) this.close(res);
@@ -87,8 +87,10 @@ export function candyGame(rnd = Math.random, tier = 1) {
   };
   g.done = () => (g.moves <= 0 && g.phase === 'idle' && g.flash <= 0 ? { id: 'candy', score: g.score, ...candyReward(g.score), text: `Candy Match: ${g.score} points!` } : null);
   g.draw = (c, w, h, t) => {
-    const bg = c.createLinearGradient(0, 0, 0, h); bg.addColorStop(0, '#ffe7f3'); bg.addColorStop(1, '#ffd9b8'); c.fillStyle = bg; c.fillRect(0, 0, w, h);
-    for (let r = 0; r < N; r++) for (let k = 0; k < N; k++) { c.fillStyle = (r + k) % 2 ? 'rgba(255,255,255,.55)' : 'rgba(255,255,255,.32)'; c.beginPath(); c.roundRect(k * cell + 3, r * cell + 3, cell - 6, cell - 6, 12); c.fill(); }
+    // (23/11) "pale and off the game's tone": a warm caramel tray in the colours of the game's paper and wood, so the sweets stand out
+    const bg = c.createLinearGradient(0, 0, 0, h); bg.addColorStop(0, '#8a4f24'); bg.addColorStop(1, '#5e3416'); c.fillStyle = bg; c.fillRect(0, 0, w, h);
+    const vg = c.createRadialGradient(w / 2, h / 2, w * 0.25, w / 2, h / 2, w * 0.75); vg.addColorStop(0, 'rgba(255,200,120,.16)'); vg.addColorStop(1, 'rgba(30,12,0,.32)'); c.fillStyle = vg; c.fillRect(0, 0, w, h);
+    for (let r = 0; r < N; r++) for (let k = 0; k < N; k++) { c.fillStyle = (r + k) % 2 ? 'rgba(255,226,170,.20)' : 'rgba(255,226,170,.11)'; c.beginPath(); c.roundRect(k * cell + 3, r * cell + 3, cell - 6, cell - 6, 12); c.fill(); }
     const ease = (x) => 1 - (1 - Math.min(1, x)) ** 3;
     for (let i = 0; i < N * N; i++) {
       const v = g.board[i]; if (v < 0) continue;
@@ -96,14 +98,14 @@ export function candyGame(rnd = Math.random, tier = 1) {
       if (g.phase === 'fall' && g.fall[i]) y -= g.fall[i] * cell * (1 - ease(g.pt / 0.32));
       if (g.swap) { const o = i === g.swap.a ? g.swap.b : i === g.swap.b ? g.swap.a : -1; if (o >= 0) { const [ox, oy] = centre(o), k = g.swap.back ? Math.sin(Math.min(1, g.pt / 0.16) * Math.PI) * 0.5 : 1 - Math.min(1, g.pt / 0.16); x += (ox - x) * k; y += (oy - y) * k; } }
       if (g.burst && g.burst.cells.has(i)) s = 1 + g.burst.t * 0.45;      // (21/11) "the match effect flashes too much": a gentler swell
-      if (i === g.sel) { s *= 1.08 + Math.sin(t * 9) * 0.05; c.fillStyle = 'rgba(255,255,255,.85)'; c.beginPath(); c.arc(x, y, cell * 0.47, 0, 7); c.fill(); }
+      if (i === g.sel) { s *= 1.08 + Math.sin(t * 9) * 0.05; c.fillStyle = 'rgba(255,236,170,.55)'; c.beginPath(); c.arc(x, y, cell * 0.47, 0, 7); c.fill(); c.strokeStyle = '#ffe28a'; c.lineWidth = 3; c.stroke(); }
       const img = CANDY_IMG[v % 6]; let sz = cell * 0.98 * s;
       if (g.burst && g.burst.cells.has(i)) { c.globalAlpha = Math.max(0, 1 - g.burst.t / 0.3); c.fillStyle = 'rgba(255,255,255,.3)'; c.beginPath(); c.arc(x, y, cell * 0.5 * s, 0, 7); c.fill(); }
       const idle = !(g.burst && g.burst.cells.has(i)) && g.phase !== 'fall';
       if (idle) {      // (20/11) shadow, a soft coloured glow and a breathing size so the board feels alive
         const br = 1 + 0.015 * Math.sin(t * 2.4 + i * 0.77), col = CANDY_COL[v % 6];
         c.save(); c.globalAlpha = 0.28; c.fillStyle = '#2a0a30'; c.beginPath(); c.ellipse(x + cell * 0.04, y + cell * 0.36, cell * 0.34 * s, cell * 0.1 * s, 0, 0, 7); c.fill(); c.restore();
-        const gl = c.createRadialGradient(x, y, cell * 0.1, x, y, cell * 0.55); gl.addColorStop(0, col + '30'); gl.addColorStop(1, col + '00'); c.fillStyle = gl; c.beginPath(); c.arc(x, y, cell * 0.55, 0, 7); c.fill();
+        const gl = c.createRadialGradient(x, y, cell * 0.1, x, y, cell * 0.55); gl.addColorStop(0, col + '55'); gl.addColorStop(1, col + '00'); c.fillStyle = gl; c.beginPath(); c.arc(x, y, cell * 0.55, 0, 7); c.fill();
         s *= br; sz = cell * 0.98 * s; y -= Math.sin(t * 2.4 + i * 0.77) * cell * 0.012;
       }
       if (img && img.complete && img.naturalWidth) c.drawImage(img, x - sz / 2, y - sz / 2, sz, sz);
@@ -118,7 +120,7 @@ export function candyGame(rnd = Math.random, tier = 1) {
       if (p.star) { c.save(); c.translate(p.x, p.y); c.rotate(p.t * 8); c.beginPath(); for (let n = 0; n < 10; n++) { const rr = n % 2 ? p.r * 0.45 : p.r * 1.2, a = n * Math.PI / 5; c[n ? 'lineTo' : 'moveTo'](Math.cos(a) * rr, Math.sin(a) * rr); } c.fill(); c.restore(); }
       else { c.beginPath(); c.arc(p.x, p.y, p.r, 0, 7); c.fill(); } }
     c.globalAlpha = 1; c.textAlign = 'center'; c.textBaseline = 'alphabetic';
-    for (const p of g.pop) { c.globalAlpha = Math.min(1, p.t * 2); c.fillStyle = '#7a2a6a'; c.font = '900 28px sans-serif'; c.fillText(p.text, p.x, p.y - (0.9 - p.t) * 60); }
+    for (const p of g.pop) { c.globalAlpha = Math.min(1, p.t * 2); c.lineWidth = 5; c.strokeStyle = '#4a2208'; c.font = '900 28px sans-serif'; c.strokeText(p.text, p.x, p.y - (0.9 - p.t) * 60); c.fillStyle = '#ffe28a'; c.fillText(p.text, p.x, p.y - (0.9 - p.t) * 60); }
     for (const p of g.words) { const k = 1.2 - p.t, sc = (p.big ? 1.25 : 1) * (k < 0.15 ? k / 0.15 * 1.2 : 1); c.globalAlpha = Math.min(1, p.t * 2.5); c.save(); c.translate(w / 2, h / 2 - 40); c.scale(sc, sc);
       c.font = '900 44px sans-serif'; c.lineWidth = 7; c.strokeStyle = '#7a1a5a'; c.strokeText(p.text, 0, 0); const gr = c.createLinearGradient(0, -40, 0, 10); gr.addColorStop(0, '#fff3a0'); gr.addColorStop(1, '#ff7ab8'); c.fillStyle = gr; c.fillText(p.text, 0, 0); c.restore(); }
     c.globalAlpha = 1;
@@ -304,7 +306,7 @@ export function spellGame(card, rnd = Math.random) {
 export function raceGame(rnd = Math.random, cards = [], tier = 1) {
   const R = rule('race', tier);
   const words = cards.filter((c) => SP.spellable(c.word) && SP.letters(c.word).length >= 3 && SP.letters(c.word).length <= 9).sort(() => rnd() - 0.5);
-  const g = { title: '🏎 Kart Race', help: 'Giữ ← → (A D) để lái. Ăn đồng xu vàng, né đá, tránh bùn, vượt 3 xe đối thủ trong 60 giây.', help: 'Giữ ← → (A D) để lái. Đi qua đồng xu có CHỮ CÁI TIẾP THEO của từ tiếng Anh (nghĩa ở trên cùng) để ghép từ. Né đá, tránh bùn, vượt 3 xe đối thủ. 60 giây, 3 tim.',
+  const g = { big: true, title: '🏎 Kart Race', help: 'Giữ ← → (A D) để lái. Ăn đồng xu vàng, né đá, tránh bùn, vượt 3 xe đối thủ trong 60 giây.', help: 'Giữ ← → (A D) để lái. Đi qua đồng xu có CHỮ CÁI TIẾP THEO của từ tiếng Anh (nghĩa ở trên cùng) để ghép từ. Né đá, tránh bùn, vượt 3 xe đối thủ. 60 giây, 3 tim.',
     x: 280, coins: 0, time: 60, hearts: 3, dist: 0, speed: 250, things: [], next: 0.5, hurt: 0, endT: 0, steer: 0, done_: [], wi: 0, got: 0, bad: 0, flash: 0, bonus: 0,
     rivals: [['#2f6fd0', 160, 0.98], ['#2e9a5a', 300, 1.0], ['#8a4ad0', 440, 1.02]].map(([col, ahead, k], i) => ({ col, d: ahead, k: k + R.rival, off: (i - 1) * 60, ph: i * 2, num: i + 2 })) };
   const roadAt = (y) => 280 + Math.sin((g.dist - y) / 260) * 90;          // centre of the road at screen height y
@@ -341,7 +343,7 @@ export function raceGame(rnd = Math.random, cards = [], tier = 1) {
         } else if (g.hurt <= 0) { raceSfx(t.kind === 'rock' ? 'bump' : 'skid'); if (t.kind === 'rock') { g.hearts -= 1; g.shake = 1; } g.hurt = t.kind === 'rock' ? 1.0 : 0.6; g.speed *= t.kind === 'rock' ? 0.5 : 0.65; }
       }
     }
-    if (Math.abs(g.x - roadAt(470)) > 110) { g.dist -= g.speed * dt * 0.5; g.speed *= 0.99; }      // off the road: slow
+    if (Math.abs(g.x - roadAt(470)) > 162) { g.dist -= g.speed * dt * 0.5; g.speed *= 0.99; }      // off the road: slow
     g.things = g.things.filter((t) => t.y < 600 && !(t.hit && (t.kind === 'letter' || t.kind === 'coin')));
   };
   const score = () => Math.floor(g.dist / 100) + g.hearts * 20 + g.bonus + (4 - place()) * 30;
@@ -403,10 +405,10 @@ export function raceGame(rnd = Math.random, cards = [], tier = 1) {
         const band = Math.floor((g.dist - y) / 48) % 2 === 0, s0 = prev.s, s1 = a.s, edge = (p, s, k) => p.x + k * s;
         c.fillStyle = band ? '#5fb03c' : '#6cbc46'; c.fillRect(-10, prev.y, w + 20, a.y - prev.y + 1);
         const quad = (k0, k1, col) => { c.fillStyle = col; c.beginPath(); c.moveTo(edge(prev, s0, k0), prev.y); c.lineTo(edge(prev, s0, k1), prev.y); c.lineTo(edge(a, s1, k1), a.y + 1); c.lineTo(edge(a, s1, k0), a.y + 1); c.closePath(); c.fill(); };
-        quad(-150, 150, band ? '#c8b07a' : '#bfa56e');      // dirt shoulder
-        quad(-134, 134, band ? '#ffffff' : '#e2483e');      // curbs
-        quad(-120, 120, band ? '#62666e' : '#5a5e66');      // asphalt
-        if (Math.floor((g.dist - y) / 70) % 2) { quad(-44, -38, 'rgba(255,255,255,.8)'); quad(38, 44, 'rgba(255,255,255,.8)'); }
+        quad(-212, 212, band ? '#c8b07a' : '#bfa56e');      // dirt shoulder   (23/11: the road is wider, 340 instead of 240)
+        quad(-186, 186, band ? '#ffffff' : '#e2483e');      // curbs
+        quad(-170, 170, band ? '#62666e' : '#5a5e66');      // asphalt
+        if (Math.floor((g.dist - y) / 70) % 2) { quad(-62, -54, 'rgba(255,255,255,.8)'); quad(54, 62, 'rgba(255,255,255,.8)'); }
       }
       prev = a;
     }
@@ -427,7 +429,7 @@ export function raceGame(rnd = Math.random, cards = [], tier = 1) {
     items.sort((a, b) => a.y - b.y);
     for (const it of items) { const p = proj(it.x, it.y); if (p && p.y < h + 80) it.draw(p); }
     // dust behind the wheels, speed lines on a fast stretch
-    const me = proj(g.x, 470); if (me && g.time > 0) { const off = Math.abs(g.x - roadAt(470)) > 110; if (Math.random() < (off ? 0.9 : 0.35)) for (const sx of [-1, 1]) dust.push({ x: me.x + sx * 34 * me.s, y: me.y, vx: sx * 20 + (Math.random() - 0.5) * 30, vy: 30 + Math.random() * 40, t: 0, col: off ? '#b89a60' : '#d8d8d8' }); }
+    const me = proj(g.x, 470); if (me && g.time > 0) { const off = Math.abs(g.x - roadAt(470)) > 162; if (Math.random() < (off ? 0.9 : 0.35)) for (const sx of [-1, 1]) dust.push({ x: me.x + sx * 34 * me.s, y: me.y, vx: sx * 20 + (Math.random() - 0.5) * 30, vy: 30 + Math.random() * 40, t: 0, col: off ? '#b89a60' : '#d8d8d8' }); }
     for (const d of dust) { d.t += 1 / 60; d.x += d.vx / 60; d.y += d.vy / 60; c.globalAlpha = Math.max(0, 0.5 - d.t); c.fillStyle = d.col; c.beginPath(); c.arc(d.x, d.y, 4 + d.t * 30, 0, 7); c.fill(); } c.globalAlpha = 1;
     for (let i = dust.length - 1; i >= 0; i--) if (dust[i].t > 0.5) dust.splice(i, 1);
     if (g.speed > 420) { c.strokeStyle = 'rgba(255,255,255,.35)'; c.lineWidth = 2; for (let i = 0; i < 10; i++) { const a = (i / 10) * 6.28 + t, r0 = 200 + ((t * 600 + i * 70) % 160); c.beginPath(); c.moveTo(280 + Math.cos(a) * r0, 330 + Math.sin(a) * r0 * 0.6); c.lineTo(280 + Math.cos(a) * (r0 + 40), 330 + Math.sin(a) * (r0 + 40) * 0.6); c.stroke(); } }

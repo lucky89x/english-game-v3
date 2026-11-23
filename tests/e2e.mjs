@@ -298,6 +298,7 @@ check(await ev(() => __eq.profile.stats.level === 6 && __eq.profile.gates[5]) &&
 for (let k = 0; k < 3 && await page.isVisible('#dialog'); k++) { await page.keyboard.press('KeyE'); await wait(200); }
 // pumpkin cart race: hold the arrow key to steer
 await ev(() => __eq.teleport(10.6, 28.6)); await wait(450); await page.keyboard.press('KeyE'); await wait(600); await answerGate(); await wait(500);
+await page.waitForFunction(() => __eq.arcade.open, null, { timeout: 90000 }); await ev(() => __eq.arcade.game.start());      // (23/11) the 3D race loads its models, then opens in its garage: skip it
 const cx0 = await ev(() => __eq.arcade.game.x); await page.keyboard.down('ArrowRight'); await wait(1200); await page.keyboard.up('ArrowRight');
 check(await ev((x) => __eq.arcade.game.title.includes('Race') && __eq.arcade.game.x > x + 40, cx0), 'Cart Race: holding → steers the cart');
 await snap('03l_cart_race'); await ev(() => { __eq.arcade.game.time = 0; }); await page.waitForFunction(() => !__eq.arcade.open, null, { timeout: 60000 });

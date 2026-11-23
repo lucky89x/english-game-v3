@@ -132,11 +132,11 @@ export function startEngine() {
   const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 500; f.Q.value = 4; f.connect(g);
   const a = ctx.createOscillator(), b = ctx.createOscillator(); a.type = b.type = 'sawtooth'; a.frequency.value = 55; b.frequency.value = 55.8; a.connect(f); b.connect(f);
   const n = ctx.createBufferSource(), nf = ctx.createBiquadFilter(), ng = ctx.createGain(); n.buffer = noiseBuf; n.loop = true; nf.type = 'lowpass'; nf.frequency.value = 220; ng.gain.value = 0.25; n.connect(nf).connect(ng).connect(f);
-  a.start(); b.start(); n.start(); g.gain.setTargetAtTime(0.16, ctx.currentTime, 0.2);
+  a.start(); b.start(); n.start(); g.gain.setTargetAtTime(0.045, ctx.currentTime, 0.2);      // (23/11) the engine was too loud: about a quarter of what it was
   eng = { a, b, n, f, g };
 }
 /** speed 0..1 (and a little more on a boost): the motor pitch and brightness. */
 export function engineSpeed(k) { if (!eng) return; const t = ctx.currentTime, hz = 50 + 110 * k; eng.a.frequency.setTargetAtTime(hz, t, 0.08); eng.b.frequency.setTargetAtTime(hz * 1.015, t, 0.08); eng.f.frequency.setTargetAtTime(350 + 1500 * k, t, 0.1); }
 export function stopEngine() { if (!eng) return; const e = eng; eng = null; e.g.gain.setTargetAtTime(0.0001, ctx.currentTime, 0.1); setTimeout(() => { try { e.a.stop(); e.b.stop(); e.n.stop(); } catch { /* stopped */ } }, 400); }
 /** One-off race sounds: a skid on a bump, a boost, a coin. */
-export function raceSfx(name) { if (!enabled || !ensure()) return; if (name === 'skid') noise(0, 0.35, 0.3, 'bandpass', 2500, 1500, 3); if (name === 'boost') { noise(0, 0.6, 0.35, 'bandpass', 500, 3000, 1.5); tone(220, 0, 0.5, 'sawtooth', 0.1, 330); } if (name === 'bump') { tone(80, 0, 0.2, 'sine', 0.5, -40); noise(0, 0.15, 0.3, 'lowpass', 600, 200, 1); } }
+export function raceSfx(name) { if (!enabled || !ensure()) return; if (name === 'skid') noise(0, 0.35, 0.12, 'bandpass', 2500, 1500, 3); if (name === 'boost') { noise(0, 0.6, 0.14, 'bandpass', 500, 3000, 1.5); tone(220, 0, 0.5, 'sawtooth', 0.04, 330); } if (name === 'bump') { tone(80, 0, 0.2, 'sine', 0.22, -40); noise(0, 0.15, 0.12, 'lowpass', 600, 200, 1); } }

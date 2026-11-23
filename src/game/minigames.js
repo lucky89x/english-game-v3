@@ -43,17 +43,12 @@ export class MiniGames {
     const sg = new THREE.ExtrudeGeometry(shape, { depth: 0.12, bevelEnabled: true, bevelSize: 0.06, bevelThickness: 0.07, bevelSegments: 3 }); sg.translate(0, 0, -0.06); sg.computeVertexNormals();
     const starGold = new THREE.MeshStandardMaterial({ color: 0xffc928, emissive: 0xff9a00, emissiveIntensity: 0.35, metalness: 0.55, roughness: 0.28 });
     const rim = new THREE.MeshBasicMaterial({ color: 0x7a4300, side: THREE.BackSide });
-    const cv = document.createElement('canvas'); cv.width = cv.height = 64; const c = cv.getContext('2d'), gr = c.createRadialGradient(32, 32, 2, 32, 32, 32);
-    gr.addColorStop(0, 'rgba(255,240,170,0.9)'); gr.addColorStop(0.35, 'rgba(255,200,60,0.25)'); gr.addColorStop(1, 'rgba(255,200,60,0)'); c.fillStyle = gr; c.fillRect(0, 0, 64, 64);
-    c.fillStyle = 'rgba(255,250,220,0.95)'; for (const [w, h] of [[2.2, 30], [30, 2.2]]) { c.beginPath(); c.ellipse(32, 32, w, h, 0, 0, 7); c.fill(); }      // a four-point sparkle
-    const halo = new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(cv), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
     const ringG = new THREE.RingGeometry(0.5, 0.62, 28), ringM = new THREE.MeshBasicMaterial({ color: 0xffd23c, transparent: true, opacity: 0.5, depthWrite: false, side: THREE.DoubleSide });
     this.stars = STARS.map(([x, z], i) => {
-      const m = new THREE.Group(), star = new THREE.Mesh(sg, starGold), edge = new THREE.Mesh(sg, rim); edge.scale.setScalar(1.08); star.castShadow = true; m.add(star, edge);
-      const h = new THREE.Sprite(halo.clone()); h.scale.setScalar(1.8); m.add(h);
+      const mat = starGold.clone(), m = new THREE.Group(), star = new THREE.Mesh(sg, mat), edge = new THREE.Mesh(sg, rim); edge.scale.setScalar(1.08); star.castShadow = true; m.add(star, edge);
       const ring = new THREE.Mesh(ringG, ringM); ring.rotation.x = -Math.PI / 2; ring.scale.setScalar(0.45); ring.position.set(x, V.groundHeight(x, z) + 0.05, z); this.root.add(ring);
       m.scale.setScalar(0.42);      // (21/11) "the stars are too big: small and sparkling"
-      m.position.set(x, V.groundHeight(x, z) + 0.9, z); this.root.add(m); return { m, x, z, i, ring, spin: star, edge, halo: h, y0: m.position.y };
+      m.position.set(x, V.groundHeight(x, z) + 0.9, z); this.root.add(m); return { m, x, z, i, ring, spin: star, edge, mat, y0: m.position.y };
     });
     // race rings
     const rg = new THREE.TorusGeometry(1.25, 0.11, 8, 28);
@@ -141,8 +136,10 @@ export class MiniGames {
     }
     for (const s of this.stars) if (s.m.visible) {
       s.spin.rotation.y = s.edge.rotation.y = this.t * 1.8 + s.i; s.m.position.y = s.y0 + Math.sin(this.t * 2.4 + s.i) * 0.08;
-      const tw = Math.pow(0.5 + 0.5 * Math.sin(this.t * 7.3 + s.i * 2.1), 6), sp = 0.5 + 0.5 * Math.sin(this.t * 3.1 + s.i);      // twinkle: a quick flash now and then over a soft glow
-      s.halo.material.opacity = 0.35 + 0.65 * tw; s.halo.scale.setScalar(1.4 + 1.8 * tw + 0.3 * sp); s.halo.material.rotation = this.t * 0.8;
+      // (23/11) "the star itself should glow and blink, not another thing scaled in and out over it": the gold shines on its own,
+      // a slow breath of light and now and then a quick glint, all in the star's own material (the bloom does the rest)
+      const breath = 0.5 + 0.5 * Math.sin(this.t * 2.2 + s.i * 1.7), glint = Math.pow(0.5 + 0.5 * Math.sin(this.t * 5.3 + s.i * 2.1), 10);
+      s.mat.emissiveIntensity = 0.25 + 0.4 * breath + 1.1 * glint; s.mat.emissive.setHex(glint > 0.35 ? 0xffd860 : 0xff9a00);
       if (Math.hypot(pos.x - s.x, pos.z - s.z) < 1.3) this.takeStar(s);
     }
     const a = this.active; if (!a) return;
