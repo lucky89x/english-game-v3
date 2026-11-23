@@ -41,6 +41,9 @@ import { Tailor } from './ui/tailor.js';
 import * as WR from './core/wardrobe.js';
 import { DexPanel } from './ui/dex.js';
 import { Toolbar } from './ui/toolbar.js';
+import * as WORLD from './core/world.js';
+import { WorldUI } from './ui/worldmap.js';
+import { makePortal } from './world/portal.js';
 import * as Sea from './core/sea.js';
 import * as Family from './core/family.js';
 import { TreasurePanel } from './ui/treasure.js';
@@ -170,7 +173,7 @@ let shopWin = null, walkers = null, talkW = -1, touch = null, quality = localSto
 const keys = new Set();
 let raceAssets = null;
 const game = { errors, voiceDisable, get reader() { return reader; }, SK, games: { raceGame, raceGame3d, slingGame, candyGame }, goHome: (o, mine) => goHome(o || profile, mine !== false), get room() { return room; }, get homes() { return homes; }, Farm, get trail() { return guide && guide.trail; }, get tom() { return tom; }, get fishing() { return fishing; }, get profile() { return profile; }, get quest() { return quest; }, get story() { return story; }, get player() { return player; }, get cam() { return cam; }, get minimap() { return minimap; }, ui, L, stats: { fps: 0, ms: 0, calls: 0, tris: 0 },
-  teleport(x, z) { player.place(x, z); cam.target.set(x, player.pos.y + 1.25, z); }, applyLook, syncPet, get dayNight() { return dayNight; }, get digs() { return digMeshes; }, catchFish, gainItems, cardsOfUnit: (n) => cardsOfUnit(n), get pet() { return petObj; }, get petPanel() { return petPanel; },  setQuality, key: (code) => onKey({ code, preventDefault() {} }), get started() { return started && !switching; }, get region() { return L.NAME; }, chooseProfile, enterRegion, MARKET_JARS, BRIDGE_SPOTS, get mini() { return mini; }, get wild() { return wild; }, get scene() { return scene; }, openShop, get sword() { return swordMesh; }, get armor() { return armorShown; }, setWear, openBag: () => openBag(), get arcade() { return arcade; }, get chests() { return chests; }, get spots() { return spots; }, get admin() { return admin; }, get friends() { return friends; }, get walkers() { return walkers; }, get shopWin() { return shopWin; }, get music() { return music; }, get journal() { return journal; }, get spells() { return spells; }, get floaters() { return floaters; }, get skillUI() { return skillUI; }, get intro() { return intro; }, cardOf: (id) => cardOfFn(id), pause: (on) => renderer.setAnimationLoop(on ? null : frame), renderNow: () => { post.setSun(camera, sunDir); post.render(scene, camera); },      // tests: stop drawing while another page is checked
+  teleport(x, z) { player.place(x, z); cam.target.set(x, player.pos.y + 1.25, z); }, applyLook, syncPet, get dayNight() { return dayNight; }, get digs() { return digMeshes; }, catchFish, gainItems, cardsOfUnit: (n) => cardsOfUnit(n), get pet() { return petObj; }, get petPanel() { return petPanel; },  setQuality, key: (code) => onKey({ code, preventDefault() {} }), get started() { return started && !switching; }, get worldUI() { return worldUI; }, openPortal, travelTo, get portals() { return portalGroup; }, get region() { return L.NAME; }, chooseProfile, enterRegion, MARKET_JARS, BRIDGE_SPOTS, get mini() { return mini; }, get wild() { return wild; }, get scene() { return scene; }, openShop, get sword() { return swordMesh; }, get armor() { return armorShown; }, setWear, openBag: () => openBag(), get arcade() { return arcade; }, get chests() { return chests; }, get spots() { return spots; }, get admin() { return admin; }, get friends() { return friends; }, get walkers() { return walkers; }, get shopWin() { return shopWin; }, get music() { return music; }, get journal() { return journal; }, get spells() { return spells; }, get floaters() { return floaters; }, get skillUI() { return skillUI; }, get intro() { return intro; }, cardOf: (id) => cardOfFn(id), pause: (on) => renderer.setAnimationLoop(on ? null : frame), renderNow: () => { post.setSun(camera, sunDir); post.render(scene, camera); },      // tests: stop drawing while another page is checked
   post, refresh: () => refresh(), refreshGear: () => { setSword(); setWear(); } };
 globalThis.__eq = game;
 
@@ -424,7 +427,7 @@ async function enterRegion(name, at) {
   scene.traverse((o) => { if (o.material) [].concat(o.material).forEach((m) => { if (m && typeof m === "object") m.needsUpdate = true; }); });
   try { await renderer.compileAsync(scene, camera); } catch { /* older browsers: shaders compile on first sight */ }      // no hitch when new things come into view
   minimap.rebuild(); placeActors(); if (walkers) walkers.setRegion(name); if (mini) mini.setRegion(name); if (wild) { if (name === 'harbor') await wild.addHarbor(seaModel); wild.setRegion(name); } if (chests) chests.setRegion(name); if (spots) spots.setRegion(name); if (homes) homes.setRegion(name); if (forestStall) forestStall.visible = name === 'forest';
-  placeHomeDoor(name);
+  placeHomeDoor(name); buildPortals();
   let [x, z] = at || [L.SPAWN.x, L.SPAWN.z];
   if (!L.walkable(x, z, 0.4)) { const o = nearestWalkable(x, z); if (o) [x, z] = o; }      // never arrive in the water or inside a wall
   game.teleport(x, z); player.yaw = Math.PI; cam.tYaw = cam.yaw = 0.25; if (petObj) petObj.snap(x, z);
@@ -1019,10 +1022,30 @@ function owlReview() {
   ui.dialogue([{ who: 'Owl', en: 'Hoo-hoo! Answer my questions and you can grow stronger.', vi: `Ôn ${total} câu${gram.length ? ` (có ${gram.length} câu ngữ pháp)` : ''}, đúng ${total - 1} câu thì lên được cấp ${L0 + 1}.` }], () => teach(order, () => ask(0)));
 }
 const near = (x, z, r) => Math.hypot(player.pos.x - x, player.pos.z - z) < r;
+/** (24/11) Portals and the world map. Arriving: from the harbor to the village on the dock, from the forest at the village gate. */
+let worldUI = null, portalGroup = null;
+function openPortal(pt) { const routes = WORLD.routesOf(profile, L.NAME, pt); sfx('tick'); worldUI.chooser(routes, 'Cổng dịch chuyển · ' + (WORLD.mapById(L.NAME) || {}).vi); }
+function openWorldMap() { if (!profile || switching) return; sfx('tick'); worldUI.map(WORLD.portalAt(L.NAME, player.pos.x, player.pos.z)); }
+async function travelTo(to) {
+  const from = L.NAME; let at = null;
+  if (to === 'village') at = from === 'harbor' ? VILLAGE_DOCK : [L.REGIONS.village.EXITS[0].x + 0.5, L.REGIONS.village.EXITS[0].z + 5];
+  if (to === 'forest') profile.flags.forest_open = true;      // only reachable when the road is open, or by the admin
+  if (to === 'harbor') profile.flags.map2 = true;
+  await enterRegion(to, at);
+}
+/** Stone arches with their swirl at the edges of this map. */
+function buildPortals() {
+  if (portalGroup) { portalGroup.removeFromParent(); portalGroup.traverse((o) => { if (o.geometry) o.geometry.dispose(); }); portalGroup = null; }
+  const list = WORLD.portalsOf(L.NAME); if (!list.length) return;
+  portalGroup = new THREE.Group(); portalGroup.name = 'portals';
+  for (const pt of list) { const names = pt.routes.map((to) => WORLD.mapById(to).vi.split(' · ')[0]).join(' · '); const m = makePortal(pt.x, L.groundHeight(pt.x, pt.z), pt.z, pt.yaw, names); portalGroup.add(m); }
+  scene.add(portalGroup);
+}
 function interactTarget() {
   if (fishing) { const f = fishing.interact(player.pos); if (f && (fishing.active || !(arcade && arcade.open))) return f; }      // (20/11) fishing spots and the rod in hand
   const p = player.pos;
-  for (const ex of L.EXITS) if (near(ex.x, ex.z, ex.r)) {
+  { const pt = WORLD.portalAt(L.NAME, p.x, p.z); if (pt) return { text: 'E · Cổng dịch chuyển', run: () => openPortal(pt) }; }      // (24/11) every map edge is a portal; two roads: the child chooses
+  for (const ex of L.EXITS) if (near(ex.x, ex.z, ex.r) && !WORLD.portalsOf(L.NAME).some((pt) => Math.hypot(pt.x - ex.x, pt.z - ex.z) < 1.5)) {
     if (ex.flag && !profile.flags[ex.flag]) return { text: 'Cổng rừng còn khóa. Hãy giúp Tom và Ben trước.', run() {} };
     return { text: 'E · ' + ex.label, run: () => { const back = ex.to === 'village' ? (L.NAME === 'harbor' ? VILLAGE_DOCK : [L.REGIONS.village.EXITS[0].x + 0.5, L.REGIONS.village.EXITS[0].z + 5]) : (L.NAME === 'isle' ? [HARBOR.isle.x + 2.2, HARBOR.isle.z - 0.5] : null); enterRegion(ex.to, back); } };
   }
@@ -1127,6 +1150,7 @@ function onKey(e) {
   if (petPanel && petPanel.key(e.code)) { e.preventDefault(); return; }
   if (trPanel && trPanel.key(e.code)) { e.preventDefault(); return; }
   if (e.code === 'KeyM' && profile && trPanel && L.NAME === 'isle') { trPanel.show(); sfx('tick'); e.preventDefault(); return; }
+  if (e.code === 'KeyO' && profile && worldUI) { if (worldUI.open) worldUI.hide(); else openWorldMap(); e.preventDefault(); return; }      // (24/11) world map
   if (e.code === 'KeyP' && profile && petPanel) { petPanel.show(); sfx('tick'); e.preventDefault(); return; }      // (21/11) pets from Map 1 too
   if (e.code === 'KeyU' && profile && wardPanel && seaOpen()) { wardPanel.show(); sfx('tick'); e.preventDefault(); return; }      // (20/11) the wardrobe moved from V to U: V is the bag now
   if (e.code === 'KeyV' && profile && packUI && !(mini && mini.active)) { packUI.show(); e.preventDefault(); return; }
@@ -1201,7 +1225,9 @@ async function boot() {
   petObj = new Pet(scene, animatedModel);
   petPanel = new PetPanel({ profile: () => profile, today: () => Review.today(), speak: (t) => speak(t, true, 0.85), sfx, playTrick: (id) => petObj.play(id), adopted: () => { syncPet(); petObj.snap(player.pos.x, player.pos.z); },
     cared: () => track('pet'), changed: () => { save(); refresh(); } });
+  worldUI = new WorldUI({ profile: () => profile, here: () => L.NAME, go: travelTo, sfx });
   toolbar = new Toolbar([
+    { id: 'world', icon: '🌍', tip: 'Bản đồ thế giới (O)', show: () => !!profile, click: () => openWorldMap() },
     { id: 'dex', icon: '🐠', tip: 'Album biển (G)', show: seaOpen, click: () => { if (profile) openDex(); } },
     { id: 'map', icon: '🗺️', tip: 'Bản đồ kho báu (M)', show: () => L.NAME === 'isle', click: () => { if (profile) { trPanel.show(); sfx('tick'); } } },
     { id: 'pet', icon: '🐾', tip: 'Thú cưng (P)', show: () => !!profile, click: () => { if (profile) { petPanel.show(); sfx('tick'); } } },
@@ -1302,6 +1328,7 @@ function frame() {
   if (floaters) floaters.update(real); if (spells) spells.update(real);
   if (profile && !profile.admin) SK.regen(profile, real, !(wild && wild.fighting));      // (21/11) faster out of a fight
   if (skillUI) skillUI.sync(started && !switching && !room && !frozen && !(mini && mini.active) && !(intro && intro.active));
+  if (portalGroup) for (const m of portalGroup.children) m.userData.update(t);
   crystals.update(t); if (world) world.update(t); if (homeDoor && homeDoor.visible) homeDoor.userData.star.rotation.y = t * 1.6;
   if (mini && started && !switching && !ui.modal && !arcade.open) mini.update(real, player.pos);      // real time, so timers stay honest on slow machines
   if (chests && started) chests.update(real);

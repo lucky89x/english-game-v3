@@ -374,6 +374,25 @@ await run('voice', async () => {         // (24/11) a word bubble pays only afte
   check(!(await page.isVisible('#readcard:not(.hidden)')), 'Where speech cannot be checked the old flow runs (no reading card)');
   await closeDialogs(); check(await ev(() => __eq.errors.length === 0), 'No script errors in the reading flow ' + await ev(() => __eq.errors.join(' | ').slice(0, 300)));
 });
+await run('world', async () => {         // (24/11) portals at the map edges, the choice card for two roads, the world map
+  await ev(() => { const p = __eq.profile; p.flags.forest_open = true; p.flags.map2 = false; delete p.flags.boss2; __eq.enterRegion('village'); }); await page.waitForFunction(() => __eq.region === 'village' && __eq.started, null, { timeout: 120000 }); await wait(800);
+  check(await ev(() => !!__eq.portals && __eq.portals.children.length === 1), 'The village has its portal arch');
+  await ev(() => { const pt = { x: -30, z: -41.4 }; __eq.teleport(pt.x, pt.z + 1); }); await wait(500);
+  await page.keyboard.press('KeyE'); await wait(500);
+  check(await page.isVisible('#worldwin .route') && (await page.locator('#worldwin .route').count()) === 2, 'E at the portal lists two roads (forest and harbor)');
+  check(await ev(() => document.querySelectorAll('#worldwin button.go:disabled').length === 1 && document.querySelector('#worldwin .route.lock .need').textContent.includes('Map 2')), 'The harbor road is locked and says what is missing');
+  await page.click('#worldwin button.go:not(:disabled)'); await page.waitForFunction(() => __eq.region === 'forest' && __eq.started, null, { timeout: 180000 }); await wait(800);
+  check(await ev(() => __eq.portals && __eq.portals.children.length === 1 && __eq.profile.region === 'forest'), 'The forest portal took the hero to the forest, which has its own portal');
+  await ev(() => __eq.teleport(-30, 56)); await wait(400); await page.keyboard.press('KeyE'); await wait(500);
+  check(await page.isVisible('#worldwin .route') && (await page.locator('#worldwin .route').count()) === 1, 'The forest portal leads one way: back to the village');
+  await page.click('#worldwin button.go:not(:disabled)'); await page.waitForFunction(() => __eq.region === 'village' && __eq.started, null, { timeout: 180000 }); await wait(800);
+  await page.keyboard.press('KeyO'); await wait(500);
+  check(await page.locator('#worldwin .node').count() === 10 && await page.locator('#worldwin .node.soon').count() === 7, 'O opens the world map: ten maps, seven of them still coming');
+  await page.click('#worldwin .node[data-id="desert"]'); await wait(200);
+  check((await page.textContent('#worldwin .info')).includes('sắp mở'), 'A map not built yet says it is coming');
+  await page.click('#worldwin .x'); await wait(200);
+  check(!(await page.isVisible('#worldwin')) && await ev(() => __eq.errors.length === 0), 'The map closes, no script errors ' + await ev(() => __eq.errors.join(' | ').slice(0, 300)));
+});
 await run('touch', async () => {         // T4: a tablet page (?touch=1) with the joystick and buttons
   await ev(() => __eq.pause(true)); const tp = await browser.newPage({ viewport: { width: 1024, height: 700 } }); await tp.goto(url + '?touch=1');
   await tp.waitForFunction(() => globalThis.__eq && document.getElementById('loading').classList.contains('hidden') && !document.getElementById('menu').classList.contains('hidden'), null, { timeout: 180000 });

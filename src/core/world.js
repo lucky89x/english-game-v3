@@ -63,12 +63,6 @@ export const PORTALS = {
   forest: [{ x: -30, z: 57.5, r: 3.0, yaw: Math.PI, routes: ['village'] }],
   harbor: [{ x: 46, z: 2, r: 3.0, yaw: -Math.PI / 2, routes: ['village'] }],
 };
-/** Where the hero arrives in map `to` when coming from `from` (null = the map's own spawn). */
-export const ARRIVE = {
-  'forest<-village': null, 'forest<-harbor': null,
-  'harbor<-village': 'dock', 'harbor<-forest': null,
-  'village<-forest': 'forestgate', 'village<-harbor': 'dock',
-};
 export const portalsOf = (region) => PORTALS[region] || [];
 /** The portal the hero stands at (within its radius), or null. */
 export const portalAt = (region, x, z) => portalsOf(region).find((p) => Math.hypot(x - p.x, z - p.z) < p.r) || null;
