@@ -155,7 +155,8 @@ const gltf = (name) => { if (!modelCache.has(name)) modelCache.set(name, loader.
 const SEA_FILES = { crab: 'harbor_mob_crab_v01', jelly: 'harbor_mob_jellyfish_v01', pirate: 'harbor_mob_pirate_v01', octopus: 'harbor_boss_octopus_v02', gull: 'mob_gull_storm_v01' };
 const seaModel = (k) => gltf(SEA_FILES[k]).catch(() => null);
 /** Map 1 monsters and bosses (batch 13): swapped in by the Wild after the game has started. */
-const MAP1_FILES = { goblin: 'mob_goblin_frost_v01', imp: 'mob_imp_fire_v01', orc: 'mob_orc_gale_v01', slime: 'mob_slime_green_v01', red: 'mob_slime_red_v01', golem: 'mob_golem_stone_v01', bat: 'mob_bat_shadow_v01', shroom: 'mob_shroom_angry_v01', king: 'boss_slime_king_v02', ancient: 'boss_golem_ancient_v02', queen: 'boss_mushroom_queen_v02', bunny: 'mob_bunny_ice_v01', wisp: 'mob_wisp_thunder_v01', fox: 'mob_fox_ember_v01' };
+// (24/11) the user's new monsters replace the old models kind by kind: wolf, magma crystal, boar, water slime, stone golem, dark bat, venom mushroom, carnivorous flower
+const MAP1_FILES = { goblin: 'mob_shadow_wolf', imp: 'mob_magma_crystal', orc: 'mob_rage_boar', slime: 'mob_water_slime', red: 'mob_slime_red_v01', golem: 'mob_stone_golem', bat: 'mob_dark_bat', shroom: 'mob_venom_mushroom', king: 'boss_slime_king_v02', ancient: 'boss_golem_ancient_v02', queen: 'boss_mushroom_queen_v02', bunny: 'mob_carnivorous_flower', wisp: 'mob_wisp_thunder_v01', fox: 'mob_fox_ember_v01' };
 const map1Model = (k) => gltf(MAP1_FILES[k]).catch(() => null);
 const staticModel = async (name) => (await gltf(name)).scene.clone(true);
 const animatedModel = async (name) => { const g = await gltf(name); return { scene: SkeletonUtils.clone(g.scene), animations: g.animations }; };
@@ -360,7 +361,7 @@ function placeActors() {
     tom.move(2.6, 7.6, -0.4); ben.move(-9.9, 19.5, Math.PI / 2); sam.move(...SAM_HOME, 1.2);
     const ex = L.EXITS[0]; if (profile && profile.flags.forest_open) { pip.root.visible = true; pip.place(ex.x + 2.2, ex.z + 3); } else pip.root.visible = false;
     if (story) placeVillageHelpers();
-    for (const f of friends) f.npc.move(...f.at);
+    for (const f of friends) { if ((f.region || 'village') === 'village') f.npc.move(...f.at); else f.npc.hide(); }
   } else if (L.NAME === 'isle') {
     tom.hide(); ben.hide(); sam.hide(); pip.root.visible = false; for (const f of friends) f.npc.hide();
   } else if (L.NAME === 'harbor') {
@@ -368,7 +369,7 @@ function placeActors() {
     sam.move(30, 29.4, Math.PI);      // fishing at the end of the small pier
   } else {
     tom.move(L.ENTRANCE.x + 2.4, L.ENTRANCE.z - 12, 0.2); sam.move(30.2, 49.6, 2.2); ben.hide();
-    for (const f of friends) f.npc.hide();
+    for (const f of friends) { if (f.region === 'forest') f.npc.move(...f.at); else f.npc.hide(); }
     pip.root.visible = true; pip.place(L.ENTRANCE.x + 3.4, L.ENTRANCE.z - 12.5);
   }
 }
@@ -1047,6 +1048,7 @@ function interactTarget() {
     if (near(sam.x, sam.z, 3)) return { text: 'E · Nói chuyện với Sam', run: () => ui.dialogue(SAM_LINES) };
     const tree = landmark('tree');
     if (quest.step === 'tree' && near(tree.spot[0], tree.spot[1], 3.2)) return { text: 'E · Đặt pha lê vào cây cổ thụ', run: () => quest.treeChallenge() };
+    for (const f of friends) if (f.region === 'forest' && near(f.npc.x, f.npc.z, 2.6)) return { text: 'E · Cửa hàng thuốc của ' + f.who + ' (bình máu, bình mana)', run: () => ui.dialogue([{ who: f.who, en: f.lines[0] }, { who: f.who, en: 'Herbs make the best potions. Take a look!' }], () => villageShop(f.shop)) };
     if (near(FOREST_SHOP.x + 1.6, FOREST_SHOP.z + 0.6, 2.4)) return profile.flags.map2 ? { text: "E · Cửa hàng của Willow (đồ Map 2)", run: () => { enterRoom('forest'); shopWin.show("Willow's Camp Shop", ['forest']); } } : { text: 'Willow đang soạn hàng: đồ Map 2 sẽ bán ở Cảng Mặt Trời', run() {} };
     for (const f of [wild, chests, spots]) { const c = f && f.interact(p); if (c) return c; }      // Map 2: board, boss shield, chests, word bubbles
     return null;
@@ -1095,7 +1097,8 @@ function interactTarget() {
   if (near(LILY_DOOR.x, LILY_DOOR.z, 1.8)) return { text: 'E · Vào nhà Lily (nhiệm vụ hằng ngày)', run: () => { enterRoom('herb'); journal.show('daily'); speak('Hello! Here are your tasks for today.'); } };
   if (near(ANNA_DOOR.x, ANNA_DOOR.z, 1.9)) return { text: 'E · Vào phòng nhạc của Anna (nghe hát, học lời)', run: () => { enterRoom('music'); music.show(); } };
   { const wi = walkers ? walkers.near(p) : -1; if (wi >= 0) return { text: 'E · Chào dân làng', run: () => { talkW = wi; ui.dialogue([{ who: 'Villager', en: walkers.greet(wi) }]); } }; }
-  for (const f of friends) if (near(f.npc.x, f.npc.z, 2.6)) {
+  for (const f of friends) if ((f.region || 'village') === 'village' && near(f.npc.x, f.npc.z, 2.6)) {
+    if (f.role === 'book') return { text: 'E · Hỏi giáo sư Finn (sổ từ vựng)', run: () => ui.dialogue(f.lines.map((en) => ({ who: f.who, en })), wordBook) };
     if (f.shop) return { text: 'E · Cửa hàng của ' + f.who + ' (Village Shop: vũ khí, máu, mana, bán hàng)', run: () => villageShop(f.shop) };      // (21/11) one shop for all
     return { text: 'E · Nói chuyện với ' + f.who, run: () => ui.dialogue(f.lines.map((en) => ({ who: f.who, en }))) };
   }

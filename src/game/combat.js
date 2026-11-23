@@ -173,6 +173,7 @@ export class Wild {
     const mixer = new THREE.AnimationMixer(inner), act = {}; for (const c of gltf.animations) act[c.name] = mixer.clipAction(c);
     if (!act.Attack && (act.Weapon || act.Punch)) act.Attack = act.Weapon || act.Punch;      // (20/11) Quaternius clip names
     if (!act.Hit && act.HitReact) act.Hit = act.HitReact;
+    if (!act.Walk && act.Move) act.Walk = act.Move;      // (24/11) the new monsters name their walk 'Move'
     const idle = act.Idle || Object.values(act)[0] || null, walk = act.Walk || idle; if (idle) idle.play();
     return { g, mats, mixer, idle, walk, acts: act, top: box.max.y, box };
   }

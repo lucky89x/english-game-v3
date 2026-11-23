@@ -13,7 +13,7 @@ for (let i = 0; i < files.length; i++) {
   const g = await L.loadAsync(`../../assets/models/${files[i]}.glb`), sc = new THREE.Scene(); if (!alpha) sc.background = new THREE.Color(0xe8e0d0);
   sc.add(new THREE.HemisphereLight(0xffffff, 0x8a7a66, 1.6)); const d = new THREE.DirectionalLight(0xffffff, 2); d.position.set(3, 6, 4); sc.add(d);
   const box = new THREE.Box3().setFromObject(g.scene), size = box.getSize(new THREE.Vector3()), ctr = box.getCenter(new THREE.Vector3()), rad = size.length() / 2 || 1;
-  info[files[i]] = { size: size.toArray().map((v) => +v.toFixed(2)), tris: 0, anims: g.animations.map((a) => a.name) }; g.scene.traverse((o) => { if (o.isMesh) info[files[i]].tris += o.geometry.index ? o.geometry.index.count / 3 : 0; });
+  info[files[i]] = { size: size.toArray().map((v) => +v.toFixed(2)), minY: +box.min.y.toFixed(2), tris: 0, anims: g.animations.map((a) => a.name), meshes: [], bones: 0 }; g.scene.traverse((o) => { if (o.isMesh) info[files[i]].meshes.push(o.name + ':' + [].concat(o.material).map((m) => m.name).join('+')); if (o.isBone) info[files[i]].bones++; }); g.scene.traverse((o) => { if (o.isMesh) info[files[i]].tris += o.geometry.index ? o.geometry.index.count / 3 : 0; });
   sc.add(g.scene); const cam = new THREE.PerspectiveCamera(30, 1, 0.01, 100), dist = rad / Math.tan(15 * Math.PI / 180) * 1.05;
   cam.position.set(ctr.x + Math.sin(yaw) * Math.cos(pitch) * dist, ctr.y + Math.sin(pitch) * dist, ctr.z + Math.cos(yaw) * Math.cos(pitch) * dist); cam.lookAt(ctr);
   const x = (i % cols) * cell, y = H - (Math.floor(i / cols) + 1) * cell; r.setViewport(x, y, cell, cell); r.setScissor(x, y, cell, cell); r.clear(); r.render(sc, cam);

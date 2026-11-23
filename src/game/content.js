@@ -152,6 +152,9 @@ export const BRIDGE_SPOTS = { rope: [7, 43.5], chain: [10.5, 36.6], log: [-6, 36
 
 // Friends in the Starter Village (original lines, simple English for every grade).
 export const FRIENDS = {
+  // (24/11) two new people from the user's designs: the professor by the Village Hall (opens the word book) and the herbalist at the forest camp (potions)
+  professor: { who: 'Professor Finn', file: 'npc_village_professor', at: [-4.6, -16, 0.35], region: 'village', role: 'book', lines: ['Good day! I am Professor Finn. I love words.', 'Open my word book and read the new words aloud. A good reader is a good explorer!'] },
+  herbalist: { who: 'Hazel', file: 'npc_forest_herbalist', at: [-33, 47.5, 0.7], region: 'forest', shop: 'healer', lines: ['Hello, traveller! I am Hazel, the forest herbalist.'] },
   forge: { who: 'Bram', file: 'npc_forge_blacksmith_v01', at: [6.2, -13.4, -0.5], shop: 'forge', lines: ['Clang, clang! I am Bram, the blacksmith. What would you like?'] },
   lily: { who: 'Lily', file: 'npc_lily_druid_v02', tint: { hair: '#e0702c', top: '#8cc25a', bottom: '#f0e6cc' }, at: [-12.5, 26.5, 1.2], lines: ['Hi! I am Lily. I look after the plants.', 'The flowers are happy today. Can you smell them?'] },
   rose: { who: 'Rose', file: 'npc_rose_baker_v02', tint: { hair: '#ee8a94', top: '#fbf6ec', bottom: '#c8352e' }, at: [5.8, -8.6, 0.6], shop: 'rose', lines: ['Hello! I am Rose. My bread is warm and soft. What would you like?'] },
