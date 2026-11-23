@@ -10,7 +10,7 @@ export const phaseOf = (hour) => { const p = phaseCore(hour); return { ...p, sun
 const mix = (a, b, k) => a + (b - a) * k;
 
 const C = (hex) => new THREE.Color(hex);
-const SKY = { day: C(0xbfe4ff), dusk: C(0xf0a070), night: C(0x0b1530) };
+const SKY = { day: C(0xbfe4ff), dusk: C(0xf0a070), night: C(0x1a2a55) };
 
 export class DayNight {
   /** parts: { scene, sky (Mesh with uniforms uSun uNight uMoon), sun, rim, hemi, sunDir (the Vector3 the game uses for shadows and rays) } */
@@ -28,11 +28,11 @@ export class DayNight {
     // the light that casts shadows: the sun by day, the moon by night (cool and gentle)
     const dir = d > 0.35 ? ph.sun : ph.moon; sunDir.copy(dir);
     sun.color.copy(C(0xffe6bc)).lerp(C(0xffa060), ph.warm * 0.8).lerp(C(0xa9bcff), n); sun.intensity = mix(0.55, 1.9, d) * (n > 0.5 ? 0.45 + 0.55 * (1 - n) : 1) + (n > 0.5 ? 0.0 : 0);
-    if (n > 0.5) sun.intensity = 0.5;      // moonlight
-    hemi.color.copy(C(0xdcefff)).lerp(C(0x8aa0ff), n); hemi.groundColor.copy(C(0xc8b88a)).lerp(C(0x1c2440), n); hemi.intensity = mix(0.4, 1.05, d);
-    rim.intensity = mix(0.18, 0.75, d); rim.color.copy(C(0xcfe2ff)).lerp(C(0x7f95e8), n);
+    if (n > 0.5) sun.intensity = 1.0;      // moonlight: soft but enough to see by (24/11: "the night is too dark with only the lamps")
+    hemi.color.copy(C(0xdcefff)).lerp(C(0x9fb4ff), n); hemi.groundColor.copy(C(0xc8b88a)).lerp(C(0x3a4a78), n); hemi.intensity = mix(0.85, 1.05, d);
+    rim.intensity = mix(0.4, 0.75, d); rim.color.copy(C(0xcfe2ff)).lerp(C(0x7f95e8), n);
     scene.fog.color.copy(SKY.day).lerp(SKY.dusk, ph.warm * 0.7).lerp(SKY.night, n);
-    scene.environmentIntensity = mix(0.05, 0.22, d);
+    scene.environmentIntensity = mix(0.12, 0.22, d);
     if (sky.material.uniforms.uNight) { sky.material.uniforms.uNight.value = n; sky.material.uniforms.uWarm.value = ph.warm; sky.material.uniforms.uSun.value.copy(ph.sun); sky.material.uniforms.uMoon.value.copy(ph.moon); }
     // windows and lamps come on in the dark
     const k = mix(0.45, 2.4, ph.lamps); for (const g of this.glow) g.m.emissiveIntensity = g.base * k;
