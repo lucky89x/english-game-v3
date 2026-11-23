@@ -196,22 +196,20 @@ function renderGear() {
   if (!gearOpen) { g.className = 'card closed'; g.innerHTML = '<button id="gopen" title="Cài đặt">⚙</button>'; $('gopen').onclick = () => { gearOpen = true; renderGear(); }; return; }
   g.className = 'card';
   const un = profile && gradeUnits[Save.unitOf(profile) - 1];      // (21/11) each map teaches one Global Success unit
-  g.innerHTML = `<b style="flex-basis:100%">Cài đặt <button id="gclose" style="float:right">✕</button></b>${un ? `<span style="flex-basis:100%;font-size:13px">📘 Đang học: Global Success ${profile.grade} · Unit ${Save.unitOf(profile)} — ${un.title} (Map ${profile.flags && profile.flags.map2 ? 2 : 1} ↔ Unit ${profile.flags && profile.flags.map2 ? 2 : 1})</span>` : ''}
+  g.innerHTML = `<b style="flex-basis:100%">Cài đặt <button id="gclose" style="float:right">✕</button></b>${un ? `<span style="flex-basis:100%;font-size:13px">📘 Đang học: Global Success ${profile.grade} · Unit ${Save.unitOf(profile)} — ${un.title} (Map ${Save.unitOf(profile)} ↔ Unit ${Save.unitOf(profile)})</span>` : ''}
     Đồ họa: <select id="gq">${Object.entries(QUALITY).map(([k, v]) => `<option value="${k}" ${k === quality ? 'selected' : ''}>${v.label}</option>`).join('')}</select>
     <button id="gs">Âm thanh: ${soundOn() ? 'bật' : 'tắt'}</button><button id="gv" title="Đọc to lời thoại tiếng Anh">Đọc to: ${voiceOn() ? 'bật' : 'tắt'}</button><button id="gp" title="Tốc độ giọng đọc tiếng Anh">Giọng đọc: ${paceOf().vi}</button><button id="gm" title="Nhạc nền nhẹ">Nhạc nền: ${musicOn() ? 'bật' : 'tắt'}</button><button id="gb" title="Xem lại các từ đã gặp (phím B)">📖 Sổ từ</button>
-    <span style="flex-basis:100%;color:#9a8060" title="Để 'theo map' thì Unit đi theo map con đã mở">Phụ huynh · Unit con đang học trên lớp: <select id="gu"><option value="0">theo map (${Save.unitOf({ flags: profile.flags })})</option>${Array.from({ length: 12 }, (_, i) => `<option value="${i + 1}" ${profile.unitPick === i + 1 ? 'selected' : ''}>${i + 1}</option>`).join('')}</select></span>
-    <button id="ge">Xuất hồ sơ</button><button id="gp">Đổi người chơi</button><span style="color:#9a8060">F3: hiệu năng</span>`;
+    <button id="ge">Xuất hồ sơ</button><button id="gsw">Đổi người chơi</button><span style="color:#9a8060">F3: hiệu năng</span>`;
   const done = (e) => { if (e && e.target) e.target.blur(); };          // a focused list would eat W/S and the arrows
   $('gclose').onclick = () => { gearOpen = false; renderGear(); };
   $('gq').onchange = (e) => { done(e); localStorage.setItem('eq-quality-manual', '1'); setQuality(e.target.value); };
-  $('gu').onchange = (e) => { done(e); const v = Number(e.target.value); if (v) profile.unitPick = v; else delete profile.unitPick; reloadUnit().then(() => ui.toast(`Đang học Unit ${Save.unitOf(profile)}`)); };
   $('gs').onclick = () => { setSound(!soundOn()); renderGear(); };
   $('gp').onclick = () => { const k = nextPace(); renderGear(); speak('Hello! This is how fast I read.', true); ui.toast('Tốc độ đọc: ' + k.vi); };
   $('gm').onclick = () => { setMusic(!musicOn()); renderGear(); };
   $('gv').onclick = () => { setVoice(!voiceOn()); renderGear(); };
   $('gb').onclick = () => { gearOpen = false; renderGear(); wordBook(); };
   $('ge').onclick = () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([Save.exportProfile(profile)], { type: 'application/json' })); a.download = `english-quest-${profile.name}.json`; a.click(); };
-  $('gp').onclick = () => { gearOpen = false; save(); ui.showMenu(store, chooseProfile); renderGear(); };
+  $('gsw').onclick = () => { gearOpen = false; save(); ui.showMenu(store, chooseProfile); renderGear(); };      // (24/11) was a second id="gp": the button did nothing and the pace button switched player
 }
 function save() { if (!profile) return; store.last = profile.id; profile.region = L.NAME; try { Save.persist(store); } catch (e) { console.warn('save failed', e); } }
 
@@ -404,7 +402,7 @@ async function enterRegion(name, at) {
   switching = true; ui.prompt('');
   if (fishing) fishing.stop();
   if (story) story.leaveMarket();
-  L.setRegion(name);
+  const unit0 = profile ? Save.unitOf(profile) : 0; L.setRegion(name); if (profile) profile.region = name;
   for (const m of digMeshes.splice(0)) m.removeFromParent(); digMixers.length = 0; if (spells) spells.clear();
   if (name === 'harbor' && profile) profile.flags.harbor_seen = true;      // main quest: sail to Sunny Harbor
   if (world) world.dispose();
@@ -419,6 +417,7 @@ async function enterRegion(name, at) {
   if (!L.walkable(x, z, 0.4)) { const o = nearestWalkable(x, z); if (o) [x, z] = o; }      // never arrive in the water or inside a wall
   game.teleport(x, z); player.yaw = Math.PI; cam.tYaw = cam.yaw = 0.25; if (petObj) petObj.snap(x, z);
   if (quest && quest.step === 'seek') quest.clueStart = performance.now();
+  if (profile && Save.unitOf(profile) !== unit0) await reloadUnit();      // (24/11) each map teaches its own unit
   switching = false; save(); refresh();
   if (name === 'isle' && trPanel && treasureMap()) trPanel.show();      // the map greets the hero on arrival
 }

@@ -1001,3 +1001,14 @@ test('skills (24/11): an ultimate per element, guards resist the element that be
   assert.ok(SK.chooseEl(t, 'wind').ok && t.stats.gold === 800 && SK.changeCost(t) === 1200, 'every change pays');
   assert.equal(SK.resetCost(t), 450); t.stats.level = 3; assert.equal(SK.resetCost(t), 0);
 });
+
+test('voice (24/11): a reading counts when what the recogniser heard is close enough to the word', async () => {
+  const V = await import('../src/ui/voice.js');
+  assert.equal(V.clean('  Hello, World! '), 'hello world'); assert.equal(V.distance('cat', 'cut'), 1); assert.equal(V.similarity('apple', 'apple'), 1);
+  assert.ok(V.heardOk(['apple'], 'apple').ok); assert.ok(V.heardOk(['an apple', 'apple'], 'Apple').ok, 'any alternative may match');
+  assert.ok(V.heardOk(['aple'], 'apple').ok, 'a small slip is allowed on a longer word'); assert.ok(!V.heardOk(['table'], 'apple').ok);
+  assert.ok(V.heardOk(['ten'], 'ten').ok && !V.heardOk(['tan'], 'ten').ok, 'short words must be exact');
+  assert.ok(V.heardOk(['the old man'], 'old man').ok, 'a phrase: every word heard');assert.ok(!V.heardOk([], 'apple').ok);
+  assert.ok(V.heardOk(['good morning'], 'good morning').ok && !V.heardOk(['good evening'], 'good morning').ok);
+  assert.equal(V.available(), false, 'node has no speech recognition: the old reward flow stays');
+});

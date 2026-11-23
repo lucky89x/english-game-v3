@@ -68,7 +68,11 @@ export const expNeed = (level) => 90 + (level - 1) * 45;
 /** Total EXP from level 1 to `level`. */
 export const expTo = (level) => { let t = 0; for (let l = 1; l < level; l++) t += expNeed(l); return t; };
 /** Unit being studied: the one a parent picked, otherwise the unit of the map reached (Map 1 = Unit 1, Map 2 = Unit 2). */
-export const unitOf = (profile) => profile.unitPick || (profile.flags && profile.flags.map2 ? 2 : 1);
+/** (24/11) The unit follows the MAP the child is in, and the grade she registered: Map N teaches Global Success Unit N
+ *  (docs/LO_TRINH_12_UNIT.md; the world map of docs/THE_GIOI_10_MAP.md: 1 village, 2 sea, 3 forest…). The parent's unit picker is gone;
+ *  `unitPick` stays only as an override for the admin and the tests. */
+export const MAP_NO = { village: 1, harbor: 2, isle: 2, forest: 3 };
+export const unitOf = (profile) => profile.unitPick || MAP_NO[profile.region] || (profile.flags && profile.flags.map2 ? 2 : 1);
 /** Hit points grow with the level; equipment adds on top (profile.gear, later). */
 export const maxHp = (profile) => 100 + (profile.stats.level - 1) * 12 + ((profile.gear && profile.gear.hp) || 0) + rankHp(profile) + powers(profile).hp;      // + the Word Keeper rank (saga.js) and skill points (skills.js)
 /** Knowledge gates: at these levels the bar fills but the next level waits for a short word review (the owl). */

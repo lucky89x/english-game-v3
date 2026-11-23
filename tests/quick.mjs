@@ -75,13 +75,18 @@ await run('combat', async () => {
   check(await ev((s) => { const m = __eq.wild.mobs[s.i]; return m.dead || (m.burn && m.mark && m.mark.el === 'fire'); }, sl), 'The slime burns and carries the fire mark');
 });
 
-await run('unit', async () => {
-  if (!(await page.isVisible('#gu'))) await page.click('#gopen');
-  await ev(() => { const s = document.getElementById('gu'); s.value = '3'; s.dispatchEvent(new Event('change')); }); await wait(1200);
-  check(await ev(() => __eq.profile.unitPick === 3 && __eq.chests.api.cards().every((c) => c.id.startsWith('g8_u03:'))), 'Parent picks Unit 3: words follow');
-  await ev(() => { const s = document.getElementById('gu'); s.value = '0'; s.dispatchEvent(new Event('change')); }); await wait(1200);
-  check(await ev(() => !__eq.profile.unitPick), '"Theo map" clears the pick');
+await run('unit', async () => {      // (24/11) the unit follows the map; the parent's picker is gone; the switch-player button works
+  await page.click('#gopen');
+  check(!(await page.isVisible('#gu')) && await page.isVisible('#gsw'), 'Settings: no unit picker any more, the switch-player button is there');
   await page.click('#gclose');
+  check(await ev(() => __eq.profile.region === 'village' && __eq.chests.api.cards().every((c) => c.id.startsWith('g8_u01:'))), 'In the village the words are Unit 1 of the registered grade');
+  await ev(() => { __eq.profile.flags.map2 = true; return __eq.enterRegion('harbor'); }); await wait(800);
+  check(await ev(() => __eq.profile.region === 'harbor' && __eq.chests.api.cards().length > 0 && __eq.chests.api.cards().every((c) => c.id.startsWith('g8_u02:'))), 'In the harbor (Map 2) the words are Unit 2');
+  await ev(() => __eq.enterRegion('village')); await wait(800);
+  check(await ev(() => __eq.chests.api.cards().every((c) => c.id.startsWith('g8_u01:'))), 'Back in the village: Unit 1 again');
+  await page.click('#gopen'); await page.click('#gsw'); await wait(500);
+  check(await page.isVisible('#menucard [data-profile]'), 'The switch-player button opens the player list');
+  await page.click('#menucard [data-profile]'); await page.waitForFunction(() => __eq.started, null, { timeout: 120000 }); await wait(500);
 });
 
 await run('owl', async () => {
