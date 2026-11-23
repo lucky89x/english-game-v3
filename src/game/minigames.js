@@ -10,7 +10,7 @@ import { ORCHARD_TREES, ORCHARD_CROWN, ORCHARD_R } from '../core/regions/village
 /** Tells the child when today's full pay for this game is used up (T1: skill games are for fun, not for farming gold). */
 export const payNote = (r) => (!r.full ? `Hôm nay trò này chỉ còn thưởng 20%. Đi đánh quái, làm nhiệm vụ để được nhiều hơn!` : r.left === 0 ? `Đã hết ${FULL_PLAYS} lượt thưởng đầy đủ hôm nay của trò này.` : '');
 
-export const STARS = [[-55, 3], [-38, -34], [-12, -38], [30, -30], [48, -12], [52, 20], [44, 38], [10, 50], [-22, 50], [-48, 30], [-30, 14], [8, -36]];
+export const STARS = [[-36, 20], [-38, -34], [-12, -38], [30, -30], [48, -12], [52, 20], [44, 38], [10, 50], [-22, 50], [-35, 38], [-30, 14], [8, -36]];
 export const RACE = [[-20, 2], [-32, 4], [-42, 14], [-40, 28], [-34, 42], [-22, 47], [-6, 44], [-8, 30], [-20, 2]];
 // Each skill game has its own spot, well apart from the others, and a host who runs it (18/11: "one NPC for each mini
 // game"). host: villager model, tint, name, a short greeting shown when the game starts. The fishing spot is Sam's dock.

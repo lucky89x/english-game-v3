@@ -155,12 +155,15 @@ export const ITEMS = {
   drum: { en: 'Drum', vi: 'cái trống', slot: 'home', cost: 200, level: 3, seller: 'music' },
   violin: { en: 'Violin', vi: 'đàn vi-ô-lông', slot: 'home', cost: 250, level: 5, seller: 'music' },
 };
+/** (24/11) "furniture and decorations cost too little: dearer, so the children must plan": everything for the house and yard is 2.5 times the old price. */
+export const HOME_PRICE_K = 2.5;
+for (const it of Object.values(ITEMS)) if (it.slot === 'home' || it.slot === 'yard') it.cost = Math.round(it.cost * HOME_PRICE_K / 5) * 5;
 export const bag = (profile) => profile.inv || (profile.inv = { owned: [], weapon: '', armor: '', charm: '', food: 0 });
 /** What a child has put in their home (18/11): furniture and instruments inside, garden things in the yard. */
 export const home = (profile) => profile.home || (profile.home = { items: [] });
 const pantry = (b) => b.pantry || (b.pantry = {});
-/** The children who own the two home lots: the first two players made on this computer (the admin does not get one). */
-export const owners = (profiles, lots = 2) => profiles.filter((p) => p && !p.admin).slice(0, lots);
+/** The children who own the home lots (four since 24/11): the first four players made on this computer (the admin does not get one). */
+export const owners = (profiles, lots = 4) => profiles.filter((p) => p && !p.admin).slice(0, lots);
 /** How many of a food the bag holds (bread, stew, or fruit and vegetables from Ben). */
 export const foodCount = (profile, id) => { const b = bag(profile); return id === 'bread' ? b.food : id === 'forest_stew' ? (b.stew || 0) : (pantry(b)[id] || 0); };
 /** Recomputes profile.gear from what is worn. */

@@ -6,7 +6,7 @@ import * as THREE from 'three';
 import * as L from '../core/layout.js';
 import { HOMES, FURNITURE, STALLS } from '../core/regions/village.js';
 import { home, owners } from '../core/rules.js';
-import { house, gardenOf } from '../core/house.js';
+import { house, gardenOf, bedOffset, flowerOffset, PLOT } from '../core/house.js';
 import { farm, stageOf, eggsReady, pigSize, pigGrown } from '../core/farm.js';
 import { label, bake } from '../world/common.js';
 import { hangSign } from '../world/village.js';
@@ -48,7 +48,7 @@ function gardenLamp() {          // own shapes: common.js lampPost draws from th
 }
 
 /** (20/11) The plot: a white picket fence all round the lot (x from the house's west side to 10.4 m east, z +-6.5 m) with a gate on the east side. */
-export const PLOT = { x0: -6.5, x1: 10.4, z: 6.5, gate: 1.4 };
+export { PLOT };
 function plotFence(h, gh) {
   const g = new THREE.Group(), post = M(0xf6efe0, 0.8), rail = M(0xe9dcc0, 0.85), pg = new THREE.CylinderGeometry(0.06, 0.07, 0.95, 6), rg = new THREE.BoxGeometry(0.8, 0.06, 0.05), rgz = new THREE.BoxGeometry(0.05, 0.06, 0.8);
   const x0 = h.x + PLOT.x0, x1 = h.x + PLOT.x1, z0 = h.z - PLOT.z, z1 = h.z + PLOT.z;
@@ -73,16 +73,15 @@ function vegBed(crops = true) {
 /** Everything the garden level adds: veg beds on the north strip, flower beds on the south strip, trees, pond, flower gate. */
 function gardenDecor(h, tier, gh, models) {
   const g = new THREE.Group(), cfg = gardenOf({ garden: tier });
-  const xs = [0.6, 3.1, 5.6, 8.1];
-  for (let i = 0; i < cfg.veg; i++) { const o = vegBed(false), x = h.x + xs[i], z = h.z - 5.2; o.position.set(x, gh(x, z), z); g.add(o); }      // (21/11) the crops are planted by the child (cropsOf)
-  for (let i = 0; i < cfg.flowers; i++) { const o = flowerBed(), x = h.x + xs[i], z = h.z + 5.2; o.position.set(x, gh(x, z), z); g.add(o); }
-  for (let i = 0; i < cfg.trees; i++) { const x = h.x - 3.6 + i * 0.01, z = h.z + (i ? 4.8 : -4.8); const t = models.tree ? models.tree.clone(true) : null; if (t) { t.scale.setScalar(0.85); t.position.set(x, gh(x, z), z); t.traverse((c) => { if (c.isMesh) c.castShadow = true; }); g.add(t); } }
+  for (let i = 0; i < cfg.veg; i++) { const o = vegBed(false), [dx, dz] = bedOffset(i), x = h.x + dx, z = h.z + dz; o.position.set(x, gh(x, z), z); g.add(o); }      // (21/11) the crops are planted by the child (cropsOf)
+  for (let i = 0; i < cfg.flowers; i++) { const o = flowerBed(), [dx, dz] = flowerOffset(i), x = h.x + dx, z = h.z + dz; o.position.set(x, gh(x, z), z); g.add(o); }
+  for (let i = 0; i < cfg.trees; i++) { const x = h.x - 5.6, z = h.z + (i ? 3.2 : -3.2); const t = models.tree ? models.tree.clone(true) : null; if (t) { t.scale.setScalar(0.85); t.position.set(x, gh(x, z), z); t.traverse((c) => { if (c.isMesh) c.castShadow = true; }); g.add(t); } }
   if (cfg.pond) { const x = h.x - 3.5, z = h.z; const w = new THREE.Mesh(new THREE.CircleGeometry(1.6, 24), new THREE.MeshStandardMaterial({ color: 0x4fc6e8, roughness: 0.15, transparent: true, opacity: 0.9 })); w.rotation.x = -Math.PI / 2; w.scale.set(1.3, 1, 1); w.position.set(x + 5.4, gh(x + 5.4, z) + 0.08, z + 2.6); g.add(w); }
   if (cfg.arch) { const x = h.x + PLOT.x1 - 0.1; for (const dz of [-PLOT.gate - 0.2, PLOT.gate + 0.2]) { const fl = new THREE.Mesh(new THREE.SphereGeometry(0.28, 8, 6), M(0xff5a8a, 0.6)); fl.position.set(x - 0.3, gh(x, h.z + dz) + 1.9, h.z + dz); g.add(fl); } }
   return g;
 }
 /** (21/11) What grows on a bed: crop and stage (1 seed, 2 sprout, 3 growing, 4 ready to pick), six plants a bed. */
-export const BED_X = [0.6, 3.1, 5.6, 8.1], BED_DZ = -5.2, COOP_AT = [8.6, -3.6], PEN_AT = [8.4, 3.4];
+export const COOP_AT = [8.6, -3.2], PEN_AT = [8.4, 3.4];
 function cropsOf(crop, stage) {
   const g = new THREE.Group(); if (!stage) return g;
   const leaf = M(0x5fb83a, 0.8), dark = M(0x3f8a2a, 0.8);
@@ -168,7 +167,7 @@ export class Homes {
   /** Rebuilds the signs and yards when an owner, a name or a bought garden thing changed. */
   refresh(force = false) {
     if (!this.lots.length) return;
-    const kids = owners(this.api.profiles()), key = JSON.stringify(kids.map((p) => [p.id, p.name, home(p).items, house(p)]));
+    const kids = owners(this.api.profiles(), HOMES.length), key = JSON.stringify(kids.map((p) => [p.id, p.name, home(p).items, house(p)]));
     if (!force && key === this.key) return; this.key = key;
     const gh = (x, z) => L.REGIONS.village.groundHeight(x, z);
     for (const [i, lot] of this.lots.entries()) {
@@ -185,7 +184,7 @@ export class Homes {
         m.scale.y = (m === lot.models.hall ? 1.0 : 1.3) * up; lot.garden.add(gardenDecor(h, hh.garden, gh, this.api.models));
         lot.farm = { beds: [], sig: [], coop: null, pen: null, hens: [] };      // (21/11) the farm: crops, coop with hens, pig pen
         const cfg = gardenOf(hh);
-        for (let b = 0; b < cfg.veg; b++) { const x = h.x + BED_X[b], z = h.z + BED_DZ, grp = new THREE.Group(); grp.position.set(x, gh(x, z), z); lot.garden.add(grp); lot.farm.beds.push(grp); lot.farm.sig.push(''); }
+        for (let b = 0; b < cfg.veg; b++) { const [dx, dz] = bedOffset(b), x = h.x + dx, z = h.z + dz, grp = new THREE.Group(); grp.position.set(x, gh(x, z), z); lot.garden.add(grp); lot.farm.beds.push(grp); lot.farm.sig.push(''); }
         if (hh.coop) { const c = coop(), x = h.x + COOP_AT[0], z = h.z + COOP_AT[1]; c.position.set(x, gh(x, z), z); c.rotation.y = -Math.PI / 2; lot.garden.add(c); lot.farm.coop = c;
           for (let k = 0; k < 3; k++) { const ch = chicken(); lot.garden.add(ch); lot.farm.hens.push({ o: ch, a: k * 2.1, cx: x - 1.4, cz: z, ph: k }); } }
         if (hh.pen) { const pn = pen(), x = h.x + PEN_AT[0], z = h.z + PEN_AT[1]; pn.position.set(x, gh(x, z), z); lot.garden.add(pn); lot.farm.pen = pn; }
@@ -232,7 +231,7 @@ export class Homes {
   /** The farm spot the hero stands at: { lot, kind: 'bed' | 'coop' | 'pen', i } or null. */
   farmAt(pos) {
     for (const lot of this.lots) { const F = lot.farm, h = lot.h; if (!F) continue;
-      for (let i = 0; i < F.beds.length; i++) if (Math.abs(pos.x - (h.x + BED_X[i])) < 1.2 && Math.abs(pos.z - (h.z + BED_DZ)) < 1.35) return { lot, kind: 'bed', i };
+      for (let i = 0; i < F.beds.length; i++) { const [dx, dz] = bedOffset(i); if (Math.abs(pos.x - (h.x + dx)) < 1.3 && Math.abs(pos.z - (h.z + dz)) < 0.85) return { lot, kind: 'bed', i }; }
       if (F.coop && Math.hypot(pos.x - (h.x + COOP_AT[0]), pos.z - (h.z + COOP_AT[1])) < 1.9) return { lot, kind: 'coop' };
       if (F.pen && Math.hypot(pos.x - (h.x + PEN_AT[0]), pos.z - (h.z + PEN_AT[1])) < 2.1) return { lot, kind: 'pen' };
     }

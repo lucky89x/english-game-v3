@@ -266,7 +266,7 @@ test('village: no vocabulary for the unit -> Ben says so and the story is not bl
 
 // ---------------------------------------------------------------- mini games (rules and places)
 test('mini games: stars, race rings and start signs are on reachable ground', async () => {
-  const STARS = [[-55, 3], [-38, -34], [-12, -38], [30, -30], [48, -12], [52, 20], [44, 38], [10, 50], [-22, 50], [-48, 30], [-30, 14], [8, -36]];
+  const STARS = [[-36, 20], [-38, -34], [-12, -38], [30, -30], [48, -12], [52, 20], [44, 38], [10, 50], [-22, 50], [-35, 38], [-30, 14], [8, -36]];
   const RACE = [[-20, 2], [-32, 4], [-42, 14], [-40, 28], [-34, 42], [-22, 47], [-6, 44], [-8, 30], [-20, 2]];
   const STARTS = [[18.4, 19.2], [33.5, 6], [-15, -17], [-6, -33], [10, 28], [-31, 4.5]];
   const src = (await import('node:fs')).readFileSync(new URL('../src/game/minigames.js', import.meta.url), 'utf8');
@@ -542,13 +542,13 @@ test('candy groups: runs of 3–6 and L shapes, bonus per shape, fall distances'
 import * as RH from '../src/core/rules.js';
 test('homes: furniture goes into the home once, fruit is eaten after bread, the admin gets no house', () => {
   const p = { stats: { gold: 1000, level: 9, hp: 10 } };
-  assert.equal(RH.buy(p, 'bed').ok, true); assert.equal(RH.buy(p, 'bed').why, 'have'); assert.deepEqual(RH.home(p).items, ['bed']); assert.equal(p.stats.gold, 880);
+  assert.equal(RH.buy(p, 'bed').ok, true); assert.equal(RH.buy(p, 'bed').why, 'have'); assert.deepEqual(RH.home(p).items, ['bed']); assert.equal(p.stats.gold, 1000 - RH.ITEMS.bed.cost); assert.equal(RH.ITEMS.bed.cost, 300, 'furniture costs 2.5 times the old price');
   assert.equal(RH.buy(p, 'flowers').ok, true); assert.ok(RH.home(p).items.includes('flowers'));
   RH.buy(p, 'apple'); RH.buy(p, 'watermelon'); assert.equal(RH.foodCount(p, 'apple'), 1);
   assert.equal(RH.eat(p, 100), 60); assert.equal(RH.foodCount(p, 'watermelon'), 0);      // the biggest fruit first
-  assert.equal(RH.sell(p, 'bed'), 60); assert.ok(!RH.home(p).items.includes('bed'));
+  assert.equal(RH.sell(p, 'bed'), RH.ITEMS.bed.cost / 2); assert.ok(!RH.home(p).items.includes('bed'));
   for (const s of ['home', 'garden', 'produce', 'music']) assert.ok(RH.shopList(s).length >= 4, s);
-  assert.deepEqual(RH.owners([{ id: 'a', admin: true }, { id: 'b' }, { id: 'c' }, { id: 'd' }]).map((x) => x.id), ['b', 'c']);
+  assert.deepEqual(RH.owners([{ id: 'a', admin: true }, { id: 'b' }, { id: 'c' }, { id: 'd' }, { id: 'e' }, { id: 'f' }]).map((x) => x.id), ['b', 'c', 'd', 'e'], 'four lots since 24/11');
 });
 
 // ---------------------------------------------------------------- Map 2: Sunny Harbor (18/11)
@@ -897,7 +897,7 @@ test('house upgrades: start with one floor, buy in order, level and gold are che
   assert.ok(buyUpgrade(p, 'garden1').ok && buyUpgrade(p, 'garden2').ok); assert.equal(buyUpgrade(p, 'garden2').why, 'have');
   const q = S.newProfile('Bo', 6); q.stats.level = 1; q.stats.gold = 5000; assert.equal(upgradeState(q, 'floor2').why, 'level'); q.stats.level = 8; q.stats.gold = 10; assert.equal(upgradeState(q, 'floor2').why, 'gold');
   assert.equal(floorPlan({ floors: 1 }).length, 1); assert.deepEqual(floorPlan({ floors: 2 })[1], ['', 'bedroom', '', '']); assert.equal(floorPlan({ floors: 3 }).length, 3);
-  const all = Object.values(GROUPS).flat(); for (const id of all) assert.ok(ITEMS[id] && ITEMS[id].slot === 'home', id); assert.deepEqual(gardenOf({ garden: 0 }), { veg: 2, flowers: 2, trees: 0, pond: false, arch: false }); assert.equal(gardenOf({ garden: 2 }).pond, true);
+  const all = Object.values(GROUPS).flat(); for (const id of all) assert.ok(ITEMS[id] && ITEMS[id].slot === 'home', id); assert.deepEqual(gardenOf({ garden: 0 }), { veg: 4, flowers: 4, trees: 0, pond: false, arch: false }); assert.equal(gardenOf({ garden: 2 }).pond, true);
 });
 
 import { lootCloth, CLOTH_LOOT } from '../src/core/rules.js';
@@ -950,7 +950,7 @@ test('goods: apples, vegetables, eggs, pigs and fish go into the bag and sell at
 });
 test('farm: plant, wait, harvest; hens lay eggs; a piglet fed four times grows and sells', () => {
   const p = S.newProfile('An', 6); p.stats.gold = 500; const t0 = 1e12, min = 60000;
-  assert.equal(FARM.bedCount(p), 2); assert.ok(FARM.plant(p, 0, 'carrot', t0).ok && p.stats.gold === 498); assert.equal(FARM.plant(p, 0, 'corn', t0).why, 'busy'); assert.equal(FARM.plant(p, 5, 'corn', t0).why, 'none');
+  assert.equal(FARM.bedCount(p), 4); assert.ok(FARM.plant(p, 0, 'carrot', t0).ok && p.stats.gold === 498); assert.equal(FARM.plant(p, 0, 'corn', t0).why, 'busy'); assert.equal(FARM.plant(p, 5, 'corn', t0).why, 'none');
   assert.equal(FARM.stageOf(FARM.farm(p).beds[0], t0 + min), 2); assert.equal(FARM.harvest(p, 0, t0 + min).why, 'young');
   const h = FARM.harvest(p, 0, t0 + 3 * min); assert.ok(h.ok && p.goods.carrot === 3 && !FARM.farm(p).beds[0]);
   assert.equal(FARM.eggsReady(p, t0), 0, 'no coop, no eggs'); HOUSE2(p).coop = true; FARM.eggsReady(p, t0); assert.equal(FARM.eggsReady(p, t0 + 9 * min), 3); assert.equal(FARM.collectEggs(p, t0 + 9 * min), 3); assert.equal(p.goods.egg, 3);
@@ -964,7 +964,7 @@ test('house walking: walls, the doorway, the stairs between floors, colours and 
   const h = { floors: 2 };
   assert.ok(freeAt(h, 0, -4, 3) && freeAt(h, 0, 0, 0.5) && !freeAt(h, 0, 0, 3), 'the middle wall has a doorway');
   assert.ok(!freeAt(h, 0, -1, 0) && freeAt(h, 0, -4, 0), 'the low wall has gaps');
-  assert.ok(!freeAt(h, 0, stairX(0), 0), 'the stair block'); assert.ok(!freeAt(h, 1, stairX(0), 0), 'the stairwell above it'); assert.ok(freeAt(h, 1, stairX(0), -4.6), 'the landing at the top');
+  assert.ok(!freeAt(h, 0, stairX(0), 0), 'the stair block'); assert.ok(!freeAt(h, 1, stairX(0), 0), 'the stairwell above it'); assert.ok(freeAt(h, 1, stairX(0), -5.1), 'the landing at the top');
   assert.equal(stairY(0, STAIR.z0), 0); assert.equal(stairY(0, STAIR.z1), FH); assert.ok(Math.abs(stairY(1, (STAIR.z0 + STAIR.z1) / 2) - 1.5 * FH) < 1e-9);
   assert.deepEqual(paintOf({}), { wall: 'cream', floor: 'oak' }); assert.deepEqual(paintOf({ paint: { wall: 'mint', floor: 'bad' } }), { wall: 'mint', floor: 'oak' });
   const hh = {}; setPlace(hh, 'sofa', { f: 1, x: 2.123, z: -1, ry: Math.PI / 2 }); assert.deepEqual(placeOf(hh, 'sofa'), { f: 1, x: 2.12, z: -1, ry: 1.571 }); assert.equal(placeOf(hh, 'bed'), null);
@@ -1023,4 +1023,26 @@ test('day and night (24/11): noon is bright, midnight is dark, dusk is warm, the
   assert.ok(dawn.warm > 0.5 && dusk.warm > 0.5 && noon.warm < 0.1, 'the sun is warm when low'); assert.ok(dusk.day > 0.2 && dusk.day < 0.9, 'dusk is in between');
   for (const h of [0, 3, 6, 9, 12, 15, 18, 21, 23.9]) { const p = D.phaseOf(h); assert.ok(Math.abs(Math.hypot(...p.sun) - 1) < 1e-9 && Math.abs(Math.hypot(...p.moon) - 1) < 1e-9 && p.sun[1] > 0 && p.moon[1] > 0, 'unit vectors above the horizon'); }
   assert.equal(D.clockHour(13.5), 13.5); assert.ok(D.clockHour() >= 0 && D.clockHour() < 24); assert.equal(D.phaseOf(25).hour, 1);
+});
+
+test('house paint (24/11): the starting colours are free, other colours are paid once, owned colours switch for nothing', async () => {
+  const H = await import('../src/core/house.js');
+  const p = { stats: { gold: 100, level: 5 } };
+  assert.equal(H.paintCost('wall', 'cream'), 0); assert.ok(H.paintCost('wall', 'pink') >= 260 && H.paintCost('floor', 'oak') === 0 && H.paintCost('floor', 'marble') > H.paintCost('floor', 'grey'));
+  assert.equal(H.buyPaint(p, 'wall', 'pink').why, 'gold'); assert.equal(p.stats.gold, 100, 'a failed purchase costs nothing');
+  p.stats.gold = 2000; const c = H.paintCost('wall', 'pink'); assert.ok(H.buyPaint(p, 'wall', 'pink').ok); assert.equal(p.stats.gold, 2000 - c); assert.equal(H.paintOf(p.house).wall, 'pink');
+  assert.ok(H.buyPaint(p, 'wall', 'cream').ok && p.stats.gold === 2000 - c, 'the free colour costs nothing'); assert.ok(H.buyPaint(p, 'wall', 'pink').ok && p.stats.gold === 2000 - c, 'a paid colour switches back for free');
+  assert.equal(H.buyPaint(p, 'wall', 'nope').why, 'none'); assert.equal(H.buyPaint(p, 'roof', 'pink').why, 'none');
+  const old = { stats: { gold: 5 }, house: { floors: 1, paint: { wall: 'mint' } } }; assert.ok(H.ownsPaint(old.house, 'wall', 'mint'), 'a colour the house already wears stays free');
+});
+test('homes (24/11): four lots with bigger plots that do not touch each other, the furniture shop or the lane; every bed lies inside its plot', async () => {
+  const V = await import('../src/core/regions/village.js'), H = await import('../src/core/house.js'), HG = H, L2 = (await import('../src/core/layout.js')).REGIONS.village;
+  assert.equal(V.HOMES.length, 4);
+  const box = (h) => ({ x0: h.x + HG.PLOT.x0, x1: h.x + HG.PLOT.x1, z0: h.z - HG.PLOT.z, z1: h.z + HG.PLOT.z });
+  for (let i = 0; i < 4; i++) for (let j = i + 1; j < 4; j++) { const a = box(V.HOMES[i]), b = box(V.HOMES[j]); assert.ok(a.z1 <= b.z0 || b.z1 <= a.z0, `plots ${i} and ${j} overlap`); }
+  const F = V.FURNITURE; for (const h of V.HOMES) { const b = box(h); assert.ok(F.x - 4.6 > b.x1 || F.z + 4.6 < b.z0 || F.z - 4.6 > b.z1, 'the furniture shop stands outside the plots'); assert.ok(L2.walkable(h.door[0] + 1.5, h.z, 0.4), `the front door of ${h.z} can be reached`); assert.ok(L2.walkable(-40, h.z, 0.4), 'the lane passes the gate'); }
+  assert.ok(L2.walkable(F.door[0] + 0.9, F.door[1], 0.4), 'the furniture shop door can be reached');
+  for (const tier of [0, 1, 2]) { const g = H.gardenOf({ garden: tier }); for (let i = 0; i < g.veg; i++) { const [dx, dz] = H.bedOffset(i); assert.ok(dx > HG.PLOT.x0 + 1 && dx < HG.PLOT.x1 - 1 && Math.abs(dz) < HG.PLOT.z - 0.4 && Math.abs(dz) > 4.4, `bed ${i} of tier ${tier} is inside the plot, outside the house`); } for (let i = 0; i < g.flowers; i++) { const [dx, dz] = H.flowerOffset(i); assert.ok(dx > HG.PLOT.x0 && dx < HG.PLOT.x1 - 1 && dz > 4.4 && dz < HG.PLOT.z - 0.4); } }
+  assert.ok(H.gardenOf({ garden: 2 }).veg >= 12, 'a big garden holds a dozen vegetable beds for income');
+  assert.ok(H.FLOOR_H >= 3 * 3.7 - 1e-9 && H.PARTITION_H <= 3.4, 'the ceiling is three times higher, the partitions are not taller than before');
 });
