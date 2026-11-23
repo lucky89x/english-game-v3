@@ -59,7 +59,7 @@ await run('combat', async () => {
   await ev(() => { __eq.profile.stats.level = 20; __eq.profile.gates = { 5: true, 10: true, 15: true, 20: true }; __eq.refresh(); }); await wait(300);
   check(await ev(() => __eq.profile.flags.map2) && (await page.textContent('#dialog')).includes('Map 2'), 'Level 20 with the golem beaten: Map 2 opens');
   await closeDialogs(); await wait(800);
-  check(await ev(() => __eq.chests.api.cards().every((c) => c.id.startsWith('g8_u02:')) && __eq.chests.api.cards().length > 0), 'Words now come from Unit 2');
+  check(await ev(() => __eq.chests.api.cards().every((c) => c.id.startsWith('g8_u01:')) && __eq.chests.api.cards().length > 0), 'Words follow the map (24/11): still in the village, so still Unit 1 although Map 2 is open');
   // (20/11) magic skills: T opens the skill book, a learnt spell goes to slot 1, key 1 casts it on a slime (energy spent, element ring)
   await ev(() => { delete __eq.profile.flags.boss2; __eq.profile.flags.map2 = false; }); await closeDialogs();
   await page.keyboard.press('KeyT'); await wait(400);

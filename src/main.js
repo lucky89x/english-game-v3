@@ -143,9 +143,11 @@ manager.onProgress = (_u, done, total) => { $('loadbar').style.width = Math.roun
 const loader = new GLTFLoader(manager), texLoader = new THREE.TextureLoader(manager), modelCache = new Map();
 // Characters from tools/chibi05 (v04+): pieces marked eq_hidden (spare hair styles, clothes) start hidden, and *_tint
 // materials sample a grey palette whose 0.8 base tone stands for the colour in material extras eq_base (0.6038 = 0.8 sRGB in linear).
+const MAX_ANISO = Math.min(16, renderer.capabilities.getMaxAnisotropy());
 function prepModel(g) {
   g.scene.traverse((o) => {
     if (o.userData && o.userData.eq_hidden) o.visible = false;
+    for (const m of o.isMesh ? [].concat(o.material) : []) if (m.map && m.map.anisotropy < MAX_ANISO) m.map.anisotropy = MAX_ANISO;      // (24/11) "Ngọc looks soft": sharp textures at a slant and at a distance
     for (const m of o.isMesh ? [].concat(o.material) : []) if (m.userData.eq_base && !m.userData.eqTinted) { m.color.set(m.userData.eq_base).multiplyScalar(1 / 0.6038); m.userData.eqTinted = true; }
   });
   return g;
@@ -178,9 +180,9 @@ globalThis.__eq = game;
 let baseRatio = 1, renderScale = 1, drsT = 0;
 function adaptResolution(stats, dt) {
   drsT += dt; if (quality === 'low' || !started || switching || document.hidden) return;
-  const want = stats.ms > 19 ? -0.1 : stats.ms < 12.5 && stats.worst < 25 ? 0.05 : 0;
+  const want = stats.ms > 22 ? -0.05 : stats.ms < 12.5 && stats.worst < 25 ? 0.05 : 0;
   if (!want || (want < 0 && drsT < 2) || (want > 0 && drsT < 5)) return;
-  const next = Math.min(1, Math.max(0.6, renderScale + want)); if (Math.abs(next - renderScale) < 0.01) return;
+  const next = Math.min(1, Math.max(0.8, renderScale + want));      // (24/11) never below 80%: lower looked blurry on the new, finely painted characters if (Math.abs(next - renderScale) < 0.01) return;
   renderScale = next; drsT = 0; renderer.setPixelRatio(baseRatio * renderScale); resize();
 }
 function resize() { const w = innerWidth, h = innerHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }

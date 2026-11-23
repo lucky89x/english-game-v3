@@ -15,7 +15,7 @@ export class Post {
     this.r = renderer; this.on = false; this.shafts = false; this.w = 0; this.h = 0; this.samples = 0;
     this.bright = pass(`uniform sampler2D tMap; uniform float uThreshold; varying vec2 vUv;
       void main(){ vec3 c = texture2D(tMap, vUv).rgb; float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
-        gl_FragColor = vec4(c * smoothstep(uThreshold, uThreshold + 0.6, l), 1.0); }`, { tMap: { value: null }, uThreshold: { value: 0.82 } });
+        gl_FragColor = vec4(c * smoothstep(uThreshold, uThreshold + 0.6, l), 1.0); }`, { tMap: { value: null }, uThreshold: { value: 0.92 } });
     this.blur = pass(`uniform sampler2D tMap; uniform vec2 uDir; varying vec2 vUv;
       void main(){ vec3 c = texture2D(tMap, vUv).rgb * 0.227;
         c += (texture2D(tMap, vUv + uDir * 1.385).rgb + texture2D(tMap, vUv - uDir * 1.385).rgb) * 0.316;
@@ -30,9 +30,12 @@ export class Post {
         gl_FragColor = vec4(acc / 9.0 * (1.0 - smoothstep(0.2, 2.2, length(q))), 1.0); }`, { tMap: { value: null }, uSun: { value: new THREE.Vector2(0.5, 0.9) }, uAspect: { value: 1 } });
     this.sunK = 0;
     // final pass: glow, tone mapping (renderer setting), warm grade, soft contrast, saturation, vignette
-    this.final = pass(`uniform sampler2D tMap; uniform sampler2D tGlowA; uniform sampler2D tGlowB; uniform sampler2D tShaft; uniform float uShaft; uniform float uGlow; uniform float uVignette; uniform float uSat; uniform vec3 uTint; varying vec2 vUv;
+    this.final = pass(`uniform sampler2D tMap; uniform sampler2D tGlowA; uniform sampler2D tGlowB; uniform sampler2D tShaft; uniform float uShaft; uniform float uGlow; uniform vec2 uTexel; uniform float uSharp; uniform float uVignette; uniform float uSat; uniform vec3 uTint; varying vec2 vUv;
       void main(){
-        vec3 c = texture2D(tMap, vUv).rgb + (texture2D(tGlowA, vUv).rgb * 0.6 + texture2D(tGlowB, vUv).rgb) * uGlow + texture2D(tShaft, vUv).rgb * vec3(1.0, 0.86, 0.62) * uShaft;
+        vec3 base = texture2D(tMap, vUv).rgb;
+        vec3 nb = (texture2D(tMap, vUv + vec2(uTexel.x, 0.0)).rgb + texture2D(tMap, vUv - vec2(uTexel.x, 0.0)).rgb + texture2D(tMap, vUv + vec2(0.0, uTexel.y)).rgb + texture2D(tMap, vUv - vec2(0.0, uTexel.y)).rgb) * 0.25;
+        base += clamp(base - nb, vec3(-0.35), vec3(0.35)) * uSharp;      // (24/11) light sharpening: the finely painted characters read crisp
+        vec3 c = base + (texture2D(tGlowA, vUv).rgb * 0.6 + texture2D(tGlowB, vUv).rgb) * uGlow + texture2D(tShaft, vUv).rgb * vec3(1.0, 0.86, 0.62) * uShaft;
         gl_FragColor = vec4(c, 1.0);
         #include <tonemapping_fragment>
         #include <colorspace_fragment>
@@ -44,7 +47,7 @@ export class Post {
         g += vec3(0.020, 0.012, 0.0) * (1.0 - l);                 // warm shadows, never pure black
         vec2 d = vUv - 0.5; g *= 1.0 - uVignette * smoothstep(0.25, 0.85, dot(d, d) * 2.0);
         gl_FragColor = vec4(clamp(g, 0.0, 1.0), 1.0);
-      }`, { tMap: { value: null }, tGlowA: { value: null }, tGlowB: { value: null }, tShaft: { value: null }, uShaft: { value: 0 }, uGlow: { value: 0.55 }, uVignette: { value: 0.32 }, uSat: { value: 1.06 }, uTint: { value: new THREE.Vector3(1.03, 1.0, 0.95) } }, { toneMapped: true });
+      }`, { tMap: { value: null }, tGlowA: { value: null }, tGlowB: { value: null }, tShaft: { value: null }, uShaft: { value: 0 }, uGlow: { value: 0.55 }, uVignette: { value: 0.32 }, uSat: { value: 1.06 }, uTexel: { value: new THREE.Vector2(1 / 1280, 1 / 720) }, uSharp: { value: 0.55 }, uTint: { value: new THREE.Vector3(1.03, 1.0, 0.95) } }, { toneMapped: true });
   }
   /** Sun position for the light shafts: dir is the world direction towards the sun. */
   setSun(camera, dir) {
@@ -56,7 +59,7 @@ export class Post {
   set(on, samples = 4) { if (this.on !== on || this.samples !== samples) { this.on = on; this.samples = samples; this.w = 0; } }
   size() {
     const s = this.r.getDrawingBufferSize(new THREE.Vector2()), w = s.x, h = s.y; if (w === this.w && h === this.h) return;
-    this.w = w; this.h = h; for (const t of [this.scene, this.a1, this.a2, this.b1, this.b2]) if (t) t.dispose();
+    this.final.uniforms.uTexel.value.set(1 / w, 1 / h); this.w = w; this.h = h; for (const t of [this.scene, this.a1, this.a2, this.b1, this.b2]) if (t) t.dispose();
     const opt = { type: THREE.HalfFloatType, minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, depthBuffer: false };
     this.scene = new THREE.WebGLRenderTarget(w, h, { ...opt, depthBuffer: true, samples: this.samples });
     const w2 = Math.max(2, w >> 1), h2 = Math.max(2, h >> 1), w4 = Math.max(2, w >> 2), h4 = Math.max(2, h >> 2);
