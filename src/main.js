@@ -18,7 +18,7 @@ import { Journal } from './ui/journal.js';
 import { campStall } from './world/stall.js';
 import { Homes } from './game/homes.js';
 import { HomePanel } from './ui/home.js';
-import { HOMES, FURNITURE, STALLS } from './core/regions/village.js';
+import { HOMES, FURNITURE, STALLS, BEN_MARKET } from './core/regions/village.js';
 import { HARBOR } from './core/regions/harbor.js';
 import { styleGame, COLORS as WCOL } from './ui/style.js';
 import { cafeGame } from './ui/cafe.js';
@@ -55,6 +55,7 @@ import * as Exam from './core/exam.js';
 import { Wild, BOARD, BOSS_AT, BOSS2_AT, FOREST_BOARD, BOSS3_AT, HARBOR_BOARD, BOSS4_AT } from './game/combat.js';
 import { Arcade, candyGame, blocksGame, slingGame, spellGame, raceGame, withTier } from './ui/arcade.js';
 import { raceGame3d, loadRaceAssets } from './ui/race3d.js';
+import { DayNight } from './game/daynight.js';
 import { tierOf, TIER_PAY } from './core/tiers.js';
 import { Chests, CHEST_SPOTS, FOREST_CHESTS, HARBOR_CHESTS } from './game/chests.js';
 import { armorMesh, charmMesh, GEAR_FILE } from './game/gear.js';
@@ -104,30 +105,37 @@ const camera = new THREE.PerspectiveCamera(52, 1, 0.3, 700);
 
 // sky dome: clean blue gradient, soft sun glow, drifting clouds
 const sunDir = new THREE.Vector3(-0.45, 0.72, 0.52).normalize();
-const sky = new THREE.Mesh(new THREE.SphereGeometry(600, 32, 16), new THREE.ShaderMaterial({ side: THREE.BackSide, depthWrite: false, fog: false, uniforms: { uTime: TIME, uSun: { value: sunDir } },
+const sky = new THREE.Mesh(new THREE.SphereGeometry(600, 32, 16), new THREE.ShaderMaterial({ side: THREE.BackSide, depthWrite: false, fog: false, uniforms: { uTime: TIME, uSun: { value: sunDir.clone() }, uMoon: { value: new THREE.Vector3(0.2, 0.7, 0.3).normalize() }, uNight: { value: 0 }, uWarm: { value: 0 } },
   vertexShader: 'varying vec3 vD; void main(){ vD = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
-  fragmentShader: `uniform float uTime; uniform vec3 uSun; varying vec3 vD;
+  fragmentShader: `uniform float uTime; uniform vec3 uSun; uniform vec3 uMoon; uniform float uNight; uniform float uWarm; varying vec3 vD;
     float h(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
     float n(vec2 p){ vec2 i = floor(p), f = fract(p); f = f*f*(3.0-2.0*f); return mix(mix(h(i), h(i+vec2(1,0)), f.x), mix(h(i+vec2(0,1)), h(i+vec2(1,1)), f.x), f.y); }
     float fbm(vec2 p){ float a = 0.5, s = 0.0; for (int i = 0; i < 4; i++) { s += a * n(p); p *= 2.03; a *= 0.5; } return s; }
     void main(){
       vec3 d = normalize(vD); float y = max(d.y, 0.0);
-      vec3 col = mix(vec3(0.74, 0.90, 1.0), vec3(0.16, 0.50, 0.95), pow(y, 0.55));
-      col += vec3(1.0, 0.93, 0.75) * pow(max(dot(d, uSun), 0.0), 220.0) * 1.2 + vec3(1.0, 0.95, 0.8) * pow(max(dot(d, uSun), 0.0), 9.0) * 0.14;
+      vec3 dayCol = mix(vec3(0.74, 0.90, 1.0), vec3(0.16, 0.50, 0.95), pow(y, 0.55));
+      vec3 duskCol = mix(vec3(1.0, 0.72, 0.50), vec3(0.35, 0.36, 0.70), pow(y, 0.5));
+      vec3 nightCol = mix(vec3(0.07, 0.10, 0.22), vec3(0.01, 0.02, 0.07), pow(y, 0.5));
+      vec3 col = mix(dayCol, duskCol, uWarm * 0.8); col = mix(col, nightCol, uNight);
+      col += (vec3(1.0, 0.93, 0.75) * pow(max(dot(d, uSun), 0.0), 220.0) * 1.2 + vec3(1.0, 0.95, 0.8) * pow(max(dot(d, uSun), 0.0), 9.0) * 0.14) * (1.0 - uNight);
+      vec2 sp = d.xz / (d.y + 0.35) * 55.0; float sh = h(floor(sp)); float stars = step(0.992, sh) * smoothstep(0.08, 0.35, d.y) * (0.55 + 0.45 * sin(uTime * 2.5 + sh * 400.0));
+      col += vec3(0.85, 0.9, 1.0) * stars * uNight;
+      float md = dot(d, uMoon); col += (vec3(0.93, 0.95, 1.0) * smoothstep(0.9990, 0.9994, md) + vec3(0.45, 0.55, 0.9) * pow(max(md, 0.0), 60.0) * 0.35) * uNight;
       vec2 uv = d.xz / (d.y + 0.22) * 1.15 + vec2(uTime * 0.006, 0.0);
       float c = smoothstep(0.52, 0.78, fbm(uv * 1.6)) * smoothstep(0.02, 0.22, d.y);
-      col = mix(col, vec3(1.0), c * 0.92);
+      col = mix(col, mix(vec3(1.0), vec3(0.22, 0.26, 0.4), uNight), c * 0.92);
       gl_FragColor = vec4(col, 1.0);
     }` }));
 sky.frustumCulled = false; scene.add(sky);
 // Soft, warm light as in the reference paintings: a strong sky/ground fill so nothing goes black, a gentler sun so
 // skin and cream cloth do not burn out, and a cool back light that draws a rim round characters and roofs.
-scene.add(new THREE.HemisphereLight(0xdcefff, 0xc8b88a, 1.05));
+const hemi = new THREE.HemisphereLight(0xdcefff, 0xc8b88a, 1.05); scene.add(hemi);
 { // the sky also lights the scene as an environment map: soft coloured fill and reflections on metal and glass
   const pm = new THREE.PMREMGenerator(renderer), envScene = new THREE.Scene(), dome = sky.clone(); dome.scale.setScalar(0.1); envScene.add(dome);
   scene.environment = pm.fromScene(envScene, 0, 0.1, 100).texture; scene.environmentIntensity = 0.22; pm.dispose(); }
 const rim = new THREE.DirectionalLight(0xcfe2ff, 0.75); rim.position.set(0.5, 0.55, -0.7); scene.add(rim);
 const sun = new THREE.DirectionalLight(0xffe6bc, 1.9); sun.castShadow = true; sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.04; scene.add(sun, sun.target);
+const dayNight = new DayNight({ scene, sky, sun, rim, hemi, sunDir });
 
 const manager = new THREE.LoadingManager();
 manager.onProgress = (_u, done, total) => { $('loadbar').style.width = Math.round((done / total) * 100) + '%'; };
@@ -158,7 +166,7 @@ let shopWin = null, walkers = null, talkW = -1, touch = null, quality = localSto
 const keys = new Set();
 let raceAssets = null;
 const game = { errors, SK, games: { raceGame, raceGame3d, slingGame, candyGame }, goHome: (o, mine) => goHome(o || profile, mine !== false), get room() { return room; }, get homes() { return homes; }, Farm, get trail() { return guide && guide.trail; }, get tom() { return tom; }, get fishing() { return fishing; }, get profile() { return profile; }, get quest() { return quest; }, get story() { return story; }, get player() { return player; }, get cam() { return cam; }, get minimap() { return minimap; }, ui, L, stats: { fps: 0, ms: 0, calls: 0, tris: 0 },
-  teleport(x, z) { player.place(x, z); cam.target.set(x, player.pos.y + 1.25, z); }, applyLook, syncPet, get digs() { return digMeshes; }, catchFish, gainItems, cardsOfUnit: (n) => cardsOfUnit(n), get pet() { return petObj; }, get petPanel() { return petPanel; },  setQuality, key: (code) => onKey({ code, preventDefault() {} }), get started() { return started && !switching; }, get region() { return L.NAME; }, chooseProfile, enterRegion, MARKET_JARS, BRIDGE_SPOTS, get mini() { return mini; }, get wild() { return wild; }, get scene() { return scene; }, openShop, get sword() { return swordMesh; }, get armor() { return armorShown; }, setWear, openBag: () => openBag(), get arcade() { return arcade; }, get chests() { return chests; }, get spots() { return spots; }, get admin() { return admin; }, get friends() { return friends; }, get walkers() { return walkers; }, get shopWin() { return shopWin; }, get music() { return music; }, get journal() { return journal; }, get spells() { return spells; }, get floaters() { return floaters; }, get skillUI() { return skillUI; }, get intro() { return intro; }, cardOf: (id) => cardOfFn(id), pause: (on) => renderer.setAnimationLoop(on ? null : frame), renderNow: () => { post.setSun(camera, sunDir); post.render(scene, camera); },      // tests: stop drawing while another page is checked
+  teleport(x, z) { player.place(x, z); cam.target.set(x, player.pos.y + 1.25, z); }, applyLook, syncPet, get dayNight() { return dayNight; }, get digs() { return digMeshes; }, catchFish, gainItems, cardsOfUnit: (n) => cardsOfUnit(n), get pet() { return petObj; }, get petPanel() { return petPanel; },  setQuality, key: (code) => onKey({ code, preventDefault() {} }), get started() { return started && !switching; }, get region() { return L.NAME; }, chooseProfile, enterRegion, MARKET_JARS, BRIDGE_SPOTS, get mini() { return mini; }, get wild() { return wild; }, get scene() { return scene; }, openShop, get sword() { return swordMesh; }, get armor() { return armorShown; }, setWear, openBag: () => openBag(), get arcade() { return arcade; }, get chests() { return chests; }, get spots() { return spots; }, get admin() { return admin; }, get friends() { return friends; }, get walkers() { return walkers; }, get shopWin() { return shopWin; }, get music() { return music; }, get journal() { return journal; }, get spells() { return spells; }, get floaters() { return floaters; }, get skillUI() { return skillUI; }, get intro() { return intro; }, cardOf: (id) => cardOfFn(id), pause: (on) => renderer.setAnimationLoop(on ? null : frame), renderNow: () => { post.setSun(camera, sunDir); post.render(scene, camera); },      // tests: stop drawing while another page is checked
   post, refresh: () => refresh(), refreshGear: () => { setSword(); setWear(); } };
 globalThis.__eq = game;
 
@@ -584,7 +592,7 @@ function adminPlaces() {
   add('village', 'Tom', 2.6, 9.6); add('village', 'Cửa hàng', SHOP_DOOR.x - 1, SHOP_DOOR.z); add('village', 'Cú Mèo', OWL.x, OWL.z + 1.2); add('village', 'Bảng săn quái', BOARD.x + 1.2, BOARD.z + 1);
   for (const st of STARTS) add('village', 'Trò: ' + st.sign.replace(/^\S+\s/, ''), st.x + 0.8, st.z + 0.8);
   add('village', 'Nhà của các con', HOMES[0].door[0] + 2, HOMES[0].door[1] + 1.5); add('village', 'Cửa hàng nội thất', FURNITURE.door[0] + 1.5, FURNITURE.door[1]);
-  add('village', 'Quầy bình của Lily', STALLS.healer.at[0] + 0.5, STALLS.healer.at[1]); add('village', 'Quầy rau quả', STALLS.produce.at[0] + 0.5, STALLS.produce.at[1]); add('village', 'Quầy nhạc cụ', STALLS.music.at[0] + 0.5, STALLS.music.at[1]); add('village', 'Tiệm may cô Mia', STALLS.tailor.at[0], STALLS.tailor.at[1] - 0.6);
+  add('village', 'Quầy rau quả', STALLS.produce.at[0] + 0.5, STALLS.produce.at[1]); add('village', 'Quầy nhạc cụ', STALLS.music.at[0] + 0.5, STALLS.music.at[1]); add('village', 'Tiệm may cô Mia', STALLS.tailor.at[0], STALLS.tailor.at[1] - 0.6);
   add('village', 'Vua Slime', BOSS_AT.x, BOSS_AT.z - 4); add('village', 'Golem Cổ', BOSS2_AT.x, BOSS2_AT.z - 4); add('village', 'Rương Đồng Hoang', CHEST_SPOTS[0][0], CHEST_SPOTS[0][1] - 1.5);
   add('forest', 'Cổng vào rừng', L.REGIONS.forest.SPAWN.x, L.REGIONS.forest.SPAWN.z); add('forest', 'Bảng săn quái rừng', FOREST_BOARD.x + 1.2, FOREST_BOARD.z + 0.6);
   add('forest', 'Nữ hoàng Nấm', BOSS3_AT.x + 6, BOSS3_AT.z); add('forest', 'Rương rừng', FOREST_CHESTS[0][0], FOREST_CHESTS[0][1] - 1.5);
@@ -1068,7 +1076,6 @@ function interactTarget() {
       const mine = o.id === profile.id; return { text: mine ? 'E · Vào nhà của con' : `E · Thăm nhà của ${o.name}`, run: () => goHome(o, mine) }; }
     if (near(FURNITURE.door[0] + 0.9, FURNITURE.door[1], 1.9)) return { text: 'E · Cửa hàng nội thất (giường, bàn ghế, vườn)', run: () => { enterRoom('shop'); shopWin.show('Furniture & Garden Shop', ['home', 'garden']); } };
     if (near(STALLS.pets.at[0], STALLS.pets.at[1], 1.9)) return { text: "E · Penny's Pet Shop (mua chó con, mèo con, thỏ, vịt con)", run: () => { petPanel.show(true); sfx('tick'); speak('Welcome to my pet shop! Who would you like to take home?'); } };
-    if (near(STALLS.healer.at[0], STALLS.healer.at[1], 1.9)) return { text: 'E · Quầy của Lily (bình máu, bình mana, vũ khí, bán hàng)', run: () => villageShop('healer') };
     if (near(STALLS.produce.at[0], STALLS.produce.at[1], 1.8)) return { text: 'E · Quầy rau quả của Ben', run: () => shopWin.show("Ben's Fruit & Veg", ['produce']) };
     if (near(STALLS.music.at[0], STALLS.music.at[1], 1.8)) return { text: 'E · Quầy nhạc cụ của Anna', run: () => shopWin.show("Anna's Instruments", ['music']) };
     if (near(STALLS.tailor.at[0], STALLS.tailor.at[1], 2.0)) return { text: 'E · Tiệm may của cô Mia (quần áo, trang sức)', run: () => tailor.show() };
@@ -1155,7 +1162,7 @@ async function boot() {
   player.swimBlock = (x, z, from) => L.NAME === 'village' && profile && !profile.flags.bridge_fixed && (x < L.riverX(z)) !== (from.x < L.riverX(z));      // the far bank stays closed until the bridge is mended
   player.onSwim = onSwim;
   fishing = new Fishing({ scene, player, ui, sfx, profile: () => profile, tier: () => tierOf(profile.stats.level), speak: (en) => speak(en, true, 0.85), onCatch: onFishCaught, gate: (go) => wordGate('Sam', go, 4), loadStatic: staticModel, loadAnimated: animatedModel });      // (23/11) four new words before fishing, the user's boat, rod, float and fish
-  tom = new Npc(tomG, 2.6, 7.6, -0.4); sam = new Npc(samG, 14, 17, 1.2); ben = new Npc(benG, -9.9, 19.5, Math.PI / 2); scene.add(tom.root, sam.root, ben.root);
+  tom = new Npc(tomG, 2.6, 7.6, -0.4); sam = new Npc(samG, 14, 17, 1.2); ben = new Npc(benG, BEN_MARKET.npc[0], BEN_MARKET.npc[1], Math.PI / 2); scene.add(tom.root, sam.root, ben.root);
   pip = new Pip(pipG.scene); scene.add(pip.root);
   const usedFiles = new Set();      // two friends may share a model file (Mia uses Rose's): the second gets its own copy
   for (const f of Object.values(FRIENDS)) { let g = await gltf(f.file); if (usedFiles.has(f.file)) { const sc = SkeletonUtils.clone(g.scene); sc.traverse((o) => { if (o.isMesh) o.material = o.material.clone(); }); g = { ...g, scene: sc }; } usedFiles.add(f.file); const npc = new Npc(g, ...f.at, ngoc.animations); if (f.tint) tintBody(npc.root, f.tint); scene.add(npc.root); friends.push({ ...f, npc }); }
@@ -1303,7 +1310,7 @@ function frame() {
   { // shadows follow Ngọc in whole shadow-map texels, so their edges do not crawl and shimmer as she walks
     const c = sun.shadow.camera, step = (c.right - c.left) / sun.shadow.mapSize.x, snap = (v) => Math.round(v / step) * step;
     shadowAt.set(snap(player.pos.x), player.pos.y, snap(player.pos.z)); sun.position.copy(shadowAt).addScaledVector(sunDir, 90); sun.target.position.copy(shadowAt); }
-  sky.position.copy(camera.position);
+  sky.position.copy(camera.position); dayNight.update(real);
   if (started && !switching) {
     const it = ui.modal || room ? null : interactTarget(); ui.prompt(it ? it.text : '');
     mapT += real; const markers = [];
@@ -1333,7 +1340,7 @@ function frame() {
         if (!have.includes('axe')) markers.push({ x: ben.x, z: ben.z, text: '!' });
         if (['rope', 'log', 'axe'].every((k) => have.includes(k))) markers.push({ x: sam.x, z: sam.z, text: '?' }); }
       if (st === 'done' && quest.step !== 'done') markers.push({ x: L.EXITS[0].x, z: L.EXITS[0].z, text: '★' });
-      if (story.market && Math.hypot(player.pos.x + 7, player.pos.z - 19.5) > 15) story.leaveMarket();
+      if (story.market && Math.hypot(player.pos.x - BEN_MARKET.centre[0], player.pos.z - BEN_MARKET.centre[1]) > 15) story.leaveMarket();
       if (!story.market) markers.push(...mini.markers());
       for (const st of STARTS) if (st.host) {      // a glowing "!" over each mini game host while today's full-pay plays remain (18/11)
         const n = (profile.plays && profile.plays.day === Review.today() && profile.plays.n[st.id]) || 0;

@@ -28,7 +28,7 @@ export class VillageStory {
     else if (s === 'letter_find') ui.dialogue([{ who: 'Tom', en: 'The letter is near the door of my hall, in the north.' }]);
     else if (s === 'letter_return') {
       profile.stats.gold += 20; addExp(profile, 30); this.api.sfx('fanfare');
-      ui.dialogue([{ who: 'Tom', en: 'Thank you! (+20 gold) Now, can you help Ben at the market?', vi: 'Chợ của Ben ở phía Nam quảng trường (dấu ! trên bản đồ).' }], () => this.set('jars'));
+      ui.dialogue([{ who: 'Tom', en: 'Thank you! (+20 gold) Now, can you help Ben at the market?', vi: 'Chợ hũ chữ của Ben ở khu trại phía Nam, cạnh đống lửa (dấu ! trên bản đồ).' }], () => this.set('jars'));
     } else if (s === 'jars' || s === 'jars_play') ui.dialogue([{ who: 'Tom', en: 'Ben is waiting for you at the market.' }]);
     else if (s === 'tom_bridge') ui.dialogue([{ who: 'Tom', en: 'Oh no! The storm broke the bridge. Please help Sam!', vi: 'Cầu phía Nam bị gãy. Tới đầu cầu gặp Sam (dấu ! trên bản đồ).' }], () => this.set('bridge'));
     else if (s === 'bridge' || s === 'gather' || s === 'plan') ui.dialogue([{ who: 'Tom', en: 'Sam is waiting for you at the south bridge.' }]);

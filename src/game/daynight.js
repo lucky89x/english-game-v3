@@ -1,27 +1,13 @@
 // Day and night that follow the computer's clock (24/11: "at night the sky is dark and the lamps come on; the moon lights the
 // world instead of the sun"). `phaseOf(hour)` is pure and tested in node; `DayNight` applies it to the scene's lights, fog and
-// sky every few frames. Morning 6:00–7:30 and evening 17:30–19:00 are the warm dawn/dusk, the night is 19:30–5:30.
+// sky every few frames (the pure clock maths is in core/daynight.js, unit-tested).
 import * as THREE from 'three';
+import { phaseOf as phaseCore, clockHour } from '../core/daynight.js';
+export { clockHour };
+/** The phase with the directions as three.js vectors. */
+export const phaseOf = (hour) => { const p = phaseCore(hour); return { ...p, sun: new THREE.Vector3(...p.sun), moon: new THREE.Vector3(...p.moon) }; };
 
-const clamp01 = (x) => Math.max(0, Math.min(1, x));
-const smooth = (a, b, x) => { const t = clamp01((x - a) / (b - a)); return t * t * (3 - 2 * t); };
 const mix = (a, b, k) => a + (b - a) * k;
-
-/** hour: 0–24 (e.g. 18.5 = 18:30). Returns the sun's height (−1..1), how much daylight (0 night … 1 noon), the warm tint at
- *  dawn and dusk, and directions for the sun and the moon (unit vectors, y up). */
-export function phaseOf(hour) {
-  const h = ((hour % 24) + 24) % 24;
-  const sunAlt = Math.sin(Math.PI * (h - 6) / 12);                   // up from 6:00, highest at 12:00, down at 18:00
-  const day = smooth(-0.05, 0.28, sunAlt);                            // a short twilight either side of the horizon
-  const warm = (1 - smooth(0.0, 0.45, Math.abs(sunAlt))) * (sunAlt > -0.2 ? 1 : 0);      // strongest when the sun is low
-  const az = (h - 12) / 12 * Math.PI;                                 // the sun walks from east (morning) to west (evening)
-  const sun = new THREE.Vector3(Math.sin(az) * 0.8, Math.max(0.08, sunAlt), -Math.cos(az) * 0.5 + 0.35).normalize();
-  const mh = (h + 12) % 24, mAlt = Math.sin(Math.PI * (mh - 6) / 12), maz = (mh - 12) / 12 * Math.PI;
-  const moon = new THREE.Vector3(Math.sin(maz) * 0.8, Math.max(0.2, mAlt), -Math.cos(maz) * 0.5 + 0.35).normalize();
-  return { hour: h, sunAlt, day, night: 1 - day, warm, sun, moon, lamps: 1 - smooth(0.0, 0.3, sunAlt) };
-}
-/** The hour now (local time), unless a test or the admin forces one. */
-export const clockHour = (force) => (force !== undefined && force !== null ? force : (() => { const d = new Date(); return d.getHours() + d.getMinutes() / 60 + d.getSeconds() / 3600; })());
 
 const C = (hex) => new THREE.Color(hex);
 const SKY = { day: C(0xbfe4ff), dusk: C(0xf0a070), night: C(0x0b1530) };
@@ -35,7 +21,8 @@ export class DayNight {
     root.traverse((o) => { if (!o.isMesh) return; for (const m of [].concat(o.material)) { if (!m || seen.has(m)) continue; seen.add(m); if (/^(window_glow|lamp_glow|light_|lantern)/.test(m.name || '') || (m.userData && m.userData.nightGlow)) this.glow.push({ m, base: m.userData.baseGlow ?? (m.userData.baseGlow = m.emissiveIntensity || 1) }); } });
   }
   update(dt) {
-    this.t += dt; if (this.t < 0.25 && this.last >= 0) return; this.t = 0;      // four times a second is plenty
+    this.t += dt; if (this.t < 0.25 && this.last >= 0) return; this.t = 0; this.last = 0;      // four times a second is plenty
+    this.scanT = (this.scanT || 0) + 0.25; if (!this.glow.length || this.scanT > 8) { this.scanT = 0; this.scan(this.p.scene); }      // houses and lamps built later join the dark
     const ph = phaseOf(clockHour(this.force)), { scene, sky, sun, rim, hemi, sunDir } = this.p; this.cur = ph;
     const d = ph.day, n = ph.night;
     // the light that casts shadows: the sun by day, the moon by night (cool and gentle)

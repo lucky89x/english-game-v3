@@ -2,11 +2,11 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import * as L from '../core/layout.js';
-import { ORCHARD_TREES, ORCHARD_H, ORCHARD_R, GATE, SOUTH, POND_SCALE, FIRE_SCALE } from '../core/regions/village.js';
-import { at, std, windy, label, bake, leafyGeo, lampPost, prop, bunting, smoke, signs } from './common.js';
+import { ORCHARD_TREES, ORCHARD_H, ORCHARD_R, GATE, SOUTH, FIRE_SCALE, TENT_SCALE, BEN_MARKET } from '../core/regions/village.js';
+import { at, std, windy, label, bake, leafyGeo, lampPost, prop, bunting, smoke, signs, lantern } from './common.js';
 
 // ------------------------------------------------------------------ village landmarks
-export const MARKET_JARS = [[-6.4, 17.2], [-6.4, 18.75], [-6.4, 20.3], [-6.4, 21.85]];
+export const MARKET_JARS = BEN_MARKET.jars;      // (24/11) at the campfire in the south
 export function well() {
   const g = new THREE.Group(), stone = new THREE.MeshStandardMaterial({ color: 0xb4afbe, roughness: 0.95, flatShading: true }), wood = new THREE.MeshStandardMaterial({ color: 0x8a5a30, roughness: 0.85 });
   const ring = new THREE.Mesh(new THREE.CylinderGeometry(1.25, 1.35, 1.0, 12, 1, true), stone); ring.position.y = 0.5; ring.material.side = THREE.DoubleSide; ring.castShadow = true; g.add(ring);
@@ -27,7 +27,7 @@ export function marketStall() {
   const counter = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.95, 4.4), new THREE.MeshStandardMaterial({ color: 0xb97d46, roughness: 0.85 })); counter.position.set(-0.6, 0.47, 0); counter.castShadow = true; g.add(counter);
   const fruit = [0xe2402f, 0xf4b942, 0x6fbf4a, 0xe2402f, 0xf08a3c];
   for (let i = 0; i < 14; i++) { const f = new THREE.Mesh(new THREE.SphereGeometry(0.13, 7, 5), new THREE.MeshStandardMaterial({ color: fruit[i % 5], roughness: 0.6 })); f.position.set(-0.6 + (i % 2) * 0.28 - 0.14, 1.05, -1.9 + i * 0.29); g.add(f); }
-  g.position.set(-8.6, L.groundHeight(-8.6, 19.5), 19.5);
+  g.position.set(BEN_MARKET.stall[0], L.groundHeight(BEN_MARKET.stall[0], BEN_MARKET.stall[1]), BEN_MARKET.stall[1]);
   return g;
 }
 export function jarRow() {
@@ -187,7 +187,7 @@ export async function villageExtras(add, loadModel, shadowed) {
     const mats = []; m.traverse((c) => { if (c.isMesh) for (const x of [].concat(c.material)) if (names.some((n) => x.name.startsWith(n)) && !mats.includes(x)) { if (!x.emissive || x.emissive.getHex() === 0) { x.emissive = x.color.clone().multiplyScalar(0.6); } mats.push(x); } });
     const o = new THREE.Group(); o.userData.update = (t) => { for (const [i, x] of mats.entries()) x.emissiveIntensity = lo + (hi - lo) * (0.5 + 0.5 * Math.sin(t * speed + i * 1.7)); }; return o;
   };
-  const [gardenM, fountainM, pondM, fireM, boatM, appleM, orangeM] = await Promise.all(['prop_vegetable_garden_v01', 'prop_plaza_fountain_v01', 'prop_pond_v01', 'prop_campfire_v01', 'prop_boat_v01', 'prop_apple_v01', 'prop_orange_v01'].map(tryModel));
+  const [gardenM, fountainM, fireM, boatM, appleM, orangeM] = await Promise.all(['prop_vegetable_garden_v01', 'prop_plaza_fountain_v01', 'prop_campfire_v01', 'prop_boat_v01', 'prop_apple_v01', 'prop_orange_v01'].map(tryModel));
   const still = new THREE.Group(); for (const g of [marketStall(), dock(!!boatM), farm(!!gardenM)]) still.add(g);      // the well in the square was removed (17/11): it blocked the main road
   add(jarRow()); add(orchard(ORCHARD_TREES, appleM && orangeM ? { Apple: appleM, Orange: orangeM } : null));
   if (boatM) { const bg = new THREE.Group(); const x0 = L.riverX(18) - 3.4; bg.add(setup(boatM, x0 + 3.2, 20.2, 0.25, 0.9, 0)); bg.children[0].position.y = L.WATER_LEVEL - 0.3; add(bake(bg)); }
@@ -209,9 +209,8 @@ export async function villageExtras(add, loadModel, shadowed) {
   const boards = new THREE.Group(); for (const [x, y, z, yaw, name, sub, size] of HOUSE_SIGNS) boards.add(hangSign(name, sub, x, L.groundHeight(x, z) + y, z, yaw, size));
   add(bake(boards));          // wood and iron merged into one mesh; only the painted faces stay apart
   add(windmill()); add(dummies()); add(campsite(!!fireM));
-  if (pondM) { const [px, pz] = SOUTH.pond; setup(pondM, px, pz, 0, POND_SCALE); const sh = glow(pondM, ['water'], 0.05, 0.3, 1.4); add(bake(pondM)); add(sh); } else add(pond());
   if (fireM) { const [fx, fz] = SOUTH.fire; setup(fireM, fx, fz, 0.4, FIRE_SCALE); const sh = glow(fireM, ['flame'], 1.2, 3.2, 12); add(bake(fireM)); add(sh); }           // D1: the south fields
-  signs(add, [[-2.5, 37.5, '← Windmill · Campsite\nTraining Yard →']]);
+  signs(add, [[-2.5, 37.5, '← Windmill · Campsite\nBen\'s Word Jars ↓ · Training Yard →']]);
   add(bunting(-5.2, -3.2, 5.2, -3.2)); add(bunting(-6.5, 10.5, -6.5, 15.2, 3.0)); add(bunting(5.4, 9.6, 5.4, 2.2, 3.0));
   for (const [x, y, z] of [[4.0, 14.2, -24.3], [14.6, 9.3, -4.6], [-24, 7.4, -0.9], [-24.8, 10.6, 15.7]]) add(smoke(x, L.groundHeight(x, z) + y, z));
 }
@@ -276,22 +275,9 @@ export function windmill() {
   g.userData.update = (t) => { hub.rotation.z = t * 0.6; };
   g.position.set(x, y, z); g.rotation.y = 0.9; return g;
 }
-/** Small round pond with lily pads, reeds and a stepping-stone rim. */
-export function pond() {
-  const [x, z] = SOUTH.pond, y = L.groundHeight(x, z), g = new THREE.Group(), still = new THREE.Group();
-  const water = new THREE.Mesh(new THREE.CircleGeometry(3.4, 32), new THREE.MeshStandardMaterial({ color: 0x3fb6d8, roughness: 0.15, metalness: 0.1, transparent: true, opacity: 0.88 }));
-  water.rotation.x = -Math.PI / 2; water.position.y = 0.06; g.add(water);
-  const rimMat = M(0xb8b2c0, { flatShading: true });
-  for (let k = 0; k < 18; k++) { const a = k / 18 * Math.PI * 2, r = new THREE.Mesh(new THREE.IcosahedronGeometry(0.42 + (k % 3) * 0.08, 0), rimMat); r.position.set(Math.cos(a) * 3.65, 0.12, Math.sin(a) * 3.65); r.scale.y = 0.55; still.add(r); }
-  const pad = M(0x5fae4a);
-  for (const [px, pz, s] of [[-1.2, 0.8, 1], [1.4, -0.6, 0.8], [0.3, 1.9, 0.7], [-0.6, -1.7, 0.9]]) { const p = new THREE.Mesh(new THREE.CylinderGeometry(0.42 * s, 0.42 * s, 0.03, 12), pad); p.position.set(px, 0.09, pz); still.add(p); }
-  const flower = new THREE.Mesh(new THREE.SphereGeometry(0.13, 8, 6), M(0xffb8d0)); flower.position.set(-1.2, 0.16, 0.8); still.add(flower);
-  const reed = M(0x6a9a3a), top = M(0x7a4a24);
-  for (const [a, h] of [[0.4, 1.4], [0.55, 1.1], [2.5, 1.3], [2.65, 1.0], [4.4, 1.2]]) { const rx = Math.cos(a) * 3.2, rz = Math.sin(a) * 3.2;
-    const st = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.04, h, 5), reed); st.position.set(rx, h / 2, rz); still.add(st);
-    const tp = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.32, 6), top); tp.position.set(rx, h + 0.1, rz); still.add(tp); }
-  g.add(bake(still)); g.position.set(x, y, z); return g;
-}
+/** The big camp tent (24/11, "make the tent bigger and decorate it"): an eight-sided striped canvas tent TENT_SCALE times the old one, its
+ *  mouth facing the fire, with crossed poles and tied-back flaps, a pennant, a rug, two lanterns on posts, a table with stools and cups,
+ *  bedrolls and supply crates. Group origin = the tent's centre on the ground; +z is the front. */
 /** Straw training dummies with red targets: the place to practise J / K before the Wild Meadow. */
 export function dummies() {
   const g = new THREE.Group(), wood = M(0x8a5a30), straw = M(0xe8c45a), red = M(0xd8342a), white = M(0xfff6e6);
@@ -309,16 +295,44 @@ export function dummies() {
   g.add(fence);
   return bake(g);
 }
+function bigTent(tx, tz, yaw) {
+  const S = TENT_SCALE, g = new THREE.Group(); g.position.set(tx, L.groundHeight(tx, tz), tz); g.rotation.y = yaw;
+  const stripe = (a, b, w = 128) => { const cv = document.createElement('canvas'); cv.width = w; cv.height = 8; const c = cv.getContext('2d'); for (let i = 0; i < 8; i++) { c.fillStyle = i % 2 ? b : a; c.fillRect(i * w / 8, 0, w / 8, 8); } const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = THREE.RepeatWrapping; t.magFilter = THREE.NearestFilter; return t; };
+  const wood = M(0x6a4020), rope = M(0xd9c79a), cloth = (c) => M(c, { side: THREE.DoubleSide });
+  const body = new THREE.Mesh(new THREE.ConeGeometry(1.9 * S, 2.4 * S, 8, 1, true), new THREE.MeshStandardMaterial({ map: stripe('#f0a03c', '#fff1d8'), side: THREE.DoubleSide, roughness: 0.9 }));
+  body.position.y = 1.2 * S; body.rotation.y = Math.PI / 8; body.castShadow = true; g.add(body);
+  const front = 1.9 * S * Math.cos(Math.PI / 8);
+  const mouth = new THREE.Mesh(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-0.85 * S, 0.02, front + 0.03), new THREE.Vector3(0.85 * S, 0.02, front + 0.03), new THREE.Vector3(0, 1.75 * S, front * 0.27)]), new THREE.MeshBasicMaterial({ color: 0x24160d, side: THREE.DoubleSide })); mouth.geometry.computeVertexNormals(); g.add(mouth);
+  for (const sx of [-1, 1]) {      // tied-back flaps and the poles that frame the mouth
+    const flap = new THREE.Mesh(new THREE.PlaneGeometry(0.75 * S, 1.8 * S), cloth(0x8a3a1c)); flap.position.set(sx * 0.98 * S, 0.85 * S, front + 0.08); flap.rotation.set(-0.35, sx * -0.32, sx * 0.18); g.add(flap);
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.06, 2.0 * S, 6), wood); pole.position.set(sx * 0.9 * S, 0.9 * S, front + 0.45); pole.rotation.x = -0.2; pole.castShadow = true; g.add(pole);
+    const post = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.07, 2.1, 6), wood); post.position.set(sx * 2.1 * S * 0.62, 1.05, front + 1.1); post.castShadow = true; g.add(post);
+    const lan = lantern(sx * 2.1 * S * 0.62 + sx * 0.12, 2.15, front + 1.1); lan.scale.setScalar(1.6); g.add(lan);
+  }
+  const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.045, 1.5, 6), wood); mast.position.y = 2.4 * S + 0.55; g.add(mast);
+  const flagGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0.3, 0), new THREE.Vector3(1.1, 0.12, 0), new THREE.Vector3(0, -0.1, 0)]); flagGeo.computeVertexNormals();
+  const flag = new THREE.Mesh(flagGeo, cloth(0xd8342a)); flag.position.set(0.03, 2.4 * S + 1.05, 0); g.add(flag);
+  const rug = new THREE.Mesh(new THREE.BoxGeometry(2.6 * S * 0.8, 0.04, 2.2), new THREE.MeshStandardMaterial({ map: stripe('#b8503a', '#e8c070', 64), roughness: 1 })); rug.position.set(0, 0.03, front + 1.25); rug.receiveShadow = true; g.add(rug);
+  const table = new THREE.Group(); const top = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.09, 0.85), M(0x9a6436)); top.position.y = 0.82; table.add(top);
+  for (const [dx, dz] of [[-0.65, -0.34], [0.65, -0.34], [-0.65, 0.34], [0.65, 0.34]]) { const l = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.8, 0.08), wood); l.position.set(dx, 0.4, dz); table.add(l); }
+  const map = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 0.45), M(0xfff1cf, { side: THREE.DoubleSide })); map.rotation.x = -Math.PI / 2; map.position.set(-0.2, 0.875, 0); table.add(map);
+  for (const [dx, dz, c] of [[0.45, 0.15, 0xd8342a], [0.55, -0.18, 0x3f7fd0]]) { const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.055, 0.12, 8), M(c)); cup.position.set(dx, 0.93, dz); table.add(cup); }
+  table.position.set(S * 1.65, 0, front * 0.35); table.rotation.y = -0.5; g.add(table);
+  for (const [dx, dz] of [[S * 1.65 - 0.9, front * 0.35 + 0.8], [S * 1.65 + 0.9, front * 0.35 - 0.3]]) { const st = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.26, 0.44, 8), wood); st.position.set(dx, 0.22, dz); st.castShadow = true; g.add(st); }
+  for (const [dx, dz, c, ry] of [[-S * 1.7, front * 0.55, 0x3f7fd0, 0.3], [-S * 1.45, front * 0.2, 0x6fae3a, -0.2]]) { const roll = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.26, 1.7, 10), M(c)); roll.rotation.z = Math.PI / 2; roll.rotation.y = ry; roll.position.set(dx, 0.26, dz); roll.castShadow = true; g.add(roll); }
+  for (const [dx, dz, w] of [[-S * 1.55, -front * 0.35, 0.8], [-S * 1.15, -front * 0.62, 0.62], [-S * 1.95, -front * 0.12, 0.55]]) { const cr = new THREE.Mesh(new THREE.BoxGeometry(w, w * 0.85, w), M(0xa8743f)); cr.position.set(dx, w * 0.42, dz); cr.rotation.y = dx; cr.castShadow = true; g.add(cr); }
+  const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.3, 0.8, 10), M(0x7a4a24)); barrel.position.set(-S * 0.55, 0.4, -front * 0.85); barrel.castShadow = true; g.add(barrel);
+  g.traverse((o) => { if (o.isMesh) o.castShadow = true; });
+  return g;
+}
 /** Campsite: striped tent, log seats and a crackling fire that glows at night-ish hours and makes sparks. */
 export function campsite(bare = false) {
   const [tx, tz] = SOUTH.tent, [fx, fz] = SOUTH.fire, g = new THREE.Group(), still = new THREE.Group();
-  const tent = new THREE.Mesh(new THREE.ConeGeometry(1.9, 2.4, 4, 1, true), M(0xf0a03c, { side: THREE.DoubleSide })); tent.rotation.y = Math.PI / 4; tent.position.set(tx, L.groundHeight(tx, tz) + 1.2, tz); still.add(tent);
-  const flap = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 1.4), M(0x7a3a1a, { side: THREE.DoubleSide })); flap.position.set(tx, L.groundHeight(tx, tz) + 0.7, tz + 1.3); flap.rotation.x = -0.5; still.add(flap);
-  const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.6, 5), M(0x5f3519)); pole.position.set(tx, L.groundHeight(tx, tz) + 2.6, tz); still.add(pole);
+  const camp = bigTent(tx, tz, Math.atan2(fx - tx, fz - tz)); g.add(camp);      // (24/11) a big striped tent with a rug, lanterns, a table, bedrolls and crates
   const fy = L.groundHeight(fx, fz), wood = M(0x6a4020), stone = M(0x9b99a8, { flatShading: true });
   if (!bare) for (let k = 0; k < 8; k++) { const a = k / 8 * Math.PI * 2, r = new THREE.Mesh(new THREE.IcosahedronGeometry(0.16, 0), stone); r.position.set(fx + Math.cos(a) * 0.55, fy + 0.08, fz + Math.sin(a) * 0.55); still.add(r); }
   if (!bare) for (let k = 0; k < 3; k++) { const l = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.8, 6), wood); l.rotation.z = Math.PI / 2; l.rotation.y = k * 1.05; l.position.set(fx, fy + 0.12, fz); still.add(l); }
-  if (!bare) for (const [dx, dz, ry] of [[1.7, 0.3, 0.2], [-0.4, 1.7, 1.6]]) { const seat = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 1.3, 8), wood); seat.rotation.z = Math.PI / 2; seat.rotation.y = ry; seat.position.set(fx + dx, fy + 0.22, fz + dz); still.add(seat); }
+  if (!bare) for (const [dx, dz, ry] of [[1.9, 0.3, 0.2], [-0.4, 1.9, 1.6], [-2.0, -0.2, 0.4], [0.3, -1.9, 1.5]]) { const seat = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 1.3, 8), wood); seat.rotation.z = Math.PI / 2; seat.rotation.y = ry; seat.position.set(fx + dx, fy + 0.22, fz + dz); still.add(seat); }
   g.add(bake(still));
   const flame = new THREE.Mesh(new THREE.ConeGeometry(0.28, 0.75, 8), new THREE.MeshStandardMaterial({ color: 0xffb030, emissive: 0xff7a10, emissiveIntensity: 2.6, transparent: true, opacity: 0.92 }));
   flame.position.set(fx, fy + 0.5, fz); g.add(flame);

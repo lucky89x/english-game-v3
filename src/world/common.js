@@ -364,7 +364,7 @@ export function buildFences() {
 }
 
 // ------------------------------------------------------------------ landmarks
-export const glowMat = (hex, k = 2.2) => new THREE.MeshStandardMaterial({ color: hex, emissive: hex, emissiveIntensity: k, roughness: 0.4 });
+export const glowMat = (hex, k = 2.2) => { const m = new THREE.MeshStandardMaterial({ color: hex, emissive: hex, emissiveIntensity: k, roughness: 0.4 }); m.userData.nightGlow = true; return m; };
 export function lantern(x, y, z) {
   const g = new THREE.Group();
   g.add(new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.34, 0.26), glowMat(0xffc45a, 2.4)));

@@ -911,13 +911,15 @@ test('cloth loot: only elites and bosses, low chance, always something the wardr
   for (const c of CLOTH_LOOT) assert.ok(WR2.unlock(S.newProfile('Z', 6), c.kind, c.color), c.kind);
   assert.equal(lootCloth(p, { id: 'orc' }, false, () => 0, () => true), null, 'nothing left to win');
 });
-test('the village pond is water: not walkable, deep in the middle, shallow at the rim', () => {
+test('village (24/11): no pond any more; Ben\'s jar market stands by the campfire on walkable ground; Lily\'s stall is gone', async () => {
   L2.setRegion('village');
   try {
-    const pond = L2.REGIONS.village.PONDS[0]; assert.ok(L2.inWater(pond.x, pond.z) && !L2.walkable(pond.x, pond.z, 0.3));
-    assert.ok(L2.waterDepth(pond.x, pond.z) > 1.1 && L2.waterDepth(pond.x + pond.r * 0.97, pond.z) < 0.6);
-    assert.ok(L2.waterSurface(pond.x, pond.z) > L2.WATER_LEVEL + 0.1, 'a pond sits on the ground'); assert.equal(L2.waterSurface(0, 0), L2.WATER_LEVEL);
-  } finally { L2.setRegion('forest'); }
+    const { BEN_MARKET, STALLS, SOUTH } = await import('../src/core/regions/village.js');
+    assert.equal(L2.REGIONS.village.PONDS.length, 0, 'no ponds'); assert.ok(L2.walkable(-3, 52, 0.4), 'the old pond spot is dry land'); assert.ok(!('healer' in STALLS), "Lily's stall is gone");
+    for (const [x, z] of [...BEN_MARKET.jars, BEN_MARKET.spot]) assert.ok(L2.walkable(x, z, 0.4), `${x},${z} is walkable (Ben himself stands behind his counter)`);
+    assert.ok(Math.hypot(BEN_MARKET.stall[0] - SOUTH.fire[0], BEN_MARKET.stall[1] - SOUTH.fire[1]) < 10, 'the jars are by the campfire');
+    assert.ok(L2.walkable(SOUTH.fire[0] + 4, SOUTH.fire[1] - 2, 0.3), 'the camp is reachable');
+  } finally { L2.setRegion('village'); }
 });
 
 // ---------------------------------------------------------------- 21/11: playtest 5
@@ -1011,4 +1013,14 @@ test('voice (24/11): a reading counts when what the recogniser heard is close en
   assert.ok(V.heardOk(['the old man'], 'old man').ok, 'a phrase: every word heard');assert.ok(!V.heardOk([], 'apple').ok);
   assert.ok(V.heardOk(['good morning'], 'good morning').ok && !V.heardOk(['good evening'], 'good morning').ok);
   assert.equal(V.available(), false, 'node has no speech recognition: the old reward flow stays');
+});
+
+test('day and night (24/11): noon is bright, midnight is dark, dusk is warm, the lamps are on in the dark', async () => {
+  const D = await import('../src/core/daynight.js');
+  const noon = D.phaseOf(12), mid = D.phaseOf(0), dawn = D.phaseOf(6.2), dusk = D.phaseOf(17.9), late = D.phaseOf(21);
+  assert.ok(noon.day > 0.99 && noon.night < 0.01 && noon.lamps < 0.01 && noon.sun[1] > 0.9, 'noon');
+  assert.ok(mid.day < 0.01 && mid.lamps > 0.99, 'midnight is dark with the lamps on'); assert.ok(late.day < 0.01 && late.lamps > 0.9, '21:00 is night');
+  assert.ok(dawn.warm > 0.5 && dusk.warm > 0.5 && noon.warm < 0.1, 'the sun is warm when low'); assert.ok(dusk.day > 0.2 && dusk.day < 0.9, 'dusk is in between');
+  for (const h of [0, 3, 6, 9, 12, 15, 18, 21, 23.9]) { const p = D.phaseOf(h); assert.ok(Math.abs(Math.hypot(...p.sun) - 1) < 1e-9 && Math.abs(Math.hypot(...p.moon) - 1) < 1e-9 && p.sun[1] > 0 && p.moon[1] > 0, 'unit vectors above the horizon'); }
+  assert.equal(D.clockHour(13.5), 13.5); assert.ok(D.clockHour() >= 0 && D.clockHour() < 24); assert.equal(D.phaseOf(25).hour, 1);
 });
