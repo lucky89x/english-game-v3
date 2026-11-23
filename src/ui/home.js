@@ -41,7 +41,7 @@ export class HomePanel {
   /** The line at the bottom while inside: the arrange-mode help, or the keys. */
   setHint(t) { this.hint.textContent = t || this.base; }
   /** owner: the profile whose home it is; mine: the child playing now owns it (a visitor only looks). */
-  show(owner, mine) { this.owner = owner; this.mine = mine; this.quiz = null; this.msg = ''; this.inside = true; this.paint(); this.el.classList.remove('hidden'); this.hint.classList.remove('on'); }
+  show(owner, mine, keepMsg = false) { this.owner = owner; this.mine = mine; this.quiz = null; if (!keepMsg) this.msg = ''; this.inside = true; this.paint(); this.el.classList.remove('hidden'); this.hint.classList.remove('on'); }
   /** The list can be shut while the hero stays inside the house (E leaves). */
   hide() { this.el.classList.add('hidden'); if (this.inside) this.hint.classList.add('on'); }
   /** (24/11) A wall or floor colour costs gold (once). */
@@ -67,7 +67,7 @@ export class HomePanel {
       .map(([id, it]) => `<div class="it ${have.includes(id) ? '' : 'no'}"><b>${it.en}</b>${it.vi}${have.includes(id) ? ' ✔' : `<br><small>${it.cost} ● · cần cấp ${it.level}</small>${mine ? `<br><button data-a="buy" data-v="${id}" ${lvl < it.level ? 'disabled title="Chưa đủ cấp"' : gold < it.cost ? 'title="Chưa đủ vàng"' : ''}>Mua</button>` : ''}`}</div>`).join('');
     const n = have.length, total = Object.values(ITEMS).filter((it) => it.slot === 'home' || it.slot === 'yard').length;
     this.el.innerHTML = `<div class="book"><header><span style="font-size:28px">🏠</span><h2>${mine ? 'My home' : `${owner.name}'s home`} · Nhà của ${owner.name}</h2><button data-a="exit">Ra ngoài (E)</button></header><button class="x" data-a="close" title="Đóng (X)">✕</button>
-      <div class="note">${mine ? 'Nhà của con. Mua đồ, sơn tường ngay ở đây (tốn vàng, con có ${owner.stats.gold} ●); đồ mua về tự đặt vào nhà hoặc sân. Bấm ✕ góc trên bên phải để đóng.' : `Con đang thăm nhà của ${owner.name}. Chỉ ${owner.name} mới mua được đồ cho nhà này.`} (${n}/${total})</div>
+      <div class="note">${mine ? `Nhà của con. Mua đồ, sơn tường ngay ở đây (tốn vàng, con có ${owner.stats.gold} ●); đồ mua về tự đặt vào nhà hoặc sân. Bấm ✕ góc trên bên phải để đóng.` : `Con đang thăm nhà của ${owner.name}. Chỉ ${owner.name} mới mua được đồ cho nhà này.`} (${n}/${total})</div>
       ${this.msg ? `<div class="flash"><b>${this.msg}</b></div>` : ''}${mine ? this.paintBox() : ''}
       ${this.upgradesBox(mine)}
       ${this.quizBox(mine)}

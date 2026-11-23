@@ -13,7 +13,8 @@ import { hangSign } from '../world/village.js';
 import { campStall } from '../world/stall.js';
 
 const M = (color, rough = 0.85) => new THREE.MeshStandardMaterial({ color, roughness: rough });
-const HOUSE_FILE = ['bld_cottage_red_v02', 'bld_house_blue_v02'];
+const HOUSE_FILE = ['bld_cottage_red_v02', 'bld_house_blue_v02', 'bld_cottage_red_v02', 'bld_house_blue_v02'];      // (24/11) four lots, two models, each tinted differently
+const HOUSE_TINT = [[1.1, 1.0, 0.92], [0.95, 1.05, 1.15], [0.92, 1.1, 0.95], [1.12, 1.02, 1.12]];
 /** Garden things around the yard centre (dx, dz); the garden path runs along dz = 0. */
 const YARD_AT = { flowers: [-1.0, -2.6], veg_patch: [-2.4, -3.6], fruit_tree: [-1.2, 3.4], bench: [-2.4, 1.9], mailbox: [2.4, -1.3], garden_lamp: [2.4, 1.3] };      // (21/11) veg patch and bench moved for the coop and the pen
 
@@ -143,7 +144,7 @@ export class Homes {
     };
     const gh = (x, z) => L.REGIONS.village.groundHeight(x, z);
     for (const [i, h] of HOMES.entries()) {
-      const hm = await place(HOUSE_FILE[i], h.x, h.z, Math.PI / 2, 1.3, i ? [0.95, 1.05, 1.15] : [1.1, 1.0, 0.92]);
+      const hm = await place(HOUSE_FILE[i], h.x, h.z, Math.PI / 2, 1.3, HOUSE_TINT[i]);
       let hall = null; try { hall = await place('bld_hall_blue_v02', h.x - 0.4, h.z, Math.PI / 2, 1.0, i ? [1.0, 0.95, 1.1] : [1.1, 1.0, 0.95]); hall.visible = false; } catch { /* no villa model: the house stays */ }
       const yard = new THREE.Group(); this.root.add(yard); const garden = new THREE.Group(); this.root.add(garden);
       still.add(plotFence(h, gh));      // (20/11) fence round the whole plot

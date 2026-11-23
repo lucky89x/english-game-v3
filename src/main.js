@@ -583,7 +583,7 @@ async function goHome(o, mine, keepList = false) {
   enterRoom('home', { items, model: homeModel, pieces: Saga.pieces(o), house: houseOf(o), editable: mine, avatar: { root: player.root, clips: Object.values(player.actions).map((a) => a.getClip()) },
     onPlace: (id, at) => { setPlace(houseOf(o), id, at); save(); }, hint: (t) => homePanel.setHint(t) });
   if (room && room.walk) { room.yaw0 = cam.yaw; if (was && was.f < houseOf(o).floors) Object.assign(room.me, { f: was.f, x: was.x, z: was.z, y: was.y, stair: was.stair }); }
-  homePanel.show(o, mine); if (!keepList) homePanel.hide();
+  homePanel.show(o, mine, keepList); if (!keepList && !mine) homePanel.hide();      // (24/11) the child sees the shop list as soon as they walk in (✕ closes it); a visitor only looks around
 }
 function enterRoom(kind, opts) { leaveRoom(); room = buildRoom(kind, opts); room.kind = kind; document.body.classList.add('inroom'); sfx('tick'); }
 function leaveRoom() { if (!room) return; room.dispose(); room = null; document.body.classList.remove('inroom'); }
