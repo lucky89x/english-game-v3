@@ -10,6 +10,8 @@ const CSS = `
 #hotbar .mp u { display:block; height:100%; background:linear-gradient(90deg,#2f6fe8,#7fd0ff); } #hotbar .mp b { position:absolute; inset:0; text-align:center; font:800 12px/16px system-ui,sans-serif; color:#fff; text-shadow:0 1px 2px #000; }
 #hotbar .sep { width:2px; background:rgba(255,255,255,.4); margin:4px 2px; } #hotbar .sl.pt .n { position:absolute; right:3px; bottom:2px; font:900 12px system-ui; background:#5a3410; border-radius:8px; padding:0 5px; } #hotbar .sl.pt .ic { font-size:24px; } #hotbar .sl.pt .ic img { width:30px; height:30px; object-fit:contain; }
 #hotbar .slots { display:flex; gap:6px; pointer-events:auto; }
+#slotpick { position:fixed; z-index:31; background:#fff7e6; border:3px solid #7a4ac8; border-radius:12px; padding:6px; display:flex; flex-direction:column; gap:4px; box-shadow:0 6px 18px rgba(0,0,0,.35); max-width:calc(100vw - 16px); } #slotpick.hidden { display:none; }
+#slotpick b { font:800 12px system-ui; color:#5a3a8a; padding:0 4px; } #slotpick button { text-align:left; font:700 13px system-ui, sans-serif; border:2px solid #cbbcef; border-radius:8px; background:#fff; padding:5px 8px; cursor:pointer; color:#3a2410; } #slotpick button:hover { background:#efe6ff; }
 #hotbar .sl { position:relative; width:54px; height:54px; border-radius:12px; border:3px solid #fff3d6; background:rgba(40,30,20,.72); color:#fff; font:800 11px system-ui, sans-serif; cursor:pointer; padding:0; overflow:hidden; }
 #hotbar .sl .ic { display:block; font-size:22px; line-height:26px; } #hotbar .sl .k { position:absolute; left:3px; top:1px; font-size:11px; opacity:.85; }
 #hotbar .sl .nm { display:block; font-size:9px; line-height:10px; white-space:nowrap; overflow:hidden; } #hotbar .sl .cd { position:absolute; left:0; right:0; bottom:0; background:rgba(0,0,0,.6); }
@@ -36,7 +38,12 @@ export class SkillUI {
     const st = document.createElement('style'); st.textContent = CSS; document.head.appendChild(st);
     this.bar = document.createElement('div'); this.bar.id = 'hotbar'; this.bar.className = 'hidden'; document.body.appendChild(this.bar);
     this.el = document.createElement('div'); this.el.id = 'skillbook'; this.el.className = 'hidden'; document.body.appendChild(this.el);
-    this.bar.addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; if (b.dataset.q !== undefined) this.api.usePotion(Number(b.dataset.q)); else if (b.dataset.slot) this.api.spells.castSlot(Number(b.dataset.slot)); else if (b.dataset.a === 'book') this.show(); });
+    // (24/11) "after learning a skill there was no way to put it in an empty slot": clicking an empty slot (or right-clicking any slot) opens a list of the learnt spells
+    this.pick = document.createElement('div'); this.pick.id = 'slotpick'; this.pick.className = 'hidden'; document.body.appendChild(this.pick);
+    this.pick.addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; const p = this.api.profile(); SK.assign(p, Number(this.pick.dataset.slot), b.dataset.id || null); this.api.sfx('tick'); this.api.changed(); this.pick.classList.add('hidden'); this.sig = ''; });
+    document.addEventListener('pointerdown', (e) => { if (!this.pick.classList.contains('hidden') && !this.pick.contains(e.target) && !(e.target.closest && e.target.closest('#hotbar .sl'))) this.pick.classList.add('hidden'); });
+    this.bar.addEventListener('contextmenu', (e) => { const b = e.target.closest('button[data-slot]'); if (b) { e.preventDefault(); this.openPick(Number(b.dataset.slot), b); } });
+    this.bar.addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; if (b.dataset.q !== undefined) this.api.usePotion(Number(b.dataset.q)); else if (b.dataset.slot) { const i = Number(b.dataset.slot); if (b.classList.contains('empty')) this.openPick(i, b); else this.api.spells.castSlot(i); } else if (b.dataset.a === 'book') this.show(); });
     this.el.addEventListener('click', (e) => {
       const b = e.target.closest('button'); if ((!b && e.target === this.el) || (b && b.dataset.a === 'close')) return this.close(); if (!b || b.disabled) return;
       const p = this.api.profile(), a = b.dataset.a, v = b.dataset.v;
@@ -44,9 +51,17 @@ export class SkillUI {
       if (a === 'el') { const had = SK.elOf(p); if (had && !confirm(`Đổi sang hệ ${SK.ELEMENTS[v].vi}? Mọi điểm kỹ năng được trả lại.`)) return; const r = SK.chooseEl(p, v); if (!r.ok) this.api.toast(`Cần ${r.cost} vàng để đổi hệ.`); else { const melee = SK.spellsOf(v)[0]; if (melee && SK.learn(p, melee.id)) SK.assign(p, 0, melee.id); this.tab = 'mine'; this.api.sfx('fanfare'); this.api.toast(`${SK.ELEMENTS[v].icon} Con đã chọn hệ ${SK.ELEMENTS[v].vi}! Phím 1: ${melee.en}`); this.api.changed(); } }
       if (a === 'learn' && SK.learn(p, v)) { this.api.sfx('correct'); this.api.changed(); }
       if (a === 'slot') { SK.assign(p, Number(b.dataset.i), v); this.api.sfx('tick'); this.api.changed(); }
-      if (a === 'reset') { if (!confirm(`Lấy lại toàn bộ điểm kỹ năng? (${SK.resetCost(p) ? SK.resetCost(p) + ' vàng' : 'lần đầu miễn phí'})`)) return; const r = SK.reset(p); if (!r.ok) this.api.toast(`Cần ${r.cost} vàng để tẩy điểm.`); else { this.api.sfx('fanfare'); this.api.changed(); } }
+      if (a === 'reset') { if (!confirm(`Lấy lại toàn bộ điểm kỹ năng? (${SK.resetCost(p) ? SK.resetCost(p) + ' vàng' : 'miễn phí vì con còn cấp 3 trở xuống'})`)) return; const r = SK.reset(p); if (!r.ok) this.api.toast(`Cần ${r.cost} vàng để tẩy điểm.`); else { this.api.sfx('fanfare'); this.api.changed(); } }
       this.draw();
     });
+  }
+  /** The list of learnt spells above slot i: pick one to put there (it moves from another slot), or empty the slot. */
+  openPick(i, btn) {
+    const p = this.api.profile(), m = SK.magic(p), learnt = Object.keys(m.ranks).filter((id) => SK.NODES[id] && SK.NODES[id].kind === 'outer' && SK.rank(p, id) > 0);
+    if (!learnt.length) { this.api.toast(SK.elOf(p) ? 'Con chưa học chiêu nào: bấm T, bấm ＋ Học ở một chiêu.' : 'Con chưa chọn hệ phép: bấm T để chọn Lửa, Băng, Gió hoặc Sét.'); return; }
+    const r = btn.getBoundingClientRect(); this.pick.dataset.slot = String(i);
+    this.pick.innerHTML = `<b>Ô ${i + 1}: chọn chiêu</b>${learnt.map((id) => { const n = SK.NODES[id]; return `<button data-id="${id}">${SK.ELEMENTS[n.el].icon} ${n.vi} <small>(${SK.spellCost(id)} mana${m.bar.includes(id) ? ' · đang ở ô ' + (m.bar.indexOf(id) + 1) : ''})</small></button>`; }).join('')}<button data-id="">✖ Bỏ trống ô này</button>`;
+    this.pick.classList.remove('hidden'); this.pick.style.left = `${Math.max(8, Math.min(innerWidth - 250, r.left))}px`; this.pick.style.bottom = `${innerHeight - r.top + 6}px`;
   }
   get open() { return !this.el.classList.contains('hidden'); }
   key(code) { if (code === 'KeyT' && !this.open) { this.show(); return true; } if (this.open && (code === 'Escape' || code === 'KeyT' || code === 'KeyE')) { this.close(); return true; } return this.open; }
@@ -80,7 +95,7 @@ export class SkillUI {
       tabs = [{ id: 'mine', t: `${E[mine].icon} Hệ ${E[mine].vi}` }, { id: 'change', t: '🔄 Đổi hệ' }, { id: 'ring', t: '☯ Tương sinh – tương khắc' }].map((t) => `<button class="${t.id === this.tab ? 'on' : ''}" data-a="tab" data-v="${t.id}">${t.t}</button>`).join('');
       if (!['mine', 'change', 'ring'].includes(this.tab)) this.tab = 'mine';
       if (this.tab === 'ring') body = this.ringHtml();
-      else if (this.tab === 'change') body = `<div class="note">Đổi hệ: mọi điểm kỹ năng được trả lại để học hệ mới. Lần đổi đầu miễn phí, sau đó tốn vàng.</div><div class="cols">${SK.EL_IDS.map((el) => pick(el, el === mine)).join('')}</div>`;
+      else if (this.tab === 'change') body = `<div class="note">Đổi hệ: mọi điểm kỹ năng được trả lại để học hệ mới. Chọn hệ lần đầu miễn phí; mỗi lần đổi sau đó tốn vàng và đắt dần theo cấp, nên hãy cân nhắc trước khi chọn.</div><div class="cols">${SK.EL_IDS.map((el) => pick(el, el === mine)).join('')}</div>`;
       else {
         const el = mine, bar = SK.magic(p).bar;
         const node = (n) => { const r = SK.rank(p, n.id), why = SK.blocked(p, n.id);

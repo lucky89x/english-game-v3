@@ -22,7 +22,7 @@ export class Spells {
   /** Casts the spell in hotbar slot i. Returns '' or why not (shown to the child). */
   castSlot(i) {
     const p = this.api.profile(); if (!p) return ''; const id = SK.magic(p).bar[i];
-    if (!id) { this.api.ui.toast(SK.elOf(p) ? `Ô ${i + 1} trống: mở bảng Kỹ năng (phím T) để học chiêu` : 'Con chưa chọn hệ phép: bấm T để chọn Lửa, Băng, Gió hoặc Sét'); return 'empty'; }
+    if (!id) { this.api.ui.toast(SK.elOf(p) ? `Ô ${i + 1} trống: bấm vào ô để chọn chiêu đã học (chưa học thì bấm T)` : 'Con chưa chọn hệ phép: bấm T để chọn Lửa, Băng, Gió hoặc Sét'); return 'empty'; }
     return this.cast(id);
   }
   /** The monster to aim at within r metres: the locked target, else the nearest one (in front counts closer). */
@@ -48,7 +48,7 @@ export class Spells {
     const here = player.pos.clone(), yaw = player.yaw, fwd = new THREE.Vector3(Math.sin(yaw), 0, Math.cos(yaw));
     const hit = (m, o = {}) => wild.damage(m, dmg * (o.k || 1), el, { spell: true, ...o });
     const near = (at, r) => targets().filter((m) => Math.hypot(m.x - at.x, m.z - at.z) < r + m.def.size * 0.3);
-    this.runes(here, el, n.type === 'aoe' ? 2.2 : 1.3);
+    this.runes(here, el, n.type === 'ultimate' ? 4.5 : n.type === 'aoe' ? 2.2 : 1.3);
     switch (id) {
       // -------------------------------------------------------------- melee: a crescent slash with the element's particles
       case 'flame_slash': case 'frost_strike': case 'thunder_fist': {
@@ -78,6 +78,29 @@ export class Spells {
       case 'thunderstorm': {
         this.cloud(here, 10, 1.9);
         for (let k = 0; k < 6; k++) this.later(0.2 + k * 0.25, () => { const list = targets().filter((m) => Math.hypot(m.x - player.pos.x, m.z - player.pos.z) < 10); const m = list[Math.floor(Math.random() * list.length)]; const at = m ? new THREE.Vector3(m.x, 0, m.z) : player.pos.clone().add(new THREE.Vector3(rnd(-6, 6), 0, rnd(-6, 6))); this.strike(at); if (m) { hit(m, { k: 0.6 }); this.impact(m, el, 1); } sfx('zap'); });
+        break;
+      }
+      // -------------------------------------------------------------- ultimates (24/11): one per element, big, dear and slow to come back
+      case 'inferno': {
+        this.warn(here, el, 9, 0.9);
+        this.later(0.9, () => { for (const m of near(here, 9)) { hit(m, { burn: 5, knock: 2.5 }); this.impact(m, el, 1.3); } this.explode(here, el, 9); sfx('boom'); });
+        for (let k = 0; k < 6; k++) this.later(0.95 + k * 0.18, () => { const at = here.clone().add(new THREE.Vector3(rnd(-6, 6), 0, rnd(-6, 6))); for (const m of near(at, 2.6)) hit(m, { k: 0.3, burn: 2 }); this.explode(at, el, 3); });
+        break;
+      }
+      case 'absolute_zero': {
+        this.shock(here, el, 10, 0.7); this.cyclone(here, 5, 0.7);
+        this.later(0.45, () => { for (const m of near(here, 9)) { hit(m, { stun: 2.5, slow: 4, mark: true }); this.impact(m, el, 1.2); } for (let k = 0; k < 18; k++) this.spike(here.x + rnd(-8, 8), here.z + rnd(-8, 8)); this.explode(here, el, 7); sfx('boom'); });
+        break;
+      }
+      case 'storm_eye': {
+        const pull = (at) => { for (const m of near(at, 8)) { const d = Math.hypot(m.x - at.x, m.z - at.z); if (!m.boss && d > 0.8) { const nx = m.x + (at.x - m.x) / d * 0.7, nz = m.z + (at.z - m.z) / d * 0.7; if (L.walkable(nx, nz, 0.45)) { m.x = nx; m.z = nz; } } hit(m, { k: 0.22 }); } };
+        const still = new THREE.Vector3(0, 0, 0), a = here.clone(), b = here.clone().add(new THREE.Vector3(3, 0, 2));
+        this.twister(a, still, pull); this.twister(b, still, () => {}); this.cyclone(here, 6, 1.2); this.shock(here, el, 8, 0.6);
+        break;
+      }
+      case 'judgement': {
+        this.cloud(here, 14, 3.4);
+        for (let k = 0; k < 14; k++) this.later(0.2 + k * 0.22, () => { const list = targets().filter((m) => Math.hypot(m.x - player.pos.x, m.z - player.pos.z) < 14), m = list[Math.floor(Math.random() * list.length)]; const at = m ? new THREE.Vector3(m.x, 0, m.z) : player.pos.clone().add(new THREE.Vector3(rnd(-10, 10), 0, rnd(-10, 10))); this.strike(at); if (m) { hit(m, { k: 0.45, stun: 0.5 }); this.impact(m, el, 1.1); } sfx('zap'); });
         break;
       }
     }

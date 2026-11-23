@@ -1,6 +1,6 @@
 // Combat and reward numbers in one place (no three.js, tested in node).
 import { rankAtk } from './saga.js';
-import { powers, resisted, mpOf, restoreMp } from './skills.js';
+import { powers, resisted, mpOf, restoreMp, FEEDS } from './skills.js';
 // (20/11) el: the monster's element (core/skills.js): it decides which spells hurt it most and which resistance its hits meet
 export const MONSTERS = {
   slime: { el: 'wind', name: 'Green Slime', level: 1, hp: 30, atk: 6, exp: 12, gold: 3, speed: 2.0, color: 0x7fd86a, size: 1.0 },
@@ -101,10 +101,10 @@ export const ITEMS = {
   frost_staff: { en: 'Frost Staff', vi: 'gậy phép sương giá (hệ Băng)', slot: 'weapon', kind: 'staff', el: 'ice', far: 0.25, cost: 250, level: 8, atk: 10, color: 0x6fd0ff, seller: 'forge' },
   gale_staff: { en: 'Gale Staff', vi: 'gậy phép gió lốc (hệ Gió)', slot: 'weapon', kind: 'staff', el: 'wind', far: 0.25, cost: 250, level: 8, atk: 10, color: 0x6fe08a, seller: 'forge' },
   spark_staff: { en: 'Spark Staff', vi: 'gậy phép tia sét (hệ Sét)', slot: 'weapon', kind: 'staff', el: 'thunder', far: 0.25, cost: 250, level: 8, atk: 10, color: 0xffd23c, seller: 'forge' },
-  fire_amulet: { en: 'Fire Amulet', vi: 'bùa Lửa (+15% phép Lửa, kháng Lửa)', slot: 'charm', el: 'fire', eldmg: 0.15, resist: 0.15, cost: 150, level: 5, hp: 20, seller: 'rose' },
-  ice_amulet: { en: 'Ice Amulet', vi: 'bùa Băng (+15% phép Băng, kháng Băng)', slot: 'charm', el: 'ice', eldmg: 0.15, resist: 0.15, cost: 150, level: 5, hp: 20, seller: 'rose' },
-  wind_amulet: { en: 'Wind Amulet', vi: 'bùa Gió (+15% phép Gió, kháng Gió)', slot: 'charm', el: 'wind', eldmg: 0.15, resist: 0.15, cost: 150, level: 5, hp: 20, seller: 'rose' },
-  thunder_amulet: { en: 'Thunder Amulet', vi: 'bùa Sét (+15% phép Sét, kháng Sét)', slot: 'charm', el: 'thunder', eldmg: 0.15, resist: 0.15, cost: 150, level: 5, hp: 20, seller: 'rose' },
+  fire_amulet: { en: 'Fire Amulet', vi: 'bùa Lửa (+15% phép Lửa, kháng Gió)', slot: 'charm', el: 'fire', eldmg: 0.15, resist: 0.15, cost: 150, level: 5, hp: 20, seller: 'rose' },
+  ice_amulet: { en: 'Ice Amulet', vi: 'bùa Băng (+15% phép Băng, kháng Lửa)', slot: 'charm', el: 'ice', eldmg: 0.15, resist: 0.15, cost: 150, level: 5, hp: 20, seller: 'rose' },
+  wind_amulet: { en: 'Wind Amulet', vi: 'bùa Gió (+15% phép Gió, kháng Sét)', slot: 'charm', el: 'wind', eldmg: 0.15, resist: 0.15, cost: 150, level: 5, hp: 20, seller: 'rose' },
+  thunder_amulet: { en: 'Thunder Amulet', vi: 'bùa Sét (+15% phép Sét, kháng Băng)', slot: 'charm', el: 'thunder', eldmg: 0.15, resist: 0.15, cost: 150, level: 5, hp: 20, seller: 'rose' },
   // Map 2 gear (18/11), sold by Willow at the forest camp once Map 2 is open
   oak_blade: { en: 'Oakheart Blade', vi: 'kiếm lõi sồi', slot: 'weapon', cost: 550, level: 21, atk: 32, color: 0x9a6a3a, seller: 'forest' },
   moon_sword: { en: 'Moonlight Sword', vi: 'kiếm ánh trăng', slot: 'weapon', cost: 1100, level: 27, atk: 44, color: 0xbfd8ff, seller: 'forest' },
@@ -120,10 +120,10 @@ export const ITEMS = {
   glacier_staff: { en: 'Glacier Staff', vi: 'trượng băng hà (hệ Băng)', slot: 'weapon', kind: 'staff', el: 'ice', far: 0.4, eldmg: 0.1, cost: 1250, level: 24, atk: 28, color: 0x6fd0ff, seller: 'forest' },
   tempest_staff: { en: 'Tempest Staff', vi: 'trượng cuồng phong (hệ Gió)', slot: 'weapon', kind: 'staff', el: 'wind', far: 0.4, eldmg: 0.1, cost: 1250, level: 24, atk: 28, color: 0x6fe08a, seller: 'forest' },
   storm_staff: { en: 'Storm Staff', vi: 'trượng lôi đình (hệ Sét)', slot: 'weapon', kind: 'staff', el: 'thunder', far: 0.4, eldmg: 0.1, cost: 1250, level: 24, atk: 28, color: 0xffd23c, seller: 'forest' },
-  flame_mail: { en: 'Flame Mail', vi: 'giáp lửa (kháng Lửa 30%)', slot: 'armor', el: 'fire', resist: 0.3, eldmg: 0.05, cost: 1100, level: 25, def: 11, hp: 110, seller: 'forest' },
-  frost_mail: { en: 'Frost Mail', vi: 'giáp băng (kháng Băng 30%)', slot: 'armor', el: 'ice', resist: 0.3, eldmg: 0.05, cost: 1100, level: 25, def: 11, hp: 110, seller: 'forest' },
-  wind_cloak: { en: 'Wind Cloak', vi: 'áo choàng gió (kháng Gió 30%)', slot: 'armor', el: 'wind', resist: 0.3, eldmg: 0.05, cost: 1100, level: 25, def: 11, hp: 110, seller: 'forest' },
-  storm_plate: { en: 'Storm Plate', vi: 'giáp sấm (kháng Sét 30%)', slot: 'armor', el: 'thunder', resist: 0.3, eldmg: 0.05, cost: 1100, level: 25, def: 11, hp: 110, seller: 'forest' },
+  flame_mail: { en: 'Flame Mail', vi: 'giáp lửa (kháng Gió 30%)', slot: 'armor', el: 'fire', resist: 0.3, eldmg: 0.05, cost: 1100, level: 25, def: 11, hp: 110, seller: 'forest' },
+  frost_mail: { en: 'Frost Mail', vi: 'giáp băng (kháng Lửa 30%)', slot: 'armor', el: 'ice', resist: 0.3, eldmg: 0.05, cost: 1100, level: 25, def: 11, hp: 110, seller: 'forest' },
+  wind_cloak: { en: 'Wind Cloak', vi: 'áo choàng gió (kháng Sét 30%)', slot: 'armor', el: 'wind', resist: 0.3, eldmg: 0.05, cost: 1100, level: 25, def: 11, hp: 110, seller: 'forest' },
+  storm_plate: { en: 'Storm Plate', vi: 'giáp sấm (kháng Băng 30%)', slot: 'armor', el: 'thunder', resist: 0.3, eldmg: 0.05, cost: 1100, level: 25, def: 11, hp: 110, seller: 'forest' },
   forest_stew: { en: 'Forest Stew', vi: 'súp rừng (hồi 120 máu, phím Q)', slot: 'food', cost: 15, level: 21, heal: 120, seller: 'forest' },
   // 18/11: Ben's fruit and vegetables (eaten with Q after the bread runs out)
   apple: { en: 'Apple', vi: 'quả táo (hồi 20 máu)', slot: 'food', cost: 4, level: 1, heal: 20, seller: 'produce' },
@@ -170,7 +170,7 @@ export function wear(profile) {
     const it = ITEMS[b[slot]]; if (!it) continue; g.atk += it.atk || 0; g.def += it.def || 0; g.hp += it.hp || 0;
     if (it.el) {      // (20/11) element gear: the weapon gives its element to the plain J attack; every piece adds its bonuses
       if (slot === 'weapon') { g.el = it.el; g.near += it.near || 0; g.far += it.far || 0; }
-      if (it.resist) g.resist[it.el] = (g.resist[it.el] || 0) + it.resist;
+      if (it.resist) g.resist[FEEDS[it.el]] = (g.resist[FEEDS[it.el]] || 0) + it.resist;      // (24/11) it resists the element that beats its own
       if (it.eldmg) g.eldmg[it.el] = (g.eldmg[it.el] || 0) + it.eldmg;
     }
   }

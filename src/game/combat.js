@@ -248,7 +248,8 @@ export class Wild {
   /** The hero swings (J / F). Returns the number of monsters hit. The worn weapon's element rides on the swing (20/11). */
   attack() {
     const { player, profile } = this.api, p = profile(); if (!this.root.visible || this.cool > 0 || !p) return 0;
-    this.cool = 0.42; if (player.swing && bag(p).weapon) player.swing(); else player.emote('Interact'); this.api.sfx('swish');
+    this.cool = 0.85; if (player.swing && bag(p).weapon) player.swing();      // (24/11) "the left-click slash is too fast": one swing in 0.85 s
+    else player.emote('Interact'); this.api.sfx('swish');
     const el = (p.gear && p.gear.el) || '';
     this.slash.material.color.set(el ? ELEMENTS[el].hex : 0xfff2a0);
     this.slash.visible = true; this.slashT = 0.16; this.slash.position.set(player.pos.x, player.pos.y + 0.9, player.pos.z); this.slash.rotation.z = -player.yaw + Math.PI * 0.05;
@@ -373,7 +374,7 @@ export class Wild {
         if (m.stun > 0) m.hitCool = 0.3;      // stunned: no hit
         else if (Math.random() < powers(p).dodge) this.api.floater(player.pos.x, player.pos.z, 'Miss!', '#9fe8ff', 0.9);      // Wind Steps: a dodge
         else { if (!p.god) p.stats.hp -= hurt(m.def.atk, p, m.def.el); this.api.sfx('wrong'); this.api.onChange(); }      // god: admin's no-damage switch
-        if (p.stats.hp <= 0) { p.stats.hp = hpMax; this.api.save(); this.api.respawn(); return; }
+        if (p.stats.hp <= 0) { p.stats.hp = Math.max(1, Math.ceil(hpMax * 0.3)); this.api.save(); this.api.respawn(); return; }
       }
     }
     if (this.target && (this.target.dead || !this.here(this.target, p) || !this.target.g.visible || Math.hypot(this.target.x - player.pos.x, this.target.z - player.pos.z) > 25)) this.target = null;
@@ -404,7 +405,7 @@ export class Wild {
       if (hit && !frozen && !this.iframes && !inSafe(this.region, player.pos.x, player.pos.z)) {
         if (Math.random() < powers(p).dodge) this.api.floater(player.pos.x, player.pos.z, 'Miss!', '#9fe8ff', 0.9);
         else { if (!p.god) p.stats.hp -= hurt(s.atk, p, s.el); this.api.sfx('wrong'); this.api.onChange(); this.api.floater(player.pos.x, player.pos.z, '💥', ELEMENTS[s.el].color, 0.8); }
-        if (p.stats.hp <= 0) { p.stats.hp = hpMax; this.clearShots(); this.api.save(); this.api.respawn(); return; }
+        if (p.stats.hp <= 0) { p.stats.hp = Math.max(1, Math.ceil(hpMax * 0.3)); this.clearShots(); this.api.save(); this.api.respawn(); return; }
       }
       if (hit || s.t <= 0) { s.g.removeFromParent(); s.g.traverse((o) => { if (o.geometry) o.geometry.dispose(); if (o.material) o.material.dispose(); }); this.shots.splice(i, 1); }
     }

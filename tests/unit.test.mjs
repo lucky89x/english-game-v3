@@ -825,7 +825,7 @@ test('skills (21/11): one element, a point per level from level 1, passives + me
   const p = S.newProfile('An', 6); p.stats.level = 13; p.stats.gold = 500;
   assert.equal(SK.earned(p), 13); assert.equal(SK.free(p), 13); assert.equal(SK.elOf(p), '');
   assert.equal(SK.EL_IDS.length, 4); for (const el of SK.EL_IDS) assert.equal(SK.TREE[el].filter((n) => n.kind === 'inner').length, 3);
-  for (const el of SK.EL_IDS) assert.deepEqual(SK.spellsOf(el).map((n) => n.type), ['melee', 'single', 'aoe']);
+  for (const el of SK.EL_IDS) assert.deepEqual(SK.spellsOf(el).map((n) => n.type), ['melee', 'single', 'aoe', 'ultimate']);
   assert.equal(SK.blocked(p, 'fire_core'), 'chọn hệ trước');
   assert.ok(SK.chooseEl(p, 'fire').ok); assert.equal(SK.elOf(p), 'fire'); assert.equal(SK.blocked(p, 'ice_core'), 'khác hệ', 'only the chosen element');
   const atk0 = playerAtk(p);
@@ -848,12 +848,12 @@ test('skills (21/11): one element, a point per level from level 1, passives + me
   assert.equal(SK.mpOf(p), SK.powers(p).mpMax); assert.ok(SK.spend(p, 40)); assert.ok(!SK.spend(p, 10000)); SK.regen(p, 1000); assert.equal(SK.mpOf(p), SK.powers(p).mpMax);
   p.stats.gold = 2000; p.stats.level = 8; assert.ok(buy(p, 'ember_staff').ok); assert.equal(p.gear.el, 'fire'); assert.equal(p.gear.far, 0.25);
   const before = SK.spellDamage({ ...p, gear: {} }, 'fireball', 100); assert.ok(SK.spellDamage(p, 'fireball', 100) > before, 'a fire staff makes fire spells stronger');
-  assert.ok(buy(p, 'ice_amulet').ok); assert.equal(SK.powers(p).resist.ice, 0.15); assert.ok(hurt(40, p, 'ice') < hurt(40, p, 'fire'), 'resistance lowers the hit of that element');
+  assert.ok(buy(p, 'ice_amulet').ok); assert.equal(SK.powers(p).resist.fire, 0.15, 'the ice amulet resists FIRE, the element that beats ice (24/11)'); assert.ok(hurt(40, p, 'fire') < hurt(40, { ...p, gear: { ...p.gear, resist: {} } }, 'fire'), 'resistance lowers the hit of that element');
   for (const k of Object.keys(MONSTERS)) assert.ok(SK.ELEMENTS[MONSTERS[k].el], k + ' has an element');
-  const r = SK.reset(p); assert.ok(r.ok && r.cost === 0 && SK.spent(p) === 0 && SK.elOf(p) === 'fire', 'the first reset is free and keeps the element'); assert.ok(SK.resetCost(p) >= 50);
-  // changing element: the first change is free, every point comes back; then it costs gold
-  SK.learn(p, 'fire_core'); assert.equal(SK.changeCost(p), 0); assert.ok(SK.chooseEl(p, 'ice').ok); assert.equal(SK.spent(p), 0); assert.equal(SK.elOf(p), 'ice');
-  assert.ok(SK.changeCost(p) >= 100); p.stats.gold = 0; assert.equal(SK.chooseEl(p, 'wind').why, 'gold');
+  p.stats.gold = 3000; const r = SK.reset(p); assert.ok(r.ok && r.cost === SK.resetCost({ ...p, stats: { ...p.stats } }) && SK.spent(p) === 0 && SK.elOf(p) === 'fire', 'a reset keeps the element (it costs gold now, 24/11)'); assert.ok(SK.resetCost(p) >= 150);
+  // changing element: every point comes back and every change costs gold (24/11)
+  SK.learn(p, 'fire_core'); p.stats.gold = 5000; assert.ok(SK.changeCost(p) >= 400); assert.ok(SK.chooseEl(p, 'ice').ok); assert.equal(SK.spent(p), 0); assert.equal(SK.elOf(p), 'ice');
+  assert.ok(SK.changeCost(p) >= 400); p.stats.gold = 0; assert.equal(SK.chooseEl(p, 'wind').why, 'gold');
   // an old save with points in two elements keeps the bigger one
   const old = S.newProfile('C', 6); old.stats.level = 20; old.magic = { ranks: { fire_core: 3, ice_core: 5, ice_spear: 1 }, bar: ['ice_spear', 'fireball', null, null], mp: null };
   assert.equal(SK.elOf(old), 'ice'); assert.deepEqual(SK.magic(old).ranks, { ice_core: 5, ice_spear: 1 }); assert.deepEqual(SK.magic(old).bar, ['ice_spear', null, null, null]);
@@ -978,4 +978,26 @@ test('fashion: printed tops, skirts and dresses wear as their base shape; four n
   for (const [k, v] of Object.entries(WK)) if (v.base) { assert.ok(WK[v.base], `${k} has a base`); assert.ok(patOf(k)); assert.equal(WK[v.base].slot === 'top' || WK[v.base].slot === 'bottom' || WK[v.base].slot === 'body', true); }
   assert.equal(baseOf('tee_stripe'), 'top'); assert.equal(baseOf('hoodie'), 'hoodie'); assert.ok(wparse('tee_dots:red') && wprice('tee_dye:blue') > 0);
   for (const k of ['hightops', 'boots', 'sandals', 'flats']) assert.equal(WK[k].slot, 'feet'); assert.ok(!/[ăâđêôơưáàảãạ]/i.test(WK.aodai.en), 'the áo dài has an English name');
+});
+
+test('skills (24/11): an ultimate per element, guards resist the element that beats yours, dearer change and reset, the ring works against the hero', async () => {
+  const { hurt } = await import('../src/core/rules.js');
+  for (const el of SK.EL_IDS) { const u = SK.spellsOf(el)[3]; assert.equal(u.range, 'ult'); assert.ok(u.cost >= 60 && u.cool >= 30 && u.needLevel >= 12, el); }
+  const p = S.newProfile('An', 6); p.stats.level = 12; p.stats.gold = 5000; SK.chooseEl(p, 'fire');
+  assert.equal(SK.blocked(p, 'inferno'), 'cần 10 điểm hệ Lửa'); for (let i = 0; i < 10; i++) SK.learn(p, 'fire_core'); p.stats.level = 13; assert.equal(SK.blocked(p, 'inferno'), '', 'ultimate opens at level 12 with 10 fire points');
+  assert.ok(SK.learn(p, 'inferno')); assert.ok(SK.magic(p).bar.includes('inferno'));
+  // Fire Guard resists WIND (the element that beats fire), not fire
+  const q = S.newProfile('B', 6); q.stats.level = 10; SK.chooseEl(q, 'fire'); for (let i = 0; i < 5; i++) SK.learn(q, 'fire_guard');
+  assert.ok(SK.powers(q).resist.wind > 0.19 && SK.powers(q).resist.wind < 0.21); assert.equal(SK.powers(q).resist.fire, 0);
+  assert.equal(SK.NODES.fire_guard.vi, 'Kháng Gió');
+  // the ring against the hero: wind beats fire (x1.25 for a fire hero), fire beats ice (x0.8 when a fire hero is hit by ice)
+  const r = S.newProfile('C', 6); r.stats.level = 10; SK.chooseEl(r, 'fire');
+  assert.equal(SK.incomingFactor(r, 'wind'), 1.25); assert.equal(SK.incomingFactor(r, 'ice'), 0.8); assert.equal(SK.incomingFactor(r, 'thunder'), 1); assert.equal(SK.incomingFactor(r, ''), 1);
+  assert.ok(hurt(40, r, 'wind') > hurt(40, r, 'thunder') && hurt(40, r, 'thunder') > hurt(40, r, 'ice'));
+  // gear: the flame mail (fire) resists wind
+  r.stats.gold = 9000; r.stats.level = 26; assert.ok(buy(r, 'flame_mail').ok); assert.ok(r.gear.resist.wind >= 0.3 && !r.gear.resist.fire);
+  // prices: only the first choice is free, a change costs 400 + 80 per level, a reset is free up to level 3 then 150 + 30 per level
+  const t = S.newProfile('D', 6); t.stats.level = 10; t.stats.gold = 2000; assert.equal(SK.changeCost(t), 0); SK.chooseEl(t, 'ice'); assert.equal(SK.changeCost(t), 1200);
+  assert.ok(SK.chooseEl(t, 'wind').ok && t.stats.gold === 800 && SK.changeCost(t) === 1200, 'every change pays');
+  assert.equal(SK.resetCost(t), 450); t.stats.level = 3; assert.equal(SK.resetCost(t), 0);
 });
