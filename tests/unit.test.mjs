@@ -1046,3 +1046,21 @@ test('homes (24/11): four lots with bigger plots that do not touch each other, t
   assert.ok(H.gardenOf({ garden: 2 }).veg >= 12, 'a big garden holds a dozen vegetable beds for income');
   assert.ok(H.FLOOR_H >= 3 * 3.7 - 1e-9 && H.PARTITION_H <= 3.4, 'the ceiling is three times higher, the partitions are not taller than before');
 });
+test('world (24/11): ten maps, roads between them, what a road needs, portals and where they stand', async () => {
+  const W = await import('../src/core/world.js'), V = await import('../src/core/regions/village.js');
+  assert.equal(W.MAPS.length, 10); assert.deepEqual(W.MAPS.map((m) => m.no), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+  assert.equal(W.mapNo('village'), 1); assert.equal(W.mapNo('harbor'), 2); assert.equal(W.mapNo('forest'), 3); assert.equal(S.MAP_NO.harbor, W.mapNo('harbor')); assert.equal(S.MAP_NO.forest, W.mapNo('forest'));
+  assert.deepEqual(W.MAPS.filter((m) => m.built).map((m) => m.id), ['village', 'harbor', 'forest']);
+  for (const r of W.ROADS) { assert.ok(W.mapById(r.a) && W.mapById(r.b), 'both ends exist'); }
+  assert.deepEqual(W.neighbours('mountain').sort(), ['desert', 'ruins', 'sky', 'volcano'].sort(), 'the mountains are the crossroads of the plan');
+  const p = { flags: {}, stats: { level: 3 } };
+  assert.equal(W.canGo(p, 'village', 'forest').ok, false); assert.ok(W.canGo(p, 'village', 'forest').missing.length);
+  p.flags.forest_open = true; assert.ok(W.canGo(p, 'village', 'forest').ok && W.canGo(p, 'forest', 'village').ok, 'a road works both ways');
+  assert.equal(W.canGo(p, 'village', 'harbor').ok, false); p.flags.map2 = true; assert.ok(W.canGo(p, 'village', 'harbor').ok);
+  assert.equal(W.canGo(p, 'forest', 'desert').ok, false, 'maps not built yet stay closed'); assert.equal(W.canGo(p, 'village', 'desert').missing[0], 'Không có đường nối.');
+  assert.ok(W.canGo({ admin: true, flags: {} }, 'village', 'harbor').ok && !W.canGo({ admin: true, flags: {} }, 'forest', 'desert').ok, 'the admin goes anywhere built, not into maps that do not exist');
+  const gate = W.portalsOf('village')[0]; assert.deepEqual(gate.routes, ['forest', 'harbor'], 'two roads from the village gate: the child chooses');
+  assert.equal(W.portalAt('village', gate.x, gate.z + 1), gate); assert.equal(W.portalAt('village', 0, 0), null);
+  for (const region of ['village', 'forest', 'harbor']) for (const pt of W.portalsOf(region)) { const R = (await import('../src/core/layout.js')).REGIONS[region]; assert.ok(R.walkable(pt.x, pt.z, 0.4), `${region} portal stands on walkable ground`); for (const to of pt.routes) assert.ok(W.roadBetween(region, to), `${region} -> ${to} is a road`); }
+  assert.deepEqual(W.routesOf(p, 'village', gate).map((r) => [r.to, r.ok]), [['forest', true], ['harbor', true]]);
+});
