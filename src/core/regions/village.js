@@ -33,6 +33,8 @@ export const MARKET_ROW = [
   { file: 'stall_flowers', name: '🌸 Flowers', x: -5, z: -9.4, yaw: Math.PI / 2, r: 1.8, scale: 1.2 },
   { file: 'stall_sweets', name: '🍭 Sweets', x: -5, z: -5.8, yaw: Math.PI / 2, r: 1.8, scale: 1.2 },
 ];
+/** (24/11) the new birch and apple trees from the user's plant pack, scattered round the outside of the village (x, z); each is solid (lateSolids). */
+export const NEW_TREES = [[55.5, -7], [-22.5, -40], [56, 4], [46, 0], [13.5, -48], [44.5, -35.5], [-5.5, -47], [33, 17.5], [-14, 36.5], [47, -23], [32, 32], [-32, -2.5], [-14.5, -54], [4, -55.5], [11, -25.5], [27.5, -22], [-25.5, -53.5], [-2, 57], [-5.5, -58], [39.5, -44], [38.5, -7.5], [57, -16], [51, 12], [22.5, -54.5], [-18.5, -24.5]];
 export const FURNITURE = { x: -31, z: -26, door: [-26.1, -26] };      // east of the lane, out of the way of the lots
 /** Two market stalls (18/11): Ben's fruit and vegetables south of his jar stall, Anna's instruments near her house. at: where E works. */
 export const STALLS = { produce: { x: -7.5, z: 24.8, yaw: Math.PI / 2, at: [-4.6, 24.8] }, music: { x: -19, z: 21.5, yaw: Math.PI / 2, at: [-16.4, 21.5] },
@@ -93,7 +95,7 @@ export default makeRegion({
     ...HOMES.map((h) => P(1.8, h.door, [-40, h.z])),                           // garden paths to the four front doors
     P(2.2, [-40, -14], [-30, -14], [-24, -16], [-24, -22], [-26.1, -26]),       // on to the furniture shop
   ],
-  lateSolids: [{ x: 0, z: 4, r: 3.8 }, ...TOWN.map((b) => ({ x: b.x, z: b.z, r: b.r })), ...MARKET_ROW.map((b) => ({ x: b.x, z: b.z, r: b.r })), ...MINI_BUILDINGS.map((b) => ({ x: b.x, z: b.z, r: b.r })),                                      // the plaza fountain (model r 3.7)
+  lateSolids: [{ x: 0, z: 4, r: 3.8 }, ...NEW_TREES.map(([x, z]) => ({ x, z, r: 0.9 })), ...TOWN.map((b) => ({ x: b.x, z: b.z, r: b.r })), ...MARKET_ROW.map((b) => ({ x: b.x, z: b.z, r: b.r })), ...MINI_BUILDINGS.map((b) => ({ x: b.x, z: b.z, r: b.r })),                                      // the plaza fountain (model r 3.7)
     ...HOMES.map((h) => ({ x: h.x, z: h.z, r: 4.4 })), { x: FURNITURE.x, z: FURNITURE.z, r: 4.6 }, ...Object.values(STALLS).map((t) => ({ x: t.x, z: t.z, r: 1.7 })), { x: STALLS.tailor.x - 2.6, z: STALLS.tailor.z - 0.6, r: 0.6 }, { x: STALLS.tailor.x + 2.6, z: STALLS.tailor.z - 0.6, r: 0.6 }],      // homes and the furniture shop (18/11)
   // 18/11 ("the houses are too close together"): Lily's and Anna's houses move further west, each with a garden path
   lateMove: [{ from: [-14.5, -8], to: [-22, -4] }, { from: [-15, 9], to: [-22.5, 12.5] }],

@@ -9,6 +9,7 @@ import { home, owners } from '../core/rules.js';
 import { house, gardenOf, bedOffset, flowerOffset, PLOT } from '../core/house.js';
 import { farm, stageOf, eggsReady, pigSize, pigGrown } from '../core/farm.js';
 import { label, bake } from '../world/common.js';
+import { buildPlants } from '../world/plants.js';
 import { hangSign } from '../world/village.js';
 import { campStall } from '../world/stall.js';
 
@@ -169,6 +170,7 @@ export class Homes {
       }
     }
     this.root.add(bake(still));
+    try { this.root.add(await buildPlants(load)); } catch (e) { console.warn('plants', e); }      // (24/11) the user's plant pack
     this.refresh(true);
   }
   /** Rebuilds the signs and yards when an owner, a name or a bought garden thing changed. */
