@@ -29,6 +29,19 @@ export const TOWN = [
   { file: 'bld_guest_inn', name: 'Guest Inn', x: -30, z: -10, yaw: Math.PI / 2, r: 3.6, scale: 1.3 },
   { file: 'bld_quest_tower', name: 'Quest Tower', x: -23, z: -30, yaw: -Math.PI / 2, r: 2.6, scale: 1.3 },
   { file: 'bld_farm_barn', name: 'Farm Barn', x: -35, z: 30, yaw: Math.PI / 2, r: 3.4, scale: 1.3 },
+
+  // (24/11) the outer ring: cottages beside the new roads and a stall by each mini game place
+  { file: 'bld_anna_house', name: '', x: -60, z: 45.5, yaw: 0.13, r: 3.2, scale: 1.3 },
+  { file: 'bld_lily_house', name: '', x: -73, z: 36, yaw: 5.24, r: 3.2, scale: 1.3 },
+  { file: 'bld_anna_house', name: '', x: -44, z: 66.5, yaw: 3.67, r: 3.2, scale: 1.3 },
+  { file: 'bld_lily_house', name: '', x: -47, z: -51.5, yaw: 3.27, r: 3.2, scale: 1.3 },
+  { file: 'bld_anna_house', name: '', x: -12.5, z: -65.5, yaw: 5.1, r: 3.2, scale: 1.3 },
+  { file: 'bld_lily_house', name: '', x: -31, z: -68.5, yaw: 1.96, r: 3.2, scale: 1.3 },
+  { file: 'bld_anna_house', name: '', x: -51, z: -67.5, yaw: 0.13, r: 3.2, scale: 1.3 },
+  { file: 'stall_sweets', name: '🍭 Sweets', x: -28.5, z: -70, yaw: 2.61, r: 1.8, scale: 1.2 },
+  { file: 'stall_potions', name: '🧪 Potions', x: -57, z: -55, yaw: -2.36, r: 1.8, scale: 1.2 },
+  { file: 'stall_gifts', name: '🎁 Gifts', x: -84, z: 39, yaw: 2.86, r: 1.8, scale: 1.2 },
+  { file: 'stall_fruit', name: '🍎 Fruit', x: -59, z: 61, yaw: -0.28, r: 1.8, scale: 1.2 },
 ];
 export const MARKET_ROW = [
   { file: 'stall_bakery', name: '🥖 Bakery', x: -5, z: -13, yaw: Math.PI / 2, r: 1.8, scale: 1.2 },
@@ -36,7 +49,7 @@ export const MARKET_ROW = [
   { file: 'stall_sweets', name: '🍭 Sweets', x: -5, z: -5.8, yaw: Math.PI / 2, r: 1.8, scale: 1.2 },
 ];
 /** (24/11) the new birch and apple trees from the user's plant pack, scattered round the outside of the village (x, z); each is solid (lateSolids). */
-export const NEW_TREES = [[55.5, -7], [-22.5, -40], [56, 4], [46, 0], [13.5, -48], [-5.5, -47], [33, 17.5], [-14, 36.5], [47, -23], [32, 32], [-32, -2.5], [-14.5, -54], [4, -55.5], [11, -25.5], [27.5, -22], [-25.5, -53.5], [-2, 57], [-5.5, -58], [39.5, -44], [38.5, -7.5], [57, -16], [51, 12], [22.5, -54.5], [-18.5, -24.5]];
+export const NEW_TREES = [[55.5, -7],  [-22.5, -40],  [56, 4],  [46, 0],  [13.5, -48],  [-5.5, -47],  [33, 17.5],  [-14, 36.5],  [47, -23],  [32, 32],  [-32, -2.5],  [-14.5, -54],  [4, -55.5],  [11, -25.5],  [27.5, -22],  [-25.5, -53.5],  [-2, 57],  [-5.5, -58],  [39.5, -44],  [38.5, -7.5],  [57, -16],  [51, 12],  [22.5, -54.5],  [-18.5, -24.5],  [69.5, -29.5],  [-28.5, 68.5],  [-79.5, -19.5],  [-16.5, 79],  [-85, 3.5],  [27, -64.5],  [44, -56],  [44.5, -76.5],  [79.5, 34],  [-72, -10.5],  [35.5, -70],  [-2.5, -69],  [7, 65],  [-56.5, -47],  [-86, 18.5],  [71, 56.5],  [64.5, -62.5],  [-25, -86],  [5, -89],  [17, -79],  [-15.5, 70],  [45, 54],  [65, 43.5],  [68.5, 8],  [11, 77],  [-31.5, 56.5],  [46, 65.5],  [64, 19],  [0.5, 86.5],  [69.5, -17.5],  [-2, 66.5],  [68, -53.5],  [76.5, 12.5],  [13, -62.5],  [57.5, -54],  [86, -19],  [27.5, -83.5],  [-80, -34.5],  [-88.5, -17],  [-81, -7.5],  [-63.5, -0.5],  [-67.5, -43.5],  [58, 62],  [48.5, 76],  [-43, -69.5]];
 export const FURNITURE = { x: -31, z: -26, door: [-26.1, -26] };      // east of the lane, out of the way of the lots
 /** Two market stalls (18/11): Ben's fruit and vegetables south of his jar stall, Anna's instruments near her house. at: where E works. */
 export const STALLS = { produce: { x: -7.5, z: 24.8, yaw: Math.PI / 2, at: [-4.6, 24.8] }, music: { x: -19, z: 21.5, yaw: Math.PI / 2, at: [-16.4, 21.5] },

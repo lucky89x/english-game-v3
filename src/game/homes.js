@@ -156,7 +156,7 @@ export class Homes {
     still.add(hangSign('FURNITURE', 'Beds · Tables · Garden', FURNITURE.door[0] - 0.3, gh(FURNITURE.door[0], FURNITURE.door[1]) + 4.9, FURNITURE.door[1], Math.PI / 2));
     for (const b of [...TOWN, ...MARKET_ROW]) {      // (24/11) the user's new buildings and stalls
       try { await place(b.file, b.x, b.z, b.yaw, b.scale);
-        const n = label(b.name, { size: 28, scale: 0.8 }); n.position.set(b.x, gh(b.x, b.z) + (b.file.startsWith('stall') ? 4.3 : b.file === 'bld_quest_tower' ? 9.0 : 7.4) * (b.scale > 1.25 ? 1 : 0.95), b.z); this.root.add(n);
+        if (b.name) { const n = label(b.name, { size: 28, scale: 0.8 }); n.position.set(b.x, gh(b.x, b.z) + (b.file.startsWith('stall') ? 4.3 : b.file === 'bld_quest_tower' ? 9.0 : 7.4) * (b.scale > 1.25 ? 1 : 0.95), b.z); this.root.add(n); }
       } catch (e) { /* the file is missing: the village goes on without it */ }
     }
     for (const [k, t] of Object.entries(STALLS)) {

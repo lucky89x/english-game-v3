@@ -369,6 +369,7 @@ await run('voice', async () => {         // (24/11) a word bubble pays only afte
   await page.click('#readcard button.mic'); await wait(500);
   check(await ev((g) => __eq.profile.stats.gold === g, gold0) && await ev((i) => __eq.spots.list.find((s) => s.i === i).sp.visible, sp.i), 'A wrong reading earns nothing and the bubble stays');
   await ev((w) => { window.__heard = ['xx', w]; }, word); await page.click('#readcard button.mic'); await wait(1500);
+  try { await page.waitForFunction((g) => __eq.profile.stats.gold > g, gold0, { timeout: 25000 }); } catch (e) { /* reported below */ }      // (24/11) the bigger village draws slowly on a machine without a GPU
   check(await ev((g) => __eq.profile.stats.gold > g, gold0) && !(await ev((i) => __eq.spots.list.find((s) => s.i === i).sp.visible, sp.i)), 'A good reading pays out and uses the bubble up');
   await closeDialogs();
   await ev(() => __eq.voiceDisable(true)); await ev((sp2) => { const s = __eq.spots.list.find((s) => s.region === 'village' && s.sp.visible); if (s) { __eq.teleport(s.x, s.z); __eq.spots.interact({ x: s.x, z: s.z }).run(); } }, null); await wait(300); await closeDialogs(); await wait(400);

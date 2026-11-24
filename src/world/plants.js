@@ -21,10 +21,10 @@ export async function buildPlants(load) {
   // trees (solid: NEW_TREES is also in the region's lateSolids)
   NEW_TREES.forEach(([x, z], i) => put(i % 2 ? 'tree_apple' : 'tree_birch', x, z, 1.55 + (i % 3) * 0.12, rnd() * 6.28));
   // bushes
-  let n = 0; for (let k = 0; k < 900 && n < 46; k++) { const a = rnd() * 6.28, r = 12 + rnd() * 48, x = Math.sin(a) * r, z = Math.cos(a) * r; if (!ok(x, z, 1.4) || R.lateClear && R.lateClear(x, z)) continue; put(n % 2 ? 'bush_red_berries' : 'bush_white_flowers', x, z, 0.9 + rnd() * 0.45, rnd() * 6.28); n++; }
+  let n = 0; for (let k = 0; k < 2400 && n < 110; k++) { const a = rnd() * 6.28, r = 12 + rnd() * 80, x = Math.sin(a) * r, z = Math.cos(a) * r; if (!ok(x, z, 1.4) || R.lateClear && R.lateClear(x, z)) continue; put(n % 2 ? 'bush_red_berries' : 'bush_white_flowers', x, z, 0.9 + rnd() * 0.45, rnd() * 6.28); n++; }
   // grass, ferns and wild flowers: many small ones, clustered
   const GROUND = [['grass_meadow', 1.5, 90], ['grass_dense', 1.4, 80], ['grass_daisies', 1.5, 60], ['grass_buttercups', 1.5, 60], ['grass_lavender', 1.5, 45], ['fern_lush', 1.3, 30], ['fern_upright', 1.4, 30], ['dandelion', 1.5, 35], ['wild_herb', 1.5, 30], ['clover_patch', 2.0, 40]];
-  for (const [kind, s, count] of GROUND) { let m = 0; for (let k = 0; k < count * 14 && m < count; k++) { const a = rnd() * 6.28, r = 4 + Math.sqrt(rnd()) * 56, x = Math.sin(a) * r, z = Math.cos(a) * r; if (!ok(x, z, 0.5) || R.lateClear && R.lateClear(x, z) && rnd() < 0.7) continue; put(kind, x, z, s * (0.8 + rnd() * 0.5), rnd() * 6.28); m++; } }
+  for (const [kind, s, count] of GROUND) { let m = 0; for (let k = 0; k < count * 30 && m < count * 2.1; k++) { const a = rnd() * 6.28, r = 4 + Math.sqrt(rnd()) * 90, x = Math.sin(a) * r, z = Math.cos(a) * r; if (!ok(x, z, 0.5) || R.lateClear && R.lateClear(x, z) && rnd() < 0.7) continue; put(kind, x, z, s * (0.8 + rnd() * 0.5), rnd() * 6.28); m++; } }
   // the farm: pumpkins at the south edge of the beds, cabbages in front, a row of corn along the east side
   for (let i = 0; i < 7; i++) put('pumpkin', -28.5 + i * 1.9 + rnd() * 0.4, 37.6 + rnd() * 0.6, 1.5 + rnd() * 0.4, rnd() * 6.28);
   for (let i = 0; i < 5; i++) put('cabbage', -29.2 + i * 2.6, 23.4 + rnd() * 0.3, 1.7, rnd() * 6.28);
