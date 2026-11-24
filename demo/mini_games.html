@@ -1,0 +1,259 @@
+<title>Khu Trò Chơi English Quest</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Nunito:wght@500;700&display=swap">
+<style>
+/* Layout: a header with six tabs, one stage (canvas or cards) under it, a one-line instruction and a score strip. */
+:root {
+  --bg: #f4efe4; --panel: #fffaf0; --ink: #33200f; --muted: #7a6444; --line: #dcc9a2;
+  --accent: #e2662f; --good: #2e9a49; --bad: #cf3a34; --sky: #7cc6f0; --water: #3aa6d8;
+  --f-head: 'Baloo 2', 'Trebuchet MS', system-ui, sans-serif; --f-body: 'Nunito', system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #1d1710; --panel: #2a2117; --ink: #f6ead2; --muted: #b9a37c; --line: #4a3a25; --accent: #ff8a4a; --good: #55c870; --bad: #ff6a62; color-scheme: dark; } }
+:root[data-theme="dark"] { --bg: #1d1710; --panel: #2a2117; --ink: #f6ead2; --muted: #b9a37c; --line: #4a3a25; --accent: #ff8a4a; --good: #55c870; --bad: #ff6a62; color-scheme: dark; }
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 16px; padding-block: 14px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+main { max-width: 760px; margin: 0 auto; display: grid; gap: 12px; }
+h1 { font: 800 26px/1.1 var(--f-head); margin: 0; text-wrap: balance; }
+.sub { color: var(--muted); margin: 2px 0 0; }
+nav { display: flex; flex-wrap: wrap; gap: 6px; }
+nav button { font: 700 14px var(--f-body); padding: 8px 12px; border-radius: 10px; border: 2px solid var(--line); background: var(--panel); color: var(--ink); cursor: pointer; }
+nav button[aria-selected="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+nav button:focus-visible, .stage button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.card { background: var(--panel); border: 2px solid var(--line); border-radius: 14px; padding: 12px; display: grid; gap: 10px; }
+.bar { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 14px; font-weight: 700; }
+.how { margin: 0; color: var(--muted); }
+canvas { width: 100%; height: auto; border-radius: 10px; border: 2px solid var(--line); display: block; touch-action: none; background: var(--sky); }
+.cv-narrow { max-width: 420px; margin: 0 auto; }
+.msg { min-height: 1.4em; font-weight: 800; color: var(--accent); text-align: center; }
+.big { font: 800 22px var(--f-head); text-align: center; text-wrap: balance; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.btn { font: 800 16px var(--f-head); padding: 9px 16px; border-radius: 12px; border: 2px solid var(--accent); background: var(--accent); color: #fff; cursor: pointer; }
+.btn.alt { background: var(--panel); color: var(--ink); border-color: var(--line); }
+.grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+.cell { font: 800 clamp(11px, 2.6vw, 15px) var(--f-body); padding: 10px 2px; border-radius: 10px; border: 3px solid transparent; color: #fff; cursor: pointer; min-width: 0; overflow-wrap: anywhere; }
+.cell small { display: block; font-weight: 600; opacity: .85; font-size: .8em; }
+.cell.on { border-color: #fff; box-shadow: 0 0 0 3px var(--ink); transform: scale(1.06); }
+.c-animal { background: #c9742e; } .c-food { background: #3f9a52; } .c-place { background: #4a74c9; }
+.hp { height: 14px; border-radius: 8px; background: var(--line); overflow: hidden; } .hp i { display: block; height: 100%; background: var(--bad); transition: width .25s; }
+.hp.me i { background: var(--good); }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; }
+.wcard { padding: 12px 6px; border-radius: 12px; border: 3px solid var(--line); background: var(--panel); color: var(--ink); font: 800 18px var(--f-head); cursor: pointer; min-width: 0; }
+.wcard .dur { display: block; font: 600 12px var(--f-body); color: var(--muted); }
+.wcard.broken { opacity: .35; text-decoration: line-through; }
+.mon { text-align: center; font: 800 20px var(--f-head); padding: 10px; border-radius: 12px; background: var(--bg); border: 2px dashed var(--line); }
+.slots { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; justify-content: center; font-size: 18px; }
+.blank { min-width: 84px; padding: 4px 8px; border-bottom: 3px solid var(--accent); text-align: center; font-weight: 800; cursor: pointer; background: transparent; color: var(--ink); border-top: 0; border-left: 0; border-right: 0; font-family: inherit; font-size: inherit; }
+.blank.ok { border-color: var(--good); color: var(--good); } .blank.no { border-color: var(--bad); color: var(--bad); }
+.clue { padding: 10px; border-radius: 12px; background: var(--bg); border: 2px solid var(--line); }
+.clue b { color: var(--accent); }
+.culprit { font: 800 28px var(--f-head); letter-spacing: .25em; text-align: center; }
+@media (prefers-reduced-motion: reduce) { .cell, .hp i { transition: none; } }
+</style>
+<main>
+  <header>
+    <h1>Khu Trò Chơi English Quest</h1>
+    <p class="sub">Bản chơi thử sáu trò mới. Mỗi trò học vài từ vựng ngay trong lúc chơi. Đây là bản mẫu để xem cách chơi, chưa phải bản cuối trong game.</p>
+  </header>
+  <nav id="tabs" role="tablist" aria-label="Chọn trò chơi"></nav>
+  <section class="card" id="stage" aria-live="polite"></section>
+</main>
+<script>
+'use strict';
+/* ---------- shared vocabulary (sample words of the starter units; Vietnamese meaning, topic) ---------- */
+const VOC = [
+  ['cat', 'mèo', 'animal'], ['dog', 'chó', 'animal'], ['rabbit', 'thỏ', 'animal'], ['tiger', 'hổ', 'animal'], ['horse', 'ngựa', 'animal'], ['bird', 'chim', 'animal'],
+  ['bread', 'bánh mì', 'food'], ['rice', 'cơm', 'food'], ['apple', 'quả táo', 'food'], ['cake', 'bánh ngọt', 'food'], ['milk', 'sữa', 'food'], ['soup', 'súp', 'food'],
+  ['school', 'trường học', 'place'], ['park', 'công viên', 'place'], ['market', 'chợ', 'place'], ['library', 'thư viện', 'place'], ['hospital', 'bệnh viện', 'place'], ['kitchen', 'nhà bếp', 'place'],
+].map(([en, vi, cat]) => ({ en, vi, cat }));
+const TOPIC_VI = { animal: 'Động vật', food: 'Đồ ăn', place: 'Địa điểm' };
+const rnd = (n) => Math.floor(Math.random() * n), pick = (a) => a[rnd(a.length)], shuffle = (a) => a.map((v) => [Math.random(), v]).sort((x, y) => x[0] - y[0]).map((x) => x[1]);
+const $ = (s, el = document) => el.querySelector(s);
+let AC = null;
+function beep(ok) { try { AC = AC || new (window.AudioContext || window.webkitAudioContext)(); const o = AC.createOscillator(), g = AC.createGain(); o.frequency.value = ok ? 660 : 180; o.type = ok ? 'triangle' : 'sawtooth'; g.gain.value = 0.05; o.connect(g); g.connect(AC.destination); o.start(); o.stop(AC.currentTime + (ok ? 0.12 : 0.2)); } catch (e) { /* no audio */ } }
+function say(w) { try { const u = new SpeechSynthesisUtterance(w); u.lang = 'en-US'; u.rate = 0.8; speechSynthesis.cancel(); speechSynthesis.speak(u); } catch (e) { /* no speech */ } }
+
+/* ---------- stage helper ---------- */
+const stage = $('#stage'); let current = null;
+function frame(title, how) { stage.innerHTML = `<div class="bar"><span id="s1"></span><span id="s2"></span></div><div id="play"></div><div class="msg" id="msg"></div><p class="how"><b>${title}.</b> ${how}</p>`; return { play: $('#play'), set: (a, b) => { $('#s1').textContent = a; $('#s2').textContent = b; }, msg: (t) => { $('#msg').textContent = t; } }; }
+function loop(fn) { let id = 0, last = performance.now(), dead = false; const f = (t) => { if (dead) return; const dt = Math.min(0.05, (t - last) / 1000); last = t; fn(dt); id = requestAnimationFrame(f); }; id = requestAnimationFrame(f); return () => { dead = true; cancelAnimationFrame(id); }; }
+function canvas(w, h, cls = '') { const c = document.createElement('canvas'); c.width = w; c.height = h; c.className = cls; return c; }
+function endScreen(ui, root, win, text, again) { ui.msg(''); const d = document.createElement('div'); d.className = 'row'; d.innerHTML = `<div class="big" style="width:100%">${win ? '🏆 ' : '💥 '}${text}</div>`; const b = document.createElement('button'); b.className = 'btn'; b.textContent = 'Chơi lại'; b.onclick = again; d.append(b); root.append(d); }
+
+/* ---------- 1. Sky Ace: side-scrolling plane, shoot the bubble with the right meaning ---------- */
+function skyAce() {
+  const ui = frame('Sky Ace', 'Kéo chuột (hoặc ngón tay) lên xuống để lái máy bay. Bấm chuột, chạm màn hình hoặc phím Space để bắn. Chỉ bắn bóng chứa nghĩa tiếng Việt đúng của từ ở trên. Tránh mây giông.');
+  const W = 640, H = 360, cv = canvas(W, H); ui.play.append(cv); const g = cv.getContext('2d');
+  let py = H / 2, ty = H / 2, lives = 3, score = 0, bullets = [], bubbles = [], clouds = [], q = null, over = false, t = 0, cd = 0;
+  function ask() { q = pick(VOC); const wrong = shuffle(VOC.filter((v) => v !== q)).slice(0, 2); const ys = shuffle([80, 170, 260]); bubbles = shuffle([q, ...wrong]).map((v, i) => ({ v, x: W + 40 + i * 70, y: ys[i], ok: v === q })); say(q.en); }
+  ask();
+  const shoot = () => { if (!over && cd <= 0) { bullets.push({ x: 90, y: py }); cd = 0.25; beep(true); } };
+  const move = (e) => { const r = cv.getBoundingClientRect(); ty = Math.max(30, Math.min(H - 30, ((e.clientY - r.top) / r.height) * H)); };
+  cv.addEventListener('pointermove', move); cv.addEventListener('pointerdown', (e) => { move(e); shoot(); });
+  const key = (e) => { if (e.code === 'Space') { e.preventDefault(); shoot(); } }; addEventListener('keydown', key);
+  const hurt = () => { lives -= 1; beep(false); if (lives <= 0) { over = true; endScreen(ui, ui.play, false, `Hết mạng. Điểm: ${score}`, skyAce); } };
+  const stop = loop((dt) => {
+    t += dt; cd -= dt; py += (ty - py) * Math.min(1, dt * 10);
+    if (!over) {
+      if (Math.random() < dt * 0.35) clouds.push({ x: W + 40, y: 40 + rnd(H - 80), r: 26 });
+      clouds.forEach((c) => { c.x -= 150 * dt; if (Math.abs(c.x - 70) < c.r + 18 && Math.abs(c.y - py) < c.r + 10 && !c.hit) { c.hit = true; hurt(); ui.msg('Mây giông! −1 mạng'); } });
+      clouds = clouds.filter((c) => c.x > -50);
+      bullets.forEach((b) => { b.x += 420 * dt; });
+      bubbles.forEach((b) => { b.x -= 70 * dt; b.y += Math.sin(t * 2 + b.x * 0.02) * 0.3; });
+      for (const b of bullets) for (const u of bubbles) if (!u.dead && Math.abs(b.x - u.x) < 44 && Math.abs(b.y - u.y) < 30) { b.x = 9999; u.dead = true; if (u.ok) { score += 10; ui.msg('Đúng rồi! ' + q.en + ' = ' + q.vi); beep(true); if (score >= 100) { over = true; endScreen(ui, ui.play, true, 'Thắng! Đủ 10 từ.', skyAce); } else ask(); } else { ui.msg('Sai rồi, bóng đó là: ' + u.v.vi); hurt(); } break; }
+      bullets = bullets.filter((b) => b.x < W + 20);
+      if (q && !over && bubbles.every((u) => u.dead || u.x < -60)) { if (!bubbles.find((u) => u.ok).dead) { ui.msg('Lỡ mất bóng đúng. −1 mạng'); hurt(); } if (!over) ask(); }
+    }
+    g.clearRect(0, 0, W, H); const sky = g.createLinearGradient(0, 0, 0, H); sky.addColorStop(0, '#5fb4ee'); sky.addColorStop(1, '#cfeeff'); g.fillStyle = sky; g.fillRect(0, 0, W, H);
+    g.fillStyle = '#ffffffcc'; for (let i = 0; i < 6; i++) { const x = ((i * 190 - t * 30) % (W + 200)) - 60; g.beginPath(); g.ellipse(x < -60 ? x + W + 200 : x, 60 + (i % 3) * 110, 46, 16, 0, 0, 7); g.fill(); }
+    clouds.forEach((c) => { g.fillStyle = '#4a4f66'; g.beginPath(); g.arc(c.x, c.y, c.r, 0, 7); g.arc(c.x + 20, c.y + 6, c.r * 0.7, 0, 7); g.arc(c.x - 20, c.y + 6, c.r * 0.7, 0, 7); g.fill(); g.fillStyle = '#ffd23c'; g.fillRect(c.x - 3, c.y + 10, 6, 16); });
+    bubbles.forEach((u) => { if (u.dead) return; g.fillStyle = '#ffffffdd'; g.strokeStyle = '#3a7ab8'; g.lineWidth = 3; g.beginPath(); g.arc(u.x, u.y, 38, 0, 7); g.fill(); g.stroke(); g.fillStyle = '#26466a'; g.font = '800 15px Nunito, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(u.v.vi, u.x, u.y, 66); });
+    g.fillStyle = '#ff5a3c'; bullets.forEach((b) => { g.fillRect(b.x, b.y - 3, 16, 6); });
+    g.save(); g.translate(70, py); g.fillStyle = '#e8443a'; g.beginPath(); g.moveTo(34, 0); g.lineTo(-24, -12); g.lineTo(-30, 0); g.lineTo(-24, 12); g.closePath(); g.fill(); g.fillStyle = '#fff'; g.fillRect(-14, -26, 14, 52); g.fillStyle = '#6ad0ff'; g.beginPath(); g.arc(10, -2, 7, 0, 7); g.fill(); g.restore();
+    g.fillStyle = '#26466a'; g.fillRect(0, 0, W, 38); g.fillStyle = '#fff'; g.font = '800 20px Baloo 2, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(`Bắn bóng có nghĩa của:  ${q ? q.en : ''}`, W / 2, 20);
+    ui.set(`Điểm ${score}/100`, `Mạng ${'❤'.repeat(Math.max(0, lives))}`);
+  });
+  return () => { stop(); removeEventListener('keydown', key); };
+}
+
+/* ---------- 2. Word Slayer: chain neighbouring words of the same topic to slash the monster ---------- */
+function wordSlayer() {
+  const ui = frame('Word Slayer', 'Bấm lần lượt các ô kề nhau (cả đường chéo) cùng chủ đề màu để tạo chuỗi từ 3 ô trở lên, rồi bấm lại ô cuối để chém. Chuỗi càng dài, đòn càng mạnh. Quái bị hạ trong 60 giây là thắng.');
+  const R = 5, C = 6; let cells = [], chain = [], hp = 100, time = 60, over = false;
+  const box = document.createElement('div'); const bar = document.createElement('div'); bar.className = 'hp'; bar.innerHTML = '<i style="width:100%"></i>'; const grid = document.createElement('div'); grid.className = 'grid'; box.append(bar, grid); ui.play.append(box);
+  const mk = () => pick(VOC);
+  for (let i = 0; i < R * C; i++) { const b = document.createElement('button'); b.type = 'button'; grid.append(b); cells.push({ el: b, v: mk() }); }
+  const draw = () => cells.forEach((c) => { c.el.className = `cell c-${c.v.cat}${chain.includes(c) ? ' on' : ''}`; c.el.innerHTML = `${c.v.en}<small>${c.v.vi}</small>`; });
+  const near = (a, b) => { const i = cells.indexOf(a), j = cells.indexOf(b); return Math.abs((i % C) - (j % C)) <= 1 && Math.abs(Math.floor(i / C) - Math.floor(j / C)) <= 1; };
+  grid.addEventListener('click', (e) => {
+    if (over) return; const el = e.target.closest('button'); if (!el) return; const c = cells.find((x) => x.el === el);
+    const last = chain[chain.length - 1];
+    if (!chain.length) chain = [c];
+    else if (c === last) { if (chain.length >= 3) { const dmg = chain.length * chain.length; hp -= dmg; chain.forEach((x) => { x.v = mk(); }); say(chain[0].v.en); ui.msg(`Chém ${chain.length} từ: −${dmg} máu quái!`); beep(true); chain = []; } else { ui.msg('Cần ít nhất 3 ô cùng chủ đề.'); chain = []; beep(false); } }
+    else if (!chain.includes(c) && near(last, c) && c.v.cat === last.v.cat) { chain.push(c); ui.msg(`Chủ đề: ${TOPIC_VI[c.v.cat]} · chuỗi ${chain.length}`); }
+    else { chain = [c]; ui.msg(''); }
+    $('i', bar).style.width = Math.max(0, hp) + '%'; draw();
+    if (hp <= 0) { over = true; endScreen(ui, ui.play, true, `Hạ quái với ${Math.ceil(time)} giây còn lại!`, wordSlayer); }
+  });
+  draw();
+  const stop = loop((dt) => { if (over) return; time -= dt; ui.set(`Quái: ${Math.max(0, hp)}/100 máu`, `⏱ ${Math.ceil(time)} s`); if (time <= 0) { over = true; endScreen(ui, ui.play, false, 'Hết giờ, quái còn sống.', wordSlayer); } });
+  return stop;
+}
+
+/* ---------- 3. Highway Rush: top-down car, dodge cars, collect the letters of the word in order ---------- */
+function highway() {
+  const ui = frame('Highway Rush', 'Bấm ← → (hoặc A D, hoặc chạm nửa trái/phải màn hình) để đổi làn. Nhặt đúng các chữ cái theo thứ tự để ghép từ tiếng Anh có nghĩa ở trên. Tránh xe khác.');
+  const W = 420, H = 480, cv = canvas(W, H, 'cv-narrow'); ui.play.append(cv); const g = cv.getContext('2d'); const LX = [W / 2 - 100, W / 2, W / 2 + 100];
+  let lane = 1, x = LX[1], lives = 3, done = 0, items = [], word = null, idx = 0, speed = 160, t = 0, spawn = 0, over = false;
+  const next = () => { word = pick(VOC); idx = 0; say(word.en); };
+  next();
+  const go = (d) => { lane = Math.max(0, Math.min(2, lane + d)); };
+  const key = (e) => { if (e.code === 'ArrowLeft' || e.code === 'KeyA') go(-1); if (e.code === 'ArrowRight' || e.code === 'KeyD') go(1); }; addEventListener('keydown', key);
+  cv.addEventListener('pointerdown', (e) => { const r = cv.getBoundingClientRect(); go(e.clientX - r.left < r.width / 2 ? -1 : 1); });
+  const hit = () => { lives -= 1; beep(false); ui.msg('Va chạm! −1 mạng'); if (lives <= 0) { over = true; endScreen(ui, ui.play, false, `Hết mạng. Ghép được ${done} từ.`, highway); } };
+  const stop = loop((dt) => {
+    t += dt; x += (LX[lane] - x) * Math.min(1, dt * 14);
+    if (!over) {
+      spawn -= dt; if (spawn <= 0) { spawn = 0.85 + Math.random() * 0.5; const l = rnd(3), need = word.en[idx], r = Math.random();
+        if (r < 0.4) items.push({ k: 'car', l, y: -50, c: pick(['#3a7ae0', '#2e9a49', '#9a5ae0', '#e0a23a']) }); else items.push({ k: 'ch', l, y: -30, ch: r < 0.75 ? need : pick(word.en.split('').concat('xzq'.split(''))) }); }
+      items.forEach((it) => { it.y += speed * dt; if (!it.dead && it.y > H - 110 && it.y < H - 40 && it.l === lane) { it.dead = true; if (it.k === 'car') hit(); else if (it.ch === word.en[idx]) { idx += 1; beep(true); if (idx >= word.en.length) { done += 1; ui.msg(`Ghép xong: ${word.en} = ${word.vi}`); speed += 12; if (done >= 5) { over = true; endScreen(ui, ui.play, true, 'Thắng! Đủ 5 từ.', highway); } else next(); } } else { beep(false); ui.msg(`Cần chữ "${word.en[idx]}"`); } } });
+      items = items.filter((it) => it.y < H + 60 && !it.dead);
+    }
+    g.fillStyle = '#4c9a46'; g.fillRect(0, 0, W, H); g.fillStyle = '#4a4e57'; g.fillRect(W / 2 - 160, 0, 320, H); g.fillStyle = '#ffffffaa'; for (let i = -1; i < 12; i++) { const y = (i * 60 + t * speed) % (H + 60) - 30; g.fillRect(W / 2 - 50, y, 5, 30); g.fillRect(W / 2 + 50, y, 5, 30); }
+    items.forEach((it) => { const ix = LX[it.l]; if (it.k === 'car') { g.fillStyle = it.c; g.fillRect(ix - 20, it.y - 32, 40, 64); g.fillStyle = '#111'; g.fillRect(ix - 14, it.y - 18, 28, 14); } else { g.fillStyle = '#ffd23c'; g.beginPath(); g.arc(ix, it.y, 20, 0, 7); g.fill(); g.fillStyle = '#4a2a10'; g.font = '800 24px Baloo 2, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(it.ch.toUpperCase(), ix, it.y + 1); } });
+    g.fillStyle = '#e8443a'; g.fillRect(x - 20, H - 100, 40, 64); g.fillStyle = '#fff'; g.fillRect(x - 14, H - 86, 28, 14); g.fillRect(x - 3, H - 100, 6, 64);
+    g.fillStyle = '#1d2a3acc'; g.fillRect(0, 0, W, 64); g.fillStyle = '#fff'; g.font = '700 15px Nunito, sans-serif'; g.textAlign = 'center'; g.fillText(`Ghép từ: ${word.vi}`, W / 2, 20);
+    g.font = '800 26px Baloo 2, sans-serif'; g.fillText(word.en.split('').map((c, i) => (i < idx ? c.toUpperCase() : '_')).join(' '), W / 2, 48);
+    ui.set(`Từ ${done}/5`, `Mạng ${'❤'.repeat(Math.max(0, lives))}`);
+  });
+  return () => { stop(); removeEventListener('keydown', key); };
+}
+
+/* ---------- 4. Boat Race: steer through the gate with the right word, against a rival boat ---------- */
+function boatRace() {
+  const ui = frame('Đua thuyền', 'Bấm ← → (hoặc A D, hoặc chạm nửa trái/phải) để lái thuyền. Mỗi cổng có ba từ tiếng Anh: chạy qua từ có nghĩa đúng như dòng trên cùng. Đúng thì tăng tốc, sai thì chậm lại. Về đích trước thuyền xanh nhé.');
+  const W = 420, H = 480, cv = canvas(W, H, 'cv-narrow'); ui.play.append(cv); const g = cv.getContext('2d'); const LX = [W / 2 - 110, W / 2, W / 2 + 110];
+  let lane = 1, x = LX[1], me = 0, rival = 0, speed = 150, gate = null, t = 0, over = false; const GOAL = 8;
+  const newGate = () => { const q = pick(VOC), ws = shuffle([q, ...shuffle(VOC.filter((v) => v !== q)).slice(0, 2)]); gate = { q, ws, y: -40 }; say(q.en); };
+  newGate();
+  const go = (d) => { lane = Math.max(0, Math.min(2, lane + d)); };
+  const key = (e) => { if (e.code === 'ArrowLeft' || e.code === 'KeyA') go(-1); if (e.code === 'ArrowRight' || e.code === 'KeyD') go(1); }; addEventListener('keydown', key);
+  cv.addEventListener('pointerdown', (e) => { const r = cv.getBoundingClientRect(); go(e.clientX - r.left < r.width / 2 ? -1 : 1); });
+  const stop = loop((dt) => {
+    t += dt; x += (LX[lane] - x) * Math.min(1, dt * 12);
+    if (!over) {
+      rival += dt / 5.2; speed += (150 - speed) * dt * 0.5; gate.y += speed * dt;
+      if (gate.y > H - 110 && !gate.done) { gate.done = true; const ok = gate.ws[lane] === gate.q; if (ok) { me += 1; speed = 260; beep(true); ui.msg(`Đúng! ${gate.q.en} = ${gate.q.vi}`); } else { speed = 70; beep(false); ui.msg(`Sai, đáp án là "${gate.q.en}"`); } }
+      if (gate.y > H + 30) newGate();
+      if (me >= GOAL || rival >= GOAL) { over = true; endScreen(ui, ui.play, me >= GOAL, me >= GOAL ? 'Bạn về nhất!' : 'Thuyền xanh về trước. Thử lại nhé.', boatRace); }
+    }
+    g.fillStyle = '#2d96cf'; g.fillRect(0, 0, W, H); g.fillStyle = '#ffffff33'; for (let i = 0; i < 14; i++) { const y = ((i * 47 + t * speed) % (H + 40)) - 20; g.fillRect(((i * 97) % W), y, 36, 3); }
+    g.fillStyle = '#e8d29a'; g.fillRect(0, 0, 18, H); g.fillRect(W - 18, 0, 18, H);
+    if (gate) { gate.ws.forEach((w, i) => { g.fillStyle = '#ff8a3c'; g.beginPath(); g.arc(LX[i] - 52, gate.y, 11, 0, 7); g.arc(LX[i] + 52, gate.y, 11, 0, 7); g.fill(); g.fillStyle = '#ffffffee'; g.beginPath(); g.roundRect(LX[i] - 46, gate.y - 17, 92, 34, 12); g.fill(); g.fillStyle = '#1d3a5a'; g.font = '800 16px Baloo 2, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(w.en, LX[i], gate.y + 1, 84); }); }
+    const boat = (bx, by, c) => { g.fillStyle = c; g.beginPath(); g.moveTo(bx, by - 34); g.quadraticCurveTo(bx + 24, by, bx + 16, by + 30); g.lineTo(bx - 16, by + 30); g.quadraticCurveTo(bx - 24, by, bx, by - 34); g.fill(); g.fillStyle = '#fff'; g.fillRect(bx - 2, by - 14, 4, 22); };
+    boat(W - 40, H - 150 - (rival / GOAL) * 80, '#1d6fe0'); boat(x, H - 80, '#e8443a');
+    g.fillStyle = '#1d2a3acc'; g.fillRect(0, 0, W, 40); g.fillStyle = '#fff'; g.font = '800 20px Baloo 2, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(`Từ nào có nghĩa: ${gate ? gate.q.vi : ''}`, W / 2, 21);
+    ui.set(`Bạn ${me}/${GOAL}`, `Thuyền xanh ${Math.min(GOAL, Math.floor(rival))}/${GOAL}`);
+  });
+  return () => { stop(); removeEventListener('keydown', key); };
+}
+
+/* ---------- 5. Word Dungeon: the cards are your weapons; a wrong card breaks and the monster bites ---------- */
+function dungeon() {
+  const ui = frame('Word Dungeon', 'Quái hiện nghĩa tiếng Việt. Chọn thẻ từ tiếng Anh đúng để đánh. Thẻ sai bị vỡ và con bị cắn. Mỗi thẻ chỉ dùng được vài lần trước khi mòn. Hạ 6 quái để thoát hầm ngục.');
+  const box = document.createElement('div'); box.style.display = 'grid'; box.style.gap = '10px'; ui.play.append(box);
+  let me = 10, kills = 0, mon = null, hand = [], over = false;
+  const draw = () => {
+    box.innerHTML = `<div class="hp me"><i style="width:${me * 10}%"></i></div><div class="mon">👹 Quái ${kills + 1}/6 · nghĩa: <b>${mon.q.vi}</b><div class="hp" style="margin-top:8px"><i style="width:${mon.hp * 50}%"></i></div></div><div class="cards"></div>`;
+    const cs = $('.cards', box); hand.forEach((c, i) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'wcard' + (c.dur <= 0 ? ' broken' : ''); b.innerHTML = `${c.v.en}<span class="dur">${'⚔'.repeat(Math.max(0, c.dur))}${c.dur <= 0 ? 'đã vỡ' : ''}</span>`; b.onclick = () => play(i); cs.append(b); });
+    ui.set(`Máu ${'❤'.repeat(Math.ceil(me / 2))}`, `Quái đã hạ ${kills}/6`);
+  };
+  const deal = () => { const q = pick(VOC), others = shuffle(VOC.filter((v) => v !== q)).slice(0, 3); mon = { q, hp: 2 }; hand = shuffle([q, ...others]).map((v) => ({ v, dur: 2 + rnd(2) })); say(q.vi); draw(); };
+  const play = (i) => {
+    if (over) return; const c = hand[i]; if (c.dur <= 0) return;
+    if (c.v === mon.q) { mon.hp -= 1; c.dur -= 1; beep(true); say(c.v.en); ui.msg(`Trúng! ${c.v.en} = ${c.v.vi}`);
+      if (mon.hp <= 0) { kills += 1; if (kills >= 6) { over = true; draw(); return endScreen(ui, ui.play, true, 'Thoát khỏi hầm ngục!', dungeon); } if (Math.random() < 0.4) { me = Math.min(10, me + 3); ui.msg('Quái rơi bình thuốc: +3 máu'); } deal(); return; }
+      const x = shuffle(VOC.filter((v) => v !== mon.q))[0]; hand[i] = { v: mon.q, dur: c.dur + 1 }; hand[(i + 1) % 4] = hand[(i + 1) % 4].v === mon.q ? { v: x, dur: 2 } : hand[(i + 1) % 4]; } else { c.dur = 0; me -= 2; beep(false); ui.msg(`Sai! "${c.v.en}" nghĩa là ${c.v.vi}. Thẻ vỡ, −2 máu.`); }
+    if (me <= 0) { over = true; draw(); return endScreen(ui, ui.play, false, 'Bạn gục ngã trong hầm ngục.', dungeon); }
+    draw();
+  };
+  deal();
+  return () => {};
+}
+
+/* ---------- 6. Tower Mystery: finish the suspects' statements with the right grammar word to reveal the culprit ---------- */
+function tower() {
+  const ui = frame('Tower Mystery', 'Ba nghi phạm khai bằng tiếng Anh nhưng thiếu từ. Bấm một từ trong khay, rồi bấm chỗ trống để điền. Điền đúng thì lộ ra một chữ cái của tên thủ phạm. Đủ ba lời khai thì kết luận.');
+  const CASES = [
+    { who: 'Cook Rosa', s: ['I', 0, 'making soup in the kitchen.'], ans: 'was', opts: ['was', 'were', 'is'], hint: 'Quá khứ tiếp diễn với "I".' },
+    { who: 'Guard Tom', s: ['She', 0, 'to the library every day.'], ans: 'goes', opts: ['go', 'goes', 'going'], hint: 'Hiện tại đơn, chủ ngữ "She".' },
+    { who: 'Maid Lily', s: ['We', 0, 'playing in the park yesterday.'], ans: 'were', opts: ['was', 'were', 'are'], hint: 'Quá khứ tiếp diễn với "We".' },
+  ];
+  const NAME = 'BUTLER'; let step = 0, picked = null, revealed = 0, over = false;
+  const box = document.createElement('div'); box.style.display = 'grid'; box.style.gap = '10px'; ui.play.append(box);
+  function draw() {
+    const c = CASES[step]; box.innerHTML = '';
+    const culprit = document.createElement('div'); culprit.className = 'culprit'; culprit.textContent = NAME.split('').map((ch, i) => (i < revealed ? ch : '_')).join(' '); box.append(culprit);
+    const cl = document.createElement('div'); cl.className = 'clue'; cl.innerHTML = `<b>${c.who}</b> khai: <div class="slots"></div><div style="color:var(--muted);margin-top:6px;font-size:14px">Gợi ý: ${c.hint}</div>`; box.append(cl);
+    const sl = $('.slots', cl); sl.append(c.s[0] + ' ');
+    const bl = document.createElement('button'); bl.type = 'button'; bl.className = 'blank'; bl.textContent = c.filled || (picked || '…'); bl.onclick = () => fill(); sl.append(bl); sl.append(' ' + c.s[2]);
+    const row = document.createElement('div'); row.className = 'row'; c.opts.forEach((o) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'btn' + (picked === o ? '' : ' alt'); b.textContent = o; b.onclick = () => { picked = o; say(o); draw(); }; row.append(b); }); box.append(row);
+    ui.set(`Lời khai ${step + 1}/3`, `Chữ cái đã lộ ${revealed}/${NAME.length}`);
+  }
+  function fill() {
+    if (over || !picked) { ui.msg('Chọn một từ trong khay trước.'); return; }
+    const c = CASES[step];
+    if (picked === c.ans) { beep(true); revealed += 2; step += 1; picked = null; ui.msg('Lời khai khớp! Lộ thêm hai chữ cái.');
+      if (step >= CASES.length) { over = true; revealed = NAME.length; box.innerHTML = `<div class="culprit">${NAME.split('').join(' ')}</div>`; return endScreen(ui, box, true, 'Thủ phạm là quản gia (the butler)!', tower); }
+      draw(); } else { beep(false); ui.msg('Lời khai không hợp lý, thử từ khác. ' + c.hint); picked = null; draw(); }
+  }
+  draw();
+  return () => {};
+}
+
+/* ---------- tabs ---------- */
+const GAMES = [['Sky Ace', skyAce], ['Word Slayer', wordSlayer], ['Highway Rush', highway], ['Đua thuyền', boatRace], ['Word Dungeon', dungeon], ['Tower Mystery', tower]];
+const tabs = $('#tabs');
+function open(i) { if (current) current(); current = null; [...tabs.children].forEach((b, k) => b.setAttribute('aria-selected', String(k === i))); current = GAMES[i][1](); try { history.replaceState(null, '', '#game' + (i + 1)); } catch (e) { /* no history in a frame */ } }
+GAMES.forEach(([name], i) => { const b = document.createElement('button'); b.type = 'button'; b.setAttribute('role', 'tab'); b.textContent = `${i + 1}. ${name}`; b.onclick = () => open(i); tabs.append(b); });
+open(Math.max(0, Math.min(5, (parseInt((location.hash.match(/game(\d)/) || [])[1], 10) || 1) - 1)));
+</script>
