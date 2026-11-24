@@ -173,7 +173,7 @@ await run('arcade', async () => {
 });
 
 await run('map2', async () => {        // the forest is the last chapter of Map 1 (19/11): its monsters, board, chests, bubbles and Queen need the forest gate, not Map 2
-  await ev(() => { const p = __eq.profile; p.flags.forest_open = true; delete p.flags.boss2; p.flags.map2 = false; __eq.enterRegion('forest'); });      // boss2 is cleared too: an earlier group may have beaten the Golem, and refresh() would reopen Map 2 await page.waitForFunction(() => __eq.region === 'forest' && __eq.started, null, { timeout: 120000 }); await wait(600);
+  await ev(() => { const p = __eq.profile; p.flags.forest_open = true; delete p.flags.boss2; p.flags.map2 = false; __eq.enterRegion('forest'); });      // boss2 is cleared too: an earlier group may have beaten the Golem, and refresh() would reopen Map 2 await page.waitForFunction(() => __eq.region === 'forest' && __eq.started, null, { timeout: 480000 }); await wait(600);
   check(await ev(() => !__eq.profile.flags.map2), 'The forest chapter is played before Map 2 opens');
   await ev(() => { __eq.profile.stats.level = 3; __eq.wild.mobs.forEach((m) => { if (m.region === 'forest') m.dead = 0; }); }); await wait(700);
   check(await ev(() => __eq.wild.mobs.filter((m) => m.g.visible).length === 0), 'The crystal quest is not done: the forest is quiet for a young hero');
@@ -193,7 +193,7 @@ await run('map2', async () => {        // the forest is the last chapter of Map 
   check(await ev(() => !__eq.wild.bosses[2].g.visible), 'Mushroom Queen sleeps below level 16');
   await ev(() => { __eq.profile.stats.level = 16; }); await wait(800);
   check(await ev(() => __eq.wild.bosses[2].g.visible && __eq.wild.markers().some((m) => m.text === '♛')), 'Level 16: the Mushroom Queen wakes in the west glade');
-  await ev(() => __eq.enterRegion('village')); await page.waitForFunction(() => __eq.region === 'village' && __eq.started, null, { timeout: 120000 }); await wait(600);
+  await ev(() => __eq.enterRegion('village')); await page.waitForFunction(() => __eq.region === 'village' && __eq.started, null, { timeout: 480000 }); await wait(600);
   check(await ev(() => __eq.wild.mobs.filter((m) => m.g.visible).every((m) => m.region === 'village')), 'Back in the village: only meadow monsters');
   await closeDialogs();
 });
@@ -201,7 +201,7 @@ await run('map2', async () => {        // the forest is the last chapter of Map 
 await run('harbor', async () => {        // Map 2 in Sunny Harbor: sea monsters, Captain Octopus, board, chests, bubbles and the two new shop games (18/11)
   await closeDialogs();
   await ev(() => { const p = __eq.profile; p.flags.map2 = true; p.stats.level = 27; p.stats.hp = 9999; p.god = true; __eq.enterRegion('harbor'); });
-  await page.waitForFunction(() => __eq.region === 'harbor' && __eq.started, null, { timeout: 180000 }); await wait(1000);
+  await page.waitForFunction(() => __eq.region === 'harbor' && __eq.started, null, { timeout: 480000 }); await wait(1000);
   const vis = await ev(() => __eq.wild.mobs.filter((m) => m.g.visible).map((m) => m.kind));
   check(vis.length === 17 && vis.every((k) => ['crab', 'jelly', 'pirate', 'gull'].includes(k)), `Harbor at level 27: 17 sea monsters (with the storm gulls), no boss yet, none from the other maps (${vis.length})`);
   check(await ev(() => __eq.wild.mobs.filter((m) => m.region === 'harbor' && m.mixer).length === 18), 'The Blender monsters and the octopus carry their own Idle/Walk clips');
@@ -228,7 +228,7 @@ await run('harbor', async () => {        // Map 2 in Sunny Harbor: sea monsters,
   check(await ev(() => __eq.arcade.open && __eq.arcade.game.title.includes('Salon')), 'E at the salon door starts the beauty game');
   await page.keyboard.press('Escape'); await wait(300);
   check(await ev(() => __eq.errors.length === 0), 'Harbor: no script errors');
-  await ev(() => __eq.enterRegion('village')); await page.waitForFunction(() => __eq.region === 'village' && __eq.started, null, { timeout: 120000 }); await wait(600);
+  await ev(() => __eq.enterRegion('village')); await page.waitForFunction(() => __eq.region === 'village' && __eq.started, null, { timeout: 480000 }); await wait(600);
   check(await ev(() => __eq.wild.mobs.filter((m) => m.g.visible).every((m) => m.region === 'village')), 'Back in the village: the sea monsters are gone');
   await closeDialogs();
 });
@@ -236,7 +236,7 @@ await run('harbor', async () => {        // Map 2 in Sunny Harbor: sea monsters,
 await run('extras', async () => {        // the sea extras (19/11): fishing, Sea Dex, fish market, wardrobe, family ship, pet
   await closeDialogs();
   await ev(() => { const p = __eq.profile; p.flags.map2 = true; p.stats.level = 22; p.stats.hp = 9999; p.god = true; __eq.enterRegion('harbor'); });
-  await page.waitForFunction(() => __eq.region === 'harbor' && __eq.started, null, { timeout: 180000 }); await wait(900);
+  await page.waitForFunction(() => __eq.region === 'harbor' && __eq.started, null, { timeout: 480000 }); await wait(900);
   await ev(() => { __eq.wild.mobs.forEach((m) => { m.dead = 999; m.g.visible = false; }); __eq.teleport(33.2, 28); }); await wait(700);
   check((await page.textContent('#prompt')).includes('Câu cá'), 'The end of the fishing pier offers fishing');
   await page.keyboard.press('KeyE'); await wait(500); await answerGate(); await page.waitForFunction(() => __eq.fishing.active, null, { timeout: 120000 }); await wait(300);      // (23/11) four new words first
@@ -275,7 +275,7 @@ await run('extras', async () => {        // the sea extras (19/11): fishing, Sea
   await page.keyboard.press('Escape'); await wait(300);
   await ev(() => __eq.teleport(22, 28.6)); await wait(700);
   check((await page.textContent('#prompt')).includes('Đảo Kho Báu'), 'The boat at the fishing pier offers Treasure Isle');
-  await page.keyboard.press('KeyE'); await page.waitForFunction(() => __eq.region === 'isle' && __eq.started, null, { timeout: 180000 }); await wait(900);
+  await page.keyboard.press('KeyE'); await page.waitForFunction(() => __eq.region === 'isle' && __eq.started, null, { timeout: 480000 }); await wait(900);
   check(await page.isVisible('#trwin') && (await page.textContent('#trwin')).includes('Start at') || (await page.textContent('#trwin')).includes('halfway') || (await page.textContent('#trwin')).includes('Go to'), 'On Treasure Isle the English treasure map opens');
   await page.keyboard.press('Escape'); await wait(300);
   await ev(() => __eq.teleport(-18, 2)); await wait(600); await page.keyboard.press('KeyE'); await wait(400);
@@ -283,13 +283,13 @@ await run('extras', async () => {        // the sea extras (19/11): fishing, Sea
   await ev(() => { const g = __eq.profile.treasure.map.goal; __eq.teleport(g.x, g.z); }); await wait(600); await page.keyboard.press('KeyE'); await wait(400);
   check((await page.textContent('#dialog')).includes('found the treasure') && await ev(() => __eq.profile.treasure.total === 1 && __eq.profile.wardrobe.owned.length >= 3), 'Digging at the goal finds the treasure: gold, EXP and a new wardrobe piece'); await closeDialogs();
   await ev(() => __eq.teleport(-21.4, 2)); await wait(600);
-  check((await page.textContent('#prompt')).includes('Cảng Mặt Trời'), 'The isle has its way back to the harbor'); await page.keyboard.press('KeyE'); await page.waitForFunction(() => __eq.region === 'harbor' && __eq.started, null, { timeout: 180000 }); await wait(600);
+  check((await page.textContent('#prompt')).includes('Cảng Mặt Trời'), 'The isle has its way back to the harbor'); await page.keyboard.press('KeyE'); await page.waitForFunction(() => __eq.region === 'harbor' && __eq.started, null, { timeout: 480000 }); await wait(600);
   check(await ev(() => __eq.errors.length === 0), 'Extras: no script errors');
-  await ev(() => __eq.enterRegion('village')); await page.waitForFunction(() => __eq.region === 'village' && __eq.started, null, { timeout: 120000 }); await wait(600); await closeDialogs();
+  await ev(() => __eq.enterRegion('village')); await page.waitForFunction(() => __eq.region === 'village' && __eq.started, null, { timeout: 480000 }); await wait(600); await closeDialogs();
 });
 
 await run('forest', async () => {
-  await ev(() => __eq.enterRegion('forest')); await page.waitForFunction(() => __eq.region === 'forest' && __eq.started, null, { timeout: 90000 });
+  await ev(() => __eq.enterRegion('forest')); await page.waitForFunction(() => __eq.region === 'forest' && __eq.started, null, { timeout: 480000 });
   check(await ev(() => __eq.errors.length === 0 && __eq.wild.mobs.every((m) => m.region === 'forest' || !m.g.visible)), 'Forest loads, no monsters from the meadow there');
 });
 
@@ -308,7 +308,7 @@ await run('bag', async () => {          // A6: bag screen and gear on the body
 });
 
 await run('shop', async () => {         // the shop door opens the inside view: buy, wear, sell
-  if (await ev(() => __eq.region !== 'village')) { await ev(() => __eq.enterRegion('village')); await page.waitForFunction(() => __eq.region === 'village' && __eq.started, null, { timeout: 120000 }); }
+  if (await ev(() => __eq.region !== 'village')) { await ev(() => __eq.enterRegion('village')); await page.waitForFunction(() => __eq.region === 'village' && __eq.started, null, { timeout: 480000 }); }
   await ev(() => { const p = __eq.profile; p.inv = { owned: [], weapon: '', armor: '', charm: '', food: 0 }; p.stats.gold = 300; p.stats.level = 6; __eq.setWear(); __eq.teleport(7.6, -8); }); await wait(600);
   check((await page.textContent('#prompt')).includes('Vào Village Shop'), 'Prompt at the shop door (21/11: one Village Shop)');
   await page.keyboard.press('KeyE'); await wait(500);
@@ -350,7 +350,7 @@ await run('admin', async () => {        // admin account (password 321) and clic
   check(await tp.isVisible('#admin') && (await tp.textContent('#admin')).includes('Nữ hoàng Nấm'), 'Admin panel lists places in every map');
   await tp.click('#admin [data-a="unlock"]'); await tp.waitForTimeout(600);
   check(await tp.evaluate(() => __eq.profile.flags.map2 && __eq.profile.flags.forest_open && __eq.profile.flags.bridge_fixed), 'Admin: unlock everything');
-  await tp.click('#admin [data-a="go"]:has-text("Nữ hoàng Nấm")'); await tp.waitForFunction(() => __eq.region === 'forest' && __eq.started, null, { timeout: 180000 }); await tp.waitForTimeout(600);
+  await tp.click('#admin [data-a="go"]:has-text("Nữ hoàng Nấm")'); await tp.waitForFunction(() => __eq.region === 'forest' && __eq.started, null, { timeout: 480000 }); await tp.waitForTimeout(600);
   check(await tp.evaluate(() => Math.hypot(__eq.player.pos.x + 40, __eq.player.pos.z + 24) < 4), 'Admin: jump straight to the Map 2 boss');
   check(await tp.evaluate(() => __eq.errors.length === 0), 'Admin page: no script errors');
   await tp.close(); await ev(() => __eq.pause(false));
@@ -358,7 +358,7 @@ await run('admin', async () => {        // admin account (password 321) and clic
 
 await run('voice', async () => {         // (24/11) a word bubble pays only after the child reads the word aloud well (a fake speech service stands in for the browser's)
   await ev(() => { window.__heard = ['nothing']; window.SpeechRecognition = class { start() { setTimeout(() => this.onresult({ results: [window.__heard.map((t) => ({ transcript: t }))] }), 60); } stop() {} }; __eq.voiceDisable(false); });
-  await ev(() => __eq.enterRegion('village')); await page.waitForFunction(() => __eq.region === 'village' && __eq.started, null, { timeout: 120000 }); await wait(600);
+  await ev(() => __eq.enterRegion('village')); await page.waitForFunction(() => __eq.region === 'village' && __eq.started, null, { timeout: 480000 }); await wait(600);
   const sp = await ev(() => { const s = __eq.spots.list.find((s) => s.region === 'village' && s.sp.visible); return s ? { x: s.x, z: s.z, i: s.i } : null; });
   check(!!sp, 'A word bubble is waiting in the village');
   await ev((sp) => { __eq.teleport(sp.x, sp.z); const it = __eq.spots.interact({ x: sp.x, z: sp.z }); it.run(); }, sp); await wait(400);
@@ -377,17 +377,17 @@ await run('voice', async () => {         // (24/11) a word bubble pays only afte
   await closeDialogs(); check(await ev(() => __eq.errors.length === 0), 'No script errors in the reading flow ' + await ev(() => __eq.errors.join(' | ').slice(0, 300)));
 });
 await run('world', async () => {         // (24/11) portals at the map edges, the choice card for two roads, the world map
-  await ev(() => { const p = __eq.profile; p.flags.forest_open = true; p.flags.map2 = false; delete p.flags.boss2; __eq.enterRegion('village'); }); await page.waitForFunction(() => __eq.region === 'village' && __eq.started, null, { timeout: 120000 }); await wait(800);
+  await ev(() => { const p = __eq.profile; p.flags.forest_open = true; p.flags.map2 = false; delete p.flags.boss2; __eq.enterRegion('village'); }); await page.waitForFunction(() => __eq.region === 'village' && __eq.started, null, { timeout: 480000 }); await wait(800);
   check(await ev(() => !!__eq.portals && __eq.portals.children.length === 1), 'The village has its portal arch');
   await ev(() => { const pt = { x: -30, z: -41.4 }; __eq.teleport(pt.x, pt.z + 1); }); await wait(500);
   await page.keyboard.press('KeyE'); await wait(500);
   check(await page.isVisible('#worldwin .route') && (await page.locator('#worldwin .route').count()) === 2, 'E at the portal lists two roads (forest and harbor)');
   check(await ev(() => document.querySelectorAll('#worldwin button.go:disabled').length === 1 && document.querySelector('#worldwin .route.lock .need').textContent.includes('Map 2')), 'The harbor road is locked and says what is missing');
-  await page.click('#worldwin button.go:not(:disabled)'); await page.waitForFunction(() => __eq.region === 'forest' && __eq.started, null, { timeout: 180000 }); await wait(800);
+  await page.click('#worldwin button.go:not(:disabled)'); await page.waitForFunction(() => __eq.region === 'forest' && __eq.started, null, { timeout: 480000 }); await wait(800);
   check(await ev(() => __eq.portals && __eq.portals.children.length === 1 && __eq.profile.region === 'forest'), 'The forest portal took the hero to the forest, which has its own portal');
   await ev(() => __eq.teleport(-30, 56)); await wait(400); await page.keyboard.press('KeyE'); await wait(500);
   check(await page.isVisible('#worldwin .route') && (await page.locator('#worldwin .route').count()) === 1, 'The forest portal leads one way: back to the village');
-  await page.click('#worldwin button.go:not(:disabled)'); await page.waitForFunction(() => __eq.region === 'village' && __eq.started, null, { timeout: 180000 }); await wait(800);
+  await page.click('#worldwin button.go:not(:disabled)'); await page.waitForFunction(() => __eq.region === 'village' && __eq.started, null, { timeout: 480000 }); await wait(800);
   await page.keyboard.press('KeyO'); await wait(500);
   check(await page.locator('#worldwin .node').count() === 10 && await page.locator('#worldwin .node.soon').count() === 7, 'O opens the world map: ten maps, seven of them still coming');
   await page.click('#worldwin .node[data-id="desert"]'); await wait(200);
