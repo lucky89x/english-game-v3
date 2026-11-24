@@ -159,9 +159,9 @@ export class Homes {
       } catch (e) { /* the file is missing: the village goes on without it */ }
     }
     for (const [k, t] of Object.entries(STALLS)) {
-      if (k === 'produce') { try { await place('stall_vegetables', t.x, t.z, t.yaw, 1.2); const n = label("🥕 Ben's Fruit & Veg", { size: 28, scale: 0.8 }); n.position.set(t.x, gh(t.x, t.z) + 4.3, t.z); this.root.add(n); continue; } catch (e) { /* the old stall below */ } }
+      if (k === 'produce') { try { await place('stall_vegetables', t.x, t.z, t.yaw, 1.2); const n = label("🥕 Poppy's Fruit & Veg", { size: 28, scale: 0.8 }); n.position.set(t.x, gh(t.x, t.z) + 4.3, t.z); this.root.add(n); continue; } catch (e) { /* the old stall below */ } }
       const s = campStall(t.x, gh(t.x, t.z), t.z, t.yaw, k === 'music' ? 0x8a4ad0 : k === 'tailor' ? 0xe06aa8 : k === 'healer' ? 0x2f9ae0 : k === 'pets' ? 0xf0a030 : 0xe2483e, k === 'tailor' ? 'cloth' : 'fruit'); this.root.add(s);
-      const n = label(k === 'music' ? "🎵 Anna's Instruments" : k === 'tailor' ? "🧵 Mia's Tailor Shop" : k === 'healer' ? "🧪 Village Shop · Lily" : k === 'pets' ? "🐾 Penny's Pet Shop" : "🍎 Ben's Fruit & Veg", { size: 28, scale: 0.8 }); n.position.set(t.x, gh(t.x, t.z) + 3.3, t.z); this.root.add(n);
+      const n = label(k === 'music' ? "🎵 Anna's Instruments" : k === 'tailor' ? "🧵 Mia's Tailor Shop" : k === 'healer' ? "🧪 Village Shop · Lily" : k === 'pets' ? "🐾 Penny's Pet Shop" : "🍎 Poppy's Fruit & Veg", { size: 28, scale: 0.8 }); n.position.set(t.x, gh(t.x, t.z) + 3.3, t.z); this.root.add(n);
       if (k === 'tailor') {      // two mannequins from the harbor boutique beside Mia's stall
         try { const src = await load('harbor_mannequin_v01');
           for (const [dx, keep] of [[-2.6, 'mannequin_dress'], [2.6, 'mannequin_coat']]) { const m = src.clone(true); m.children.forEach((c) => { if (c.name && c.name.startsWith('mannequin') && c.name !== keep) c.visible = false; });

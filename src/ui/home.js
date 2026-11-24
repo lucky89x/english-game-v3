@@ -32,6 +32,8 @@ export class HomePanel {
       if (b && b.dataset.a === 'up') { this.upgrade(b.dataset.v); return; }
       if (b && (b.dataset.a === 'wall' || b.dataset.a === 'floor')) { this.paintBuy(b.dataset.a, b.dataset.v); return; }
       if (b && b.dataset.a === 'buy') { this.buyItem(b.dataset.v); return; }
+      if (b && b.dataset.a === 'take') { this.takeItem(b.dataset.v); return; }
+      if (b && b.dataset.a === 'reset') { this.resetHouse(); return; }
       if (b && b.dataset.a === 'arrange') { this.hide(); if (this.api.setEditing) this.api.setEditing(true); return; }
       if (b && b.dataset.a === 'quiz') this.startQuiz();
       if (b && b.dataset.a === 'ans') this.answer(Number(b.dataset.v));
@@ -41,36 +43,42 @@ export class HomePanel {
   /** The line at the bottom while inside: the arrange-mode help, or the keys. */
   setHint(t) { this.hint.textContent = t || this.base; }
   /** owner: the profile whose home it is; mine: the child playing now owns it (a visitor only looks). */
-  show(owner, mine, keepMsg = false) { this.owner = owner; this.mine = mine; this.quiz = null; if (!keepMsg) this.msg = ''; this.inside = true; this.paint(); this.el.classList.remove('hidden'); this.hint.classList.remove('on'); }
+  show(owner, mine, keepMsg = false, admin = this.admin) { this.owner = owner; this.mine = mine; this.admin = !!admin; this.quiz = null; if (!keepMsg) this.msg = ''; this.inside = true; this.paint(); this.el.classList.remove('hidden'); this.hint.classList.remove('on'); }
   /** The list can be shut while the hero stays inside the house (E leaves). */
   hide() { this.el.classList.add('hidden'); if (this.inside) this.hint.classList.add('on'); }
+  /** (24/11) The admin has full control of any child's home: purchases cost the child nothing and ignore the level. */
+  free(fn) { if (!this.admin) return fn(); const st = this.owner.stats, g = st.gold, l = st.level; st.gold = 1e9; st.level = 99; try { return fn(); } finally { st.gold = g; st.level = l; } }
   /** (24/11) A wall or floor colour costs gold (once). */
   paintBuy(kind, key) {
-    if (!this.mine) return; const r = buyPaint(this.owner, kind, key);
+    if (!this.mine) return; const r = this.free(() => buyPaint(this.owner, kind, key));
     if (!r.ok) { this.api.sfx('wrong'); this.msg = r.why === 'gold' ? `Chưa đủ vàng: màu này giá ${r.cost} ●.` : 'Màu này chưa có.'; this.paint(); return; }
     this.api.sfx(r.cost ? 'correct' : 'tick'); this.msg = r.cost ? `Đã sơn màu mới (−${r.cost} ●)!` : 'Đã đổi màu (màu con đã mua rồi).'; this.api.changed(); if (this.api.rebuild) this.api.rebuild(this.owner); this.paint();
   }
   /** (24/11) Furniture and garden things are bought here, inside the house. */
   buyItem(id) {
-    if (!this.mine) return; const it = ITEMS[id], r = buy(this.owner, id);
+    if (!this.mine) return; const it = ITEMS[id], r = this.free(() => buy(this.owner, id));
     if (!r.ok) { this.api.sfx('wrong'); this.msg = r.why === 'gold' ? `Chưa đủ vàng: ${it.en} giá ${it.cost} ●.` : r.why === 'level' ? `Cần cấp ${it.level} mới mua ${it.en}.` : 'Con đã có đồ này rồi.'; this.paint(); return; }
     this.api.sfx('correct'); this.msg = `Đã mua ${it.en} (−${it.cost} ●), đồ tự đặt vào nhà. Phím B để dời chỗ.`; this.api.changed(); if (this.api.rebuild) this.api.rebuild(this.owner); this.paint();
   }
+  /** Admin only: takes a piece of furniture out of the house (no refund), or puts the whole house back to one floor and no garden. */
+  takeItem(id) { if (!this.admin) return; const h = home(this.owner); h.items = h.items.filter((x) => x !== id); if (this.owner.house && this.owner.house.place) delete this.owner.house.place[id]; this.msg = `Đã gỡ ${ITEMS[id].en} khỏi nhà.`; this.api.changed(); if (this.api.rebuild) this.api.rebuild(this.owner); this.paint(); }
+  resetHouse() { if (!this.admin) return; if (!this.armed) { this.armed = true; this.msg = 'Bấm "Đặt lại nhà" thêm lần nữa để xác nhận (về 1 tầng, vườn 0, giữ đồ).'; this.paint(); return; } this.armed = false; this.owner.house = { floors: 1, villa: false, garden: 0 }; this.msg = 'Đã đặt lại nhà về 1 tầng.'; this.api.changed(); if (this.api.rebuild) this.api.rebuild(this.owner); this.paint(); }
   upgrade(id) {
-    const r = buyUpgrade(this.owner, id), u = UPGRADES.find((x) => x.id === id);
+    const r = this.free(() => buyUpgrade(this.owner, id)), u = UPGRADES.find((x) => x.id === id);
     if (!r.ok) { this.api.sfx('wrong'); this.msg = r.why === 'gold' ? 'Chưa đủ vàng.' : r.why === 'level' ? `Cần cấp ${u.level}.` : r.why === 'need' ? 'Cần nâng cấp trước đó.' : 'Con đã có rồi.'; this.paint(); return; }
     this.api.sfx('fanfare'); this.msg = `Đã nâng cấp: ${u.en}! Nhà đang được xây lại…`; this.api.changed(); if (this.api.rebuild) this.api.rebuild(this.owner); this.paint();
   }
   paint() {
     const owner = this.owner, mine = this.mine;
-    const have = home(owner).items, lvl = owner.stats.level, gold = owner.stats.gold, row = (slot) => Object.entries(ITEMS).filter(([, it]) => it.slot === slot)
-      .map(([id, it]) => `<div class="it ${have.includes(id) ? '' : 'no'}"><b>${it.en}</b>${it.vi}${have.includes(id) ? ' ✔' : `<br><small>${it.cost} ● · cần cấp ${it.level}</small>${mine ? `<br><button data-a="buy" data-v="${id}" ${lvl < it.level ? 'disabled title="Chưa đủ cấp"' : gold < it.cost ? 'title="Chưa đủ vàng"' : ''}>Mua</button>` : ''}`}</div>`).join('');
+    const adm = this.admin, have = home(owner).items, lvl = adm ? 99 : owner.stats.level, gold = adm ? 1e9 : owner.stats.gold, row = (slot) => Object.entries(ITEMS).filter(([, it]) => it.slot === slot)
+      .map(([id, it]) => `<div class="it ${have.includes(id) ? '' : 'no'}"><b>${it.en}</b>${it.vi}${have.includes(id) ? (adm ? ` ✔<br><button data-a="take" data-v="${id}">Gỡ</button>` : ' ✔') : `<br><small>${it.cost} ● · cần cấp ${it.level}</small>${mine ? `<br><button data-a="buy" data-v="${id}" ${lvl < it.level ? 'disabled title="Chưa đủ cấp"' : gold < it.cost ? 'title="Chưa đủ vàng"' : ''}>Mua</button>` : ''}`}</div>`).join('');
     const n = have.length, total = Object.values(ITEMS).filter((it) => it.slot === 'home' || it.slot === 'yard').length;
     this.el.innerHTML = `<div class="book"><header><span style="font-size:28px">🏠</span><h2>${mine ? 'My home' : `${owner.name}'s home`} · Nhà của ${owner.name}</h2><button data-a="exit">Ra ngoài (E)</button></header><button class="x" data-a="close" title="Đóng (X)">✕</button>
       <div class="note">${mine ? `Nhà của con. Mua đồ, sơn tường ngay ở đây (tốn vàng, con có ${owner.stats.gold} ●); đồ mua về tự đặt vào nhà hoặc sân. Bấm ✕ góc trên bên phải để đóng.` : `Con đang thăm nhà của ${owner.name}. Chỉ ${owner.name} mới mua được đồ cho nhà này.`} (${n}/${total})</div>
+      ${adm ? `<div class="flash">🛠 <b>Quyền admin</b>: làm gì với nhà này cũng không tốn vàng của ${owner.name}. <button data-a="reset">Đặt lại nhà</button></div>` : ''}
       ${this.msg ? `<div class="flash"><b>${this.msg}</b></div>` : ''}${mine ? this.paintBox() : ''}
       ${this.upgradesBox(mine)}
-      ${this.quizBox(mine)}
+      ${this.quizBox(mine && !adm)}
       <h3>🛒 In the house · Cửa hàng đồ trong nhà</h3><div class="grid">${row('home')}</div><h3>🌳 In the yard · Đồ ngoài sân</h3><div class="grid">${row('yard')}</div></div>`;
   }
   /** (21/11) "change the colours as the owner likes; arrange the furniture" */
@@ -109,7 +117,7 @@ export class HomePanel {
     q.done = `${q.right}/3 đúng · +${gold} vàng. Mai làm tiếp nhé!`; this.paint();
   }
   /** Leaves the house. */
-  close() { if (!this.inside) return; this.inside = false; this.msg = ''; this.el.classList.add('hidden'); this.hint.classList.remove('on'); if (this.api.onClose) this.api.onClose(); }
+  close() { if (!this.inside) return; this.inside = false; this.admin = false; this.armed = false; this.msg = ''; this.el.classList.add('hidden'); this.hint.classList.remove('on'); if (this.api.onClose) this.api.onClose(); }
   key(code) {
     if (!this.inside) return false;
     if (code === 'KeyE') { this.close(); return true; }

@@ -65,7 +65,6 @@ export const stairY = (f, z) => (f + Math.max(0, Math.min(1, (STAIR.z0 - z) / (S
 export function freeAt(h, f, x, z, r = 0.3) {
   if (Math.abs(x) > HALF_W - r || z < -HALF_D + r || z > HALF_D - r) return false;
   if (Math.abs(x) < 0.08 + r && Math.abs(z) > 1.2 - r) return false;      // the middle wall, with a doorway
-  if (Math.abs(z) < 0.08 + r && !((x > -5.4 + r && x < -2.6 - r) || (x > 2.6 + r && x < 5.4 - r))) return false;      // the low wall with two gaps
   if (f < h.floors - 1 && Math.abs(x - stairX(f)) < STAIR.half + r && z > STAIR.z1 - r && z < STAIR.z0) return false;      // the stair block
   if (f > 0 && Math.abs(x - stairX(f - 1)) < 0.8 + r && z > STAIR.z1 && z < STAIR.z0 - 0.06 + r) return false;      // the stairwell from below
   return true;

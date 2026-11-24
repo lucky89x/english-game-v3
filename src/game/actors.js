@@ -168,7 +168,7 @@ export class OrbitCamera {
     dom.addEventListener('contextmenu', (e) => e.preventDefault());
   }
   zoom(f) { this.tDist = Math.min(CAM.max, Math.max(CAM.min, this.tDist * f)); }
-  tilt(d) { this.tPitch = Math.min(1.25, Math.max(0.05, this.tPitch + d)); }
+  tilt(d) { this.tPitch = Math.min(this.maxPitch ?? 1.25, Math.max(this.minPitch ?? 0.05, this.tPitch + d)); }
   /** Shortest unobstructed distance from the target towards the wanted camera spot: only the ground and big solids
    *  (houses, cliffs) pull the camera in. Tree crowns no longer do: the constant zooming in and out among trees made
    *  children dizzy (feedback 17/11). */

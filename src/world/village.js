@@ -196,7 +196,7 @@ export async function villageExtras(add, loadModel, shadowed) {
     for (const [x, z] of FARM_BEDS) gg.add(setup(gardenM.clone(true), x, z, 0, 1.25, -0.02));
     add(bake(gg));
   }
-  const stallName = label("Ben's Word Jars", { size: 28, scale: 0.8 }); stallName.position.set(-8.4, L.groundHeight(-8.6, 19.5) + 3.5, 19.5); add(stallName);
+  const stallName = label("Ben's Word Jars", { size: 28, scale: 0.8 }); stallName.position.set(BEN_MARKET.stall[0] + 0.6, L.groundHeight(BEN_MARKET.stall[0], BEN_MARKET.stall[1]) + 3.5, BEN_MARKET.stall[1]);      // (24/11) the sign over his own stall add(stallName);
   for (const [x, z] of [[3.6, -12], [-3.6, -2], [3.8, 10], [-4, 16], [2.6, 27], [6, 8.2], [-8, 1.5], [-20, -10], [-26, -26], [32, 9], [42.6, 22], [8, 38]]) still.add(lampPost(x, z));
   signs(add, [[2.9, 14.5, '← Market\nFarm ↓'], [30.5, 9.5, 'Orchard']]);
   // Quest Square: fountain in the middle, a signpost where each road leaves (17/11)

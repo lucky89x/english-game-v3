@@ -43,7 +43,8 @@ export class AdminPanel {
         <button data-a="god">${p.god ? '✔ ' : ''}Không mất máu</button></div>
       <div class="row"><button data-a="magic">Học đủ phép (hệ đang chọn) + gán ô 1–3</button><button data-a="mp">Đầy mana</button><button data-a="potions">+10 bình máu/mana (túi V)</button><button data-a="loot">Nhận hết đồ hiếm</button></div>
       <div class="row">Lớp: ${[6, 7, 8, 9].map((g) => `<button data-a="grade" data-v="${g}">${g === p.grade ? '✔ ' : ''}Lớp ${g}</button>`).join('')}</div>
-      <h4>🏠 Vào nhà từng người chơi (xem đồ đạc, cách bày trí)</h4><div class="row">${(this.api.profiles ? this.api.profiles() : []).filter((o) => !o.admin).map((o) => `<button data-a="visit" data-v="${o.id}">🏠 ${o.name} (lớp ${o.grade}, ${o.stats.gold} vàng)</button>`).join('') || 'Chưa có người chơi nào.'}</div>
+      <h4>🏠 Vào nhà từng người chơi (toàn quyền: sơn, mua, nâng cấp, gỡ đồ, bày trí, không tốn vàng của bé)</h4><div class="row">${(this.api.profiles ? this.api.profiles() : []).filter((o) => !o.admin).map((o) => `<button data-a="visit" data-v="${o.id}">🏠 ${o.name} (lớp ${o.grade}, ${o.stats.gold} vàng)</button>`).join('') || 'Chưa có người chơi nào.'}</div>
+      <h4>🗑 Xoá người chơi (xoá luôn nhà, đồ và tiến độ của bé đó)</h4><div class="row">${(this.api.profiles ? this.api.profiles() : []).filter((o) => !o.admin).map((o) => `<button data-a="del" data-v="${o.id}" style="${this.armedDel === o.id ? 'background:#8a2a22' : ''}">${this.armedDel === o.id ? 'Chắc chắn xoá ' : 'Xoá '}${o.name}</button>`).join('') || '<small>Chưa có bé nào.</small>'}</div>
       <h4>Mở khóa</h4><div class="row"><button data-a="unlock">Mở hết (rừng, cầu, Map 2, boss, cổng Cú Mèo)</button><button data-a="limits">Xóa giới hạn mini game hôm nay</button>
         <button data-a="daily">Mở lại rương + bong bóng hôm nay</button></div>
       <h4>Nhiệm vụ làng (Chương I)</h4><div class="row">${STEPS.map(([k, t]) => `<button data-a="step" data-v="${k}">${k === step ? '✔ ' : ''}${t}</button>`).join('')}</div>
@@ -55,6 +56,7 @@ export class AdminPanel {
     const p = this.api.profile(), api = this.api;
     if (a === 'close') { this.el.classList.add('hidden'); return; }
     if (a === 'visit') { const o = (api.profiles ? api.profiles() : []).find((x) => x.id === v); if (o && api.visitHome) { this.el.classList.add('hidden'); api.visitHome(o); } return; }
+    if (a === 'del') { const o = (api.profiles ? api.profiles() : []).find((x) => x.id === v); if (!o || o.admin) return; if (this.armedDel !== v) { this.armedDel = v; api.toast(`Bấm "Xoá" thêm lần nữa để xoá ${o.name} và cả nhà của bé`); this.render(); return; } this.armedDel = null; if (api.deleteProfile) api.deleteProfile(v); api.toast(`Đã xoá ${o.name} cùng nhà của bé`); this.render(); return; }
     if (a === 'level') { const n = Math.max(1, Math.min(60, Number(this.el.querySelector('#adlv').value) || 1)); api.setLevel(n); api.toast(`Cấp ${n}`); }
     if (a === 'gold') { api.addGold(Number(v)); }
     if (a === 'heal') { p.stats.hp = undefined; api.toast('Đầy máu'); }

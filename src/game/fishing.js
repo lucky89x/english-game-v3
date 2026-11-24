@@ -6,6 +6,7 @@ import * as THREE from 'three';
 import * as L from '../core/layout.js';
 import { rollFish, rollRiver, FISH_MODEL, SWIMMERS, RARITY, RARITY_VI } from '../core/sea.js';
 import { gameMusic, endMusic } from '../audio.js';
+import { makeRowboat } from '../world/rowboat.js';
 
 export const SPOTS = { village: [{ x: 18.4, z: 19.2, name: 'bến sông' }], harbor: [{ x: 34, z: 28, name: 'cầu tàu nhỏ' }] };
 const EMOJI = '"Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif';
@@ -44,7 +45,7 @@ export class Fishing {
   /** (23/11) the user's models replace the shapes made by code: the rowboat (prop_boat_v01), the rod and the float of the fishing pack. */
   loadGear() {
     const a = this.api; if (!a.loadStatic) return;
-    a.loadStatic('prop_boat_v01').then((m) => { this.boat.clear(); m.traverse((o) => { if (o.isMesh) o.castShadow = true; }); m.scale.setScalar(0.8); this.boat.add(m); this.boatModel = true; }, () => {});
+    this.boat.clear(); this.boat.add(makeRowboat()); this.boatModel = true;      // (24/11) a proper, bigger rowboat made by code
     a.loadStatic('fishing/fishing_rod').then((m) => {      // handle at the origin, the tip along +Z (the rod model lies along +X)
       const box = new THREE.Box3().setFromObject(m); m.position.x = -box.min.x; const g = new THREE.Group(); const inner = new THREE.Group(); inner.add(m); inner.rotation.y = -Math.PI / 2; g.add(inner); g.scale.setScalar(1.55);
       g.traverse((o) => { if (o.isMesh) o.castShadow = true; }); g.visible = this.rod.visible; this.api.scene.remove(this.rod); this.rod = g; this.rodModel = true; this.api.scene.add(g);
@@ -86,18 +87,22 @@ export class Fishing {
     if (!this.fishCache.has(icon)) { const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d'); g.font = `92px ${EMOJI}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(icon, 64, 72); this.fishCache.set(icon, new THREE.CanvasTexture(c)); }
     const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: this.fishCache.get(icon), transparent: true, depthWrite: false })); sp.scale.set(0.9, 0.9, 1); return sp;
   }
-  startJump() {
-    const item = this.pending.item, fp = this.fpos || this.w; this.jumpFrom = { x: fp.x, y: L.waterSurface(fp.x, fp.z), z: fp.z };
+  /** (24/11) The bite is answered: the rod is yanked up, the line is wound in with the fish on the hook, then the hero takes it in the hand. */
+  startReel() {
+    const item = this.pending.item, fp = this.fpos || this.w;
     const f = this.catchReady; const holder = f ? f.holder : this.emojiCard(item.icon); this.api.scene.add(holder);
-    this.catchObj = { holder, mixer: f ? f.mixer : null, sprite: !f }; holder.position.set(this.jumpFrom.x, this.jumpFrom.y, this.jumpFrom.z); holder.scale.setScalar(1); this.api.sfx('splash');
+    this.catchObj = { holder, mixer: f ? f.mixer : null, sprite: !f }; holder.position.set(fp.x, L.waterSurface(fp.x, fp.z) - 0.25, fp.z); holder.scale.setScalar(1); this.api.sfx('splash');
+    this.hook = { x: fp.x, y: L.waterSurface(fp.x, fp.z), z: fp.z }; this.reelFrom = { x: fp.x, z: fp.z };
+    if (this.api.player.emote) this.api.player.emote('Interact');      // the yank
   }
+  startJump() { this.jumpFrom = { ...this.hook }; }
   updateJump(dt) {
     const c = this.catchObj; if (!c) { this.finishCatch(); return; }
-    const p = this.api.player, from = this.jumpFrom, s = Math.min(1, this.t / 1.3), hx = p.pos.x + Math.sin(p.yaw) * 0.2, hz = p.pos.z + Math.cos(p.yaw) * 0.2, hy = p.pos.y + 2.2;
-    c.holder.position.set(from.x + (hx - from.x) * s, from.y + (hy - from.y) * s + Math.sin(Math.PI * s) * 1.3, from.z + (hz - from.z) * s);
-    if (!c.sprite) { c.holder.rotation.y = Math.atan2(hx - from.x, hz - from.z) + Math.PI / 2; c.holder.rotation.z = Math.sin(s * Math.PI * 3) * 0.8 * (1 - s); }
+    const p = this.api.player, from = this.jumpFrom, s = Math.min(1, this.t / 0.7), hx = p.pos.x + Math.sin(p.yaw) * 0.2, hz = p.pos.z + Math.cos(p.yaw) * 0.2, hy = p.pos.y + 2.2;
+    c.holder.position.set(from.x + (hx - from.x) * s, from.y - 0.3 + (hy - from.y + 0.3) * s + Math.sin(Math.PI * s) * 0.25, from.z + (hz - from.z) * s);
+    if (!c.sprite) { c.holder.rotation.set(0, p.yaw + Math.PI, Math.PI / 2 * (1 - s)); }
     if (c.mixer) c.mixer.update(dt * 3);
-    if (s >= 1) this.finishCatch();
+    if (s >= 1) { if (p.emote) p.emote('Celebrate'); this.finishCatch(); }
   }
   /** The fish is held up over the hero's head while the result text shows (it shrinks away at the end). */
   holdCatch(dt, t) {
@@ -128,7 +133,7 @@ export class Fishing {
   }
   /** Where the boat floats: the first deep water from the bank towards a, plus a little. Null when there is none. */
   boatPoint(pos, a) {
-    for (let r = 1.2; r < 6; r += 0.3) { const x = pos.x + Math.sin(a) * r, z = pos.z + Math.cos(a) * r; if (L.inWater(x, z) && L.waterDepth(x, z) > 0.35) { const bx = pos.x + Math.sin(a) * (r + 1.1), bz = pos.z + Math.cos(a) * (r + 1.1); return L.inWater(bx, bz) ? { x: bx, z: bz } : { x, z }; } }
+    for (let r = 1.2; r < 6; r += 0.3) { const x = pos.x + Math.sin(a) * r, z = pos.z + Math.cos(a) * r; if (L.inWater(x, z) && L.waterDepth(x, z) > 0.35) { for (const off of [4.2, 3.4, 2.7]) { const bx = pos.x + Math.sin(a) * (r + off), bz = pos.z + Math.cos(a) * (r + off), fxx = bx + Math.sin(a) * 2.6, fzz = bz + Math.cos(a) * 2.6; if (L.inWater(bx, bz) && L.waterDepth(bx, bz) > 0.35 && L.inWater(fxx, fzz)) return { x: bx, z: bz }; } return { x, z }; } }
     return null;
   }
   start(spot) {
@@ -136,7 +141,7 @@ export class Fishing {
     if (!w0) { this.api.ui.toast('Chỗ này không có nước để câu.'); return; }
     const b = this.boatPoint(p.pos, w0.a); let w = w0;
     if (b) {      // into the boat; the float goes 3.4 m further out
-      const fx = b.x + Math.sin(w0.a) * 3.4, fz = b.z + Math.cos(w0.a) * 3.4; if (L.inWater(fx, fz)) w = { x: fx, z: fz, a: w0.a };
+      const fx = b.x + Math.sin(w0.a) * 4.6, fz = b.z + Math.cos(w0.a) * 4.6; if (L.inWater(fx, fz)) w = { x: fx, z: fz, a: w0.a };
       this.back = { x: p.pos.x, z: p.pos.z }; const sy = L.waterSurface(b.x, b.z); this.boatAt = { x: b.x, z: b.z, y: sy, a: w0.a };
       this.boat.position.set(b.x, sy + 0.18, b.z); this.boat.rotation.y = w0.a; this.boat.visible = true; p.seat = { x: b.x, y: sy - 0.08, z: b.z, yaw: w0.a };
       this.api.sfx('splash');
@@ -152,7 +157,7 @@ export class Fishing {
     if (this.state === 'bite' && this.t > 0.35) {
       const ok = this.marker >= this.zone[0] && this.marker <= this.zone[1];
       if (!ok) { this.state = 'result'; this.t = 0; this.resultText = 'It got away!'; this.resultVi = 'Cá thoát mất rồi. Thử lại nhé!'; this.api.sfx('wrong'); return true; }
-      const item = this.item, text = this.api.onCatch(item); this.pending = { item, text }; this.state = 'reel'; this.t = 0; this.fpos = { x: this.w.x, z: this.w.z }; this.api.sfx('splash'); return true;      // (23/11) reel it in, then the fish jumps out of the water
+      const item = this.item, text = this.api.onCatch(item); this.pending = { item, text }; this.state = 'reel'; this.t = 0; this.fpos = { x: this.w.x, z: this.w.z }; this.startReel(); return true;      // (23/11) reel it in, then the fish jumps out of the water
     }
     return this.state !== 'idle';
   }
@@ -171,19 +176,24 @@ export class Fishing {
       const width = Math.max(64, 170 - 22 * (this.item.r || 0)), s = 90 + Math.random() * (360 - width); this.zone = [s, s + width]; this.state = 'bite'; this.t = 0; this.marker = 0; this.api.sfx('tick'); this.loadCatch(this.item);      // (21/11) wider green zone
     }
     if (this.state === 'bite') { bob = -0.12 + Math.sin(t * 26) * 0.045; ring = 1; const sp = 0.42 + 0.08 * this.api.tier(), k = (this.t * sp) % 2; this.marker = this.hold ? (this.zone[0] + this.zone[1]) / 2 : (k < 1 ? k : 2 - k) * 360; if (this.t > 8) { this.state = 'result'; this.t = 0; this.resultText = 'Too slow!'; this.resultVi = 'Chậm quá, cá thoát mất.'; this.api.sfx('wrong'); } }      // (21/11) "too fast to press in time": about 2.4 s for one pass
-    if (this.state === 'reel') {      // (23/11) the float is pulled to the boat, the rod bends up, then the fish jumps out
-      const k = Math.min(1, this.t / 1.1), e = k * k * (3 - 2 * k), at = this.boatAt || p.pos;
-      this.fpos = { x: w.x + (at.x - w.x) * e * 0.78, z: w.z + (at.z - w.z) * e * 0.78 }; bob = -0.05 + Math.sin(t * 30) * 0.03; ring = 1;
-      if (this.t >= 1.1) { this.state = 'jump'; this.t = 0; this.startJump(); }
+    let lift = 0;
+    if (this.state === 'reel') {      // (24/11) the line is wound in: the hook comes to the boat under the water, then rises to the rod tip with the fish hanging on it
+      const yw = p.yaw, TIME = 1.9, e = Math.min(1, this.t / TIME), at = this.boatAt || p.pos, tx = p.pos.x + Math.sin(yw) * 2.1 + Math.cos(yw) * 0.22, tz = p.pos.z + Math.cos(yw) * 2.1 - Math.sin(yw) * 0.22;
+      const a = Math.min(1, e / 0.55), a2 = a * a * (3 - 2 * a), nx = this.reelFrom.x + (at.x - this.reelFrom.x) * 0.82 * a2, nz = this.reelFrom.z + (at.z - this.reelFrom.z) * 0.82 * a2;
+      const b = Math.max(0, (e - 0.55) / 0.45), b2 = b * b * (3 - 2 * b), fx2 = nx + (tx - nx) * b2, fz2 = nz + (tz - nz) * b2, surf = L.waterSurface(nx, nz);
+      lift = b2 * Math.max(0.2, p.pos.y + 2.1 - surf);
+      this.fpos = { x: fx2, z: fz2 }; bob = -0.05 + Math.sin(t * 30) * 0.03 * (1 - b2); ring = 1 - b2;
+      const c = this.catchObj; if (c) { const hy = surf + 0.04 + bob + lift; c.holder.position.set(fx2, hy - 0.32, fz2); if (!c.sprite) { c.holder.rotation.set(Math.sin(t * 16) * 0.25 * (0.4 + b2), p.yaw + Math.PI / 2, Math.PI / 2 + Math.sin(t * 20) * 0.3 * (0.4 + b2)); } if (c.mixer) c.mixer.update(dt * 4); }
+      if (this.t >= TIME) { this.state = 'jump'; this.t = 0; this.hook = { x: fx2, y: surf + 0.04 + bob + lift, z: fz2 }; this.startJump(); }
     } else if (this.state === 'jump') this.updateJump(dt);
     else if (this.state === 'result' && this.catchObj) this.holdCatch(dt, t);
     if (this.state === 'result' && this.t > 2.4) { this.clearCatch(); this.fpos = null; this.state = 'wait'; this.t = 0; this.biteAt = 2.5 + Math.random() * 4.5; }
-    fw.position.y = L.WATER_LEVEL + 0.04 + bob;
+    fw.position.y = L.WATER_LEVEL + 0.04 + bob + lift;
     this.rings.forEach((r, i) => { const k = ((t * (this.state === 'bite' ? 1.8 : 0.7) + i * 0.5) % 1); r.scale.setScalar(1 + k * (this.state === 'bite' ? 4 : 2.2)); r.material.opacity = ring * (1 - k) * 0.7; r.position.y = 0.02 - bob; });
     // rod in the hands, line to the float
     const yaw = p.yaw, fx = Math.sin(yaw), fz = Math.cos(yaw), rx = Math.cos(yaw), rz = -Math.sin(yaw);
     const base = new THREE.Vector3(p.pos.x + fx * 0.35 + rx * 0.22, p.pos.y + 0.85, p.pos.z + fz * 0.35 + rz * 0.22);
-    const raise = this.state === 'bite' ? 0.12 : this.state === 'reel' ? 0.45 : this.state === 'jump' ? 0.3 : 0;
+    const raise = this.state === 'bite' ? 0.12 : this.state === 'reel' ? 0.5 + 0.7 * Math.max(0, 1 - this.t / 0.45) : this.state === 'jump' ? 0.3 : 0;      // (24/11) the yank on the bite: the tip flicks up, then holds while the line is wound in
     const tip = this.rodModel ? new THREE.Vector3(base.x + fx * 1.9, base.y + 1.1 + raise, base.z + fz * 1.9) : new THREE.Vector3(base.x + fx * 1.2, base.y + 1.15 + raise, base.z + fz * 1.2);
     if (this.rodModel) { this.rod.position.copy(base); this.rod.lookAt(tip); } else { this.rod.position.copy(base).lerp(tip, 0.5); this.rod.lookAt(tip); this.rod.rotateX(Math.PI / 2); }
     const pts = this.lineGeo.attributes.position, end = fw.position;

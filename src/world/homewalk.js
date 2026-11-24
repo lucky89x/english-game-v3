@@ -101,7 +101,7 @@ export function buildHomeWalk(opts) {
     /** dt, aspect, ctl: { input {x, z, run}, yaw (camera turn from the mouse drag), mouse ndc or null } */
     update(dt, aspect, ctl = {}) {
       t += dt; if (Math.abs(camera.aspect - aspect) > 1e-3) { camera.aspect = aspect; camera.updateProjectionMatrix(); }
-      const yaw = Math.max(-0.9, Math.min(0.9, ctl.yaw || 0)), inp = ctl.input || {};
+      const yaw = ctl.yaw || 0, inp = ctl.input || {};      // (24/11) the camera turns all the way round, looks up and down, zooms: drag with the mouse, wheel
       let mx = 0, mz = 0, speed = 0;
       if (!editing && (inp.x || inp.z)) { me.route = null; const fx = -Math.sin(yaw), fz = -Math.cos(yaw), rx = Math.cos(yaw), rz = -Math.sin(yaw); mx = fx * inp.z + rx * inp.x; mz = fz * inp.z + rz * inp.x; const l = Math.hypot(mx, mz) || 1; mx /= l; mz /= l; speed = inp.run ? 4.6 : 3.0; }
       else if (me.route) { const dx = me.route.x - me.x, dz = me.route.z - me.z, d = Math.hypot(dx, dz); if (d < 0.25) me.route = null; else { mx = dx / d; mz = dz / d; speed = 3.0; } }
@@ -113,8 +113,10 @@ export function buildHomeWalk(opts) {
       const top = me.stair >= 0 ? (me.y - me.stair * FLOOR_H > FLOOR_H * 0.65 ? me.stair + 1 : me.stair) : me.f;
       floors.forEach((fl, i) => { fl.visible = i <= top; });
       // the camera: from the open front, a little above, following the hero
-      const want = new THREE.Vector3(me.x * 0.85 + Math.sin(yaw) * 5.6, me.y + 3.1, me.z + Math.cos(yaw) * 5.6 + 0.8);
-      want.z = Math.max(want.z, me.z + 3.2); camAt.lerp(want, Math.min(1, dt * 4)); camera.position.copy(camAt);
+      const pit = Math.max(-0.7, Math.min(1.45, ctl.pitch === undefined ? 0.5 : ctl.pitch)), dist = Math.max(2.4, Math.min(11, (ctl.dist || 9.5) * 0.62)), base = Math.floor((me.y + 0.01) / FLOOR_H) * FLOOR_H;
+      const want = new THREE.Vector3(me.x + Math.sin(yaw) * Math.cos(pit) * dist, me.y + 1.1 + Math.sin(pit) * dist, me.z + Math.cos(yaw) * Math.cos(pit) * dist);
+      want.x = Math.max(-7.5, Math.min(7.5, want.x)); want.z = Math.max(-5.4, Math.min(16, want.z)); want.y = Math.max(base + 0.35, Math.min(base + FLOOR_H - 0.6, want.y));      // stays inside the house
+      camAt.lerp(want, Math.min(1, dt * 6)); camera.position.copy(camAt);
       look.set(me.x, me.y + 1.1, me.z - 0.6); camera.lookAt(look);
       // arrange mode: the piece in hand follows the mouse on its floor
       if (editing && held && ctl.mouse) { const at = floorPoint(ctl.mouse, held.userData.f); if (at) { held.position.x = Math.round(at.x * 4) / 4; held.position.z = Math.round(at.z * 4) / 4; held.position.y = 0.04 + Math.sin(t * 6) * 0.03; } }

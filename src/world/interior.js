@@ -115,9 +115,10 @@ export function houseFloor(g, f, h, lights) {
   for (let i = 0; i < 16; i++) box(fl, 1.0, 0.08, D + 0.2, i % 2 ? plank : plank2, -7.5 + i, 0, 0);      // the floor boards
   box(fl, W, WH, 0.2, wall, 0, WH / 2, -D / 2 - 0.1); box(fl, 0.2, WH, D, wall, -W / 2 - 0.1, WH / 2, 0); box(fl, 0.2, WH, D, wall, W / 2 + 0.1, WH / 2, 0);
   box(fl, W, 1.0, 0.24, trim, 0, 0.5, -D / 2 + 0.02); box(fl, 0.24, 1.0, D, trim, -W / 2 + 0.02, 0.5, 0); box(fl, 0.24, 1.0, D, trim, W / 2 - 0.02, 0.5, 0);      // wainscot
-  // partitions: a full wall at x = 0 with a doorway, a low wall at z = 0 with gaps
-  box(fl, 0.15, PH, 4.8, wall, 0, PH / 2, -3.6); box(fl, 0.15, PH, 4.8, wall, 0, PH / 2, 3.6); box(fl, 0.15, 1.0, 2.4, wall, 0, PH - 0.5, 0);
-  for (const [x0, x1] of [[-8, -5.4], [-2.6, 2.6], [5.4, 8]]) box(fl, x1 - x0, 1.0, 0.15, trim, (x0 + x1) / 2, 0.5, 0);
+  // (24/11) the partition between the two halves now reaches the ceiling, with one doorway; the low brown wall across the middle is gone (it was in the way)
+  const DOOR = 3.1;
+  box(fl, 0.15, WH, 4.8, wall, 0, WH / 2, -3.6); box(fl, 0.15, WH, 4.8, wall, 0, WH / 2, 3.6); box(fl, 0.15, WH - DOOR, 2.4, wall, 0, DOOR + (WH - DOOR) / 2, 0);
+  box(fl, 0.2, 0.18, 2.5, trim, 0, DOOR + 0.04, 0);      // the lintel trim over the doorway
   // windows (daylight)
   const glass = M(0xfff2c0, 0.3, { emissive: 0xffe0a0, emissiveIntensity: 0.9 });
   for (const x of [-6, -2, 2, 6]) { box(fl, 1.5, 1.3, 0.08, glass, x, 2.1, -D / 2 + 0.05); box(fl, 1.65, 0.1, 0.16, trim, x, 1.42, -D / 2 + 0.1); }
