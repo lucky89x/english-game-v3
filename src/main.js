@@ -105,7 +105,7 @@ const post = new Post(renderer);
  *  acceleration is off or blocked): the game then stutters even on a strong graphics card. */
 const GPU = (() => { try { const gl = renderer.getContext(), ext = gl.getExtension('WEBGL_debug_renderer_info'); return String(ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER)); } catch { return '?'; } })();
 const SOFTWARE_GL = /swiftshader|llvmpipe|software|basic render|microsoft basic/i.test(GPU);
-const scene = new THREE.Scene(); scene.fog = new THREE.Fog(0xbfe4ff, 70, 330);
+const scene = new THREE.Scene(); scene.fog = new THREE.Fog(0xbfe4ff, 90, 400);
 const camera = new THREE.PerspectiveCamera(52, 1, 0.3, 700);
 
 // sky dome: clean blue gradient, soft sun glow, drifting clouds

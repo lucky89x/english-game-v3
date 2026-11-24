@@ -19,10 +19,10 @@ export const RACE = [[-20, 2], [-32, 4], [-42, 14], [-40, 28], [-34, 42], [-22, 
 export const STARTS = [
   { id: 'fish', x: 18.4, z: 19.2, text: 'E · Câu cá (trò chơi)', sign: '🎣 Fishing' },
   { id: 'apple', x: 33.5, z: 6, text: 'E · Hứng táo với cô Hana', sign: '🍎 Apple catch', host: { name: 'Hana', file: 'npc_ben_merchant_v02', tint: [0.85, 1.12, 0.85], hello: 'The apples are falling! Catch them!' } },
-  { id: 'candy', x: -15, z: -17, text: 'E · Xếp kẹo với cô Mimi', sign: '🍬 Candy Match', board: true, host: { name: 'Mimi', file: 'npc_ben_merchant_v02', tint: [1.15, 0.88, 1.0], hello: 'Sweet! Let\'s match the candies!' } },
-  { id: 'sling', x: -6, z: -33, text: 'E · Bắn ná với chú Rex', sign: '🎯 Slingshot', board: true, host: { name: 'Rex', file: 'npc_forge_blacksmith_v01', tint: [1.05, 0.95, 0.82], hello: 'Aim high and let go!' } },
-  { id: 'race2', x: 10, z: 28, text: 'E · Đua xe bí ngô với anh Leo', sign: '🏎 Cart Race', board: true, host: { name: 'Leo', file: 'npc_sam_fisherman_v02', tint: [1.12, 0.95, 0.8], hello: 'Ready, steady, go!' } },
-  { id: 'blocks', x: -31, z: 4.5, text: 'E · Xếp hình với bác Max', sign: '🧱 Blocks', board: true, host: { name: 'Max', file: 'npc_forge_blacksmith_v01', tint: [0.88, 0.92, 1.08], hello: 'Fill a whole line!' } },
+  { id: 'candy', x: -25, z: -76, text: 'E · Xếp kẹo với cô Mimi', sign: '🍬 Candy Match', board: true, host: { name: 'Mimi', file: 'npc_ben_merchant_v02', tint: [1.15, 0.88, 1.0], hello: 'Sweet! Let\'s match the candies!' } },
+  { id: 'sling', x: -62, z: -60, text: 'E · Bắn ná với chú Rex', sign: '🎯 Slingshot', board: true, host: { name: 'Rex', file: 'npc_forge_blacksmith_v01', tint: [1.05, 0.95, 0.82], hello: 'Aim high and let go!' } },
+  { id: 'race2', x: -61, z: 68, text: 'E · Đua xe bí ngô với anh Leo', sign: '🏎 Cart Race', board: true, host: { name: 'Leo', file: 'npc_sam_fisherman_v02', tint: [1.12, 0.95, 0.8], hello: 'Ready, steady, go!' } },
+  { id: 'blocks', x: -82, z: 32, text: 'E · Xếp hình với bác Max', sign: '🧱 Blocks', board: true, host: { name: 'Max', file: 'npc_forge_blacksmith_v01', tint: [0.88, 0.92, 1.08], hello: 'Fill a whole line!' } },
 ];
 export const ORCHARD = { x: 40, z: 11, r: 8 };
 

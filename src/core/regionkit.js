@@ -91,10 +91,11 @@ export function makeRegion(cfg) {
   R.SOLIDS = [...cfg.solids]; R.TREES = []; R.ROCKS = [];
   const rnd = mulberry32(cfg.seed);
   let guard = 0;
-  const spread = R.PLAY_RADIUS + 14;
+  const SEED_R = cfg.seedRadius ?? R.PLAY_RADIUS;      // (24/11) the radius the first, seeded scenery was made for: a larger play area adds trees on its own seed, the old ones stay where they were
+  const spread = SEED_R + 14;
   while (R.TREES.length < cfg.trees && guard++ < cfg.trees * 25) {
     const a = rnd() * Math.PI * 2, d = Math.sqrt(rnd()) * spread, x = Math.cos(a) * d, z = Math.sin(a) * d;
-    const inside = d < R.PLAY_RADIUS + 2;
+    const inside = d < SEED_R + 2;
     if (inside && (R.pathDistance(x, z) < 3.6 || R.riverDistance(x, z) < R.riverHalf(z) + 2.4 || !clearOf(x, z, 1.5))) continue;
     if (inside && cfg.treeFree && cfg.treeFree(x, z)) continue;
     if (R.WATERFALL && z < R.RIVER_START && Math.abs(x - R.riverX(R.RIVER_START)) < 5) continue;
@@ -105,15 +106,26 @@ export function makeRegion(cfg) {
   }
   guard = 0;
   while (R.ROCKS.length < cfg.rocks && guard++ < cfg.rocks * 45) {
-    const x = (rnd() - 0.5) * R.PLAY_RADIUS * 2, z = (rnd() - 0.5) * R.PLAY_RADIUS * 2;
+    const x = (rnd() - 0.5) * SEED_R * 2, z = (rnd() - 0.5) * SEED_R * 2;
     const rd = R.riverDistance(x, z), nearRiver = rd < R.riverHalf(z) + 3.5 && rd > R.riverHalf(z) + 0.6;
     if (!nearRiver && rnd() > 0.25) continue;
-    if (R.pathDistance(x, z) < 1.6 || !clearOf(x, z, 0.5) || Math.hypot(x, z) > R.PLAY_RADIUS) continue;
+    if (R.pathDistance(x, z) < 1.6 || !clearOf(x, z, 0.5) || Math.hypot(x, z) > SEED_R) continue;
     if (R.BRIDGES.some((b) => Math.abs(z - b.z) < 4 && Math.abs(x - b.x) < 10)) continue;
     if (R.STONES_Z !== null && Math.abs(z - R.STONES_Z) < 3 && rd < 12) continue;
     if (cfg.treeFree && cfg.treeFree(x, z)) continue;
     if (R.TREES.some((t) => Math.hypot(t.x - x, t.z - z) < 2.2)) continue;
     R.ROCKS.push({ x, z, s: 0.5 + rnd() * 0.9, rot: rnd() * 6.28 });
+  }
+  if (cfg.extraTrees) {      // the ring added by a larger play area: its own generator, the same rules as inside
+    const X = cfg.extraTrees, rx = mulberry32(X.seed || 77), mix2 = cfg.treeMix || [0.56, 0.9]; let g2 = 0, n2 = 0;
+    while (n2 < X.n && g2++ < X.n * 40) {
+      const a = rx() * Math.PI * 2, d = X.inner + Math.sqrt(rx()) * (X.outer - X.inner), x = Math.cos(a) * d, z = Math.sin(a) * d, inside = d < R.PLAY_RADIUS + 2;
+      if (inside && (R.pathDistance(x, z) < 3.6 || R.riverDistance(x, z) < R.riverHalf(z) + 2.4 || !clearOf(x, z, 1.5))) continue;
+      if (inside && cfg.treeFree && cfg.treeFree(x, z)) continue;
+      if (R.groundHeight(x, z) < 0 || (inside && slopeAt(x, z) > 0.75)) continue;
+      if (R.TREES.some((t) => Math.hypot(t.x - x, t.z - z) < 3.1)) continue;
+      const k = rx(); R.TREES.push({ x, z, kind: k < mix2[0] ? 'pine' : k < mix2[1] ? 'oak' : 'birch', s: 0.8 + rx() * 0.55, rot: rx() * 6.28 }); n2++;
+    }
   }
   // Later additions (latePaths, lateClear) are applied after the seeded trees and rocks, so adding a place to a map
   // only removes the trees standing on it and never reshuffles the rest of the forest.
@@ -122,7 +134,7 @@ export function makeRegion(cfg) {
   if (cfg.latePaths) R.PATHS.push(...cfg.latePaths(R));
   if (cfg.latePaths || cfg.lateClear || cfg.pathWiden || cfg.lateRiverHalf || cfg.thinTrees || cfg.lateMove) {
     // thinTrees: share removed inside the play area; thinOuter: share removed beyond it (the scenery ring)
-    const thin = (x, z) => { const k = Math.abs(Math.sin(x * 91.7 + z * 47.3) * 43758.5) % 1; return Math.hypot(x, z) < R.PLAY_RADIUS ? k < (cfg.thinTrees || 0) : k < (cfg.thinOuter || 0); };
+    const thin = (x, z) => { const k = Math.abs(Math.sin(x * 91.7 + z * 47.3) * 43758.5) % 1; return Math.hypot(x, z) < SEED_R ? k < (cfg.thinTrees || 0) : k < (cfg.thinOuter || 0); };
     const gone = (x, z, pad) => (cfg.lateClear && cfg.lateClear(x, z)) || R.pathDistance(x, z) < pad || R.riverDistance(x, z) < R.riverHalf(z) + pad * 0.5;
     const pad = 3.6 * (cfg.treeScale || 1);          // bigger trees keep further from the roads
     R.TREES = R.TREES.filter((t) => !gone(t.x, t.z, pad) && !thin(t.x, t.z)); R.ROCKS = R.ROCKS.filter((r) => !gone(r.x, r.z, 1.6));

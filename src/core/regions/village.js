@@ -16,11 +16,13 @@ export const HOMES = [-31.5, -10.5, 10.5, 31.5].map((z) => ({ x: -50, z, door: [
 /** (24/11) the landmark of each mini game, a few metres from its sign and host: a candy shop, a shooting range, a start arch, a block tower.
  *  yaw: the way the front faces (radians, 0 = +z, so PI/2 faces west); r: its solid. Pure data: world/arcade_sites.js draws them. */
 export const MINI_BUILDINGS = [
-  { id: 'candy', kind: 'candy', x: -11, z: -17, yaw: -Math.PI / 2, r: 2.8 },
-  { id: 'sling', kind: 'range', x: -3.2, z: -35.8, yaw: -Math.PI / 4, r: 2.6 },
-  { id: 'race2', kind: 'arch', x: 6, z: 28, yaw: Math.PI / 2, r: 2.2 },
-  { id: 'blocks', kind: 'tower', x: -35, z: 4.5, yaw: -Math.PI / 2, r: 2.2 },
+  { id: 'candy', kind: 'candy', x: -21, z: -76, yaw: -Math.PI / 2, r: 2.8 },
+  { id: 'sling', kind: 'range', x: -59.2, z: -62.8, yaw: -Math.PI / 4, r: 2.6 },
+  { id: 'race2', kind: 'arch', x: -65, z: 68, yaw: Math.PI / 2, r: 2.2 },
+  { id: 'blocks', kind: 'tower', x: -86, z: 32, yaw: -Math.PI / 2, r: 2.2 },
 ];
+/** (24/11) the mini game places moved out to the new outer ring of the village (x, z of each sign), joined to the village by roads of their own. */
+export const MINI_SITES = { candy: [-25, -76], sling: [-62, -60], race2: [-61, 68], blocks: [-82, 32] };
 /** (24/11) the new buildings and stalls from the user's set (assets/models/bld_*.glb, stall_*.glb): the forge next to Bram, an inn by the west lane, the quest tower by the forest road, the barn at the farm, and a row of three market stalls along the main road. yaw 0 faces +z. */
 export const TOWN = [
   { file: 'bld_village_forge', name: 'Village Forge', x: 8.5, z: -18, yaw: 0, r: 3.2, scale: 1.3 },
@@ -44,7 +46,7 @@ export const STALLS = { produce: { x: -7.5, z: 24.8, yaw: Math.PI / 2, at: [-4.6
 export const PONDS = [];
 export default makeRegion({
   ponds: PONDS,
-  name: 'village', title: 'Starter Village', size: 140, playRadius: 62, seed: 4242, trees: 230, rocks: 40, roughness: 0.3, treeMix: [0.3, 0.85],
+  name: 'village', title: 'Starter Village', size: 230, playRadius: 96, seedRadius: 62, extraTrees: { n: 300, inner: 56, outer: 118, seed: 24112 }, seed: 4242, trees: 230, rocks: 40, roughness: 0.3, treeMix: [0.3, 0.85],
   riverX, riverHalf: () => 3.4, riverStart: -52, waterfall: true,
   bridges: [{ id: 'village', z: 6, name: 'Village Bridge' }, { id: 'south', z: 40, name: 'South Bridge', closed: true }], stonesZ: null,
   landmarks: [
@@ -91,6 +93,8 @@ export default makeRegion({
     P(2.2, [-10, -1], [-14, -16], [-12, -30], [-4, -36]),                    // west lane past the hall to the hill
     P(2.2, [-17.4, -4], [-12, -3.6]), P(2.2, [-17.8, 12.5], [-11.4, 12.2]),     // garden paths to the two moved houses
     P(2.2, [-12.5, -1.5], [-19, 2.5], [-30, 4]),                              // lane to Max's blocks yard
+    P(2.6, [-24, -24], [-18, -40], [-20, -58], [-25, -72]), P(2.4, [-20, -58], [-40, -62], [-58, -60]),      // (24/11) roads out to the candy shop and the shooting range
+    P(2.4, [-40, 34], [-40, 48], [-62, 52], [-78, 42], [-82, 34]), P(2.4, [-27, 44], [-42, 54], [-54, 62], [-60, 67]),      // and out to the blocks tower and the cart race
     P(2.4, [-30, 4], [-36, 2.5], [-40, 2.5]), P(2.2, [-40, -34], [-40, 34]),    // lane to the children's homes (18/11), now past all four lots
     ...HOMES.map((h) => P(1.8, h.door, [-40, h.z])),                           // garden paths to the four front doors
     P(2.2, [-40, -14], [-30, -14], [-24, -16], [-24, -22], [-26.1, -26]),       // on to the furniture shop

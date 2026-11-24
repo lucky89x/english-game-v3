@@ -131,7 +131,7 @@ export function bake(group) {
 /** Same, for a small moving thing built at the origin (a creature): its parts become one mesh inside the same group. */
 export function compact(group) { const b = bake(group); group.clear(); for (const c of [...b.children]) group.add(c); return group; }
 export function buildTerrain() {
-  const seg = 180, geo = new THREE.PlaneGeometry(L.SIZE + 40, L.SIZE + 40, seg, seg);
+  const seg = Math.max(180, Math.round(L.SIZE + 40)), geo = new THREE.PlaneGeometry(L.SIZE + 40, L.SIZE + 40, seg, seg);      // (24/11) about one vertex a metre, as before, on the bigger village map
   geo.rotateX(-Math.PI / 2);
   const p = geo.attributes.position, col = new Float32Array(p.count * 3);
   const gA = C(0x62b83a), gB = C(0x9ad852), gC = C(0x3f9a3a), path = C(0xc9b58c), dirt = C(0xa98a5a), sand = C(0xe9dca6),
@@ -384,12 +384,13 @@ export function lampPost(x, z) {
 }
 export function mountains() {
   const g = new THREE.Group(), parts = [];
+  const K = Math.max(1, (L.PLAY_RADIUS + 34) / 96);      // (24/11) a bigger play area pushes the far mountains and the foothills out
   for (let i = 0; i < 26; i++) {
-    const a = (i / 26) * Math.PI * 2 + R(-0.06, 0.06), d = R(150, 215), h = R(34, 78), r = R(30, 52);
+    const a = (i / 26) * Math.PI * 2 + R(-0.06, 0.06), d = R(150, 215) * K, h = R(34, 78), r = R(30, 52);
     parts.push(tint(at(lumpy(new THREE.ConeGeometry(r, h, 7, 3), 0.1, i), Math.cos(a) * d, h / 2 - 6, Math.sin(a) * d, 1, 1, 1, R(0, 6)), i % 3 ? 0x7f9fd0 : 0x93b1dc, 0.06));
     parts.push(tint(at(new THREE.ConeGeometry(r * 0.3, h * 0.3, 7), Math.cos(a) * d, h * 0.85 - 6, Math.sin(a) * d), 0xf4f8ff, 0.03));
   }
-  for (let i = 0; i < 40; i++) { const a = (i / 40) * Math.PI * 2, d = R(96, 128), r = R(16, 28); parts.push(tint(at(new THREE.SphereGeometry(r, 9, 6), Math.cos(a) * d, -r * 0.42, Math.sin(a) * d, 1, 0.8, 1), i % 2 ? 0x3f9442 : 0x4fa648, 0.1)); }
+  for (let i = 0; i < 40; i++) { const a = (i / 40) * Math.PI * 2, d = R(96, 128) * K, r = R(16, 28); parts.push(tint(at(new THREE.SphereGeometry(r, 9, 6), Math.cos(a) * d, -r * 0.42, Math.sin(a) * d, 1, 0.8, 1), i % 2 ? 0x3f9442 : 0x4fa648, 0.1)); }
   const m = new THREE.Mesh(mergeGeometries(parts), new THREE.MeshBasicMaterial({ vertexColors: true, fog: true })); g.add(m);
   return g;
 }

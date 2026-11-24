@@ -268,7 +268,7 @@ test('village: no vocabulary for the unit -> Ben says so and the story is not bl
 test('mini games: stars, race rings and start signs are on reachable ground', async () => {
   const STARS = [[-36, 20], [-38, -34], [-12, -38], [30, -30], [48, -12], [52, 20], [44, 38], [10, 50], [-22, 50], [-35, 38], [-30, 14], [8, -36]];
   const RACE = [[-20, 2], [-32, 4], [-42, 14], [-40, 28], [-34, 42], [-22, 47], [-6, 44], [-8, 30], [-20, 2]];
-  const STARTS = [[18.4, 19.2], [33.5, 6], [-15, -17], [-6, -33], [10, 28], [-31, 4.5]];
+  const STARTS = [[18.4, 19.2], [33.5, 6], [-25, -76], [-62, -60], [-61, 68], [-82, 32]];
   const src = (await import('node:fs')).readFileSync(new URL('../src/game/minigames.js', import.meta.url), 'utf8');
   assert.ok(src.includes(JSON.stringify(STARS).replace(/,/g, ', ').replace(/\], \[/g, '], [')), 'test list matches the game list');
   L.setRegion('village');
@@ -932,7 +932,7 @@ import * as PET2 from '../src/core/pet.js';
 import { KINDS as WK, baseOf, patOf, parse as wparse, priceOf as wprice } from '../src/core/wardrobe.js';
 test('safe places: no monster lives in one; the orchard, the mini games and the shops are safe; chase is slower, respawn later', () => {
   for (const [kind, x, z] of SP21) assert.ok(!inSafe('village', x, z, 1), `${kind} at ${x},${z} spawns outside the safe places`);
-  for (const [x, z] of [[40, 11], [36, 0], [45, 18], [-15, -17], [-6, -33], [10, 28], [-31, 4.5], [0, 0], [-50, -5]]) assert.ok(inSafe('village', x, z), `${x},${z} is safe`);
+  for (const [x, z] of [[40, 11], [36, 0], [45, 18], [-25, -76], [-62, -60], [-61, 68], [-82, 32], [0, 0], [-50, -5]]) assert.ok(inSafe('village', x, z), `${x},${z} is safe`);
   assert.ok(inSafe('harbor', -12, 2) && !inSafe('harbor', 12, 45));
   assert.ok(CHASE < 0.8 && RESPAWN.normal >= 30 && RESPAWN.elite > RESPAWN.normal);
 });

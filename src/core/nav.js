@@ -1,7 +1,7 @@
 // Grid A* over the walkable map (1 m cells, 8 directions). Used by minimap click-to-travel.
 import { walkable, canStep, onRegionChange } from './layout.js';
 
-const N = 150, OFF = N / 2;          // covers the largest region (play radius up to 74 m)
+const N = 240, OFF = N / 2;          // covers the largest region (24/11: the village now has a play radius of 96 m)
 let grid = null;
 onRegionChange(() => { grid = null; });
 function build() {
