@@ -316,6 +316,7 @@ await view(-8, 26, 0.6, 0.5, 16); await wait(1500); await snap('03_village_marke
 await view(14, 14, -2.2, 0.4, 14); await wait(1500); await snap('04_village_bridge_dock');
 await view(0, -12, 0.0, 0.3, 13); await wait(1500); await snap('05_village_hall');
 await view(38, 12, -0.6, 0.35, 13); await wait(1500); await snap('06_orchard');
+await ev(() => { const p = __eq.profile; p.stats.level = Math.max(p.stats.level, 10); p.gates = { 5: true, 10: true }; p.flags.forest_open = true; });      // (24/11) the owl steps above held the village at level 5: the forest asks for level 10 and the review
 await ev((g) => __eq.teleport(g.x, g.z + 1.2), gate); await wait(450);
 console.log('gate state', JSON.stringify(await ev(() => ({ dialog: !!document.querySelector('#dialog:not(.hidden)'), prompt: document.getElementById('prompt').textContent, hp: __eq.profile.stats.hp, pos: __eq.player.pos.toArray().map((v) => +v.toFixed(1)), fishing: __eq.fishing.active, modal: __eq.ui.modal }))));
 await page.keyboard.press('KeyE');
