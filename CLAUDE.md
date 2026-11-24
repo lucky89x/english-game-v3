@@ -4,13 +4,25 @@ Game học tiếng Anh lớp 6–9 bằng Three.js, JavaScript thuần, không b
 
 ## Quy tắc làm việc
 - Trả lời tiếng Việt, ngắn. Cuối mỗi lượt báo checklist: đã làm · còn lại · đề xuất.
-- Xong mỗi lượt: cập nhật mục **Tiến độ** cuối file này rồi mới commit (người dùng hay chuyển sang hội thoại mới).
+- Xong mỗi lượt: cập nhật mục **Tiến độ** cuối file này rồi mới commit (người dùng hay chuyển sang hội thoại mới); cách làm ở mục "Quy tắc cập nhật CLAUDE.md" ngay dưới.
 - Chỉ push khi người dùng nói "đẩy đi" (mỗi lần nói chỉ áp dụng cho phần việc lúc đó). Đẩy lên `fable/web-rebuild`. Không tạo pull request.
 - Không dùng `git add -A`, `reset --hard`, `clean`, force push. Luôn `git add` từng đường dẫn.
 - Nội dung có bản quyền (sách, đề thi): chỉ lấy khung từ vựng, ngữ pháp. Bài đọc, câu hỏi, lời thoại phải tự viết.
 - Lớp chưa có nội dung thì game nói "chưa được soạn"; không mượn nội dung lớp khác.
 - (Đổi 18/11 theo ý anh) Trò chơi kỹ năng **có lồng tiếng Anh**: dạy từ trong lúc chơi (Xếp hình tặng từ mỗi hàng xóa, Đua xe đánh vần bằng xu chữ cái), chủ trò hỏi lại vài từ cuối trò. Vẫn giữ tỉ lệ khoảng 70% chơi, 30% học.
 - Không chép lời bài hát có bản quyền (BLACKPINK…); chỉ bài dân gian hết bản quyền hoặc bài tự viết, kèm nút mở kênh chính thức.
+
+## Quy tắc cập nhật CLAUDE.md (để hội thoại khác làm tiếp được)
+File này nằm ở **gốc dự án** (`english-quest-web/CLAUDE.md`, nằm trong git cùng mã nguồn, nên đi theo nhánh `fable/web-rebuild`); Claude Code tự đọc nó đầu mỗi hội thoại. Mọi thứ cần nhớ giữa các hội thoại phải nằm ở đây hoặc trong `docs/`, không nằm trong trí nhớ của hội thoại.
+- **Khi nào cập nhật**: cuối mỗi lượt làm việc, TRƯỚC khi commit; và ngay khi anh chốt một quyết định mới (luật chơi, số liệu, "bỏ/giữ cái gì") dù chưa làm xong, để khỏi mất.
+- **Cập nhật những gì** (theo thứ tự):
+  1. Dòng `**Lần cập nhật:**` (ngày, tên lượt, số unit test, nhóm quick, e2e).
+  2. Khối `**BÀN GIAO CHO HỘI THOẠI MỚI**`: VIẾT LẠI cho đúng hiện tại, không nối thêm. Gồm: nhánh và số commit chưa đẩy; trạng thái kiểm thử (đã chạy gì, chưa chạy gì); luật chơi đã chốt; việc còn lại theo thứ tự nên làm; quy ước cần nhớ.
+  3. Một mục `- Lượt N (ngày) **tên lượt**` mới ở cuối danh sách Tiến độ: đã làm gì, file/hàm chính, bẫy gặp phải, quyết định của anh, việc tiếp. Ngắn, đủ để người sau tìm đúng chỗ trong mã.
+  4. Mục `## Bẫy đã gặp` nếu có bài học dùng lại được; mục `## Cấu trúc` nếu thêm file/thư mục mới quan trọng; `## Lệnh` nếu đổi cách chạy test.
+- **Viết thế nào**: tiếng Việt, có tên file và hàm; ghi rõ cái gì CHƯA làm và CHƯA kiểm (đừng viết "đạt" khi chưa chạy); số liệu cân bằng (EXP, vàng, giá…) không chép vào đây mà trỏ tới `src/core/progress.js`, `zones.js`, `docs/CAP_DO_QUAI_TRANG_BI.md` (sinh từ code).
+- **Giữ file gọn** (hiện hơn 100 KB, mỗi hội thoại mới phải đọc hết): khi file quá ~60 KB thì chuyển các mục `Lượt` cũ (trừ 5 lượt gần nhất) sang `docs/NHAT_KY_TIEN_DO.md`, để lại ở đây một dòng trỏ tới đó. Khối bàn giao luôn ở trên cùng của mục Tiến độ.
+- **Trước khi kết thúc lượt**: đã commit cả CLAUDE.md chưa? (commit local; chỉ đẩy khi anh nói "đẩy đi"). Nếu hội thoại sắp hết dung lượng thì cập nhật CLAUDE.md trước mọi việc khác.
 
 ## Lệnh
 ```bash
