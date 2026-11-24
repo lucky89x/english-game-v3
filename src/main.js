@@ -1067,7 +1067,7 @@ function interactTarget() {
     if (near(H.market.x, H.market.z - 1.2, 3.4)) { const n = Sea.bucketCount(profile); return { text: n ? `E · Bán ${n} món trong xô cá ở chợ cá` : 'E · Chợ cá (xô cá đang trống)', run: sellFish }; }
     if (near(H.shop.x + 1.6, H.shop.z + 0.6, 2.4)) return { text: "E · Quầy của Willow (đồ Map 2)", run: () => { enterRoom('forest'); shopWin.show("Willow's Harbor Stall", ['forest']); } };
     if (near(sam.x, sam.z, 3)) return { text: 'E · Nói chuyện với Sam', run: () => ui.dialogue([{ who: 'Sam', en: 'Welcome to Sunny Harbor! The sea is big and blue.', vi: 'Chào mừng tới Cảng Mặt Trời (Map 2)! Ghé Style Boutique bên trái quảng trường nhé.' }]) };
-    for (const f of [wild, chests, spots]) { const c = f && f.interact(p); if (c) return c; }
+    for (const f of [mini, wild, chests, spots]) { const c = f && f.interact(p); if (c) return c; }
     return null;
   }
   if (L.NAME === 'forest') {
@@ -1079,7 +1079,7 @@ function interactTarget() {
     if (quest.step === 'tree' && near(tree.spot[0], tree.spot[1], 3.2)) return { text: 'E · Đặt pha lê vào cây cổ thụ', run: () => quest.treeChallenge() };
     for (const f of friends) if (f.region === 'forest' && near(f.npc.x, f.npc.z, 2.6)) return { text: 'E · Cửa hàng thuốc của ' + f.who + ' (bình máu, bình mana)', run: () => ui.dialogue([{ who: f.who, en: f.lines[0] }, { who: f.who, en: 'Herbs make the best potions. Take a look!' }], () => villageShop(f.shop)) };
     if (near(FOREST_SHOP.x + 1.6, FOREST_SHOP.z + 0.6, 2.4)) return profile.flags.map2 ? { text: "E · Cửa hàng của Willow (đồ Map 2)", run: () => { enterRoom('forest'); shopWin.show("Willow's Camp Shop", ['forest']); } } : { text: 'Willow đang soạn hàng: đồ Map 2 sẽ bán ở Cảng Mặt Trời', run() {} };
-    for (const f of [wild, chests, spots]) { const c = f && f.interact(p); if (c) return c; }      // Map 2: board, boss shield, chests, word bubbles
+    for (const f of [mini, wild, chests, spots]) { const c = f && f.interact(p); if (c) return c; }      // Map 2: board, boss shield, chests, word bubbles
     return null;
   }
   if (story.market) {
