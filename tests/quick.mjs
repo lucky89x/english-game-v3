@@ -182,7 +182,7 @@ await run('map2', async () => {        // the forest is the last chapter of Map 
   check(r.exp && r.dead, 'Defeating a Shadow Bat pays EXP');
   await closeDialogs();
   await ev(() => { __eq.teleport(-32.4, 46.6); __eq.wild.mobs.forEach((m) => { if (!m.boss) { m.dead = 999; m.g.visible = false; } }); }); await wait(500);
-  check((await page.textContent('#prompt')).includes('Bảng nhiệm vụ'), 'Forest quest board by the entrance path');
+  check((await page.textContent('#prompt')).includes('Bảng nhiệm vụ'), 'Forest quest board by the entrance path [' + await page.textContent('#prompt') + ']');
   await page.keyboard.press('KeyE'); await wait(400);
   check(/bats/i.test(await page.textContent('#dialog .en')), 'The forest board asks for Shadow Bats in English');
   await closeDialogs();
@@ -209,7 +209,7 @@ await run('harbor', async () => {        // Map 2 in Sunny Harbor: sea monsters,
   check(await ev(() => __eq.chests.list.filter((c) => c.region === 'harbor' && c.g.visible).length === 6 && __eq.chests.list.filter((c) => c.region !== 'harbor').every((c) => !c.g.visible)), 'Six word chests in the harbor');
   check(await ev(() => __eq.spots.list.filter((s) => s.region === 'harbor' && s.sp.visible).length === 10), 'Ten word bubbles in the harbor');
   await ev(() => { __eq.wild.mobs.forEach((m) => { if (!m.boss) { m.dead = 999; m.g.visible = false; } }); __eq.teleport(-2, -0.2); }); await wait(600);
-  check((await page.textContent('#prompt')).includes('Bảng nhiệm vụ'), 'Harbor quest board beside the square');
+  check((await page.textContent('#prompt')).includes('Bảng nhiệm vụ'), 'Harbor quest board beside the square [' + await page.textContent('#prompt') + ']');
   await page.keyboard.press('KeyE'); await wait(400);
   check(/crabs/i.test(await page.textContent('#dialog .en')), 'The harbor board asks for crabs in English');
   await closeDialogs();
