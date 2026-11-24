@@ -601,7 +601,7 @@ function adminPlaces() {
   const out = [], add = (region, name, x, z) => out.push({ region, name, x, z });
   for (const r of ['village', 'forest', 'harbor', 'isle']) for (const l of L.REGIONS[r].LANDMARKS) add(r, l.label, ...(l.spot || [l.x, l.z]));
   add('village', 'Tom', 2.6, 9.6); add('village', 'Cửa hàng', SHOP_DOOR.x - 1, SHOP_DOOR.z); add('village', 'Cú Mèo', OWL.x, OWL.z + 1.2); add('village', 'Bảng săn quái', BOARD.x + 1.2, BOARD.z + 1);
-  for (const st of STARTS) add('village', 'Trò: ' + st.sign.replace(/^\S+\s/, ''), st.x + 0.8, st.z + 0.8);
+  for (const st of STARTS) add(st.region || 'village', 'Trò: ' + st.sign.replace(/^\S+\s/, ''), st.x + 0.8, st.z + 0.8);
   add('village', 'Nhà của các con', HOMES[0].door[0] + 2, HOMES[0].door[1] + 1.5); add('village', 'Cửa hàng nội thất', FURNITURE.door[0] + 1.5, FURNITURE.door[1]);
   add('village', 'Quầy rau quả', STALLS.produce.at[0] + 0.5, STALLS.produce.at[1]); add('village', 'Quầy nhạc cụ', STALLS.music.at[0] + 0.5, STALLS.music.at[1]); add('village', 'Tiệm may cô Mia', STALLS.tailor.at[0], STALLS.tailor.at[1] - 0.6);
   add('village', 'Vua Slime', BOSS_AT.x, BOSS_AT.z - 4); add('village', 'Golem Cổ', BOSS2_AT.x, BOSS2_AT.z - 4); add('village', 'Rương Đồng Hoang', CHEST_SPOTS[0][0], CHEST_SPOTS[0][1] - 1.5);
@@ -1291,7 +1291,7 @@ async function boot() {
   spells = new Spells({ scene, wild, player, camera, canvas, profile: () => profile, sfx, ui, onChange: () => {} });      // (20/11) magic skills: keys 1-4, the skill book T
   packUI = new PackUI({ profile: () => profile, sfx, toast: (t) => ui.toast(t), changed: () => { save(); refresh(); }, hpMax: () => Save.maxHp(profile), focus: creatorCamera, look: () => { setSword(); setWear(); }, swing: () => player.swing() });      // (21/11) the hero stands beside the bag and shows each piece
   skillUI = new SkillUI({ profile: () => profile, spells, sfx, usePotion, toast: (t) => ui.toast(t), atk: () => playerAtk(profile), changed: () => { save(); refresh(); } });      // the Blender monsters replace the shapes a moment after the game starts (not awaited: a slow download must not hold the boot)
-  mini = new MiniGames({ scene, player, ui, sfx, track, profile: () => profile, save, onNote: refresh, board: (id) => { const t = tierOf(profile.stats.level), go = async () => { let g; if (id === 'race2') { try { raceAssets = raceAssets || await loadRaceAssets(gltf); g = raceGame3d({ assets: raceAssets, cards: unitCards, tier: t }); } catch (e) { console.warn('race3d: ' + e.message); g = raceGame(Math.random, [], t); } } else g = ({ candy: () => candyGame(Math.random, t), blocks: () => blocksGame(Math.random, unitCards, t), sling: () => slingGame(Math.random, t) })[id](); arcade.start(withTier(g, t)); }; if (id === 'candy' || id === 'race2' || id === 'blocks') wordGate(id === 'candy' ? 'Mimi' : id === 'blocks' ? 'Max' : 'Leo', go); else go(); } });
+  mini = new MiniGames({ scene, player, ui, sfx, track, profile: () => profile, save, onNote: refresh, board: (id) => { const t = tierOf(profile.stats.level), go = async () => { let g; if (id.startsWith('race2')) { try { raceAssets = raceAssets || await loadRaceAssets(gltf); g = raceGame3d({ assets: raceAssets, cards: unitCards, tier: t, variant: id === 'race2h' ? 'harbor' : id === 'race2f' ? 'forest' : 'village' }); } catch (e) { console.warn('race3d: ' + e.message); g = raceGame(Math.random, [], t); } } else g = ({ candy: () => candyGame(Math.random, t), blocks: () => blocksGame(Math.random, unitCards, t), sling: () => slingGame(Math.random, t) })[id](); arcade.start(withTier(g, t)); }; if (id === 'candy' || id.startsWith('race2') || id === 'blocks') wordGate(id === 'candy' ? 'Mimi' : id === 'blocks' ? 'Max' : id === 'race2h' ? 'Marina' : id === 'race2f' ? 'Rowan' : 'Leo', go); else go(); } });
   await mini.addHosts((name) => loader.loadAsync(`./assets/models/${name}.glb`));      // a host by each mini game
   admin = new AdminPanel({ profile: () => profile, profiles: () => store.profiles, visitHome: (o) => goHome(o, true, false, true), deleteProfile: adminDelete, places: adminPlaces, go: adminGo, unlockAll: adminUnlock, setStep: adminStep,
     resetForest: () => { delete profile.quests.forest; if (L.NAME === 'forest') enterRegion('forest'); }, setGrade: (g) => { profile.grade = g; save(); chooseProfile(profile); },
@@ -1368,14 +1368,16 @@ function frame() {
       if (left('cafe')) markers.push({ x: HARBOR.cafe.door[0] + 1, z: HARBOR.cafe.door[1], text: '!', host: true });
       if (left('salon')) markers.push({ x: HARBOR.salon.door[0], z: HARBOR.salon.door[1] + 1, text: '!', host: true });
       markers.push({ x: sam.x, z: sam.z, text: '!', host: true });
-      markers.push(...wild.markers(), ...chests.markers(), ...spots.markers());
+      markers.push(...mini.markers(), ...wild.markers(), ...chests.markers(), ...spots.markers());
+      for (const st of STARTS) if (st.host && st.region === 'harbor') { const n = (profile.plays && profile.plays.day === Review.today() && profile.plays.n[st.id]) || 0; if (n < 3) markers.push({ x: st.x - 0.6, z: st.z + 0.4, text: '!', host: true }); }
     } else if (L.NAME === 'isle') {
       // Treasure Isle has no markers: the map is read on its card (M) and the place names stand on small signs
     } else if (L.NAME === 'forest') {
       if (quest.step === 'intro') markers.push({ x: tom.x, z: tom.z, text: '!' });
       if (quest.step === 'tree') { const s = landmark('tree').spot; markers.push({ x: s[0], z: s[1], text: '★' }); }
       if (quest.step === 'seek' && quest.q.hint >= 3) { const s = landmark(quest.targetId).spot; markers.push({ x: s[0], z: s[1], text: '★' }); }
-      markers.push(...wild.markers(), ...chests.markers(), ...spots.markers());
+      markers.push(...mini.markers(), ...wild.markers(), ...chests.markers(), ...spots.markers());
+      for (const st of STARTS) if (st.host && st.region === 'forest') { const n = (profile.plays && profile.plays.day === Review.today() && profile.plays.n[st.id]) || 0; if (n < 3) markers.push({ x: st.x - 0.6, z: st.z + 0.4, text: '!', host: true }); }
     } else {
       const st = story.step;
       if (st === 'arrive' || st === 'letter_return' || st === 'open') markers.push({ x: tom.x, z: tom.z, text: st === 'arrive' ? '!' : '?' });
@@ -1389,7 +1391,7 @@ function frame() {
       if (st === 'done' && quest.step !== 'done') markers.push({ x: L.EXITS[0].x, z: L.EXITS[0].z, text: '★' });
       if (story.market && Math.hypot(player.pos.x - BEN_MARKET.centre[0], player.pos.z - BEN_MARKET.centre[1]) > 15) story.leaveMarket();
       if (!story.market) markers.push(...mini.markers());
-      for (const st of STARTS) if (st.host) {      // a glowing "!" over each mini game host while today's full-pay plays remain (18/11)
+      for (const st of STARTS) if (st.host && (st.region || 'village') === L.NAME) {      // a glowing "!" over each mini game host while today's full-pay plays remain (18/11)
         const n = (profile.plays && profile.plays.day === Review.today() && profile.plays.n[st.id]) || 0;
         if (n < 3) markers.push({ x: st.x - 0.6, z: st.z + 0.4, text: '!', host: true });
       }

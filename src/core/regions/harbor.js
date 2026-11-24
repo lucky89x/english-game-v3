@@ -34,10 +34,10 @@ export const PLAY = {
 const onPier = (x, z) => PIERS.some((p) => Math.abs(z - p.z) < p.half && x > p.x0 - 2 && x < p.x1 + 1);
 
 export default makeRegion({
-  name: 'harbor', title: 'Sunny Harbor', sea: true, size: 150, playRadius: 66, seed: 20261118, trees: 16, rocks: 24,      // an island town: few trees, only on the slope behind the shops
+  name: 'harbor', title: 'Sunny Harbor', sea: true, size: 220, playRadius: 92, seedRadius: 66, extraTrees: { n: 70, inner: 58, outer: 96, seed: 24118, free: (x, z) => x > -26 }, seed: 20261118, trees: 16, rocks: 24,      // an island town: few trees, only on the slope behind the shops
   treeFree: (x, z) => x > -30 || Math.hypot(x, z) > 58,
   riverX: () => 999, riverHalf: () => 0, riverStart: 9999, riverEnd: 9999,      // no river: the sea is made by the ground (hills)
-  bridges: [], stonesZ: null, lowSand: (x, z) => x > coastX(z) - 15 || Math.hypot(x, z) > 46,      // sand along every shore
+  bridges: [], stonesZ: null, lowSand: (x, z) => x > coastX(z) - 15 || Math.hypot(x, z) > 74,      // sand along every shore
   rim: () => 0,      // no hills round the edge and no mountains: open sea to the horizon on every side
   landmarks: [
     { id: 'lighthouse', en: 'lighthouse', vi: 'ngọn hải đăng', label: 'Lighthouse', x: 34, z: -40, spot: [28, -35] },
@@ -61,9 +61,10 @@ export default makeRegion({
     P(2.4, [8, 30], [PIERS[1].x0, 28]),                                   // the fishing pier
     P(2.6, [-12, -18], [0, -26], [12, -24], [22, -32], [28, -36]),        // rock pools to the lighthouse
     P(2.4, [-24, -8], [-36, -20], [-44, -28]), P(2.4, [-24, 14], [-38, 26], [-46, 34]),   // trails into the hills
+    P(2.4, [-46, 34], [-56, 38], [-63, 40]),                              // on to the Coast Race (24/11)
   ],
   hills: (x, z, h) => {
-    const xc = coastX(z), point = gauss(Math.hypot(x - 32, z + 38), 9), ring = smooth(57, 66, Math.hypot(x, z));      // the sea also closes round the west, north and south: the harbour is an island
+    const xc = coastX(z), point = gauss(Math.hypot(x - 32, z + 38), 9), ring = smooth(83, 92, Math.hypot(x, z));      // the sea also closes round the west, north and south: the harbour is an island
     const sea = Math.max(smooth(xc - 2, xc + 9, x) * (1 - Math.min(1, point * 1.6)), ring);      // the rocky point stays land
     h *= 0.6;                                                             // gentle ground: a harbour town, not hills
     h += 2.4 * smooth(-10, -40, x) * (1 - sea);                           // the town slope rises to the west
@@ -81,5 +82,6 @@ export default makeRegion({
     { x: 14.5, z: -15, r: 2.6 }, { x: 14.5, z: -5, r: 2.6 },              // quay crane legs
     { x: -1, z: 18, r: 1.6 }, { x: 5, z: 18, r: 1.6 },                    // fish market stalls
     { x: -7.5, z: 9.5, r: 1.9 },                                          // Willow's stall
+    { x: -61, z: 40, r: 2.2 },                                            // the start arch of the Coast Race (24/11)
   ],
 });

@@ -23,7 +23,12 @@ export const STARTS = [
   { id: 'sling', x: -62, z: -60, text: 'E · Bắn ná với chú Rex', sign: '🎯 Slingshot', board: true, host: { name: 'Rex', file: 'npc_forge_blacksmith_v01', tint: [1.05, 0.95, 0.82], hello: 'Aim high and let go!' } },
   { id: 'race2', x: -61, z: 68, text: 'E · Đua xe bí ngô với anh Leo', sign: '🏎 Cart Race', board: true, host: { name: 'Leo', file: 'npc_sam_fisherman_v02', tint: [1.12, 0.95, 0.8], hello: 'Ready, steady, go!' } },
   { id: 'blocks', x: -82, z: 32, text: 'E · Xếp hình với bác Max', sign: '🧱 Blocks', board: true, host: { name: 'Max', file: 'npc_forge_blacksmith_v01', tint: [0.88, 0.92, 1.08], hello: 'Fill a whole line!' } },
+  // (24/11) the race on the other maps: a different circuit, a higher tier, another host
+  { id: 'race2h', region: 'harbor', x: -65, z: 40, text: 'E · Đua xe ven biển với cô Marina', sign: '🏎 Coast Race', board: true, host: { name: 'Marina', file: 'npc_ben_merchant_v02', tint: [0.8, 1.0, 1.2], hello: 'The coast road is waiting!' } },
+  { id: 'race2f', region: 'forest', x: -81, z: 20, text: 'E · Đua xe trong rừng với bác Rowan', sign: '🏎 Forest Rally', board: true, host: { name: 'Rowan', file: 'npc_forest_herbalist', tint: [1.05, 0.95, 0.85], hello: 'Mind the bends in the trees!' } },
 ];
+/** The landmark of the race places on the other maps (the solids are in each region's file). */
+export const OTHER_BUILDINGS = [{ region: 'harbor', kind: 'arch', x: -61, z: 40, yaw: -Math.PI / 2 }, { region: 'forest', kind: 'arch', x: -77, z: 20, yaw: -Math.PI / 2 }];
 export const ORCHARD = { x: 40, z: 11, r: 8 };
 
 /** Pure rules, tested without a browser. */
@@ -36,7 +41,7 @@ export const fishBar = (pos, centre, width, n = 23) => { let s = ''; const m = M
 export class MiniGames {
   /** api: { scene, player, ui, sfx(name), profile() -> profile, save(), onNote(), board(id) -> opens an arcade board game } */
   constructor(api) {
-    this.api = api; this.active = null; this.note = ''; this.t = 0; this.root = new THREE.Group(); api.scene.add(this.root);
+    this.api = api; this.active = null; this.note = ''; this.t = 0; this.root = new THREE.Group(); api.scene.add(this.root); this.roots = { village: new THREE.Group(), harbor: new THREE.Group(), forest: new THREE.Group() }; for (const g of Object.values(this.roots)) this.root.add(g); this.region = L.NAME;      // (24/11) one group of things for each map
     const V = L.REGIONS.village, glow = (hex, k = 1.6) => new THREE.MeshStandardMaterial({ color: hex, emissive: hex, emissiveIntensity: k, roughness: 0.4 });
     // hidden stars
     // hidden stars (17/11: sharper): a bevelled gold star with a dark rim, a soft halo and a ring on the ground
@@ -47,23 +52,23 @@ export class MiniGames {
     const ringG = new THREE.RingGeometry(0.5, 0.62, 28), ringM = new THREE.MeshBasicMaterial({ color: 0xffd23c, transparent: true, opacity: 0.5, depthWrite: false, side: THREE.DoubleSide });
     this.stars = STARS.map(([x, z], i) => {
       const mat = starGold.clone(), m = new THREE.Group(), star = new THREE.Mesh(sg, mat), edge = new THREE.Mesh(sg, rim); edge.scale.setScalar(1.08); star.castShadow = true; m.add(star, edge);
-      const ring = new THREE.Mesh(ringG, ringM); ring.rotation.x = -Math.PI / 2; ring.scale.setScalar(0.45); ring.position.set(x, V.groundHeight(x, z) + 0.05, z); this.root.add(ring);
+      const ring = new THREE.Mesh(ringG, ringM); ring.rotation.x = -Math.PI / 2; ring.scale.setScalar(0.45); ring.position.set(x, V.groundHeight(x, z) + 0.05, z); this.roots.village.add(ring);
       m.scale.setScalar(0.42);      // (21/11) "the stars are too big: small and sparkling"
-      m.position.set(x, V.groundHeight(x, z) + 0.9, z); this.root.add(m); return { m, x, z, i, ring, spin: star, edge, mat, y0: m.position.y };
+      m.position.set(x, V.groundHeight(x, z) + 0.9, z); this.roots.village.add(m); return { m, x, z, i, ring, spin: star, edge, mat, y0: m.position.y };
     });
     // race rings
     const rg = new THREE.TorusGeometry(1.25, 0.11, 8, 28);
-    this.rings = RACE.slice(1).map(([x, z], i) => { const m = new THREE.Mesh(rg, glow(0x58c8ff, 1.2)); const [px, pz] = RACE[i]; m.position.set(x, V.groundHeight(x, z) + 1.45, z); m.rotation.y = Math.atan2(x - px, z - pz); m.visible = false; this.root.add(m); return { m, x, z }; });
+    this.rings = RACE.slice(1).map(([x, z], i) => { const m = new THREE.Mesh(rg, glow(0x58c8ff, 1.2)); const [px, pz] = RACE[i]; m.position.set(x, V.groundHeight(x, z) + 1.45, z); m.rotation.y = Math.atan2(x - px, z - pz); m.visible = false; this.roots.village.add(m); return { m, x, z }; });
     // falling apples (pool)
     const ag = new THREE.SphereGeometry(0.26, 12, 9), red = new THREE.MeshStandardMaterial({ color: 0xe23a2a, roughness: 0.45 }), gold = glow(0xffc83c, 1.2);
-    this.apples = Array.from({ length: 8 }, () => { const m = new THREE.Mesh(ag, red); m.visible = false; m.castShadow = true; this.root.add(m); return { m, live: false, redMat: red, goldMat: gold }; });      // (21/11) not 'gold': that name is the golden-apple flag below
+    this.apples = Array.from({ length: 8 }, () => { const m = new THREE.Mesh(ag, red); m.visible = false; m.castShadow = true; this.roots.village.add(m); return { m, live: false, redMat: red, goldMat: gold }; });      // (21/11) not 'gold': that name is the golden-apple flag below
     // start signs
     for (const s of STARTS) {
-      const y = V.groundHeight(s.x, s.z), post = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.09, 1.9, 6), new THREE.MeshStandardMaterial({ color: 0x8a5a30 })); post.position.set(s.x + 0.9, y + 0.95, s.z - 0.9); post.castShadow = true; this.root.add(post);
+      const RG = L.REGIONS[s.region || 'village'], RT = this.roots[s.region || 'village'], y = RG.groundHeight(s.x, s.z), post = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.09, 1.9, 6), new THREE.MeshStandardMaterial({ color: 0x8a5a30 })); post.position.set(s.x + 0.9, y + 0.95, s.z - 0.9); post.castShadow = true; RT.add(post);
       const cv = document.createElement('canvas'); cv.width = 256; cv.height = 72; const c = cv.getContext('2d'); c.fillStyle = '#fff4dc'; c.strokeStyle = '#b98a52'; c.lineWidth = 6; c.beginPath(); c.roundRect(4, 4, 248, 64, 14); c.fill(); c.stroke(); c.fillStyle = '#4a2a10'; c.font = '700 30px sans-serif'; c.textAlign = 'center'; c.fillText(s.sign, 128, 47);
-      const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace; const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex })); sp.scale.set(2.3, 0.65, 1); sp.position.set(s.x + 0.9, y + 2.25, s.z - 0.9); this.root.add(sp);
+      const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace; const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex })); sp.scale.set(2.3, 0.65, 1); sp.position.set(s.x + 0.9, y + 2.25, s.z - 0.9); RT.add(sp);
     }
-    for (const b of MINI_BUILDINGS) { const m = siteBuilding(b.kind); m.position.set(b.x, V.groundHeight(b.x, b.z), b.z); m.rotation.y = b.yaw; this.root.add(m); }      // (24/11) the landmark of each game
+    for (const b of [...MINI_BUILDINGS.map((x) => ({ ...x, region: 'village' })), ...OTHER_BUILDINGS]) { const m = siteBuilding(b.kind); m.position.set(b.x, L.REGIONS[b.region].groundHeight(b.x, b.z), b.z); m.rotation.y = b.yaw; this.roots[b.region].add(m); }      // (24/11) the landmark of each game
     this.setRegion(L.NAME);
   }
   /** Puts each game's host by its sign. load(name) -> Promise<gltf>, a fresh copy each call. */
@@ -73,13 +78,13 @@ export class MiniGames {
       const gltf = await load(s.host.file), root = gltf.scene, mixer = new THREE.AnimationMixer(root), act = {};
       for (const c of gltf.animations) act[c.name] = mixer.clipAction(c);
       root.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.frustumCulled = false; o.material = o.material.clone(); o.material.color.multiply(new THREE.Color(...s.host.tint)); } });
-      const y = L.REGIONS.village.walkHeight(s.x, s.z); root.position.set(s.x - 0.6, y, s.z + 0.4); root.rotation.y = 0.6; this.root.add(root);
+      const y = L.REGIONS[s.region || 'village'].walkHeight(s.x, s.z); root.position.set(s.x - 0.6, y, s.z + 0.4); root.rotation.y = 0.6; this.roots[s.region || 'village'].add(root);
       if (act.Idle) act.Idle.play();
       this.hosts.push({ s, root, mixer, act, cur: 'Idle' });
     }
   }
   get data() { const p = this.api.profile(); if (!p) return { stars: [], best: {} }; return p.mini || (p.mini = { stars: [], best: {} }); }
-  setRegion(name) { this.root.visible = name === 'village'; if (name !== 'village') this.stop(); this.syncStars(); }
+  setRegion(name) { this.region = name; for (const [k, g] of Object.entries(this.roots)) g.visible = k === name; if (name !== 'village') this.stop(); this.syncStars(); }
   syncStars() { const got = this.data.stars; for (const s of this.stars) s.m.visible = s.ring.visible = !got.includes(s.i); }
   say(text) { if (text !== this.note) { this.note = text; this.api.onNote(); } }
   stop() { if (!this.active) return; if (this.active.id === 'apple') endMusic(); this.active = null; for (const r of this.rings) r.m.visible = false; for (const a of this.apples) { a.live = false; a.m.visible = false; } this.say(''); }
@@ -89,7 +94,7 @@ export class MiniGames {
     if (!this.root.visible) return null;
     if (this.active && this.active.id === 'fish') return { text: 'E · Giật cần!', run: () => this.pull() };
     if (this.active) return null;
-    for (const s of STARTS) if (Math.hypot(pos.x - s.x, pos.z - s.z) < 2.4) return { text: s.text, run: () => this.start(s.id) };
+    for (const s of STARTS) if ((s.region || 'village') === this.region && Math.hypot(pos.x - s.x, pos.z - s.z) < 2.4) return { text: s.text, run: () => this.start(s.id) };
     return null;
   }
   start(id) {
@@ -131,12 +136,13 @@ export class MiniGames {
     if (!this.root.visible) return;
     this.t += dt;
     for (const h of this.hosts || []) {          // hosts turn to Ngọc and wave when she comes close
+      if ((h.s.region || 'village') !== this.region) continue;
       const d = Math.hypot(pos.x - h.root.position.x, pos.z - h.root.position.z); if (d > 40) continue;
       if (d < 7) { let k = Math.atan2(pos.x - h.root.position.x, pos.z - h.root.position.z) - h.root.rotation.y; k = Math.atan2(Math.sin(k), Math.cos(k)); h.root.rotation.y += k * Math.min(1, dt * 4); }
       const want = d < 4 && h.act.Talk ? 'Talk' : 'Idle'; if (want !== h.cur && h.act[want]) { h.act[want].reset().play(); if (h.act[h.cur]) h.act[h.cur].crossFadeTo(h.act[want], 0.3, false); h.cur = want; }
       if (d < 30) h.mixer.update(dt);
     }
-    for (const s of this.stars) if (s.m.visible) {
+    if (this.region === 'village') for (const s of this.stars) if (s.m.visible) {
       s.spin.rotation.y = s.edge.rotation.y = this.t * 1.8 + s.i; s.m.position.y = s.y0 + Math.sin(this.t * 2.4 + s.i) * 0.08;
       // (23/11) "the star itself should glow and blink, not another thing scaled in and out over it": the gold shines on its own,
       // a slow breath of light and now and then a quick glint, all in the star's own material (the bloom does the rest)
@@ -175,5 +181,5 @@ export class MiniGames {
     if (d.stars.length === STARS.length) { p.stats.gold += 20; this.api.sfx('fanfare'); this.api.ui.dialogue([{ who: 'Ngọc', en: 'I found all twelve stars! (+20 gold)' }]); }
     this.api.save(); this.api.onNote();
   }
-  markers() { const a = this.active; if (!this.root.visible) return []; if (a && a.id === 'race') { const r = this.rings[a.i]; return [{ x: r.x, z: r.z, text: '🏁', color: '#8fd8ff' }]; } return a ? [] : STARTS.map((s) => ({ x: s.x, z: s.z, text: '♪', color: '#b8f0a0' })); }
+  markers() { const a = this.active; if (a && a.id === 'race') { const r = this.rings[a.i]; return [{ x: r.x, z: r.z, text: '🏁', color: '#8fd8ff' }]; } return a ? [] : STARTS.filter((s) => (s.region || 'village') === this.region).map((s) => ({ x: s.x, z: s.z, text: '♪', color: '#b8f0a0' })); }
 }

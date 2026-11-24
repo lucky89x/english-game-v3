@@ -121,7 +121,7 @@ export function makeRegion(cfg) {
     while (n2 < X.n && g2++ < X.n * 40) {
       const a = rx() * Math.PI * 2, d = X.inner + Math.sqrt(rx()) * (X.outer - X.inner), x = Math.cos(a) * d, z = Math.sin(a) * d, inside = d < R.PLAY_RADIUS + 2;
       if (inside && (R.pathDistance(x, z) < 3.6 || R.riverDistance(x, z) < R.riverHalf(z) + 2.4 || !clearOf(x, z, 1.5))) continue;
-      if (inside && cfg.treeFree && cfg.treeFree(x, z)) continue;
+      if (inside && (X.free || cfg.treeFree) && (X.free || cfg.treeFree)(x, z)) continue;
       if (R.groundHeight(x, z) < 0 || (inside && slopeAt(x, z) > 0.75)) continue;
       if (R.TREES.some((t) => Math.hypot(t.x - x, t.z - z) < 3.1)) continue;
       const k = rx(); R.TREES.push({ x, z, kind: k < mix2[0] ? 'pine' : k < mix2[1] ? 'oak' : 'birch', s: 0.8 + rx() * 0.55, rot: rx() * 6.28 }); n2++;

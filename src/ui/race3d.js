@@ -24,6 +24,12 @@ export async function loadRaceAssets(gltf) {
 const HALF = 6.3, SC = HALF / 4.15, LANES = [-3.75, 0, 3.75], LAPS = 3, TAU = Math.PI * 2;
 const CURVE_PTS = [[-90, -70], [-30, -74], [40, -74], [92, -66], [116, -36], [108, 0], [84, 22], [56, 16], [34, 34], [8, 58], [-30, 60], [-70, 46], [-104, 20], [-116, -18], [-110, -52]];
 const SPEED = { cruise: 16, boost: 26, brake: 6, off: 8, hurt: 10 };
+/** (24/11) The race on each map: the village oval-with-bends, a long coastal loop in the harbour, a twisting rally through the forest. Higher maps are faster and the rivals keener. */
+export const VARIANTS = {
+  village: { title: 'Kart Race', pts: CURVE_PTS, ground: 0x91ba68, sky: 0x9fd9ee, fogc: 0xb9e0e7, fogd: 0.0042, cruise: 16, rival: 0, trees: 110, houses: true, id: 'race2' },
+  harbor: { title: 'Coast Race', pts: [[-120, -60], [-50, -66], [30, -66], [100, -58], [132, -20], [118, 24], [70, 40], [40, 22], [10, 40], [-20, 70], [-70, 66], [-110, 40], [-128, -10]], ground: 0xe4d29a, sky: 0x8fd0f0, fogc: 0xcde9f2, fogd: 0.0034, cruise: 18, rival: 0.04, trees: 34, houses: false, id: 'race2h' },
+  forest: { title: 'Forest Rally', pts: [[-96, -44], [-48, -66], [4, -52], [48, -72], [98, -54], [122, -12], [102, 30], [64, 46], [36, 76], [-12, 68], [-44, 86], [-88, 68], [-104, 26], [-108, -12]], ground: 0x5d8c4c, sky: 0xa7cdb8, fogc: 0xbcd8c4, fogd: 0.0072, cruise: 17, rival: 0.07, trees: 230, houses: false, id: 'race2f' },
+};
 const damp = (a, b, lambda, dt) => THREE.MathUtils.damp(a, b, lambda, dt);
 
 let shared = null;      // one WebGL renderer for every race (a second context per race would leak)
@@ -39,21 +45,21 @@ function token(text, fill = '#ffcf57', ink = '#533a22', rim = '#8e5425') {
 }
 
 /** opts: { assets (from loadRaceAssets), cards (the unit's words), tier, rnd } */
-export function raceGame3d({ assets, cards = [], tier = 1, rnd = Math.random }) {
-  const R = rule('race', tier), own = [];      // own: geometries and materials made here, disposed at the end
+export function raceGame3d({ assets, cards = [], tier = 1, rnd = Math.random, variant = 'village' }) {
+  const VR = VARIANTS[variant] || VARIANTS.village, R = { ...rule('race', tier) }, own = []; R.rival = (R.rival || 0) + VR.rival; const SPEEDS = { ...SPEED, cruise: VR.cruise, boost: VR.cruise + 10 };      // own: geometries and materials made here, disposed at the end
   const mk = (x) => { own.push(x); return x; };
   const words = cards.filter((c) => SP.spellable(c.word) && SP.letters(c.word).length >= 3 && SP.letters(c.word).length <= 8).sort(() => rnd() - 0.5).slice(0, 8);
   const scene = new THREE.Scene(), cam = new THREE.PerspectiveCamera(55, 1.5, 0.12, 700);
-  const curve = new THREE.CatmullRomCurve3(CURVE_PTS.map(([x, z]) => new THREE.Vector3(x, 0, z)), true, 'centripetal'); curve.arcLengthDivisions = 4000;
+  const curve = new THREE.CatmullRomCurve3(VR.pts.map(([x, z]) => new THREE.Vector3(x, 0, z)), true, 'centripetal'); curve.arcLengthDivisions = 4000;
   const length = curve.getLength(), finish = LAPS * length;
   const at = (d, x = 0) => { const t = (((d % length) + length) % length) / length, p = curve.getPointAt(t), f = curve.getTangentAt(t); p.x -= f.z * x; p.z += f.x * x; return [p, Math.atan2(f.x, f.z)]; };
   const model = (n) => { const m = assets[n].clone(true); return m; };
   const put = (n, d, x, scale = 1, turn = 0) => { const o = model(n), [p, yaw] = at(d, x); o.position.copy(p); o.rotation.y = yaw + turn; o.scale.setScalar(scale); scene.add(o); return o; };
 
   // ---- the world (as in the prototype)
-  scene.background = new THREE.Color(0x9fd9ee); scene.fog = new THREE.FogExp2(0xb9e0e7, 0.0042);
+  scene.background = new THREE.Color(VR.sky); scene.fog = new THREE.FogExp2(VR.fogc, VR.fogd);
   scene.add(new THREE.HemisphereLight(0xfff2d7, 0xabbf9d, 2.0)); const sun = new THREE.DirectionalLight(0xfff1d7, 2.05); sun.position.set(-35, 55, -25); scene.add(sun);
-  const ground = new THREE.Mesh(mk(new THREE.BoxGeometry(900, 0.3, 900)), mk(new THREE.MeshStandardMaterial({ color: 0x91ba68, roughness: 1 }))); ground.position.y = -0.22; scene.add(ground);
+  const ground = new THREE.Mesh(mk(new THREE.BoxGeometry(900, 0.3, 900)), mk(new THREE.MeshStandardMaterial({ color: VR.ground, roughness: 1 }))); ground.position.y = -0.22; scene.add(ground);
   const roadP = [], roadC = [];
   const quad = (p, c) => { const col = new THREE.Color(c); for (const i of [0, 1, 2, 0, 2, 3]) { roadP.push(...p[i].toArray()); roadC.push(col.r, col.g, col.b); } };
   const strip = (d0, d1, x0, x1, y, c) => quad([at(d0, x0)[0], at(d0, x1)[0], at(d1, x1)[0], at(d1, x0)[0]].map((p) => (p.y = y, p)), c);
@@ -69,9 +75,9 @@ export function raceGame3d({ assets, cards = [], tier = 1, rnd = Math.random }) 
   const roadGeo = mk(new THREE.BufferGeometry()); roadGeo.setAttribute('position', new THREE.Float32BufferAttribute(roadP, 3)); roadGeo.setAttribute('color', new THREE.Float32BufferAttribute(roadC, 3)); roadGeo.computeVertexNormals();
   scene.add(new THREE.Mesh(roadGeo, mk(new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, vertexColors: true }))));
   put('race_start_gate', 1, 0, 1.57 * SC, Math.PI); put('race_grandstand', 10, -8 * SC, 2.2, -Math.PI / 2); put('race_pit_tent', -9, 8 * SC, 1.9, Math.PI / 2); put('race_scoreboard', 13, 7 * SC, 1.65, Math.PI * 0.71); put('race_podium', 20, -7 * SC, 1.3, -Math.PI * 0.71);
-  for (let j = 0; j < 110; j++) { const o = put(j % 4 ? 'prop_tree_pine_v01' : 'prop_tree_round_v01', j * length / 110, (j % 2 ? 1 : -1) * (9 + (j * 7) % 11) * SC, 1.0 + (j % 3) * 0.22, j); o.scale.multiplyScalar(0.7); }
+  for (let j = 0; j < VR.trees; j++) { const o = put(j % 4 ? 'prop_tree_pine_v01' : 'prop_tree_round_v01', j * length / VR.trees, (j % 2 ? 1 : -1) * (9 + (j * 7) % 11) * SC, 1.0 + (j % 3) * 0.22, j); o.scale.multiplyScalar(0.7); }
   for (let j = 0; j < 46; j++) { const d = length * j / 46; if (j % 3 === 1) put('race_chevron', d, (HALF + 1.15), 1.25, Math.PI); if (j % 3 === 0) put('race_flag', d, -(HALF + 0.95), 1.4, Math.PI); if (j % 4 === 2) put('race_tire_stack', d, (HALF + 1.25), 1.3); if (j % 6 === 5) put('race_hay_bales', d, -(HALF + 1.45), 1.3); if (j % 6 === 0) put('race_lamp', d, (HALF + 1.45), 1.5); }
-  for (const [b, d, x, sc] of [['bld_farm_barn', 34, 17, 1.65], ['bld_anna_house', 58, -16, 1.25], ['stall_fruit', -20, -10, 1.24], ['bld_farm_barn', length * 0.61, 20, 1.35], ['bld_anna_house', length * 0.44, -19, 1.55], ['bld_farm_barn', length * 0.12, 21, 1.5], ['bld_anna_house', length * 0.27, 19, 1.4], ['stall_fruit', length * 0.35, -13, 1.3], ['bld_farm_barn', length * 0.82, -21, 1.5], ['bld_anna_house', length * 0.93, 18, 1.35], ['stall_fruit', length * 0.7, 14, 1.3]]) put(b, d, x * SC * 0.8 + (x > 0 ? 3 : -3), sc, x > 0 ? 1.45 : -1.45);
+  if (VR.houses) for (const [b, d, x, sc] of [['bld_farm_barn', 34, 17, 1.65], ['bld_anna_house', 58, -16, 1.25], ['stall_fruit', -20, -10, 1.24], ['bld_farm_barn', length * 0.61, 20, 1.35], ['bld_anna_house', length * 0.44, -19, 1.55], ['bld_farm_barn', length * 0.12, 21, 1.5], ['bld_anna_house', length * 0.27, 19, 1.4], ['stall_fruit', length * 0.35, -13, 1.3], ['bld_farm_barn', length * 0.82, -21, 1.5], ['bld_anna_house', length * 0.93, 18, 1.35], ['stall_fruit', length * 0.7, 14, 1.3]]) put(b, d, x * SC * 0.8 + (x > 0 ? 3 : -3), sc, x > 0 ? 1.45 : -1.45);
   { const src = assets.race_safety_barrier; let bm = null; if (src) { src.updateMatrixWorld(true); src.traverse((o) => { if (o.isMesh && !bm) bm = o; }); }
     if (bm) {      // the user's safety barriers (24/11) on the outside of every corner, as instanced meshes
       const list = [], m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), sc = new THREE.Vector3(1.5, 1.5, 1.5);
@@ -113,7 +119,7 @@ export function raceGame3d({ assets, cards = [], tier = 1, rnd = Math.random }) 
   const choose = (i) => { pick = (i + 6) % 6; if (player) scene.remove(player); player = makeKart(pick); };
   choose(0);
   const others = () => [0, 1, 2, 3, 4, 5].filter((k) => k !== pick);
-  const buildRivals = () => { for (const r of rivals) scene.remove(r.car); rivals.length = 0; others().slice(0, 3).forEach((k, j) => rivals.push({ car: makeKart(k), d: 0, lane: 0, rate: [14.0, 15.1, 16.0][j], stun: 0, spin: 0, num: j + 2 })); };
+  const buildRivals = () => { for (const r of rivals) scene.remove(r.car); rivals.length = 0; others().slice(0, 3).forEach((k, j) => rivals.push({ car: makeKart(k), d: 0, lane: 0, rate: [14.0, 15.1, 16.0][j] * VR.cruise / 16, stun: 0, spin: 0, num: j + 2 })); };
   buildRivals();
 
   // ---- things on the track: cones, coins, letters, item boxes, speed pads
@@ -131,7 +137,7 @@ export function raceGame3d({ assets, cards = [], tier = 1, rnd = Math.random }) 
   for (const [d, l] of padSpots) items.push({ d: d + 1.5, l, kind: 'pad', o: null, round: -1 });
 
   // ---- state
-  const g = { big: true, aspect: 1.5, title: '🏎 Kart Race', coins: 0 };
+  const g = { big: true, aspect: 1.5, title: '🏎 ' + VR.title, coins: 0 };
   g.help = 'Đua 3 vòng với 3 đối thủ. ← → (A D) lái, ↓ (S) phanh. Đi qua CHỮ CÁI tiếp theo của từ (nghĩa ở dưới) và xu ★. Ô ? cho tăng tốc hoặc đạn: bấm Space để dùng. Ván xanh = tăng tốc, tránh cọc.';
   let state = 'garage', elapsed = 0, countdown = 3, speed = 0, distance = 0, lane = 0, hurt = 0, boostT = 0, steer = 0, spinT = 0, letters = 0, wi = 0, flashText = '', pop = 0, endT = 0, item = null, t0 = 0, paused = false;
   const wordsDone = [], shots = [], dust = [];
@@ -147,7 +153,7 @@ export function raceGame3d({ assets, cards = [], tier = 1, rnd = Math.random }) 
   Object.defineProperty(g, 'x', { get: () => 280 + lane * 60 });
   g.info = () => `🏁 Vòng ${Math.min(LAPS, Math.floor(distance / length) + 1)}/${LAPS} · hạng ${place()}/4 · ★ ${g.coins} · 🔤 ${wordsDone.length}`;
   const score = () => Math.round(distance / 9) + g.coins * 6 + wordsDone.length * 40 + (5 - place()) * 30;
-  g.done = () => (state === 'finished' && endT > 1.4 ? { id: 'race2', score: score(), gold: Math.min(44, wordsDone.length * 6 + g.coins * 2 + (4 - place()) * 5 + 4), exp: Math.min(60, 10 + Math.floor(score() / 8)), words: wordsDone.slice(),
+  g.done = () => (state === 'finished' && endT > 1.4 ? { id: VR.id, score: score(), gold: Math.min(44, wordsDone.length * 6 + g.coins * 2 + (4 - place()) * 5 + 4), exp: Math.min(60, 10 + Math.floor(score() / 8)), words: wordsDone.slice(),
     text: `Race over: place ${place()} of 4, ${g.coins} stars, ${wordsDone.length} word${wordsDone.length === 1 ? '' : 's'}!` } : null);
   const useItem = () => {
     if (state !== 'running' || !item) return;
@@ -171,7 +177,7 @@ export function raceGame3d({ assets, cards = [], tier = 1, rnd = Math.random }) 
     elapsed += dt; hurt = Math.max(0, hurt - dt); boostT = Math.max(0, boostT - dt); spinT = Math.max(0, spinT - dt);
     steer = Number(held.has('ArrowRight') || held.has('KeyD')) - Number(held.has('ArrowLeft') || held.has('KeyA'));
     lane = THREE.MathUtils.clamp(lane + dt * steer * (5.6 + speed * 0.2), -(HALF + 0.9), HALF + 0.9);
-    const braking = held.has('ArrowDown') || held.has('KeyS'), off = Math.abs(lane) > HALF - 0.15, target = braking ? SPEED.brake : off ? SPEED.off : hurt > 0 ? SPEED.hurt : boostT > 0 ? SPEED.boost : SPEED.cruise;
+    const braking = held.has('ArrowDown') || held.has('KeyS'), off = Math.abs(lane) > HALF - 0.15, target = braking ? SPEEDS.brake : off ? SPEEDS.off : hurt > 0 ? SPEEDS.hurt : boostT > 0 ? SPEEDS.boost : SPEEDS.cruise;
     speed = damp(speed, target, braking ? 4 : boostT > 0 ? 3 : 1.25, dt); const old = distance; distance += dt * speed;
     rivals.forEach((r, i) => {
       let k = 1; if (r.stun > 0) { r.stun -= dt; k = 0.3; r.spin = 10; } else r.spin = 0;
@@ -226,7 +232,7 @@ export function raceGame3d({ assets, cards = [], tier = 1, rnd = Math.random }) 
     if (!gar) {
       let x = 10; x += chip(c, x, 8, `Vòng ${Math.min(LAPS, Math.floor(distance / length) + 1)}/${LAPS}`) + 6; x += chip(c, x, 8, `Hạng ${place()}/4`) + 6; x += chip(c, x, 8, `★ ${g.coins}`) + 6; chip(c, x, 8, fmtT(elapsed));
       c.fillStyle = 'rgba(38,55,66,.9)'; c.beginPath(); c.roundRect(10, 40, 62, 62, 12); c.fill(); c.strokeStyle = item ? '#ffd23c' : '#6a7a86'; c.lineWidth = 2; c.stroke(); c.textAlign = 'center'; c.font = '900 30px system-ui'; c.fillStyle = '#fff1cd'; c.fillText(item === 'boost' ? '⚡' : item === 'shot' ? '🚀' : '·', 41, 68); c.font = '700 10px system-ui'; c.fillText(item ? 'Space' : 'ô ?', 41, 94);
-      c.fillStyle = 'rgba(38,55,66,.9)'; c.beginPath(); c.roundRect(w - 110, 8, 100, 24, 8); c.fill(); c.fillStyle = boostT > 0 ? '#2fd2ff' : '#ffd23c'; c.beginPath(); c.roundRect(w - 106, 14, 92 * Math.min(1, speed / SPEED.boost), 12, 5); c.fill();
+      c.fillStyle = 'rgba(38,55,66,.9)'; c.beginPath(); c.roundRect(w - 110, 8, 100, 24, 8); c.fill(); c.fillStyle = boostT > 0 ? '#2fd2ff' : '#ffd23c'; c.beginPath(); c.roundRect(w - 106, 14, 92 * Math.min(1, speed / SPEEDS.boost), 12, 5); c.fill();
       const mx = w - 118, my = h - 124, ms = 104; c.fillStyle = 'rgba(38,55,66,.78)'; c.beginPath(); c.roundRect(mx - 6, my - 6, ms + 12, ms + 12, 12); c.fill();
       const P = (p) => [mx + 6 + (p.x - track2d.x0) * track2d.sc * (ms - 12), my + 6 + (p.z - track2d.z0) * track2d.sc * (ms - 12)];
       c.strokeStyle = '#d9d2c4'; c.lineWidth = 5; c.lineJoin = 'round'; c.beginPath(); track2d.pts.forEach((p, i) => { const [a, b] = P(p); i ? c.lineTo(a, b) : c.moveTo(a, b); }); c.closePath(); c.stroke();

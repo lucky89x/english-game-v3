@@ -3,7 +3,7 @@ import { makeRegion, P, smooth, gauss, BRIDGE_LEN } from '../regionkit.js';
 const riverX = (z) => -6 + 12 * Math.sin((z + 50) * 0.05) + 5 * Math.sin(z * 0.11);
 const bw = (b) => [b.x - BRIDGE_LEN / 2 - 0.8, b.z], be = (b) => [b.x + BRIDGE_LEN / 2 + 0.8, b.z];
 export default makeRegion({
-  name: 'forest', title: 'Forest of Memories', size: 150, playRadius: 68, seed: 20261113, trees: 420, rocks: 70, waterfall: true,
+  name: 'forest', title: 'Forest of Memories', size: 220, playRadius: 92, seedRadius: 68, extraTrees: { n: 260, inner: 62, outer: 112, seed: 24113 }, seed: 20261113, trees: 420, rocks: 70, waterfall: true,
   riverX, riverHalf: (z) => 3.4 + 2.6 * gauss(z - 22, 5), riverStart: -52,
   bridges: [{ id: 'north', z: -14, name: 'North Bridge' }, { id: 'south', z: 34, name: 'South Bridge' }], stonesZ: 8,
   landmarks: [
@@ -41,12 +41,13 @@ export default makeRegion({
     return h;
   },
   lateClear: (x, z) => Math.hypot(x + 46, z - -24) < 9.5,      // the Mushroom Queen's glade (Map 2 boss, 17/11); applied after the seeded trees
-  latePaths: () => [P(2.2, [-41, -35], [-44, -29], [-46, -25])],            // a trail from the ruins into the glade
+  latePaths: () => [P(2.2, [-41, -35], [-44, -29], [-46, -25]), P(2.4, [-36, 14], [-52, 18], [-66, 20], [-79, 20])],            // a trail from the ruins into the glade; a road out to the Forest Rally (24/11)
   keepClear: [{ x: 17, z: -30, r: 7.5 }, { x: -44, z: -40, r: 8 }, { x: -41, z: 7, r: 8.5 }, { x: 55, z: 2, r: 7 }, { x: 40, z: 21, r: 6.5 }, { x: 34, z: 47, r: 8 }, { x: 49, z: -44, r: 6.5 }, { x: -48, z: 48, r: 5 }],
   solids: [
     { x: 17, z: -30, r: 3.3 }, { x: -41, z: 7, r: 4.6 }, { x: -46.5, z: 11.5, r: 1.6 }, { x: 49, z: -44, r: 2.3 }, { x: 36.5, z: 49.5, r: 2.3 }, { x: 31.5, z: 47.5, r: 0.9 },
     { x: 41.5, z: 19, r: 1.3 }, { x: 43.5, z: 23.5, r: 1.0 }, { x: 39, z: 24.5, r: 0.7 },
     { x: -47, z: -43, r: 1.0 }, { x: -41.5, z: -44.5, r: 1.0 }, { x: -48.5, z: -37.5, r: 0.9 }, { x: -44.2, z: -40.5, r: 1.1 }, { x: -48, z: 48, r: 1.1 },
     { x: -33.4, z: 61, r: 0.9 }, { x: -26.6, z: 61, r: 0.9 },
+    { x: -77, z: 20, r: 2.2 },      // the start arch of the Forest Rally (24/11)
   ],
 });
