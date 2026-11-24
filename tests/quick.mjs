@@ -308,12 +308,12 @@ await run('bag', async () => {          // A6: bag screen and gear on the body
   await ev(() => { const p = __eq.profile; p.inv = { owned: ['wood_sword', 'iron_armor', 'clover'], weapon: 'wood_sword', armor: 'iron_armor', charm: 'clover', food: 2 }; __eq.setWear(); __eq.teleport(0, 13); }); await wait(300);
   check(await ev(() => !!__eq.armor && __eq.armor.parent.name === 'chest'), 'Iron armour is shown on Ngọc\'s chest');
   await page.keyboard.press('KeyI'); await wait(300);
-  check((await page.textContent('#dialog')).includes('Iron Armor') && (await page.textContent('#dialog')).includes('Phòng thủ 5'), 'I opens the bag with gear and numbers');
+  check((await page.textContent('#dialog')).includes('Iron Armor') && (await page.textContent('#dialog')).includes('Phòng thủ 2'), 'I opens the bag with gear and numbers (24/11: iron armour is a level 4 piece, defence 2)');
   const k = await ev(() => __eq.ui.options.findIndex((o) => o.includes('Iron Armor')));
   await page.keyboard.press('Digit' + (k + 1)); await wait(300);
   check(await ev(() => !__eq.armor && __eq.profile.inv.armor === '' && __eq.profile.gear.def === 0), 'Picking the worn armour takes it off');
   await page.keyboard.press('Digit' + (k + 1)); await wait(300);
-  check(await ev(() => !!__eq.armor && __eq.profile.gear.def === 5), 'Picking it again puts it back on');
+  check(await ev(() => !!__eq.armor && __eq.profile.gear.def === 2), 'Picking it again puts it back on');
   await closeDialogs(); await page.keyboard.press('Escape'); await wait(200);
   for (let n = 0; n < 3 && await page.isVisible('#dialog'); n++) { const last = await ev(() => __eq.ui.options ? __eq.ui.options.length : 0); if (last) await page.keyboard.press('Digit' + last); await wait(200); }
 });
@@ -328,7 +328,7 @@ await run('shop', async () => {         // the shop door opens the inside view: 
   await page.click('#shopwin button[data-act="buy"][data-id="wood_sword"]'); await wait(400);
   check(await ev((c) => __eq.profile.inv.owned.includes('wood_sword') && __eq.profile.stats.gold === 300 - c && !!__eq.sword, wc), 'Buy: gold paid, sword in her hand');
   await page.click('#shopwin button[data-act="sell"][data-id="wood_sword"]'); await wait(400);
-  check(await ev(() => !__eq.profile.inv.owned.includes('wood_sword') && __eq.profile.stats.gold === 300 - wc + Math.floor(wc / 2) && !__eq.sword), 'Sell: half the price back, sword gone');
+  check(await ev((c) => !__eq.profile.inv.owned.includes('wood_sword') && __eq.profile.stats.gold === 300 - c + Math.floor(c / 2) && !__eq.sword, wc), 'Sell: half the price back, sword gone');
   await page.keyboard.press('Escape'); await wait(300);
   check(!(await page.isVisible('#shopwin')), 'Esc leaves the shop');
 });
