@@ -13,6 +13,14 @@ export const BEN_MARKET = { stall: [-9.5, 47.5], jars: [[-7.3, 45.2], [-7.3, 46.
 /** 18/11: the children's own homes, two lots in the empty west fields, doors facing east (+x) like Lily's house; the
  *  furniture shop stands south of them. Each yard is the strip between the door and the lane at x = -40. */
 export const HOMES = [-31.5, -10.5, 10.5, 31.5].map((z) => ({ x: -50, z, door: [-45.4, z], yard: [-42.6, z] }));      // (24/11) four lots, each a bigger plot (see PLOT in game/homes.js)
+/** (24/11) the landmark of each mini game, a few metres from its sign and host: a candy shop, a shooting range, a start arch, a block tower.
+ *  yaw: the way the front faces (radians, 0 = +z, so PI/2 faces west); r: its solid. Pure data: world/arcade_sites.js draws them. */
+export const MINI_BUILDINGS = [
+  { id: 'candy', kind: 'candy', x: -11, z: -17, yaw: -Math.PI / 2, r: 2.8 },
+  { id: 'sling', kind: 'range', x: -3.2, z: -35.8, yaw: -Math.PI / 4, r: 2.6 },
+  { id: 'race2', kind: 'arch', x: 6, z: 28, yaw: Math.PI / 2, r: 2.2 },
+  { id: 'blocks', kind: 'tower', x: -35, z: 4.5, yaw: -Math.PI / 2, r: 2.2 },
+];
 export const FURNITURE = { x: -31, z: -26, door: [-26.1, -26] };      // east of the lane, out of the way of the lots
 /** Two market stalls (18/11): Ben's fruit and vegetables south of his jar stall, Anna's instruments near her house. at: where E works. */
 export const STALLS = { produce: { x: -7.5, z: 24.8, yaw: Math.PI / 2, at: [-4.6, 24.8] }, music: { x: -19, z: 21.5, yaw: Math.PI / 2, at: [-16.4, 21.5] },
@@ -73,7 +81,7 @@ export default makeRegion({
     ...HOMES.map((h) => P(1.8, h.door, [-40, h.z])),                           // garden paths to the four front doors
     P(2.2, [-40, -14], [-30, -14], [-24, -16], [-24, -22], [-26.1, -26]),       // on to the furniture shop
   ],
-  lateSolids: [{ x: 0, z: 4, r: 3.8 },                                      // the plaza fountain (model r 3.7)
+  lateSolids: [{ x: 0, z: 4, r: 3.8 }, ...MINI_BUILDINGS.map((b) => ({ x: b.x, z: b.z, r: b.r })),                                      // the plaza fountain (model r 3.7)
     ...HOMES.map((h) => ({ x: h.x, z: h.z, r: 4.4 })), { x: FURNITURE.x, z: FURNITURE.z, r: 4.6 }, ...Object.values(STALLS).map((t) => ({ x: t.x, z: t.z, r: 1.7 })), { x: STALLS.tailor.x - 2.6, z: STALLS.tailor.z - 0.6, r: 0.6 }, { x: STALLS.tailor.x + 2.6, z: STALLS.tailor.z - 0.6, r: 0.6 }],      // homes and the furniture shop (18/11)
   // 18/11 ("the houses are too close together"): Lily's and Anna's houses move further west, each with a garden path
   lateMove: [{ from: [-14.5, -8], to: [-22, -4] }, { from: [-15, 9], to: [-22.5, 12.5] }],

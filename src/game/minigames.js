@@ -6,7 +6,8 @@ import { pay, FULL_PLAYS } from '../core/rules.js';
 import { today } from '../core/review.js';
 import { gameMusic, endMusic } from '../audio.js';
 import { addGood } from '../core/goods.js';
-import { ORCHARD_TREES, ORCHARD_CROWN, ORCHARD_R } from '../core/regions/village.js';
+import { ORCHARD_TREES, ORCHARD_CROWN, ORCHARD_R, MINI_BUILDINGS } from '../core/regions/village.js';
+import { siteBuilding } from '../world/arcade_sites.js';
 /** Tells the child when today's full pay for this game is used up (T1: skill games are for fun, not for farming gold). */
 export const payNote = (r) => (!r.full ? `Hôm nay trò này chỉ còn thưởng 20%. Đi đánh quái, làm nhiệm vụ để được nhiều hơn!` : r.left === 0 ? `Đã hết ${FULL_PLAYS} lượt thưởng đầy đủ hôm nay của trò này.` : '');
 
@@ -62,6 +63,7 @@ export class MiniGames {
       const cv = document.createElement('canvas'); cv.width = 256; cv.height = 72; const c = cv.getContext('2d'); c.fillStyle = '#fff4dc'; c.strokeStyle = '#b98a52'; c.lineWidth = 6; c.beginPath(); c.roundRect(4, 4, 248, 64, 14); c.fill(); c.stroke(); c.fillStyle = '#4a2a10'; c.font = '700 30px sans-serif'; c.textAlign = 'center'; c.fillText(s.sign, 128, 47);
       const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace; const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex })); sp.scale.set(2.3, 0.65, 1); sp.position.set(s.x + 0.9, y + 2.25, s.z - 0.9); this.root.add(sp);
     }
+    for (const b of MINI_BUILDINGS) { const m = siteBuilding(b.kind); m.position.set(b.x, V.groundHeight(b.x, b.z), b.z); m.rotation.y = b.yaw; this.root.add(m); }      // (24/11) the landmark of each game
     this.setRegion(L.NAME);
   }
   /** Puts each game's host by its sign. load(name) -> Promise<gltf>, a fresh copy each call. */
