@@ -194,8 +194,8 @@ check(await ev((h) => __eq.wild.mobs[0].hp < h, mob.hp), 'J swings: the slime in
 console.log('after J', JSON.stringify(await ev(() => ({ hp: __eq.profile.stats.hp, lv: __eq.profile.stats.level, modal: __eq.ui.modal, dialog: document.getElementById('dialog').className, mini: !!(__eq.mini && __eq.mini.active), region: __eq.region, pos: __eq.player.pos.toArray().map((v) => +v.toFixed(1)), m0: [__eq.wild.mobs[0].x, __eq.wild.mobs[0].z, __eq.wild.mobs[0].hp, __eq.wild.mobs[0].dead], arcade: __eq.arcade.open, swim: !!__eq.player.swim }))));
 await snap('03e_wild_fight');
 for (let k = 0; k < 8 && await ev(() => !__eq.wild.mobs[0].dead); k++) { await ev(() => { const m = __eq.wild.mobs[0]; __eq.teleport(m.x, m.z - 1.6); __eq.player.yaw = 0; }); await wait(250); await page.keyboard.press('KeyJ'); await wait(650); }
-check(await ev((b) => __eq.wild.mobs[0].dead > 0 && (__eq.profile.stats.level > b.lv || __eq.profile.stats.exp > b.exp) && __eq.profile.stats.gold > b.gold, fight0), 'Slime defeated: EXP and gold earned');
-check(await ev(() => __eq.profile.stats.hp > 0 && __eq.profile.stats.hp <= 100 + (__eq.profile.stats.level - 1) * 12) && (await page.innerHTML('#hud')).includes('bar hp'), 'HUD shows the health and EXP bars');
+check(await ev((b) => __eq.wild.mobs[0].dead > 0 && __eq.profile.stats.level === b.lv && __eq.profile.stats.exp === b.exp && __eq.profile.stats.gold > b.gold, fight0), 'Slime defeated above the map cap: no EXP, a little gold');      // (24/11) the village stops at level 5, this hero is level 10
+check(await page.evaluate(async () => { const S = await import('./src/core/save.js'); return __eq.profile.stats.hp > 0 && __eq.profile.stats.hp <= S.maxHp(__eq.profile); }) && (await page.innerHTML('#hud')).includes('bar hp'), 'HUD shows the health and EXP bars');
 // ---------------------------------------------------------------- shop, equipment, bread, candy board
 await ev(() => { __eq.profile.stats.gold += 100; __eq.teleport(5.2, -12.2); }); await wait(500);
 check((await page.textContent('#prompt')).includes('Cửa hàng'), 'Prompt at Bram the blacksmith: shop');
@@ -203,7 +203,7 @@ await page.keyboard.press('KeyE'); await wait(600);
 check(await page.isVisible('#shopwin') && (await page.textContent('#shopwin')).includes('Wooden Sword') && (await page.textContent('#shopwin')).includes('Market counter'), '(21/11) Bram opens the one Village Shop: goods with prices and the market counter');
 const shopGold = await ev(() => __eq.profile.stats.gold);
 await page.click('#shopwin button[data-act="buy"][data-id="wood_sword"]'); await wait(400);
-check(await ev((g) => __eq.profile.stats.gold === g - 40 && __eq.profile.inv.weapon === 'wood_sword' && __eq.profile.gear.atk === 5 && !!__eq.sword, shopGold), 'Buying the wooden sword: gold paid, attack up, sword in her hand');
+check(await page.evaluate(async (g) => { const I = (await import('./src/core/rules.js')).ITEMS.wood_sword; return __eq.profile.stats.gold === g - I.cost && __eq.profile.inv.weapon === 'wood_sword' && __eq.profile.gear.atk === I.atk && !!__eq.sword; }, shopGold), 'Buying the wooden sword: gold paid, attack up, sword in her hand');      // (24/11) price and attack follow the level ladder (core/progress.js)
 await snap('03f_shop'); await page.keyboard.press('Escape'); await wait(300);
 await ev(() => __eq.teleport(5.0, -8.0)); await wait(450);
 check((await page.textContent('#prompt')).includes('Rose'), 'Next to Rose the prompt is her shop, not a game sign');
@@ -218,17 +218,17 @@ await page.keyboard.press('KeyE'); await wait(800);
 await answerGate(); await wait(600);
 check(await ev(() => __eq.arcade.open && __eq.arcade.game.title.includes('Candy')), 'Candy Match opens only after three words are answered');
 const cmv = await ev(async () => { const M = await import('./src/core/match3.js'); const b = __eq.arcade.game.board; for (let i = 0; i < 49; i++) for (const j of [i + 1, i + 7]) { if (j >= 49 || !M.adjacent(i, j)) continue; if (M.move([...b], i, j, Math.random).ok) return [i, j]; } return null; });
-const cbox = await page.locator('#arccv').boundingBox();
+const cbox = await page.locator('#arccv').boundingBox(), cm0 = await ev(() => __eq.arcade.game.moves);      // (24/11) the number of moves follows the tier
 for (const i of cmv) { await page.mouse.click(cbox.x + (i % 7 + 0.5) * cbox.width / 7, cbox.y + (Math.floor(i / 7) + 0.5) * cbox.width / 7); await wait(400); }
-check(await ev(() => __eq.arcade.open && __eq.arcade.game.score >= 30 && __eq.arcade.game.moves === 24), 'Candy Match: a real mouse swap lines up three and scores');
+check(await ev((m) => __eq.arcade.open && __eq.arcade.game.score >= 30 && __eq.arcade.game.moves === m, cm0 - 1), 'Candy Match: a real mouse swap lines up three and scores');
 await snap('03g_candy'); await ev(() => { __eq.arcade.game.moves = 0; }); for (let k = 0; k < 30 && await ev(() => __eq.arcade.open); k++) await wait(500);      // the last cascade may still be falling (slow frames without a GPU)
 check(await ev(() => !__eq.arcade.open && __eq.mini.data.best.candy >= 30) && (await page.textContent('#dialog')).includes('Candy Match'), 'Board ends: gold and EXP paid, record saved');
 for (let k = 0; k < 3 && await page.isVisible('#dialog'); k++) { await page.keyboard.press('KeyE'); await wait(200); }
 // archery (21/11, was the slingshot): drag back from the bow with the real mouse and let go
 await rich(); await ev(() => __eq.teleport(-61.4, -59.6)); await wait(450); await page.keyboard.press('KeyE'); await wait(800); await answerGate(); await page.waitForFunction(() => __eq.arcade.open, null, { timeout: 60000 }); await wait(300);      // (24/11) archery has its toll too
-const sbox = await page.locator('#arccv').boundingBox(), sk = sbox.width / 560;
+const sbox = await page.locator('#arccv').boundingBox(), sk = sbox.width / 560, sh0 = await ev(() => __eq.arcade.game.shots);      // (24/11) the number of arrows follows the tier
 await page.mouse.move(sbox.x + 280 * sk, sbox.y + 470 * sk); await page.mouse.down(); await page.mouse.move(sbox.x + 300 * sk, sbox.y + 560 * sk, { steps: 4 }); await page.mouse.up(); await wait(300);
-check(await ev(() => __eq.arcade.game.title.includes('Archery') && __eq.arcade.game.shots === 11), 'Archery (was Slingshot): a real drag-and-release shoots an arrow');
+check(await ev((s) => __eq.arcade.game.title.includes('Archery') && __eq.arcade.game.shots === s - 1, sh0), 'Archery (was Slingshot): a real drag-and-release shoots an arrow');
 await snap('03h_slingshot'); await page.keyboard.press('Escape'); await wait(300);
 check(await ev(() => !__eq.arcade.open && __eq.mini.data.best.sling === undefined), 'Esc quits a board game with no reward');
 // falling blocks: real arrow keys
@@ -280,7 +280,7 @@ await snap('03k_word_shield');
 const qi = await ev(() => { const vi = document.querySelector('#dialog .vi').textContent; const card = __eq.chests.api.cards().find((c) => vi.includes('"' + c.vi + '"')); return __eq.ui.options.indexOf(card.word); });
 await page.keyboard.press('Digit' + (qi + 1)); await wait(400);
 check(await ev(() => !__eq.wild.boss.shieldOn && __eq.wild.boss.broken === 1), 'Choosing the right English word breaks the shield');
-await ev(() => { const m = __eq.wild.boss; m.broken = 3; m.hp = 5; __eq.wild.cool = 0; __eq.teleport(m.x, m.z - 2.4); __eq.player.yaw = 0; }); await wait(250); await page.keyboard.press('KeyJ'); await wait(500);
+await ev(() => { const m = __eq.wild.boss; m.broken = 3; m.hp = 5; __eq.wild.cool = 0; __eq.teleport(m.x, m.z - 2.4); __eq.player.yaw = 0; }); await wait(250); await page.keyboard.press('KeyJ'); await page.waitForFunction(() => __eq.wild.boss.dead > 0, null, { timeout: 60000 }).catch(() => {}); await wait(300);      // (24/11) the swing has a delay and the frames are slow
 check(await ev(() => __eq.wild.boss.dead > 0 && __eq.profile.flags.boss1 === true) && (await page.textContent('#dialog')).includes('Slime King'), 'Slime King defeated: big reward, flag saved');
 for (let k = 0; k < 3 && await page.isVisible('#dialog'); k++) { await page.keyboard.press('KeyE'); await wait(200); }
 await ev(() => __eq.wild.mobs.forEach((m) => { if (!m.boss) m.dead = 0.1; }));
@@ -304,9 +304,9 @@ for (let k = 0; k < 3 && await page.isVisible('#dialog'); k++) { await page.keyb
 // pumpkin cart race: hold the arrow key to steer
 await rich(); await ev(() => __eq.teleport(-60.4, 68.6)); await wait(450); await page.keyboard.press('KeyE'); await wait(600); await answerGate(); await wait(500);
 await page.waitForFunction(() => __eq.arcade.open, null, { timeout: 90000 }); await ev(() => __eq.arcade.game.start());      // (23/11) the 3D race loads its models, then opens in its garage: skip it
-const cx0 = await ev(() => __eq.arcade.game.x); await page.keyboard.down('ArrowRight'); await wait(1200); await page.keyboard.up('ArrowRight');
-check(await ev((x) => __eq.arcade.game.title.includes('Race') && __eq.arcade.game.x > x + 40, cx0), 'Cart Race: holding → steers the cart');
-await snap('03l_cart_race'); await ev(() => { __eq.arcade.game.time = 0; }); await page.waitForFunction(() => !__eq.arcade.open, null, { timeout: 60000 });
+const cx0 = await ev(() => __eq.arcade.game.laneNow()); await page.keyboard.down('ArrowRight'); await wait(1200); await page.keyboard.up('ArrowRight');      // (24/11) the 3D race: the lane of the cart is read through a test hook
+check(await ev((x) => __eq.arcade.game.title.includes('Race') && __eq.arcade.game.laneNow() > x + 0.3, cx0), 'Cart Race: holding → steers the cart');
+await snap('03l_cart_race'); await ev(() => { __eq.arcade.game.time = 0; }); await page.waitForFunction(() => !__eq.arcade.open, null, { timeout: 240000 });
 check(await ev(() => __eq.mini.data.best.race2 > 0), 'Race ends: score saved');
 for (let k = 0; k < 3 && await page.isVisible('#dialog'); k++) { await page.keyboard.press('KeyE'); await wait(200); }
 await ev(() => __eq.teleport(0, 13)); await wait(300);

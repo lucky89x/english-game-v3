@@ -148,6 +148,7 @@ export function raceGame3d({ assets, cards = [], tier = 1, rnd = Math.random, va
   const reset = () => { elapsed = distance = lane = speed = hurt = boostT = spinT = letters = wi = 0; item = null; g.coins = 0; wordsDone.length = 0; for (const s of shots) scene.remove(s.m); shots.length = 0; items.forEach((t) => { t.round = -1; if (t.o) t.o.visible = true; }); rivals.forEach((r, i) => { r.d = [2.7, 5.6, 8.5][i]; r.lane = (i - 1) * 2.1; r.stun = r.spin = 0; }); };
   const begin = () => { if (state !== 'garage') return; buildRivals(); reset(); state = 'count'; countdown = 3; flash('3', 1); };
   g.start = () => { buildRivals(); reset(); state = 'running'; };      // test hook: skip the garage and the countdown
+  g.laneNow = () => lane;      // test hook: where the cart is across the road
   const finishRace = () => { if (state === 'finished') return; state = 'finished'; endT = 0; stopEngine(); flash(place() === 1 ? 'Hạng nhất!' : `Về đích · hạng ${place()}`, 1.6); };
   Object.defineProperty(g, 'time', { get: () => Math.max(0, 300 - elapsed), set: (v) => { if (v <= 0 && state !== 'finished') finishRace(); } });
   Object.defineProperty(g, 'x', { get: () => 280 + lane * 60 });
