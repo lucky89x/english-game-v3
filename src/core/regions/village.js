@@ -46,7 +46,7 @@ export const STALLS = { produce: { x: -7.5, z: 24.8, yaw: Math.PI / 2, at: [-4.6
 export const PONDS = [];
 export default makeRegion({
   ponds: PONDS,
-  name: 'village', title: 'Starter Village', size: 230, playRadius: 96, seedRadius: 62, extraTrees: { n: 300, inner: 56, outer: 118, seed: 24112 }, seed: 4242, trees: 230, rocks: 40, roughness: 0.3, treeMix: [0.3, 0.85],
+  name: 'village', title: 'Starter Village', size: 230, playRadius: 96, seedRadius: 62, extraTrees: { n: 220, inner: 56, outer: 118, seed: 24112 }, seed: 4242, trees: 230, rocks: 40, roughness: 0.3, treeMix: [0.3, 0.85],
   riverX, riverHalf: () => 3.4, riverStart: -52, waterfall: true,
   bridges: [{ id: 'village', z: 6, name: 'Village Bridge' }, { id: 'south', z: 40, name: 'South Bridge', closed: true }], stonesZ: null,
   landmarks: [

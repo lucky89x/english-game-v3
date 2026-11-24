@@ -29,6 +29,7 @@ await run('boot', async () => {
   await page.click('#gopen'); check(!(await page.$('#gu')), 'The ⚙ panel no longer has a parent Unit picker (the unit follows the map)'); await page.click('#gclose');
   const k0 = await ev(() => { __eq.teleport(0, 12); return { x: __eq.player.pos.x, z: __eq.player.pos.z }; }); await wait(400);
   await ev(() => { for (let i = 0; i < 30; i++) setTimeout(() => { dispatchEvent(new KeyboardEvent('keydown', { key: 'ư' })); dispatchEvent(new KeyboardEvent('keyup', { key: 'ư' })); }, i * 40); }); await wait(3000);
+  try { await page.waitForFunction((k) => Math.hypot(__eq.player.pos.x - k.x, __eq.player.pos.z - k.z) > 0.8, k0, { timeout: 20000 }); } catch (e) { /* the check below reports it */ }      // (24/11) a slow software renderer needs a while: the bigger village draws more
   check(await ev((k) => Math.hypot(__eq.player.pos.x - k.x, __eq.player.pos.z - k.z) > 0.8, k0), 'Vietnamese input method on: "ư" from the W key still walks');
   check(await ev(() => __eq.friends.every((f) => f.npc.actions.Idle && f.npc.actions.Talk)), 'Lily, Rose and Anna play Ngọc\'s shared clips (K3)');
   await ev(() => { const a = __eq.friends.find((f) => f.who === 'Anna').npc; __eq.teleport(a.x + 1.5, a.z + 1.5); }); await wait(1200);
@@ -160,7 +161,7 @@ await run('arcade', async () => {
   await ev(() => { __eq.profile.plays = undefined; }); const g0 = await ev(() => __eq.profile.stats.gold);
   const paid = [];
   for (let n = 0; n < 4; n++) {
-    await ev(() => __eq.teleport(10.6, 28.6)); await wait(400); await page.keyboard.press('KeyE'); await wait(500); await answerGate(); await wait(400);
+    await ev(() => __eq.teleport(-60.4, 68.6)); await wait(400); await page.keyboard.press('KeyE'); await wait(500); await answerGate(); await wait(400);
     await page.waitForFunction(() => __eq.arcade.open, null, { timeout: 90000 });      // the 3D race loads its models first
     const before = await ev(() => __eq.profile.stats.gold);
     await ev(() => { __eq.arcade.game.coins = 10; __eq.arcade.game.time = 0; }); await page.waitForFunction(() => !__eq.arcade.open, null, { timeout: 60000 });

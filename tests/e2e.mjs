@@ -73,7 +73,7 @@ await page.keyboard.press('Digit1'); await wait(300); await page.keyboard.press(
 check(await ev(() => __eq.story.step === 'letter_return'), 'Letter understood → return to Tom');
 await ev(() => __eq.teleport(1.6, 9.2)); await wait(400); await page.keyboard.press('KeyE'); await wait(250); await page.keyboard.press('KeyE'); await wait(200);
 check(await ev(() => __eq.story.step === 'jars' && __eq.profile.stats.gold >= 23), 'Tom rewards and sends Ngọc to Ben');
-await ev(() => __eq.teleport(-6.6, 19.6)); await wait(500);
+await ev(() => __eq.teleport(-12.6, 45.5)); await wait(500);
 await page.keyboard.press('KeyE'); await wait(250); await page.keyboard.press('KeyE'); await wait(400); await passCards();
 check(await ev(() => !!__eq.story.market) && (await page.textContent('#clue .en')).includes('A jar of'), "Ben's market: traveller asks in English on the request card");
 await snap('02_market');
@@ -120,7 +120,7 @@ check((await page.textContent('#dialog')).includes('chain') && await ev(() => !_
 await closeDialog();
 for (const id of ['rope', 'log']) { await ev((p) => __eq.teleport(p[0] + 1.2, p[1]), SP[id]); await wait(450); await page.keyboard.press('KeyE'); await wait(300); await closeDialog(); }
 check(await ev(() => __eq.story.items.includes('rope') && __eq.story.items.includes('log')), 'Rope and log picked up with real E');
-await ev(() => __eq.teleport(-6.6, 19.6)); await wait(500); await page.keyboard.press('KeyE'); await wait(250);
+await ev(() => __eq.teleport(-12.6, 45.5)); await wait(500); await page.keyboard.press('KeyE'); await wait(250);
 check((await page.textContent('#dialog')).includes('axe'), 'Ben: help the travellers first, then the axe');
 await page.keyboard.press('KeyE'); await wait(400); await passCards();
 for (let n = 0; n < 8; n++) {
@@ -207,7 +207,7 @@ await page.click('#shopwin button[data-act="buy"][data-id="bread"]'); await wait
 check(await ev(() => __eq.profile.inv.food === 1) && (await page.innerHTML('#hud')).includes('chip food'), 'Rose sells honey bread; the HUD shows it');
 await ev(() => { __eq.profile.stats.hp = 40; }); await page.keyboard.press('KeyQ'); await wait(250);
 check(await ev(() => __eq.profile.stats.hp >= 90 && __eq.profile.stats.hp <= 99 && __eq.profile.inv.food === 0), 'Q eats the bread: +50 health (plus slow natural healing)');
-await ev(() => __eq.teleport(-14.4, -16.4)); await wait(450);
+await ev(() => __eq.teleport(-24.4, -75.6)); await wait(450);
 check((await page.textContent('#prompt')).includes('Xếp kẹo'), 'Prompt at the Candy Match sign');
 await page.keyboard.press('KeyE'); await wait(800);
 await answerGate(); await wait(600);
@@ -220,14 +220,14 @@ await snap('03g_candy'); await ev(() => { __eq.arcade.game.moves = 0; }); for (l
 check(await ev(() => !__eq.arcade.open && __eq.mini.data.best.candy >= 30) && (await page.textContent('#dialog')).includes('Candy Match'), 'Board ends: gold and EXP paid, record saved');
 for (let k = 0; k < 3 && await page.isVisible('#dialog'); k++) { await page.keyboard.press('KeyE'); await wait(200); }
 // archery (21/11, was the slingshot): drag back from the bow with the real mouse and let go
-await ev(() => __eq.teleport(-5.4, -32.4)); await wait(450); await page.keyboard.press('KeyE'); await wait(800);
+await ev(() => __eq.teleport(-61.4, -59.6)); await wait(450); await page.keyboard.press('KeyE'); await wait(800);
 const sbox = await page.locator('#arccv').boundingBox(), sk = sbox.width / 560;
 await page.mouse.move(sbox.x + 280 * sk, sbox.y + 470 * sk); await page.mouse.down(); await page.mouse.move(sbox.x + 300 * sk, sbox.y + 560 * sk, { steps: 4 }); await page.mouse.up(); await wait(300);
 check(await ev(() => __eq.arcade.game.title.includes('Archery') && __eq.arcade.game.shots === 11), 'Archery (was Slingshot): a real drag-and-release shoots an arrow');
 await snap('03h_slingshot'); await page.keyboard.press('Escape'); await wait(300);
 check(await ev(() => !__eq.arcade.open && __eq.mini.data.best.sling === undefined), 'Esc quits a board game with no reward');
 // falling blocks: real arrow keys
-await ev(() => __eq.teleport(-30.4, 5.1)); await wait(450); await page.keyboard.press('KeyE'); await wait(800); await answerGate(); await wait(600);      // (20/11) four words before Blocks too
+await ev(() => __eq.teleport(-81.4, 32.6)); await wait(450); await page.keyboard.press('KeyE'); await wait(800); await answerGate(); await wait(600);      // (20/11) four words before Blocks too
 const bk0 = await ev(() => JSON.stringify(__eq.arcade.game.piece));
 await page.keyboard.press('ArrowLeft'); await wait(200); await page.keyboard.press('ArrowUp'); await wait(200);
 check(await ev((p0) => JSON.stringify(__eq.arcade.game.piece) !== p0, bk0), 'Falling Blocks: arrow keys move and turn the piece');
@@ -297,7 +297,7 @@ for (let n = 0; n < 5; n++) {
 check(await ev(() => __eq.profile.stats.level === 6 && __eq.profile.gates[5]) && (await page.textContent('#dialog')).includes('Wonderful'), 'Five owl questions answered: level 6');
 for (let k = 0; k < 3 && await page.isVisible('#dialog'); k++) { await page.keyboard.press('KeyE'); await wait(200); }
 // pumpkin cart race: hold the arrow key to steer
-await ev(() => __eq.teleport(10.6, 28.6)); await wait(450); await page.keyboard.press('KeyE'); await wait(600); await answerGate(); await wait(500);
+await ev(() => __eq.teleport(-60.4, 68.6)); await wait(450); await page.keyboard.press('KeyE'); await wait(600); await answerGate(); await wait(500);
 await page.waitForFunction(() => __eq.arcade.open, null, { timeout: 90000 }); await ev(() => __eq.arcade.game.start());      // (23/11) the 3D race loads its models, then opens in its garage: skip it
 const cx0 = await ev(() => __eq.arcade.game.x); await page.keyboard.down('ArrowRight'); await wait(1200); await page.keyboard.up('ArrowRight');
 check(await ev((x) => __eq.arcade.game.title.includes('Race') && __eq.arcade.game.x > x + 40, cx0), 'Cart Race: holding → steers the cart');
