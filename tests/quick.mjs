@@ -181,7 +181,9 @@ await run('arcade', async () => {        // (24/11) a mini game costs gold, asks
 
 await run('map2', async () => {        // the forest (Map 3, levels 10-20, 24/11): its monsters, board, chests, bubbles, the Queen and the Golem
   await ev(() => { const p = __eq.profile; p.flags.forest_open = true; delete p.flags.boss2; p.stats.level = 12; p.stats.hp = 9999; __eq.enterRegion('forest'); });
-  await page.waitForFunction(() => __eq.region === 'forest' && __eq.started, null, { timeout: 480000 }); await wait(900);
+  await page.waitForFunction(() => __eq.region === 'forest' && __eq.started, null, { timeout: 480000 });
+  await ev(() => { __eq.wild.mobs.forEach((m) => { if (m.region === 'forest' && !m.boss) m.dead = 0; }); });      // an earlier group may have felled some
+  await page.waitForFunction(() => __eq.wild.mobs.filter((m) => m.g.visible).length >= 19, null, { timeout: 240000 }).catch(() => {}); await wait(500);
   check(await ev(() => __eq.profile.region === 'forest' && __eq.wild.mobs.filter((m) => m.g.visible).every((m) => m.region === 'forest') && __eq.wild.mobs.filter((m) => m.g.visible).length === 19), 'Forest: 19 monsters in five grounds (bats, wisps, foxes, mushrooms, orcs), none from the meadow ' + await ev(() => __eq.wild.mobs.filter((m) => m.g.visible).map((m) => m.kind).join(',')));
   check(await ev(() => __eq.wild.mobs.filter((m) => m.g.visible).every((m) => m.lvTag)), 'Every monster carries its level tag');
   check(await ev(() => __eq.wild.signs.filter((s) => s.visible).length === 5), 'Five ground signs stand in the forest');
