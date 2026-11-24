@@ -47,10 +47,13 @@ check(Math.abs((await ev(() => __eq.cam.tYaw)) - yaw0) > Math.PI * 2, 'Left-drag
 const d0 = await ev(() => __eq.cam.tDist); await page.mouse.move(640, 400); await page.mouse.wheel(0, 400);
 check((await ev(() => __eq.cam.tDist)) > d0, 'Wheel zooms the camera');
 // ---------------------------------------------------------------- Chapter I in the village
+const rich = () => ev(() => { __eq.profile.stats.gold = Math.max(__eq.profile.stats.gold, 400); });      // (24/11) every mini game costs gold
 const answerGate = async () => {          // the three words asked before Candy Match and the Kart Race (18/11)
   for (let k = 0; k < 40 && await page.isVisible('#dialog') && !(await page.evaluate(() => __eq.arcade.open)); k++) {
     if (await page.isVisible('#dialog .opts')) {
-      const i = await page.evaluate(() => { const en = document.querySelector('#dialog .en').textContent, m = /What does "(.+)" mean/.exec(en), cards = [...__eq.chests.api.cards(), ...Object.keys(__eq.profile.words).map(__eq.cardOf).filter(Boolean)]; return __eq.ui.options.indexOf(cards.find((x) => x.word === m[1]).vi); });
+      const i = await page.evaluate(async () => { const en = document.querySelector('#dialog .en').textContent;
+        if (en.includes('___')) { const G = await import('./src/core/grammar.js'), g = Object.values(G.GRAMMAR).flat().find((x) => x.q === en); return __eq.ui.options.indexOf(g.options[g.a]); }      // (24/11) a verb form in a sentence
+        const m = /What does "(.+)" mean/.exec(en), cards = [...__eq.chests.api.cards(), ...Object.keys(__eq.profile.words).map(__eq.cardOf).filter(Boolean)]; return __eq.ui.options.indexOf(cards.find((x) => x.word === m[1]).vi); });
       await page.keyboard.press('Digit' + (i + 1)); await new Promise((r) => setTimeout(r, 260));
     } else { await page.keyboard.press('KeyE'); await new Promise((r) => setTimeout(r, 220)); }
   }
@@ -90,6 +93,7 @@ for (let n = 0; n < 5; n++) {
 check(await ev(() => !__eq.story.market && __eq.story.step === 'tom_bridge' && Object.keys(__eq.profile.words).length === 5), 'Five travellers served; words stored for review');
 for (let k = 0; k < 4 && await page.isVisible('#dialog'); k++) { await page.keyboard.press('KeyE'); await wait(200); }
 const gate = await ev(() => ({ x: __eq.L.EXITS[0].x, z: __eq.L.EXITS[0].z }));
+await ev(() => { const p = __eq.profile; p.stats.level = 10; p.gates = { 5: true, 10: true }; });      // (24/11) the forest opens at level 10 with the owl's exam
 await ev((g) => __eq.teleport(g.x, g.z + 1.2), gate); await wait(450);
 check((await page.textContent('#prompt')).includes('còn khóa'), 'Forest gate is locked before Tom opens it');
 // ---------------------------------------------------------------- Fix the Bridge
@@ -158,7 +162,7 @@ const gold0 = await ev(() => __eq.profile.stats.gold);
 await ev((p) => __eq.teleport(p[0], p[1]), MG.stars[0]); await wait(500);
 check(await ev((g) => __eq.mini.data.stars.length === 1 && __eq.profile.stats.gold === g + 3, gold0) && (await page.textContent('#hud')).includes('★ 1/12'), 'Walking into a hidden star collects it (HUD shows ★ 1/12)');
 await closeDialog();
-await ev(() => __eq.teleport(18.6, 19.8)); await wait(450); await page.keyboard.press('KeyE'); await wait(400); await answerGate(); await page.waitForFunction(() => __eq.fishing.active, null, { timeout: 120000 }); await wait(300);      // (23/11) four new words first
+await rich(); await ev(() => __eq.teleport(18.6, 19.8)); await wait(450); await page.keyboard.press('KeyE'); await wait(400); await answerGate(); await page.waitForFunction(() => __eq.fishing.active, null, { timeout: 120000 }); await wait(300);      // (23/11) four new words first
 check(await ev(() => __eq.fishing.active && __eq.fishing.state === 'wait'), 'Fishing starts: the rod is in hand and the hero waits for a bite');
 for (let c = 0; c < 3; c++) {      // software GL (~1 fps) cannot time a rhythm game: hold the marker inside the zone, then press a real E
   await ev(() => { const f = __eq.fishing; f.biteAt = 0; f.hold = true; }); await page.waitForFunction(() => __eq.fishing.state === 'bite', null, { timeout: 180000 }); await wait(500);
@@ -220,14 +224,14 @@ await snap('03g_candy'); await ev(() => { __eq.arcade.game.moves = 0; }); for (l
 check(await ev(() => !__eq.arcade.open && __eq.mini.data.best.candy >= 30) && (await page.textContent('#dialog')).includes('Candy Match'), 'Board ends: gold and EXP paid, record saved');
 for (let k = 0; k < 3 && await page.isVisible('#dialog'); k++) { await page.keyboard.press('KeyE'); await wait(200); }
 // archery (21/11, was the slingshot): drag back from the bow with the real mouse and let go
-await ev(() => __eq.teleport(-61.4, -59.6)); await wait(450); await page.keyboard.press('KeyE'); await wait(800);
+await rich(); await ev(() => __eq.teleport(-61.4, -59.6)); await wait(450); await page.keyboard.press('KeyE'); await wait(800); await answerGate(); await page.waitForFunction(() => __eq.arcade.open, null, { timeout: 60000 }); await wait(300);      // (24/11) archery has its toll too
 const sbox = await page.locator('#arccv').boundingBox(), sk = sbox.width / 560;
 await page.mouse.move(sbox.x + 280 * sk, sbox.y + 470 * sk); await page.mouse.down(); await page.mouse.move(sbox.x + 300 * sk, sbox.y + 560 * sk, { steps: 4 }); await page.mouse.up(); await wait(300);
 check(await ev(() => __eq.arcade.game.title.includes('Archery') && __eq.arcade.game.shots === 11), 'Archery (was Slingshot): a real drag-and-release shoots an arrow');
 await snap('03h_slingshot'); await page.keyboard.press('Escape'); await wait(300);
 check(await ev(() => !__eq.arcade.open && __eq.mini.data.best.sling === undefined), 'Esc quits a board game with no reward');
 // falling blocks: real arrow keys
-await ev(() => __eq.teleport(-81.4, 32.6)); await wait(450); await page.keyboard.press('KeyE'); await wait(800); await answerGate(); await wait(600);      // (20/11) four words before Blocks too
+await rich(); await ev(() => __eq.teleport(-81.4, 32.6)); await wait(450); await page.keyboard.press('KeyE'); await wait(800); await answerGate(); await wait(600);      // (20/11) four words before Blocks too
 const bk0 = await ev(() => JSON.stringify(__eq.arcade.game.piece));
 await page.keyboard.press('ArrowLeft'); await wait(200); await page.keyboard.press('ArrowUp'); await wait(200);
 check(await ev((p0) => JSON.stringify(__eq.arcade.game.piece) !== p0, bk0), 'Falling Blocks: arrow keys move and turn the piece');
@@ -263,8 +267,8 @@ for (let n = 0; n < 3; n++) await ev(() => __eq.wild.kill(__eq.wild.mobs.find((m
 await ev(() => __eq.teleport(-5.0, 1.6)); await wait(400); await page.keyboard.press('KeyE'); await wait(300);
 check(await ev(() => !__eq.profile.hunt.active && __eq.profile.hunt.done === 1) && (await page.textContent('#dialog')).includes('Thank you'), 'Three slimes later the board pays and offers the next job');
 await page.keyboard.press('KeyE'); await wait(200);
-await ev(() => { __eq.profile.stats.level = Math.max(8, __eq.profile.stats.level); __eq.wild.mobs.forEach((m) => { if (!m.boss) { m.dead = 120; m.g.visible = false; } }); }); await wait(600);
-check(await ev(() => __eq.wild.boss.g.visible), 'At level 8 the Slime King appears in the meadow');
+await ev(() => { __eq.profile.stats.level = Math.max(4, __eq.profile.stats.level); __eq.wild.mobs.forEach((m) => { if (!m.boss) { m.dead = 120; m.g.visible = false; } }); }); await wait(600);
+check(await ev(() => __eq.wild.boss.g.visible), 'At level 4 the Slime King wakes in the meadow');
 await ev(() => { const m = __eq.wild.boss; m.hp = 460; __eq.teleport(m.x, m.z - 2.4); __eq.player.yaw = 0; __eq.profile.stats.hp = 999; }); await wait(250);
 await page.keyboard.press('KeyJ'); await wait(500);
 check(await ev(() => __eq.wild.boss.shieldOn && __eq.wild.boss.broken === 0), 'Below 75% health the boss raises a word shield');
@@ -294,10 +298,10 @@ for (let n = 0; n < 5; n++) {
     if (m) return __eq.ui.options.indexOf(cards.find((x) => x.word === m[1]).vi); return __eq.ui.options.indexOf(cards.find((x) => x.vi === vi).word); });
   await page.keyboard.press('Digit' + (oi + 1)); await wait(300);
 }
-check(await ev(() => __eq.profile.stats.level === 6 && __eq.profile.gates[5]) && (await page.textContent('#dialog')).includes('Wonderful'), 'Five owl questions answered: level 6');
+check(await ev(() => __eq.profile.stats.level === 5 && __eq.profile.gates[5]) && (await page.textContent('#dialog')).includes('Wonderful'), 'Five owl questions answered: the review is passed (the village stops at level 5; the sea lets the level go up)');
 for (let k = 0; k < 3 && await page.isVisible('#dialog'); k++) { await page.keyboard.press('KeyE'); await wait(200); }
 // pumpkin cart race: hold the arrow key to steer
-await ev(() => __eq.teleport(-60.4, 68.6)); await wait(450); await page.keyboard.press('KeyE'); await wait(600); await answerGate(); await wait(500);
+await rich(); await ev(() => __eq.teleport(-60.4, 68.6)); await wait(450); await page.keyboard.press('KeyE'); await wait(600); await answerGate(); await wait(500);
 await page.waitForFunction(() => __eq.arcade.open, null, { timeout: 90000 }); await ev(() => __eq.arcade.game.start());      // (23/11) the 3D race loads its models, then opens in its garage: skip it
 const cx0 = await ev(() => __eq.arcade.game.x); await page.keyboard.down('ArrowRight'); await wait(1200); await page.keyboard.up('ArrowRight');
 check(await ev((x) => __eq.arcade.game.title.includes('Race') && __eq.arcade.game.x > x + 40, cx0), 'Cart Race: holding → steers the cart');

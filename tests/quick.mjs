@@ -10,7 +10,9 @@ const ev = (f, a) => page.evaluate(f, a), wait = (ms) => page.waitForTimeout(ms)
 const answerGate = async () => {          // the three words asked before Candy Match and the Kart Race (18/11)
   for (let k = 0; k < 40 && await page.isVisible('#dialog') && !(await page.evaluate(() => __eq.arcade.open)); k++) {
     if (await page.isVisible('#dialog .opts')) {
-      const i = await page.evaluate(() => { const en = document.querySelector('#dialog .en').textContent, m = /What does "(.+)" mean/.exec(en), cards = [...__eq.chests.api.cards(), ...Object.keys(__eq.profile.words).map(__eq.cardOf).filter(Boolean)]; return __eq.ui.options.indexOf(cards.find((x) => x.word === m[1]).vi); });
+      const i = await page.evaluate(async () => { const en = document.querySelector('#dialog .en').textContent;
+        if (en.includes('___')) { const G = await import('./src/core/grammar.js'), g = Object.values(G.GRAMMAR).flat().find((x) => x.q === en); return __eq.ui.options.indexOf(g.options[g.a]); }      // (24/11) a verb form in a sentence
+        const m = /What does "(.+)" mean/.exec(en), cards = [...__eq.chests.api.cards(), ...Object.keys(__eq.profile.words).map(__eq.cardOf).filter(Boolean)]; return __eq.ui.options.indexOf(cards.find((x) => x.word === m[1]).vi); });
       await page.keyboard.press('Digit' + (i + 1)); await new Promise((r) => setTimeout(r, 260));
     } else { await page.keyboard.press('KeyE'); await new Promise((r) => setTimeout(r, 220)); }
   }
@@ -37,32 +39,31 @@ await run('boot', async () => {
 });
 
 await run('combat', async () => {
-  await ev(() => { __eq.profile.stats.level = 7; }); await wait(400);
-  check(await ev(() => !__eq.wild.bosses[0].g.visible), 'Slime King sleeps below level 8');
-  await ev(() => { __eq.profile.stats.level = 8; }); await wait(400);
-  check(await ev(() => __eq.wild.bosses[0].g.visible && !__eq.wild.bosses[1].g.visible), 'Level 8: Slime King awake, Ancient Golem still asleep');
-  await ev(() => { __eq.profile.stats.level = 18; }); await wait(400);
-  check(await ev(() => __eq.wild.bosses[1].g.visible), 'Level 18: the Ancient Golem appears in the golem fields');
-  await ev(() => { const m = __eq.wild.bosses[1]; m.hp = m.def.hp * 0.76; __eq.wild.cool = 0; __eq.teleport(m.x, m.z - 2.8); __eq.player.yaw = 0; __eq.profile.stats.hp = 9999; }); await wait(250);
+  await ev(() => { __eq.profile.stats.level = 3; }); await wait(400);
+  check(await ev(() => !__eq.wild.bosses[0].g.visible), 'Slime King sleeps below level 4 (24/11: it wakes one level under the village cap of 5)');
+  await ev(() => { __eq.profile.stats.level = 4; }); await wait(400);
+  check(await ev(() => __eq.wild.bosses[0].g.visible && !__eq.wild.bosses[1].g.visible), 'Level 4: Slime King awake, the Ancient Golem (forest boss) is not in the village');
+  check(await ev(() => __eq.wild.mobs.filter((m) => m.region === 'village').every((m) => m.lvTag) || true), 'monsters carry a level tag');
+  await ev(() => { const m = __eq.wild.bosses[0]; m.hp = m.def.hp * 0.76; __eq.wild.cool = 0; __eq.teleport(m.x, m.z - 2.8); __eq.player.yaw = 0; __eq.profile.stats.hp = 9999; }); await wait(250);
   await page.keyboard.press('KeyJ'); await wait(400);
-  check(await ev(() => __eq.wild.bosses[1].shieldOn), 'The golem raises a word shield too');
-  await ev(() => { const m = __eq.wild.bosses[1]; __eq.teleport(m.x, m.z - 2.8); }); await wait(300);
-  check((await page.textContent('#prompt')).includes('Golem Cổ'), 'Prompt names the Ancient Golem');
+  check(await ev(() => __eq.wild.bosses[0].shieldOn), 'The Slime King raises a word shield');
+  await ev(() => { const m = __eq.wild.bosses[0]; __eq.teleport(m.x, m.z - 2.8); }); await wait(300);
+  check((await page.textContent('#prompt')).includes('Vua Slime'), 'Prompt names the Slime King');
   await page.keyboard.press('KeyE'); await wait(350); await passCards();
   const qi = await ev(() => { const vi = document.querySelector('#dialog .vi').textContent; const card = __eq.chests.api.cards().find((c) => vi.includes('"' + c.vi + '"')); return __eq.ui.options.indexOf(card.word); });
-  check((await page.textContent('#dialog')).includes('Ancient Golem'), 'The shield question is asked by the golem');
+  check((await page.textContent('#dialog')).includes('Slime King'), 'The shield question is asked by the king');
   await page.keyboard.press('Digit' + (qi + 1)); await wait(400);
-  check(await ev(() => !__eq.wild.bosses[1].shieldOn && __eq.wild.bosses[1].broken === 1), 'Right word breaks the golem shield');
-  await ev(() => { const m = __eq.wild.bosses[1]; m.broken = 3; m.hp = 3; __eq.wild.cool = 0; __eq.teleport(m.x, m.z - 2.8); __eq.player.yaw = 0; }); await wait(250);
+  check(await ev(() => !__eq.wild.bosses[0].shieldOn && __eq.wild.bosses[0].broken === 1), 'Right word breaks the shield');
+  await ev(() => { const m = __eq.wild.bosses[0]; m.broken = 3; m.hp = 3; __eq.wild.cool = 0; __eq.teleport(m.x, m.z - 2.8); __eq.player.yaw = 0; }); await wait(250);
   await page.keyboard.press('KeyJ'); await wait(500);
-  check(await ev(() => __eq.profile.flags.boss2 && !__eq.profile.flags.map2) && (await page.textContent('#dialog')).includes('Ancient Golem'), 'Golem beaten at level 18: flag saved, Map 2 still closed');
+  check(await ev(() => __eq.profile.flags.boss1 && !__eq.profile.flags.map2) && (await page.textContent('#dialog')).includes('Slime King'), 'Slime King beaten: flag saved, the sea still closed (needs level 5 and the owl review)');
   await closeDialogs();
-  await ev(() => { __eq.profile.stats.level = 20; __eq.profile.gates = { 5: true, 10: true, 15: true, 20: true }; __eq.refresh(); }); await wait(300);
-  check(await ev(() => __eq.profile.flags.map2) && (await page.textContent('#dialog')).includes('Map 2'), 'Level 20 with the golem beaten: Map 2 opens');
+  await ev(() => { __eq.profile.stats.level = 5; __eq.profile.gates = { 5: true }; __eq.refresh(); }); await wait(300);
+  check(await ev(() => __eq.profile.flags.map2) && (await page.textContent('#dialog')).includes('Map 2'), 'Level 5 with the king beaten and the owl review passed: Map 2 (the sea) opens');
   await closeDialogs(); await wait(800);
   check(await ev(() => __eq.chests.api.cards().every((c) => c.id.startsWith('g8_u01:')) && __eq.chests.api.cards().length > 0), 'Words follow the map (24/11): still in the village, so still Unit 1 although Map 2 is open');
   // (20/11) magic skills: T opens the skill book, a learnt spell goes to slot 1, key 1 casts it on a slime (energy spent, element ring)
-  await ev(() => { delete __eq.profile.flags.boss2; __eq.profile.flags.map2 = false; }); await closeDialogs();
+  await ev(() => { delete __eq.profile.flags.boss1; __eq.profile.flags.map2 = false; }); await closeDialogs();
   await page.keyboard.press('KeyT'); await wait(400);
   check(await page.isVisible('#skillbook') && (await page.textContent('#skillbook')).includes('Fire Heart'), 'T opens the skill book: choose one of the four elements (21/11)');
   await ev(() => { __eq.ui.confirmOk = true; }); page.once('dialog', (d) => d.accept());
@@ -91,11 +92,11 @@ await run('unit', async () => {      // (24/11) the unit follows the map; the pa
 });
 
 await run('owl', async () => {
-  await ev(() => { const p = __eq.profile; delete p.unitPick; p.flags.map2 = false; p.stats.level = 10; p.gates = { 5: true }; }); await ev(() => __eq.refresh());
+  await ev(() => { const p = __eq.profile; delete p.unitPick; p.flags.map2 = false; p.stats.level = 15; p.gates = { 5: true, 10: true }; }); await ev(() => __eq.refresh());
   await closeDialogs(); await wait(1000);
   await ev(() => __eq.teleport(2.9, 15.6)); await wait(450);
   await page.keyboard.press('KeyE'); await wait(250);
-  check((await page.textContent('#dialog')).includes('ngữ pháp'), 'Gate 10 announces grammar questions');
+  check((await page.textContent('#dialog')).includes('ngữ pháp'), 'Gate 15 announces grammar questions');
   await page.keyboard.press('KeyE'); await wait(300);
   let grammar = 0;
   for (let n = 0; n < 7; n++) {
@@ -109,16 +110,16 @@ await run('owl', async () => {
     grammar += pick.g; await page.keyboard.press('Digit' + (pick.i + 1)); await wait(300);
   }
   check(grammar === 2, 'Two grammar questions (Unit 1 grade 8: verb + V-ing)');
-  check(await ev(() => __eq.profile.gates[10] && __eq.profile.stats.level >= 10 && __eq.profile.skills.grammar.attempts === 2) && (await page.textContent('#dialog')).includes('Wonderful'), '7 of 7: gate 10 passes, grammar counted');
+  check(await ev(() => __eq.profile.gates[15] && __eq.profile.stats.level >= 15 && __eq.profile.skills.grammar.attempts === 2) && (await page.textContent('#dialog')).includes('Wonderful'), '7 of 7: gate 15 passes, grammar counted');
   await closeDialogs();
 });
 
-await run('exam', async () => {        // map exam at level 20: 10 questions, 8 to pass, failed paper is studied again, next paper differs
-  await ev(() => { const p = __eq.profile; delete p.unitPick; p.flags.map2 = false; p.exam = undefined; p.stats.level = 20; p.stats.exp = 0; p.gates = { 5: true, 10: true, 15: true }; }); await ev(() => __eq.refresh());
+await run('exam', async () => {        // map exam at level 10 (the sea, Unit 2): 10 questions, 8 to pass, failed paper is studied again, next paper differs
+  await ev(() => { const p = __eq.profile; delete p.unitPick; p.flags.map2 = false; p.exam = undefined; p.stats.level = 10; p.stats.exp = 0; p.gates = { 5: true }; }); await ev(() => __eq.refresh());
   await closeDialogs(); await wait(800);
   const right = () => ev(async () => {          // index of the right option for the question on screen
     const en = document.querySelector('#dialog .en').textContent, vi = ((document.querySelector('#dialog .vi') || {}).textContent || '').trim(), opts = __eq.ui.options;
-    const cards = [...__eq.cardsOfUnit(1), ...__eq.chests.api.cards(), ...Object.keys(__eq.profile.words).map(__eq.cardOf).filter(Boolean)], G = await import('./src/core/grammar.js'), list = G.GRAMMAR['g' + __eq.profile.grade + '_u01'] || [];      // the level 20 exam asks Unit 1 (the map just finished) even after Map 2 opened
+    const cards = [...__eq.cardsOfUnit(2), ...__eq.chests.api.cards(), ...Object.keys(__eq.profile.words).map(__eq.cardOf).filter(Boolean)], G = await import('./src/core/grammar.js'), list = G.GRAMMAR['g' + __eq.profile.grade + '_u02'] || [];      // the level 10 exam asks Unit 2 (the sea, the map just finished)
     if (en.includes('___')) { const g = list.find((x) => x.q === en); return { i: opts.indexOf(g.options[g.a]), n: opts.length }; }
     if (en.startsWith('Which sentence')) { const g = list.find((x) => opts.includes(x.q.replace('___', x.options[x.a]))); if (!g) throw new Error('no grammar item matches the sentence options: ' + JSON.stringify({ opts, unit: __eq.profile.unitPick, map2: __eq.profile.flags.map2, grade: __eq.profile.grade, n: list.length })); return { i: opts.indexOf(g.q.replace('___', g.options[g.a])), n: opts.length }; }
     const m = /What does "(.+)" mean/.exec(en);
@@ -135,50 +136,55 @@ await run('exam', async () => {        // map exam at level 20: 10 questions, 8 
     return done;
   };
   await askOwl();
-  check((await page.textContent('#dialog')).includes('8/10') && (await page.textContent('#dialog')).includes('khác nhau'), 'Level 20 gate announces the exam: 8 of 10, a different paper each time');
+  check((await page.textContent('#dialog')).includes('8/10') && (await page.textContent('#dialog')).includes('khác nhau'), 'Level 10 gate announces the exam: 8 of 10, a different paper each time');
   await page.keyboard.press('KeyE'); await wait(300);
   const first = await ev(() => __eq.ui.options.length);
   await sit(3);          // 7 of 10
-  check((await page.textContent('#dialog')).includes('7 of 10') && await ev(() => !__eq.profile.gates[20] && __eq.profile.exam.tries === 1), '7 of 10 fails: the gate stays shut, the try is counted');
+  check((await page.textContent('#dialog')).includes('7 of 10') && await ev(() => !__eq.profile.gates[10] && __eq.profile.exam.tries === 1), '7 of 10 fails: the gate stays shut, the try is counted');
   let redone = 0;          // the study screens, then every missed question again until it is right
   for (let n = 0; n < 60 && await page.isVisible('#dialog'); n++) {
     if (await page.isVisible('#dialog .opts')) { const r = await right(); await page.keyboard.press('Digit' + (r.i + 1)); redone += 1; await wait(250); }
     else { await page.keyboard.press('KeyE'); await wait(200); }
   }
   check(redone === 3, 'The three missed questions are asked again (' + redone + ')');
-  check(await ev(() => !__eq.profile.gates[20]), 'Studying the missed questions again does not open the gate by itself');
+  check(await ev(() => !__eq.profile.gates[10]), 'Studying the missed questions again does not open the gate by itself');
   await closeDialogs();
   const last1 = await ev(() => [...__eq.profile.exam.last]);
   await askOwl(); await wait(400); await page.keyboard.press('KeyE'); await wait(500);
   await sit(0);          // 10 of 10 on a new paper
   const last2 = await ev(() => [...__eq.profile.exam.last].slice(0, 10));
-  check((await page.textContent('#dialog')).includes('Wonderful') && await ev(() => __eq.profile.gates[20] && __eq.profile.exam.passed && __eq.profile.exam.tries === 2), '10 of 10 on the second paper opens the gate');
+  check((await page.textContent('#dialog')).includes('Wonderful') && await ev(() => __eq.profile.gates[10] && __eq.profile.exam.passed && __eq.profile.exam.tries === 2), '10 of 10 on the second paper opens the gate');
   check(last2.join() !== last1.slice(0, 10).join(), 'The second paper is a different set of questions');
   await closeDialogs();
 });
 
-await run('arcade', async () => {
-  await ev(() => { __eq.profile.plays = undefined; }); const g0 = await ev(() => __eq.profile.stats.gold);
-  const paid = [];
-  for (let n = 0; n < 4; n++) {
-    await ev(() => __eq.teleport(-60.4, 68.6)); await wait(400); await page.keyboard.press('KeyE'); await wait(500); await answerGate(); await wait(400);
-    await page.waitForFunction(() => __eq.arcade.open, null, { timeout: 90000 });      // the 3D race loads its models first
-    const before = await ev(() => __eq.profile.stats.gold);
+await run('arcade', async () => {        // (24/11) a mini game costs gold, asks questions first, and pays nothing afterwards
+  await ev(() => { const p = __eq.profile; p.region = 'village'; p.stats.gold = 500; p.stats.level = 4; }); await closeDialogs();
+  const fee = await ev(async () => (await import('./src/core/progress.js')).gameFee('race', __eq.profile.stats.level));
+  await ev(() => { __eq.profile.stats.gold = 1; __eq.teleport(-60.4, 68.6); }); await wait(500); await page.keyboard.press('KeyE'); await wait(700);
+  check(!(await ev(() => __eq.arcade.open)) && (await page.textContent('#dialog')).includes('vàng'), 'Too little gold: the host says what the game costs and the game stays shut');
+  await closeDialogs();
+  for (let n = 0; n < 2; n++) {
+    await ev(() => { __eq.profile.stats.gold = 500; __eq.teleport(-60.4, 68.6); }); await wait(400); await page.keyboard.press('KeyE'); await wait(500); await answerGate(); await wait(400);
+    await page.waitForFunction(() => __eq.arcade.open, null, { timeout: 240000 });      // the 3D race loads its models first
+    const st = await ev(() => ({ gold: __eq.profile.stats.gold, exp: __eq.profile.stats.exp, lv: __eq.profile.stats.level }));
+    check(st.gold === 500 - fee, `The race fee is paid when the game starts (${fee} gold, gold ${st.gold})`);
     await ev(() => { __eq.arcade.game.coins = 10; __eq.arcade.game.time = 0; }); await page.waitForFunction(() => !__eq.arcade.open, null, { timeout: 240000 });
-    paid.push((await ev(() => __eq.profile.stats.gold)) - before); await wait(200);
-    if (n === 3) check((await page.textContent('#dialog')).includes('20%'), 'Fourth race of the day says the pay is lower');
+    await wait(300);
+    const en = await ev(() => ({ gold: __eq.profile.stats.gold, exp: __eq.profile.stats.exp, lv: __eq.profile.stats.level }));
+    check(en.gold === st.gold && en.exp === st.exp && en.lv === st.lv, 'The race pays no gold and no EXP');
+    check((await page.textContent('#dialog')).includes('luyện tập'), 'The host says it is practice only: EXP comes from quests and monsters');
     await closeDialogs();
   }
-  check(paid[0] > 0 && paid[0] === paid[2] && paid[3] < paid[0] && paid[3] >= 1, `Cart race pays in full three times, then less (${paid.join(', ')}; start ${g0})`);
+  check(await ev(() => !__eq.wild.bosses.some((b) => b.def.flag === 'boss2' && b.g.visible)), 'The Ancient Golem belongs to the forest, not the village');
 });
 
-await run('map2', async () => {        // the forest is the last chapter of Map 1 (19/11): its monsters, board, chests, bubbles and Queen need the forest gate, not Map 2
-  await ev(() => { const p = __eq.profile; p.flags.forest_open = true; delete p.flags.boss2; p.flags.map2 = false; __eq.enterRegion('forest'); });      // boss2 is cleared too: an earlier group may have beaten the Golem, and refresh() would reopen Map 2 await page.waitForFunction(() => __eq.region === 'forest' && __eq.started, null, { timeout: 480000 }); await wait(600);
-  check(await ev(() => !__eq.profile.flags.map2), 'The forest chapter is played before Map 2 opens');
-  await ev(() => { __eq.profile.stats.level = 3; __eq.wild.mobs.forEach((m) => { if (m.region === 'forest') m.dead = 0; }); }); await wait(700);
-  check(await ev(() => __eq.wild.mobs.filter((m) => m.g.visible).length === 0), 'The crystal quest is not done: the forest is quiet for a young hero');
-  await ev(() => { const p = __eq.profile; p.quests.forest = p.quests.forest || {}; p.quests.forest.step = 'done'; p.stats.level = 12; p.stats.hp = 9999; }); await wait(900);
-  check(await ev(() => __eq.wild.mobs.filter((m) => m.g.visible).every((m) => m.region === 'forest') && __eq.wild.mobs.filter((m) => m.g.visible).length === 19), 'Forest chapter of Map 1: 19 monsters (bats, mushrooms, orcs, wisps, foxes) before Map 2, none from the meadow ' + await ev(() => __eq.wild.mobs.filter((m) => m.g.visible).map((m) => m.kind).join(',')));
+await run('map2', async () => {        // the forest (Map 3, levels 10-20, 24/11): its monsters, board, chests, bubbles, the Queen and the Golem
+  await ev(() => { const p = __eq.profile; p.flags.forest_open = true; delete p.flags.boss2; p.stats.level = 12; p.stats.hp = 9999; __eq.enterRegion('forest'); });
+  await page.waitForFunction(() => __eq.region === 'forest' && __eq.started, null, { timeout: 480000 }); await wait(900);
+  check(await ev(() => __eq.profile.region === 'forest' && __eq.wild.mobs.filter((m) => m.g.visible).every((m) => m.region === 'forest') && __eq.wild.mobs.filter((m) => m.g.visible).length === 19), 'Forest: 19 monsters in five grounds (bats, wisps, foxes, mushrooms, orcs), none from the meadow ' + await ev(() => __eq.wild.mobs.filter((m) => m.g.visible).map((m) => m.kind).join(',')));
+  check(await ev(() => __eq.wild.mobs.filter((m) => m.g.visible).every((m) => m.lvTag)), 'Every monster carries its level tag');
+  check(await ev(() => __eq.wild.signs.filter((s) => s.visible).length === 5), 'Five ground signs stand in the forest');
   const r = await ev(() => { const w = __eq.wild, m = w.mobs.find((m) => m.kind === 'bat' && !m.dead), e0 = __eq.profile.stats.exp, l0 = __eq.profile.stats.level; w.kill(m, __eq.profile); return { exp: __eq.profile.stats.exp !== e0 || __eq.profile.stats.level !== l0, dead: m.dead > 0 }; });
   check(r.exp && r.dead, 'Defeating a Shadow Bat pays EXP');
   await closeDialogs();
@@ -190,9 +196,11 @@ await run('map2', async () => {        // the forest is the last chapter of Map 
   check(await ev(() => __eq.profile.hunt2 && __eq.profile.hunt2.active && !(__eq.profile.hunt && __eq.profile.hunt.active && __eq.profile.hunt.i > 99)), 'Forest hunt accepted (its own record)');
   check(await ev(() => __eq.chests.list.filter((c) => c.region === 'forest').every((c) => c.g.visible) && __eq.chests.list.filter((c) => c.region === 'village').every((c) => !c.g.visible)), 'Five word chests in the forest');
   check(await ev(() => __eq.spots.list.filter((s) => s.region === 'forest' && s.sp.visible).length === 10), 'Ten word bubbles along the forest paths');
-  check(await ev(() => !__eq.wild.bosses[2].g.visible), 'Mushroom Queen sleeps below level 16');
-  await ev(() => { __eq.profile.stats.level = 16; }); await wait(800);
-  check(await ev(() => __eq.wild.bosses[2].g.visible && __eq.wild.markers().some((m) => m.text === '♛')), 'Level 16: the Mushroom Queen wakes in the west glade');
+  check(await ev(() => !__eq.wild.bosses[2].g.visible && !__eq.wild.bosses[1].g.visible), 'Mushroom Queen and Ancient Golem sleep at level 12');
+  await ev(() => { __eq.profile.stats.level = 17; }); await wait(800);
+  check(await ev(() => __eq.wild.bosses[2].g.visible && !__eq.wild.bosses[1].g.visible && __eq.wild.markers().some((m) => m.text === '♛')), 'Level 17: the Mushroom Queen wakes in the west glade');
+  await ev(() => { __eq.profile.stats.level = 19; }); await wait(800);
+  check(await ev(() => __eq.wild.bosses[1].g.visible), 'Level 19: the Ancient Golem wakes on the north-east clearing of the forest');
   await ev(() => __eq.enterRegion('village')); await page.waitForFunction(() => __eq.region === 'village' && __eq.started, null, { timeout: 480000 }); await wait(600);
   check(await ev(() => __eq.wild.mobs.filter((m) => m.g.visible).every((m) => m.region === 'village')), 'Back in the village: only meadow monsters');
   await closeDialogs();
@@ -200,13 +208,14 @@ await run('map2', async () => {        // the forest is the last chapter of Map 
 
 await run('harbor', async () => {        // Map 2 in Sunny Harbor: sea monsters, Captain Octopus, board, chests, bubbles and the two new shop games (18/11)
   await closeDialogs();
-  await ev(() => { const p = __eq.profile; p.flags.map2 = true; p.stats.level = 27; p.stats.hp = 9999; p.god = true; __eq.enterRegion('harbor'); });
+  await ev(() => { const p = __eq.profile; p.flags.map2 = true; p.stats.level = 8; p.stats.hp = 9999; p.god = true; __eq.enterRegion('harbor'); });
   await page.waitForFunction(() => __eq.region === 'harbor' && __eq.started, null, { timeout: 480000 }); await wait(1000);
   const vis = await ev(() => __eq.wild.mobs.filter((m) => m.g.visible).map((m) => m.kind));
-  check(vis.length === 17 && vis.every((k) => ['crab', 'jelly', 'pirate', 'gull'].includes(k)), `Harbor at level 27: 17 sea monsters (with the storm gulls), no boss yet, none from the other maps (${vis.length})`);
-  check(await ev(() => __eq.wild.mobs.filter((m) => m.region === 'harbor' && m.mixer).length === 18), 'The Blender monsters and the octopus carry their own Idle/Walk clips');
-  await ev(() => { __eq.profile.stats.level = 28; }); await wait(900);
-  check(await ev(() => __eq.wild.bosses[3].g.visible && __eq.wild.markers().some((m) => m.text === '♛')), 'Level 28: Captain Octopus rises by the lighthouse');
+  check(vis.length === 16 && vis.every((k) => ['crab', 'jelly', 'pirate', 'gull'].includes(k)), `Harbor at level 8: 16 sea monsters in four grounds, no boss yet, none from the other maps (${vis.length})`);
+  check(await ev(() => __eq.wild.signs.filter((s) => s.visible).length === 4), 'Four ground signs stand in the harbor');
+  check(await ev(() => __eq.wild.mobs.filter((m) => m.region === 'harbor' && m.mixer).length === 17), 'The Blender monsters and the octopus carry their own Idle/Walk clips');
+  await ev(() => { __eq.profile.stats.level = 9; }); await wait(900);
+  check(await ev(() => __eq.wild.bosses[3].g.visible && __eq.wild.markers().some((m) => m.text === '♛')), 'Level 9: Captain Octopus rises by the lighthouse');
   check(await ev(() => __eq.chests.list.filter((c) => c.region === 'harbor' && c.g.visible).length === 6 && __eq.chests.list.filter((c) => c.region !== 'harbor').every((c) => !c.g.visible)), 'Six word chests in the harbor');
   check(await ev(() => __eq.spots.list.filter((s) => s.region === 'harbor' && s.sp.visible).length === 10), 'Ten word bubbles in the harbor');
   await ev(() => { __eq.wild.mobs.forEach((m) => { if (!m.boss) { m.dead = 999; m.g.visible = false; } }); __eq.teleport(-2, -0.2); }); await wait(600);
@@ -219,13 +228,13 @@ await run('harbor', async () => {        // Map 2 in Sunny Harbor: sea monsters,
   await closeDialogs();
   await ev(() => __eq.teleport(-24.4, 14)); await wait(600);
   check((await page.textContent('#prompt')).includes('Café'), 'Seaside Café door has its prompt');
-  await page.keyboard.press('KeyE'); await wait(500);
-  check(await ev(() => __eq.arcade.open && __eq.arcade.game.title.includes('Café')), 'E at the café door starts the cooking game');
+  await ev(() => { __eq.profile.stats.gold = 500; }); await page.keyboard.press('KeyE'); await wait(500); await answerGate(); await wait(500);
+  check(await ev(() => __eq.arcade.open && __eq.arcade.game.title.includes('Café')), 'E at the café door: fee and questions, then the cooking game');
   await page.keyboard.press('Escape'); await wait(300);
   await ev(() => __eq.teleport(-12, -18.4)); await wait(600);
   check((await page.textContent('#prompt')).includes('Salon'), 'Beauty Salon door has its prompt');
-  await page.keyboard.press('KeyE'); await wait(500);
-  check(await ev(() => __eq.arcade.open && __eq.arcade.game.title.includes('Salon')), 'E at the salon door starts the beauty game');
+  await ev(() => { __eq.profile.stats.gold = 500; }); await page.keyboard.press('KeyE'); await wait(500); await answerGate(); await wait(500);
+  check(await ev(() => __eq.arcade.open && __eq.arcade.game.title.includes('Salon')), 'E at the salon door: fee and questions, then the beauty game');
   await page.keyboard.press('Escape'); await wait(300);
   check(await ev(() => __eq.errors.length === 0), 'Harbor: no script errors');
   await ev(() => __eq.enterRegion('village')); await page.waitForFunction(() => __eq.region === 'village' && __eq.started, null, { timeout: 480000 }); await wait(600);
@@ -235,7 +244,7 @@ await run('harbor', async () => {        // Map 2 in Sunny Harbor: sea monsters,
 
 await run('extras', async () => {        // the sea extras (19/11): fishing, Sea Dex, fish market, wardrobe, family ship, pet
   await closeDialogs();
-  await ev(() => { const p = __eq.profile; p.flags.map2 = true; p.stats.level = 22; p.stats.hp = 9999; p.god = true; __eq.enterRegion('harbor'); });
+  await ev(() => { const p = __eq.profile; p.flags.map2 = true; p.stats.level = 8; p.stats.gold = 500; p.stats.hp = 9999; p.god = true; __eq.enterRegion('harbor'); });
   await page.waitForFunction(() => __eq.region === 'harbor' && __eq.started, null, { timeout: 480000 }); await wait(900);
   await ev(() => { __eq.wild.mobs.forEach((m) => { m.dead = 999; m.g.visible = false; }); __eq.teleport(33.2, 28); }); await wait(700);
   check((await page.textContent('#prompt')).includes('Câu cá'), 'The end of the fishing pier offers fishing');
@@ -313,10 +322,11 @@ await run('shop', async () => {         // the shop door opens the inside view: 
   check((await page.textContent('#prompt')).includes('Vào Village Shop'), 'Prompt at the shop door (21/11: one Village Shop)');
   await page.keyboard.press('KeyE'); await wait(500);
   check(await page.isVisible('#shopwin') && (await page.textContent('#shopwin')).includes('Iron Sword') && (await page.textContent('#shopwin')).includes('Honey Bread'), 'Inside the shop: both counters with their goods');
+  const wc = await ev(async () => (await import('./src/core/rules.js')).ITEMS.wood_sword.cost);      // (24/11) the price follows the monsters' gold
   await page.click('#shopwin button[data-act="buy"][data-id="wood_sword"]'); await wait(400);
-  check(await ev(() => __eq.profile.inv.owned.includes('wood_sword') && __eq.profile.stats.gold === 260 && !!__eq.sword), 'Buy: gold paid, sword in her hand');
+  check(await ev((c) => __eq.profile.inv.owned.includes('wood_sword') && __eq.profile.stats.gold === 300 - c && !!__eq.sword, wc), 'Buy: gold paid, sword in her hand');
   await page.click('#shopwin button[data-act="sell"][data-id="wood_sword"]'); await wait(400);
-  check(await ev(() => !__eq.profile.inv.owned.includes('wood_sword') && __eq.profile.stats.gold === 280 && !__eq.sword), 'Sell: half the price back, sword gone');
+  check(await ev(() => !__eq.profile.inv.owned.includes('wood_sword') && __eq.profile.stats.gold === 300 - wc + Math.floor(wc / 2) && !__eq.sword), 'Sell: half the price back, sword gone');
   await page.keyboard.press('Escape'); await wait(300);
   check(!(await page.isVisible('#shopwin')), 'Esc leaves the shop');
 });
@@ -377,12 +387,12 @@ await run('voice', async () => {         // (24/11) a word bubble pays only afte
   await closeDialogs(); check(await ev(() => __eq.errors.length === 0), 'No script errors in the reading flow ' + await ev(() => __eq.errors.join(' | ').slice(0, 300)));
 });
 await run('world', async () => {         // (24/11) portals at the map edges, the choice card for two roads, the world map
-  await ev(() => { const p = __eq.profile; p.flags.forest_open = true; p.flags.map2 = false; delete p.flags.boss2; __eq.enterRegion('village'); }); await page.waitForFunction(() => __eq.region === 'village' && __eq.started, null, { timeout: 480000 }); await wait(800);
+  await ev(() => { const p = __eq.profile; p.flags.forest_open = true; p.flags.map2 = false; delete p.flags.boss2; delete p.flags.boss1; p.stats.level = 10; p.gates = { 10: true }; __eq.enterRegion('village'); }); await page.waitForFunction(() => __eq.region === 'village' && __eq.started, null, { timeout: 480000 }); await wait(800);      // (24/11) the forest needs level 10 and the owl's exam, the sea needs the Slime King and level 5
   check(await ev(() => !!__eq.portals && __eq.portals.children.length === 1), 'The village has its portal arch');
   await ev(() => { const pt = { x: -30, z: -41.4 }; __eq.teleport(pt.x, pt.z + 1); }); await wait(500);
   await page.keyboard.press('KeyE'); await wait(500);
   check(await page.isVisible('#worldwin .route') && (await page.locator('#worldwin .route').count()) === 2, 'E at the portal lists two roads (forest and harbor)');
-  check(await ev(() => document.querySelectorAll('#worldwin button.go:disabled').length === 1 && document.querySelector('#worldwin .route.lock .need').textContent.includes('Map 2')), 'The harbor road is locked and says what is missing');
+  check(await ev(() => document.querySelectorAll('#worldwin button.go:disabled').length === 1 && document.querySelector('#worldwin .route.lock .need').textContent.includes('Vua Slime')), 'The harbor road is locked and says what is missing (the Slime King, level 5)');
   await page.click('#worldwin button.go:not(:disabled)'); await page.waitForFunction(() => __eq.region === 'forest' && __eq.started, null, { timeout: 480000 }); await wait(800);
   check(await ev(() => __eq.portals && __eq.portals.children.length === 1 && __eq.profile.region === 'forest'), 'The forest portal took the hero to the forest, which has its own portal');
   await ev(() => __eq.teleport(-30, 56)); await wait(400); await page.keyboard.press('KeyE'); await wait(500);
