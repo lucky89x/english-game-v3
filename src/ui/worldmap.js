@@ -7,20 +7,25 @@ import { MAPS, ROADS, canGo, mapById, neighbours, portalAt } from '../core/world
 const CSS = `#worldwin { position:fixed; inset:0; z-index:58; display:flex; align-items:center; justify-content:center; background:rgba(30,16,6,.55); font-family:system-ui,sans-serif; }
 #worldwin.hidden { display:none; }
 #worldwin .box { width:min(560px, calc(100vw - 24px)); max-height:calc(100vh - 24px); overflow:auto; position:relative; background:linear-gradient(#fffaf0,#f6e6c4); border:6px solid #7a4a1a; border-radius:18px; padding:14px 16px; color:#3a2008; box-shadow:0 12px 36px rgba(0,0,0,.45); }
-#worldwin.map .box { width:min(900px, calc(100vw - 24px)); }
+#worldwin.map .box { width:min(1100px, calc(100vw - 24px)); }
 #worldwin h2 { margin:0 0 4px; font-size:21px; } #worldwin .sub { font-size:13px; color:#6a4a20; margin-bottom:8px; }
 #worldwin .x { position:absolute; top:8px; right:10px; width:32px; height:32px; border-radius:50%; font:900 17px system-ui; padding:0; background:#e8443a; color:#fff; border:2px solid #8a2a22; cursor:pointer; }
 #worldwin .route { display:flex; gap:10px; align-items:center; background:#fff; border:2px solid #d9b98a; border-radius:12px; padding:8px 10px; margin:7px 0; }
 #worldwin .route.lock { opacity:.82; background:#f4eee2; } #worldwin .route .t { flex:1; } #worldwin .route b { font-size:17px; } #worldwin .route small { display:block; color:#6a4a20; }
 #worldwin .route .need { color:#b0452a; font-size:13px; }
 #worldwin button.go { font:800 15px system-ui; border:3px solid #2a7a3a; border-radius:11px; background:#8fdc8a; padding:6px 14px; cursor:pointer; color:#12361a; } #worldwin button.go:disabled { border-color:#999; background:#ddd; color:#777; cursor:default; }
-#worldwin .world { position:relative; width:100%; aspect-ratio:16/9; border:3px solid #7a4a1a; border-radius:12px; overflow:hidden; background:radial-gradient(circle at 30% 40%, #efe0b2, #d9c28a 60%, #c4a870); }
+#worldwin .world { position:relative; width:min(100%, calc((100vh - 235px) * 1.7766)); margin:0 auto; aspect-ratio:16/9; border:3px solid #7a4a1a; border-radius:12px; overflow:hidden; background:radial-gradient(circle at 30% 40%, #efe0b2, #d9c28a 60%, #c4a870); }
 #worldwin .world img.bg { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; } #worldwin .world svg { position:absolute; inset:0; width:100%; height:100%; }
 #worldwin .node { position:absolute; transform:translate(-50%,-50%); width:76px; text-align:center; font:800 11px system-ui; cursor:pointer; }
 #worldwin .node i { display:block; margin:0 auto 2px; width:36px; height:36px; border-radius:50%; border:3px solid #7a4a1a; background:#bba; font:900 17px/30px system-ui; font-style:normal; color:#fff; }
 #worldwin .node.open i { background:#3fae52; border-color:#1f6a30; } #worldwin .node.lock i { background:#c8a14a; border-color:#7a5a1a; } #worldwin .node.soon i { background:#9a948a; border-color:#6a665e; opacity:.8; }
 #worldwin .node span { display:block; background:rgba(255,248,226,.92); border-radius:6px; padding:1px 3px; color:#3a2008; } #worldwin .node.here i { box-shadow:0 0 0 4px #fff, 0 0 0 7px #e8443a; }
 #worldwin .info { margin-top:8px; min-height:68px; font-size:14px; display:flex; gap:12px; align-items:flex-start; } #worldwin .info img { width:168px; border-radius:10px; border:3px solid #7a4a1a; flex:none; } #worldwin .info img.soon { filter:grayscale(1) brightness(.8); } #worldwin .routeimg { width:92px; border-radius:8px; border:2px solid #d9b98a; flex:none; } #worldwin .info .need { color:#b0452a; }
+#worldwin .world.pic svg, #worldwin .world.pic .node span { display:none; } #worldwin .world.pic .node { width:auto; }
+#worldwin .world.pic .node i { position:relative; width:50px; height:50px; margin:0; font-size:0; background:rgba(255,255,255,.04); border:4px solid; box-sizing:border-box; box-shadow:0 0 10px rgba(0,0,0,.5); }
+#worldwin .world.pic .node.open i { border-color:#4bf06a; box-shadow:0 0 14px #4bf06a, inset 0 0 8px #4bf06a88; } #worldwin .world.pic .node.lock i { border-color:#ffc83c; box-shadow:0 0 14px #ffc83c; } #worldwin .world.pic .node.soon i { border-color:#ffffffaa; border-style:dashed; opacity:.75; }
+#worldwin .world.pic .node i::after { position:absolute; right:-10px; bottom:-12px; font-size:19px; line-height:1; text-shadow:0 1px 3px #000; } #worldwin .world.pic .node.open i::after { content:'✓'; color:#7dff93; font-weight:900; } #worldwin .world.pic .node.lock i::after { content:'🔒'; } #worldwin .world.pic .node.soon i::after { content:'🚧'; }
+#worldwin .world.pic .node.here i { border-color:#ff4a3a; box-shadow:0 0 0 3px #fff, 0 0 16px #ff4a3a; }
 #warp { position:fixed; inset:0; z-index:70; background:#fff; opacity:0; pointer-events:none; transition:opacity .35s; } #warp.on { opacity:1; pointer-events:auto; }`;
 
 export class WorldUI {
@@ -52,7 +57,7 @@ export class WorldUI {
     const lines = ROADS.map((r) => { const a = mapById(r.a), b = mapById(r.b), live = a.built && b.built; return `<line x1="${a.at[0] * 100}%" y1="${a.at[1] * 100}%" x2="${b.at[0] * 100}%" y2="${b.at[1] * 100}%" stroke="${live ? '#7a4a1a' : '#8a8478'}" stroke-width="${live ? 4 : 3}" stroke-dasharray="${live ? '' : '7 6'}" stroke-linecap="round" opacity=".85"/>`; }).join('');
     const nodes = MAPS.map((m) => { const st = !m.built ? 'soon' : (m.id === here || neighbours(m.id).some((n) => canGo(p, n, m.id).ok && (n === 'village' || n === here))) || (p && p.admin) ? 'open' : 'lock'; return `<div class="node ${st} ${m.id === here ? 'here' : ''}" data-id="${m.id}" style="${pos(m)}"><i>${m.no}</i><span>${m.vi.split(' · ')[0]}</span></div>`; }).join('');
     this.el.innerHTML = `<div class="box"><button class="x" data-a="close" title="Đóng">✕</button><h2>🌍 Bản đồ thế giới</h2><div class="sub">Mười vùng đất nối với nhau bằng các cổng dịch chuyển. Bấm vào một vùng để xem.</div>
-      <div class="world"><img class="bg" src="./assets/ui/world_map.jpg" alt="" onerror="this.remove()"><svg>${lines}</svg>${nodes}</div><div class="info"></div></div>`;
+      <div class="world"><img class="bg" src="./assets/ui/world_map.jpg" alt="" onload="this.parentNode.classList.add('pic')" onerror="this.remove()"><svg>${lines}</svg>${nodes}</div><div class="info"></div></div>`;
     this.drawInfo();
   }
   drawInfo() {

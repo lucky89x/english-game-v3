@@ -3,19 +3,20 @@
 // Three maps are built (village, harbor, forest); the other seven are listed so the world map and the portals can show them as
 // "coming soon" and the roads are in place when the maps arrive.
 
-/** no: the map number (Unit no. of the grade book); region: the layout key; lv: the level range of its monsters as they are now
- *  (the plan is Sea 5-10 and Forest 10-20; the numbers here are what the game really uses until that is re-balanced). */
+/** no: the map number (Unit no. of the grade book); region: the layout key; lv: the level range printed on the user's world map picture
+ *  (assets/ui/world_map.jpg: Village 1-5, Sea 5-10, Forest 10-20 ...); at: where the map's badge is in that picture (fractions of its width and height).
+ *  The monsters of the built maps still use the old levels until they are re-balanced to these numbers. */
 export const MAPS = [
-  { no: 1, id: 'village', region: 'village', vi: 'Làng Khởi Đầu', en: 'Starter Village', lv: [1, 15], built: true, at: [0.18, 0.62] },
-  { no: 2, id: 'harbor', region: 'harbor', vi: 'Biển cả · Cảng Mặt Trời', en: 'Sunny Harbor', lv: [21, 28], built: true, at: [0.20, 0.30] },
-  { no: 3, id: 'forest', region: 'forest', vi: 'Rừng xanh · Rừng Ký Ức', en: 'Forest of Memories', lv: [11, 18], built: true, at: [0.38, 0.55] },
-  { no: 4, id: 'desert', vi: 'Sa mạc cát vàng', en: 'Golden Desert', lv: [15, 25], built: false, at: [0.55, 0.72] },
-  { no: 5, id: 'mountain', vi: 'Núi non', en: 'Mountains', lv: [20, 30], built: false, at: [0.58, 0.45] },
-  { no: 6, id: 'sky', vi: 'Vương quốc trên trời', en: 'Sky Kingdom', lv: [35, 45], built: false, at: [0.74, 0.16] },
-  { no: 7, id: 'ruins', vi: 'Khu di tích cổ', en: 'Ancient Ruins', lv: [25, 35], built: false, at: [0.78, 0.55] },
-  { no: 8, id: 'fairy', vi: 'Đảo thần tiên', en: 'Fairy Isle', lv: [30, 40], built: false, at: [0.90, 0.28] },
-  { no: 9, id: 'volcano', vi: 'Thung lũng núi lửa', en: 'Volcano Valley', lv: [40, 50], built: false, at: [0.62, 0.84] },
-  { no: 10, id: 'crystal', vi: 'Hang tinh thể', en: 'Crystal Cave', lv: [45, 55], built: false, at: [0.86, 0.86] },
+  { no: 1, id: 'village', region: 'village', vi: 'Làng Khởi Đầu', en: 'Starter Village', lv: [1, 5], built: true, at: [0.41, 0.776] },
+  { no: 2, id: 'harbor', region: 'harbor', vi: 'Biển cả · Cảng Mặt Trời', en: 'Sunny Harbor', lv: [5, 10], built: true, at: [0.17, 0.7] },
+  { no: 3, id: 'forest', region: 'forest', vi: 'Rừng xanh · Rừng Ký Ức', en: 'Forest of Memories', lv: [10, 20], built: true, at: [0.68, 0.76] },
+  { no: 4, id: 'desert', vi: 'Sa mạc cát vàng', en: 'Golden Desert', lv: [15, 25], built: false, at: [0.136, 0.417] },
+  { no: 5, id: 'mountain', vi: 'Núi non', en: 'Mountains', lv: [20, 30], built: false, at: [0.535, 0.342] },
+  { no: 6, id: 'sky', vi: 'Vương quốc trên trời', en: 'Sky Kingdom', lv: [35, 45], built: false, at: [0.423, 0.129] },
+  { no: 7, id: 'ruins', vi: 'Khu di tích cổ', en: 'Ancient Ruins', lv: [25, 35], built: false, at: [0.81, 0.495] },
+  { no: 8, id: 'fairy', vi: 'Đảo thần tiên', en: 'Fairy Isle', lv: [30, 40], built: false, at: [0.138, 0.257] },
+  { no: 9, id: 'volcano', vi: 'Thung lũng núi lửa', en: 'Volcano Valley', lv: [40, 50], built: false, at: [0.68, 0.134] },
+  { no: 10, id: 'crystal', vi: 'Hang tinh thể', en: 'Crystal Cave', lv: [45, 55], built: false, at: [0.868, 0.225] },
 ];
 export const mapById = (id) => MAPS.find((m) => m.id === id) || null;
 export const mapNo = (id) => (mapById(id) || {}).no || 0;
