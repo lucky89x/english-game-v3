@@ -304,7 +304,7 @@ for (let k = 0; k < 3 && await page.isVisible('#dialog'); k++) { await page.keyb
 // pumpkin cart race: hold the arrow key to steer
 await rich(); await ev(() => __eq.teleport(-60.4, 68.6)); await wait(450); await page.keyboard.press('KeyE'); await wait(600); await answerGate(); await wait(500);
 await page.waitForFunction(() => __eq.arcade.open, null, { timeout: 90000 }); await ev(() => __eq.arcade.game.start());      // (23/11) the 3D race loads its models, then opens in its garage: skip it
-const cx0 = await ev(() => __eq.arcade.game.laneNow()); await page.keyboard.down('ArrowRight'); await wait(1200); await page.keyboard.up('ArrowRight');      // (24/11) the 3D race: the lane of the cart is read through a test hook
+const cx0 = await ev(() => __eq.arcade.game.laneNow()); await page.keyboard.down('ArrowRight'); await page.waitForFunction((x) => __eq.arcade.game.laneNow() > x + 0.3, cx0, { timeout: 120000 }).catch(() => {}); await page.keyboard.up('ArrowRight');      // (24/11) the 3D race: the lane is read through a test hook; a frame moves the cart at most 0.05 s, so on a slow machine hold until it has moved
 check(await ev((x) => __eq.arcade.game.title.includes('Race') && __eq.arcade.game.laneNow() > x + 0.3, cx0), 'Cart Race: holding → steers the cart');
 await snap('03l_cart_race'); await ev(() => { __eq.arcade.game.time = 0; }); await page.waitForFunction(() => !__eq.arcade.open, null, { timeout: 240000 });
 check(await ev(() => __eq.mini.data.best.race2 > 0), 'Race ends: score saved');
@@ -317,6 +317,7 @@ await view(38, 12, -0.6, 0.35, 13); await wait(1500); await snap('06_orchard');
 await ev((g) => __eq.teleport(g.x, g.z + 1.2), gate); await wait(450);
 console.log('gate state', JSON.stringify(await ev(() => ({ dialog: !!document.querySelector('#dialog:not(.hidden)'), prompt: document.getElementById('prompt').textContent, hp: __eq.profile.stats.hp, pos: __eq.player.pos.toArray().map((v) => +v.toFixed(1)), fishing: __eq.fishing.active, modal: __eq.ui.modal }))));
 await page.keyboard.press('KeyE');
+await page.waitForSelector('#worldwin button[data-a="go"][data-v="forest"]:not([disabled])', { timeout: 60000 }); await page.click('#worldwin button[data-a="go"][data-v="forest"]');      // (24/11) the village portal has two roads: the child chooses
 try { await page.waitForFunction(() => __eq.region === 'forest' && __eq.started, null, { timeout: 60000 }); } catch (e) { await page.screenshot({ path: '/tmp/e2e_gate_fail.png' }); console.log('gate fail', JSON.stringify(await ev(() => ({ region: __eq.region, started: __eq.started, prompt: document.getElementById('prompt').textContent, dialog: document.getElementById('dialog').className, errors: __eq.errors }))));  throw e; }
 check(true, 'E at the open gate travels to the Forest of Memories');
 await wait(1200); await snap('07_forest_gate');
