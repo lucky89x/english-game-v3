@@ -519,8 +519,8 @@ function track(ev, n = 1) {
   if (done.length || fp.n) save(); if (journal) journal.sync();
 }
 function claimReward(r, what) {
-  if (!r) return; profile.stats.gold += r.gold; if (r.exp) Save.addExp(profile, r.exp); sfx('fanfare'); save(); refresh();
-  ui.toast(`🎁 ${what}: +${r.gold} vàng${r.exp ? `, +${r.exp} EXP` : ''}${r.bonusAll ? ' (thưởng xong cả 3!)' : ''}`);
+  if (!r) return; const capped = Save.atCap(profile), gold = Save.capGold(profile, r.gold); profile.stats.gold += gold; if (r.exp) Save.addExp(profile, r.exp); sfx('fanfare'); save(); refresh();      // (24/11) at the map's top level: half the gold, fading, no EXP
+  ui.toast(`🎁 ${what}: +${gold} vàng${r.exp && !capped ? `, +${r.exp} EXP` : ''}${capped ? ' (cấp tối đa của vùng: sang vùng mới để nhận đủ)' : ''}${r.bonusAll ? ' (thưởng xong cả 3!)' : ''}`);
 }
 // Anna's music house (moved west on 18/11, door on the east side); Willow's stall at the forest camp (Map 2 gear)
 const ANNA_DOOR = { x: -17.4, z: 12.5 }, FOREST_SHOP = { x: -36.5, z: 39.5 };

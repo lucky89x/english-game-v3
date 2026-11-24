@@ -66,7 +66,7 @@ export class UI {
     $('hud').innerHTML = `<div class="top"><div class="portrait"><i></i><span class="lv">${st.level}</span></div>
       <div class="who"><b>${esc(profile.name)}</b><small>${(() => { const r = rankName(profile); return rankOf(profile) ? `${r.icon} ${r.en} · ` : ''; })()}Lớp ${profile.grade} · ${esc(place)}</small>
         <div class="bar hp" title="Máu"><u style="width:${Math.round(hp / hpMax * 100)}%"></u><em>${Math.round(hp)}/${hpMax}</em></div>
-        <div class="bar xp" title="${Save.atCap(profile) ? 'Đã tối đa cấp ' + levelCap(profile) + ' ở vùng này: sang vùng mới để lên cấp tiếp' : 'Kinh nghiệm'}"><u style="width:${Math.min(100, Math.round(st.exp / need * 100))}%"></u><em>${Save.atCap(profile) ? 'TỐI ĐA cấp ' + levelCap(profile) + ' ở vùng này' : `EXP ${st.exp}/${need}`}</em></div></div></div>
+        <div class="bar xp" title="${Save.atCap(profile) ? 'Đã tối đa cấp ' + levelCap(profile) + ' ở vùng này: không còn EXP, vàng giảm dần về 0. Sang vùng mới để chơi tiếp' : 'Kinh nghiệm'}"><u style="width:${Math.min(100, Math.round(st.exp / need * 100))}%"></u><em>${Save.atCap(profile) ? 'TỐI ĐA cấp ' + levelCap(profile) + ' ở vùng này' : `EXP ${st.exp}/${need}`}</em></div></div></div>
       <div class="chips"><span class="chip gold" title="Vàng"><i>●</i>${st.gold}</span><span class="chip word" title="Từ đã học"><i>✎</i>${learned}</span>${extra ? `<span class="chip star">${esc(extra)}</span>` : ''}${food ? `<span class="chip food" title="Bánh (phím Q)"><i>🍞</i>${food}</span>` : ''}</div>`;
   }
   /** Big centre banner for a level up or a reward. */

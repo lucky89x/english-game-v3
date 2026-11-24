@@ -390,6 +390,17 @@ test('progress: the top level comes from the skill tree (7 lines x 10 ranks = le
   assert.equal(PR.levelCap({ admin: true, region: 'village' }), PR.MAX_LEVEL, 'the admin has no cap');
   assert.ok(S.killExp({ ...p, stats: { ...p.stats, level: 8 } }, 100, 5) < 100 && S.killExp({ ...p, stats: { ...p.stats, level: 8 } }, 100, 5) >= 15, 'a monster far below the hero pays less');
 });
+test('at the top level of a map the gold of monsters and quests is halved and fades to nothing, and comes back on a new map (24/11)', () => {
+  const p = S.newProfile('An', 6); p.region = 'village'; p.stats.level = 4;
+  assert.equal(S.capGold(p, 100), 100, 'below the cap: full gold'); assert.ok(!p.capN);
+  p.stats.level = 5; assert.equal(S.atCap(p), true);
+  assert.equal(S.capGold(p, 100), 50, 'the first reward at the cap pays half');
+  const got = []; for (let i = 0; i < 40; i++) got.push(S.capGold(p, 100));
+  assert.ok(got.every((g, i) => i === 0 || g <= got[i - 1]) && got[0] < 50 && got[0] > 40, 'it fades with every reward');
+  assert.equal(got[got.length - 1], 0, 'after about thirty rewards no gold is left'); assert.equal(PR.capGoldFactor(0), 0.5); assert.equal(PR.capGoldFactor(30), 0); assert.equal(PR.capGoldFactor(99), 0);
+  p.region = 'harbor'; assert.equal(S.capGold(p, 100), 100, 'a new map (cap 10): the gold is back');
+  p.stats.level = 10; assert.equal(S.capGold(p, 100), 50, 'and has its own count at its own cap');
+});
 test('monsters: one level per kind, stats follow the level, one hunting ground per kind in the right map, the gear of the level wins', () => {
   const R2 = { village: [1, 5], harbor: [5, 10], forest: [10, 20] };
   for (const [region, list] of Object.entries(ZONES)) {

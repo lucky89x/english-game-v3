@@ -88,3 +88,9 @@ export const armorCost = (level) => Math.max(45, Math.round(mobGold(level) * 19 
 /** Gold to enter a mini game (the child answers questions too). It grows with the level like the gold of the monsters. */
 export const GAME_FEE_K = { candy: 1, blocks: 1, sling: 1, race: 1.5, style: 1.5, cafe: 1.5, salon: 1.5, fishing: 0.8, apples: 0.8 };
 export const gameFee = (game, level) => Math.max(5, Math.round((8 + 2 * level) * (GAME_FEE_K[game] || 1) / 5) * 5);
+
+// ---------------------------------------------------------------- at the top level of a map: gold fades away too (24/11)
+/** At the cap a monster or a quest gives no EXP and only half its gold, and the gold fades by a little with every reward until it is none
+ *  at all, so the child goes on to the next map. `n` = how many rewards were already taken at this cap. */
+export const CAP_GOLD = { start: 0.5, steps: 30 };
+export const capGoldFactor = (n) => CAP_GOLD.start * Math.max(0, 1 - n / CAP_GOLD.steps);

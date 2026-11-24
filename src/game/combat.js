@@ -15,7 +15,7 @@ export const FOREST_BOARD = { x: -33.5, z: 46 }, BOSS3_AT = { x: -46, z: -24 };
 export const HARBOR_BOARD = PLAY.board, BOSS4_AT = PLAY.boss;
 const BOARD_OF = { village: BOARD, forest: FOREST_BOARD, harbor: HARBOR_BOARD };
 const BOSS_NAMES = { boss1: 'Vua Slime', boss2: 'Golem Cổ', boss3: 'Nữ hoàng Nấm', boss4: 'Thuyền trưởng Bạch Tuộc' };
-import { addExp, maxHp, killExp, atCap } from '../core/save.js';
+import { addExp, maxHp, killExp, atCap, capGold } from '../core/save.js';
 import { levelCap } from '../core/progress.js';
 import { compact, label } from '../world/common.js';
 import { ZONES } from '../core/zones.js';
@@ -304,7 +304,7 @@ export class Wild {
     const death = m.acts && m.acts.Death;      // (20/11) monsters with a Death clip fall down first, then vanish
     if (death) { death.setLoop(THREE.LoopOnce, 1); death.clampWhenFinished = true; const prev = m.cur; death.reset().play(); if (prev && prev !== death) prev.crossFadeTo(death, 0.1, false); m.cur = death; m.once = null; m.dying = Math.min(1.4, death.getClip().duration); if (m.bar) m.bar.visible = m.back.visible = false; if (m.elDot) m.elDot.visible = false; }
     else m.g.visible = false;
-    const first = m.boss && !p.flags[m.def.flag], k = m.boss && !first ? 0.25 : 1, gold = Math.round(m.def.gold * k * (this.api.goldMul ? this.api.goldMul() : 1)), exp = killExp(p, Math.round(m.def.exp * k), m.def.level);      // (24/11) less for a monster far below the hero, none at the map's top level
+    const first = m.boss && !p.flags[m.def.flag], k = m.boss && !first ? 0.25 : 1, gold = capGold(p, Math.round(m.def.gold * k * (this.api.goldMul ? this.api.goldMul() : 1))), exp = killExp(p, Math.round(m.def.exp * k), m.def.level);      // (24/11) less for a monster far below the hero, none at the map's top level
     p.stats.gold += gold; addExp(p, exp); p.kills = (p.kills || 0) + 1; if (this.api.onKill) this.api.onKill(m);
     if (m.boss) { m.broken = 0; m.shieldOn = false; m.shield.visible = false; p.flags[m.def.flag] = true; }
     if (countKill(p, m.kind)) this.api.ui.toast('Quest done! Go back to the board');
@@ -334,8 +334,8 @@ export class Wild {
     const { ui, profile } = this.api, p = profile(), list = huntsOf(this.region), h = hunt(p, this.region), q = list[h.i % list.length], name = MONSTERS[q.kind].name;
     if (!h.active) { ui.dialogue([{ who: 'Quest board', en: huntLine(q, p.grade), vi: `Nhiệm vụ: hạ ${q.need} ${name}. Thưởng ${q.gold} vàng, ${q.exp} EXP.` }], () => { h.active = true; h.got = 0; this.api.sfx('tick'); this.api.save(); this.api.onChange(); }); return; }
     if (h.got < q.need) { ui.dialogue([{ who: 'Quest board', en: `${name}: ${h.got} of ${q.need}. Keep going!` }]); return; }
-    p.stats.gold += q.gold; addExp(p, q.exp); h.done += 1; h.i += 1; h.active = false; h.got = 0; this.api.sfx('fanfare'); if (this.api.onJob) this.api.onJob(this.region);
-    ui.dialogue([{ who: 'Quest board', en: `Thank you, hero! (+${q.gold} gold, +${q.exp} EXP)`, vi: 'Quay lại bảng để nhận nhiệm vụ mới.' }]); this.api.save(); this.api.onChange();
+    const capped = atCap(p), jobGold = capGold(p, q.gold); p.stats.gold += jobGold; addExp(p, q.exp); h.done += 1; h.i += 1; h.active = false; h.got = 0; this.api.sfx('fanfare'); if (this.api.onJob) this.api.onJob(this.region);
+    ui.dialogue([{ who: 'Quest board', en: `Thank you, hero! (+${jobGold} gold, +${capped ? 0 : q.exp} EXP)`, vi: capped ? `Con đã ở cấp tối đa của vùng này: vàng giảm dần, không còn EXP. Sang vùng mới để chơi tiếp nhé!` : 'Quay lại bảng để nhận nhiệm vụ mới.' }]); this.api.save(); this.api.onChange();
   }
   /** Short text for the HUD while a hunt of this region's board is running. */
   huntNote() { const p = this.api.profile(); if (!p) return ''; const k = HUNT_KEY[this.region] || 'hunt', h = p[k]; if (!h || !h.active) return ''; const list = huntsOf(this.region), q = list[h.i % list.length]; return `⚔ ${Math.min(h.got, q.need)}/${q.need}`; }

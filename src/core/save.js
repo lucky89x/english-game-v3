@@ -2,7 +2,7 @@
 // Layout: { version, last, profiles: [{ id, name, grade, unit, created, quests, flags, words, skills, stats }] }
 import { rankHp } from './saga.js';
 import { powers } from './skills.js';
-import { EXP_K, expNeed, expTo, levelCap, expFactor } from './progress.js';
+import { EXP_K, expNeed, expTo, levelCap, expFactor, capGoldFactor } from './progress.js';
 export { EXP_K, expNeed, expTo };      // (24/11) the curve moved to progress.js, next to the level caps
 export const SAVE_VERSION = 2;
 export const KEY = 'english-quest-web';
@@ -91,3 +91,10 @@ export function addExp(profile, amount) {
 export const atCap = (profile) => profile.stats.level >= levelCap(profile);
 /** EXP a kill of a monster of level `mLevel` really gives: the base EXP, less for monsters far below the hero, none at the cap. */
 export function killExp(profile, base, mLevel) { return atCap(profile) ? 0 : Math.max(1, Math.round(base * expFactor(profile.stats.level, mLevel || 1))); }
+/** (24/11) Gold of a monster or a quest for this hero: full below the map's top level; at the top level half, fading to none with every reward
+ *  taken there (`profile.capN[cap]` counts them; a new map has a new cap, so the gold comes back). */
+export function capGold(profile, gold) {
+  if (!gold || !atCap(profile)) return gold;
+  const cap = levelCap(profile), n = ((profile.capN || (profile.capN = {}))[cap]) || 0; profile.capN[cap] = n + 1;
+  return Math.round(gold * capGoldFactor(n));
+}
