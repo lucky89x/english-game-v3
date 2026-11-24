@@ -243,11 +243,11 @@ function refresh() {
   const gate = Save.gateWaiting(profile); if (gate && profile.toldGate !== gate) { profile.toldGate = gate; ui.toast('Gặp Cú Mèo để lên cấp!'); }
   if (shownLevel && profile.stats.level > shownLevel) { profile.stats.hp = Save.maxHp(profile); ui.toast(`LEVEL UP!  Lv ${profile.stats.level} · +1 điểm kỹ năng (phím T)`); sfx('fanfare'); }
   shownLevel = profile.stats.level;
-  if (map2Ready(profile) && !profile.flags.map2) {      // (24/11) Slime King beaten, level 5 reached and the owl's review passed -> the sea (Map 2, Unit 2 words)
+  if (map2Ready(profile) && !profile.flags.map2 && !ui.busy) {      // (24/11) never over another talk (the king's farewell and the Compass piece come first); frame() asks again when it is closed.  Slime King beaten, level 5 reached and the owl's review passed -> the sea (Map 2, Unit 2 words)
     profile.flags.map2 = true; save(); sfx('fanfare');
     ui.dialogue([{ who: 'Tom', en: 'You have grown so strong! A boat is waiting at the dock to take you to Sunny Harbor.', vi: `Đã mở Map 2 · Cảng Mặt Trời: ra bến thuyền bên sông (chỗ chú Sam câu cá) để đi. Từ giờ rương, boss, Cú Mèo hỏi từ Unit ${Save.unitOf(profile)}.` }, { who: '🥈 Word Keeper badge', en: 'Rank up: Explorer Word Keeper!', vi: 'Lên hạng Thám hiểm: mạnh hơn (+4 công, +30 máu).' }], () => reloadUnit());
   }
-  if (map3Ready(profile) && !profile.flags.map3) {      // (24/11) the Ancient Golem is beaten and the level-20 exam passed: the forest is finished (the next map, the desert, is still being built)
+  if (map3Ready(profile) && !profile.flags.map3 && !ui.busy) {      // (24/11) same: wait for the Golem's farewell.  the Ancient Golem is beaten and the level-20 exam passed: the forest is finished (the next map, the desert, is still being built)
     profile.flags.map3 = true; save(); sfx('fanfare');
     ui.dialogue([{ who: 'Tom', en: 'You beat the Ancient Golem! The forest is quiet again. A warm wind from the desert is calling you now.', vi: 'Con đã hoàn thành các map đã xây (Làng, Biển cả, Rừng)! Map tiếp theo · Sa mạc đang được xây, sắp mở. Cấp tối đa hiện giờ là 20 (cấp cao nhất của Rừng).' }]);
   }
@@ -1330,6 +1330,7 @@ const AUTO = !navigator.webdriver && !localStorage.getItem('eq-quality-manual');
 function frame() {
   const now = performance.now(), raw = (now - last) / 1000, real = Math.min(0.25, raw); last = now;
   const dt = Math.min(0.05, real); TIME.value += real; const t = TIME.value;
+  if (profile && started && !ui.busy && ((map2Ready(profile) && !profile.flags.map2) || (map3Ready(profile) && !profile.flags.map3))) refresh();      // (24/11) a map announcement that waited for a talk to end
   const frozen = ui.modal || !started || (arcade && arcade.open) || (shopWin && shopWin.open) || (packUI && packUI.open) || (fishing && fishing.active) || (music && music.open) || (journal && journal.open) || (homePanel && homePanel.open) || room || (dexPanel && dexPanel.open) || (wardPanel && wardPanel.open) || (creator && creator.open) || (tailor && tailor.open) || (skillUI && skillUI.open) || (petPanel && petPanel.open) || (trPanel && trPanel.open);
   if (arcade) arcade.update(real, keys);
   if (touch) touch.update();

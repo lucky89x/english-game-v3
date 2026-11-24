@@ -283,8 +283,9 @@ check(await ev(() => !__eq.wild.boss.shieldOn && __eq.wild.boss.broken === 1), '
 for (let k = 0; k < 6 && await page.isVisible('#dialog') && !(await page.$('#dialog .opts')); k++) { await page.keyboard.press('KeyE'); await wait(250); }      // (24/11) nothing may stand between the sword and the king
 for (let k = 0; k < 6 && await ev(() => !__eq.wild.boss.dead); k++) { await ev(() => { const m = __eq.wild.boss; m.broken = 3; m.hp = 5; m.shieldOn = false; m.shield.visible = false; __eq.wild.cool = 0; __eq.teleport(m.x, m.z - 2.4); __eq.player.yaw = 0; }); await wait(300); await page.keyboard.press('KeyJ'); await wait(900); }
 console.log('boss state', JSON.stringify(await ev(() => { const m = __eq.wild.boss; return { hp: m.hp, dead: m.dead, flag: __eq.profile.flags.boss1, modal: __eq.ui.modal, dlg: document.getElementById('dialog').className, text: document.getElementById('dialog').textContent.slice(0, 160), pos: [m.x, m.z], pl: __eq.player.pos.toArray().map((v) => +v.toFixed(1)), cool: __eq.wild.cool }; })));
-for (let k = 0; k < 5 && await page.isVisible('#dialog') && !(await page.textContent('#dialog')).includes('Slime King'); k++) { await page.keyboard.press('KeyE'); await wait(300); }      // (24/11) a rare drop card may come before the king's words
 check(await ev(() => __eq.wild.boss.dead > 0 && __eq.profile.flags.boss1 === true) && (await page.textContent('#dialog')).includes('Slime King'), 'Slime King defeated: big reward, flag saved');
+let sawBoat = false; for (let k = 0; k < 24 && await page.isVisible('#dialog'); k++) { if ((await page.textContent('#dialog')).includes('A boat is waiting')) sawBoat = true; await page.keyboard.press('KeyE'); await wait(250); }
+check(sawBoat && await ev(() => __eq.profile.flags.map2 === true), "After the king's scene Tom announces the sea: the two talks no longer overwrite each other");      // (24/11) was a real bug: the sea announcement replaced the Compass piece scene
 for (let k = 0; k < 3 && await page.isVisible('#dialog'); k++) { await page.keyboard.press('KeyE'); await wait(200); }
 await ev(() => __eq.wild.mobs.forEach((m) => { if (!m.boss) m.dead = 0.1; }));
 // dodge roll (K) and the owl's knowledge gate at level 5
@@ -397,7 +398,7 @@ await page.click('[data-profile]'); await page.waitForFunction(() => __eq.starte
 check(await ev((b) => __eq.region === 'forest' && __eq.quest.step === 'done' && __eq.profile.stats.gold === b.gold && Object.keys(__eq.profile.words).length === b.words, before), 'Progress, gold and review words survive a reload');
 const saved = await ev(() => JSON.parse(localStorage.getItem('english-quest-web')));
 check(saved.version === 2 && saved.profiles.length === 1, 'Save is versioned JSON in localStorage');
-await page.click('#gopen'); await page.click('#gp'); await page.click('#mnew'); await page.fill('#mname', 'Minh'); await page.click('[data-g="9"]'); await page.click('#mgo');
+await page.click('#gopen'); await page.click('#gsw'); await page.click('#mnew'); await page.fill('#mname', 'Minh'); await page.click('[data-g="9"]'); await page.click('#mgo');      // (24/11) #gsw switches the player (#gp is the reading pace)
 await page.waitForFunction(() => __eq.started && __eq.profile.name === 'Minh', null, { timeout: 60000 });
 check(await ev(() => __eq.profile.stats.gold === 0 && __eq.region === 'village' && __eq.story.step === 'arrive' && !__eq.profile.flags.forest_open), 'Second profile (grade 9) starts fresh in the village');
 await ev(() => __eq.story.talkTom()); for (let k = 0; k < 3; k++) { await page.keyboard.press('KeyE'); await wait(200); }
