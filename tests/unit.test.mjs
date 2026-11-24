@@ -391,7 +391,7 @@ test('Map 2 opens after the Ancient Golem at level 20; the unit follows the map 
   p.flags.boss2 = true; p.stats.level = 19; assert.equal(map2Ready(p), false);
   p.stats.level = 20; assert.equal(map2Ready(p), true); p.flags.map2 = true; assert.equal(S.unitOf(p), 2);
   p.unitPick = 5; assert.equal(S.unitOf(p), 5);
-  assert.equal(S.expTo(20), 9405, 'Map 1 length (T2): retune expNeed if this changes');
+  assert.equal(S.expTo(20), 9405 * S.EXP_K, 'levels 1-20 need the old 9,405 EXP times EXP_K (24/11: longer bar)');
 });
 test('grammar gate items: valid answers, English-only sentences with one blank, only written units', () => {
   for (const [id, list] of Object.entries(GRAMMAR)) for (const g of list) {

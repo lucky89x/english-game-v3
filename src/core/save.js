@@ -62,9 +62,10 @@ export function recordSkill(profile, skill, correct, hints) {
   row.attempts += 1; row.hints += hints || 0;
   if (correct) { row.correct += 1; if (!hints) row.firstTry += 1; }
 }
-/** EXP needed to go from `level` to the next one. Map 1 (levels 1-20) needs 9,405 EXP in all: about 8-10 hours of
- *  mixed play at roughly 1,000 EXP an hour (fights, hunts, chests, a few mini games). Change this line to retune. */
-export const expNeed = (level) => 90 + (level - 1) * 45;
+/** EXP needed to go from `level` to the next one. (24/11) the child asked for a longer bar because the world now has fewer levels than
+ *  planned at first: the old curve (90 + 45 per level, 9,405 EXP for levels 1-20) times EXP_K. Change EXP_K to retune. */
+export const EXP_K = 2;
+export const expNeed = (level) => Math.round((90 + (level - 1) * 45) * EXP_K);
 /** Total EXP from level 1 to `level`. */
 export const expTo = (level) => { let t = 0; for (let l = 1; l < level; l++) t += expNeed(l); return t; };
 /** Unit being studied: the one a parent picked, otherwise the unit of the map reached (Map 1 = Unit 1, Map 2 = Unit 2). */

@@ -20,7 +20,7 @@ const CSS = `#worldwin { position:fixed; inset:0; z-index:58; display:flex; alig
 #worldwin .node i { display:block; margin:0 auto 2px; width:36px; height:36px; border-radius:50%; border:3px solid #7a4a1a; background:#bba; font:900 17px/30px system-ui; font-style:normal; color:#fff; }
 #worldwin .node.open i { background:#3fae52; border-color:#1f6a30; } #worldwin .node.lock i { background:#c8a14a; border-color:#7a5a1a; } #worldwin .node.soon i { background:#9a948a; border-color:#6a665e; opacity:.8; }
 #worldwin .node span { display:block; background:rgba(255,248,226,.92); border-radius:6px; padding:1px 3px; color:#3a2008; } #worldwin .node.here i { box-shadow:0 0 0 4px #fff, 0 0 0 7px #e8443a; }
-#worldwin .info { margin-top:8px; min-height:68px; font-size:14px; } #worldwin .info .need { color:#b0452a; }
+#worldwin .info { margin-top:8px; min-height:68px; font-size:14px; display:flex; gap:12px; align-items:flex-start; } #worldwin .info img { width:168px; border-radius:10px; border:3px solid #7a4a1a; flex:none; } #worldwin .info img.soon { filter:grayscale(1) brightness(.8); } #worldwin .routeimg { width:92px; border-radius:8px; border:2px solid #d9b98a; flex:none; } #worldwin .info .need { color:#b0452a; }
 #warp { position:fixed; inset:0; z-index:70; background:#fff; opacity:0; pointer-events:none; transition:opacity .35s; } #warp.on { opacity:1; pointer-events:auto; }`;
 
 export class WorldUI {
@@ -41,7 +41,7 @@ export class WorldUI {
   /** The portal card: routes = [{ to, map, ok, missing[] }]. */
   chooser(routes, title = 'Cổng dịch chuyển') {
     this.mode = 'portal'; this.el.className = '';
-    const rows = routes.map((r) => `<div class="route ${r.ok ? '' : 'lock'}"><div class="t"><b>${r.ok ? '✨' : '🔒'} ${r.map.vi}</b><small>${r.map.en} · cấp ${r.map.lv[0]}–${r.map.lv[1]}</small>${r.ok ? '' : `<div class="need">${r.missing.join(' ')}</div>`}</div><button class="go" data-a="go" data-v="${r.to}" ${r.ok ? '' : 'disabled'}>${r.ok ? 'Đi' : 'Khóa'}</button></div>`).join('');
+    const rows = routes.map((r) => `<div class="route ${r.ok ? '' : 'lock'}"><img class="routeimg" src="./assets/ui/world_${r.map.id}.jpg" alt="" onerror="this.remove()"><div class="t"><b>${r.ok ? '✨' : '🔒'} ${r.map.vi}</b><small>${r.map.en} · cấp ${r.map.lv[0]}–${r.map.lv[1]}</small>${r.ok ? '' : `<div class="need">${r.missing.join(' ')}</div>`}</div><button class="go" data-a="go" data-v="${r.to}" ${r.ok ? '' : 'disabled'}>${r.ok ? 'Đi' : 'Khóa'}</button></div>`).join('');
     this.el.innerHTML = `<div class="box"><button class="x" data-a="close" title="Đóng">✕</button><h2>🌀 ${title}</h2><div class="sub">${routes.length > 1 ? 'Hai đường đi: chọn nơi con muốn tới.' : 'Con muốn đi tới nơi này?'}</div>${rows}</div>`;
   }
   /** The world map. Travelling from it needs a portal: the button shows only next to the right portal. */
@@ -64,7 +64,7 @@ export class WorldUI {
     else if (m.id === here) body = '<div>📍 Con đang ở đây.</div>';
     else { const c = canGo(p, here, m.id); const portal = this.near; const rt = portal && portal.routes.includes(m.id);
       body = c.built && c.ok ? (rt ? `<button class="go" data-a="go" data-v="${m.id}">Đi tới ${m.vi}</button>` : '<div>Đường đã mở. Hãy tới cổng dịch chuyển ở rìa bản đồ để đi.</div>') : `<div class="need">🔒 ${c.missing.join(' ')}</div>`; }
-    box.innerHTML = `<b style="font-size:17px">${m.no}. ${m.vi}</b> <small>(${m.en} · cấp ${m.lv[0]}–${m.lv[1]})</small>${body}`.replace(/<\/small>(?=<)/, '</small><br>');
+    box.innerHTML = `<img class="${m.built ? '' : 'soon'}" src="./assets/ui/world_${m.id}.jpg" alt="" onerror="this.remove()"><div><b style="font-size:17px">${m.no}. ${m.vi}</b> <small>(${m.en} · cấp ${m.lv[0]}–${m.lv[1]})</small><br>${body}</div>`;
   }
   /** Fades to white, runs the move, fades back. */
   async travel(to) {

@@ -5,7 +5,7 @@ Mục tiêu: trẻ muốn chơi tiếp vì trò chơi vui. Tiếng Anh nằm tro
 ## Nguyên tắc
 - 70% thời gian là chơi (hành động, mini game, khám phá). 30% là tiếng Anh, chia nhỏ, có lý do trong truyện.
 - Mọi hoạt động đều cho EXP và vàng. Vàng mua trang bị. Trang bị giúp đánh quái và mở khu mới.
-- Map 1 có 20 cấp (9.405 EXP, khoảng 8–10 giờ chơi). Lên cấp bằng EXP. Cổng sang map 2 mở khi đạt cấp 20 và thắng Golem Cổ.
+- Map 1 có 20 cấp (9.405 EXP gốc nhân `EXP_K` = 2 từ 24/11, tức 18.810 EXP). Lên cấp bằng EXP. Cổng sang map 2 mở khi đạt cấp 20 và thắng Golem Cổ.
 - Nội dung học theo lớp của hồ sơ (6–9). Lớp chưa soạn thì game nói rõ, không mượn lớp khác.
 
 ## Cấp và Unit
