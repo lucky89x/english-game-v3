@@ -283,7 +283,7 @@ test('combat: attack grows with level and weapon, armour never blocks everything
   assert.equal(playerAtk(p), 10); p.stats.level = 5; p.gear = { atk: 6, def: 4 };
   assert.equal(playerAtk(p), 24); assert.equal(hurt(11, p), 7); assert.equal(hurt(2, p), 1);
   assert.ok(inArc(0, 0, 0, 0, 2)); assert.ok(!inArc(0, 0, 0, 0, -2), 'behind'); assert.ok(!inArc(0, 0, 0, 0, 3), 'too far'); assert.ok(inArc(0, 0, Math.PI / 2, 2, 0));
-  assert.ok(Math.ceil(MONSTERS.slime.hp / 10) <= 3, 'a level 1 child beats a slime in 3 hits');
+  assert.ok(Math.ceil(MONSTERS.bunny.hp / 10) <= 4, 'a level 1 child with no weapon beats a level 1 monster in 4 hits');
   assert.equal(S.maxHp(S.newProfile('x', 6)), 100);
 });
 test('combat: every monster spawn is on reachable ground east of the river', () => {
@@ -299,10 +299,10 @@ test('shop: buying needs gold and level, puts the item on, owned items are free 
   assert.deepEqual(buy(p, 'wood_sword'), { ok: false, why: 'gold' });
   p.stats.gold = 500;
   assert.equal(buy(p, 'iron_sword').why, 'level');
-  assert.ok(buy(p, 'wood_sword').ok); assert.equal(p.stats.gold, 460); assert.equal(bag(p).weapon, 'wood_sword'); assert.equal(playerAtk(p), 15);
-  p.stats.level = 5; assert.ok(buy(p, 'iron_sword').ok); assert.equal(playerAtk(p), 10 + 8 + 12);
+  assert.ok(buy(p, 'wood_sword').ok); assert.equal(p.stats.gold, 500 - ITEMS.wood_sword.cost); assert.equal(bag(p).weapon, 'wood_sword'); assert.equal(playerAtk(p), 10 + ITEMS.wood_sword.atk);
+  p.stats.level = 5; assert.ok(buy(p, 'iron_sword').ok); assert.equal(playerAtk(p), 10 + 8 + ITEMS.iron_sword.atk);
   const g = p.stats.gold; assert.equal(buy(p, 'wood_sword').why, 'owned'); assert.equal(p.stats.gold, g, 'no second payment'); assert.equal(bag(p).weapon, 'wood_sword');
-  assert.ok(buy(p, 'leather_vest').ok); assert.equal(S.maxHp(p), 100 + 4 * 12 + 20); assert.equal(hurt(6, p), 4);
+  assert.ok(buy(p, 'leather_vest').ok); assert.equal(S.maxHp(p), 100 + 4 * 12 + ITEMS.leather_vest.hp); assert.equal(hurt(6, p), Math.max(1, 6 - ITEMS.leather_vest.def));
   assert.ok(buy(p, 'bread').ok && buy(p, 'bread').ok); assert.equal(bag(p).food, 2);
   p.stats.hp = 30; assert.equal(eat(p, S.maxHp(p)), 50); assert.equal(p.stats.hp, 80); assert.equal(bag(p).food, 1);
   p.stats.hp = S.maxHp(p); assert.equal(eat(p, S.maxHp(p)), 0, 'not wasted at full health'); assert.equal(bag(p).food, 1);
@@ -367,29 +367,67 @@ test('hunts: only the asked monster counts, only while active, finishing returns
   assert.equal(SHIELDS.length, 3); assert.ok(BOSS.hp > 0);
 });
 
-test('knowledge gates: level 5 waits for the owl review, extra EXP is capped, passing lets the level go up', () => {
-  const p = S.newProfile('An', 6); p.stats.level = 4;
+test('knowledge gates: level 5 waits for the owl review, extra EXP is capped, passing lets the level go up once the map allows it', () => {
+  const p = S.newProfile('An', 6); p.stats.level = 4; p.region = 'harbor';      // the sea allows levels 5-10
   S.addExp(p, S.expTo(5) + 500); assert.equal(p.stats.level, 5); assert.equal(S.gateWaiting(p), 5); assert.equal(p.stats.exp, S.expNeed(5), 'bar full, rest not stored');
   S.addExp(p, 999); assert.equal(p.stats.level, 5);
   assert.equal(S.passGate(p, 5), 1); assert.equal(p.stats.level, 6); assert.equal(S.gateWaiting(p), 0); assert.equal(p.stats.exp, 0);
 });
 
-// ---------------------------------------------------------------- review round: pay limits, Map 2, units, grammar, old saves
-import { pay, FULL_PLAYS, map2Ready, BOSSES } from '../src/core/rules.js';
-import { GRAMMAR, grammarFor } from '../src/core/grammar.js';
-test('mini games: full pay for the first plays of the day, 20% after, a new day resets', () => {
-  const p = S.newProfile('An', 6);
-  for (let i = 0; i < FULL_PLAYS; i++) assert.deepEqual([pay(p, 'candy', 100, 30, 40).gold], [30]);
-  const later = pay(p, 'candy', 100, 30, 40); assert.equal(later.gold, 6); assert.equal(later.exp, 8); assert.equal(later.full, false);
-  assert.equal(pay(p, 'race2', 100, 30).gold, 30, 'each game counts on its own');
-  assert.equal(pay(p, 'candy', 101, 30).gold, 30, 'next day pays in full again');
-  assert.equal(pay(p, 'fish', 101, 1).gold, 1); for (let i = 0; i < 5; i++) assert.ok(pay(p, 'fish', 101, 1).gold >= 1, 'never rounds to zero');
+// ---------------------------------------------------------------- level caps of the maps, the skills' top level, monsters by level (24/11)
+import * as PR from '../src/core/progress.js';
+import * as W from '../src/core/world.js';
+import { ZONES, spawnsOf } from '../src/core/zones.js';
+test('progress: the top level comes from the skill tree (7 lines x 10 ranks = level 70), every map has a hard cap, the cap stops EXP', () => {
+  assert.equal(PR.POINTS_PER_ELEMENT, 70); assert.equal(PR.POINTS_ALL_ELEMENTS, 280); assert.equal(PR.MAX_LEVEL, 70); assert.ok(PR.HIGHEST_SKILL_LEVEL <= PR.MAX_LEVEL);
+  assert.deepEqual(['village', 'harbor', 'forest', 'desert'].map(PR.capOfMap), [5, 10, 20, 25], 'the caps are the tops of the ranges of the world map picture');
+  assert.equal(Math.max(...W.MAPS.map((m) => m.lv[1])), PR.MAX_LEVEL, 'the last map ends at the top level');
+  assert.equal(PR.capOfRegion('isle'), 10, 'the treasure isle belongs to the sea');
+  const p = S.newProfile('An', 6); p.region = 'village'; p.stats.level = 4;
+  assert.equal(S.killExp(p, 100, 4), 100); S.addExp(p, S.expNeed(4)); assert.equal(p.stats.level, 5);
+  assert.equal(S.atCap(p), true); assert.equal(S.killExp(p, 100, 5), 0, 'no EXP for a kill at the cap'); const before = p.stats.exp; S.addExp(p, 5000); assert.equal(p.stats.level, 5); assert.equal(p.stats.exp, before, 'nothing is added at the cap');
+  p.region = 'harbor'; assert.equal(S.atCap(p), false); assert.ok(S.killExp(p, 100, 6) > 0);
+  assert.equal(PR.levelCap({ admin: true, region: 'village' }), PR.MAX_LEVEL, 'the admin has no cap');
+  assert.ok(S.killExp({ ...p, stats: { ...p.stats, level: 8 } }, 100, 5) < 100 && S.killExp({ ...p, stats: { ...p.stats, level: 8 } }, 100, 5) >= 15, 'a monster far below the hero pays less');
 });
-test('Map 2 opens after the Ancient Golem at level 20; the unit follows the map unless a parent picks one', () => {
+test('monsters: one level per kind, stats follow the level, one hunting ground per kind in the right map, the gear of the level wins', () => {
+  const R2 = { village: [1, 5], harbor: [5, 10], forest: [10, 20] };
+  for (const [region, list] of Object.entries(ZONES)) {
+    const kinds = list.map((z) => z.kind); assert.equal(new Set(kinds).size, kinds.length, region + ': one ground per kind');
+    const levels = kinds.map((k) => MONSTERS[k].level); assert.deepEqual(levels, [...levels].sort((a, b) => a - b), region + ': the grounds climb with the level');
+    for (const k of kinds) assert.ok(MONSTERS[k].level >= R2[region][0] && MONSTERS[k].level <= R2[region][1], `${k} (lv ${MONSTERS[k].level}) belongs to the ${region} range`);
+    const sp = spawnsOf(region); for (const z of list) assert.equal(sp.filter(([k]) => k === z.kind).length, z.n, z.id + ' is full');
+    for (let i = 0; i < sp.length; i++) for (let j = i + 1; j < sp.length; j++) if (sp[i][0] !== sp[j][0]) assert.ok(Math.hypot(sp[i][1] - sp[j][1], sp[i][2] - sp[j][2]) > 4, `${sp[i][0]} and ${sp[j][0]} are not mixed`);
+  }
+  const lv = (k) => MONSTERS[k].level; assert.ok(lv('bunny') < lv('slime') && lv('crab') >= 5 && lv('bat') >= 10 && lv('orc') <= 20);
+  for (const L of [1, 5, 10, 20, 40, 70]) {
+    const m = PR.mobStats(L), hits = m.hp / PR.heroAtkAt(L); assert.ok(hits >= 2 && hits <= 7.01, `level ${L}: ${hits.toFixed(1)} hits with the gear of the level`);
+    if (L >= 10 && L <= 20) { const old = PR.baseAtk(L) + PR.weaponAtk(L - 10); assert.ok(m.hp / old > hits * 1.15, `level ${L}: gear ten levels old needs clearly more hits`); }
+    assert.ok(PR.mobStats(L, 'elite').exp > m.exp && PR.mobStats(L + 1).exp > m.exp && PR.mobStats(L + 1).hp > m.hp, 'EXP and hp grow with the level');
+  }
+  const kills = (L) => PR.expNeed(L) / PR.mobStats(L).exp; for (const L of [1, 10, 30, 60]) assert.ok(kills(L) >= 8 && kills(L) <= 30, `level ${L} takes ${kills(L).toFixed(1)} kills`);
+  // weapons: made for a level, price from the monsters' gold, sold in the map of that level
+  for (const [id, it] of Object.entries(ITEMS)) if (it.slot === 'weapon' && !it.rare) { assert.ok(it.atk >= Math.round(PR.weaponAtk(it.level) * 0.7) && it.atk <= PR.weaponAtk(it.level), `${id} gives the attack of level ${it.level}`); assert.ok(it.cost >= 40); }
+  const sellers = { forge: [1, 5], harbor: [6, 10], forest: [11, 20] };
+  for (const [seller, [lo, hi]] of Object.entries(sellers)) for (const id of shopList(seller)) { const it = ITEMS[id]; if (it.slot === 'weapon' || it.slot === 'armor' || it.slot === 'charm') assert.ok(it.level >= lo && it.level <= hi, `${id} (lv ${it.level}) sold at ${seller}`); }
+  assert.ok(shopList('forest').some((id) => ITEMS[id].level === 20) && shopList('harbor').some((id) => ITEMS[id].level === 10), 'each shop has its top piece');
+});
+test('mini games: a fee that grows with the level, no pay; the race has no letters', () => {
+  assert.ok(PR.gameFee('candy', 1) >= 5 && PR.gameFee('candy', 20) > PR.gameFee('candy', 1) && PR.gameFee('race', 10) > PR.gameFee('candy', 10));
+  assert.ok(PR.gameFee('candy', 1) <= MONSTERS.bunny.gold * 4, 'a few kills of gold pay for a game at the start');
+  assert.ok(!/CHỮ CÁI/.test(readFileSync(new URL('../src/ui/race3d.js', import.meta.url), 'utf8').split('\n').filter((l) => l.includes('g.help')).join('')), 'the race help no longer talks about letters');
+});
+
+// ---------------------------------------------------------------- review round: pay limits, Map 2, units, grammar, old saves
+import { map2Ready, forestReady, BOSSES } from '../src/core/rules.js';
+import { GRAMMAR, grammarFor } from '../src/core/grammar.js';
+test('the sea (Map 2) opens at level 5 with the Slime King beaten and the owl review passed, the forest (Map 3) at level 10; the unit follows the map unless a parent picks one', () => {
   const p = S.newProfile('An', 8);
-  assert.equal(S.unitOf(p), 1); assert.equal(BOSSES[0].level, 8); assert.ok(BOSSES[1].level >= 18);
-  p.flags.boss2 = true; p.stats.level = 19; assert.equal(map2Ready(p), false);
-  p.stats.level = 20; assert.equal(map2Ready(p), true); p.flags.map2 = true; assert.equal(S.unitOf(p), 2);
+  assert.equal(S.unitOf(p), 1); assert.equal(BOSSES[0].level, 4, 'the Slime King wakes at level 4, one below the village cap'); assert.ok(BOSSES[1].level >= 19);
+  p.flags.boss1 = true; p.stats.level = 4; assert.equal(map2Ready(p), false);
+  p.stats.level = 5; assert.equal(map2Ready(p), false, 'the owl review is still missing');
+  p.gates = { 5: true }; assert.equal(map2Ready(p), true); p.flags.map2 = true; assert.equal(S.unitOf(p), 2);
+  p.flags.forest_open = true; p.stats.level = 9; p.gates[10] = true; assert.equal(forestReady(p), false); p.stats.level = 10; assert.equal(forestReady(p), true);
   p.unitPick = 5; assert.equal(S.unitOf(p), 5);
   assert.equal(S.expTo(20), 9405 * S.EXP_K, 'levels 1-20 need the old 9,405 EXP times EXP_K (24/11: longer bar)');
 });
@@ -407,13 +445,13 @@ test('old saves (v1 and v2 before bag, hunts, chests, gates) load and play on (K
   const v2 = S.migrate({ version: 2, last: 'a', profiles: [{ id: 'a', name: 'An', grade: 6, unit: 1, quests: {}, flags: {}, words: {}, skills: {}, stats: { gold: 5, exp: 3, level: 4 } }] }), q = v2.profiles[0];
   assert.deepEqual(bag(q), { owned: [], weapon: '', armor: '', charm: '', food: 0 }); assert.deepEqual(wear(q), { atk: 0, def: 0, hp: 0, el: '', near: 0, far: 0, resist: {}, eldmg: {} });
   assert.equal(hunt(q).active, false); assert.equal(S.gateWaiting(q), 0); assert.equal(S.addExp(q, S.expNeed(4)), 1); assert.equal(S.gateWaiting(q), 5);
-  assert.equal(pay(q, 'candy', 1, 10).gold, 10); assert.equal(map2Ready(q), false);
+  assert.equal(map2Ready(q), false);
 });
 
 import { sell, sellPrice } from '../src/core/rules.js';
 test('shop: selling pays half, takes the item off, bread one by one, nothing for what is not owned', () => {
   const p = S.newProfile('An', 6); p.stats.level = 8; p.stats.gold = 1000;
-  assert.ok(buy(p, 'iron_armor').ok); assert.equal(p.gear.def, 5);
+  assert.ok(buy(p, 'iron_armor').ok); assert.equal(p.gear.def, ITEMS.iron_armor.def);
   assert.equal(sell(p, 'iron_armor'), sellPrice('iron_armor')); assert.equal(p.inv.armor, ''); assert.equal(p.gear.def, 0); assert.ok(!p.inv.owned.includes('iron_armor'));
   assert.equal(sell(p, 'iron_armor'), 0, 'already sold');
   buy(p, 'bread'); buy(p, 'bread'); const g = p.stats.gold; assert.equal(sell(p, 'bread'), 3); assert.equal(p.inv.food, 1); assert.equal(p.stats.gold, g + 3);
@@ -442,7 +480,7 @@ test('keys: Vietnamese input method letters still walk and act (Unikey / Telex o
   assert.equal(keyCode({ code: '', key: 'Backspace' }), '');
 });
 
-test('Forest chapter (end of Map 1): own hunts at Map 1 levels, the Mushroom Queen at level 16 before the Ancient Golem, owl gates at 25 and 30', async () => {
+test('Forest (Map 3, levels 10-20): own hunts, the Mushroom Queen before the Ancient Golem, owl gates every 5 levels', async () => {
   const R = await import('../src/core/rules.js');
   const p = S.newProfile('An', 8), hv = R.hunt(p), hf = R.hunt(p, 'forest');
   assert.notEqual(hv, hf, 'two separate hunts'); assert.ok(p.hunt2);
@@ -450,10 +488,10 @@ test('Forest chapter (end of Map 1): own hunts at Map 1 levels, the Mushroom Que
   assert.equal(R.countKill(p, 'bat'), false); assert.equal(R.countKill(p, 'bat'), false); assert.equal(R.countKill(p, 'bat'), true);
   assert.equal(hv.got, 0, 'village hunt untouched');
   for (const q of R.FOREST_HUNTS) for (const t of Object.values(q.en)) assert.ok(!/[àáảãạăâđêôơư]/i.test(t), 'English only');
-  const q3 = R.BOSSES.find((b) => b.flag === 'boss3'); assert.equal(q3.region, 'forest'); assert.equal(q3.level, 16); assert.ok(q3.level < R.BOSSES.find((b) => b.flag === 'boss2').level, 'the Queen comes before the Golem');
-  for (const k of ['bat', 'shroom']) assert.ok(R.MONSTERS[k].level < 20, k + ' is a Map 1 monster');
+  const q3 = R.BOSSES.find((b) => b.flag === 'boss3'); assert.equal(q3.region, 'forest'); assert.equal(q3.level, 17); assert.ok(q3.level < R.BOSSES.find((b) => b.flag === 'boss2').level, 'the Queen comes before the Golem');
+  for (const k of ['bat', 'shroom']) assert.ok(R.MONSTERS[k].level >= 10 && R.MONSTERS[k].level <= 20, k + ' is a forest monster');
   assert.equal(R.forestChapter({ quests: {} }), false); assert.equal(R.forestChapter({ quests: { forest: { step: 'seek' } } }), false); assert.equal(R.forestChapter({ quests: { forest: { step: 'done' } } }), true, 'the chapter wakes after the crystal quest');
-  assert.ok(S.GATES.includes(25) && S.GATES.includes(30));
+  assert.ok(S.GATES.includes(25) && S.GATES.includes(70) && S.GATES.every((g) => g % 5 === 0));
 });
 
 test('desktop app: every save is mirrored to a file and an empty page storage is restored from it', async () => {
@@ -504,7 +542,7 @@ test('map exam: papers differ and avoid the last one; pass mark is 8 of 10; thin
   assert.equal(g(10).pass, true); assert.equal(g(8).pass, true); assert.equal(g(7).pass, false); assert.equal(g(7).wrong.length, 3);
   const p = {}; Exam.recordExam(p, a.ids, false); Exam.recordExam(p, b.ids, true);
   assert.equal(p.exam.tries, 2); assert.equal(p.exam.passed, true); assert.deepEqual(p.exam.last.slice(0, 10), b.ids);
-  assert.deepEqual(Exam.EXAM_GATES, [20, 30]);
+  assert.deepEqual(Exam.EXAM_GATES, [10, 20]);
 });
 
 // ---------------------------------------------------------------- mini game tiers (18/11)
@@ -584,20 +622,20 @@ test('harbor: monsters, boss, hunt board, chests and word bubbles all stand on g
     assert.ok(Math.hypot(H.PLAY.boss.x - 34, H.PLAY.boss.z + 40) > 5, 'the boss stands clear of the lighthouse');
   } finally { L.setRegion('forest'); }
 });
-test('Map 2 (harbor): own hunt board, Captain Octopus at level 28, kills count for the right board only', async () => {
+test('Map 2 (harbor, levels 5-10): own hunt board, Captain Octopus wakes at level 9, kills count for the right board only', async () => {
   const R = await import('../src/core/rules.js'), p = S.newProfile('An', 8);
   const h = R.hunt(p, 'harbor'); assert.ok(p.hunt3 && h === p.hunt3); assert.notEqual(h, R.hunt(p, 'forest'));
   h.active = true; assert.equal(R.HARBOR_HUNTS[0].kind, 'crab');
   assert.equal(R.countKill(p, 'crab'), false); assert.equal(R.countKill(p, 'crab'), false); assert.equal(R.countKill(p, 'crab'), true);
   assert.equal(R.hunt(p).got, 0, 'village hunt untouched'); assert.equal(R.hunt(p, 'forest').got, 0, 'forest hunt untouched');
   for (const q of R.HARBOR_HUNTS) { assert.ok(R.MONSTERS[q.kind], q.kind); assert.ok(R.HARBOR_SPAWNS.filter(([k]) => k === q.kind).length >= q.need, `${q.kind} x${q.need} fit the spawns`); for (const t of Object.values(q.en)) assert.ok(!/[àáảãạăâđêôơư]/i.test(t), 'English only'); }
-  const o = R.BOSSES.find((b) => b.flag === 'boss4'); assert.equal(o.region, 'harbor'); assert.equal(o.level, 28); assert.ok(o.model);
-  for (const m of ['crab', 'jelly', 'pirate']) assert.ok(R.MONSTERS[m].level >= 21 && R.MONSTERS[m].level <= 30, m + ' is a Map 2 level');
+  const o = R.BOSSES.find((b) => b.flag === 'boss4'); assert.equal(o.region, 'harbor'); assert.equal(o.level, 9); assert.ok(o.model);
+  for (const m of ['crab', 'jelly', 'pirate']) assert.ok(R.MONSTERS[m].level >= 5 && R.MONSTERS[m].level <= 10, m + ' is a Map 2 level');
   const Q = await import('../src/core/quests.js'), q = { flags: {}, stats: { level: 30 }, gates: {} };
   const at = (id) => Q.MAIN.findIndex((x) => x.id === id);
-  assert.ok(at('hunt2') > at('owl10') && at('boss3') > at('owl15') && at('boss3') < at('boss2') && at('boss2') < at('map2'), 'the forest chapter sits inside Map 1');
-  assert.ok(at('map2') < at('harbor') && at('harbor') < at('shops') && at('shops') < at('hunt3') && at('hunt3') < at('owl25') && at('owl25') < at('boss4') && at('boss4') < at('exam2') && at('exam2') === Q.MAIN.length - 1, 'the Map 2 chain ends with the octopus and the sea exam');
-  assert.ok(R.map3Ready({ flags: { boss4: true }, stats: { level: 30 } }) && !R.map3Ready({ flags: { boss4: true }, stats: { level: 29 } }) && !R.map3Ready({ flags: {}, stats: { level: 30 } }), 'Map 3 needs the octopus and level 30');
+  assert.ok(at('owl5') < at('boss1') && at('boss1') < at('map2') && at('map2') < at('harbor') && at('harbor') < at('shops') && at('shops') < at('hunt3') && at('hunt3') < at('boss4') && at('boss4') < at('owl10'), 'the sea chain comes right after the village (levels 1-5 -> 5-10)');
+  assert.ok(at('owl10') < at('crystals') && at('crystals') < at('hunt2') && at('hunt2') < at('owl15') && at('owl15') < at('boss3') && at('boss3') < at('boss2') && at('boss2') < at('owl20') && at('owl20') === Q.MAIN.length - 1, 'the forest chain (levels 10-20) ends with the Ancient Golem and the level-20 exam');
+  assert.ok(R.map3Ready({ flags: { boss2: true }, gates: { 20: true }, stats: { level: 20 } }) && !R.map3Ready({ flags: { boss2: true }, gates: {}, stats: { level: 20 } }) && !R.map3Ready({ flags: {}, gates: { 20: true }, stats: { level: 20 } }), 'the next map needs the Ancient Golem and the level-20 exam');
   const shops = Q.MAIN.find((x) => x.id === 'shops'); assert.equal(shops.done(q), false);
   q.mini = { best: { style: 10, cafe: 20 } }; assert.equal(shops.done(q), false); q.mini.best.salon = 5; assert.equal(shops.done(q), true);
 });
@@ -783,10 +821,10 @@ test('treasure maps: every map for every tier is English, solvable, and leads to
   } finally { L.setRegion('forest'); }
 });
 
-test('map exams ask the map just finished: level 20 is Unit 1, level 30 is Unit 2 (not the unit of the map that opens)', async () => {
-  const EX = await import('../src/core/exam.js'); assert.deepEqual(EX.EXAM_UNIT, { 20: 1, 30: 2 });
+test('map exams ask the map just finished: level 10 is Unit 2 (the sea), level 20 is Unit 3 (the forest)', async () => {
+  const EX = await import('../src/core/exam.js'); assert.deepEqual(EX.EXAM_UNIT, { 10: 2, 20: 3 });
   for (const g of EX.EXAM_GATES) assert.ok(EX.EXAM_UNIT[g], 'every exam gate has a unit');
-  for (const grade of [6, 7, 8, 9]) for (const g of EX.EXAM_GATES) assert.ok(grammarFor(grade, EX.EXAM_UNIT[g], 10).length >= 6, `grade ${grade} gate ${g} has grammar for its exam`);
+  for (const grade of [6, 7, 8, 9]) assert.ok(grammarFor(grade, EX.EXAM_UNIT[10], 10).length >= 6, `grade ${grade}: the level-10 exam (Unit 2) has grammar`);      // Unit 3 grammar is not written yet: its exam falls back to words
 });
 
 // ---------------------------------------------------------------- creator starters + Mia's tailor shop (19/11)
@@ -812,9 +850,10 @@ test('saga: badge and exams give ranks with bonuses, bosses give compass pieces'
   assert.equal(SAGA.rankOf(p), 0);
   const atk0 = playerAtk(p), hp0 = S.maxHp(p);
   p.flags.badge1 = true; assert.equal(SAGA.rankOf(p), 1); assert.equal(playerAtk(p), atk0, "apprentice: no bonus yet");
-  p.flags.boss2 = true; assert.deepEqual(SAGA.pieces(p), [1]);
+  p.flags.boss1 = true; assert.deepEqual(SAGA.pieces(p), [1], 'the Slime King holds the first piece');
   p.flags.map2 = true; assert.equal(SAGA.rankOf(p), 2); assert.equal(playerAtk(p), atk0 + 4); assert.equal(S.maxHp(p), hp0 + 30);
-  p.flags.boss4 = true; p.gates = { 30: true }; assert.equal(SAGA.rankOf(p), 3); assert.deepEqual(SAGA.pieces(p), [1, 2]);
+  p.flags.boss4 = true; p.gates = { 10: true }; assert.equal(SAGA.rankOf(p), 3); assert.deepEqual(SAGA.pieces(p), [1, 2]);
+  p.flags.boss2 = true; p.gates[20] = true; assert.equal(SAGA.rankOf(p), 4); assert.deepEqual(SAGA.pieces(p), [1, 2, 3]);
   assert.equal(SAGA.LANDS.length, 10);
   assert.ok(SAGA.nextGoal(p).length > 10);
 });
@@ -1053,16 +1092,18 @@ test('world (24/11): ten maps, roads between them, what a road needs, portals an
   assert.deepEqual(W.MAPS.filter((m) => m.built).map((m) => m.id), ['village', 'harbor', 'forest']);
   for (const r of W.ROADS) { assert.ok(W.mapById(r.a) && W.mapById(r.b), 'both ends exist'); }
   assert.deepEqual(W.neighbours('mountain').sort(), ['desert', 'ruins', 'sky', 'volcano'].sort(), 'the mountains are the crossroads of the plan');
-  const p = { flags: {}, stats: { level: 3 } };
+  const p = { flags: {}, stats: { level: 3 }, gates: {} };
   assert.equal(W.canGo(p, 'village', 'forest').ok, false); assert.ok(W.canGo(p, 'village', 'forest').missing.length);
-  p.flags.forest_open = true; assert.ok(W.canGo(p, 'village', 'forest').ok && W.canGo(p, 'forest', 'village').ok, 'a road works both ways');
-  assert.equal(W.canGo(p, 'village', 'harbor').ok, false); p.flags.map2 = true; assert.ok(W.canGo(p, 'village', 'harbor').ok);
+  p.flags.forest_open = true; assert.equal(W.canGo(p, 'village', 'forest').ok, false, "Tom's badge is not enough: the forest needs level 10 and the owl's exam (24/11)");
+  p.stats.level = 10; p.gates[10] = true; assert.ok(W.canGo(p, 'village', 'forest').ok && W.canGo(p, 'forest', 'village').ok, 'a road works both ways');
+  assert.equal(W.canGo(p, 'village', 'harbor').ok, false, 'the sea needs the Slime King and level 5 with the owl review'); p.flags.boss1 = true; p.gates[5] = true; assert.ok(W.canGo(p, 'village', 'harbor').ok);
   assert.equal(W.canGo(p, 'forest', 'desert').ok, false, 'maps not built yet stay closed'); assert.equal(W.canGo(p, 'village', 'desert').missing[0], 'Không có đường nối.');
   assert.ok(W.canGo({ admin: true, flags: {} }, 'village', 'harbor').ok && !W.canGo({ admin: true, flags: {} }, 'forest', 'desert').ok, 'the admin goes anywhere built, not into maps that do not exist');
   const gate = W.portalsOf('village')[0]; assert.deepEqual(gate.routes, ['forest', 'harbor'], 'two roads from the village gate: the child chooses');
   assert.equal(W.portalAt('village', gate.x, gate.z + 1), gate); assert.equal(W.portalAt('village', 0, 0), null);
   for (const region of ['village', 'forest', 'harbor']) for (const pt of W.portalsOf(region)) { const R = (await import('../src/core/layout.js')).REGIONS[region]; assert.ok(R.walkable(pt.x, pt.z, 0.4), `${region} portal stands on walkable ground`); for (const to of pt.routes) assert.ok(W.roadBetween(region, to), `${region} -> ${to} is a road`); }
   assert.deepEqual(W.routesOf(p, 'village', gate).map((r) => [r.to, r.ok]), [['forest', true], ['harbor', true]]);
+  assert.deepEqual(W.MAPS.slice(0, 3).map((m) => m.lv), [[1, 5], [5, 10], [10, 20]], 'the level ranges of the world map picture');
 });
 
 test('outer ring cottages (harbour, forest): on dry land, apart from each other, solid, and the race places stay reachable', async () => {

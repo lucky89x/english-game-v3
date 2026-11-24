@@ -3,9 +3,9 @@
 // Ten questions: 4 vocabulary (both directions), 3 grammar (pick the right form), 3 sentences (pick the correctly built
 // sentence among scrambled ones). Each paper is drawn at random and avoids what the last papers asked, while enough remains.
 
-export const EXAM_GATES = [20, 30];        // 20 opens Map 2, 30 opens Map 3
+export const EXAM_GATES = [10, 20];        // (24/11) 10 ends the sea (opens the forest), 20 ends the forest (opens the next map)
 /** The unit each map exam asks about: the map just finished (Map 1 = Unit 1, Map 2 = Unit 2), not the unit of the map it opens (19/11). */
-export const EXAM_UNIT = { 20: 1, 30: 2 };
+export const EXAM_UNIT = { 10: 2, 20: 3 };
 export const EXAM_TOTAL = 10, EXAM_PASS = 8;
 const shuffle = (a, rnd) => { const b = [...a]; for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; } return b; };
 

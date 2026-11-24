@@ -1,6 +1,7 @@
 // Worn equipment shown on Ngọc: armour on the chest bone, the charm on the hip. Simple shapes in the game's palette,
 // rebuilt whenever the bag changes. Sizes are in the chest bone's space (about metres; y up the spine, z forward).
 import * as THREE from 'three';
+import { GEAR_LIKE } from '../core/rules.js';
 
 const mat = (color, metal = 0, rough = 0.7) => new THREE.MeshStandardMaterial({ color, metalness: metal, roughness: rough });
 export const ARMOR_LOOK = {
@@ -41,5 +42,7 @@ export const GEAR_FILE = {
   clover: 'gear_charm_clover_v01', owl_feather: 'gear_charm_owlfeather_v01',
   fire_amulet: 'acc_amulet_fire_v01', ice_amulet: 'acc_amulet_ice_v01', wind_amulet: 'acc_amulet_wind_v01', thunder_amulet: 'acc_amulet_thunder_v01',
 };
+// (24/11) the forest's own gear wears the Blender model (and the stand-in shape) of the older piece it is made like
+for (const [id, like] of Object.entries(GEAR_LIKE)) { if (GEAR_FILE[like]) GEAR_FILE[id] = GEAR_FILE[like]; if (ARMOR_LOOK[like]) ARMOR_LOOK[id] = ARMOR_LOOK[like]; }
 /** Shop icon (128 px, rendered in Blender for the batch 20 pieces); null for pieces that only have an emoji. */
 export const gearIcon = (id) => { const f = GEAR_FILE[id]; return f && /^(weapon|armor|acc_amulet)_/.test(f) ? `./assets/ui/item_${f.replace(/_v01$/, '')}.png` : null; };

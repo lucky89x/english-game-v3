@@ -4,7 +4,7 @@
 // "coming soon" and the roads are in place when the maps arrive.
 
 /** no: the map number (Unit no. of the grade book); region: the layout key; lv: the level range printed on the user's world map picture
- *  (assets/ui/world_map.jpg: Village 1-5, Sea 5-10, Forest 10-20 ...); at: where the map's badge is in that picture (fractions of its width and height).
+ *  (assets/ui/world_map.jpg: Village 1-5, Sea 5-10, Forest 10-20 ...; 24/11: the last two maps were stretched so the top is level 70 = every rank of one skill element, see core/progress.js); at: where the map's badge is in that picture (fractions of its width and height).
  *  The monsters of the built maps still use the old levels until they are re-balanced to these numbers. */
 export const MAPS = [
   { no: 1, id: 'village', region: 'village', vi: 'Làng Khởi Đầu', en: 'Starter Village', lv: [1, 5], built: true, at: [0.41, 0.776] },
@@ -15,8 +15,8 @@ export const MAPS = [
   { no: 6, id: 'sky', vi: 'Vương quốc trên trời', en: 'Sky Kingdom', lv: [35, 45], built: false, at: [0.423, 0.129] },
   { no: 7, id: 'ruins', vi: 'Khu di tích cổ', en: 'Ancient Ruins', lv: [25, 35], built: false, at: [0.81, 0.495] },
   { no: 8, id: 'fairy', vi: 'Đảo thần tiên', en: 'Fairy Isle', lv: [30, 40], built: false, at: [0.138, 0.257] },
-  { no: 9, id: 'volcano', vi: 'Thung lũng núi lửa', en: 'Volcano Valley', lv: [40, 50], built: false, at: [0.68, 0.134] },
-  { no: 10, id: 'crystal', vi: 'Hang tinh thể', en: 'Crystal Cave', lv: [45, 55], built: false, at: [0.868, 0.225] },
+  { no: 9, id: 'volcano', vi: 'Thung lũng núi lửa', en: 'Volcano Valley', lv: [40, 55], built: false, at: [0.68, 0.134] },
+  { no: 10, id: 'crystal', vi: 'Hang tinh thể', en: 'Crystal Cave', lv: [50, 70], built: false, at: [0.868, 0.225] },
 ];
 export const mapById = (id) => MAPS.find((m) => m.id === id) || null;
 export const mapNo = (id) => (mapById(id) || {}).no || 0;
@@ -38,8 +38,8 @@ export const ROADS = [
 /** The conditions: what is missing (an array of Vietnamese lines; empty = open). */
 const f = (p) => (p && p.flags) || {};
 export const CONDITIONS = {
-  forest: (p) => (f(p).forest_open ? [] : ['Giúp Tom và Ben ở quảng trường để nhận huy hiệu Người Giữ Từ.']),
-  sea: (p) => (f(p).map2 ? [] : ['Lên cấp 20, đánh bại Golem Cổ và qua bài thi của Cú Mèo để mở Map 2.']),
+  forest: (p) => { const m = []; if (!f(p).forest_open) m.push('Giúp Tom và Ben ở quảng trường để nhận huy hiệu Người Giữ Từ.'); if (!(p && p.stats && p.stats.level >= 10 && p.gates && p.gates[10])) m.push('Lên cấp 10 ở Biển cả (cấp 5–10) và qua bài thi của Cú Mèo để vào Rừng Ký Ức (cấp 10–20).'); return m; },
+  sea: (p) => { const m = []; if (!f(p).boss1) m.push('Đánh bại Vua Slime ở Đồng Hoang.'); if (!(p && p.stats && p.stats.level >= 5 && p.gates && p.gates[5])) m.push('Lên cấp 5 (cấp cao nhất của làng) và qua cổng ôn tập của Cú Mèo để mở Biển cả (cấp 5–10).'); return m; },
   coast: () => ['Con đường ven biển chưa làm xong: đi qua Làng.'],
   later: () => ['Khu này sắp mở, em đang xây.'],
 };

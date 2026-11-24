@@ -7,8 +7,8 @@
 // Magic skills (20/11: "hệ thống kỹ năng phép thuật… 4 hệ lửa băng gió sét, nội năng và ngoại năng, đánh gần và xa,
 // quái cũng có 4 hệ, tương sinh tương khắc"). Pure rules, no three.js: tested in node.
 //
-// Every level up gives 1 skill point (points = level - 1). Each element has 6 lines of 10 ranks = 60, four elements = 240
-// ranks, more than the 179 points a level-180 hero will ever have: the child must choose.
+// Every level gives 1 skill point (points = level). Each element has 7 lines of 10 ranks = 70, four elements = 280 ranks: the child
+// learns ONE element (core/progress.js: level 70 = the whole element), changing it gives the points back.
 //  - Inner power (nội năng, passive, makes the hero stronger): core, guard, flow.
 //  - Outer power (ngoại năng, the spells the hero casts): a close spell, a far spell and an ultimate.
 // Elements beat each other in a ring: Fire > Ice > Thunder > Wind > Fire (x1.5 damage; x0.7 the other way).
@@ -86,7 +86,7 @@ export const TREE = {
 };
 export const NODES = Object.fromEntries(Object.entries(TREE).flatMap(([el, list]) => list.map((n) => [n.id, { ...n, el }])));
 export const SPELLS = Object.values(NODES).filter((n) => n.kind === 'outer');
-export const TOTAL_RANKS = Object.keys(NODES).length * MAX_RANK;      // 240
+export const TOTAL_RANKS = Object.keys(NODES).length * MAX_RANK;      // 280 (70 per element)
 
 /** The skill data of a profile: ranks per node, the 4 hotbar slots, the energy (mp). */
 export function magic(p) {

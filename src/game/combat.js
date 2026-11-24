@@ -8,20 +8,22 @@ import { PLAY } from '../core/regions/harbor.js';
 import { ITEMS, bag, lootRoll, giveLoot, lootCloth, MONSTERS, SPAWNS, FOREST_SPAWNS, HARBOR_SPAWNS, HUNT_KEY, forestChapter, inSafe, CHASE, RESPAWN, playerAtk, hurt, inArc, huntsOf, hunt, countKill, huntLine, BOSSES, BOSS4, shieldDue } from '../core/rules.js';
 
 // BOARD: on the Quest Square since 17/11 (was out at 29, -14), facing the fountain
-export const BOARD = { x: -6.2, z: 0.6 }, BOSS_AT = { x: 40, z: -26 }, BOSS2_AT = { x: 46, z: 40 };
+export const BOARD = { x: -6.2, z: 0.6 }, BOSS_AT = { x: 38, z: -52 }, BOSS2_AT = { x: 49, z: -44 };      // (24/11) the Slime King in the meadow's far north, the Ancient Golem on the clearing in the north-east of the FOREST
 /** Map 2: the forest board by the entrance path, the Mushroom Queen's glade west of the old ruins (17/11). */
 export const FOREST_BOARD = { x: -33.5, z: 46 }, BOSS3_AT = { x: -46, z: -24 };
 /** Map 2 (Sunny Harbor, 18/11): the board beside the harbour square, Captain Octopus's cove next to the lighthouse. */
 export const HARBOR_BOARD = PLAY.board, BOSS4_AT = PLAY.boss;
 const BOARD_OF = { village: BOARD, forest: FOREST_BOARD, harbor: HARBOR_BOARD };
 const BOSS_NAMES = { boss1: 'Vua Slime', boss2: 'Golem Cổ', boss3: 'Nữ hoàng Nấm', boss4: 'Thuyền trưởng Bạch Tuộc' };
-import { addExp, maxHp } from '../core/save.js';
-import { compact } from '../world/common.js';
+import { addExp, maxHp, killExp, atCap } from '../core/save.js';
+import { levelCap } from '../core/progress.js';
+import { compact, label } from '../world/common.js';
+import { ZONES } from '../core/zones.js';
 import { bossWake } from './saga.js';
 import { ELEMENTS, elementFactor, comboOf, powers } from '../core/skills.js';
 
 /** Round badge texture per element, drawn once: a coloured disc with a light rim and the element's emoji (🔥 ❄️ 🌪️ ⚡). */
-const ELTEX = {};
+const ELTEX = {}, LVTEX = {};
 function elementTex(el) {
   if (ELTEX[el]) return ELTEX[el];
   const e = ELEMENTS[el], cv = document.createElement('canvas'); cv.width = cv.height = 96; const c = cv.getContext('2d');
@@ -77,6 +79,11 @@ export class Wild {
       compact(g); g.traverse((o) => { if (o.isMesh) o.castShadow = true; });
       g.position.set(at.x, L.REGIONS[region].groundHeight(at.x, at.z), at.z); g.rotation.y = region === 'village' ? Math.atan2(-at.x, 4 - at.z) : region === 'harbor' ? 0.55 : Math.PI / 2; g.scale.setScalar(1.25); this.root.add(g);
       this.boards.push({ at, region, g }); if (region === 'village') this.boardMesh = g;
+    }
+    // (24/11) a floating sign over the middle of every hunting ground: its name, its level, one kind of monster only
+    this.signs = [];
+    for (const [region, list] of Object.entries(ZONES)) for (const z of list) {
+      const def = MONSTERS[z.kind], sp = label(`${z.icon} ${z.vi}\nLv ${def.level}${def.elite ? ' · tinh anh' : ''}`, { size: 30, scale: 1.1 }); sp.position.set(z.x, L.REGIONS[region].groundHeight(z.x, z.z) + 4.6, z.z); sp.renderOrder = 7; sp.userData.region = region; sp.visible = false; this.root.add(sp); this.signs.push(sp);
     }
     // sword slash arc shown for a moment in front of Ngọc
     this.slash = new THREE.Mesh(new THREE.TorusGeometry(1.5, 0.09, 6, 20, Math.PI * 0.9), new THREE.MeshBasicMaterial({ color: 0xfff2a0, transparent: true, opacity: 0.9, depthWrite: false })); this.slash.rotation.x = Math.PI / 2; this.slash.visible = false; api.scene.add(this.slash);
@@ -158,10 +165,16 @@ export class Wild {
   /** Village: meadow monsters, bosses and the board. Forest: Map 2 monsters, only once Map 2 is open. */
   setRegion(name) {
     this.clearShots(); this.target = this.hover = null; this.region = name; this.root.visible = name === 'village' || name === 'forest' || name === 'harbor'; for (const b of this.boards || []) b.g.visible = b.region === name;
-    for (const m of this.mobs) { if (m.region === name) this.place(m); else m.g.visible = false; }
+    for (const m of this.mobs) { if (m.region === name) this.place(m); else m.g.visible = false; if (!m.lvTag && m.bar) this.tagLevel(m); }
+    for (const sg of this.signs || []) sg.visible = sg.userData.region === name;
+  }
+  /** (24/11) the level of a monster over its health bar (cached textures: one per level). */
+  tagLevel(m) {
+    const lv = m.boss ? m.def.level + 1 : m.def.level; LVTEX[lv] = LVTEX[lv] || label(`Lv ${lv}`, { size: 34, color: '#fff6dc', bg: 'rgba(58,36,16,0.85)', scale: 1 }).material.map;
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: LVTEX[lv], depthTest: false, transparent: true })); sp.scale.set(0.55, 0.3, 1); sp.position.set(0, m.bar.position.y + 0.3, 0); sp.renderOrder = 7; m.g.add(sp); m.lvTag = sp;
   }
   /** The region's fighting content is on: always in the village; the forest after the crystal quest (last chapter of Map 1); the harbor once Map 2 is open. */
-  on(region, p) { return region === 'village' || !!(p && (region === 'harbor' ? p.flags.map2 : forestChapter(p))); }
+  on(region, p) { return region === 'village' || region === 'forest' || !!(p && p.flags.map2); }      // (24/11) the forest is only reached at level 10, so its monsters are always awake
   /** A monster takes part when it lives in this region and that region's fighting content is on. */
   here(m, p) { return m.region === this.region && this.on(m.region, p); }
   /** A monster made from a Blender model (rigged, with Idle and Walk clips). Own copies of the materials, so a hit can flash it. */
@@ -291,11 +304,11 @@ export class Wild {
     const death = m.acts && m.acts.Death;      // (20/11) monsters with a Death clip fall down first, then vanish
     if (death) { death.setLoop(THREE.LoopOnce, 1); death.clampWhenFinished = true; const prev = m.cur; death.reset().play(); if (prev && prev !== death) prev.crossFadeTo(death, 0.1, false); m.cur = death; m.once = null; m.dying = Math.min(1.4, death.getClip().duration); if (m.bar) m.bar.visible = m.back.visible = false; if (m.elDot) m.elDot.visible = false; }
     else m.g.visible = false;
-    const first = m.boss && !p.flags[m.def.flag], k = m.boss && !first ? 0.25 : 1, gold = Math.round(m.def.gold * k * (this.api.goldMul ? this.api.goldMul() : 1)), exp = Math.round(m.def.exp * k);
+    const first = m.boss && !p.flags[m.def.flag], k = m.boss && !first ? 0.25 : 1, gold = Math.round(m.def.gold * k * (this.api.goldMul ? this.api.goldMul() : 1)), exp = killExp(p, Math.round(m.def.exp * k), m.def.level);      // (24/11) less for a monster far below the hero, none at the map's top level
     p.stats.gold += gold; addExp(p, exp); p.kills = (p.kills || 0) + 1; if (this.api.onKill) this.api.onKill(m);
     if (m.boss) { m.broken = 0; m.shieldOn = false; m.shield.visible = false; p.flags[m.def.flag] = true; }
     if (countKill(p, m.kind)) this.api.ui.toast('Quest done! Go back to the board');
-    else this.api.ui.toast(`+${exp} EXP   +${gold} ●`);
+    else this.api.ui.toast(exp ? `+${exp} EXP   +${gold} ●` : `+${gold} ●   (đã tối đa cấp ${levelCap(p)} ở vùng này: sang vùng mới để lên cấp)`);
     if (first) { const pages = bossWake(m.def.flag, gold, exp, p.stats.level); if (pages) this.api.ui.dialogue(pages); }      // the boss wakes up from the Dark Wind (saga, 19/11)
     const drop = lootRoll(p, m.boss ? m.def : { id: m.kind }, first);      // (20/11) rare gear from elites and bosses, low chance
     if (drop && giveLoot(p, drop)) { this.api.sfx('fanfare'); this.api.ui.toast(`✨ Rớt trang bị hiếm: ${ITEMS[drop].en}! Mở túi (V) để mặc.`); }

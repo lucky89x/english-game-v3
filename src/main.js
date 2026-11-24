@@ -60,12 +60,13 @@ import { Wild, BOARD, BOSS_AT, BOSS2_AT, FOREST_BOARD, BOSS3_AT, HARBOR_BOARD, B
 import { Arcade, candyGame, blocksGame, slingGame, spellGame, raceGame, withTier } from './ui/arcade.js';
 import { raceGame3d, loadRaceAssets } from './ui/race3d.js';
 import { DayNight } from './game/daynight.js';
-import { tierOf, TIER_PAY } from './core/tiers.js';
+import { tierOf } from './core/tiers.js';
+import { gameFee, levelCap } from './core/progress.js';
 import { Chests, CHEST_SPOTS, FOREST_CHESTS, HARBOR_CHESTS } from './game/chests.js';
 import { armorMesh, charmMesh, GEAR_FILE } from './game/gear.js';
 import { Walkers } from './game/walkers.js';
 import { ShopWindow } from './ui/shop.js';
-import { ITEMS, bag, wear, buy, eat, shopList, pay, map2Ready, map3Ready, playerAtk, useQuick } from './core/rules.js';
+import { ITEMS, bag, wear, buy, eat, shopList, map2Ready, map3Ready, playerAtk, useQuick } from './core/rules.js';
 import { PackUI } from './ui/pack.js';
 import { Fishing } from './game/fishing.js';
 import { house as houseOf, setPlace } from './core/house.js';
@@ -242,13 +243,13 @@ function refresh() {
   const gate = Save.gateWaiting(profile); if (gate && profile.toldGate !== gate) { profile.toldGate = gate; ui.toast('Gặp Cú Mèo để lên cấp!'); }
   if (shownLevel && profile.stats.level > shownLevel) { profile.stats.hp = Save.maxHp(profile); ui.toast(`LEVEL UP!  Lv ${profile.stats.level} · +1 điểm kỹ năng (phím T)`); sfx('fanfare'); }
   shownLevel = profile.stats.level;
-  if (map2Ready(profile) && !profile.flags.map2) {      // T3: Ancient Golem beaten at level 20 -> Map 2 and Unit 2 words
+  if (map2Ready(profile) && !profile.flags.map2) {      // (24/11) Slime King beaten, level 5 reached and the owl's review passed -> the sea (Map 2, Unit 2 words)
     profile.flags.map2 = true; save(); sfx('fanfare');
     ui.dialogue([{ who: 'Tom', en: 'You have grown so strong! A boat is waiting at the dock to take you to Sunny Harbor.', vi: `Đã mở Map 2 · Cảng Mặt Trời: ra bến thuyền bên sông (chỗ chú Sam câu cá) để đi. Từ giờ rương, boss, Cú Mèo hỏi từ Unit ${Save.unitOf(profile)}.` }, { who: '🥈 Word Keeper badge', en: 'Rank up: Explorer Word Keeper!', vi: 'Lên hạng Thám hiểm: mạnh hơn (+4 công, +30 máu).' }], () => reloadUnit());
   }
-  if (map3Ready(profile) && !profile.flags.map3) {      // Captain Octopus beaten at level 30: the sea map is finished (Map 3, the desert, is still being built)
+  if (map3Ready(profile) && !profile.flags.map3) {      // (24/11) the Ancient Golem is beaten and the level-20 exam passed: the forest is finished (the next map, the desert, is still being built)
     profile.flags.map3 = true; save(); sfx('fanfare');
-    ui.dialogue([{ who: 'Tom', en: 'You beat Captain Octopus! The sea is calm again. A warm wind from the desert is calling you now.', vi: 'Con đã hoàn thành Map 2 · Cảng Mặt Trời! Map 3 · Sa mạc Gió Vàng đang được xây, sắp mở. Làm bài kiểm tra cấp 30 của Cú Mèo để lên cấp tiếp.' }]);
+    ui.dialogue([{ who: 'Tom', en: 'You beat the Ancient Golem! The forest is quiet again. A warm wind from the desert is calling you now.', vi: 'Con đã hoàn thành các map đã xây (Làng, Biển cả, Rừng)! Map tiếp theo · Sa mạc đang được xây, sắp mở. Cấp tối đa hiện giờ là 20 (cấp cao nhất của Rừng).' }]);
   }
   const learned = Review.learned(profile.words); if (journal) journal.sync(); if (toolbar) toolbar.sync(profile);
   if (L.NAME === 'isle') {
@@ -258,7 +259,7 @@ function refresh() {
   } else if (L.NAME === 'harbor') {
     ui.hud(profile, 'Cảng Mặt Trời', [wild ? wild.huntNote() : '', Save.gateWaiting(profile) ? '🦉 ôn tập' : ''].filter(Boolean).join('  '), learned, bag(profile).food);
     const mq = Q.mainCurrent(profile);
-    ui.clue(null, 0, '', mq && ['harbor', 'shops', 'hunt3', 'owl25', 'boss4', 'exam2'].includes(mq.id) ? `Quest: ${mq.en}. Press N for the quest book.` : 'Welcome to Sunny Harbor! Take jobs from the board by the square.');
+    ui.clue(null, 0, '', mq && ['harbor', 'shops', 'dex', 'treasure', 'hunt3', 'boss4', 'owl10'].includes(mq.id) ? `Quest: ${mq.en}. Press N for the quest book.` : 'Welcome to Sunny Harbor! Take jobs from the board by the square.');
     crystals.show([]);
   } else if (L.NAME === 'forest') {
     ui.hud(profile, 'Rừng Ký Ức', [`Pha lê ${quest.q.found.length}/5`, wild ? wild.huntNote() : '', Save.gateWaiting(profile) ? '🦉 ôn tập' : ''].filter(Boolean).join('  '), learned, bag(profile).food);
@@ -401,7 +402,7 @@ function swimHud() {
 function onFishCaught(item) {
   if (L.NAME === 'harbor' || L.NAME === 'isle') { catchFish([item.id]); return item.junk ? 'vào túi (V)' : 'vào túi đồ (V) · bán ở chợ cá hoặc Village Shop'; }
   // (21/11) "a caught fish goes into the bag; the hero sells it at the shop": the river fish go to the same bucket
-  Sea.keep(profile, item); if (!item.junk) { Save.addExp(profile, 3 + (item.r || 0) * 4); track('sea_fish'); } track('mini'); save(); refresh(); return 'vào túi đồ (V) · bán ở Village Shop';
+  Sea.keep(profile, item); if (!item.junk) { track('sea_fish'); } track('mini'); save(); refresh(); return 'vào túi đồ (V) · bán ở Village Shop';
 }
 /** Keys 5-8 and the potion slots: drinks or eats what is in the quick slot. */
 function usePotion(i) {
@@ -546,7 +547,7 @@ function digHere() {
   if (!TR.isGoal(m, x, z)) { const w = TR.warmth(TR.dist(m, x, z)); ui.dialogue([{ who: 'Ngọc', en: `Nothing here… ${w.en}`, vi: w.vi }]); return; }
   const t = tierOf(profile.stats.level), r = TR.reward(t); TR.solved(profile);
   const all = WR.allItems(), fresh = all.filter(([k, c]) => !WR.wardrobe(profile).owned.includes(WR.itemId(k, c))), [k, c] = (fresh.length ? fresh : all)[Math.floor(Math.random() * (fresh.length || all.length))];
-  const isNew = WR.unlock(profile, k, c); profile.stats.gold += r.gold; Save.addExp(profile, r.exp); track('treasure'); sfx('fanfare'); save(); refresh();
+  const isNew = WR.unlock(profile, k, c); profile.stats.gold += r.gold; track('treasure'); sfx('fanfare'); save(); refresh();
   const gx = m.goal.x, gz = m.goal.z, gy = L.groundHeight(gx, gz);
   const mound = new THREE.Mesh(new THREE.SphereGeometry(0.7, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0x6a4a2a, roughness: 1 })); mound.position.set(gx, gy, gz); scene.add(mound); digMeshes.push(mound);
   animatedModel('isle_chest_v01').then((c) => {        // the Blender chest rises from the sand and its lid opens
@@ -554,14 +555,14 @@ function digHere() {
     c.scene.traverse((o) => { if (o.isMesh) o.castShadow = true; }); scene.add(c.scene); digMeshes.push(c.scene); mound.visible = false;
     const mx = new THREE.AnimationMixer(c.scene), act = mx.clipAction(c.animations.find((a) => a.name === 'Open') || c.animations[0]); act.setLoop(THREE.LoopOnce, 1); act.clampWhenFinished = true; act.play(); digMixers.push(mx);
   }, () => {});
-  ui.dialogue([{ who: 'Ngọc', en: `I found the treasure! A chest full of gold, and a new piece for your wardrobe: ${WR.itemName(WR.itemId(k, c))}! (+${r.gold} gold, +${r.exp} EXP)`, vi: `Tìm được kho báu! ${isNew ? 'Có thêm món mới trong tủ đồ (phím V).' : ''} ${treasureMap() ? 'Còn một bản đồ nữa hôm nay: bấm M.' : 'Hôm nay con đã tìm đủ rồi, mai có bản đồ mới.'}` }]);
+  ui.dialogue([{ who: 'Ngọc', en: `I found the treasure! A chest full of gold, and a new piece for your wardrobe: ${WR.itemName(WR.itemId(k, c))}! (+${r.gold} gold)`, vi: `Tìm được kho báu! ${isNew ? 'Có thêm món mới trong tủ đồ (phím V).' : ''} ${treasureMap() ? 'Còn một bản đồ nữa hôm nay: bấm M.' : 'Hôm nay con đã tìm đủ rồi, mai có bản đồ mới.'}` }]);
 }
 function openDex() { dexPanel.show(); sfx('tick'); }
 /** A sea creature is found (caught or defeated): the first time pays by rarity, milestones pay a bonus. */
 function seaFound(id) {
   const r = Sea.discover(profile, id, Review.today()); if (!r.isNew) return; const e = Sea.entry(id);
-  profile.stats.gold += r.gold + r.bonus; Save.addExp(profile, r.exp); sfx('fanfare'); save(); refresh();
-  ui.toast(`🐠 Album biển: ${e.en} = ${e.vi}  (+${r.gold + r.bonus} ●, +${r.exp} EXP)${r.bonus ? '  🎉 mốc thưởng!' : ''}`);
+  profile.stats.gold += r.gold + r.bonus; sfx('fanfare'); save(); refresh();      // (24/11) EXP only from quests and monsters
+  ui.toast(`🐠 Album biển: ${e.en} = ${e.vi}  (+${r.gold + r.bonus} ●)${r.bonus ? '  🎉 mốc thưởng!' : ''}`);
 }
 function catchFish(ids) {
   for (const id of ids) { const e = Sea.entry(id); if (!e) continue; Sea.keep(profile, e); if (!e.junk) { track('sea_fish'); seaFound(id); } }
@@ -606,9 +607,9 @@ function adminPlaces() {
   for (const st of STARTS) add(st.region || 'village', 'Trò: ' + st.sign.replace(/^\S+\s/, ''), st.x + 0.8, st.z + 0.8);
   add('village', 'Nhà của các con', HOMES[0].door[0] + 2, HOMES[0].door[1] + 1.5); add('village', 'Cửa hàng nội thất', FURNITURE.door[0] + 1.5, FURNITURE.door[1]);
   add('village', 'Quầy rau quả', STALLS.produce.at[0] + 0.5, STALLS.produce.at[1]); add('village', 'Quầy nhạc cụ', STALLS.music.at[0] + 0.5, STALLS.music.at[1]); add('village', 'Tiệm may cô Mia', STALLS.tailor.at[0], STALLS.tailor.at[1] - 0.6);
-  add('village', 'Vua Slime', BOSS_AT.x, BOSS_AT.z - 4); add('village', 'Golem Cổ', BOSS2_AT.x, BOSS2_AT.z - 4); add('village', 'Rương Đồng Hoang', CHEST_SPOTS[0][0], CHEST_SPOTS[0][1] - 1.5);
+  add('village', 'Vua Slime', BOSS_AT.x, BOSS_AT.z - 4);  add('village', 'Rương Đồng Hoang', CHEST_SPOTS[0][0], CHEST_SPOTS[0][1] - 1.5);
   add('forest', 'Cổng vào rừng', L.REGIONS.forest.SPAWN.x, L.REGIONS.forest.SPAWN.z); add('forest', 'Bảng săn quái rừng', FOREST_BOARD.x + 1.2, FOREST_BOARD.z + 0.6);
-  add('forest', 'Nữ hoàng Nấm', BOSS3_AT.x + 6, BOSS3_AT.z); add('forest', 'Rương rừng', FOREST_CHESTS[0][0], FOREST_CHESTS[0][1] - 1.5);
+  add('forest', 'Nữ hoàng Nấm', BOSS3_AT.x + 6, BOSS3_AT.z); add('forest', 'Golem Cổ', BOSS2_AT.x, BOSS2_AT.z - 4); add('forest', 'Rương rừng', FOREST_CHESTS[0][0], FOREST_CHESTS[0][1] - 1.5);
   add('harbor', 'Bảng săn quái cảng', HARBOR_BOARD.x + 1.2, HARBOR_BOARD.z + 1.4); add('harbor', 'Bãi cua (bờ Nam)', 12, 42); add('harbor', 'Bờ sứa (phía Bắc)', 14, -24); add('harbor', 'Mũi cướp biển', 30, -34);
   add('harbor', 'Quầy Willow (đồ Map 2)', HARBOR.shop.x + 1.6, HARBOR.shop.z + 1.2); add('harbor', 'Thuyền trưởng Bạch Tuộc', BOSS4_AT.x, BOSS4_AT.z + 5); add('harbor', 'Rương cảng', HARBOR_CHESTS[0][0], HARBOR_CHESTS[0][1] - 1.5);
   return out;
@@ -650,41 +651,57 @@ function adminLevel(n) {
  *  reading (the .exe, no microphone) the card resolves with skipped:true and the old flow goes on. */
 let reader = null;
 function readOut(card, good, bad, title) { reader = reader || new ReadAloud({ speak: (w) => speak(w, true, 0.8) }); reader.read(card, { title }).then((r) => { if (r.ok) good(r); else bad(r); }); }
-function wordGate(who, then, N = 4) {      // (20/11) four words, different from the last visit, before Candy, Race and Blocks
-  const pool = unitCards.filter((c) => c.word.length <= 22);
-  if (pool.length < 4) { then(); return; }
-  const known = (c) => profile.words[c.id] && profile.words[c.id].right > 0, mix = (a) => [...a].sort(() => Math.random() - 0.5);
-  const last = (profile.gateLast || {})[who] || [], fresh = pool.filter((c) => !last.includes(c.id)), src = fresh.length >= N ? fresh : pool;
-  const list = [...mix(src.filter((c) => !known(c))), ...mix(src.filter(known))].slice(0, N); (profile.gateLast || (profile.gateLast = {}))[who] = list.map((c) => c.id);
+/** (24/11) The toll of every mini game: gold to enter (`gameFee`) AND the right answers, words and verb forms mixed: N questions, a word's meaning
+ *  (read aloud after a right answer) or a sentence with a gap to fill with the right verb form (grammar.js). A game pays nothing afterwards. */
+function gameGate(who, game, then, N = 3) {
+  const fee = gameFee(game, profile.stats.level);
+  if (profile.stats.gold < fee) { sfx('wrong'); ui.dialogue([{ who, en: `It costs ${fee} gold to play. Come back with more gold!`, vi: `Vào chơi tốn ${fee} vàng, con mới có ${profile.stats.gold}. Đi đánh quái hoặc làm nhiệm vụ để kiếm thêm nhé!` }]); return; }
+  const pool = unitCards.filter((c) => c.word.length <= 22), mix = (a) => [...a].sort(() => Math.random() - 0.5), gram = grammarFor(profile.grade, Save.unitOf(profile), 1);
+  const nVocab = pool.length >= 4 ? N - gram.length : 0;
+  const known = (c) => profile.words[c.id] && profile.words[c.id].right > 0;
+  const last = (profile.gateLast || {})[who] || [], fresh = pool.filter((c) => !last.includes(c.id)), src = fresh.length >= nVocab ? fresh : pool;
+  const words = [...mix(src.filter((c) => !known(c))), ...mix(src.filter(known))].slice(0, nVocab); (profile.gateLast || (profile.gateLast = {}))[who] = words.map((c) => c.id);
+  const qs = [...words.map((c) => ({ c })), ...gram.map((g) => ({ g }))];
+  const go = () => { profile.stats.gold -= fee; save(); refresh(); sfx('fanfare'); then(); };
+  if (!qs.length) { go(); return; }
   const ask = (n) => {
-    if (n >= list.length) { sfx('fanfare'); ui.dialogue([{ who, en: "Great! Now let's play!", vi: `Con trả lời đúng cả ${N} từ rồi. Vào chơi thôi!` }], then); return; }
-    const c = list[n], opts = mix([c, ...mix(pool.filter((x) => x.id !== c.id && x.vi !== c.vi)).slice(0, 2)]), t0 = Date.now();
-    ui.choose({ who: `${who} · ${n + 1}/${list.length}`, en: `What does "${c.word}" mean?`, vi: `Trả lời đúng ${N} từ để vào chơi.` }, opts.map((o) => o.vi), (i) => {
+    if (n >= qs.length) { sfx('fanfare'); ui.dialogue([{ who, en: "Great! Now let's play!", vi: `Con trả lời đúng cả ${qs.length} câu rồi. Trả ${fee} vàng và vào chơi thôi!` }], go); return; }
+    const q = qs[n], head = `${who} · ${n + 1}/${qs.length}`, t0 = Date.now();
+    if (q.g) {      // a verb form in a sentence
+      const opts = mix(q.g.options.map((o, i) => ({ o, ok: i === q.g.a })));
+      ui.choose({ who: head, en: q.g.q, vi: 'Chọn dạng đúng của động từ điền vào chỗ trống.' }, opts.map((x) => x.o), (i) => {
+        const ok = opts[i].ok; Save.recordSkill(profile, 'grammar', ok, 0); sfx(ok ? 'correct' : 'wrong');
+        if (ok) ask(n + 1); else ui.dialogue([{ who, en: q.g.q.replace('___', q.g.options[q.g.a]), vi: q.g.why }], () => ask(n));
+      });
+      return;
+    }
+    const c = q.c, opts = mix([c, ...mix(pool.filter((x) => x.id !== c.id && x.vi !== c.vi)).slice(0, 2)]);
+    ui.choose({ who: head, en: `What does "${c.word}" mean?`, vi: 'Trả lời đúng để vào chơi.' }, opts.map((o) => o.vi), (i) => {
       const ok = opts[i].id === c.id; Review.record(profile.words, c.id, { correct: ok, hints: 0, ms: Date.now() - t0 }); Save.recordSkill(profile, 'vocabulary', ok, 0); sfx(ok ? 'correct' : 'wrong');
       if (ok) readOut(c, () => ask(n + 1), () => ask(n)); else ui.dialogue([{ who, en: `"${c.word}" means "${c.vi}". Try again!`, vi: `${c.word} = ${c.vi}` }], () => ask(n));
     });
   };
-  ui.dialogue([{ who, en: 'Answer four words, then you can play!', vi: `${who}: trả lời đúng ${N} từ tiếng Anh thì được vào chơi (mỗi lần là bộ từ khác).` }], () => teach(list, () => ask(0)));
+  ui.dialogue([{ who, en: `Playing costs ${fee} gold. Answer ${qs.length} questions first!`, vi: `${who}: phí chơi ${fee} vàng (trò chơi không còn thưởng vàng hay EXP). Trả lời đúng ${qs.length} câu (từ vựng hoặc chia động từ) để vào chơi.` }], () => (words.length ? teach(words, () => ask(0)) : ask(0)));
 }
 function hostQuiz(who, words) {
   const pool = unitCards.length >= 4 ? unitCards : words, list = [...words].sort(() => Math.random() - 0.5).slice(0, 3); let right = 0;
   const ask = (n) => {
-    if (n >= list.length) { const gold = right * 4; profile.stats.gold += gold; Save.addExp(profile, right * 5); save(); refresh(); sfx(right ? 'fanfare' : 'tick');
-      ui.dialogue([{ who, en: right === list.length ? 'Perfect! You remember every word!' : `You got ${right} of ${list.length}. Well done!`, vi: `+${gold} vàng, +${right * 5} EXP` }]); return; }
+    if (n >= list.length) { save(); refresh(); sfx(right ? 'fanfare' : 'tick');      // (24/11) a review after a game pays nothing
+      ui.dialogue([{ who, en: right === list.length ? 'Perfect! You remember every word!' : `You got ${right} of ${list.length}. Well done!`, vi: 'Ôn lại từ vừa gặp trong trò chơi. Giỏi lắm!' }]); return; }
     const c = list[n], opts = [c, ...pool.filter((x) => x.id !== c.id && x.vi !== c.vi).sort(() => Math.random() - 0.5).slice(0, 2)].sort(() => Math.random() - 0.5), t0 = Date.now();
     ui.choose({ who: `${who} · ${n + 1}/${list.length}`, en: `What does "${c.word}" mean?`, vi: 'Từ con vừa gặp trong trò chơi.' }, opts.map((o) => o.vi), (i) => {
       const ok = opts[i].id === c.id; if (ok) right += 1; Review.record(profile.words, c.id, { correct: ok, hints: 0, ms: Date.now() - t0 }); sfx(ok ? 'correct' : 'wrong');
       if (ok) ask(n + 1); else ui.dialogue([{ who, en: `"${c.word}" means "${c.vi}".` }], () => ask(n + 1));
     });
   };
-  ui.dialogue([{ who, en: 'Before you go: do you remember the words from the game?', vi: `${who} hỏi lại ${list.length} từ con vừa gặp. Đúng mỗi từ +4 vàng.` }], () => ask(0));
+  ui.dialogue([{ who, en: 'Before you go: do you remember the words from the game?', vi: `${who} hỏi lại ${list.length} từ con vừa gặp (chỉ để ôn, không có thưởng).` }], () => ask(0));
 }
 /** A word sparkle was touched: teach one word (a new one first, else one met before), with a small reward. */
 function learnWord(card, isNew, use) {
   if (!card) { ui.dialogue([{ who: 'Pip', en: 'This bubble is empty…', vi: `Từ vựng Unit ${Save.unitOf(profile)} lớp ${profile.grade} chưa có.` }]); save(); return; }
   (profile.seen || (profile.seen = {}))[card.id] = Review.today();
   const exp = isNew ? 6 : 3, gold = isNew ? 2 : 1, who = isNew ? '✨ Từ mới' : '🔁 Ôn lại';
-  const reward = (note) => { track('bubble'); if (L.NAME === 'harbor') track('sea_bubble'); profile.stats.gold += gold; Save.addExp(profile, exp); sfx('correct'); save(); refresh(); if (use) use(); return `${note} (+${exp} EXP, +${gold} vàng)`; };
+  const reward = (note) => { track('bubble'); if (L.NAME === 'harbor') track('sea_bubble'); profile.stats.gold += gold; sfx('correct'); save(); refresh(); if (use) use(); return `${note} (+${gold} vàng)`; };      // (24/11) no EXP from a bubble
   // (24/11) the reward comes only after the child reads the word aloud well; the bubble stays until then
   ui.dialogue([{ who, card, vi: isNew ? 'Nghe kỹ rồi sắp phải đọc to từ này nhé.' : 'Con nhớ từ này chứ? Nghe rồi đọc to lên nhé.' }], () => readOut(card,
     (r) => ui.dialogue([{ who, card, vi: reward(r.skipped ? 'Nghe và đọc lại nhé.' : 'Đọc chuẩn rồi, giỏi quá!') }]),
@@ -1062,12 +1079,12 @@ function interactTarget() {
   }
   if (L.NAME === 'harbor') {          // Map 2: Sunny Harbor (18/11)
     const H = HARBOR;
-    if (near(H.boutique.door[0] + 1, H.boutique.door[1], 2.0)) return { text: 'E · Style Boutique: trò thời trang với cô Mia', run: () => { const t = tierOf(profile.stats.level); arcade.start(withTier(styleGame(Math.random, t), t)); } };
-    if (near(H.cafe.door[0] + 1, H.cafe.door[1], 2.0)) return { text: 'E · Seaside Café: trò nấu ăn với đầu bếp Leo', run: () => { const t = tierOf(profile.stats.level); arcade.start(withTier(cafeGame(Math.random, t), t)); } };
-    if (near(H.salon.door[0], H.salon.door[1] + 1, 2.0)) return { text: 'E · Beauty Salon: trò làm đẹp với chị Ruby', run: () => { const t = tierOf(profile.stats.level); arcade.start(withTier(salonGame(Math.random, t), t)); } };
+    if (near(H.boutique.door[0] + 1, H.boutique.door[1], 2.0)) return { text: 'E · Style Boutique: trò thời trang với cô Mia', run: () => gameGate('Mia', 'style', () => { const t = tierOf(profile.stats.level); arcade.start(withTier(styleGame(Math.random, t), t)); }) };
+    if (near(H.cafe.door[0] + 1, H.cafe.door[1], 2.0)) return { text: 'E · Seaside Café: trò nấu ăn với đầu bếp Leo', run: () => gameGate('Leo', 'cafe', () => { const t = tierOf(profile.stats.level); arcade.start(withTier(cafeGame(Math.random, t), t)); }) };
+    if (near(H.salon.door[0], H.salon.door[1] + 1, 2.0)) return { text: 'E · Beauty Salon: trò làm đẹp với chị Ruby', run: () => gameGate('Ruby', 'salon', () => { const t = tierOf(profile.stats.level); arcade.start(withTier(salonGame(Math.random, t), t)); }) };
     if (near(H.isle.x, H.isle.z, 2.3)) return { text: 'E · Đi thuyền tới Đảo Kho Báu', run: () => enterRegion('isle') };
     if (near(H.market.x, H.market.z - 1.2, 3.4)) { const n = Sea.bucketCount(profile); return { text: n ? `E · Bán ${n} món trong xô cá ở chợ cá` : 'E · Chợ cá (xô cá đang trống)', run: sellFish }; }
-    if (near(H.shop.x + 1.6, H.shop.z + 0.6, 2.4)) return { text: "E · Quầy của Willow (đồ Map 2)", run: () => { enterRoom('forest'); shopWin.show("Willow's Harbor Stall", ['forest']); } };
+    if (near(H.shop.x + 1.6, H.shop.z + 0.6, 2.4)) return { text: "E · Quầy của Willow (đồ Map 2)", run: () => { enterRoom('forest'); shopWin.show("Willow's Harbor Stall", ['harbor']); } };
     if (near(sam.x, sam.z, 3)) return { text: 'E · Nói chuyện với Sam', run: () => ui.dialogue([{ who: 'Sam', en: 'Welcome to Sunny Harbor! The sea is big and blue.', vi: 'Chào mừng tới Cảng Mặt Trời (Map 2)! Ghé Style Boutique bên trái quảng trường nhé.' }]) };
     for (const f of [mini, wild, chests, spots]) { const c = f && f.interact(p); if (c) return c; }
     return null;
@@ -1207,7 +1224,7 @@ async function boot() {
   player = new Player(ngoc, { blink, talk, joy }); player.firstFaces = { ...player.faceMaps }; scene.add(player.root);
   player.swimBlock = (x, z, from) => L.NAME === 'village' && profile && !profile.flags.bridge_fixed && (x < L.riverX(z)) !== (from.x < L.riverX(z));      // the far bank stays closed until the bridge is mended
   player.onSwim = onSwim;
-  fishing = new Fishing({ scene, player, ui, sfx, profile: () => profile, tier: () => tierOf(profile.stats.level), speak: (en) => speak(en, true, 0.85), onCatch: onFishCaught, gate: (go) => wordGate('Sam', go, 4), loadStatic: staticModel, loadAnimated: animatedModel });      // (23/11) four new words before fishing, the user's boat, rod, float and fish
+  fishing = new Fishing({ scene, player, ui, sfx, profile: () => profile, tier: () => tierOf(profile.stats.level), speak: (en) => speak(en, true, 0.85), onCatch: onFishCaught, gate: (go) => gameGate('Sam', 'fishing', go), loadStatic: staticModel, loadAnimated: animatedModel });      // (23/11) four new words before fishing, the user's boat, rod, float and fish
   tom = new Npc(tomG, 2.6, 7.6, -0.4); sam = new Npc(samG, 14, 17, 1.2); ben = new Npc(benG, BEN_MARKET.npc[0], BEN_MARKET.npc[1], Math.PI / 2); scene.add(tom.root, sam.root, ben.root);
   pip = new Pip(pipG.scene); scene.add(pip.root);
   const usedFiles = new Set();      // two friends may share a model file (Mia uses Rose's): the second gets its own copy
@@ -1255,15 +1272,13 @@ async function boot() {
   for (const id of ['rope', 'chain', 'log', 'boulder']) { const [x, z] = BRIDGE_SPOTS[id], m = bridgeItem(id); m.position.set(x, L.REGIONS.village.groundHeight(x, z), z); m.visible = false; scene.add(m); itemProps[id] = m; }
   cam = new OrbitCamera(camera, canvas);
   if (touchWanted()) touch = initTouch({ keys, press: (code) => onKey({ code, preventDefault() {} }), cam, canvas, state: () => ({ playing: started && !switching, arcade: !!(arcade && arcade.open) }) });
-  arcade = new Arcade((g, res) => {       // a finished board game pays gold and EXP; quitting pays nothing
+  arcade = new Arcade((g, res) => {       // (24/11) a finished board game keeps the record only; quitting does nothing
     if (!res) return;
     if (g.onResult) return g.onResult(res);
     const best = mini.data.best, record = best[res.id] === undefined || res.score > best[res.id]; if (record) best[res.id] = res.score;
-    const mul = TIER_PAY[res.tier || 1];      // higher tiers pay more
-    const r = pay(profile, res.id, Review.today(), Math.round(res.gold * mul), Math.round(res.exp * mul));
-    profile.stats.gold += r.gold; Save.addExp(profile, r.exp); sfx('fanfare'); save(); refresh();
+    save(); refresh();      // (24/11) no gold and no EXP for a mini game: the child paid to enter
     track('mini'); if (['style', 'cafe', 'salon'].includes(res.id)) track('sea_game'); if (res.fish) catchFish(res.fish); if (res.unlock && res.unlock.length) gainItems(res.unlock); for (const c of res.words || []) (profile.seen || (profile.seen = {}))[c.id] = Review.today();      // words met inside the game count as seen
-    ui.dialogue([{ who: 'Ngọc', en: `${res.text} (+${r.gold} gold, +${r.exp} EXP)`, vi: [record ? 'Kỷ lục mới của con!' : '', payNote(r)].filter(Boolean).join(' ') || undefined }],
+    ui.dialogue([{ who: 'Ngọc', en: res.text, vi: [record ? 'Kỷ lục mới của con!' : '', payNote()].filter(Boolean).join(' ') }],
       () => { if (res.words && res.words.length >= 2) hostQuiz(res.id === 'blocks' ? 'Max' : 'Leo', res.words); });
   });
   spots = new WordSpots({ scene, profile: () => profile, cards: () => unitCards, learn: learnWord });
@@ -1273,8 +1288,8 @@ async function boot() {
       const g = spellGame(card); const started = Date.now();
       g.onResult = (res) => {
         Review.record(profile.words, card.id, { correct: res.wrong === 0, hints: res.wrong ? 1 : 0, ms: Date.now() - started }); Save.recordSkill(profile, 'spelling', res.wrong === 0, res.wrong ? 1 : 0);
-        chests.opened(c); track('chest'); if (L.NAME === 'harbor') track('sea_chest'); profile.stats.gold += res.gold; Save.addExp(profile, res.exp); sfx('fanfare'); save(); refresh();
-        ui.dialogue([{ who: 'Ngọc', en: `${res.text} (+${res.gold} gold, +${res.exp} EXP)`, vi: `${card.word} = ${card.vi}` }]);
+        chests.opened(c); track('chest'); if (L.NAME === 'harbor') track('sea_chest'); profile.stats.gold += res.gold; sfx('fanfare'); save(); refresh();      // (24/11) no EXP from a chest
+        ui.dialogue([{ who: 'Ngọc', en: `${res.text} (+${res.gold} gold)`, vi: `${card.word} = ${card.vi}` }]);
       };
       teach([card], () => arcade.start(g));
     } });
@@ -1295,7 +1310,7 @@ async function boot() {
   spells = new Spells({ scene, wild, player, camera, canvas, profile: () => profile, sfx, ui, onChange: () => {} });      // (20/11) magic skills: keys 1-4, the skill book T
   packUI = new PackUI({ profile: () => profile, sfx, toast: (t) => ui.toast(t), changed: () => { save(); refresh(); }, hpMax: () => Save.maxHp(profile), focus: creatorCamera, look: () => { setSword(); setWear(); }, swing: () => player.swing() });      // (21/11) the hero stands beside the bag and shows each piece
   skillUI = new SkillUI({ profile: () => profile, spells, sfx, usePotion, toast: (t) => ui.toast(t), atk: () => playerAtk(profile), changed: () => { save(); refresh(); } });      // the Blender monsters replace the shapes a moment after the game starts (not awaited: a slow download must not hold the boot)
-  mini = new MiniGames({ scene, player, ui, sfx, track, profile: () => profile, save, onNote: refresh, board: (id) => { const t = tierOf(profile.stats.level), go = async () => { let g; if (id.startsWith('race2')) { try { raceAssets = raceAssets || await loadRaceAssets(gltf); g = raceGame3d({ assets: raceAssets, cards: unitCards, tier: t, variant: id === 'race2h' ? 'harbor' : id === 'race2f' ? 'forest' : 'village' }); } catch (e) { console.warn('race3d: ' + e.message); g = raceGame(Math.random, [], t); } } else g = ({ candy: () => candyGame(Math.random, t), blocks: () => blocksGame(Math.random, unitCards, t), sling: () => slingGame(Math.random, t) })[id](); arcade.start(withTier(g, t)); }; if (id === 'candy' || id.startsWith('race2') || id === 'blocks') wordGate(id === 'candy' ? 'Mimi' : id === 'blocks' ? 'Max' : id === 'race2h' ? 'Marina' : id === 'race2f' ? 'Rowan' : 'Leo', go); else go(); } });
+  mini = new MiniGames({ scene, player, ui, sfx, track, gate: (who, game, go) => gameGate(who, game, go), profile: () => profile, save, onNote: refresh, board: (id) => { const t = tierOf(profile.stats.level), go = async () => { let g; if (id.startsWith('race2')) { try { raceAssets = raceAssets || await loadRaceAssets(gltf); g = raceGame3d({ assets: raceAssets, cards: unitCards, tier: t, variant: id === 'race2h' ? 'harbor' : id === 'race2f' ? 'forest' : 'village' }); } catch (e) { console.warn('race3d: ' + e.message); g = raceGame(Math.random, [], t); } } else g = ({ candy: () => candyGame(Math.random, t), blocks: () => blocksGame(Math.random, unitCards, t), sling: () => slingGame(Math.random, t) })[id](); arcade.start(withTier(g, t)); }; gameGate(id === 'candy' ? 'Mimi' : id === 'blocks' ? 'Max' : id === 'sling' ? 'Rex' : id === 'race2h' ? 'Marina' : id === 'race2f' ? 'Rowan' : 'Leo', id.startsWith('race2') ? 'race' : id, go); } });
   await mini.addHosts((name) => loader.loadAsync(`./assets/models/${name}.glb`));      // a host by each mini game
   admin = new AdminPanel({ profile: () => profile, profiles: () => store.profiles, visitHome: (o) => goHome(o, true, false, true), deleteProfile: adminDelete, places: adminPlaces, go: adminGo, unlockAll: adminUnlock, setStep: adminStep,
     resetForest: () => { delete profile.quests.forest; if (L.NAME === 'forest') enterRegion('forest'); }, setGrade: (g) => { profile.grade = g; save(); chooseProfile(profile); },

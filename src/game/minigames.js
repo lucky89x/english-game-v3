@@ -2,14 +2,13 @@
 // the west meadow and twelve hidden stars. They exist so the village is fun between lessons; rewards are small.
 import * as THREE from 'three';
 import * as L from '../core/layout.js';
-import { pay, FULL_PLAYS } from '../core/rules.js';
 import { today } from '../core/review.js';
 import { gameMusic, endMusic } from '../audio.js';
 import { addGood } from '../core/goods.js';
 import { ORCHARD_TREES, ORCHARD_CROWN, ORCHARD_R, MINI_BUILDINGS } from '../core/regions/village.js';
 import { siteBuilding } from '../world/arcade_sites.js';
-/** Tells the child when today's full pay for this game is used up (T1: skill games are for fun, not for farming gold). */
-export const payNote = (r) => (!r.full ? `Hôm nay trò này chỉ còn thưởng 20%. Đi đánh quái, làm nhiệm vụ để được nhiều hơn!` : r.left === 0 ? `Đã hết ${FULL_PLAYS} lượt thưởng đầy đủ hôm nay của trò này.` : '');
+/** (24/11) A mini game pays no gold and no EXP any more: the child pays to enter, EXP comes only from quests and monsters. */
+export const payNote = () => 'Trò chơi chỉ để luyện tập và giải trí. Muốn lên cấp thì đi làm nhiệm vụ và đánh quái nhé!';
 
 export const STARS = [[-36, 20], [-38, -34], [-12, -38], [30, -30], [48, -12], [52, 20], [44, 38], [10, 50], [-22, 50], [-35, 38], [-30, 14], [8, -36]];
 export const RACE = [[-20, 2], [-32, 4], [-42, 14], [-40, 28], [-34, 42], [-22, 47], [-6, 44], [-8, 30], [-20, 2]];
@@ -100,7 +99,8 @@ export class MiniGames {
   start(id) {
     const s = STARTS.find((x) => x.id === id); this.api.sfx('tick');
     if (id === 'apple') {      // (20/11) Hana talks first; the apples only fall after her talk, from the crowns of the tall trees, slowly
-      this.api.ui.dialogue([{ who: 'Hana', en: 'Welcome to my orchard! The apples are ripe.', vi: 'Chào mừng tới vườn táo của cô Hana! Táo chín rồi.' }, { who: 'Hana', en: 'Run under the trees and catch the apples. Gold apples are worth three!', vi: 'Chạy dưới các cây để hứng táo trong 30 giây. Táo vàng được 3 điểm.' }], () => { this.active = { id, s, time: 30, score: 0, next: 1.2 }; gameMusic('apple'); });
+      const talk = () => this.api.ui.dialogue([{ who: 'Hana', en: 'Welcome to my orchard! The apples are ripe.', vi: 'Chào mừng tới vườn táo của cô Hana! Táo chín rồi.' }, { who: 'Hana', en: 'Run under the trees and catch the apples. Gold apples are worth three!', vi: 'Chạy dưới các cây để hứng táo trong 30 giây. Táo vàng được 3 điểm.' }], () => { this.active = { id, s, time: 30, score: 0, next: 1.2 }; gameMusic('apple'); });
+      if (this.api.gate) this.api.gate('Hana', 'apples', talk); else talk();      // (24/11) the toll: gold and questions
       return;
     }
     if (s.host && this.api.ui.toast) this.api.ui.toast(`${s.host.name}: ${s.host.hello}`);
@@ -118,9 +118,8 @@ export class MiniGames {
     if (this.api.track) this.api.track('mini');
     const p = this.api.profile(), best = this.data.best, old = best[key];
     const record = old === undefined || (lowerIsBetter ? score < old : score > old); if (record) best[key] = score;
-    const r = pay(p, key, today(), gold);
-    p.stats.gold += r.gold; this.stop(); this.api.sfx('fanfare'); this.api.save();
-    this.api.ui.dialogue([{ who: 'Ngọc', en: `${text} (+${r.gold} gold)`, vi: [record ? 'Kỷ lục mới của con!' : '', payNote(r)].filter(Boolean).join(' ') || undefined }]);
+    this.stop(); this.api.sfx('fanfare'); this.api.save();
+    this.api.ui.dialogue([{ who: 'Ngọc', en: text, vi: [record ? 'Kỷ lục mới của con!' : '', payNote()].filter(Boolean).join(' ') }]);
   }
 
   /** (21/11) "picked apples go into the bag, sold at the shop": the apples themselves are the reward (a fifth of them after
@@ -128,9 +127,9 @@ export class MiniGames {
   finishApples(a) {
     if (this.api.track) this.api.track('mini');
     const p = this.api.profile(), best = this.data.best, record = best.apple === undefined || a.score > best.apple; if (record) best.apple = a.score;
-    const n = (a.reds || 0) + (a.golds || 0), r = pay(p, 'apple', today(), n), k = n ? r.gold / n : 0, reds = Math.round((a.reds || 0) * k), golds = Math.round((a.golds || 0) * k);
+    const reds = a.reds || 0, golds = a.golds || 0;
     addGood(p, 'apple', reds); addGood(p, 'gold_apple', golds); this.stop(); this.api.sfx('fanfare'); this.api.save();
-    this.api.ui.dialogue([{ who: 'Ngọc', en: `I picked ${reds} apples${golds ? ` and ${golds} golden apples` : ''}! They are in my bag.`, vi: [`Táo nằm trong túi đồ (phím V). Mang ra Village Shop bán lấy vàng nhé.`, record ? 'Kỷ lục mới của con!' : '', payNote(r)].filter(Boolean).join(' ') }]);
+    this.api.ui.dialogue([{ who: 'Ngọc', en: `I picked ${reds} apples${golds ? ` and ${golds} golden apples` : ''}! They are in my bag.`, vi: [`Táo nằm trong túi đồ (phím V). Mang ra Village Shop bán lấy vàng nhé.`, record ? 'Kỷ lục mới của con!' : '', payNote()].filter(Boolean).join(' ') }]);
   }
   update(dt, pos) {
     if (!this.root.visible) return;

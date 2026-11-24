@@ -32,7 +32,9 @@ const KEEPERS = {
     talk: ['Music makes every room happy.', 'A guitar has six strings.', 'The piano has black keys and white keys.', 'Bang the drum slowly, then quickly!'] },
   market: { name: 'Ben', img: 'assets/ui/keeper_ben.jpg', title: '🧺 Market counter', sub: 'Sell your fish, apples, vegetables, eggs and pigs · bán hàng của con',
     talk: ['I buy fresh fish every day!', 'Golden apples are worth more than red ones.', 'Bring me vegetables from your garden.', 'A big pig sells for a lot of gold.'] },
-  forest: { name: 'Willow', img: 'assets/ui/keeper_willow.jpg', title: "🌿 Willow's camp shop", sub: 'Forest gear · đồ của rừng (Map 2)',
+  forest: { name: 'Willow', img: 'assets/ui/keeper_willow.jpg', title: "🌿 Willow's camp shop", sub: 'Forest gear · đồ cho Rừng Ký Ức (cấp 11–20)',
+    talk: ['The forest is dark. Strong armour keeps you safe.', 'Moonlight makes my swords shine.', 'Owls are wise. Their feathers bring good health.', 'My stew is hot and full of mushrooms. Not angry ones!'] },
+  harbor: { name: 'Willow', img: 'assets/ui/keeper_willow.jpg', title: "🌿 Willow's harbor stall", sub: 'Harbor gear · đồ cho Biển cả (cấp 6–10)',
     talk: ['The forest is dark. Strong armour keeps you safe.', 'Moonlight makes my swords shine.', 'Owls are wise. Their feathers bring good health.', 'My stew is hot and full of mushrooms. Not angry ones!'] },
 };
 const CSS = `
@@ -80,7 +82,7 @@ export class ShopWindow {
   }
   show(title = 'Village Shop', counters = ['forge', 'rose']) {
     this.title = title; this.counters = counters; this.open = true; this.quiz = null;
-    this.say = { forge: 'Welcome! Look at my blades.', rose: 'Hello! Fresh bread today!', forest: 'Welcome to my camp, brave explorer!', healer: 'Hello! Potions for health and mana.', market: 'I buy what you catch, pick and grow!' };
+    this.say = { forge: 'Welcome! Look at my blades.', rose: 'Hello! Fresh bread today!', forest: 'Welcome to my camp, brave explorer!', harbor: 'Welcome to my stall by the sea!', healer: 'Hello! Potions for health and mana.', market: 'I buy what you catch, pick and grow!' };
     this.msg = 'Buy = mua · Wear = mặc · Sell = bán lại nửa giá. Bấm 📜 để nhận nhiệm vụ từ vựng của chủ quầy.';
     this.render(); this.el.classList.remove('hidden');
   }

@@ -1,59 +1,36 @@
 // Combat and reward numbers in one place (no three.js, tested in node).
 import { rankAtk } from './saga.js';
 import { powers, resisted, mpOf, restoreMp, FEEDS } from './skills.js';
+import { mobStats, bossStats, weaponAtk, weaponCost, armorDef, armorHp, armorCost, mobGold } from './progress.js';
+import { spawnsOf } from './zones.js';
 // (20/11) el: the monster's element (core/skills.js): it decides which spells hurt it most and which resistance its hits meet
+// (24/11) Every monster has ONE level and lives in ONE hunting ground (core/zones.js); hp, atk, exp and gold follow the level by the
+// formulas of core/progress.js (`mobStats`), so a monster of level N is a fair fight for a hero of level N in the gear made for N.
+// role: normal | ranged (spits magic) | elite (a hard fight that pays well). Village 1-5, Sunny Harbor 5-10, Memory Forest 10-20.
+const mob = (level, role, o) => ({ level, role, ...mobStats(level, role), ...(role === 'ranged' ? { ranged: true } : role === 'elite' ? { elite: true } : {}), ...o });
 export const MONSTERS = {
-  slime: { el: 'wind', name: 'Green Slime', level: 1, hp: 30, atk: 6, exp: 12, gold: 3, speed: 2.0, color: 0x7fd86a, size: 1.0 },
-  red: { el: 'fire', name: 'Red Slime', level: 4, hp: 70, atk: 11, exp: 26, gold: 7, speed: 2.5, color: 0xff7a6a, size: 1.25 },
-  golem: { el: 'thunder', name: 'Stone Golem', level: 8, elite: true, hp: 180, atk: 18, exp: 75, gold: 20, speed: 1.6, color: 0xa49aa6, size: 1.7 },
-  // The Forest of Memories is the last chapter of Map 1 (19/11): levels 11-16, open once the forest gate is
-  bat: { el: 'wind', name: 'Shadow Bat', level: 11, ranged: true, hp: 200, atk: 21, exp: 70, gold: 12, speed: 3.2, color: 0x6a4a9a, size: 1.0, fly: true, hover: 1.1 },      // hover: the dark bat of 24/11 stands on the ground in its file; the old Blender bat already floats 0.9 m up in its own file
-  shroom: { el: 'ice', name: 'Angry Mushroom', level: 14, ranged: true, elite: true, hp: 320, atk: 26, exp: 100, gold: 16, speed: 1.8, color: 0xe2483e, size: 1.3 },
-  // (20/11) CC0 monsters from Quaternius' Ultimate Monsters pack (tools/monsters/import_quaternius.py, assets/models/CREDITS.md):
-  // 1 m tall in the file, `fit` is the height in the game; clips Idle, Walk, Weapon (attack), HitReact, Death
-  goblin: { el: 'ice', name: 'Frost Goblin', level: 5, ranged: true, hp: 110, atk: 12, exp: 40, gold: 10, speed: 2.4, color: 0x4f9ad0, size: 1.0, model: 'goblin', fit: 0.8 },
-  imp: { el: 'fire', name: 'Ember Imp', level: 9, ranged: true, hp: 210, atk: 19, exp: 80, gold: 16, speed: 2.7, color: 0xd8402e, size: 1.0, model: 'imp', fit: 0.7 },
-  orc: { el: 'wind', name: 'Gale Orc', level: 15, elite: true, hp: 420, atk: 28, exp: 130, gold: 22, speed: 2.1, color: 0x6fae3a, size: 1.15, model: 'orc', fit: 1.0 },
-  // (20/11) lô 22: bunny (Quaternius), wisp / fox / gull (Blender, real size in the file; the wisp and the gull float on their own)
-  bunny: { el: 'ice', name: 'Frost Bunny', level: 2, hp: 50, atk: 8, exp: 16, gold: 4, speed: 2.6, color: 0xbfe8ff, size: 1.0, model: 'bunny', fit: 0.7 },
-  wisp: { el: 'thunder', name: 'Storm Wisp', level: 12, ranged: true, hp: 230, atk: 23, exp: 85, gold: 14, speed: 2.8, color: 0xffe14a, size: 1.0, fly: true, hover: 0.05, model: 'wisp', fit: 1.3 },
-  fox: { el: 'fire', name: 'Ember Fox', level: 13, hp: 270, atk: 25, exp: 95, gold: 15, speed: 3.0, color: 0xff8a3a, size: 1.0, model: 'fox', fit: 1.0 },
-  gull: { el: 'wind', name: 'Storm Gull', level: 23, ranged: true, hp: 320, atk: 36, exp: 140, gold: 25, speed: 3.0, color: 0xc8d4e0, size: 1.0, fly: true, hover: 0.05, model: 'gull', fit: 1.2 },
-  // Map 2 (Sunny Harbor, levels 21-30): the Blender models in assets/models/harbor_mob_*; `fit` scales the model, `model` names it
-  crab: { el: 'ice', name: 'Beach Crab', level: 21, hp: 300, atk: 34, exp: 130, gold: 24, speed: 2.3, color: 0xe2483e, size: 1.0, model: 'crab', fit: 1.0 },
-  jelly: { el: 'thunder', name: 'Glow Jellyfish', level: 24, ranged: true, hp: 340, atk: 38, exp: 150, gold: 26, speed: 1.9, color: 0xb48ae8, size: 1.0, fly: true, model: 'jelly', fit: 1.2 },
-  pirate: { el: 'fire', name: 'Little Pirate', level: 27, ranged: true, elite: true, hp: 520, atk: 44, exp: 210, gold: 36, speed: 2.4, color: 0x2f4f8a, size: 1.2, model: 'pirate', fit: 1.15 },
+  // Starter Village (levels 1-5): one ground for each kind, from the gate of the meadow out to the golem fields
+  bunny: mob(1, 'normal', { el: 'ice', name: 'Frost Bunny', speed: 2.6, color: 0xbfe8ff, size: 1.0, model: 'bunny', fit: 0.7 }),
+  slime: mob(2, 'normal', { el: 'wind', name: 'Green Slime', speed: 2.0, color: 0x7fd86a, size: 1.0 }),
+  goblin: mob(3, 'ranged', { el: 'ice', name: 'Frost Goblin', speed: 2.4, color: 0x4f9ad0, size: 1.0, model: 'goblin', fit: 0.8 }),
+  red: mob(4, 'normal', { el: 'fire', name: 'Red Slime', speed: 2.5, color: 0xff7a6a, size: 1.25 }),
+  imp: mob(5, 'ranged', { el: 'fire', name: 'Ember Imp', speed: 2.7, color: 0xd8402e, size: 1.0, model: 'imp', fit: 0.7 }),
+  golem: mob(5, 'elite', { el: 'thunder', name: 'Stone Golem', speed: 1.6, color: 0xa49aa6, size: 1.7 }),
+  // Sunny Harbor (levels 5-10): the Blender models in assets/models/harbor_mob_*; `fit` scales the model, `model` names it
+  crab: mob(5, 'normal', { el: 'ice', name: 'Beach Crab', speed: 2.3, color: 0xe2483e, size: 1.0, model: 'crab', fit: 1.0 }),
+  jelly: mob(6, 'ranged', { el: 'thunder', name: 'Glow Jellyfish', speed: 1.9, color: 0xb48ae8, size: 1.0, fly: true, model: 'jelly', fit: 1.2 }),
+  gull: mob(8, 'ranged', { el: 'wind', name: 'Storm Gull', speed: 3.0, color: 0xc8d4e0, size: 1.0, fly: true, hover: 0.05, model: 'gull', fit: 1.2 }),
+  pirate: mob(9, 'elite', { el: 'fire', name: 'Little Pirate', ranged: true, speed: 2.4, color: 0x2f4f8a, size: 1.2, model: 'pirate', fit: 1.15 }),
+  // Memory Forest (levels 10-20); hover: the dark bat stands on the ground in its file, the wisp and the gull float on their own
+  bat: mob(10, 'ranged', { el: 'wind', name: 'Shadow Bat', speed: 3.2, color: 0x6a4a9a, size: 1.0, fly: true, hover: 1.1 }),
+  wisp: mob(12, 'ranged', { el: 'thunder', name: 'Storm Wisp', speed: 2.8, color: 0xffe14a, size: 1.0, fly: true, hover: 0.05, model: 'wisp', fit: 1.3 }),
+  fox: mob(14, 'normal', { el: 'fire', name: 'Ember Fox', speed: 3.0, color: 0xff8a3a, size: 1.0, model: 'fox', fit: 1.0 }),
+  shroom: mob(16, 'elite', { el: 'ice', name: 'Angry Mushroom', ranged: true, speed: 1.8, color: 0xe2483e, size: 1.3 }),
+  orc: mob(18, 'elite', { el: 'wind', name: 'Gale Orc', speed: 2.1, color: 0x6fae3a, size: 1.15, model: 'orc', fit: 1.0 }),
 };
-/** Monsters of the Memory Forest, the last chapter of Map 1: [kind, x, z] (open ground away from crystals, paths and the gate). */
-export const FOREST_SPAWNS = [
-  ['bat', -25, -43], ['bat', 35, -34], ['bat', -16, -31], ['bat', 38, -19], ['bat', -46, -4],
-  ['shroom', 14, -7], ['shroom', -19, 14], ['shroom', 17, 26], ['shroom', -40, 26], ['shroom', 2, 20],
-  ['orc', 18, -10], ['orc', 21, 22], ['orc', 6, 16],
-  ['wisp', -30, -22], ['wisp', 26, -26], ['wisp', -8, 22], ['fox', 28, 4], ['fox', -33, 8], ['fox', 10, -36],      // (20/11) lô 22: Storm Wisps (thunder) and Ember Foxes (fire)      // (20/11) Gale Orcs, wind
-];
-/** Map 2 monsters in Sunny Harbor: crabs on the south beach, jellyfish along the north shore, little pirates round the lighthouse point. */
-export const HARBOR_SPAWNS = [
-  ['crab', 9, 41], ['crab', 17, 45], ['crab', 7, 51], ['crab', 21, 48], ['crab', 12, 57],
-  ['jelly', 8, -19], ['jelly', 15, -28], ['jelly', 22, -34], ['jelly', 44, -32],
-  ['pirate', 32, -29], ['pirate', 14, -40], ['pirate', 40, -40], ['pirate', 12, -46], ['pirate', 26, -37],
-  ['gull', 12, -24], ['gull', 18, -31], ['gull', 30, -33],      // (20/11) Storm Gulls over the north shore
-];
-/** Where monsters live in the Starter Village region: [kind, x, z]. The Wild Meadow is north-east, golems guard the south-east. */
-export const SPAWNS = [
-  ['slime', 36, -14], ['slime', 32, -24], ['slime', 38, -30], ['slime', 34, -8], ['slime', 48, -26],
-  ['red', 44, -36], ['red', 50, -16], ['red', 30, -38], ['golem', 52, 30], ['golem', 38, 48],
-  ['bunny', 28, -18], ['bunny', 30, -32], ['bunny', 40, -9],      // (20/11) lô 22: Frost Bunnies near the meadow gate
-  ['goblin', 40, -18], ['goblin', 42, -28], ['goblin', 44, -10], ['imp', 48, 26], ['imp', 42, 44], ['imp', 46, 34],      // (20/11) Frost Goblins (ice) in the meadow, Ember Imps (fire) in the golem fields
-];
-/** (21/11) Safe places: monsters never walk in and do not chase or shoot a hero standing inside (the village streets and
- *  shops, the players' homes, the apple orchard and every mini game; the harbour town, the market and the fishing pier). */
-export const SAFE = {
-  village: [{ x: 2, z: 4, r: 24 }, { x: 40, z: 10, r: 13 }, ...[[-25, -76], [-62, -60], [-61, 68], [-82, 32], [18.4, 19.2], [33.5, 6]].map(([x, z]) => ({ x, z, r: 7 })),      // the town, the orchard, each mini game
-    { x: -46, z: 2, r: 15 }, { x: -40, z: -18, r: 7 }, { x: -3, z: 50, r: 9 }, { x: -18, z: 50, r: 8 }],
-  harbor: [{ x: -12, z: 2, r: 22 }, { x: 2, z: 16, r: 9 }, { x: 34, z: 28, r: 6 }, { x: 22, z: 28.6, r: 5 }, { x: -65, z: 40, r: 7 }],
-  forest: [{ x: -30, z: 50, r: 9 }, { x: -81, z: 20, r: 7 }],
-};
-export const inSafe = (region, x, z, pad = 0) => (SAFE[region] || []).some((s) => Math.hypot(x - s.x, z - s.z) < s.r + pad);
+// (24/11) Where monsters live: one hunting ground per kind, see core/zones.js (ZONES, spawnsOf). [kind, x, z] lists for the three maps.
+export const SPAWNS = spawnsOf('village'), FOREST_SPAWNS = spawnsOf('forest'), HARBOR_SPAWNS = spawnsOf('harbor');
+export { SAFE, inSafe } from './safe.js';
 /** (21/11) Monsters walk towards the hero at this share of their speed ("they rush in too fast"); they come back to life after RESPAWN seconds. */
 export const CHASE = 0.62, RESPAWN = { normal: 35, elite: 70, boss: 300 };
 /** The hero's attack: grows with the level, weapon adds on top. */
@@ -155,6 +132,49 @@ export const ITEMS = {
   drum: { en: 'Drum', vi: 'cái trống', slot: 'home', cost: 200, level: 3, seller: 'music' },
   violin: { en: 'Violin', vi: 'đàn vi-ô-lông', slot: 'home', cost: 250, level: 5, seller: 'music' },
 };
+// (24/11) Weapons, armour and charms follow the level ("buy higher gear to fight higher monsters"): every piece is made for a LEVEL and its
+// attack / defence / health / price come from the formulas of core/progress.js, so the gear of the hero's level beats the monsters of that level
+// in a handful of hits and gear two tiers old needs about twice as many. Village forge: levels 1-5; Willow's harbour stall ('harbor'): 6-10;
+// Willow's camp shop in the forest ('forest'): 11-20. The numbers below are only the level (and where it is sold); the rest is computed.
+const LADDER = {
+  wood_sword: 1, iron_sword: 3, crystal_blade: 5, leather_vest: 2, iron_armor: 4, clover: 3,
+  ember_sword: 4, frost_sword: 4, gale_sword: 4, spark_sword: 4, ember_staff: 5, frost_staff: 5, gale_staff: 5, spark_staff: 5,
+  fire_amulet: 4, ice_amulet: 4, wind_amulet: 4, thunder_amulet: 4,
+  dawn_blade: 5, silver_mail: 5, lucky_star: 4,
+  oak_blade: 6, ranger_cloak: 7, forest_stew: 7, owl_feather: 8, blaze_blade: 8, glacier_blade: 8, tempest_blade: 8, storm_blade: 8,
+  inferno_staff: 9, glacier_staff: 9, tempest_staff: 9, storm_staff: 9, flame_mail: 9, frost_mail: 9, wind_cloak: 9, storm_plate: 9, moon_sword: 10, bark_armor: 10,
+  tide_blade: 10, coral_mail: 10, sun_charm: 9,
+};
+const SELLER_OF = { oak_blade: 'harbor', ranger_cloak: 'harbor', forest_stew: 'harbor', owl_feather: 'harbor', blaze_blade: 'harbor', glacier_blade: 'harbor', tempest_blade: 'harbor', storm_blade: 'harbor',
+  inferno_staff: 'harbor', glacier_staff: 'harbor', tempest_staff: 'harbor', storm_staff: 'harbor', flame_mail: 'harbor', frost_mail: 'harbor', wind_cloak: 'harbor', storm_plate: 'harbor', moon_sword: 'harbor', bark_armor: 'harbor' };
+// the forest's own gear (levels 11-20): the pieces reuse the Blender models of the older ones (gear.js GEAR_FILE `like`)
+const EL_NAMES = { fire: ['Phoenix', 'phượng hoàng', 'Lửa', 0xff6a2a], ice: ['Aurora', 'cực quang', 'Băng', 0x6fd0ff], wind: ['Cyclone', 'xoáy lốc', 'Gió', 0x6fe08a], thunder: ['Thunderclap', 'sấm rền', 'Sét', 0xffd23c] };
+const NEW_GEAR = {
+  thorn_blade: { en: 'Thornwood Blade', vi: 'kiếm gai rừng', slot: 'weapon', level: 12, color: 0x7a9a3a, like: 'oak_blade' },
+  ironwood_blade: { en: 'Ironwood Blade', vi: 'kiếm gỗ sắt', slot: 'weapon', level: 15, color: 0x8a6a3a, like: 'oak_blade' },
+  starfall_blade: { en: 'Starfall Blade', vi: 'kiếm sao rơi', slot: 'weapon', level: 18, color: 0xbfd8ff, like: 'moon_sword' },
+  ancient_blade: { en: 'Ancient Blade', vi: 'kiếm cổ', slot: 'weapon', level: 20, color: 0xffe08a, like: 'moon_sword' },
+  moss_plate: { en: 'Moss Plate', vi: 'giáp rêu', slot: 'armor', level: 13, like: 'bark_armor' },
+  elder_mail: { en: 'Elderbark Mail', vi: 'giáp vỏ cổ thụ', slot: 'armor', level: 17, like: 'bark_armor' },
+  heartwood_armor: { en: 'Heartwood Armor', vi: 'giáp lõi cổ thụ', slot: 'armor', level: 20, like: 'bark_armor' },
+  wisp_charm: { en: 'Wisp Charm', vi: 'bùa ma trơi', slot: 'charm', level: 12, like: 'owl_feather' },
+  fox_charm: { en: 'Fox Tail Charm', vi: 'bùa đuôi cáo', slot: 'charm', level: 16, like: 'owl_feather' },
+  golem_charm: { en: 'Golem Heart Charm', vi: 'bùa tim golem', slot: 'charm', level: 20, like: 'owl_feather' },
+};
+for (const [el, [en, vi, hệ, color]] of Object.entries(EL_NAMES)) {
+  NEW_GEAR[`${en.toLowerCase()}_blade`] = { en: `${en} Blade`, vi: `kiếm ${vi} (hệ ${hệ})`, slot: 'weapon', kind: 'sword', el, near: 0.45, eldmg: 0.15, level: 15, color, like: ({ fire: 'blaze_blade', ice: 'glacier_blade', wind: 'tempest_blade', thunder: 'storm_blade' })[el] };
+  NEW_GEAR[`${en.toLowerCase()}_staff`] = { en: `${en} Staff`, vi: `trượng ${vi} (hệ ${hệ})`, slot: 'weapon', kind: 'staff', el, far: 0.5, eldmg: 0.15, level: 16, color, like: ({ fire: 'inferno_staff', ice: 'glacier_staff', wind: 'tempest_staff', thunder: 'storm_staff' })[el] };
+}
+for (const [id, it] of Object.entries(NEW_GEAR)) { ITEMS[id] = { ...it, seller: 'forest' }; LADDER[id] = it.level; }
+export const GEAR_LIKE = Object.fromEntries(Object.entries(NEW_GEAR).map(([id, it]) => [id, it.like]));      // gear.js shows these with the model of the older piece
+for (const [id, level] of Object.entries(LADDER)) {
+  const it = ITEMS[id]; if (!it) continue; it.level = level; if (SELLER_OF[id]) it.seller = SELLER_OF[id];
+  const rare = it.rare ? 1.25 : 1;
+  if (it.slot === 'weapon') { const k = it.kind === 'staff' ? 0.75 : 1; it.atk = Math.round(weaponAtk(level) * k * rare); it.cost = Math.round(weaponCost(level) * (it.el ? 1.3 : 1) * (it.rare ? 1.5 : 1) / 5) * 5; }
+  else if (it.slot === 'armor') { it.def = Math.round(armorDef(level) * rare); it.hp = Math.round(armorHp(level) * rare); it.cost = Math.round(armorCost(level) * (it.el ? 1.2 : 1) * (it.rare ? 1.5 : 1) / 5) * 5; }
+  else if (it.slot === 'charm') { it.hp = Math.round(armorHp(level) * 0.6 * rare); it.cost = Math.round(armorCost(level) * 0.7 * (it.rare ? 1.5 : 1) / 5) * 5; }
+  else if (it.slot === 'food' && it.heal) it.cost = Math.max(it.cost, Math.round(mobGold(level) * 2));      // the stew
+}
 /** (24/11) "furniture and decorations cost too little: dearer, so the children must plan": everything for the house and yard is 2.5 times the old price. */
 export const HOME_PRICE_K = 2.5;
 for (const it of Object.values(ITEMS)) if (it.slot === 'home' || it.slot === 'yard') it.cost = Math.round(it.cost * HOME_PRICE_K / 5) * 5;
@@ -294,6 +314,8 @@ export const HARBOR_HUNTS = [
   { kind: 'gull', need: 3, gold: 140, exp: 700, en: { easy: 'Storm gulls are stealing our fish! Please chase away three.', hard: "Three storm gulls keep diving down and stealing the fishermen's lunch. Could you chase them away? Thunder works well on them!" } },
   { kind: 'pirate', need: 4, gold: 190, exp: 900, en: { easy: 'Four pirates are hiding near the rocks. Be brave!', hard: "Four pirates are hiding among the rocks. You'll need to be brave!" } },
 ];
+// (24/11) the pay of a job follows the monsters it asks for: the EXP and the gold they would give, a little more for the trouble
+for (const list of [HUNTS, FOREST_HUNTS, HARBOR_HUNTS]) for (const h of list) { const m = MONSTERS[h.kind]; h.exp = Math.round(m.exp * h.need * 1.3); h.gold = Math.round(m.gold * h.need * 1.6 / 5) * 5 || 5; }
 export const huntsOf = (region) => (region === 'forest' ? FOREST_HUNTS : region === 'harbor' ? HARBOR_HUNTS : HUNTS);
 export const huntLine = (h, grade) => h.en[grade >= 8 ? 'hard' : 'easy'];
 /** The hunt in progress for a board: profile.hunt (village), profile.hunt2 (forest) or profile.hunt3 (harbor). */
@@ -309,35 +331,27 @@ export function countKill(profile, kind) {
   }
   return done;
 }
-export const BOSS = { id: 'king', el: 'ice', flag: 'boss1', name: 'Slime King', level: 8, hp: 600, atk: 16, exp: 400, gold: 150, speed: 1.4, color: 0x5fd0ff, size: 2.6 };
-/** Map 1's last boss in the golem fields. Beating it at level 20 opens Map 2. */
-export const BOSS2 = { id: 'ancient', el: 'thunder', flag: 'boss2', name: 'Ancient Golem', level: 18, hp: 1600, atk: 30, exp: 900, gold: 300, speed: 1.2, color: 0x9a8f7a, size: 3.0 };
-/** The boss of the Forest chapter (last chapter of Map 1): the Mushroom Queen, deep in the west of the forest near the old ruins. Level 16, before the Ancient Golem. */
-export const BOSS3 = { id: 'queen', el: 'wind', flag: 'boss3', name: 'Mushroom Queen', level: 16, hp: 1300, atk: 28, exp: 700, gold: 220, speed: 1.3, color: 0xc0397a, size: 3.0, region: 'forest' };
+// (24/11) Bosses wake one level BELOW the level they fight at, so their big first reward still counts towards the map's cap
+// (a boss that woke at the cap would pay nothing). hp, atk, exp and gold come from `bossStats` (core/progress.js).
+const boss = (wake, o) => ({ level: wake, ...bossStats(wake + 1), ...o });
+export const BOSS = boss(4, { id: 'king', el: 'ice', flag: 'boss1', name: 'Slime King', speed: 1.4, color: 0x5fd0ff, size: 2.6 });      // Starter Village, in the meadow: beating it (and the owl's review at 5) opens the sea
+/** The last boss of the Memory Forest (Map 3, levels 10-20): the Ancient Golem on the clearing in the north-east of the forest. */
+export const BOSS2 = boss(19, { id: 'ancient', el: 'thunder', flag: 'boss2', name: 'Ancient Golem', speed: 1.2, color: 0x9a8f7a, size: 3.0, region: 'forest' });
+/** The boss of the Forest chapter: the Mushroom Queen, deep in the west of the forest near the old ruins. */
+export const BOSS3 = boss(17, { id: 'queen', el: 'wind', flag: 'boss3', name: 'Mushroom Queen', speed: 1.3, color: 0xc0397a, size: 3.0, region: 'forest' });
 /** Map 2's main boss: Captain Octopus on the north point beside the lighthouse (the Blender octopus, 3 word shields). */
-export const BOSS4 = { id: 'octopus', el: 'fire', flag: 'boss4', name: 'Captain Octopus', level: 28, hp: 3000, atk: 52, exp: 1800, gold: 500, speed: 1.4, color: 0xc0397a, size: 2.4, region: 'harbor', model: 'octopus', fit: 1.0 };
+export const BOSS4 = boss(9, { id: 'octopus', el: 'fire', flag: 'boss4', name: 'Captain Octopus', speed: 1.4, color: 0xc0397a, size: 2.4, region: 'harbor', model: 'octopus', fit: 1.0 });
 export const BOSSES = [BOSS, BOSS2, BOSS3, BOSS4];
-/** Map 2 opens once the Ancient Golem is beaten and the hero has reached level 20 (owl gate passed or waiting). */
-export const map2Ready = (profile) => !!(profile.flags.boss2 && profile.stats.level >= 20);
-/** Map 3 (the desert, still to be built) opens once Captain Octopus is beaten and the hero has reached level 30 (owl exam passed or waiting). */
+/** (24/11) Map 2 (the sea, levels 5-10) opens once the Slime King is beaten and the hero has reached the village's top level (5) and passed the owl's review. */
+export const map2Ready = (profile) => !!(profile.flags.boss1 && profile.stats.level >= 5 && profile.gates && profile.gates[5]);
+/** Map 3 (the forest, levels 10-20) opens at level 10 with the owl's exam passed (and Tom's badge, `forest_open`). */
+export const forestReady = (profile) => !!(profile.flags.forest_open && profile.stats.level >= 10 && profile.gates && profile.gates[10]);
 /** The forest chapter of Map 1 (monsters, hunt board, the Mushroom Queen) wakes once the crystal quest is done, so a young hero finds the forest quiet at first. */
 export const forestChapter = (profile) => !!(profile.quests && profile.quests.forest && profile.quests.forest.step === 'done');
-export const map3Ready = (profile) => !!(profile.flags.boss4 && profile.stats.level >= 30);
+export const map3Ready = (profile) => !!(profile.flags.boss2 && profile.gates && profile.gates[20]);      // (24/11) the forest is finished: the Ancient Golem is beaten and the level-20 exam passed (the desert, Map 4, is still to be built)
 
-// ---------------------------------------------------------------- mini game pay
-/** Each skill game pays in full for its first FULL_PLAYS games of the day, then LATER_PAY of it, so gold and EXP
- *  come mostly from training and quests. Returns the factor and counts this play. */
-export const FULL_PLAYS = 3, LATER_PAY = 0.2;
-export function payFactor(profile, game, day) {
-  const r = profile.plays && profile.plays.day === day ? profile.plays : (profile.plays = { day, n: {} });
-  r.n[game] = (r.n[game] || 0) + 1;
-  return r.n[game] <= FULL_PLAYS ? 1 : LATER_PAY;
-}
-/** Applies payFactor to a reward {gold, exp}; rounds down but never to zero for a non-zero reward. */
-export function pay(profile, game, day, gold, exp = 0) {
-  const k = payFactor(profile, game, day), f = (v) => (v > 0 ? Math.max(1, Math.floor(v * k)) : 0);
-  return { gold: f(gold), exp: f(exp), full: k === 1, left: Math.max(0, FULL_PLAYS - profile.plays.n[game]) };
-}
+// ---------------------------------------------------------------- mini games
+// (24/11) A mini game costs gold to enter (progress.js `gameFee`) and pays nothing afterwards: no gold, no EXP (the old daily pay limits are gone).
 /** The boss raises a word shield each time its health drops past one of these fractions. */
 export const SHIELDS = [0.75, 0.5, 0.25];
 export const shieldDue = (hp, max, broken) => broken < SHIELDS.length && hp / max <= SHIELDS[broken];

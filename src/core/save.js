@@ -2,6 +2,8 @@
 // Layout: { version, last, profiles: [{ id, name, grade, unit, created, quests, flags, words, skills, stats }] }
 import { rankHp } from './saga.js';
 import { powers } from './skills.js';
+import { EXP_K, expNeed, expTo, levelCap, expFactor } from './progress.js';
+export { EXP_K, expNeed, expTo };      // (24/11) the curve moved to progress.js, next to the level caps
 export const SAVE_VERSION = 2;
 export const KEY = 'english-quest-web';
 export const GRADES = [6, 7, 8, 9];
@@ -62,12 +64,6 @@ export function recordSkill(profile, skill, correct, hints) {
   row.attempts += 1; row.hints += hints || 0;
   if (correct) { row.correct += 1; if (!hints) row.firstTry += 1; }
 }
-/** EXP needed to go from `level` to the next one. (24/11) the child asked for a longer bar because the world now has fewer levels than
- *  planned at first: the old curve (90 + 45 per level, 9,405 EXP for levels 1-20) times EXP_K. Change EXP_K to retune. */
-export const EXP_K = 2;
-export const expNeed = (level) => Math.round((90 + (level - 1) * 45) * EXP_K);
-/** Total EXP from level 1 to `level`. */
-export const expTo = (level) => { let t = 0; for (let l = 1; l < level; l++) t += expNeed(l); return t; };
 /** Unit being studied: the one a parent picked, otherwise the unit of the map reached (Map 1 = Unit 1, Map 2 = Unit 2). */
 /** (24/11) The unit follows the MAP the child is in, and the grade she registered: Map N teaches Global Success Unit N
  *  (docs/LO_TRINH_12_UNIT.md; the world map of docs/THE_GIOI_10_MAP.md: 1 village, 2 sea, 3 forest…). The parent's unit picker is gone;
@@ -77,13 +73,21 @@ export const unitOf = (profile) => profile.unitPick || MAP_NO[profile.region] ||
 /** Hit points grow with the level; equipment adds on top (profile.gear, later). */
 export const maxHp = (profile) => 100 + (profile.stats.level - 1) * 12 + ((profile.gear && profile.gear.hp) || 0) + rankHp(profile) + powers(profile).hp;      // + the Word Keeper rank (saga.js) and skill points (skills.js)
 /** Knowledge gates: at these levels the bar fills but the next level waits for a short word review (the owl). */
-export const GATES = [5, 10, 15, 20, 25, 30];          // 25 and 30: Map 2 (Unit 2 words)
+export const GATES = Array.from({ length: 14 }, (_, i) => (i + 1) * 5);          // every 5 levels up to 70 (the owl's review)
 export const gateWaiting = (profile) => { const L = profile.stats.level; return GATES.includes(L) && !(profile.gates && profile.gates[L]) ? L : 0; };
 export function passGate(profile, level) { (profile.gates || (profile.gates = {}))[level] = true; return addExp(profile, 0); }
+/** (24/11) The hero stops at the top level of the map they are in (core/progress.js `levelCap`): nothing earns EXP there any more, so
+ *  grinding the same ground pays nothing and the child must move on. Returns how many levels were gained. */
 export function addExp(profile, amount) {
-  const s = profile.stats; s.exp += amount;
+  const s = profile.stats, cap = levelCap(profile);
+  if (s.level >= cap) { s.exp = Math.min(s.exp, expNeed(s.level)); return 0; }
+  s.exp += amount;
   let need = expNeed(s.level), ups = 0;
-  while (s.exp >= need && !gateWaiting(profile)) { s.exp -= need; s.level += 1; ups += 1; need = expNeed(s.level); }
-  if (gateWaiting(profile)) s.exp = Math.min(s.exp, need);        // full bar, nothing wasted beyond it
+  while (s.exp >= need && !gateWaiting(profile) && s.level < cap) { s.exp -= need; s.level += 1; ups += 1; need = expNeed(s.level); }
+  if (gateWaiting(profile) || s.level >= cap) s.exp = Math.min(s.exp, need);        // full bar, nothing wasted beyond it
   return ups;
 }
+/** Is the hero at the top level of this map (no more EXP here)? */
+export const atCap = (profile) => profile.stats.level >= levelCap(profile);
+/** EXP a kill of a monster of level `mLevel` really gives: the base EXP, less for monsters far below the hero, none at the cap. */
+export function killExp(profile, base, mLevel) { return atCap(profile) ? 0 : Math.max(1, Math.round(base * expFactor(profile.stats.level, mLevel || 1))); }

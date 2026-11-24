@@ -48,7 +48,7 @@ function token(text, fill = '#ffcf57', ink = '#533a22', rim = '#8e5425') {
 export function raceGame3d({ assets, cards = [], tier = 1, rnd = Math.random, variant = 'village' }) {
   const VR = VARIANTS[variant] || VARIANTS.village, R = { ...rule('race', tier) }, own = []; R.rival = (R.rival || 0) + VR.rival; const SPEEDS = { ...SPEED, cruise: VR.cruise, boost: VR.cruise + 10 };      // own: geometries and materials made here, disposed at the end
   const mk = (x) => { own.push(x); return x; };
-  const words = cards.filter((c) => SP.spellable(c.word) && SP.letters(c.word).length >= 3 && SP.letters(c.word).length <= 8).sort(() => rnd() - 0.5).slice(0, 8);
+  const words = [];      // (24/11) no letters on the road: the child answers questions BEFORE the race (gate), and only drives in it, nothing to distract
   const scene = new THREE.Scene(), cam = new THREE.PerspectiveCamera(55, 1.5, 0.12, 700);
   const curve = new THREE.CatmullRomCurve3(VR.pts.map(([x, z]) => new THREE.Vector3(x, 0, z)), true, 'centripetal'); curve.arcLengthDivisions = 4000;
   const length = curve.getLength(), finish = LAPS * length;
@@ -138,7 +138,7 @@ export function raceGame3d({ assets, cards = [], tier = 1, rnd = Math.random, va
 
   // ---- state
   const g = { big: true, aspect: 1.5, title: '🏎 ' + VR.title, coins: 0 };
-  g.help = 'Đua 3 vòng với 3 đối thủ. ← → (A D) lái, ↓ (S) phanh. Đi qua CHỮ CÁI tiếp theo của từ (nghĩa ở dưới) và xu ★. Ô ? cho tăng tốc hoặc đạn: bấm Space để dùng. Ván xanh = tăng tốc, tránh cọc.';
+  g.help = 'Đua 3 vòng với 3 đối thủ. ← → (A D) lái, ↓ (S) phanh. Chỉ cần lái thật tốt: nhặt xu ★, né cọc. Ô ? cho tăng tốc hoặc đạn: bấm Space để dùng. Ván xanh = tăng tốc, tránh cọc.';
   let state = 'garage', elapsed = 0, countdown = 3, speed = 0, distance = 0, lane = 0, hurt = 0, boostT = 0, steer = 0, spinT = 0, letters = 0, wi = 0, flashText = '', pop = 0, endT = 0, item = null, t0 = 0, paused = false;
   const wordsDone = [], shots = [], dust = [];
   const place = () => 1 + rivals.filter((r) => r.d > distance).length;
@@ -151,10 +151,10 @@ export function raceGame3d({ assets, cards = [], tier = 1, rnd = Math.random, va
   const finishRace = () => { if (state === 'finished') return; state = 'finished'; endT = 0; stopEngine(); flash(place() === 1 ? 'Hạng nhất!' : `Về đích · hạng ${place()}`, 1.6); };
   Object.defineProperty(g, 'time', { get: () => Math.max(0, 300 - elapsed), set: (v) => { if (v <= 0 && state !== 'finished') finishRace(); } });
   Object.defineProperty(g, 'x', { get: () => 280 + lane * 60 });
-  g.info = () => `🏁 Vòng ${Math.min(LAPS, Math.floor(distance / length) + 1)}/${LAPS} · hạng ${place()}/4 · ★ ${g.coins} · 🔤 ${wordsDone.length}`;
+  g.info = () => `🏁 Vòng ${Math.min(LAPS, Math.floor(distance / length) + 1)}/${LAPS} · hạng ${place()}/4 · ★ ${g.coins}`;
   const score = () => Math.round(distance / 9) + g.coins * 6 + wordsDone.length * 40 + (5 - place()) * 30;
   g.done = () => (state === 'finished' && endT > 1.4 ? { id: VR.id, score: score(), gold: Math.min(44, wordsDone.length * 6 + g.coins * 2 + (4 - place()) * 5 + 4), exp: Math.min(60, 10 + Math.floor(score() / 8)), words: wordsDone.slice(),
-    text: `Race over: place ${place()} of 4, ${g.coins} stars, ${wordsDone.length} word${wordsDone.length === 1 ? '' : 's'}!` } : null);
+    text: `Race over: place ${place()} of 4, ${g.coins} stars!` } : null);
   const useItem = () => {
     if (state !== 'running' || !item) return;
     if (item === 'boost') { boostT = 2.4; raceSfx('boost'); flash('Tăng tốc!', 0.6); }
