@@ -17,6 +17,7 @@ import { MusicRoom } from './ui/music.js';
 import { Journal } from './ui/journal.js';
 import { campStall } from './world/stall.js';
 import { Homes } from './game/homes.js';
+import { buildOuter } from './world/outer_ring.js';
 import { HomePanel } from './ui/home.js';
 import { HOMES, FURNITURE, STALLS, BEN_MARKET } from './core/regions/village.js';
 import { HARBOR } from './core/regions/harbor.js';
@@ -428,7 +429,7 @@ async function enterRegion(name, at) {
   const q = QUALITY[quality]; world.setDetail(q.density, q.particles, q.far);
   scene.traverse((o) => { if (o.material) [].concat(o.material).forEach((m) => { if (m && typeof m === "object") m.needsUpdate = true; }); });
   try { await renderer.compileAsync(scene, camera); } catch { /* older browsers: shaders compile on first sight */ }      // no hitch when new things come into view
-  minimap.rebuild(); placeActors(); if (walkers) walkers.setRegion(name); if (mini) mini.setRegion(name); if (wild) { if (name === 'harbor') await wild.addHarbor(seaModel); wild.setRegion(name); } if (chests) chests.setRegion(name); if (spots) spots.setRegion(name); if (homes) homes.setRegion(name); if (forestStall) forestStall.visible = name === 'forest';
+  minimap.rebuild(); placeActors(); if (walkers) walkers.setRegion(name); if (mini) mini.setRegion(name); if (wild) { if (name === 'harbor') await wild.addHarbor(seaModel); wild.setRegion(name); } if (chests) chests.setRegion(name); if (spots) spots.setRegion(name); if (homes) homes.setRegion(name); if (forestStall) forestStall.visible = name === 'forest'; showOuter(name);
   placeHomeDoor(name); buildPortals();
   let [x, z] = at || [L.SPAWN.x, L.SPAWN.z];
   if (!L.walkable(x, z, 0.4)) { const o = nearestWalkable(x, z); if (o) [x, z] = o; }      // never arrive in the water or inside a wall
@@ -522,7 +523,8 @@ function claimReward(r, what) {
 }
 // Anna's music house (moved west on 18/11, door on the east side); Willow's stall at the forest camp (Map 2 gear)
 const ANNA_DOOR = { x: -17.4, z: 12.5 }, FOREST_SHOP = { x: -36.5, z: 39.5 };
-let forestStall = null, room = null, homes = null, homePanel = null;
+let forestStall = null, room = null, homes = null, homePanel = null, outerRing = null;
+function showOuter(name) { if (outerRing) for (const [k, g] of Object.entries(outerRing)) g.visible = k === name; }
 const HALL_DOOR = { x: 0, z: -16.4 }, LILY_DOOR = { x: -17.4, z: -4 };
 /** Inside a house: the room is drawn instead of the world, the window docks on the right (body.inroom). */
 /** Where the boat lands in the village (the dock), and leaves for the harbour. */
@@ -1217,7 +1219,9 @@ async function boot() {
     const name = label("🌿 Willow's Camp Shop", { size: 28, scale: 0.8 }); name.position.set(0, 3.2, 0); forestStall.add(name); forestStall.visible = false; scene.add(forestStall); }
   { const opt = (n) => staticModel(n).catch(() => null);
     homes = new Homes({ scene, load: staticModel, profiles: () => store.profiles, models: { garden: await opt('prop_vegetable_garden_v01'), tree: await opt('prop_tree_round_v01'), flowers: await opt('yard_flowerbed_v01'), bench: await opt('yard_bench_v01'), mailbox: await opt('yard_mailbox_v01'), garden_lamp: await opt('yard_garden_lamp_v01') } });
-    await homes.build(); homes.setRegion(L.NAME); homePanel = new HomePanel({ onClose: leaveRoom, rebuild: (o) => { goHome(o, homePanel.mine, true, homePanel.admin); if (homes) homes.refresh(true); }, setEditing: (on) => room && room.walk && room.setEditing(on), profile: () => profile, today: () => Review.today(), changed: () => { save(); refresh(); }, sfx, track }); }
+    await homes.build(); homes.setRegion(L.NAME);
+    try { outerRing = await buildOuter(staticModel); for (const g of Object.values(outerRing)) scene.add(g); showOuter(L.NAME); } catch (e) { console.warn('outer ring', e); }      // (24/11) cottages and plants round the edge of the harbour and forest
+    homePanel = new HomePanel({ onClose: leaveRoom, rebuild: (o) => { goHome(o, homePanel.mine, true, homePanel.admin); if (homes) homes.refresh(true); }, setEditing: (on) => room && room.walk && room.setEditing(on), profile: () => profile, today: () => Review.today(), changed: () => { save(); refresh(); }, sfx, track }); }
   journal = new Journal({ profile: () => profile, today: () => Review.today(), onClose: leaveRoom,
     store: () => store, claimShip: () => { const r = Family.claim(store, profile); if (r) { sfx('fanfare'); save(); refresh(); ui.toast(`⚓ Thưởng tàu gia đình: +${r.gold} vàng`); } },
     claimMain: (id) => claimReward(Q.claimMain(profile, id), 'Nhiệm vụ chính'), claimDaily: (id) => claimReward(Q.claimDaily(profile, Review.today(), id), 'Nhiệm vụ ngày') });

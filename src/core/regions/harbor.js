@@ -4,6 +4,7 @@
 // on the gentle western slope: a paved harbour square, the fish market, and three shops with mini games (boutique,
 // café, salon). A lighthouse stands on the rocky point in the north-east.
 import { makeRegion, P, smooth, gauss } from '../regionkit.js';
+import { outerSolids } from './outer.js';
 
 /** x of the shoreline at z: the sea is east of it. */
 export const coastX = (z) => 20 + 5 * Math.sin(z * 0.06) + 3 * Math.sin(z * 0.17 + 1);
@@ -74,6 +75,7 @@ export default makeRegion({
     return h;
   },
   lateClear: (x, z) => onPier(x, z) || x > coastX(z) - 7 || Math.hypot(x + 7.5, z - 9.5) < 3.6,              // no trees on the piers or the sand
+  lateSolids: outerSolids('harbor'),      // (24/11) the new cottages round the outer ring
   keepClear: [{ x: -12, z: 2, r: 10 }, { x: -30, z: -8, r: 7 }, { x: -30, z: 14, r: 7 }, { x: -12, z: -24, r: 7 }, { x: 2, z: 16, r: 6 }, { x: 34, z: -40, r: 6 }, { x: 5, z: -9, r: 9 }, { x: 14, z: 40, r: 9 }],
   solids: [
     { x: -30, z: -8, r: 4.6 }, { x: -30, z: 14, r: 4.6 }, { x: -12, z: -24, r: 4.6 },      // the three shops

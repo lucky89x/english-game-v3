@@ -1064,3 +1064,17 @@ test('world (24/11): ten maps, roads between them, what a road needs, portals an
   for (const region of ['village', 'forest', 'harbor']) for (const pt of W.portalsOf(region)) { const R = (await import('../src/core/layout.js')).REGIONS[region]; assert.ok(R.walkable(pt.x, pt.z, 0.4), `${region} portal stands on walkable ground`); for (const to of pt.routes) assert.ok(W.roadBetween(region, to), `${region} -> ${to} is a road`); }
   assert.deepEqual(W.routesOf(p, 'village', gate).map((r) => [r.to, r.ok]), [['forest', true], ['harbor', true]]);
 });
+
+test('outer ring cottages (harbour, forest): on dry land, apart from each other, solid, and the race places stay reachable', async () => {
+  const { OUTER } = await import('../src/core/regions/outer.js'); const SITES = { harbor: [-65, 40], forest: [-81, 20] };
+  for (const [name, list] of Object.entries(OUTER)) {
+    const R = L.REGIONS[name]; assert.ok(list.length >= 8, name + ' has its new cottages');
+    list.forEach((b, i) => {
+      assert.ok(!R.inWater(b.x, b.z) && R.groundHeight(b.x, b.z) > 0.2, `${name} cottage ${i} is on dry land`);
+      assert.ok(Math.hypot(b.x, b.z) < R.PLAY_RADIUS, `${name} cottage ${i} is inside the play radius`);
+      assert.ok(!R.walkable(b.x, b.z, 0.3), `${name} cottage ${i} is solid`);
+      for (const o of list.slice(i + 1)) assert.ok(Math.hypot(b.x - o.x, b.z - o.z) > 12, `${name} cottages ${i} apart`);
+      { const s = { x: SITES[name][0], z: SITES[name][1] }; assert.ok(Math.hypot(b.x - s.x, b.z - s.z) > 9, `${name} cottage ${i} is not on a mini game place`); }
+    });
+  }
+});

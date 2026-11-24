@@ -1,5 +1,6 @@
 // Forest of Memories (Chapter II). Layout follows the forest reference painting.
 import { makeRegion, P, smooth, gauss, BRIDGE_LEN } from '../regionkit.js';
+import { outerSolids } from './outer.js';
 const riverX = (z) => -6 + 12 * Math.sin((z + 50) * 0.05) + 5 * Math.sin(z * 0.11);
 const bw = (b) => [b.x - BRIDGE_LEN / 2 - 0.8, b.z], be = (b) => [b.x + BRIDGE_LEN / 2 + 0.8, b.z];
 export default makeRegion({
@@ -42,6 +43,7 @@ export default makeRegion({
   },
   lateClear: (x, z) => Math.hypot(x + 46, z - -24) < 9.5,      // the Mushroom Queen's glade (Map 2 boss, 17/11); applied after the seeded trees
   latePaths: () => [P(2.2, [-41, -35], [-44, -29], [-46, -25]), P(2.4, [-36, 14], [-52, 18], [-66, 20], [-79, 20])],            // a trail from the ruins into the glade; a road out to the Forest Rally (24/11)
+  lateSolids: outerSolids('forest'),      // (24/11) the new cottages round the outer ring
   keepClear: [{ x: 17, z: -30, r: 7.5 }, { x: -44, z: -40, r: 8 }, { x: -41, z: 7, r: 8.5 }, { x: 55, z: 2, r: 7 }, { x: 40, z: 21, r: 6.5 }, { x: 34, z: 47, r: 8 }, { x: 49, z: -44, r: 6.5 }, { x: -48, z: 48, r: 5 }],
   solids: [
     { x: 17, z: -30, r: 3.3 }, { x: -41, z: 7, r: 4.6 }, { x: -46.5, z: 11.5, r: 1.6 }, { x: 49, z: -44, r: 2.3 }, { x: 36.5, z: 49.5, r: 2.3 }, { x: 31.5, z: 47.5, r: 0.9 },
