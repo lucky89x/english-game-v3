@@ -280,7 +280,9 @@ await snap('03k_word_shield');
 const qi = await ev(() => { const vi = document.querySelector('#dialog .vi').textContent; const card = __eq.chests.api.cards().find((c) => vi.includes('"' + c.vi + '"')); return __eq.ui.options.indexOf(card.word); });
 await page.keyboard.press('Digit' + (qi + 1)); await wait(400);
 check(await ev(() => !__eq.wild.boss.shieldOn && __eq.wild.boss.broken === 1), 'Choosing the right English word breaks the shield');
-await ev(() => { const m = __eq.wild.boss; m.broken = 3; m.hp = 5; __eq.wild.cool = 0; __eq.teleport(m.x, m.z - 2.4); __eq.player.yaw = 0; }); await wait(250); await page.keyboard.press('KeyJ'); await page.waitForFunction(() => __eq.wild.boss.dead > 0, null, { timeout: 60000 }).catch(() => {}); await wait(300);      // (24/11) the swing has a delay and the frames are slow
+for (let k = 0; k < 6 && await page.isVisible('#dialog') && !(await page.$('#dialog .opts')); k++) { await page.keyboard.press('KeyE'); await wait(250); }      // (24/11) nothing may stand between the sword and the king
+for (let k = 0; k < 6 && await ev(() => !__eq.wild.boss.dead); k++) { await ev(() => { const m = __eq.wild.boss; m.broken = 3; m.hp = 5; m.shieldOn = false; m.shield.visible = false; __eq.wild.cool = 0; __eq.teleport(m.x, m.z - 2.4); __eq.player.yaw = 0; }); await wait(300); await page.keyboard.press('KeyJ'); await wait(900); }
+console.log('boss state', JSON.stringify(await ev(() => { const m = __eq.wild.boss; return { hp: m.hp, dead: m.dead, flag: __eq.profile.flags.boss1, modal: __eq.ui.modal, dlg: document.getElementById('dialog').className, pos: [m.x, m.z], pl: __eq.player.pos.toArray().map((v) => +v.toFixed(1)), cool: __eq.wild.cool }; })));
 check(await ev(() => __eq.wild.boss.dead > 0 && __eq.profile.flags.boss1 === true) && (await page.textContent('#dialog')).includes('Slime King'), 'Slime King defeated: big reward, flag saved');
 for (let k = 0; k < 3 && await page.isVisible('#dialog'); k++) { await page.keyboard.press('KeyE'); await wait(200); }
 await ev(() => __eq.wild.mobs.forEach((m) => { if (!m.boss) m.dead = 0.1; }));
