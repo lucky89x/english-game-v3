@@ -95,7 +95,7 @@ for (let k = 0; k < 4 && await page.isVisible('#dialog'); k++) { await page.keyb
 const gate = await ev(() => ({ x: __eq.L.EXITS[0].x, z: __eq.L.EXITS[0].z }));
 await ev(() => { const p = __eq.profile; p.stats.level = 10; p.gates = { 5: true, 10: true }; });      // (24/11) the forest opens at level 10 with the owl's exam
 await ev((g) => __eq.teleport(g.x, g.z + 1.2), gate); await wait(450);
-check((await page.textContent('#prompt')).includes('còn khóa'), 'Forest gate is locked before Tom opens it');
+check((await page.textContent('#prompt')).includes('Cổng dịch chuyển') && await ev(() => !__eq.profile.flags.forest_open), 'Forest gate is a portal, and Tom has not opened it yet');      // (24/11) the lock is checked in the map chooser (world.canGo), not in the prompt
 // ---------------------------------------------------------------- Fix the Bridge
 const closeDialog = async () => { for (let k = 0; k < 14 && await page.isVisible('#dialog') && !(await page.$('#dialog .opts')); k++) { await page.keyboard.press('KeyE'); await wait(200); } };
 check(await ev(() => __eq.story.step === 'tom_bridge'), 'After the market Tom has news');
@@ -172,9 +172,10 @@ for (let c = 0; c < 3; c++) {      // software GL (~1 fps) cannot time a rhythm 
 check(await ev((g) => __eq.profile.stats.gold > g, gold0), 'Three real-E catches at the dock pay gold');
 await page.keyboard.press('Escape'); await wait(300);
 for (let k = 0; k < 3 && await page.isVisible('#dialog'); k++) { await page.keyboard.press('KeyE'); await wait(200); }
-await ev(() => __eq.teleport(34, 6.6)); await wait(450); await page.keyboard.press('KeyE'); await wait(300);
+await rich(); await ev(() => __eq.teleport(34, 6.6)); await wait(450); await page.keyboard.press('KeyE'); await wait(300);
 check(await page.isVisible('#dialog') && (await page.textContent('#dialog')).includes('Hana') && !(await ev(() => !!__eq.mini.active)), 'Hana talks first: the apples do not fall before her talk');
-for (let k = 0; k < 4 && !(await ev(() => !!__eq.mini.active)); k++) { await page.keyboard.press('KeyE'); await wait(300); }
+for (let k = 0; k < 4 && await page.isVisible('#dialog') && !(await page.$('#dialog .opts')); k++) { await page.keyboard.press('KeyE'); await wait(300); }
+await answerGate(); await page.waitForFunction(() => __eq.mini.active, null, { timeout: 120000 });      // (24/11) the toll: gold and three questions after the talk
 check(await ev(() => __eq.mini.active && __eq.mini.active.id === 'apple'), 'Apple catch starts in the orchard after the talk');
 for (let k = 0; k < 40 && await ev(() => __eq.mini.active && __eq.mini.active.score < 3); k++) { await ev(() => { const f = __eq.mini.apples.find((a) => a.live && a.y < 3.5); if (f) __eq.teleport(f.x, f.z); }); await wait(250); }
 check(await ev(() => __eq.mini.active && __eq.mini.active.score >= 3), 'Standing under falling apples catches them');
