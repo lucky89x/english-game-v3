@@ -4,7 +4,7 @@
 // vegetables, instruments.") All profiles live in one save on this computer, so both houses read the same store.
 import * as THREE from 'three';
 import * as L from '../core/layout.js';
-import { HOMES, FURNITURE, STALLS } from '../core/regions/village.js';
+import { HOMES, FURNITURE, STALLS, TOWN, MARKET_ROW } from '../core/regions/village.js';
 import { home, owners } from '../core/rules.js';
 import { house, gardenOf, bedOffset, flowerOffset, PLOT } from '../core/house.js';
 import { farm, stageOf, eggsReady, pigSize, pigGrown } from '../core/farm.js';
@@ -153,7 +153,13 @@ export class Homes {
     // Bram's furniture shop, with its board over the door, and the two market stalls
     await place('bld_shop_orange_v02', FURNITURE.x, FURNITURE.z, Math.PI / 2, 1.3, [0.92, 1.05, 1.12]);
     still.add(hangSign('FURNITURE', 'Beds · Tables · Garden', FURNITURE.door[0] - 0.3, gh(FURNITURE.door[0], FURNITURE.door[1]) + 4.9, FURNITURE.door[1], Math.PI / 2));
+    for (const b of [...TOWN, ...MARKET_ROW]) {      // (24/11) the user's new buildings and stalls
+      try { await place(b.file, b.x, b.z, b.yaw, b.scale);
+        const n = label(b.name, { size: 28, scale: 0.8 }); n.position.set(b.x, gh(b.x, b.z) + (b.file.startsWith('stall') ? 4.3 : b.file === 'bld_quest_tower' ? 9.0 : 7.4) * (b.scale > 1.25 ? 1 : 0.95), b.z); this.root.add(n);
+      } catch (e) { /* the file is missing: the village goes on without it */ }
+    }
     for (const [k, t] of Object.entries(STALLS)) {
+      if (k === 'produce') { try { await place('stall_vegetables', t.x, t.z, t.yaw, 1.2); const n = label("🥕 Ben's Fruit & Veg", { size: 28, scale: 0.8 }); n.position.set(t.x, gh(t.x, t.z) + 4.3, t.z); this.root.add(n); continue; } catch (e) { /* the old stall below */ } }
       const s = campStall(t.x, gh(t.x, t.z), t.z, t.yaw, k === 'music' ? 0x8a4ad0 : k === 'tailor' ? 0xe06aa8 : k === 'healer' ? 0x2f9ae0 : k === 'pets' ? 0xf0a030 : 0xe2483e, k === 'tailor' ? 'cloth' : 'fruit'); this.root.add(s);
       const n = label(k === 'music' ? "🎵 Anna's Instruments" : k === 'tailor' ? "🧵 Mia's Tailor Shop" : k === 'healer' ? "🧪 Village Shop · Lily" : k === 'pets' ? "🐾 Penny's Pet Shop" : "🍎 Ben's Fruit & Veg", { size: 28, scale: 0.8 }); n.position.set(t.x, gh(t.x, t.z) + 3.3, t.z); this.root.add(n);
       if (k === 'tailor') {      // two mannequins from the harbor boutique beside Mia's stall

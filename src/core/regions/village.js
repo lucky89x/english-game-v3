@@ -21,6 +21,18 @@ export const MINI_BUILDINGS = [
   { id: 'race2', kind: 'arch', x: 6, z: 28, yaw: Math.PI / 2, r: 2.2 },
   { id: 'blocks', kind: 'tower', x: -35, z: 4.5, yaw: -Math.PI / 2, r: 2.2 },
 ];
+/** (24/11) the new buildings and stalls from the user's set (assets/models/bld_*.glb, stall_*.glb): the forge next to Bram, an inn by the west lane, the quest tower by the forest road, the barn at the farm, and a row of three market stalls along the main road. yaw 0 faces +z. */
+export const TOWN = [
+  { file: 'bld_village_forge', name: 'Village Forge', x: 8.5, z: -18, yaw: 0, r: 3.2, scale: 1.3 },
+  { file: 'bld_guest_inn', name: 'Guest Inn', x: -30, z: -10, yaw: Math.PI / 2, r: 3.6, scale: 1.3 },
+  { file: 'bld_quest_tower', name: 'Quest Tower', x: -23, z: -30, yaw: -Math.PI / 2, r: 2.6, scale: 1.3 },
+  { file: 'bld_farm_barn', name: 'Farm Barn', x: -35, z: 30, yaw: Math.PI / 2, r: 3.4, scale: 1.3 },
+];
+export const MARKET_ROW = [
+  { file: 'stall_bakery', name: '🥖 Bakery', x: -5, z: -13, yaw: Math.PI / 2, r: 1.8, scale: 1.2 },
+  { file: 'stall_flowers', name: '🌸 Flowers', x: -5, z: -9.4, yaw: Math.PI / 2, r: 1.8, scale: 1.2 },
+  { file: 'stall_sweets', name: '🍭 Sweets', x: -5, z: -5.8, yaw: Math.PI / 2, r: 1.8, scale: 1.2 },
+];
 export const FURNITURE = { x: -31, z: -26, door: [-26.1, -26] };      // east of the lane, out of the way of the lots
 /** Two market stalls (18/11): Ben's fruit and vegetables south of his jar stall, Anna's instruments near her house. at: where E works. */
 export const STALLS = { produce: { x: -7.5, z: 24.8, yaw: Math.PI / 2, at: [-4.6, 24.8] }, music: { x: -19, z: 21.5, yaw: Math.PI / 2, at: [-16.4, 21.5] },
@@ -81,7 +93,7 @@ export default makeRegion({
     ...HOMES.map((h) => P(1.8, h.door, [-40, h.z])),                           // garden paths to the four front doors
     P(2.2, [-40, -14], [-30, -14], [-24, -16], [-24, -22], [-26.1, -26]),       // on to the furniture shop
   ],
-  lateSolids: [{ x: 0, z: 4, r: 3.8 }, ...MINI_BUILDINGS.map((b) => ({ x: b.x, z: b.z, r: b.r })),                                      // the plaza fountain (model r 3.7)
+  lateSolids: [{ x: 0, z: 4, r: 3.8 }, ...TOWN.map((b) => ({ x: b.x, z: b.z, r: b.r })), ...MARKET_ROW.map((b) => ({ x: b.x, z: b.z, r: b.r })), ...MINI_BUILDINGS.map((b) => ({ x: b.x, z: b.z, r: b.r })),                                      // the plaza fountain (model r 3.7)
     ...HOMES.map((h) => ({ x: h.x, z: h.z, r: 4.4 })), { x: FURNITURE.x, z: FURNITURE.z, r: 4.6 }, ...Object.values(STALLS).map((t) => ({ x: t.x, z: t.z, r: 1.7 })), { x: STALLS.tailor.x - 2.6, z: STALLS.tailor.z - 0.6, r: 0.6 }, { x: STALLS.tailor.x + 2.6, z: STALLS.tailor.z - 0.6, r: 0.6 }],      // homes and the furniture shop (18/11)
   // 18/11 ("the houses are too close together"): Lily's and Anna's houses move further west, each with a garden path
   lateMove: [{ from: [-14.5, -8], to: [-22, -4] }, { from: [-15, 9], to: [-22.5, 12.5] }],
