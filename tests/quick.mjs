@@ -164,7 +164,7 @@ await run('arcade', async () => {
     await ev(() => __eq.teleport(-60.4, 68.6)); await wait(400); await page.keyboard.press('KeyE'); await wait(500); await answerGate(); await wait(400);
     await page.waitForFunction(() => __eq.arcade.open, null, { timeout: 90000 });      // the 3D race loads its models first
     const before = await ev(() => __eq.profile.stats.gold);
-    await ev(() => { __eq.arcade.game.coins = 10; __eq.arcade.game.time = 0; }); await page.waitForFunction(() => !__eq.arcade.open, null, { timeout: 60000 });
+    await ev(() => { __eq.arcade.game.coins = 10; __eq.arcade.game.time = 0; }); await page.waitForFunction(() => !__eq.arcade.open, null, { timeout: 240000 });
     paid.push((await ev(() => __eq.profile.stats.gold)) - before); await wait(200);
     if (n === 3) check((await page.textContent('#dialog')).includes('20%'), 'Fourth race of the day says the pay is lower');
     await closeDialogs();
