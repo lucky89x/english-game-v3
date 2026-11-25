@@ -141,6 +141,49 @@ function pen() {
   for (const [x, z] of [[-0.2, 0.3], [0.2, 0.3], [-0.2, -0.3], [0.2, -0.3]]) { const l = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.2, 6), pink); l.position.set(x, 0.1, z); pig.add(l); }
   g.add(pig); g.userData.pig = pig; return g;
 }
+/** (25/11) "the villa must look like a villa, even a castle": a cream manor with gold trim, slate roofs, a white-columned porch with a balcony
+ *  over the door, rows of tall windows and two round corner towers with pointed roofs and flags. Faces +x (the door side of the lot).
+ *  floors: 2 or 3. Returns { g, signY } (signY: height of the name board, right over the door). */
+export function villaExterior(floors) {
+  const g = new THREE.Group(), S = 3.6, H = S * floors, Mx = (c, r = 0.75, o = {}) => new THREE.MeshStandardMaterial({ color: c, roughness: r, ...o });
+  const wall = Mx(0xf4ecdc, 0.8), trim = Mx(0xd9b45a, 0.35, { metalness: 0.5 }), roof = Mx(0x3a5a8a, 0.6), white = Mx(0xfbf8f2, 0.5), glass = Mx(0xbfe2ff, 0.15, { emissive: 0xffe0a0, emissiveIntensity: 0.35 }), stone = Mx(0xb8b0a0, 0.9);
+  const bx = (w, h, d, m, x, y, z) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); o.position.set(x, y, z); o.castShadow = o.receiveShadow = true; g.add(o); return o; };
+  const cy = (r1, r2, h, m, x, y, z, seg = 16) => { const o = new THREE.Mesh(new THREE.CylinderGeometry(r1, r2, h, seg), m); o.position.set(x, y, z); o.castShadow = true; g.add(o); return o; };
+  const X0 = -4.2, X1 = 3.4, Z = 3.5, W = X1 - X0;
+  bx(W + 0.4, 0.5, Z * 2 + 0.4, stone, (X0 + X1) / 2, 0.25, 0);      // plinth
+  bx(W, H, Z * 2, wall, (X0 + X1) / 2, H / 2 + 0.5, 0);
+  for (let f = 1; f <= floors; f++) bx(W + 0.12, 0.18, Z * 2 + 0.12, trim, (X0 + X1) / 2, 0.5 + f * S, 0);      // a gold band at each floor
+  // a hipped slate roof (a four-sided pyramid, flattened)
+  const rf = new THREE.Mesh(new THREE.ConeGeometry(Math.hypot(W, Z * 2) / 2 + 0.6, 3.2, 4), roof); rf.rotation.y = Math.PI / 4; rf.scale.set(W / (Z * 2) * 1.02, 1, 1); rf.position.set((X0 + X1) / 2, H + 0.5 + 1.6, 0); rf.castShadow = true; g.add(rf);
+  // windows on the front and the two sides, every floor
+  for (let f = 0; f < floors; f++) {
+    const y = 0.5 + f * S + 1.9;
+    for (const z of [-2.5, -1.2, 1.2, 2.5]) { if (f === 0 && Math.abs(z) < 1.5) continue; bx(0.06, 1.6, 0.8, glass, X1 + 0.02, y, z); bx(0.1, 0.12, 1.0, trim, X1 + 0.04, y + 0.86, z); bx(0.14, 0.1, 1.0, white, X1 + 0.06, y - 0.85, z); }
+    for (const sz of [-1, 1]) for (const x of [-2.6, -0.4, 1.8]) { bx(0.8, 1.6, 0.06, glass, x, y, sz * (Z + 0.02)); bx(1.0, 0.12, 0.1, trim, x, y + 0.86, sz * (Z + 0.04)); }
+  }
+  // the porch: four white columns, a pediment, a balcony with a gold rail over the door, steps
+  const PX = X1 + 1.2;
+  for (const z of [-1.9, -0.7, 0.7, 1.9]) { cy(0.17, 0.2, S - 0.2, white, PX, 0.5 + (S - 0.2) / 2, z, 14); cy(0.26, 0.26, 0.14, trim, PX, 0.5 + S - 0.13, z, 14); }
+  bx(1.5, 0.3, 4.6, white, X1 + 0.75, 0.5 + S + 0.05, 0);      // the porch roof = the balcony floor
+  for (const z of [-2.2, -1.1, 0, 1.1, 2.2]) cy(0.03, 0.03, 0.8, trim, PX + 0.6, 0.5 + S + 0.6, z, 6);
+  bx(0.08, 0.08, 4.6, trim, PX + 0.6, 0.5 + S + 1.0, 0);
+  for (let i = 0; i < 3; i++) bx(1.0, 0.17, 3.2 - i * 0.3, stone, X1 + 1.6 + 0.35 * (2 - i), 0.08 + i * 0.17, 0);
+  bx(0.08, 2.6, 1.6, Mx(0x7a3a1a, 0.6), X1 + 0.03, 0.5 + 1.3, 0); bx(0.1, 0.16, 1.9, trim, X1 + 0.05, 0.5 + 2.7, 0);      // the double door
+  for (const z of [-0.35, 0.35]) { const k = new THREE.Mesh(new THREE.SphereGeometry(0.06, 8, 6), trim); k.position.set(X1 + 0.1, 0.5 + 1.25, z); g.add(k); }
+  // two round towers at the front corners with pointed roofs and flags
+  for (const sz of [-1, 1]) {
+    const tz = sz * (Z + 0.75), tx = X1 - 0.9, th = H + 2.4;
+    cy(0.95, 1.05, th, wall, tx, 0.5 + th / 2, tz, 20); cy(1.08, 1.08, 0.2, trim, tx, 0.5 + th, tz, 20);
+    for (let f = 0; f < floors; f++) { const w = bx(0.5, 1.2, 0.06, glass, tx + 0.98, 0.5 + f * S + 2.0, tz); w.rotation.y = Math.PI / 2; }
+    const cone = new THREE.Mesh(new THREE.ConeGeometry(1.3, 3.2, 20), roof); cone.position.set(tx, 0.5 + th + 1.8, tz); cone.castShadow = true; g.add(cone);
+    cy(0.03, 0.03, 1.4, trim, tx, 0.5 + th + 4.1, tz, 6);
+    const flag = new THREE.Mesh(new THREE.PlaneGeometry(0.8, 0.45), Mx(sz > 0 ? 0xe8443a : 0x2f6fd0, 0.7, { side: THREE.DoubleSide })); flag.position.set(tx + 0.42, 0.5 + th + 4.55, tz); g.add(flag);
+  }
+  // hedges and two gold lamps by the steps
+  for (const sz of [-1, 1]) { const hb = new THREE.Mesh(new THREE.SphereGeometry(0.55, 12, 8), Mx(0x3f8a34, 0.9)); hb.scale.set(1.4, 0.8, 1); hb.position.set(X1 + 1.3, 0.45, sz * 2.9); g.add(hb); cy(0.05, 0.06, 1.6, trim, X1 + 2.4, 0.8, sz * 1.9, 8); const l = new THREE.Mesh(new THREE.SphereGeometry(0.15, 10, 8), Mx(0xffe6a0, 0.3, { emissive: 0xffc860, emissiveIntensity: 1.2 })); l.position.set(X1 + 2.4, 1.7, sz * 1.9); g.add(l); }
+  return { g, signY: 0.5 + S + 1.55 };
+}
+
 export class Homes {
   /** api: { scene, load(name) -> model, profiles() -> all profiles in the save, current() -> playing profile } */
   constructor(api) { this.api = api; this.root = new THREE.Group(); this.root.name = 'homes'; api.scene.add(this.root); this.lots = []; this.key = ''; }
@@ -192,13 +235,18 @@ export class Homes {
       const p = kids[i] || null, h = lot.h; lot.owner = p;
       for (const o of [lot.sign, lot.post]) if (o) { o.removeFromParent(); o.traverse((c) => { if (c.material) { if (c.material.map) c.material.map.dispose(); c.material.dispose(); } }); }
       const name = p ? p.name : '';
-      lot.sign = hangSign(p ? `NHÀ CỦA ${name.toLocaleUpperCase('vi')}` : 'NHÀ TRỐNG', p ? `${name}'s home` : 'Chưa có chủ', h.door[0] - 0.3, gh(h.door[0], h.door[1]) + 4.7, h.door[1], Math.PI / 2, 1.25);      // the hero's own name (18/11)
+      // (25/11) the name board always hangs right over the door: on the villa's balcony, or at the door of the (taller) house
+      const hh0 = p ? house(p) : null, isVilla = !!(hh0 && hh0.villa), tall = hh0 ? 1 + 0.38 * (hh0.floors - 1) : 1;
+      if (lot.villa) { lot.villa.removeFromParent(); lot.villa = null; }
+      if (isVilla) { const v = villaExterior(Math.max(2, hh0.floors)); v.g.position.set(h.x, gh(h.x, h.z) - 0.05, h.z); this.root.add(v.g); lot.villa = v.g; lot.signAt = [h.x + 3.4 + 1.95, gh(h.x, h.z) + v.signY, h.z]; }
+      else lot.signAt = [h.door[0] - 0.3, gh(h.door[0], h.door[1]) + 4.7 * tall, h.door[1]];
+      lot.sign = hangSign(p ? `NHÀ CỦA ${name.toLocaleUpperCase('vi')}` : 'NHÀ TRỐNG', p ? `${name}'s home` : 'Chưa có chủ', ...lot.signAt, Math.PI / 2, 1.25);      // the hero's own name (18/11)
       this.root.add(lot.sign);
       lot.post = label(p ? `🏠 Nhà của ${name}` : '🏠 Nhà trống', { size: 28, scale: 0.8 }); lot.post.position.set(h.yard[0] + 2.9, gh(h.yard[0] + 2.9, h.z - 1.6) + 2.2, h.z - 1.6); this.root.add(lot.post);
       lot.yard.clear(); lot.garden.clear();
       if (p) {      // (20/11) the house grows with the floors, the villa swaps in the big hall; the garden has three sizes
-        const hh = house(p), up = 1 + 0.38 * (hh.floors - 1), m = hh.villa && lot.models.hall ? lot.models.hall : lot.models.house;
-        lot.models.house.visible = m === lot.models.house; if (lot.models.hall) lot.models.hall.visible = m === lot.models.hall;
+        const hh = house(p), up = 1 + 0.38 * (hh.floors - 1), m = lot.models.house;
+        lot.models.house.visible = !hh.villa; if (lot.models.hall) lot.models.hall.visible = false;      // (25/11) the villa is drawn by villaExterior
         m.scale.y = (m === lot.models.hall ? 1.0 : 1.3) * up; lot.garden.add(gardenDecor(h, hh.garden, gh, this.api.models));
         lot.farm = { beds: [], sig: [], coop: null, pen: null, hens: [] };      // (21/11) the farm: crops, coop with hens, pig pen
         const cfg = gardenOf(hh);
