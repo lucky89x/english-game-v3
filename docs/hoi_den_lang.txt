@@ -1,0 +1,32 @@
+HỘI ĐÈN LÀNG | ENGLISH QUEST
+
+Cách vào
+Trong làng, đến bảng Hội Đèn Làng cạnh đường đua của Leo rồi nhấn E. Trên màn hình cảm ứng, chạm nút E. Có thể thoát giữa ván hoặc nhận vàng và EXP khi hoàn thành. Trò nối chữ, trò thẻ và trò lái xe sử dụng từ vựng của Unit đang học. Khi Unit thiếu từ phù hợp, trò dùng thêm một số từ cơ bản.
+
+Bốn trò và cách chuyển thể cho người học
+
+Lối đom đóm
+Trong Grindstone, người chơi phải nhìn cả đường đi trước khi nối những sinh vật cùng màu. Viên đá cho phép đổi màu giữa đường. Trong English Quest, trẻ đọc nghĩa tiếng Việt rồi nối các đom đóm mang chữ cái hoặc cụm chữ. Ngôi sao là chỗ đổi màu. Nút Soi đường cho biết từ và gợi ô tiếp theo, để trẻ có thể học ngay trong ván.
+https://www.capybaragames.com/games/grindstone/
+
+Hầm thẻ đồng
+Card of Darkness biến chồng thẻ thành quyết định về rủi ro. Khi đã bắt đầu một chồng, người chơi phải xử lý các lá còn lại. Hầm thẻ đồng cho thấy lá trên cùng và số lá còn lại. Người chơi giải nghĩa từ trước khi hiệu ứng xảy ra, cân nhắc lấy khiên trước dơi, hồi tim hay tìm chìa. Mỗi loại thẻ có một hình riêng để nhận biết cả khi chưa đọc tên.
+https://cardofdarkness.com/presskit/index.html
+
+Chuyến thư đêm
+Speed Demons dùng góc nhìn từ trên xuống và giao thông đông để tạo nhịp đua. Trong English Quest, mỗi chốt là một địa chỉ giao thư. Ba từ tiếng Anh xuất hiện đúng vị trí ba làn. Trẻ có thể phanh hoặc tạm dừng để đọc nghĩa tiếng Việt rồi quyết định đổi làn. Giao đúng ít nhất ba trong năm lá thư và giữ xe còn tim để hoàn thành.
+https://apps.apple.com/us/app/speed-demons/id6478928745
+
+Hồ sơ xưởng đồng hồ
+Tangle Tower dùng phòng cảnh minh họa, vật chứng và đối thoại để người chơi tự suy luận. Xưởng đồng hồ có ba hồ sơ về hạt giống, thư muộn và chìa khóa. Hai chi tiết về giờ, địa điểm hoặc màu sắc phải cùng khớp lời khai. Trẻ có thể xem bản dịch, đọc lại và sửa kết luận. Cửa sổ, đồng hồ và túi thư là ba điểm khám trong tranh.
+https://www.sfbgames.com/press/sheet.php?p=tangle_tower
+
+Tranh minh họa
+Hai ảnh WebP được dựng bằng ImageGen tích hợp. Xe và chân dung nhân chứng dùng hình đã có trong English Quest. Các câu lệnh tạo tranh được lưu dưới đây bằng tiếng Anh.
+
+assets/ui/lantern_workshop.webp
+Original widescreen hand-painted storybook background for the playable English Quest detective scene. Inside a small village clockmaker and postal workshop after sunset. A conspicuous single large arched blue window in the left third, grand golden wall clock high in the centre, a red leather mail satchel on the right side of the long foreground workbench, clear separated clickable silhouettes. Warm apricot lamplight against rich deep teal and plum shadows. Chunky expressive ink contours, matte gouache, lovingly drawn old wooden beams, brass gears, secret drawers, starry sky through window, subtle crooked perspective. Beautiful intimate place to explore for ages 11–15. Broad landscape composition 3:2, full bleed, no text, no lettering, no characters, no UI.
+
+assets/ui/lantern_fair.webp
+Produce an original square game art atlas as a strict 2 by 2 grid of four equal square panels, with the dividing lines exactly at 50% of image width and height. No gutters, frames, letters, numerals, captions, watermarks or UI. Each panel is independent artwork. Coordinated hand-painted gouache and storybook ink for a cozy village adventure, with paper grain and readable silhouettes. TOP LEFT: enchanted woodland at blue hour. Deep teal, muted jade-green ferns, twisted willow branches cropping in from the outer edges, clusters of little ochre lantern mushrooms in the lower corners, luminous drifting motes. The whole central 70% is an open calm dark teal marsh clearing for overlaid word tokens, with very subtle leaves. TOP RIGHT: interior of an old village brass vault, seen straight on, chunky plum stone arches, big closed engraved bronze door centred in rear, luminous amber lanterns on each side, worn floor steps, carved oak frames. More delicate at center so cards can overlay. BOTTOM LEFT: strict orthographic straight-down map tile of a smooth asphalt village racetrack at blue hour, north to south, no perspective or vanishing point. The FULL central 80% from x 10% to 90% of this square is unmarked dark slate road uniformly at all heights; the outermost left and right strips are detailed overhead handpainted market roof edges, warm golden lanterns, hedges, cobblestone curbs, occasional red and white curb stones. No vehicles, no lanes, no objects in the road. Top and bottom match closely as a vertically repeating game texture. BOTTOM RIGHT: a miniature 2 by 2 inventory grid in this quarter only, four separate original icons on solid very dark plum ground, ample padding: upper left one ornate brass key, upper right one round glass flask of coral healing potion with a cork, lower left one jade green metal shield with a cream star, lower right one charming little purple bat spreading its wings. Each icon centered in its own equal sub-square. Make this an actual art asset sheet for a polished illustrated game.
+

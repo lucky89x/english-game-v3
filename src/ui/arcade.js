@@ -17,10 +17,18 @@ export class Arcade {
     this.cv.addEventListener('pointerdown', (e) => { if (this.game && this.game.down) { this.cv.setPointerCapture(e.pointerId); this.game.down(...at(e)); } });
     this.cv.addEventListener('pointermove', (e) => { if (this.game && this.game.drag) this.game.drag(...at(e)); });
     this.cv.addEventListener('pointerup', (e) => { if (this.game && this.game.up) this.game.up(...at(e)); });
+    this.cv.addEventListener('pointercancel', (e) => { this.game?.up?.(...at(e)); });
     el.querySelector('#arcquit').addEventListener('click', () => this.close(null));
   }
   get open() { return !!this.game; }
-  start(game) { this.game = game; this.t = 0; this.el.classList.remove('hidden'); this.el.querySelector('#arctitle').textContent = game.title; this.el.querySelector('#archelp').textContent = game.help; }
+  start(game) {
+    this.game = game; this.t = 0;
+    this.cv.style.touchAction = game.directTouch ? 'none' : '';
+    this.el.classList.remove('hidden');
+    this.el.querySelector('#arctitle').textContent = game.title;
+    this.el.querySelector('#archelp').textContent = game.help;
+    if (game.directTouch) this.update(0);
+  }
   close(result) { const g = this.game; this.game = null; this.el.classList.add('hidden'); if (g) this.onFinish(g, result); }
   key(code) { if (!this.game) return false; if (code === 'Escape') this.close(null); else if (this.game.key) this.game.key(code); return true; }
   update(dt, held = new Set()) {

@@ -420,10 +420,11 @@ test('shop: selling pays half, takes the item off, bread one by one, nothing for
 });
 
 import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 test('every source file parses (catches a stray brace or comment before the browser does)', () => {
   const walk = (d) => readdirSync(d).flatMap((f) => { const p = d + '/' + f; return statSync(p).isDirectory() ? walk(p) : p.endsWith('.js') ? [p] : []; });
-  for (const f of walk(new URL('../src', import.meta.url).pathname)) {
+  for (const f of walk(fileURLToPath(new URL('../src', import.meta.url)))) {
     const r = spawnSync(process.execPath, ['--input-type=module', '--check'], { input: readFileSync(f) });
     assert.equal(r.status, 0, f + ': ' + String(r.stderr).split('\n').slice(0, 4).join(' '));
   }

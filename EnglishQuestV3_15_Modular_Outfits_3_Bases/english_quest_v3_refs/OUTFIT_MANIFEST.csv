@@ -1,0 +1,16 @@
+character,outfit_id,design,color,reference_png,base_character_png
+NGOC,01,Sky Lotus Disciple,Blue,outfits/NGOC/NGOC_01_Sky_Lotus_Blue.png,base_characters/NGOC_base_turnaround.png
+NGOC,02,Peach Blossom Festival,Pink,outfits/NGOC/NGOC_02_Peach_Blossom_Pink.png,base_characters/NGOC_base_turnaround.png
+NGOC,03,Phoenix Battle,Red,outfits/NGOC/NGOC_03_Phoenix_Battle_Red.png,base_characters/NGOC_base_turnaround.png
+NGOC,04,Moonlight Oracle,Purple,outfits/NGOC/NGOC_04_Moonlight_Oracle_Purple.png,base_characters/NGOC_base_turnaround.png
+NGOC,05,Emerald Ranger,Green,outfits/NGOC/NGOC_05_Emerald_Ranger_Green.png,base_characters/NGOC_base_turnaround.png
+HONG_LIEN,01,Ember Phoenix,Red,outfits/HONG_LIEN/HONG_LIEN_01_Ember_Phoenix_Red.png,base_characters/HONG_LIEN_base_turnaround.png
+HONG_LIEN,02,Rose Petal,Pink,outfits/HONG_LIEN/HONG_LIEN_02_Rose_Petal_Pink.png,base_characters/HONG_LIEN_base_turnaround.png
+HONG_LIEN,03,Obsidian Commander,Black,outfits/HONG_LIEN/HONG_LIEN_03_Obsidian_Commander_Black.png,base_characters/HONG_LIEN_base_turnaround.png
+HONG_LIEN,04,Snow Lotus Court,White,outfits/HONG_LIEN/HONG_LIEN_04_Snow_Lotus_White.png,base_characters/HONG_LIEN_base_turnaround.png
+HONG_LIEN,05,Frost Wave Duelist,Blue,outfits/HONG_LIEN/HONG_LIEN_05_Frost_Wave_Blue.png,base_characters/HONG_LIEN_base_turnaround.png
+HAO_THIEN,01,Silver Dragon,Silver White,outfits/HAO_THIEN/HAO_THIEN_01_Silver_Dragon_White.png,base_characters/HAO_THIEN_base_turnaround.png
+HAO_THIEN,02,Midnight Star,Purple,outfits/HAO_THIEN/HAO_THIEN_02_Midnight_Star_Purple.png,base_characters/HAO_THIEN_base_turnaround.png
+HAO_THIEN,03,Crimson Sun Captain,Red,outfits/HAO_THIEN/HAO_THIEN_03_Crimson_Sun_Red.png,base_characters/HAO_THIEN_base_turnaround.png
+HAO_THIEN,04,Jade Wind Wanderer,Green,outfits/HAO_THIEN/HAO_THIEN_04_Jade_Wanderer_Green.png,base_characters/HAO_THIEN_base_turnaround.png
+HAO_THIEN,05,Golden Cloud Guardian,Gold,outfits/HAO_THIEN/HAO_THIEN_05_Golden_Guardian_Gold.png,base_characters/HAO_THIEN_base_turnaround.png

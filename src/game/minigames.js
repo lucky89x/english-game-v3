@@ -13,6 +13,7 @@ export const RACE = [[-20, 2], [-32, 4], [-42, 14], [-40, 28], [-34, 42], [-18, 
 // game"). host: villager model, tint, name, a short greeting shown when the game starts. The fishing spot is Sam's dock.
 // The ring race was dropped (17/11): the cart race board is the racing game.
 export const STARTS = [
+  { id: 'lantern_fair', x: 4, z: 27, text: 'E · Hội Đèn Làng — bốn thử thách', sign: '✦ Hội Đèn Làng', board: true },
   { id: 'fish', x: 18.4, z: 19.2, text: 'E · Câu cá (trò chơi)', sign: '🎣 Fishing' },
   { id: 'apple', x: 33.5, z: 6, text: 'E · Hứng táo với cô Hana', sign: '🍎 Apple catch', host: { name: 'Hana', file: 'npc_ben_merchant_v02', tint: [0.85, 1.12, 0.85], hello: 'The apples are falling! Catch them!' } },
   { id: 'candy', x: -15, z: -17, text: 'E · Xếp kẹo với cô Mimi', sign: '🍬 Candy Match', board: true, host: { name: 'Mimi', file: 'npc_ben_merchant_v02', tint: [1.15, 0.88, 1.0], hello: 'Sweet! Let\'s match the candies!' } },

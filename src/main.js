@@ -43,6 +43,10 @@ import * as Q from './core/quests.js';
 import * as Exam from './core/exam.js';
 import { Wild, BOARD, BOSS_AT, BOSS2_AT, FOREST_BOARD, BOSS3_AT, HARBOR_BOARD, BOSS4_AT } from './game/combat.js';
 import { Arcade, candyGame, blocksGame, slingGame, spellGame, raceGame, withTier } from './ui/arcade.js';
+import { fireflies } from './ui/lantern/fireflies.js';
+import { vault } from './ui/lantern/vault.js';
+import { courier } from './ui/lantern/courier.js';
+import { workshop } from './ui/lantern/workshop.js';
 import { tierOf, TIER_PAY } from './core/tiers.js';
 import { Chests, CHEST_SPOTS, FOREST_CHESTS, HARBOR_CHESTS } from './game/chests.js';
 import { armorMesh, charmMesh } from './game/gear.js';
@@ -901,15 +905,16 @@ async function boot() {
   letterProp.position.set(hall[0] + 1.2, L.REGIONS.village.groundHeight(hall[0] + 1.2, hall[1]) + 0.5, hall[1]); letterProp.visible = false; scene.add(letterProp);
   for (const id of ['rope', 'chain', 'log', 'boulder']) { const [x, z] = BRIDGE_SPOTS[id], m = bridgeItem(id); m.position.set(x, L.REGIONS.village.groundHeight(x, z), z); m.visible = false; scene.add(m); itemProps[id] = m; }
   cam = new OrbitCamera(camera, canvas);
-  if (touchWanted()) touch = initTouch({ keys, press: (code) => onKey({ code, preventDefault() {} }), cam, canvas, state: () => ({ playing: started && !switching, arcade: !!(arcade && arcade.open) }) });
+  if (touchWanted()) touch = initTouch({ keys, press: (code) => onKey({ code, preventDefault() {} }), cam, canvas, state: () => ({ playing: started && !switching && !arcade?.game?.directTouch, arcade: !!(arcade && arcade.open) }) });
   arcade = new Arcade((g, res) => {       // a finished board game pays gold and EXP; quitting pays nothing
     if (!res) return;
     if (g.onResult) return g.onResult(res);
     const best = mini.data.best, record = best[res.id] === undefined || res.score > best[res.id]; if (record) best[res.id] = res.score;
     const mul = TIER_PAY[res.tier || 1];      // higher tiers pay more
     const r = pay(profile, res.id, Review.today(), Math.round(res.gold * mul), Math.round(res.exp * mul));
+    for (const c of res.words || []) (profile.seen || (profile.seen = {}))[c.id] = Review.today();
     profile.stats.gold += r.gold; Save.addExp(profile, r.exp); sfx('fanfare'); save(); refresh();
-    track('mini'); if (['style', 'cafe', 'salon'].includes(res.id)) track('sea_game'); if (res.fish) catchFish(res.fish); if (res.unlock && res.unlock.length) gainItems(res.unlock); for (const c of res.words || []) (profile.seen || (profile.seen = {}))[c.id] = Review.today();      // words met inside the game count as seen
+    track('mini'); if (['style', 'cafe', 'salon'].includes(res.id)) track('sea_game'); if (res.fish) catchFish(res.fish); if (res.unlock && res.unlock.length) gainItems(res.unlock);
     ui.dialogue([{ who: 'Ngọc', en: `${res.text} (+${r.gold} gold, +${r.exp} EXP)`, vi: [record ? 'Kỷ lục mới của con!' : '', payNote(r)].filter(Boolean).join(' ') || undefined }],
       () => { if (res.words && res.words.length >= 2) hostQuiz(res.id === 'blocks' ? 'Max' : 'Leo', res.words); });
   });
@@ -937,7 +942,17 @@ async function boot() {
       }));
     },
     respawn: () => { game.teleport(L.SPAWN.x, L.SPAWN.z); ui.dialogue([{ who: 'Tom', en: 'You fainted, so I carried you home. Rest, then try again!', vi: 'Con hết máu nên được đưa về làng. Máu đã đầy lại. Mua trang bị tốt hơn rồi quay lại nhé.' }]); } });
-  mini = new MiniGames({ scene, player, ui, sfx, track, profile: () => profile, save, onNote: refresh, board: (id) => { const t = tierOf(profile.stats.level), go = () => arcade.start(withTier(({ candy: () => candyGame(Math.random, t), blocks: () => blocksGame(Math.random, unitCards, t), sling: () => slingGame(Math.random, t), race2: () => raceGame(Math.random, [], t) })[id](), t)); if (id === 'candy' || id === 'race2') wordGate(id === 'candy' ? 'Mimi' : 'Leo', go); else go(); } });
+  mini = new MiniGames({ scene, player, ui, sfx, track, profile: () => profile, save, onNote: refresh, board: (id) => {
+    if (id === 'lantern_fair') {
+      const activities = [fireflies, vault, courier, workshop];
+      ui.choose({ who: 'Hội Đèn Làng', en: 'Where shall we go tonight?', vi: 'Chọn một trò để bắt đầu.' },
+        ['Lối đom đóm · Nối chữ', 'Hầm thẻ đồng · Mở khóa', 'Chuyến thư đêm · Lái xe', 'Hồ sơ xưởng đồng hồ · Điều tra', 'Trở về làng'],
+        (i) => { if (activities[i]) arcade.start(activities[i](unitCards)); });
+      return;
+    }
+    const t = tierOf(profile.stats.level), go = () => arcade.start(withTier(({ candy: () => candyGame(Math.random, t), blocks: () => blocksGame(Math.random, unitCards, t), sling: () => slingGame(Math.random, t), race2: () => raceGame(Math.random, [], t) })[id](), t));
+    if (id === 'candy' || id === 'race2') wordGate(id === 'candy' ? 'Mimi' : 'Leo', go); else go();
+  } });
   await mini.addHosts((name) => loader.loadAsync(`./assets/models/${name}.glb`));      // a host by each mini game
   admin = new AdminPanel({ profile: () => profile, places: adminPlaces, go: adminGo, unlockAll: adminUnlock, setStep: adminStep,
     resetForest: () => { delete profile.quests.forest; if (L.NAME === 'forest') enterRegion('forest'); }, setGrade: (g) => { profile.grade = g; save(); chooseProfile(profile); },
