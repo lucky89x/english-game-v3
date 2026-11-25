@@ -1,4 +1,4 @@
-# Cấp độ, bãi quái, trang bị (24/11)
+# Cấp độ, bãi quái, trang bị (25/11)
 
 Sinh từ code (`src/core/progress.js`, `zones.js`, `rules.js`): sửa số ở code rồi chạy lại lệnh sinh bảng này.
 
@@ -20,31 +20,32 @@ Sinh từ code (`src/core/progress.js`, `zones.js`, `rules.js`): sửa số ở 
 | 10 | Hang tinh thể (chưa xây) | 50–70 |
 
 ## Bãi quái (mỗi loại một bãi)
+Công thức (`progress.js`): máu = công của bé trong đồ cùng cấp × `hitsToKill` (3 + 0,25·cấp, tối đa 10); công = máu bé / `MOB_BITES` (10); EXP = EXP cấp / `killsPerLevel` (15 + 0,35·cấp); đánh tay không = 60% công cơ bản (`UNARMED`).
 | Map | Bãi | Quái | Cấp | Loại | Máu | Công | EXP | Vàng | Số con |
 |---|---|---|---|---|---|---|---|---|---|
-| village | Bãi Thỏ Băng | Frost Bunny | 1 | normal | 40 | 8 | 17 | 3 | 5 |
-| village | Bãi Slime Xanh | Green Slime | 2 | normal | 53 | 9 | 25 | 4 | 5 |
-| village | Bãi Yêu Tinh Băng | Frost Goblin | 3 | ranged | 55 | 9 | 35 | 6 | 4 |
-| village | Bãi Slime Đỏ | Red Slime | 4 | normal | 81 | 11 | 40 | 6 | 4 |
-| village | Bãi Quỷ Lửa Nhỏ | Ember Imp | 5 | ranged | 82 | 11 | 49 | 8 | 4 |
-| village | Bãi Golem Đá | Stone Golem | 5 | elite | 211 | 17 | 117 | 15 | 2 |
-| harbor | Bãi Cua Biển | Beach Crab | 5 | normal | 96 | 13 | 47 | 7 | 5 |
-| harbor | Bãi Sứa Phát Sáng | Glow Jellyfish | 6 | ranged | 98 | 13 | 56 | 8 | 4 |
-| harbor | Bãi Hải Âu Bão | Storm Gull | 8 | ranged | 132 | 15 | 69 | 10 | 3 |
-| harbor | Bãi Cướp Biển Nhí | Little Pirate | 9 | elite | 393 | 23 | 177 | 22 | 4 |
-| forest | Bãi Dơi Bóng Tối | Shadow Bat | 10 | ranged | 170 | 17 | 80 | 12 | 5 |
-| forest | Bãi Ma Trơi Sét | Storm Wisp | 12 | ranged | 217 | 20 | 90 | 14 | 4 |
-| forest | Bãi Cáo Lửa | Ember Fox | 14 | normal | 312 | 24 | 95 | 15 | 4 |
-| forest | Bãi Nấm Giận Dữ | Angry Mushroom | 16 | elite | 824 | 35 | 258 | 35 | 3 |
-| forest | Bãi Orc Gió Lốc | Gale Orc | 18 | elite | 973 | 38 | 278 | 40 | 3 |
+| village | Bãi Thỏ Băng | Frost Bunny | 1 | normal | 59 | 11 | 12 | 3 | 5 |
+| village | Bãi Slime Xanh | Green Slime | 2 | normal | 77 | 12 | 17 | 4 | 5 |
+| village | Bãi Yêu Tinh Băng | Frost Goblin | 3 | ranged | 80 | 13 | 24 | 6 | 4 |
+| village | Bãi Slime Đỏ | Red Slime | 4 | normal | 116 | 16 | 27 | 6 | 4 |
+| village | Bãi Quỷ Lửa Nhỏ | Ember Imp | 5 | ranged | 116 | 16 | 34 | 8 | 4 |
+| village | Bãi Golem Đá | Stone Golem | 5 | elite | 299 | 23 | 81 | 15 | 2 |
+| harbor | Bãi Cua Biển | Beach Crab | 5 | normal | 136 | 18 | 32 | 7 | 5 |
+| harbor | Bãi Sứa Phát Sáng | Glow Jellyfish | 6 | ranged | 138 | 18 | 39 | 8 | 4 |
+| harbor | Bãi Hải Âu Bão | Storm Gull | 8 | ranged | 183 | 21 | 48 | 10 | 3 |
+| harbor | Bãi Cướp Biển Nhí | Little Pirate | 9 | elite | 543 | 33 | 124 | 22 | 4 |
+| forest | Bãi Dơi Bóng Tối | Shadow Bat | 10 | ranged | 234 | 24 | 56 | 12 | 5 |
+| forest | Bãi Ma Trơi Sét | Storm Wisp | 12 | ranged | 296 | 27 | 64 | 14 | 4 |
+| forest | Bãi Cáo Lửa | Ember Fox | 14 | normal | 423 | 34 | 68 | 15 | 4 |
+| forest | Bãi Nấm Giận Dữ | Angry Mushroom | 16 | elite | 1109 | 49 | 186 | 35 | 3 |
+| forest | Bãi Orc Gió Lốc | Gale Orc | 18 | elite | 1304 | 54 | 201 | 40 | 3 |
 
 ## Trùm
 | Trùm | Map | Thức dậy ở cấp | Máu | Công | EXP lần đầu |
 |---|---|---|---|---|---|
-| Slime King | village | 4 | 717 | 16 | 351 |
-| Ancient Golem | forest | 19 | 2752 | 41 | 1229 |
-| Mushroom Queen | forest | 17 | 2427 | 37 | 1112 |
-| Captain Octopus | harbor | 9 | 1280 | 24 | 644 |
+| Slime King | village | 4 | 845 | 22 | 351 |
+| Ancient Golem | forest | 19 | 3302 | 56 | 1229 |
+| Mushroom Queen | forest | 17 | 2907 | 52 | 1112 |
+| Captain Octopus | harbor | 9 | 1520 | 34 | 644 |
 
 ## Vũ khí (công thức: 80% công cơ bản của cấp đó)
 | Cấp | Nơi bán | Món | Công | Giá |

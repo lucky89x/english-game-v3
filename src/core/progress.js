@@ -55,23 +55,28 @@ export const ROLES = {
   ranged: { hp: 0.85, atk: 0.9, exp: 1.05, gold: 1.1 },
   elite: { hp: 2.2, atk: 1.3, exp: 2.5, gold: 2.2 },
 };
-/** Hits of a hero in the gear of the level needed to kill a normal monster of that level (2.2 at level 1, 7 at the top). */
-export const hitsToKill = (level) => Math.min(7, 2 + level * 0.2);
+/** Hits of a hero in the gear of the level needed to kill a normal monster of that level (3.25 at level 1, 10 at the top). */
+/** Bites of a normal monster of a level that take a hero in the gear of that level from full to nothing (25/11: was 14). */
+export const MOB_BITES = 10;
+/** Share of the hero's base attack without a weapon (25/11 "đánh tay không cũng giết quái dễ"). */
+export const UNARMED = 0.6;
+export const hitsToKill = (level) => Math.min(10, 3 + level * 0.25);      // (25/11 "quái hơi yếu") was 2 + 0.2·level, max 7
 /** Kills of normal monsters of a level that fill one level of EXP (quests give the rest). */
-export const killsPerLevel = (level) => 10 + level * 0.3;
+export const killsPerLevel = (level) => 15 + level * 0.35;      // (25/11 "lên cấp hơi nhanh") was 10 + 0.3·level
 export const mobGold = (level) => Math.round(2 + level * 0.9);
 export function mobStats(level, role = 'normal') {
   const r = ROLES[role] || ROLES.normal;
   return {
     hp: Math.round(heroAtkAt(level) * hitsToKill(level) * r.hp),
-    atk: Math.max(4, Math.round(heroHpAt(level) / 14 * r.atk)),
+    atk: Math.max(4, Math.round(heroHpAt(level) / MOB_BITES * r.atk)),
     exp: Math.max(1, Math.round(expNeed(level) / killsPerLevel(level) * r.exp)),
     gold: Math.max(1, Math.round(mobGold(level) * r.gold)),
   };
 }
 /** A boss of a level: a long fight, a big first reward. */
 export function bossStats(level) {
-  return { hp: Math.round(heroAtkAt(level) * (hitsToKill(level) + 4) * 3.2), atk: Math.round(heroHpAt(level) / 11), exp: Math.round(expNeed(level) * 0.65), gold: Math.round(mobGold(level) * 14) };
+  return { hp: Math.round(heroAtkAt(level) * (hitsToKill(level) + 4) * 3.2), atk: Math.round(heroHpAt(level) / 8),      // (25/11) was / 11
+           exp: Math.round(expNeed(level) * 0.65), gold: Math.round(mobGold(level) * 14) };
 }
 /** Share of a monster's EXP the hero gets: full when the monster is at or above the hero's level, 20% less for every level the hero
  *  is above it (never below 15%), and none at all when the map's cap is reached (grinding the same ground pays nothing). */

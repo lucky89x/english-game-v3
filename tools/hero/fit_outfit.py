@@ -87,20 +87,37 @@ if face_img:
 # dressed file the suit's chest and shoulder straps (body faces above the waist with suit colour) are painted in the face's
 # skin tone, shading kept; the bare body file keeps its suit.
 if face_img:
-    from PIL import Image, ImageDraw
+    from PIL import Image, ImageDraw, ImageFilter
     W, H = face_img.size; fp = np.array(face_img.pixels[:]).reshape(H, W, 4)
     me = hero.data; uvd = me.uv_layers.active.data; mask = Image.new('L', (W, H), 0); dr = ImageDraw.Draw(mask)
-    zs = np.array([v.co.z for v in me.vertices]) / S
+    co = np.array([v.co[:] for v in me.vertices]) / S
     for poly in me.polygons:
-        if min(zs[i] for i in poly.vertices) < 0.45: continue
+        z = co[list(poly.vertices), 2]; y = co[list(poly.vertices), 1].mean()
+        # bare skin above the outfit: the neck, the tops of the shoulders, the chest above the neckline (the dress reaches z 0.60
+        # in front but only the waist at the back, where the beige suit reads as the tunic and stays)
+        if z.max() > 0.635 or not ((z.min() > 0.55 and y < 0.0) or z.min() > 0.575): continue
         dr.polygon([(uvd[li].uv[0] * W, uvd[li].uv[1] * H) for li in poly.loop_indices], fill=255)
-    m = np.array(mask.filter(__import__('PIL.ImageFilter', fromlist=['MaxFilter']).MaxFilter(5))) > 0
+    m = np.array(mask.filter(ImageFilter.MaxFilter(5))) > 0
     r, g, b = fp[..., 0], fp[..., 1], fp[..., 2]
-    suit = m & (g > 0.7) & (b > 0.48) & (r > 0.9) & (g - b < 0.3) & (b / np.maximum(r, 1e-3) > 0.5)
-    skinpx = skin_of(fp) & ~suit
-    if suit.sum() > 100:
-        k = np.median(fp[skinpx][:, :3], 0) / np.median(fp[suit][:, :3], 0); fp[suit, :3] = np.clip(fp[suit, :3] * k, 0, 1)
-        face_img.pixels.foreach_set(fp.ravel().astype(np.float32)); face_img.update(); print('suit painted as skin', int(suit.sum()), 'x', k.round(3))
+    area = m & (g > 0.5)                                       # everything but hair, eyes and outline marks in that area
+    ref = skin_of(fp) & ~m
+    want = np.median(fp[ref][:, :3], 0); lum = fp[..., :3] @ np.array([0.3, 0.55, 0.15]); lref = float(want @ np.array([0.3, 0.55, 0.15]))
+    k = np.clip(lum[area] / lref, 0.9, 1.05)                  # a little of the old shading, none of the strap edges
+    fp[area, :3] = np.clip(want[None, :] * k[:, None], 0, 1)
+    # the back of the outfit is missing in Tripo's split (the dress reaches only the waist behind): the suit on the back and the
+    # sides between the waist and the shoulders becomes the cream of the sleeves, an undershirt under the vest
+    sl = bpy.data.objects.get('Outfit_sleeve_l'); simg = tex_of(sl) if sl else None
+    if simg:
+        sp = np.array(simg.pixels[:]).reshape(-1, 4); sv = sp[:, :3]; lumv = sv @ np.array([0.3, 0.55, 0.15])
+        creamsel = (lumv > 0.7) & (sv.max(1) - sv.min(1) < 0.3) & ~skin_of(sp); cream = np.median(sv[creamsel], 0) if creamsel.sum() > 100 else np.array([0.95, 0.88, 0.74])
+        mask2 = Image.new('L', (W, H), 0); dr2 = ImageDraw.Draw(mask2)
+        for poly in me.polygons:
+            z = co[list(poly.vertices), 2]; y = co[list(poly.vertices), 1].mean(); ax = np.abs(co[list(poly.vertices), 0]).mean()
+            if z.min() > 0.40 and z.max() < 0.585 and (y > -0.01 or ax > 0.07): dr2.polygon([(uvd[li].uv[0] * W, uvd[li].uv[1] * H) for li in poly.loop_indices], fill=255)
+        m2 = (np.array(mask2.filter(ImageFilter.MaxFilter(5))) > 0) & ~area & (fp[..., 1] > 0.5)
+        lr = lum[m2] / max(1e-3, float(np.median(lum[m2]))); fp[m2, :3] = np.clip(cream[None, :] * np.clip(lr, 0.85, 1.08)[:, None], 0, 1)
+        print('back and sides painted as undershirt', int(m2.sum()), cream.round(3))
+    face_img.pixels.foreach_set(fp.ravel().astype(np.float32)); face_img.update(); print('neck and shoulders painted as skin', int(area.sum()), want.round(3))
 # lighten for the game: base colour only (the normal / metal-rough maps triple the download), parts at 1024 px, body at 2048
 for mat in bpy.data.materials:
     if not mat.use_nodes: continue

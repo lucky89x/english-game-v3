@@ -280,10 +280,10 @@ test('mini games: stars, race rings and start signs are on reachable ground', as
 import { MONSTERS, SPAWNS, playerAtk, hurt, inArc } from '../src/core/rules.js';
 test('combat: attack grows with level and weapon, armour never blocks everything, the arc is in front only', () => {
   const p = S.newProfile('An', 6);
-  assert.equal(playerAtk(p), 10); p.stats.level = 5; p.gear = { atk: 6, def: 4 };
+  assert.equal(playerAtk(p), 6, 'bare hands: 60% of the base'); bag(p).weapon = 'wood_sword'; assert.equal(playerAtk(p), 10); p.stats.level = 5; p.gear = { atk: 6, def: 4 };
   assert.equal(playerAtk(p), 24); assert.equal(hurt(11, p), 7); assert.equal(hurt(2, p), 1);
   assert.ok(inArc(0, 0, 0, 0, 2)); assert.ok(!inArc(0, 0, 0, 0, -2), 'behind'); assert.ok(!inArc(0, 0, 0, 0, 3), 'too far'); assert.ok(inArc(0, 0, Math.PI / 2, 2, 0));
-  assert.ok(Math.ceil(MONSTERS.bunny.hp / 10) <= 4, 'a level 1 child with no weapon beats a level 1 monster in 4 hits');
+  assert.ok(Math.ceil(MONSTERS.bunny.hp / 6) >= 8 && Math.ceil(MONSTERS.bunny.hp / 10) <= 7, '(25/11) bare hands need 8+ hits on a level 1 monster, the wooden sword about half as many');
   assert.equal(S.maxHp(S.newProfile('x', 6)), 100);
 });
 test('combat: every monster spawn is on reachable ground east of the river', () => {
@@ -412,11 +412,11 @@ test('monsters: one level per kind, stats follow the level, one hunting ground p
   }
   const lv = (k) => MONSTERS[k].level; assert.ok(lv('bunny') < lv('slime') && lv('crab') >= 5 && lv('bat') >= 10 && lv('orc') <= 20);
   for (const L of [1, 5, 10, 20, 40, 70]) {
-    const m = PR.mobStats(L), hits = m.hp / PR.heroAtkAt(L); assert.ok(hits >= 2 && hits <= 7.01, `level ${L}: ${hits.toFixed(1)} hits with the gear of the level`);
+    const m = PR.mobStats(L), hits = m.hp / PR.heroAtkAt(L); assert.ok(hits >= 3 && hits <= 10.01, `level ${L}: ${hits.toFixed(1)} hits with the gear of the level`);
     if (L >= 10 && L <= 20) { const old = PR.baseAtk(L) + PR.weaponAtk(L - 10); assert.ok(m.hp / old > hits * 1.15, `level ${L}: gear ten levels old needs clearly more hits`); }
     assert.ok(PR.mobStats(L, 'elite').exp > m.exp && PR.mobStats(L + 1).exp > m.exp && PR.mobStats(L + 1).hp > m.hp, 'EXP and hp grow with the level');
   }
-  const kills = (L) => PR.expNeed(L) / PR.mobStats(L).exp; for (const L of [1, 10, 30, 60]) assert.ok(kills(L) >= 8 && kills(L) <= 30, `level ${L} takes ${kills(L).toFixed(1)} kills`);
+  const kills = (L) => PR.expNeed(L) / PR.mobStats(L).exp; for (const L of [1, 10, 30, 60]) assert.ok(kills(L) >= 14 && kills(L) <= 46, `level ${L} takes ${kills(L).toFixed(1)} kills`);
   // weapons: made for a level, price from the monsters' gold, sold in the map of that level
   for (const [id, it] of Object.entries(ITEMS)) if (it.slot === 'weapon' && !it.rare) { assert.ok(it.atk >= Math.round(PR.weaponAtk(it.level) * 0.7) && it.atk <= PR.weaponAtk(it.level), `${id} gives the attack of level ${it.level}`); assert.ok(it.cost >= 40); }
   const sellers = { forge: [1, 5], harbor: [6, 10], forest: [11, 20] };
