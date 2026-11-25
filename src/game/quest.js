@@ -6,7 +6,7 @@ import { REGIONS, mulberry32 } from '../core/layout.js';
 const LANDMARKS = REGIONS.forest.LANDMARKS;
 import { CLUES, DEFINITIONS, TOM_INTRO } from './content.js';
 import * as Review from '../core/review.js';
-import { recordSkill, addExp } from '../core/save.js';
+import { recordSkill, bonusExp } from '../core/save.js';
 import { FOREST_MEMORY } from './saga.js';
 
 export const TARGETS = 5;
@@ -71,7 +71,7 @@ export class ForestQuest {
     Review.record(profile.words, this.api.wordId(t.en), { correct: q.wrongNow === 0, hints: q.hint, ms });
     if (q.wrongNow === 0) recordSkill(profile, 'reading', true, q.hint);
     const gold = q.wrongNow > 0 ? 1 : GOLD[q.hint];
-    profile.stats.gold += gold; addExp(profile, 10);
+    profile.stats.gold += gold; bonusExp(profile, 10);
     q.found.push(id); q.idx += 1;
     this.api.sfx(clean ? 'fanfare' : 'correct');
     const last = q.idx >= q.order.length;
@@ -104,7 +104,7 @@ export class ForestQuest {
   finish(right) {
     const q = this.q, { profile, ui } = this.api;
     q.step = 'done'; q.review = right;
-    profile.stats.gold += 10 + right * 5; addExp(profile, 50);
+    profile.stats.gold += 10 + right * 5; bonusExp(profile, 50);
     profile.flags.compass_piece_forest = true;
     this.api.sfx('fanfare');
     ui.dialogue(FOREST_MEMORY(right));      // (19/11) the forest's memory of Lord Hush: the Ancient Golem has the Compass piece

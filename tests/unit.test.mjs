@@ -369,7 +369,7 @@ test('hunts: only the asked monster counts, only while active, finishing returns
 
 test('knowledge gates: level 5 waits for the owl review, extra EXP is capped, passing lets the level go up once the map allows it', () => {
   const p = S.newProfile('An', 6); p.stats.level = 4; p.region = 'harbor';      // the sea allows levels 5-10
-  S.addExp(p, S.expTo(5) + 500); assert.equal(p.stats.level, 5); assert.equal(S.gateWaiting(p), 5); assert.equal(p.stats.exp, S.expNeed(5), 'bar full, rest not stored');
+  S.addExp(p, S.expNeed(4) + S.expNeed(5) + 500); assert.equal(p.stats.level, 5); assert.equal(S.gateWaiting(p), 5); assert.equal(p.stats.exp, S.expNeed(5), 'bar full, rest not stored');
   S.addExp(p, 999); assert.equal(p.stats.level, 5);
   assert.equal(S.passGate(p, 5), 1); assert.equal(p.stats.level, 6); assert.equal(S.gateWaiting(p), 0); assert.equal(p.stats.exp, 0);
 });
@@ -416,7 +416,11 @@ test('monsters: one level per kind, stats follow the level, one hunting ground p
     if (L >= 10 && L <= 20) { const old = PR.baseAtk(L) + PR.weaponAtk(L - 10); assert.ok(m.hp / old > hits * 1.15, `level ${L}: gear ten levels old needs clearly more hits`); }
     assert.ok(PR.mobStats(L, 'elite').exp > m.exp && PR.mobStats(L + 1).exp > m.exp && PR.mobStats(L + 1).hp > m.hp, 'EXP and hp grow with the level');
   }
-  const kills = (L) => PR.expNeed(L) / PR.mobStats(L).exp; for (const L of [1, 10, 30, 60]) assert.ok(kills(L) >= 14 && kills(L) <= 46, `level ${L} takes ${kills(L).toFixed(1)} kills`);
+  const kills = (L) => PR.expNeed(L) / PR.mobStats(L).exp; for (const L of [1, 2, 3, 4, 10, 30, 60]) assert.equal(kills(L), PR.killsPerLevel(L), `level ${L}: the bar is exactly the kills of its level`);
+  // (25/11) Map 1 is a week of play: each level asks clearly more kills than the one before, 1,000+ kills in all for levels 1-4, and a monster a level up pays more
+  for (let L = 1; L < 4; L++) assert.ok(PR.killsPerLevel(L + 1) >= PR.killsPerLevel(L) * 1.4, `level ${L + 1} asks clearly more kills than level ${L}`);
+  assert.ok([1, 2, 3, 4].reduce((a, L) => a + PR.killsPerLevel(L), 0) >= 1000, 'Map 1 (levels 1-4) takes 1,000+ kills');
+  assert.ok(PR.mobStats(2).exp >= PR.mobStats(1).exp * 1.3, 'a monster one level up pays at least 30% more EXP');
   // weapons: made for a level, price from the monsters' gold, sold in the map of that level
   for (const [id, it] of Object.entries(ITEMS)) if (it.slot === 'weapon' && !it.rare) { assert.ok(it.atk >= Math.round(PR.weaponAtk(it.level) * 0.7) && it.atk <= PR.weaponAtk(it.level), `${id} gives the attack of level ${it.level}`); assert.ok(it.cost >= 40); }
   const sellers = { forge: [1, 5], harbor: [6, 10], forest: [11, 20] };
@@ -440,7 +444,7 @@ test('the sea (Map 2) opens at level 5 with the Slime King beaten and the owl re
   p.gates = { 5: true }; assert.equal(map2Ready(p), true); p.flags.map2 = true; assert.equal(S.unitOf(p), 2);
   p.flags.forest_open = true; p.stats.level = 9; p.gates[10] = true; assert.equal(forestReady(p), false); p.stats.level = 10; assert.equal(forestReady(p), true);
   p.unitPick = 5; assert.equal(S.unitOf(p), 5);
-  assert.equal(S.expTo(20), 9405 * S.EXP_K, 'levels 1-20 need the old 9,405 EXP times EXP_K (24/11: longer bar)');
+  assert.ok(S.expTo(5) > 20000 && S.expTo(20) > S.expTo(5) * 3, 'the bar grows level after level (25/11: a week for Map 1)'); assert.equal(PR.scaleExp(1, 180), PR.expNeed(1), 'a reward of one old bar is one new bar');
 });
 test('grammar gate items: valid answers, English-only sentences with one blank, only written units', () => {
   for (const [id, list] of Object.entries(GRAMMAR)) for (const g of list) {
@@ -522,7 +526,7 @@ test('quest journal: main quests follow the save, daily quests count events and 
   const Q = await import('../src/core/quests.js');
   const p = S.newProfile('An', 6); p.quests.village = { step: 'jars' };
   assert.equal(Q.mainCurrent(p).id, 'jars', 'letter done, jars next');
-  assert.deepEqual(Q.claimMain(p, 'letter'), { gold: 20, exp: 40 }); assert.equal(Q.claimMain(p, 'letter'), null, 'paid once');
+  assert.deepEqual(Q.claimMain(p, 'letter'), { gold: 20, exp: PR.scaleExp(p.stats.level, 40) }); assert.equal(Q.claimMain(p, 'letter'), null, 'paid once');
   assert.equal(Q.claimMain(p, 'bridge'), null, 'not done yet');
   const d = Q.dailyOf(p, 100); assert.equal(d.ids.length, 3); assert.deepEqual(Q.dailyOf(p, 100).ids, d.ids, 'same three all day');
   const id = d.ids[0], q = Q.DAILY.find((x) => x.id === id);

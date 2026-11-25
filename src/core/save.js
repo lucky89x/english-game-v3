@@ -2,8 +2,8 @@
 // Layout: { version, last, profiles: [{ id, name, grade, unit, created, quests, flags, words, skills, stats }] }
 import { rankHp } from './saga.js';
 import { powers } from './skills.js';
-import { EXP_K, expNeed, expTo, levelCap, expFactor, capGoldFactor } from './progress.js';
-export { EXP_K, expNeed, expTo };      // (24/11) the curve moved to progress.js, next to the level caps
+import { expNeed, expTo, levelCap, expFactor, capGoldFactor, scaleExp } from './progress.js';
+export { expNeed, expTo, scaleExp };      // (24/11) the curve moved to progress.js, next to the level caps
 export const SAVE_VERSION = 2;
 export const KEY = 'english-quest-web';
 export const GRADES = [6, 7, 8, 9];
@@ -87,6 +87,8 @@ export function addExp(profile, amount) {
   if (gateWaiting(profile) || s.level >= cap) s.exp = Math.min(s.exp, need);        // full bar, nothing wasted beyond it
   return ups;
 }
+/** (25/11) EXP of a quest or a story step, written in the old units of the code and scaled to the bar of the hero's level now. */
+export const bonusExp = (profile, base) => addExp(profile, scaleExp(profile.stats.level, base));
 /** Is the hero at the top level of this map (no more EXP here)? */
 export const atCap = (profile) => profile.stats.level >= levelCap(profile);
 /** EXP a kill of a monster of level `mLevel` really gives: the base EXP, less for monsters far below the hero, none at the cap. */

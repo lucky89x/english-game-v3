@@ -3,6 +3,7 @@
 // count at once, and the reward is claimed in the journal. Daily quests: three picked for each day from a pool, with
 // counters fed by game events (track); each pays when claimed, all three pay a bonus.
 import { dexCount } from './sea.js';
+import { expNeed, scaleExp } from './progress.js';
 
 const VILLAGE_ORDER = ['arrive', 'letter_find', 'letter_return', 'jars', 'jars_play', 'tom_bridge', 'bridge', 'gather', 'plan', 'open', 'done'];
 const past = (p, step) => VILLAGE_ORDER.indexOf((p.quests && p.quests.village && p.quests.village.step) || 'arrive') > VILLAGE_ORDER.indexOf(step);
@@ -37,7 +38,7 @@ export const mainState = (p) => p.mainClaimed || (p.mainClaimed = {});
 export const mainCurrent = (p) => MAIN.find((q) => !q.done(p)) || null;
 /** Main quests that are finished but not claimed yet. */
 export const mainToClaim = (p) => MAIN.filter((q) => q.done(p) && !mainState(p)[q.id]);
-export function claimMain(p, id) { const q = MAIN.find((x) => x.id === id); if (!q || !q.done(p) || mainState(p)[id]) return null; mainState(p)[id] = true; return { gold: q.gold, exp: q.exp }; }
+export function claimMain(p, id) { const q = MAIN.find((x) => x.id === id); if (!q || !q.done(p) || mainState(p)[id]) return null; mainState(p)[id] = true; return { gold: q.gold, exp: q.exp ? scaleExp(p.stats.level, q.exp) : 0 }; }      // (25/11) reward written in old units, scaled to the bar of the hero's level
 
 /** Daily pool: event name, how many, text. */
 export const DAILY = [
@@ -73,7 +74,7 @@ export function track(p, day, ev, n = 1) {
   for (const id of d.ids) { const q = DAILY.find((x) => x.id === id); if (q.ev !== ev) continue; const was = d.prog[id] || 0; if (was >= q.need) continue; d.prog[id] = Math.min(q.need, was + n); if (d.prog[id] >= q.need) out.push(q); }
   return out;
 }
-export const dailyReward = (p) => ({ gold: 20 + p.stats.level * 2, exp: 30 + p.stats.level * 8 });
+export const dailyReward = (p) => ({ gold: 20 + p.stats.level * 2, exp: Math.round(expNeed(p.stats.level) * 0.03) });      // (25/11) 3% of the bar for each of the three daily jobs
 export function claimDaily(p, day, id) {
   const d = dailyOf(p, day), q = DAILY.find((x) => x.id === id);
   if (!q || !d.ids.includes(id) || d.claimed[id] || (d.prog[id] || 0) < q.need) return null;

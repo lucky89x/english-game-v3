@@ -3,6 +3,7 @@
 import { MAIN, mainCurrent, mainState, DAILY, dailyOf, dailyReward } from '../core/quests.js';
 import * as FAM from '../core/family.js';
 import * as SAGA from '../core/saga.js';
+import { scaleExp } from '../core/progress.js';
 
 const CSS = `
 #jbtn { position:fixed; left:14px; top:150px; z-index:25; font:800 14px system-ui, sans-serif; border:3px solid #b07a3c; border-radius:12px; background:#fff3d6; color:#4a2a10; padding:5px 10px; cursor:pointer; box-shadow:0 3px 0 rgba(74,42,16,.25); }
@@ -55,7 +56,7 @@ export class Journal {
       let seenCur = false;
       body = `<div class="note">Nhiệm vụ chính tuyến: làm lần lượt để lên cấp và mở map mới. Xong việc nào bấm <b>Nhận thưởng</b>.</div>` + MAIN.map((q) => {
         const done = q.done(p), isCur = q === cur, lock = !done && !isCur && seenCur; if (isCur) seenCur = true;
-        const reward = [q.gold && `${q.gold} vàng`, q.exp && `${q.exp} EXP`, q.unlock && `mở ${q.unlock}`].filter(Boolean).join(' · ');
+        const reward = [q.gold && `${q.gold} vàng`, q.exp && `${scaleExp(p.stats.level, q.exp)} EXP`, q.unlock && `mở ${q.unlock}`].filter(Boolean).join(' · ');
         return `<div class="q ${isCur ? 'cur' : ''} ${lock ? 'lock' : ''}"><span class="ic">${done ? '✅' : isCur ? '⭐' : '🔒'}</span><div><b>${q.en}</b><div class="vi">${lock ? 'Làm xong nhiệm vụ trước để mở.' : q.vi}</div><div class="rw">Thưởng: ${reward}</div></div>
           <div>${done ? (claimed[q.id] ? '<span class="rw">Đã nhận</span>' : `<button data-a="main" data-v="${q.id}">Nhận thưởng</button>`) : ''}</div></div>`;
       }).join('');

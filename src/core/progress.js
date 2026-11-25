@@ -20,10 +20,19 @@ export const MAX_LEVEL = FULL_POINTS;
 export const HIGHEST_SKILL_LEVEL = Math.max(...Object.values(TREE).flat().map((n) => n.needLevel || 1));
 
 // ---------------------------------------------------------------- EXP curve (it moved here from save.js, which re-exports it)
-/** (24/11) the child asked for a longer bar: the old curve (90 + 45 per level) times EXP_K. */
-export const EXP_K = 2;
-export const expNeed = (level) => Math.round((90 + (level - 1) * 45) * EXP_K);
+// (25/11, "mỗi cấp cần số quái khác nhau; map 1 chơi khám phá cả tuần, 2-3 giờ mỗi ngày") The bar of a level is built from HOW MANY monsters
+// of that level fill it, so the numbers can be read and tuned: bar(L) = EXP of one monster of level L × kills needed at level L.
+// Kills needed to go from level L to L+1 by hunting monsters of level L: a table for the first map, a gentle climb after it.
+export const KILLS_TABLE = [60, 180, 380, 640];      // levels 1-4 (the whole of Map 1: 1,260 kills; quests, bosses and gates come on top)
+export const killsPerLevel = (level) => (level <= KILLS_TABLE.length ? KILLS_TABLE[level - 1] : KILLS_TABLE[KILLS_TABLE.length - 1] + 15 * (level - KILLS_TABLE.length));
+/** EXP of one normal monster of a level: a stronger monster pays clearly more, so fighting a level above you is worth the risk. */
+export const mobExp = (level) => 6 + 4 * level;
+export const expNeed = (level) => mobExp(level) * killsPerLevel(level);
 export const expTo = (level) => { let t = 0; for (let l = 1; l < level; l++) t += expNeed(l); return t; };
+/** The bar before 25/11 (180 + 90 per level): quest rewards in the code were written against it, so they are scaled by `scaleExp`. */
+const oldNeed = (level) => 180 + (level - 1) * 90;
+/** A reward written in the old units (quests, story, daily jobs) as the same share of the bar of the hero's level now. */
+export const scaleExp = (level, base) => Math.round(base * expNeed(level) / oldNeed(level));
 
 // ---------------------------------------------------------------- the level cap of every map
 /** The map a region belongs to (the treasure isle is part of Map 2). */
@@ -61,22 +70,20 @@ export const MOB_BITES = 10;
 /** Share of the hero's base attack without a weapon (25/11 "đánh tay không cũng giết quái dễ"). */
 export const UNARMED = 0.6;
 export const hitsToKill = (level) => Math.min(10, 3 + level * 0.25);      // (25/11 "quái hơi yếu") was 2 + 0.2·level, max 7
-/** Kills of normal monsters of a level that fill one level of EXP (quests give the rest). */
-export const killsPerLevel = (level) => 15 + level * 0.35;      // (25/11 "lên cấp hơi nhanh") was 10 + 0.3·level
 export const mobGold = (level) => Math.round(2 + level * 0.9);
 export function mobStats(level, role = 'normal') {
   const r = ROLES[role] || ROLES.normal;
   return {
     hp: Math.round(heroAtkAt(level) * hitsToKill(level) * r.hp),
     atk: Math.max(4, Math.round(heroHpAt(level) / MOB_BITES * r.atk)),
-    exp: Math.max(1, Math.round(expNeed(level) / killsPerLevel(level) * r.exp)),
+    exp: Math.max(1, Math.round(mobExp(level) * r.exp)),
     gold: Math.max(1, Math.round(mobGold(level) * r.gold)),
   };
 }
 /** A boss of a level: a long fight, a big first reward. */
 export function bossStats(level) {
   return { hp: Math.round(heroAtkAt(level) * (hitsToKill(level) + 4) * 3.2), atk: Math.round(heroHpAt(level) / 8),      // (25/11) was / 11
-           exp: Math.round(expNeed(level) * 0.65), gold: Math.round(mobGold(level) * 14) };
+           exp: Math.round(expNeed(level) * 0.35), gold: Math.round(mobGold(level) * 14) };
 }
 /** Share of a monster's EXP the hero gets: full when the monster is at or above the hero's level, 20% less for every level the hero
  *  is above it (never below 15%), and none at all when the map's cap is reached (grinding the same ground pays nothing). */

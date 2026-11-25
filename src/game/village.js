@@ -5,7 +5,7 @@
 import { unitOf } from '../core/save.js';
 import { mulberry32 } from '../core/regionkit.js';
 import * as Review from '../core/review.js';
-import { recordSkill, addExp } from '../core/save.js';
+import { recordSkill, bonusExp } from '../core/save.js';
 import { BADGE } from './saga.js';
 
 export const CUSTOMERS = 5, JARS = 4;
@@ -27,7 +27,7 @@ export class VillageStory {
     ], () => this.set('letter_find'));
     else if (s === 'letter_find') ui.dialogue([{ who: 'Tom', en: 'The letter is near the door of my hall, in the north.' }]);
     else if (s === 'letter_return') {
-      profile.stats.gold += 20; addExp(profile, 30); this.api.sfx('fanfare');
+      profile.stats.gold += 20; bonusExp(profile, 30); this.api.sfx('fanfare');
       ui.dialogue([{ who: 'Tom', en: 'Thank you! (+20 gold) Now, can you help Ben at the market?', vi: 'Chợ hũ chữ của Ben ở khu trại phía Nam, cạnh đống lửa (dấu ! trên bản đồ).' }], () => this.set('jars'));
     } else if (s === 'jars' || s === 'jars_play') ui.dialogue([{ who: 'Tom', en: 'Ben is waiting for you at the market.' }]);
     else if (s === 'tom_bridge') ui.dialogue([{ who: 'Tom', en: 'Oh no! The storm broke the bridge. Please help Sam!', vi: 'Cầu phía Nam bị gãy. Tới đầu cầu gặp Sam (dấu ! trên bản đồ).' }], () => this.set('bridge'));
@@ -56,7 +56,7 @@ export class VillageStory {
       recordSkill(profile, 'reading', ok, ok && !first ? 1 : 0);
       this.api.sfx(ok ? 'correct' : 'wrong');
       if (!ok) { this.q.letterWrong += 1; this.api.save(); return this.askLetter(true); }
-      profile.stats.gold += first ? 10 : 3; addExp(profile, 15);
+      profile.stats.gold += first ? 10 : 3; bonusExp(profile, 15);
       this.q.letterMs = Date.now() - started;
       ui.dialogue([{ who: 'Ngọc', en: `I understand the letter now! (+${first ? 10 : 3} gold)`, vi: 'Mang thư về cho trưởng làng Tom ở quảng trường.' }], () => this.set('letter_return'));
     });
@@ -103,7 +103,7 @@ export class VillageStory {
     m.tries += 1;
     if (!ok) { if (m.tries === 1) m.missed.push(target); m.said = `That's "${given.word}"! I need "${target.word}".`; this.api.sfx('wrong'); this.api.save(); this.api.onChange(); return false; }
     const gold = m.tries === 1 ? 3 : 1; if (m.tries === 1) m.firstTry += 1;
-    m.gold += gold; profile.stats.gold += gold; addExp(profile, 5); m.said = ''; m.index += 1;
+    m.gold += gold; profile.stats.gold += gold; bonusExp(profile, 5); m.said = ''; m.index += 1;
     this.api.sfx('correct'); this.api.save();
     this.nextCustomer();
     return true;
@@ -152,7 +152,7 @@ export class VillageStory {
   }
   take(id) {
     if (this.items.includes(id)) return;
-    this.items.push(id); this.api.profile.stats.gold += 2; addExp(this.api.profile, 5); this.api.sfx('correct');
+    this.items.push(id); this.api.profile.stats.gold += 2; bonusExp(this.api.profile, 5); this.api.sfx('correct');
     if (['rope', 'log', 'axe'].every((k) => this.items.includes(k))) this.api.ui.dialogue([{ who: 'Ngọc', en: 'I have the rope, the log and the axe!', vi: 'Mang đồ về cho Sam ở đầu cầu phía Nam.' }]);
     this.api.save(); this.api.onChange();
   }
@@ -173,7 +173,7 @@ export class VillageStory {
   }
   fixBridge() {
     const { profile, ui } = this.api;
-    profile.flags.bridge_fixed = true; addExp(profile, 30); this.api.sfx('fanfare');
+    profile.flags.bridge_fixed = true; bonusExp(profile, 30); this.api.sfx('fanfare');
     this.q.step = 'open'; this.api.save(); this.api.onBridgeFixed(); this.api.onChange();
     if (this.api.bridge) ui.dialogue([{ who: 'Sam', en: 'The bridge is strong again. Thank you! Go and tell Tom.', vi: 'Quay lại quảng trường gặp Tom.' }]);
   }
