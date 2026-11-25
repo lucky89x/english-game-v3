@@ -932,7 +932,7 @@ async function swapAvatar(kind) {
     if (!ngocGltf) ngocGltf = { scene: player.root, animations: Object.values(player.actions).map((a) => a.getClip()) };
     const g = kind === 'hero' ? await gltf('chr_hero_v01') : ngocGltf;
     player.setModel(g); avatarKind = kind;
-    if (!outlined.has(player.root)) { outlined.add(player.root); addOutline(player.root); }
+    if (!outlined.has(player.root)) { outlined.add(player.root); addOutline(player.root, kind === 'hero' ? { thick: 0.005 } : undefined); }
     if (kind === 'ngoc') { tintBody(player.root, NGOC_COLORS); }
     setSword(); setWear();
   } catch (e) { console.warn('avatar', e); } finally { swappingAvatar = false; }
