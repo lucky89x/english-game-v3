@@ -40,6 +40,35 @@ export const KINDS = {
 export const JEWEL_HEX = { gold: '#f2c23a', silver: '#d4d8e0' };
 /** Gold price of each kind at Mia's shop (19/11: "kiếm vàng để mua quần áo trang sức thay thế"). */
 export const PRICE = { tee_stripe: 60, tee_dots: 60, tee_raglan: 65, tee_block: 65, tee_dye: 80, shirt_check: 85, hoodie_block: 90, skirt_check: 65, skirt_dots: 60, trackpants: 70, dress_dots: 130, dress_stripe: 130, dress_dye: 150, hightops: 85, boots: 95, sandals: 55, flats: 70, hoodie: 70, jacket: 90, aodai: 110, shorts: 40, gown: 160, top: 50, skirt: 50, trousers: 50, dress: 120, shoes: 70, hat: 60, bow: 30, headband: 40, glasses: 70, scarf: 50, bag: 80, bracelet: 60, haircolor: 40, hairstyle: 80, necklace: 150, earrings: 120, tiara: 220, hairclip: 45 };
+/** (25/11) Styles drawn in Blender for the Tripo hero (tools/acc/build_hero_acc.py -> assets/models/acc_<kind>_v01.glb, drawn in her own coordinates).
+ *  Each accessory type has its first look (the older kind: hat, bow ...) plus four more here; a style is its own kind, shown in the shop as a "style" row. */
+export const STYLES = {
+  hat: [['hat_cap', 'baseball cap', 'mũ lưỡi trai', '🧢'], ['hat_beanie', 'knit beanie', 'mũ len', '🧶'], ['hat_bucket', 'bucket hat', 'mũ tai bèo', '👒'], ['hat_wizard', 'wizard hat', 'mũ phù thủy', '🧙']],
+  glasses: [['glasses_round', 'round glasses', 'kính tròn', '👓'], ['glasses_sun', 'sunglasses', 'kính râm', '🕶️'], ['glasses_heart', 'heart glasses', 'kính trái tim', '💖'], ['glasses_star', 'star glasses', 'kính ngôi sao', '🤩']],
+  headband: [['headband_cat', 'cat-ear headband', 'băng đô tai mèo', '🐱'], ['headband_bunny', 'bunny-ear headband', 'băng đô tai thỏ', '🐰'], ['headband_sport', 'sports headband', 'băng đô thể thao', '🏃'], ['headband_pearl', 'pearl headband', 'băng đô ngọc trai', '⚪']],
+  bow: [['bow_side', 'side bow', 'nơ cài bên', '🎀'], ['bow_top', 'big top bow', 'nơ to trên đầu', '🎀'], ['bow_pair', 'pair of bows', 'cặp nơ', '🎀'], ['bow_ribbon', 'ribbon band', 'dải ruy băng', '🎗️']],
+  tiara: [['tiara_crown', 'crown', 'vương miện', '👑'], ['tiara_flower', 'flower crown', 'vòng hoa', '🌼'], ['tiara_laurel', 'laurel wreath', 'vòng nguyệt quế', '🌿'], ['tiara_stars', 'star tiara', 'vương miện ngôi sao', '⭐']],
+  hairclip: [['hairclip_star', 'star hair clip', 'kẹp ngôi sao', '⭐'], ['hairclip_flower', 'flower hair clip', 'kẹp hoa', '🌸'], ['hairclip_butterfly', 'butterfly hair clip', 'kẹp bướm', '🦋'], ['hairclip_heart', 'heart hair clip', 'kẹp trái tim', '💗']],
+  earrings: [['earrings_hoop', 'hoop earrings', 'bông tai vòng', '⭕'], ['earrings_stud', 'stud earrings', 'bông tai nụ', '✨'], ['earrings_drop', 'drop earrings', 'bông tai giọt', '💧'], ['earrings_star', 'star earrings', 'bông tai ngôi sao', '🌟']],
+  necklace: [['necklace_pearl', 'pearl necklace', 'dây chuyền ngọc trai', '📿'], ['necklace_heart', 'heart necklace', 'dây chuyền trái tim', '💗'], ['necklace_choker', 'choker', 'vòng cổ ngắn', '🎀'], ['necklace_star', 'star necklace', 'dây chuyền ngôi sao', '⭐']],
+  scarf: [['scarf_muffler', 'long muffler', 'khăn len dài', '🧣'], ['scarf_bandana', 'bandana', 'khăn bandana', '🏴‍☠️'], ['scarf_ribbon', 'neck bow', 'nơ cổ', '🎀'], ['scarf_fluffy', 'fluffy collar', 'cổ lông xù', '☁️']],
+  bracelet: [['bracelet_beads', 'bead bracelet', 'vòng hạt', '📿'], ['bracelet_watch', 'wrist watch', 'đồng hồ', '⌚'], ['bracelet_charm', 'charm bracelet', 'vòng đính charm', '💎'], ['bracelet_cuff', 'cuff bracelet', 'vòng cổ tay bản rộng', '🔶']],
+  bag: [['bag_satchel', 'satchel', 'túi đeo chéo', '👜'], ['bag_pack', 'mini backpack', 'ba lô nhỏ', '🎒'], ['bag_round', 'round bag', 'túi tròn', '🔘'], ['bag_wings', 'fairy wings', 'cánh tiên', '🧚']],
+};
+const STYLE_SLOT = { hat: 'head', tiara: 'head', glasses: 'face', bow: 'hair', headband: 'hair', hairclip: 'hair', scarf: 'neck', necklace: 'chain', earrings: 'ears', bracelet: 'wrist', bag: 'back' };
+const STYLE_PRICE = { hat: 70, glasses: 65, headband: 50, bow: 40, tiara: 240, hairclip: 55, earrings: 130, necklace: 160, scarf: 60, bracelet: 70, bag: 90 };
+for (const [type, list] of Object.entries(STYLES)) {
+  for (const [kind, en, vi, icon] of list) {
+    KINDS[kind] = { slot: STYLE_SLOT[type], acc: type, hero: true, en, vi, icon, ...(KINDS[type].vals ? { vals: KINDS[type].vals } : {}) };
+    PRICE[kind] = STYLE_PRICE[type];
+  }
+}
+/** The accessory type of a kind ("hat_cap" -> "hat"); other kinds are their own type. */
+export const typeOf = (kind) => (KINDS[kind] && KINDS[kind].acc) || kind;
+/** Every look of one accessory type, the first (older) one first. */
+export const stylesOf = (type) => [type, ...(STYLES[type] || []).map((x) => x[0])];
+/** True for the styles drawn only for the hero (the older Ngọc has none of them). */
+export const heroOnly = (kind) => !!(KINDS[kind] && KINDS[kind].hero);
 export const priceOf = (id) => { const it = parse(id); if (!it) return 0; return PRICE[it.kind] * (it.color === 'gold' ? 2 : it.color === 'silver' ? 1.5 : 1); };
 export const SLOTS = [{ id: 'head', en: 'Head', vi: 'đầu' }, { id: 'hair', en: 'Hair', vi: 'tóc' }, { id: 'style', en: 'Hair style', vi: 'kiểu tóc' }, { id: 'haircolor', en: 'Hair colour', vi: 'màu tóc' }, { id: 'top', en: 'Top', vi: 'áo' }, { id: 'bottom', en: 'Bottom', vi: 'quần, váy' }, { id: 'body', en: 'Dress', vi: 'đầm' }, { id: 'face', en: 'Face', vi: 'mặt' }, { id: 'neck', en: 'Neck', vi: 'cổ' }, { id: 'chain', en: 'Necklace', vi: 'dây chuyền' }, { id: 'ears', en: 'Earrings', vi: 'bông tai' }, { id: 'back', en: 'Back', vi: 'lưng' }, { id: 'wrist', en: 'Wrist', vi: 'cổ tay' }, { id: 'feet', en: 'Feet', vi: 'chân' }];
 export const COLOR_NAMES = ['red', 'blue', 'yellow', 'green', 'pink', 'purple', 'black', 'white', 'orange', 'brown'];

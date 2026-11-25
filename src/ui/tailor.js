@@ -1,7 +1,7 @@
 // Mia's tailor shop in the village (19/11: "kiếm vàng để mua quần áo trang sức thay thế và khi thay thế cũng hiển thị luôn
 // trên nhân vật"). The card sits on the left, the hero stands on the right seen from the front (the creator's camera):
 // pick a kind and a colour to try it on, buy it with gold to keep it. Names are English ("a pink scarf"), read aloud.
-import { KINDS, COLOR_NAMES, JEWEL_HEX, wardrobe, parse, itemId, itemName, priceOf, buyPiece } from '../core/wardrobe.js';
+import { KINDS, COLOR_NAMES, JEWEL_HEX, wardrobe, parse, itemId, itemName, priceOf, buyPiece, typeOf, stylesOf } from '../core/wardrobe.js';
 import { COLORS } from './style.js';
 import { speak } from './speech.js';
 
@@ -29,6 +29,8 @@ const TABS = [
   { id: 'jewel', en: 'Jewellery', vi: 'trang sức', kinds: ['necklace', 'earrings', 'tiara', 'hairclip'] },
   { id: 'hair', en: 'Hair', vi: 'tóc', kinds: ['hairstyle', 'haircolor'] },
 ];
+/** (25/11) The hero's clothes are one painted outfit that takes colours (game/herotint.js), not different shapes: her tabs offer the colour kinds. */
+const HERO_ONLY_KINDS = { tops: ['top'], bottoms: ['skirt'], dresses: ['dress'], shoes: ['boots'], hair: ['haircolor'] };
 const VAL_VI = { red: 'đỏ', blue: 'xanh dương', yellow: 'vàng', green: 'xanh lá', pink: 'hồng', purple: 'tím', black: 'đen', white: 'trắng', orange: 'cam', brown: 'nâu', gold: 'vàng kim', silver: 'bạc', short: 'ngắn', long: 'dài', curly: 'xoăn', wavy: 'gợn sóng', ponytail: 'đuôi ngựa', braids: 'tết' };
 const hex = (c) => COLORS[c] || JEWEL_HEX[c];
 /** "a pink scarf", "pink trousers", "earrings", "a ponytail" for reading aloud. */
@@ -63,7 +65,7 @@ export class Tailor {
   act(a, v) {
     const p = this.api.profile(), w = wardrobe(p);
     if (a === 'close') return this.close();
-    if (a === 'tab') { this.tab = v; this.kind = TABS.find((t) => t.id === v).kinds[0]; this.api.sfx('tick'); }
+    if (a === 'tab') { this.tab = v; this.kind = this.kindsOf(v)[0]; this.api.sfx('tick'); }
     else if (a === 'kind') { this.kind = v; this.api.sfx('tick'); speak(KINDS[v].en === 'hair' ? (v === 'hairstyle' ? 'hair style' : 'hair colour') : KINDS[v].en); }
     else if (a === 'pick') { this.tryOn(v); this.api.sfx('tick'); speak(phrase(v)); }
     else if (a === 'off') { const it = parse(v); this.orig[it.slot] = null; w.worn = { ...this.orig }; this.sel = null; this.api.apply(); this.api.changed(); }
@@ -74,12 +76,17 @@ export class Tailor {
     }
     this.draw();
   }
+  /** the kinds a tab offers for this player (the hero: colours only for clothes, hair colour, all the accessory styles) */
+  kindsOf(tabId) { const t = TABS.find((x) => x.id === tabId); return this.api.profile().avatar === 'hero' && HERO_ONLY_KINDS[tabId] ? HERO_ONLY_KINDS[tabId] : t.kinds; }
   draw() {
     const p = this.api.profile(), w = wardrobe(p), tab = TABS.find((t) => t.id === this.tab), K = KINDS[this.kind], vals = K.vals || COLOR_NAMES, owned = new Set(w.owned);
-    const kindBtn = (k) => `<button class="k${k === this.kind ? ' on' : ''}" data-a="kind" data-v="${k}"><i>${KINDS[k].icon}</i>${k === 'hairstyle' ? 'hair style' : k === 'haircolor' ? 'hair colour' : KINDS[k].en}<br><small>${KINDS[k].vi}</small></button>`;
+    const kindBtn = (k) => `<button class="k${k === typeOf(this.kind) ? ' on' : ''}" data-a="kind" data-v="${k}"><i>${KINDS[k].icon}</i>${k === 'hairstyle' ? 'hair style' : k === 'haircolor' ? 'hair colour' : KINDS[k].en}<br><small>${KINDS[k].vi}</small></button>`;
     const valBtn = (c) => { const id = itemId(this.kind, c), cls = `${id === this.sel ? ' on' : ''}${owned.has(id) ? ' own' : ''}`;
       return this.kind === 'hairstyle' ? `<button class="txt${cls}" data-a="pick" data-v="${id}">${c}${owned.has(id) ? ' ✔' : ''}</button>` : `<button class="sw${cls}" data-a="pick" data-v="${id}" title="${c} · ${VAL_VI[c] || ''}" style="background:${hex(c)}"></button>`; };
     const worn = this.orig[K.slot], sel = this.sel && parse(this.sel);
+    // (25/11) the hero has five looks of each accessory (the first one is the older kind): a "style" row under the kinds
+    const styles = p.avatar === 'hero' ? stylesOf(typeOf(this.kind)) : [];
+    const styleRow = styles.length > 1 ? `<h3>Style <small>· kiểu (${styles.length})</small></h3><div class="row">${styles.map((k) => `<button class="k${k === this.kind ? ' on' : ''}" data-a="kind" data-v="${k}"><i>${KINDS[k].icon}</i>${KINDS[k].en}<br><small>${KINDS[k].vi}</small></button>`).join('')}</div>` : '';
     let buy = '<b class="note">Bấm một màu để thử lên người.</b>';
     if (sel) { const own = owned.has(this.sel), cost = priceOf(this.sel);
       buy = `<b>${phrase(this.sel)} <small>(${VAL_VI[sel.color] || ''} · ${KINDS[sel.kind].vi})</small></b><button class="main" data-a="buy">${own ? 'Mặc' : `Mua · ${cost} ●`}</button>`; }
@@ -87,7 +94,8 @@ export class Tailor {
       <div class="say">💬 <b>Mia:</b> ${this.say.en}<br><small>${this.say.vi}</small></div>
       <div class="note">Vàng của con: <b>${p.stats.gold} ●</b></div>
       <div class="row tabs" style="margin-top:6px">${TABS.map((t) => `<button class="${t.id === this.tab ? 'on' : ''}" data-a="tab" data-v="${t.id}">${t.en} <small>· ${t.vi}</small></button>`).join('')}</div>
-      <h3>${tab.en} <small>· ${tab.vi}</small></h3><div class="row">${tab.kinds.map(kindBtn).join('')}</div>
+      <h3>${tab.en} <small>· ${tab.vi}</small></h3><div class="row">${this.kindsOf(tab.id).map(kindBtn).join('')}</div>
+      ${styleRow}
       <h3>${K.icon} ${this.kind === 'hairstyle' ? 'Hair style' : this.kind === 'haircolor' ? 'Hair colour' : K.en} <small>· ${K.vi} · ${priceOf(itemId(this.kind, vals[0]))} ●${K.vals && K.vals.includes('gold') ? ' (gold ×2, silver ×1,5)' : ''}</small></h3>
       <div class="row">${vals.map(valBtn).join('')}</div>
       ${worn ? `<div class="note" style="margin-top:6px">Đang mặc: ${phrase(worn)} <button data-a="off" data-v="${worn}">Cởi</button></div>` : ''}

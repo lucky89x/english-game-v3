@@ -31,6 +31,7 @@ import { Pet } from './game/pet.js';
 import * as PETS from './core/pet.js';
 import { outfitParts } from './game/outfit.js';
 import { tintBody, tintAccessory, setHairStyle, setClothes, setGoggles, CLOTH, setPattern, setBoots } from './game/tint.js';
+import { tintHero } from './game/herotint.js';
 import { faceMaps, tintSkin, lookOf } from './game/faces.js';
 import * as Saga from './core/saga.js';
 import { Creator } from './ui/creator.js';
@@ -550,7 +551,7 @@ function digHere() {
   const x = player.pos.x, z = player.pos.z;
   if (!TR.isGoal(m, x, z)) { const w = TR.warmth(TR.dist(m, x, z)); ui.dialogue([{ who: 'Ngọc', en: `Nothing here… ${w.en}`, vi: w.vi }]); return; }
   const t = tierOf(profile.stats.level), r = TR.reward(t); TR.solved(profile);
-  const all = WR.allItems(), fresh = all.filter(([k, c]) => !WR.wardrobe(profile).owned.includes(WR.itemId(k, c))), [k, c] = (fresh.length ? fresh : all)[Math.floor(Math.random() * (fresh.length || all.length))];
+  const all = WR.allItems().filter(([k]) => !WR.heroOnly(k) || profile.avatar === 'hero'), fresh = all.filter(([k, c]) => !WR.wardrobe(profile).owned.includes(WR.itemId(k, c))), [k, c] = (fresh.length ? fresh : all)[Math.floor(Math.random() * (fresh.length || all.length))];
   const isNew = WR.unlock(profile, k, c); profile.stats.gold += r.gold; track('treasure'); sfx('fanfare'); save(); refresh();
   const gx = m.goal.x, gz = m.goal.z, gy = L.groundHeight(gx, gz);
   const mound = new THREE.Mesh(new THREE.SphereGeometry(0.7, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0x6a4a2a, roughness: 1 })); mound.position.set(gx, gy, gz); scene.add(mound); digMeshes.push(mound);
@@ -921,7 +922,10 @@ function creatorCamera(on) {
 const NGOC_COLORS = { hair: '#8c4a22', top: '#f4e9d2', bottom: '#cfb487' };
 const ACC_BONE = { hat: /^head$/, bow: /^head$/, headband: /^head$/, glasses: /^head$/, scarf: /^neck$/, bag: /^chest$/, bracelet: /^hand.?L$/, necklace: /^neck$/, earrings: /^head$/, tiara: /^head$/, hairclip: /^head$/ };
 const PROC_ONLY = new Set();      // kinds drawn only from outfit.js shapes (the jewellery now has Blender files; the shapes are the fallback when a file is missing)
-const JEWEL = new Set(['necklace', 'earrings', 'tiara', 'hairclip']);
+const JEWEL = new Set(['necklace', 'earrings', 'tiara', 'hairclip']);      // by accessory type (WR.typeOf)
+/** (25/11) The styles drawn for the hero (WR.STYLES) are in her own coordinates: no HERO_FIT. The first bracelet has its own hero file, and on her it hangs on the forearm (the hand turns more). */
+const heroFile = (kind) => (avatarKind === 'hero' && kind === 'bracelet' ? 'bracelet_hero' : kind);
+const accBone = (kind) => (avatarKind === 'hero' && WR.typeOf(kind) === 'bracelet' ? /^forearm.?L$/ : ACC_BONE[WR.typeOf(kind)]);
 /** (25/11) The accessories (acc_*_v01.glb) are placed at fixed spots made for Ngọc; the Tripo hero's head is higher and bigger, so for her the piece is
  *  raised `dy` and scaled `s` about the point (py, pz). Tuned by eye (tests/hero_wardrobe.mjs); `globalThis.__heroFit` overrides it for tuning. */
 const HERO_FIT = {
@@ -952,12 +956,17 @@ function applyLook() {
   for (const o of lookShown) o.removeFromParent(); lookShown = [];
   const root = player.root, bone = (re) => { let b = null; root.traverse((o) => { if (!b && o.isBone && re.test(o.name)) b = o; }); return b; };
   const worn = WR.wardrobe(profile).worn, val = (slot) => { const it = worn[slot] && WR.parse(worn[slot]); return it ? it.color : null; }, paint = (n, d) => (n && (WCOL[n] || WR.JEWEL_HEX[n])) || d;
+  const kindOf0 = (slot) => { const it = worn[slot] && WR.parse(worn[slot]); return it ? it.kind : null; };
   const look = lookOf(profile); tintSkin(root, look.skin);
   if (profile.look) { const want = look.face + '|' + look.skin; if (faceShown !== want) { faceShown = want; faceMaps(look.face, look.skin).then((m) => { if (faceShown === want) player.setFaces(m); }, (e) => console.warn(e.message)); } }
   else if (faceShown) { faceShown = ''; player.setFaces(player.firstFaces); }
   const dress = val('body');
   tintBody(root, { hair: paint(val('haircolor'), NGOC_COLORS.hair), top: paint(dress || val('top'), NGOC_COLORS.top), bottom: paint(dress || val('bottom'), NGOC_COLORS.bottom) });
   setHairStyle(root, val('style') || 'short');
+  if (avatarKind === 'hero') {      // (25/11) the hero's clothes and hair are painted textures: recoloured in the shader (game/herotint.js)
+    const hc = (slot) => (val(slot) ? paint(val(slot)) : null), tp = hc('body') || hc('top');
+    tintHero(root, { top: tp, bottom: hc('body') || hc('bottom'), sleeves: tp, boots: kindOf0('feet') === 'boots' ? hc('feet') : null, hair: hc('haircolor') });
+  }
   const kindOf = (slot) => { const it = worn[slot] && WR.parse(worn[slot]); return it ? it.kind : null; };
   const baseK = (slot) => WR.baseOf(kindOf(slot));
   setClothes(root, { top: CLOTH.top[baseK('top')], bottom: CLOTH.bottom[baseK('bottom')], body: CLOTH.body[baseK('body')] });
@@ -968,27 +977,28 @@ function applyLook() {
     const feet = kindOf('feet'), skinCol = (() => { let c = null; root.traverse((o) => { if (!c && o.isMesh && o.material && o.material.name === 'ngoc_skin') c = o.material.color; }); return c; })();
     setBoots(root, feet === 'boots' || feet === 'hightops' ? 'colour' : feet === 'sandals' || feet === 'flats' ? 'skin' : '', paint(val('feet'), '#8a5a30'), skinCol);
   }
-  setGoggles(root, !['hat', 'tiara'].includes(kindOf('head')) && !(avatarKind === 'hero' && kindOf('face')));
+  setGoggles(root, !['hat', 'tiara'].includes(WR.typeOf(kindOf('head'))) && !(avatarKind === 'hero' && (kindOf('face') || kindOf('hair'))));
   syncOutlines(root);
   let skinned = null; root.traverse((o) => { if (!skinned && o.isSkinnedMesh) skinned = o; });
-  const hang = (obj, b, kind) => { const i = skinned ? skinned.skeleton.bones.indexOf(b) : -1; if (i >= 0) { obj.matrix.copy(skinned.skeleton.boneInverses[i]); const f = avatarKind === 'hero' && heroFit(kind); if (f) { const sz = f.sz || f.s, S = new THREE.Matrix4().makeScale(f.s, f.s, sz), T = new THREE.Matrix4().makeTranslation(0, f.dy + (1 - f.s) * f.py, (f.dz || 0) + (1 - sz) * f.pz); obj.matrix.multiply(T).multiply(S); } obj.matrix.decompose(obj.position, obj.quaternion, obj.scale); } b.add(obj); lookShown.push(obj); };
+  const hang = (obj, b, kind) => { const i = skinned ? skinned.skeleton.bones.indexOf(b) : -1; if (i >= 0) { obj.matrix.copy(skinned.skeleton.boneInverses[i]); const f = avatarKind === 'hero' && !WR.heroOnly(kind) && kind !== 'bracelet' && heroFit(kind); if (f) { const sz = f.sz || f.s, S = new THREE.Matrix4().makeScale(f.s, f.s, sz), T = new THREE.Matrix4().makeTranslation(0, f.dy + (1 - f.s) * f.py, (f.dz || 0) + (1 - sz) * f.pz); obj.matrix.multiply(T).multiply(S); } obj.matrix.decompose(obj.position, obj.quaternion, obj.scale); } b.add(obj); lookShown.push(obj); };
   for (const id of Object.values(worn)) {
     const it = id && WR.parse(id); if (!it) continue;
     if (PROC_ONLY.has(it.kind)) { for (const part of outfitParts(it.kind, it.color)) { const b = bone(part.bone); if (b) { b.add(part.obj); lookShown.push(part.obj); } } continue; }
     if (it.kind === 'boots') continue;      // (21/11) the body's own boots, recoloured above
     const shoeLike = { hightops: [1.12, 1.05, 1.08], flats: [1.0, 0.55, 1.0], sandals: [1.04, 0.3, 1.04] }[it.kind];      // the sneaker file, reshaped
-    if (!ACC_BONE[it.kind] && !['shoes'].includes(it.kind) && !shoeLike) continue;
-    const src = accScene[shoeLike ? 'shoes' : it.kind];
+    if (WR.heroOnly(it.kind) && avatarKind !== 'hero') continue;      // the styles of the hero are not drawn for Ngọc
+    if (!accBone(it.kind) && !['shoes'].includes(it.kind) && !shoeLike) continue;
+    const fileKey = heroFile(it.kind), src = accScene[shoeLike ? 'shoes' : fileKey];
     if (shoeLike && !src) continue;
     if (src) {
       const clone = src.clone(true);
-      if (JEWEL.has(it.kind)) { const metal = WR.JEWEL_HEX[it.color]; tintAccessory(clone, metal || WR.JEWEL_HEX.gold, metal ? new THREE.Color(metal).multiplyScalar(0.8).getStyle() : (WCOL[it.color] || '#ffffff')); } else tintAccessory(clone, WCOL[it.color] || '#ffffff');
-      for (const c of [...clone.children]) { const side = /_([LR])$/.exec(c.name); const b = bone(it.kind === 'shoes' || shoeLike ? new RegExp(`^foot.?${side ? side[1] : 'L'}$`) : ACC_BONE[it.kind]); if (b) { c.removeFromParent(); hang(c, b, it.kind); if (shoeLike) { const sc = new THREE.Group(); c.parent.add(sc); sc.position.copy(c.position); sc.quaternion.copy(c.quaternion); c.position.set(0, 0, 0); c.quaternion.identity(); sc.add(c); sc.scale.set(...shoeLike); lookShown.push(sc); } } }
+      if (JEWEL.has(WR.typeOf(it.kind))) { const metal = WR.JEWEL_HEX[it.color]; tintAccessory(clone, metal || WR.JEWEL_HEX.gold, metal ? new THREE.Color(metal).multiplyScalar(0.8).getStyle() : (WCOL[it.color] || '#ffffff')); } else tintAccessory(clone, WCOL[it.color] || '#ffffff');
+      for (const c of [...clone.children]) { const side = /_([LR])$/.exec(c.name); const b = bone(it.kind === 'shoes' || shoeLike ? new RegExp(`^foot.?${side ? side[1] : 'L'}$`) : accBone(it.kind)); if (b) { c.removeFromParent(); hang(c, b, it.kind); if (shoeLike) { const sc = new THREE.Group(); c.parent.add(sc); sc.position.copy(c.position); sc.quaternion.copy(c.quaternion); c.position.set(0, 0, 0); c.quaternion.identity(); sc.add(c); sc.scale.set(...shoeLike); lookShown.push(sc); } } }
     } else if (src === undefined) {
-      accScene[it.kind] = null;
-      staticModel(`acc_${it.kind}_v01`).then((m) => { accScene[it.kind] = m; applyLook(); }, () => {});
-      for (const part of outfitParts(it.kind, it.color)) { const b = bone(part.bone); if (b) { b.add(part.obj); lookShown.push(part.obj); } }      // shapes until the file arrives
-    } else for (const part of outfitParts(it.kind, it.color)) { const b = bone(part.bone); if (b) { b.add(part.obj); lookShown.push(part.obj); } }
+      accScene[fileKey] = null;
+      staticModel(`acc_${fileKey}_v01`).then((m) => { accScene[fileKey] = m; applyLook(); }, () => {});
+      if (!WR.heroOnly(it.kind)) for (const part of outfitParts(it.kind, it.color)) { const b = bone(part.bone); if (b) { b.add(part.obj); lookShown.push(part.obj); } }      // shapes until the file arrives
+    } else if (!WR.heroOnly(it.kind)) for (const part of outfitParts(it.kind, it.color)) { const b = bone(part.bone); if (b) { b.add(part.obj); lookShown.push(part.obj); } }
   }
 }
 /** Pieces won at the Boutique or the Salon go to the wardrobe. */

@@ -1135,3 +1135,16 @@ test('outer ring cottages (harbour, forest): on dry land, apart from each other,
     });
   }
 });
+
+// (25/11) the hero's accessory styles: five looks per type, each a Blender file, priced, and wearable
+import { STYLES as HSTYLES, stylesOf as hstylesOf, typeOf as htypeOf, heroOnly as hheroOnly, KINDS as HKINDS, PRICE as HPRICE, parse as hparse } from '../src/core/wardrobe.js';
+import { existsSync as hexists } from 'node:fs';
+test('hero accessory styles: five per type, files, prices', () => {
+  const types = Object.keys(HSTYLES);
+  assert.equal(types.length, 11);
+  for (const t of types) {
+    assert.equal(hstylesOf(t).length, 5, t);
+    for (const k of hstylesOf(t)) { assert.equal(htypeOf(k), t); assert.ok(HPRICE[k] > 0, k); assert.ok(hparse(`${k}:${HKINDS[k].vals ? 'gold' : 'red'}`), k); if (k !== t) assert.ok(hheroOnly(k)); }
+  }
+  for (const k of Object.values(HSTYLES).flat().map((x) => x[0]).concat(['bracelet_hero'])) assert.ok(hexists(new URL(`../assets/models/acc_${k}_v01.glb`, import.meta.url)), `file for ${k}`);
+});
