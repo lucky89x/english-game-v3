@@ -1013,8 +1013,9 @@ test('farm: plant, wait, harvest; hens lay eggs; a piglet fed four times grows a
 test('house walking: walls, the doorway, the stairs between floors, colours and saved furniture places', () => {
   const h = { floors: 2 };
   assert.ok(freeAt(h, 0, -4, 3) && freeAt(h, 0, 0, 0.5) && !freeAt(h, 0, 0, 3), 'the middle wall has a doorway');
+  assert.ok(freeAt(h, 0, -10, 10) && freeAt(h, 0, 15, -11), '25/11: twice as big (32 x 24 m)'); assert.ok(freeAt({ floors: 2, villa: true }, 0, -17, 14) && !freeAt(h, 0, -20, 0), 'the villa is bigger still');
   assert.ok(freeAt(h, 0, -1, 0) && freeAt(h, 0, -4, 0), '24/11: no low wall across the middle any more');
-  assert.ok(!freeAt(h, 0, stairX(0), 0), 'the stair block'); assert.ok(!freeAt(h, 1, stairX(0), 0), 'the stairwell above it'); assert.ok(freeAt(h, 1, stairX(0), -5.1), 'the landing at the top');
+  assert.ok(!freeAt(h, 0, stairX(0), 0), 'the stair block'); assert.ok(STAIR.half * 2 >= 3 && FH / (STAIR.z0 - STAIR.z1) < 0.65, '25/11: wide, gentle stairs'); assert.ok(!freeAt(h, 1, stairX(0), 0), 'the stairwell above it'); assert.ok(freeAt(h, 1, stairX(0), STAIR.z1 - 1.2), 'the landing at the top');
   assert.equal(stairY(0, STAIR.z0), 0); assert.equal(stairY(0, STAIR.z1), FH); assert.ok(Math.abs(stairY(1, (STAIR.z0 + STAIR.z1) / 2) - 1.5 * FH) < 1e-9);
   assert.deepEqual(paintOf({}), { wall: 'cream', floor: 'oak' }); assert.deepEqual(paintOf({ paint: { wall: 'mint', floor: 'bad' } }), { wall: 'mint', floor: 'oak' });
   const hh = {}; setPlace(hh, 'sofa', { f: 1, x: 2.123, z: -1, ry: Math.PI / 2 }); assert.deepEqual(placeOf(hh, 'sofa'), { f: 1, x: 2.12, z: -1, ry: 1.571 }); assert.equal(placeOf(hh, 'bed'), null);

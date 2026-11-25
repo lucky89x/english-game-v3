@@ -53,20 +53,32 @@ export const flowerOffset = (i) => [-4 + (i % 6) * 2.55, 5.4 + Math.floor(i / 6)
 // the colours; one floor at first, the second floor opens when bought (designed in advance)". Pure rules for the walker.
 /** (24/11) "the ceiling is too low: three times higher" (the partitions inside stay as low as they were). */
 export const CEIL_K = 3, FLOOR_BASE = 3.7, PARTITION_H = 3.4;
-export const FLOOR_H = FLOOR_BASE * CEIL_K, HALF_W = 7.9, HALF_D = 5.9;
-/** The stairs of floor f go up along the left wall (even floors) or the right wall (odd floors), front (low) to back (high). */
-export const STAIR = { half: 0.62, z0: 5.2, z1: -4.6 };      // (24/11) the whole depth of the wall, so the higher ceiling does not make the stairs a ladder
-export const stairX = (f) => (f % 2 === 0 ? -7.2 : 7.2);
-export const inStairColumn = (f, x) => Math.abs(x - stairX(f)) < STAIR.half;
+export const FLOOR_H = FLOOR_BASE * CEIL_K;
+// (25/11) "the rooms still feel cramped: twice as big; the villa must really be wider; the stairs are narrow and plain".
+// Each floor of an ordinary house is 32 x 24 m (twice as wide and twice as deep as before), a villa 44 x 32 m. The stairs are 3 m wide and run
+// along a side wall over most of the depth, so they climb gently. Everything below takes the house h (floors, villa) to know its size.
+export const SIZE = { home: { hw: 15.9, hd: 11.9 }, villa: { hw: 21.9, hd: 15.9 } };
+export const dims = (h) => (h && h.villa ? SIZE.villa : SIZE.home);
+export const HALF_W = SIZE.home.hw, HALF_D = SIZE.home.hd;      // the ordinary house (older callers)
+export const DOOR_HALF = 1.7;      // the doorway in the middle wall
+export const STAIR_HALF = 1.5;
+/** The stairs of floor f: front (low, z0) to back (high, z1), along the left wall (even floors) or the right wall (odd floors). */
+export const stairOf = (h) => { const { hd } = dims(h); return { half: STAIR_HALF, z0: hd - 1.8, z1: -hd + 2.8 }; };
+export const STAIR = stairOf({});
+export const stairX = (f, h) => (f % 2 === 0 ? -1 : 1) * (dims(h).hw - STAIR_HALF - 0.25);
+export const inStairColumn = (f, x, h) => Math.abs(x - stairX(f, h)) < STAIR_HALF;
 /** Height on the stairs of floor f at z (z0 = the floor, z1 = the floor above). */
-export const stairY = (f, z) => (f + Math.max(0, Math.min(1, (STAIR.z0 - z) / (STAIR.z0 - STAIR.z1)))) * FLOOR_H;
-/** True when a body of radius r can stand at (x, z) on floor f: inside the walls, not in a partition, not on this floor's
- *  stair block, not over the stairwell of the floor below. The front side (z > 5.9) is the open doll's-house edge. */
+export const stairY = (f, z, h) => { const s = stairOf(h); return (f + Math.max(0, Math.min(1, (s.z0 - z) / (s.z0 - s.z1)))) * FLOOR_H; };
+/** The four room centres of a floor (back-left, back-right, front-left, front-right). */
+export const cellsOf = (h) => { const { hw, hd } = dims(h); return [[-hw / 2, -hd / 2], [hw / 2, -hd / 2], [-hw / 2, hd / 2], [hw / 2, hd / 2]]; };
+/** True when a body of radius r can stand at (x, z) on floor f: inside the walls, not in the middle wall, not on this floor's
+ *  stair block, not over the stairwell of the floor below. The front side (z > hd) is the open doll's-house edge. */
 export function freeAt(h, f, x, z, r = 0.3) {
-  if (Math.abs(x) > HALF_W - r || z < -HALF_D + r || z > HALF_D - r) return false;
-  if (Math.abs(x) < 0.08 + r && Math.abs(z) > 1.2 - r) return false;      // the middle wall, with a doorway
-  if (f < h.floors - 1 && Math.abs(x - stairX(f)) < STAIR.half + r && z > STAIR.z1 - r && z < STAIR.z0) return false;      // the stair block
-  if (f > 0 && Math.abs(x - stairX(f - 1)) < 0.8 + r && z > STAIR.z1 && z < STAIR.z0 - 0.06 + r) return false;      // the stairwell from below
+  const { hw, hd } = dims(h), s = stairOf(h);
+  if (Math.abs(x) > hw - r || z < -hd + r || z > hd - r) return false;
+  if (Math.abs(x) < 0.08 + r && Math.abs(z) > DOOR_HALF - r) return false;      // the middle wall, with a doorway
+  if (f < (h.floors || 1) - 1 && Math.abs(x - stairX(f, h)) < STAIR_HALF + r && z > s.z1 - r && z < s.z0) return false;      // the stair block
+  if (f > 0 && Math.abs(x - stairX(f - 1, h)) < STAIR_HALF + 0.2 + r && z > s.z1 && z < s.z0 - 0.06 + r) return false;      // the stairwell from below
   return true;
 }
 /** Colours the child can paint the walls and floors with. */

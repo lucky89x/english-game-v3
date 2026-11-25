@@ -6,15 +6,14 @@
 // Rules (walls, stairs, colours, saved places) are in core/house.js.
 import * as THREE from 'three';
 import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
-import { GROUPS, floorPlan, FLOOR_H, STAIR, stairX, inStairColumn, stairY, freeAt, placeOf } from '../core/house.js';
+import { GROUPS, floorPlan, FLOOR_H, stairOf, stairX, inStairColumn, stairY, freeAt, placeOf, dims, cellsOf } from '../core/house.js';
 import { houseFloor, homeThings, compassPedestal } from './interior.js';
 
-const CELLS = [[-4, -2.9], [4, -2.9], [-4, 3.1], [4, 3.1]];
 const WALL_ITEMS = new Set(['clock', 'picture', 'violin', 'mirror']);      // hung on a wall: they stay where they are
 
 /** opts: { house, items, model, pieces, avatar: { root (to clone), clips }, editable, onPlace(id, at), hint(text) } */
 export function buildHomeWalk(opts) {
-  const h = { floors: 1, villa: false, garden: 0, ...(opts.house || {}) }, items = opts.items || [], plan = floorPlan(h);
+  const h = { floors: 1, villa: false, garden: 0, ...(opts.house || {}) }, items = opts.items || [], plan = floorPlan(h), CELLS = cellsOf(h), { hw, hd } = dims(h), STAIR = stairOf(h);
   const scene = new THREE.Scene(), g = new THREE.Group(), lights = []; scene.add(g);
   scene.background = new THREE.Color(0x2a1a10);
   scene.add(new THREE.HemisphereLight(0xffffff, 0x6a5a48, 1.35));
@@ -22,7 +21,7 @@ export function buildHomeWalk(opts) {
   const floors = [], pieces = [];
   for (let f = 0; f < h.floors; f++) floors.push(houseFloor(g, f, h, lights));
   // a doormat with the way out at the open front of the ground floor
-  { const mat = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 1.0), new THREE.MeshStandardMaterial({ color: 0x8a3a2a, roughness: 1 })); mat.rotation.x = -Math.PI / 2; mat.position.set(-2.2, 0.05, 5.2); floors[0].add(mat); }
+  { const mat = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 1.0), new THREE.MeshStandardMaterial({ color: 0x8a3a2a, roughness: 1 })); mat.rotation.x = -Math.PI / 2; mat.position.set(-hw / 2, 0.05, hd - 0.7); floors[0].add(mat); }
   /** One piece of furniture as its own group, centred on its footprint, so it can be moved and turned. */
   const makePiece = (id, f, cx, cz) => {
     const tmp = new THREE.Group(); homeThings(tmp, [id], lights, opts.model); if (!tmp.children.length) return null;
@@ -44,7 +43,7 @@ export function buildHomeWalk(opts) {
   scene.add(av); const mixer = new THREE.AnimationMixer(av), acts = {};
   for (const c of (opts.avatar && opts.avatar.clips) || []) acts[c.name] = mixer.clipAction(c);
   let cur = ''; const play = (n) => { if (cur === n || !acts[n]) return; acts[n].reset().play(); if (acts[cur]) acts[cur].crossFadeTo(acts[n], 0.2, false); cur = n; }; play('Idle');
-  const me = { f: 0, x: -2.2, z: 4.4, y: 0, stair: -1, yaw: Math.PI, route: null };      // just inside, on the doormat of the front-left room
+  const me = { f: 0, x: -hw / 2, z: hd - 1.6, y: 0, stair: -1, yaw: Math.PI, route: null };      // just inside, on the doormat of the front-left room
   const camera = new THREE.PerspectiveCamera(52, 1, 0.1, 90), camAt = new THREE.Vector3(0, 3, 12), look = new THREE.Vector3();
   let t = 0, editing = false, held = null, heldWas = null, hover = null, onOff = '';
   // ---------------------------------------------------------------- walking
@@ -58,14 +57,14 @@ export function buildHomeWalk(opts) {
   function step(dx, dz) {
     if (!dx && !dz) return false;
     if (me.stair >= 0) {      // on the stairs: along them only; off at the bottom (this floor) or the top (the floor above)
-      const s = me.stair, nx = Math.max(stairX(s) - STAIR.half + 0.25, Math.min(stairX(s) + STAIR.half - 0.25, me.x + dx)), nz = me.z + dz;
+      const s = me.stair, nx = Math.max(stairX(s, h) - STAIR.half + 0.3, Math.min(stairX(s, h) + STAIR.half - 0.3, me.x + dx)), nz = me.z + dz;
       if (nz > STAIR.z0 + 0.02) { if (freeAt(h, s, nx, nz, 0.2)) { me.stair = -1; me.f = s; me.x = nx; me.z = nz; me.y = s * FLOOR_H; } return true; }
       if (nz < STAIR.z1) { me.stair = -1; me.f = s + 1; me.x = nx; me.z = nz; me.y = (s + 1) * FLOOR_H; return true; }
-      me.x = nx; me.z = nz; me.y = stairY(s, nz); return true;
+      me.x = nx; me.z = nz; me.y = stairY(s, nz, h); return true;
     }
     const nx = me.x + dx, nz = me.z + dz, f = me.f;
-    if (f < h.floors - 1 && inStairColumn(f, nx) && me.z >= STAIR.z0 - 0.05 && nz < STAIR.z0) { me.stair = f; me.x = nx; me.z = nz; me.y = stairY(f, nz); return true; }      // onto the stairs from the bottom
-    if (f > 0 && inStairColumn(f - 1, nx) && me.z <= STAIR.z1 + 0.05 && nz > STAIR.z1) { me.stair = f - 1; me.f = f - 1; me.x = nx; me.z = nz; me.y = stairY(f - 1, nz); return true; }      // down from the top
+    if (f < h.floors - 1 && inStairColumn(f, nx, h) && me.z >= STAIR.z0 - 0.05 && nz < STAIR.z0) { me.stair = f; me.x = nx; me.z = nz; me.y = stairY(f, nz, h); return true; }      // onto the stairs from the bottom
+    if (f > 0 && inStairColumn(f - 1, nx, h) && me.z <= STAIR.z1 + 0.05 && nz > STAIR.z1) { me.stair = f - 1; me.f = f - 1; me.x = nx; me.z = nz; me.y = stairY(f - 1, nz, h); return true; }      // down from the top
     if (canStand(f, nx, nz)) { me.x = nx; me.z = nz; return true; }
     if (canStand(f, nx, me.z)) { me.x = nx; return true; }
     if (canStand(f, me.x, nz)) { me.z = nz; return true; }
@@ -113,11 +112,15 @@ export function buildHomeWalk(opts) {
       const top = me.stair >= 0 ? (me.y - me.stair * FLOOR_H > FLOOR_H * 0.65 ? me.stair + 1 : me.stair) : me.f;
       floors.forEach((fl, i) => { fl.visible = i <= top; });
       // the camera: from the open front, a little above, following the hero
-      const pit = Math.max(-0.7, Math.min(1.45, ctl.pitch === undefined ? 0.5 : ctl.pitch)), dist = Math.max(2.4, Math.min(11, (ctl.dist || 9.5) * 0.62)), base = Math.floor((me.y + 0.01) / FLOOR_H) * FLOOR_H;
-      const want = new THREE.Vector3(me.x + Math.sin(yaw) * Math.cos(pit) * dist, me.y + 1.1 + Math.sin(pit) * dist, me.z + Math.cos(yaw) * Math.cos(pit) * dist);
-      want.x = Math.max(-7.5, Math.min(7.5, want.x)); want.z = Math.max(-5.4, Math.min(16, want.z)); want.y = Math.max(base + 0.35, Math.min(base + FLOOR_H - 0.6, want.y));      // stays inside the house
-      camAt.lerp(want, Math.min(1, dt * 6)); camera.position.copy(camAt);
-      look.set(me.x, me.y + 1.1, me.z - 0.6); camera.lookAt(look);
+      // (25/11) the camera keeps the direction the child chose and only comes CLOSER when a wall or the ceiling is in the way (it used to be
+      // pushed sideways into the room, which swung the view round wildly in the corners)
+      const pit = Math.max(-0.7, Math.min(1.45, ctl.pitch === undefined ? 0.5 : ctl.pitch)), dist = Math.max(2.4, Math.min(16, (ctl.dist || 9.5) * 0.8)), base = Math.floor((me.y + 0.01) / FLOOR_H) * FLOOR_H;
+      look.set(me.x, me.y + 1.2, me.z);
+      const dir = new THREE.Vector3(Math.sin(yaw) * Math.cos(pit), Math.sin(pit), Math.cos(yaw) * Math.cos(pit)).normalize();
+      const lim = [[-hw + 0.45, hw - 0.45], [base + 0.4, base + FLOOR_H - 0.7], [-hd + 0.45, hd + 14]];
+      let tMax = dist; ['x', 'y', 'z'].forEach((k, i) => { const d = dir[k], o = look[k]; if (Math.abs(d) < 1e-4) return; const tb = ((d > 0 ? lim[i][1] : lim[i][0]) - o) / d; if (tb < tMax) tMax = Math.max(0.9, tb); });
+      const want = look.clone().addScaledVector(dir, tMax);
+      camAt.lerp(want, Math.min(1, dt * 8)); camera.position.copy(camAt); camera.lookAt(look);
       // arrange mode: the piece in hand follows the mouse on its floor
       if (editing && held && ctl.mouse) { const at = floorPoint(ctl.mouse, held.userData.f); if (at) { held.position.x = Math.round(at.x * 4) / 4; held.position.z = Math.round(at.z * 4) / 4; held.position.y = 0.04 + Math.sin(t * 6) * 0.03; } }
       if (editing && !held && ctl.mouse) { const p = pieceAt(ctl.mouse); if (p !== hover) { if (hover) glow(hover, false); hover = p && !p.userData.wall && !p.userData.fixed ? p : null; if (hover) glow(hover, true); } }

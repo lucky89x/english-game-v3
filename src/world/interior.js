@@ -3,7 +3,7 @@
 // built from simple shapes in the game's warm palette: plank floor, panelled walls, beams, glowing windows and
 // lanterns, a rug, and furniture for each house. The camera drifts slowly so the room feels alive.
 import * as THREE from 'three';
-import { GROUPS, floorPlan, paintOf, WALL_COLORS, FLOOR_COLORS, FLOOR_H, PARTITION_H, STAIR } from '../core/house.js';
+import { GROUPS, floorPlan, paintOf, WALL_COLORS, FLOOR_COLORS, FLOOR_H, dims, stairOf, stairX, STAIR_HALF, DOOR_HALF, cellsOf } from '../core/house.js';
 import { buildHomeWalk } from './homewalk.js';
 
 const M = (color, rough = 0.8, extra = {}) => new THREE.MeshStandardMaterial({ color, roughness: rough, ...extra });
@@ -104,47 +104,67 @@ export function compassPedestal(g, pieces, lights) {
 }
 
 
-// ---------------------------------------------------------------- the child's house (20/11): 16 x 12 m per floor (four times the old room),
-// up to three floors of the same size joined by stairs, four rooms on each floor. Open towards the camera like a doll's house.
+// ---------------------------------------------------------------- the child's house (20/11; 25/11 twice as big, the villa bigger still)
+// Up to three floors joined by wide stairs, four rooms on each floor, open towards the camera like a doll's house. Sizes: core/house.js dims().
 export function houseFloor(g, f, h, lights) {
-  const y0 = f * FLOOR_H, W = 16, D = 12, villa = !!h.villa, top = f === h.floors - 1, WH = FLOOR_H - 0.3, CY = FLOOR_H - 0.15, PH = PARTITION_H;      // (24/11) WH: the outer walls reach the (three times higher) ceiling, PH: the partitions stay low
+  const { hw, hd } = dims(h), W = hw * 2, D = hd * 2, S = stairOf(h);
+  const y0 = f * FLOOR_H, villa = !!h.villa, top = f === h.floors - 1, WH = FLOOR_H - 0.3, CY = FLOOR_H - 0.15;      // WH: the outer walls reach the high ceiling
   const pt = paintOf(h), fc = h.paint && h.paint.floor ? FLOOR_COLORS[pt.floor].hex : villa ? 0xe6dccb : FLOOR_COLORS[pt.floor].hex, shiny = villa || pt.floor === 'marble';      // (21/11) the child's own colours
   const wallCol = h.paint && h.paint.wall ? WALL_COLORS[pt.wall].hex : villa ? 0xf4ecdc : WALL_COLORS[pt.wall].hex, plank = M(fc, shiny ? 0.45 : 0.85), plank2 = M(new THREE.Color(fc).multiplyScalar(0.9).getHex(), shiny ? 0.45 : 0.85);
   const wall = M(wallCol, 0.9), trim = M(villa ? 0xd9b45a : 0x7a4a24, villa ? 0.35 : 0.8, villa ? { metalness: 0.5 } : {}), beam = M(0x5a3416, 0.85), slab = M(0x6a4020, 0.9);
   const fl = new THREE.Group(); fl.position.y = y0; g.add(fl);
-  for (let i = 0; i < 16; i++) box(fl, 1.0, 0.08, D + 0.2, i % 2 ? plank : plank2, -7.5 + i, 0, 0);      // the floor boards
-  box(fl, W, WH, 0.2, wall, 0, WH / 2, -D / 2 - 0.1); box(fl, 0.2, WH, D, wall, -W / 2 - 0.1, WH / 2, 0); box(fl, 0.2, WH, D, wall, W / 2 + 0.1, WH / 2, 0);
-  box(fl, W, 1.0, 0.24, trim, 0, 0.5, -D / 2 + 0.02); box(fl, 0.24, 1.0, D, trim, -W / 2 + 0.02, 0.5, 0); box(fl, 0.24, 1.0, D, trim, W / 2 - 0.02, 0.5, 0);      // wainscot
-  // (24/11) the partition between the two halves now reaches the ceiling, with one doorway; the low brown wall across the middle is gone (it was in the way)
-  const DOOR = 3.1;
-  box(fl, 0.15, WH, 4.8, wall, 0, WH / 2, -3.6); box(fl, 0.15, WH, 4.8, wall, 0, WH / 2, 3.6); box(fl, 0.15, WH - DOOR, 2.4, wall, 0, DOOR + (WH - DOOR) / 2, 0);
-  box(fl, 0.2, 0.18, 2.5, trim, 0, DOOR + 0.04, 0);      // the lintel trim over the doorway
-  // windows (daylight)
-  const glass = M(0xfff2c0, 0.3, { emissive: 0xffe0a0, emissiveIntensity: 0.9 });
-  for (const x of [-6, -2, 2, 6]) { box(fl, 1.5, 1.3, 0.08, glass, x, 2.1, -D / 2 + 0.05); box(fl, 1.65, 0.1, 0.16, trim, x, 1.42, -D / 2 + 0.1); }
-  for (const z of [-3, 3]) for (const sx of [-1, 1]) box(fl, 0.08, 1.3, 1.5, glass, sx * (W / 2 - 0.05), 2.1, z);
-  for (const x of [-6, -2, 2, 6]) box(fl, 1.5, 1.6, 0.08, glass, x, WH * 0.72, -D / 2 + 0.05);      // a second row of tall windows under the high ceiling
-  // the ceiling slab (the next floor's boards) with a stairwell hole on the side of this floor's stairs
-  if (!top) {
-    const left = f % 2 === 0, hx0 = left ? -8 : 6.4, hx1 = left ? -6.4 : 8;
-    box(fl, W - (hx1 - hx0), 0.3, D, slab, left ? (hx1 + 8) / 2 : (-8 + hx0) / 2, CY, 0);
-    const e0 = (D / 2 + STAIR.z1) / 2, e1 = (D / 2 - STAIR.z0) / 2;      // the strips of slab in front of and behind the stairwell, which runs the whole length of the stairs
-    box(fl, hx1 - hx0, 0.3, e0, slab, (hx0 + hx1) / 2, CY, -D / 2 + e0 / 2); box(fl, hx1 - hx0, 0.3, e1, slab, (hx0 + hx1) / 2, CY, D / 2 - e1 / 2);
-    // the stairs: solid steps from the front (low) to the back (high) along the wall, with a handrail
-    const sx = left ? -7.2 : 7.2, wood = M(0xa8743f, 0.85), wood2 = M(0xb98450, 0.85), N = Math.round(FLOOR_H / 0.25), run = (STAIR.z0 - STAIR.z1) / N;
-    for (let i = 0; i < N; i++) { const hgt = (i + 1) * (FLOOR_H / N); box(fl, 1.3, hgt, run, i % 2 ? wood : wood2, sx, hgt / 2, STAIR.z0 - run / 2 - i * run); }
-    const rx = left ? -6.45 : 6.45, span = STAIR.z0 - STAIR.z1;
-    for (let i = 0; i <= N; i += 8) cyl(fl, 0.035, 0.035, 0.9, M(0x3a2410), rx, (i + 1) * (FLOOR_H / N) + 0.45, STAIR.z0 - run / 2 - i * run, 6);
-    const rail = box(fl, 0.06, 0.06, Math.hypot(span, FLOOR_H), M(0x3a2410), rx, FLOOR_H / 2 + 0.9, (STAIR.z0 + STAIR.z1) / 2); rail.rotation.x = Math.atan2(FLOOR_H, span);
+  // the floor boards; (25/11) on an upper floor they leave the stairwell of the floor below open, so the way down can be seen and walked
+  const hole = f > 0 ? { x0: stairX(f - 1, h) - STAIR_HALF - 0.2, x1: stairX(f - 1, h) + STAIR_HALF + 0.2, z0: S.z1, z1: S.z0 } : null;
+  for (let i = 0, n = Math.round(W / 1.2); i < n; i++) {
+    const bw = W / n, x = -hw + bw * (i + 0.5), m = i % 2 ? plank : plank2;
+    if (hole && x + bw / 2 > hole.x0 && x - bw / 2 < hole.x1) { const back = hole.z0 + hd, front = hd - hole.z1; if (back > 0.05) box(fl, bw, 0.08, back, m, x, 0, -hd + back / 2); if (front > 0.05) box(fl, bw, 0.08, front, m, x, 0, hd - front / 2); }
+    else box(fl, bw, 0.08, D + 0.2, m, x, 0, 0);
   }
-  if (top) { box(fl, W + 0.3, 0.2, D + 0.3, slab, 0, CY, 0); for (const x of [-6, -2, 2, 6]) box(fl, 0.25, 0.25, D, beam, x, CY - 0.2, 0); }
-  // a lantern on each room, one real light per floor (more would slow the shaders)
-  for (const cx of [-4, 4]) for (const cz of [-3, 3]) { cyl(fl, 0.01, 0.01, CY - 3.0, M(0x333333), cx, (CY + 3.0) / 2, cz, 4); ball(fl, 0.16, M(0xffd27a, 0.4, { emissive: 0xffb040, emissiveIntensity: 1.6 }), cx, 2.85, cz); }
-  for (const x of [-4, 4]) { const l = new THREE.PointLight(0xfff0dc, 13, 15, 1.4); l.position.set(x, y0 + 2.7, 0); g.add(l); lights.push(l); }      // (21/11) whiter, so the chosen wall colour shows
-  if (villa) {      // stone columns on the open front edge, a golden chandelier
-    for (const x of [-7.7, -3, 3, 7.7]) { cyl(fl, 0.22, 0.26, WH - 0.1, M(0xf0ece4, 0.4), x, (WH - 0.1) / 2, D / 2 - 0.2, 14); cyl(fl, 0.34, 0.34, 0.12, M(0xd9b45a, 0.35, { metalness: 0.5 }), x, WH - 0.06, D / 2 - 0.2, 14); }
-    const ch = new THREE.Group(); ball(ch, 0.28, M(0xffe6a0, 0.3, { emissive: 0xffc860, emissiveIntensity: 1.5 }), 0, 0, 0); for (let i = 0; i < 6; i++) ball(ch, 0.1, M(0xffe6a0, 0.3, { emissive: 0xffc860, emissiveIntensity: 1.5 }), Math.cos(i * 1.05) * 0.5, -0.1, Math.sin(i * 1.05) * 0.5);
-    const chY = Math.min(6, CY - 1.2); cyl(ch, 0.012, 0.012, CY - chY, M(0x333333), 0, (CY - chY) / 2 + 0.2, 0, 4); ch.position.set(0, chY, 0.6); fl.add(ch);
+  if (hole) {      // a balustrade round the stairwell on the upper floor, so nobody steps off the edge by mistake
+    const rail = M(villa ? 0xd9b45a : 0x5a3416, villa ? 0.3 : 0.7, villa ? { metalness: 0.6 } : {}), inner = f % 2 === 1 ? hole.x1 : hole.x0, len = hole.z1 - hole.z0;
+    box(fl, 0.12, 0.1, len, rail, inner, 1.05, (hole.z0 + hole.z1) / 2); for (let z = hole.z0 + 0.6; z < hole.z1 - 2.6; z += 0.9) cyl(fl, 0.04, 0.04, 1.0, rail, inner, 0.5, z, 6);
+  }
+  box(fl, W, WH, 0.2, wall, 0, WH / 2, -hd - 0.1); box(fl, 0.2, WH, D, wall, -hw - 0.1, WH / 2, 0); box(fl, 0.2, WH, D, wall, hw + 0.1, WH / 2, 0);
+  box(fl, W, 1.0, 0.24, trim, 0, 0.5, -hd + 0.02); box(fl, 0.24, 1.0, D, trim, -hw + 0.02, 0.5, 0); box(fl, 0.24, 1.0, D, trim, hw - 0.02, 0.5, 0);      // wainscot
+  // the middle wall reaches the ceiling, with one wide doorway
+  const DOOR = 3.6, side = hd - DOOR_HALF;
+  box(fl, 0.15, WH, side, wall, 0, WH / 2, -hd + side / 2); box(fl, 0.15, WH, side, wall, 0, WH / 2, hd - side / 2); box(fl, 0.15, WH - DOOR, DOOR_HALF * 2, wall, 0, DOOR + (WH - DOOR) / 2, 0);
+  box(fl, 0.2, 0.18, DOOR_HALF * 2 + 0.1, trim, 0, DOOR + 0.04, 0);
+  // windows (daylight), two rows under the high ceiling
+  const glass = M(0xfff2c0, 0.3, { emissive: 0xffe0a0, emissiveIntensity: 0.9 }), nx = Math.round(W / 4);
+  for (let i = 0; i < nx; i++) { const x = -hw + (W / nx) * (i + 0.5); box(fl, 1.6, 1.4, 0.08, glass, x, 2.2, -hd + 0.05); box(fl, 1.75, 0.1, 0.16, trim, x, 1.46, -hd + 0.1); box(fl, 1.6, 1.8, 0.08, glass, x, WH * 0.7, -hd + 0.05); }
+  for (let i = 0, nz = Math.round(D / 5); i < nz; i++) for (const sx of [-1, 1]) { const z = -hd + (D / nz) * (i + 0.5); if (sx === (f % 2 === 0 ? -1 : 1) && z > S.z1 && z < S.z0) continue; box(fl, 0.08, 1.4, 1.6, glass, sx * (hw - 0.05), 2.2, z); }
+  // the ceiling slab (the next floor's underside) with the stairwell open over this floor's stairs
+  const sxS = stairX(f, h), hx0 = sxS - STAIR_HALF - 0.2, hx1 = sxS + STAIR_HALF + 0.2;
+  if (!top) {
+    box(fl, hx0 + hw, 0.3, D, slab, (-hw + hx0) / 2, CY, 0); box(fl, hw - hx1, 0.3, D, slab, (hx1 + hw) / 2, CY, 0);
+    const back = S.z1 + hd, front = hd - S.z0; box(fl, hx1 - hx0, 0.3, back, slab, (hx0 + hx1) / 2, CY, -hd + back / 2); box(fl, hx1 - hx0, 0.3, front, slab, (hx0 + hx1) / 2, CY, hd - front / 2);
+    // (25/11) the stairs: 3 m wide, gentle, with a carpet runner, nosings, a balustrade on both sides and newel posts (gold in a villa)
+    const wood = M(villa ? 0xf0ece4 : 0xa8743f, villa ? 0.35 : 0.8), wood2 = M(villa ? 0xe2dccf : 0xb98450, villa ? 0.35 : 0.8), carpet = M(villa ? 0x8a1f2a : 0xb8463a, 0.95), nose = M(villa ? 0xd9b45a : 0x6a4020, villa ? 0.3 : 0.7, villa ? { metalness: 0.6 } : {});
+    const N = Math.round(FLOOR_H / 0.2), run = (S.z0 - S.z1) / N, wSt = STAIR_HALF * 2;
+    for (let i = 0; i < N; i++) {
+      const hgt = (i + 1) * (FLOOR_H / N), z = S.z0 - run / 2 - i * run;
+      box(fl, wSt, hgt, run, i % 2 ? wood : wood2, sxS, hgt / 2, z); box(fl, wSt * 0.62, 0.02, run + 0.01, carpet, sxS, hgt + 0.01, z); box(fl, wSt, 0.05, 0.06, nose, sxS, hgt - 0.01, z + run / 2);
+    }
+    const railM = M(villa ? 0xd9b45a : 0x3a2410, villa ? 0.3 : 0.7, villa ? { metalness: 0.6 } : {}), span = S.z0 - S.z1, ang = Math.atan2(FLOOR_H, span), L = Math.hypot(span, FLOOR_H);
+    for (const rx of [sxS - STAIR_HALF + 0.08, sxS + STAIR_HALF - 0.08]) {
+      for (let i = 0; i <= N; i += 3) cyl(fl, 0.03, 0.03, 0.95, railM, rx, (i + 1) * (FLOOR_H / N) + 0.47, S.z0 - run / 2 - i * run, 6);
+      const r = box(fl, 0.09, 0.09, L, railM, rx, FLOOR_H / 2 + 0.95, (S.z0 + S.z1) / 2); r.rotation.x = ang;
+      cyl(fl, 0.11, 0.13, 1.25, railM, rx, 0.62, S.z0 - 0.05, 8); ball(fl, 0.13, railM, rx, 1.32, S.z0 - 0.05);      // newel post at the foot
+    }
+  }
+  if (top) { box(fl, W + 0.3, 0.2, D + 0.3, slab, 0, CY, 0); for (let i = 0; i < nx; i++) box(fl, 0.25, 0.25, D, beam, -hw + (W / nx) * (i + 0.5), CY - 0.2, 0); }
+  // a lantern over each room, one real light per half floor (more would slow the shaders)
+  for (const [cx, cz] of cellsOf(h)) { cyl(fl, 0.01, 0.01, CY - 3.0, M(0x333333), cx, (CY + 3.0) / 2, cz, 4); ball(fl, 0.2, M(0xffd27a, 0.4, { emissive: 0xffb040, emissiveIntensity: 1.6 }), cx, 2.85, cz); }
+  for (const x of [-hw / 2, hw / 2]) { const l = new THREE.PointLight(0xfff0dc, 22, hd * 2.6, 1.3); l.position.set(x, y0 + 3.2, 0); g.add(l); lights.push(l); }      // whiter, so the chosen wall colour shows
+  if (villa) {      // stone columns along the open front edge, golden chandeliers
+    for (let i = 0, n = 6; i < n; i++) { const x = -hw + 0.3 + (W - 0.6) * i / (n - 1); cyl(fl, 0.3, 0.36, WH - 0.1, M(0xf0ece4, 0.4), x, (WH - 0.1) / 2, hd - 0.3, 16); cyl(fl, 0.46, 0.46, 0.14, M(0xd9b45a, 0.35, { metalness: 0.5 }), x, WH - 0.07, hd - 0.3, 16); cyl(fl, 0.46, 0.5, 0.2, M(0xd9b45a, 0.35, { metalness: 0.5 }), x, 0.1, hd - 0.3, 16); }
+    for (const cx of [-hw / 2, hw / 2]) {
+      const ch = new THREE.Group(), gl = M(0xffe6a0, 0.3, { emissive: 0xffc860, emissiveIntensity: 1.5 }), gold = M(0xd9b45a, 0.3, { metalness: 0.7 });
+      ball(ch, 0.34, gl, 0, 0, 0); const ring = new THREE.Mesh(new THREE.TorusGeometry(0.75, 0.04, 6, 28), gold); ring.rotation.x = Math.PI / 2; ring.position.y = -0.15; ch.add(ring);
+      for (let i = 0; i < 8; i++) ball(ch, 0.11, gl, Math.cos(i * 0.785) * 0.75, -0.05, Math.sin(i * 0.785) * 0.75);
+      const chY = Math.min(7, CY - 1.4); cyl(ch, 0.015, 0.015, CY - chY, M(0x333333), 0, (CY - chY) / 2 + 0.2, 0, 4); ch.position.set(cx, chY, 0); fl.add(ch);
+    }
   }
   return fl;
 }
@@ -154,7 +174,7 @@ function buildHome(opts) {
   scene.background = new THREE.Color(0x2a1a10);
   scene.add(new THREE.HemisphereLight(0xfff0d0, 0x5a3a20, 1.3));
   const sun = new THREE.DirectionalLight(0xfff0d0, 1.1); sun.position.set(-3, 8, 12); scene.add(sun);
-  const CELLS = [[-4, -2.9], [4, -2.9], [-4, 3.1], [4, 3.1]];
+  const CELLS = cellsOf(h);
   for (let f = 0; f < h.floors; f++) {
     houseFloor(g, f, h, lights);
     plan[f].forEach((room, k) => {
@@ -169,7 +189,7 @@ function buildHome(opts) {
     scene, camera,
     update(dt, aspect) {
       t += dt; if (Math.abs(camera.aspect - aspect) > 1e-3) { camera.aspect = aspect; camera.updateProjectionMatrix(); }
-      camera.position.set(2 + Math.sin(t * 0.15) * 0.8, 4.2 + top * 0.55 + Math.sin(t * 0.2) * 0.1, 19.5 + N * 3.2); camera.lookAt(2.2, top * 0.42 + 0.6, -1);
+      camera.position.set(2 + Math.sin(t * 0.15) * 0.8, 4.2 + top * 0.55 + Math.sin(t * 0.2) * 0.1, dims(h).hd * 1.9 + 8 + N * 3.2); camera.lookAt(2.2, top * 0.42 + 0.6, -1);
       for (const l of lights) if (l.isPointLight && l.userData.base === undefined) l.userData.base = l.intensity;
       for (const l of lights) if (l.isPointLight) l.intensity = (l.userData.base || 6) * (1 + Math.sin(t * 7 + l.position.x) * 0.03);
     },
