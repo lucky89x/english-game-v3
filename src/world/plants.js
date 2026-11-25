@@ -3,6 +3,7 @@
 // (a few draw calls for hundreds of plants). Positions come from a seeded generator of its own, so the older scenery does not move.
 import * as THREE from 'three';
 import * as L from '../core/layout.js';
+import { restyle } from './foliage.js';
 import { NEW_TREES, ORCHARD_TREES, STALLS } from '../core/regions/village.js';
 
 const FILES = ['tree_birch', 'tree_apple', 'bush_red_berries', 'bush_white_flowers', 'grass_daisies', 'grass_buttercups', 'grass_lavender', 'grass_meadow', 'grass_dense', 'fern_lush', 'fern_upright', 'dandelion', 'wild_herb', 'clover_patch',
@@ -14,6 +15,7 @@ export async function buildPlants(load, region = 'village') {
   const V = region === 'village', R = L.REGIONS[region], root = new THREE.Group(); root.name = 'plants-' + region;
   const src = {};
   await Promise.all(FILES.map(async (f) => { try { src[f] = await load(`plants/${f}`); } catch (e) { /* the file is missing: that kind is skipped */ } }));
+  for (const f of Object.keys(src)) restyle(f, src[f]);      // (25/11) soft crowns instead of the pack's paper-leaf cards (world/foliage.js)
   const lists = {}; const rnd = mulberry32(240411);
   const put = (kind, x, z, s = 1, ry = 0, dy = 0) => { if (!src[kind]) return; (lists[kind] || (lists[kind] = [])).push({ x, z, s, ry, dy }); };
   const solids = [...(R.solids || []), ...(R.lateSolids || [])];

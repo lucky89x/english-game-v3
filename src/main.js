@@ -85,7 +85,7 @@ import { initTouch, touchWanted } from './ui/touch.js';
 import { sfx, setSound, soundOn, unlock, setMusic, musicOn, playMusic } from './audio.js';
 import { voiceOn, setVoice, speak, paceOf, nextPace } from './ui/speech.js';
 import { ReadAloud, disable as voiceDisable } from './ui/voice.js';
-import { relaxArms } from './game/relax.js';
+import { relaxArms, thicken, isPerson } from './game/relax.js';
 import { QuestMarks } from './game/marks.js';
 import { keyCode } from './core/keys.js';
 import { WordSpots } from './game/wordspots.js';
@@ -151,7 +151,7 @@ const dayNight = new DayNight({ scene, sky, sun, rim, hemi, sunDir });
 const manager = new THREE.LoadingManager();
 manager.onProgress = (_u, done, total) => { $('loadbar').style.width = Math.round((done / total) * 100) + '%'; };
 const loader = new GLTFLoader(manager), texLoader = new THREE.TextureLoader(manager), modelCache = new Map();
-{ const rawLoad = loader.loadAsync.bind(loader); loader.loadAsync = async (...a) => { const g = await rawLoad(...a); try { relaxArms(g); } catch (e) { /* the model keeps its pose */ } return g; }; }      // (24/11) relaxed arms for every person model (src/game/relax.js)
+{ const rawLoad = loader.loadAsync.bind(loader); loader.loadAsync = async (...a) => { const g = await rawLoad(...a); try { relaxArms(g); if (isPerson(g)) thicken(g); } catch (e) { /* the model keeps its pose */ } return g; }; }      // (24/11) relaxed arms for every person model (src/game/relax.js)
 // Characters from tools/chibi05 (v04+): pieces marked eq_hidden (spare hair styles, clothes) start hidden, and *_tint
 // materials sample a grey palette whose 0.8 base tone stands for the colour in material extras eq_base (0.6038 = 0.8 sRGB in linear).
 const MAX_ANISO = Math.min(16, renderer.capabilities.getMaxAnisotropy());
@@ -1232,7 +1232,7 @@ async function boot() {
   tom = new Npc(tomG, 2.6, 7.6, -0.4); sam = new Npc(samG, 14, 17, 1.2); ben = new Npc(benG, BEN_MARKET.npc[0], BEN_MARKET.npc[1], Math.PI / 2); scene.add(tom.root, sam.root, ben.root);
   pip = new Pip(pipG.scene); scene.add(pip.root);
   const usedFiles = new Set();      // two friends may share a model file (Mia uses Rose's): the second gets its own copy
-  for (const f of Object.values(FRIENDS)) { let g = await gltf(f.file); if (usedFiles.has(f.file)) { const sc = SkeletonUtils.clone(g.scene); sc.traverse((o) => { if (o.isMesh) o.material = o.material.clone(); }); g = { ...g, scene: sc }; } usedFiles.add(f.file); const npc = new Npc(g, ...f.at, ngoc.animations); if (f.tint) tintBody(npc.root, f.tint); scene.add(npc.root); friends.push({ ...f, npc }); }
+  let oldRigClips = null; for (const f of Object.values(FRIENDS)) { let g = await gltf(f.file); if (usedFiles.has(f.file)) { const sc = SkeletonUtils.clone(g.scene); sc.traverse((o) => { if (o.isMesh) o.material = o.material.clone(); }); g = { ...g, scene: sc }; } usedFiles.add(f.file); if (!g.animations.length && !oldRigClips) { try { oldRigClips = (await gltf('chr_ngoc_adventurer_v04')).animations; } catch (e) { oldRigClips = []; } } let bun = false; g.scene.traverse((o) => { if (o.isBone && o.name === 'bun') bun = true; }); const npc = new Npc(g, ...f.at, bun && oldRigClips && oldRigClips.length ? oldRigClips : ngoc.animations); if (f.tint) tintBody(npc.root, f.tint); scene.add(npc.root); friends.push({ ...f, npc }); }      // (25/11) Lily, Rose, Anna are on the OLD skeleton (v04, with a 'bun' bone): Ngọc v05's clips lifted their hips and folded their legs away
   tintBody(player.root, NGOC_COLORS); setHairStyle(player.root, 'short');
   shopWin = new ShopWindow({ profile: () => profile, sfx, track, onClose: leaveRoom, today: () => Review.today(), changed: () => { setSword(); setWear(); save(); refresh(); if (homes) homes.refresh(); } });
   music = new MusicRoom({ profile: () => profile, sfx, track, onClose: leaveRoom, changed: () => { save(); refresh(); } });

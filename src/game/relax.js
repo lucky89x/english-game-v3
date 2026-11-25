@@ -51,3 +51,16 @@ export function relaxArms(gltf, opts = {}) {
   gltf.scene.updateMatrixWorld(true);
   return { arms: arms.length, clips: lowered };
 }
+
+/** (25/11) "Seen from the side the people are flat": the new person models are thin from front to back. Their children go into an inner
+ *  group stretched along the model's own forward axis (+Z), so the whole posed figure (and what hangs on its bones) gets deeper while the
+ *  height and width stay. Skinning stays right: the stretch sits above every bone. Called once per loaded model with arm bones. */
+export const THICK = 1.3;
+export function thicken(gltf, k = THICK) {
+  const s = gltf && gltf.scene; if (!s || s.userData.thick) return false;
+  const inner = new THREE.Group(); inner.name = 'thick'; inner.scale.set(1, 1, k);
+  for (const c of [...s.children]) inner.add(c);
+  s.add(inner); s.userData.thick = k; s.updateMatrixWorld(true); return true;
+}
+/** A person model: it has the two upper-arm bones (monsters, buildings and props do not). */
+export function isPerson(gltf) { let n = 0; gltf && gltf.scene && gltf.scene.traverse((o) => { if (o.isBone && ARM.test(o.name || '')) n++; }); return n >= 2; }
