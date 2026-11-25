@@ -83,6 +83,24 @@ if face_img:
             if m.sum() < 50: continue
             k = want / np.median(px[m][:, :3], 0); px[m, :3] = np.clip(px[m, :3] * k, 0, 1); img.pixels.foreach_set(px.ravel().astype(np.float32)); img.update()
             print('skin matched', o.name, int(m.sum()), 'x', k.round(3))
+# (25/11 "the chest is whiter than the face") the beige suit of the bare body showed above the dress neckline. In this
+# dressed file the suit's chest and shoulder straps (body faces above the waist with suit colour) are painted in the face's
+# skin tone, shading kept; the bare body file keeps its suit.
+if face_img:
+    from PIL import Image, ImageDraw
+    W, H = face_img.size; fp = np.array(face_img.pixels[:]).reshape(H, W, 4)
+    me = hero.data; uvd = me.uv_layers.active.data; mask = Image.new('L', (W, H), 0); dr = ImageDraw.Draw(mask)
+    zs = np.array([v.co.z for v in me.vertices]) / S
+    for poly in me.polygons:
+        if min(zs[i] for i in poly.vertices) < 0.45: continue
+        dr.polygon([(uvd[li].uv[0] * W, uvd[li].uv[1] * H) for li in poly.loop_indices], fill=255)
+    m = np.array(mask.filter(__import__('PIL.ImageFilter', fromlist=['MaxFilter']).MaxFilter(5))) > 0
+    r, g, b = fp[..., 0], fp[..., 1], fp[..., 2]
+    suit = m & (g > 0.7) & (b > 0.48) & (r > 0.9) & (g - b < 0.3) & (b / np.maximum(r, 1e-3) > 0.5)
+    skinpx = skin_of(fp) & ~suit
+    if suit.sum() > 100:
+        k = np.median(fp[skinpx][:, :3], 0) / np.median(fp[suit][:, :3], 0); fp[suit, :3] = np.clip(fp[suit, :3] * k, 0, 1)
+        face_img.pixels.foreach_set(fp.ravel().astype(np.float32)); face_img.update(); print('suit painted as skin', int(suit.sum()), 'x', k.round(3))
 # lighten for the game: base colour only (the normal / metal-rough maps triple the download), parts at 1024 px, body at 2048
 for mat in bpy.data.materials:
     if not mat.use_nodes: continue

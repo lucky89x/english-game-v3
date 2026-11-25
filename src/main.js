@@ -933,6 +933,7 @@ async function swapAvatar(kind) {
     const g = kind === 'hero' ? await gltf('chr_hero_v01') : ngocGltf;
     player.setModel(g); avatarKind = kind;
     if (!outlined.has(player.root)) { outlined.add(player.root); addOutline(player.root, kind === 'hero' ? { thick: 0.005 } : undefined); }
+    if (kind === 'hero' && !player.root.userData.lit) { player.root.userData.lit = true; player.root.traverse((o) => { if (o.isMesh && !o.userData.outline && o.material && o.material.color) o.material.color.setScalar(1.15); }); }      // (25/11) the Tripo textures read darker than the painted world: +15 %
     if (kind === 'ngoc') { tintBody(player.root, NGOC_COLORS); }
     setSword(); setWear();
   } catch (e) { console.warn('avatar', e); } finally { swappingAvatar = false; }
