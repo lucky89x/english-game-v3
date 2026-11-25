@@ -84,8 +84,16 @@ function gardenDecor(h, tier, gh, models) {
 }
 /** (21/11) What grows on a bed: crop and stage (1 seed, 2 sprout, 3 growing, 4 ready to pick), six plants a bed. */
 export const COOP_AT = [8.6, -3.2], PEN_AT = [8.4, 3.4];
-function cropsOf(crop, stage) {
+/** (25/11) The user's crop models (plants pack) for a growing (3) and a ready (4) bed: [file, scale at 3, scale at 4, sink at 3, sink at 4]. Tomato has no model and keeps its shapes. */
+const CROP_MODEL = { corn: [['corn_stalk', 0.45], ['corn_plant_ripe', 0.62]], carrot: [['carrot', 0.75, -0.3], ['carrot', 1.0, -0.2]], cabbage: [['cabbage', 0.9], ['cabbage', 1.45]], pumpkin: [['pumpkin', 0.6], ['pumpkin', 1.1]] };
+export const CROP_FILES = [...new Set(Object.values(CROP_MODEL).flat().map(([f]) => f))];
+function cropsOf(crop, stage, models = {}) {
   const g = new THREE.Group(); if (!stage) return g;
+  const cm = stage >= 3 && CROP_MODEL[crop] && CROP_MODEL[crop][stage - 3], src = cm && models[cm[0]];
+  if (src) {      // six real plants on the bed
+    for (let i = 0; i < 6; i++) { const o = src.clone(true); o.position.set(-0.62 + (i % 3) * 0.62, 0.24 + (cm[2] || 0), i < 3 ? -0.25 : 0.25); o.scale.setScalar(cm[1] * (0.92 + ((i * 37) % 10) / 60)); o.rotation.y = i * 1.9; o.traverse((c) => { if (c.isMesh) c.castShadow = true; }); g.add(o); }
+    return g;
+  }
   const leaf = M(0x5fb83a, 0.8), dark = M(0x3f8a2a, 0.8);
   for (let i = 0; i < 6; i++) {
     const x = -0.62 + (i % 3) * 0.62, z = i < 3 ? -0.25 : 0.25, p = new THREE.Group(); p.position.set(x, 0.24, z); g.add(p);
@@ -138,6 +146,7 @@ export class Homes {
   constructor(api) { this.api = api; this.root = new THREE.Group(); this.root.name = 'homes'; api.scene.add(this.root); this.lots = []; this.key = ''; }
   async build() {
     const { load } = this.api, still = new THREE.Group();
+    this.cropModels = {}; await Promise.all(CROP_FILES.map(async (f) => { try { this.cropModels[f] = await load(`plants/${f}`); } catch (e) { /* missing: that crop keeps its shapes */ } }));      // (25/11)
     const place = async (name, x, z, rot, scale, tint) => {
       const m = await load(name); m.position.set(x, L.REGIONS.village.groundHeight(x, z) - 0.05, z); m.rotation.y = rot; m.scale.setScalar(scale);
       m.traverse((c) => { if (c.isMesh) { c.castShadow = c.receiveShadow = true; if (tint) { c.material = c.material.clone(); c.material.color.multiply(new THREE.Color(...tint)); } } });
@@ -222,7 +231,7 @@ export class Homes {
   syncFarm(force = false, now = Date.now()) {
     for (const lot of this.lots) {
       const p = lot.owner, F = lot.farm; if (!p || !F) continue; const fm = farm(p);
-      F.beds.forEach((grp, i) => { const b = fm.beds[i], st = stageOf(b, now), sig = b ? `${b.crop}:${st}` : ''; if (!force && sig === F.sig[i]) return; F.sig[i] = sig; grp.clear(); grp.add(cropsOf(b && b.crop, st)); });
+      F.beds.forEach((grp, i) => { const b = fm.beds[i], st = stageOf(b, now), sig = b ? `${b.crop}:${st}` : ''; if (!force && sig === F.sig[i]) return; F.sig[i] = sig; grp.clear(); grp.add(cropsOf(b && b.crop, st, this.cropModels)); });
       if (F.coop) { const n = eggsReady(p, now), nest = F.coop.userData.nest; if (nest.userData.n !== n) { nest.userData.n = n; while (nest.children.length > 1) nest.remove(nest.children[1]); for (let k = 0; k < Math.min(n, 8); k++) { const e = new THREE.Mesh(new THREE.SphereGeometry(0.06, 8, 6), M(0xfaf0dc, 0.5)); e.scale.y = 1.3; e.position.set(Math.cos(k * 1.3) * 0.12, 0.17 + Math.floor(k / 5) * 0.06, Math.sin(k * 1.3) * 0.12); nest.add(e); } } }
       if (F.pen) { const pig = F.pen.userData.pig, s = pigSize(fm.pig, now); pig.visible = !!fm.pig; pig.scale.setScalar(s || 0.5); pig.userData.grown = pigGrown(fm.pig, now); }
     }
