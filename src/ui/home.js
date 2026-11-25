@@ -18,6 +18,8 @@ const CSS = `
 #homewin .up { display:flex; gap:8px; align-items:center; background:#fff; border:2px solid #d9b98a; border-radius:10px; padding:5px 8px; margin:5px 0; font-size:13px; } #homewin .up b { font-size:14px; } #homewin .up .t { flex:1; } #homewin .up button:disabled { opacity:.5; cursor:default; }
 #homehint { position:fixed; left:50%; bottom:14px; transform:translateX(-50%); z-index:30; padding:7px 16px; border-radius:20px; background:rgba(40,24,8,.82); color:#fff; font:800 14px system-ui,sans-serif; display:none; pointer-events:none; } #homehint.on { display:block; }
 body.inroom #homewin { background:transparent; justify-content:flex-end; } body.inroom #homewin .book { width:min(560px, 56vw); margin-right:12px; }
+#hometools { position:fixed; right:14px; bottom:60px; z-index:30; display:none; flex-direction:column; gap:6px; } #hometools.on { display:flex; }
+#hometools button { font:800 15px system-ui,sans-serif; min-width:130px; padding:9px 12px; border-radius:12px; border:2px solid #7a4a1a; background:#ffd98a; color:#3a2008; cursor:pointer; box-shadow:0 3px 0 rgba(0,0,0,.25); } #hometools button.hide { display:none; } #hometools button.go { background:#8fe0a0; } #hometools button.no { background:#f6b0a0; }
 `;
 
 export class HomePanel {
@@ -26,6 +28,12 @@ export class HomePanel {
     this.api = api; const st = document.createElement('style'); st.textContent = CSS; document.head.appendChild(st);
     this.el = document.createElement('div'); this.el.id = 'homewin'; this.el.className = 'hidden'; document.body.appendChild(this.el);
     this.hint = document.createElement('div'); this.hint.id = 'homehint'; this.base = 'WASD / bấm chuột: đi lại · L: danh sách, nâng cấp, màu nhà · B: sắp xếp đồ · E: ra ngoài'; this.hint.textContent = this.base; document.body.appendChild(this.hint); this.inside = false;
+    // (25/11) buttons on screen for arranging (mouse and touch): arrange on/off, turn, put down, cancel
+    this.tools = document.createElement('div'); this.tools.id = 'hometools';
+    this.tools.innerHTML = '<button data-t="arrange">🛠 Sắp xếp đồ</button><button data-t="turn">⟲ Xoay 45°</button><button class="go" data-t="drop">✔ Đặt ở đây</button><button class="no" data-t="cancel">✖ Thôi</button>';
+    document.body.appendChild(this.tools);
+    this.tools.addEventListener('pointerdown', (e) => e.stopPropagation()); this.tools.addEventListener('click', (e) => { e.stopPropagation(); const b = e.target.closest('button'); if (!b || !this.api.tool) return; this.api.tool(b.dataset.t); this.syncTools(); });
+    setInterval(() => this.syncTools(), 400);
     this.el.addEventListener('click', (e) => {
       const b = e.target.closest('button'); if ((b && b.dataset.a === 'close') || e.target === this.el) { this.hide(); return; }
       if (b && b.dataset.a === 'exit') { this.close(); return; }
@@ -40,6 +48,12 @@ export class HomePanel {
     });
   }
   get open() { return !this.el.classList.contains('hidden'); }
+  /** Shows the arranging buttons while the owner is inside with the list closed; the turn / put-down buttons only with a piece in hand. */
+  syncTools() {
+    const on = this.inside && this.mine && !this.open, ed = !!(this.api.editing && this.api.editing()), hold = !!(this.api.holding && this.api.holding());
+    this.tools.classList.toggle('on', on); if (!on) return;
+    const [a, t, d, c] = this.tools.children; a.textContent = ed ? '✔ Xong sắp xếp' : '🛠 Sắp xếp đồ'; t.classList.toggle('hide', !hold); d.classList.toggle('hide', !hold); c.classList.toggle('hide', !ed);
+  }
   /** The line at the bottom while inside: the arrange-mode help, or the keys. */
   setHint(t) { this.hint.textContent = t || this.base; }
   /** owner: the profile whose home it is; mine: the child playing now owns it (a visitor only looks). */
@@ -58,7 +72,8 @@ export class HomePanel {
   buyItem(id) {
     if (!this.mine) return; const it = ITEMS[id], r = this.free(() => buy(this.owner, id));
     if (!r.ok) { this.api.sfx('wrong'); this.msg = r.why === 'gold' ? `Chưa đủ vàng: ${it.en} giá ${it.cost} ●.` : r.why === 'level' ? `Cần cấp ${it.level} mới mua ${it.en}.` : 'Con đã có đồ này rồi.'; this.paint(); return; }
-    this.api.sfx('correct'); this.msg = `Đã mua ${it.en} (−${it.cost} ●), đồ tự đặt vào nhà. Phím B để dời chỗ.`; this.api.changed(); if (this.api.rebuild) this.api.rebuild(this.owner); this.paint();
+    this.api.sfx('correct'); this.msg = `Đã mua ${it.en} (−${it.cost} ●). Đồ đang trên tay: di chuột chọn chỗ rồi bấm để đặt.`; this.api.changed(); this.paint();
+    const done = this.api.rebuild ? this.api.rebuild(this.owner) : null; if (it.slot === 'home') Promise.resolve(done).then(() => { this.hide(); if (this.api.pickUp) this.api.pickUp(id); this.syncTools(); });      // (25/11) the new piece is in the hero's hands, ready to be put where the child wants
   }
   /** Admin only: takes a piece of furniture out of the house (no refund), or puts the whole house back to one floor and no garden. */
   takeItem(id) { if (!this.admin) return; const h = home(this.owner); h.items = h.items.filter((x) => x !== id); if (this.owner.house && this.owner.house.place) delete this.owner.house.place[id]; this.msg = `Đã gỡ ${ITEMS[id].en} khỏi nhà.`; this.api.changed(); if (this.api.rebuild) this.api.rebuild(this.owner); this.paint(); }

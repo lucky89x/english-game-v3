@@ -3,7 +3,7 @@
 // built from simple shapes in the game's warm palette: plank floor, panelled walls, beams, glowing windows and
 // lanterns, a rug, and furniture for each house. The camera drifts slowly so the room feels alive.
 import * as THREE from 'three';
-import { GROUPS, floorPlan, paintOf, WALL_COLORS, FLOOR_COLORS, FLOOR_H, dims, stairOf, stairX, STAIR_HALF, DOOR_HALF, cellsOf } from '../core/house.js';
+import { GROUPS, floorPlan, roomOf, paintOf, WALL_COLORS, FLOOR_COLORS, FLOOR_H, dims, stairOf, stairX, STAIR_HALF, DOOR_HALF, cellsOf } from '../core/house.js';
 import { buildHomeWalk } from './homewalk.js';
 
 const M = (color, rough = 0.8, extra = {}) => new THREE.MeshStandardMaterial({ color, roughness: rough, ...extra });
@@ -84,6 +84,38 @@ export function homeThings(g, items, lights, model) {
   if (has('drum') && !put('home_drum', 2.3, 0, 2.0, 0, 0.8)) { cyl(g, 0.38, 0.38, 0.45, M(0xd8342a, 0.4), 2.3, 0.23, 2.0, 20); cyl(g, 0.39, 0.39, 0.02, white, 2.3, 0.46, 2.0, 20); for (const dx of [-0.12, 0.12]) { const st = cyl(g, 0.015, 0.015, 0.45, M(0xe8c070), 2.3 + dx, 0.5, 2.0, 5); st.rotation.z = 1.2 * Math.sign(dx); } }
   if (has('violin') && !put('home_violin', 3.84, 1.1, -1.2, -Math.PI / 2, 1.3)) { const vg = new THREE.Group(), b = M(0x8a3a10, 0.3); const v1 = ball(vg, 0.15, b, 0, 0, 0); v1.scale.z = 0.3; const v2 = ball(vg, 0.12, b, 0, 0.2, 0); v2.scale.z = 0.3; box(vg, 0.04, 0.35, 0.03, M(0x1a1a1a), 0, 0.45, 0);
     vg.position.set(3.86, 1.6, -1.2); vg.rotation.y = -Math.PI / 2; vg.rotation.z = 0.3; g.add(vg); }
+  extraThings(g, items);      // (25/11) the newer pieces
+}
+
+// (25/11) "more kinds of furniture": 22 more pieces drawn from simple shapes, each in its own spot of its room (the child moves them freely).
+const XTRA = {
+  armchair: [-5.5, 1.5, Math.PI / 2, (g) => { const c = M(0xc0504a, 0.95), w = M(0x5a3416); box(g, 1.0, 0.45, 1.0, c, 0, 0.35, 0); box(g, 1.0, 0.8, 0.22, c, 0, 0.75, -0.42); for (const x of [-0.45, 0.45]) box(g, 0.16, 0.6, 1.0, c, x, 0.5, 0); for (const [x, z] of [[-0.4, -0.4], [0.4, -0.4], [-0.4, 0.4], [0.4, 0.4]]) box(g, 0.08, 0.14, 0.08, w, x, 0.07, z); }],
+  coffee_table: [1.8, 0.8, 0, (g) => { const w = M(0x8a5428, 0.6); box(g, 1.3, 0.07, 0.75, w, 0, 0.45, 0); box(g, 1.15, 0.04, 0.6, w, 0, 0.15, 0); for (const [x, z] of [[-0.58, -0.3], [0.58, -0.3], [-0.58, 0.3], [0.58, 0.3]]) box(g, 0.06, 0.45, 0.06, w, x, 0.22, z); ball(g, 0.1, M(0xe8b030, 0.5), 0.3, 0.55, 0); }],
+  tv: [0, -5.3, 0, (g) => { const k = M(0x222428, 0.4); box(g, 2.2, 0.55, 0.5, M(0x6a4020, 0.7), 0, 0.28, 0); box(g, 1.9, 1.1, 0.07, k, 0, 1.25, 0); box(g, 1.75, 0.95, 0.02, M(0x3a7ad8, 0.3, { emissive: 0x2a6ad0, emissiveIntensity: 0.7 }), 0, 1.25, 0.045); box(g, 0.3, 0.2, 0.2, k, 0, 0.62, 0); }],
+  fireplace: [-5.5, -5.4, 0, (g) => { const st = M(0xb8aea0, 0.9); box(g, 2.0, 1.4, 0.6, st, 0, 0.7, 0); box(g, 2.3, 0.12, 0.75, M(0x7a4a24), 0, 1.45, 0.05); box(g, 1.1, 0.8, 0.1, M(0x2a1a10), 0, 0.5, 0.26); box(g, 0.8, 0.35, 0.12, M(0xff8a3a, 0.5, { emissive: 0xff6a20, emissiveIntensity: 1.6 }), 0, 0.3, 0.27); box(g, 0.7, 2.5, 0.5, st, 0, 2.7, -0.05); }],
+  aquarium: [5.5, -5.2, 0, (g) => { box(g, 1.6, 0.8, 0.6, M(0x2a2a30, 0.5), 0, 0.4, 0); box(g, 1.5, 0.75, 0.5, new THREE.MeshStandardMaterial({ color: 0x6ad0f0, roughness: 0.05, transparent: true, opacity: 0.55, emissive: 0x2a8ab0, emissiveIntensity: 0.4 }), 0, 1.2, 0); for (let i = 0; i < 4; i++) { const f = ball(g, 0.06, M([0xff8a1a, 0xffd23c, 0xe8443a, 0xf0f0f0][i], 0.4), -0.5 + i * 0.32, 1.05 + (i % 2) * 0.25, 0.05); f.scale.set(1.6, 1, 0.6); } box(g, 1.5, 0.08, 0.5, M(0xe0c890), 0, 0.86, 0); }],
+  beanbag: [5.3, 2.8, 0, (g) => { const b = ball(g, 0.55, M(0x8a4ad0, 0.95), 0, 0.38, 0); b.scale.set(1.1, 0.7, 1.1); const t = ball(g, 0.35, M(0x8a4ad0, 0.95), 0, 0.62, -0.32); t.scale.set(1.2, 0.8, 0.7); }],
+  statue: [-6.5, 4.2, 0, (g) => { const m = M(0xf2ede4, 0.35); box(g, 0.8, 0.9, 0.8, M(0x9a8a7a, 0.6), 0, 0.45, 0); cyl(g, 0.22, 0.3, 1.1, m, 0, 1.45, 0, 12); ball(g, 0.24, m, 0, 2.2, 0); for (const sx of [-1, 1]) { const a = cyl(g, 0.07, 0.07, 0.7, m, sx * 0.3, 1.6, 0, 8); a.rotation.z = sx * 0.4; } }],
+  vase: [6.5, 4.5, 0, (g) => { cyl(g, 0.16, 0.24, 0.6, M(0x2f6fd0, 0.3), 0, 0.3, 0, 14); for (let i = 0; i < 6; i++) { cyl(g, 0.01, 0.01, 0.5, M(0x3f8a2a), Math.cos(i) * 0.05, 0.8, Math.sin(i) * 0.05, 4); ball(g, 0.07, M([0xf8a0c0, 0xffd23c, 0xffffff][i % 3], 0.6), Math.cos(i) * 0.12, 1.05 + (i % 2) * 0.06, Math.sin(i) * 0.12); } }],
+  palm: [6.6, -3.3, 0, (g) => { cyl(g, 0.3, 0.24, 0.5, M(0xc8643a), 0, 0.25, 0, 12); cyl(g, 0.06, 0.09, 1.6, M(0x8a6a3a), 0, 1.3, 0, 8); for (let i = 0; i < 7; i++) { const l = new THREE.Mesh(new THREE.ConeGeometry(0.16, 1.2, 4), M(0x3f9a3a, 0.8)); l.position.set(Math.cos(i * 0.9) * 0.45, 2.0, Math.sin(i * 0.9) * 0.45); l.rotation.set(Math.sin(i * 0.9) * 1.2, 0, -Math.cos(i * 0.9) * 1.2); g.add(l); } }],
+  fridge: [-2.6, 4.6, Math.PI, (g) => { const w = M(0xeef2f4, 0.35); box(g, 0.9, 2.0, 0.75, w, 0, 1.0, 0); box(g, 0.88, 0.02, 0.02, M(0x9aa0a6), 0, 1.3, 0.38); for (const y of [0.8, 1.6]) box(g, 0.04, 0.35, 0.05, M(0x9aa0a6, 0.3, { metalness: 0.7 }), 0.32, y, 0.4); }],
+  stove: [-1.3, 4.6, Math.PI, (g) => { box(g, 0.9, 0.9, 0.7, M(0xd8dcdf, 0.4), 0, 0.45, 0); box(g, 0.9, 0.04, 0.7, M(0x222222, 0.3), 0, 0.92, 0); for (const [x, z] of [[-0.2, -0.15], [0.2, -0.15], [-0.2, 0.15], [0.2, 0.15]]) cyl(g, 0.12, 0.12, 0.02, M(0x555555), x, 0.95, z, 14); box(g, 0.6, 0.35, 0.02, M(0x1a1a1a, 0.2), 0, 0.45, 0.36); cyl(g, 0.17, 0.15, 0.18, M(0xc0392b, 0.4), 0.2, 1.04, -0.15, 14); }],
+  counter: [0.4, 4.6, Math.PI, (g) => { box(g, 1.8, 0.9, 0.65, M(0x7aa0c0, 0.6), 0, 0.45, 0); box(g, 1.9, 0.06, 0.72, M(0xf0ece4, 0.3), 0, 0.93, 0); box(g, 0.5, 0.05, 0.35, M(0xb88a5a), -0.4, 0.98, 0); ball(g, 0.08, M(0xe2402f, 0.5), 0.4, 1.02, 0); ball(g, 0.08, M(0xffd23c, 0.5), 0.55, 1.02, 0.1); }],
+  dining: [4.0, 4.0, 0, (g) => { const w = M(0x7a4a24, 0.6); box(g, 2.4, 0.08, 1.1, w, 0, 0.76, 0); for (const [x, z] of [[-1.1, -0.45], [1.1, -0.45], [-1.1, 0.45], [1.1, 0.45]]) box(g, 0.08, 0.74, 0.08, w, x, 0.37, z); for (const x of [-0.7, 0, 0.7]) for (const sz of [-1, 1]) { box(g, 0.45, 0.06, 0.45, w, x, 0.46, sz * 0.85); box(g, 0.45, 0.55, 0.06, w, x, 0.76, sz * 1.06); } cyl(g, 0.18, 0.12, 0.08, M(0xf4efe6, 0.5), 0, 0.84, 0, 14); }],
+  nightstand: [-1.6, -2.8, 0, (g) => { box(g, 0.55, 0.6, 0.45, M(0x9a6436), 0, 0.3, 0); box(g, 0.45, 0.02, 0.02, M(0xe2b04a, 0.3), 0, 0.42, 0.23); cyl(g, 0.12, 0.16, 0.3, M(0xfff0c0, 0.6, { emissive: 0xffc060, emissiveIntensity: 0.8 }), 0, 0.85, 0, 12); }],
+  teddy: [-1.2, 0.5, 0, (g) => { const b = M(0xb07a44, 0.95); ball(g, 0.24, b, 0, 0.25, 0); ball(g, 0.18, b, 0, 0.62, 0); for (const sx of [-1, 1]) { ball(g, 0.07, b, sx * 0.13, 0.78, 0); ball(g, 0.09, b, sx * 0.2, 0.32, 0.08); } ball(g, 0.06, M(0xe8d0b0), 0, 0.6, 0.15); }],
+  toybox: [2.8, 3.8, 0, (g) => { box(g, 0.9, 0.55, 0.6, M(0xe8443a, 0.6), 0, 0.28, 0); box(g, 0.94, 0.08, 0.64, M(0xffd23c, 0.6), 0, 0.6, 0); ball(g, 0.12, M(0x2f8fd0, 0.5), -0.25, 0.7, 0); box(g, 0.18, 0.18, 0.18, M(0x5fb84a, 0.6), 0.2, 0.73, 0.05); }],
+  dresser: [5.6, -4.9, 0, (g) => { const w = M(0xf4efe6, 0.6); box(g, 1.3, 0.8, 0.5, w, 0, 0.4, 0); box(g, 1.0, 1.0, 0.05, new THREE.MeshStandardMaterial({ color: 0xcfe8ff, roughness: 0.05, metalness: 0.9 }), 0, 1.4, -0.2); box(g, 1.1, 1.1, 0.04, M(0xe2b04a, 0.35), 0, 1.4, -0.23); bottleish(g); }],
+  globe: [5.2, 1.5, 0, (g) => { cyl(g, 0.2, 0.25, 0.06, M(0x7a4a24), 0, 0.03, 0, 14); cyl(g, 0.03, 0.03, 0.9, M(0x7a4a24), 0, 0.48, 0, 6); ball(g, 0.32, M(0x2f8fd0, 0.5), 0, 1.15, 0); const r = new THREE.Mesh(new THREE.TorusGeometry(0.36, 0.015, 6, 24), M(0xe2b04a, 0.3, { metalness: 0.7 })); r.position.y = 1.15; r.rotation.y = 0.4; g.add(r); }],
+  telescope: [-5.6, -4.4, 0, (g) => { for (let i = 0; i < 3; i++) { const l = cyl(g, 0.025, 0.025, 1.2, M(0x3a2a1a), Math.cos(i * 2.1) * 0.25, 0.55, Math.sin(i * 2.1) * 0.25, 5); l.rotation.set(Math.sin(i * 2.1) * 0.35, 0, -Math.cos(i * 2.1) * 0.35); } const t = cyl(g, 0.09, 0.13, 1.2, M(0xe2b04a, 0.3, { metalness: 0.6 }), 0, 1.3, 0.1, 12); t.rotation.x = -0.9; }],
+  trophy: [-3.5, -5.3, 0, (g) => { box(g, 1.3, 2.0, 0.45, M(0x5a3416, 0.6), 0, 1.0, 0); box(g, 1.15, 1.8, 0.02, new THREE.MeshStandardMaterial({ color: 0xdff0ff, roughness: 0.05, transparent: true, opacity: 0.35 }), 0, 1.05, 0.23); for (let k = 0; k < 3; k++) { box(g, 1.15, 0.04, 0.4, M(0x7a4a24), 0, 0.45 + k * 0.55, 0); for (let i = 0; i < 3; i++) { cyl(g, 0.08, 0.04, 0.16, M(0xffcf3a, 0.25, { metalness: 0.8 }), -0.35 + i * 0.35, 0.6 + k * 0.55, 0, 10); cyl(g, 0.03, 0.05, 0.06, M(0xffcf3a, 0.25, { metalness: 0.8 }), -0.35 + i * 0.35, 0.5 + k * 0.55, 0, 8); } } }],
+  computer: [5.4, -4.6, 0, (g) => { const w = M(0x2a2a30, 0.5); box(g, 1.4, 0.06, 0.7, M(0xf0ece4, 0.5), 0, 0.75, 0); for (const x of [-0.65, 0.65]) box(g, 0.06, 0.74, 0.65, w, x, 0.37, 0); box(g, 0.9, 0.55, 0.05, w, 0, 1.15, -0.2); box(g, 0.82, 0.47, 0.02, M(0x5fd0a0, 0.3, { emissive: 0x2fa070, emissiveIntensity: 0.8 }), 0, 1.15, -0.17); box(g, 0.6, 0.03, 0.2, w, 0, 0.8, 0.1); box(g, 0.2, 0.45, 0.45, M(0x3a3a44, 0.4, { emissive: 0x4a2ad0, emissiveIntensity: 0.3 }), 0.5, 1.0, -0.05); box(g, 0.5, 0.06, 0.5, M(0x222222), 0, 0.45, 0.75); box(g, 0.5, 0.6, 0.06, M(0x222222), 0, 0.78, 0.98); }],
+  chalkboard: [0, -5.6, 0, (g) => { box(g, 2.2, 1.3, 0.06, M(0x2a4a3a, 0.9), 0, 1.6, 0); box(g, 2.35, 1.45, 0.04, M(0x8a5428), 0, 1.6, -0.03); box(g, 2.2, 0.06, 0.12, M(0x8a5428), 0, 0.92, 0.05); box(g, 0.9, 0.04, 0.01, M(0xf4f4f4, 0.9), -0.3, 1.9, 0.035); box(g, 0.6, 0.04, 0.01, M(0xf4f4f4, 0.9), -0.45, 1.7, 0.035); box(g, 0.2, 0.04, 0.04, M(0xffffff), 0.6, 0.97, 0.05); for (const x of [-1.0, 1.0]) box(g, 0.06, 0.95, 0.06, M(0x8a5428), x, 0.47, 0.1); }],
+};
+function bottleish(g) { for (let i = 0; i < 3; i++) cyl(g, 0.05, 0.06, 0.16, M([0xf8a0c0, 0xb684e8, 0x7fd6ff][i], 0.2), -0.35 + i * 0.2, 0.88, 0.05, 10); }
+export const EXTRA_FURNITURE = Object.keys(XTRA);
+function extraThings(g, items) {
+  for (const id of items) { const x = XTRA[id]; if (!x) continue; const p = new THREE.Group(); x[3](p); p.position.set(x[0], 0, x[1]); p.rotation.y = x[2]; p.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } }); g.add(p); }
 }
 
 /** kind: 'shop' | 'music' | 'hall' | 'herb' | 'forest' | 'home' (opts.items: what the child bought). Returns { scene, camera, update(dt), dispose() }. */
@@ -175,14 +207,10 @@ function buildHome(opts) {
   scene.add(new THREE.HemisphereLight(0xfff0d0, 0x5a3a20, 1.3));
   const sun = new THREE.DirectionalLight(0xfff0d0, 1.1); sun.position.set(-3, 8, 12); scene.add(sun);
   const CELLS = cellsOf(h);
-  for (let f = 0; f < h.floors; f++) {
-    houseFloor(g, f, h, lights);
-    plan[f].forEach((room, k) => {
-      if (!room) return; const cell = new THREE.Group(); cell.position.set(CELLS[k][0], f * FLOOR_H, CELLS[k][1]); g.add(cell);
-      const mine = (GROUPS[room] || []).filter((id) => items.includes(id)); if (mine.length) homeThings(cell, mine, lights, opts.model);
-      if (room === 'living') compassPedestal(cell, opts.pieces || [], lights);
-    });
-  }
+  for (let f = 0; f < h.floors; f++) houseFloor(g, f, h, lights);
+  const where = roomOf(h);
+  for (const [grp, ids] of Object.entries(GROUPS)) { const [f, k] = where[grp], mine = ids.filter((id) => items.includes(id)); if (!mine.length) continue; const cell = new THREE.Group(); cell.position.set(CELLS[k][0], f * FLOOR_H, CELLS[k][1]); g.add(cell); homeThings(cell, mine, lights, opts.model); }
+  { const [f, k] = where.living, cell = new THREE.Group(); cell.position.set(CELLS[k][0], f * FLOOR_H, CELLS[k][1]); g.add(cell); compassPedestal(cell, opts.pieces || [], lights); }
   const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 90), N = h.floors, top = FLOOR_H * N;
   let t = 0;
   return {

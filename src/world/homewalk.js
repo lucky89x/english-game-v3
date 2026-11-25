@@ -6,7 +6,7 @@
 // Rules (walls, stairs, colours, saved places) are in core/house.js.
 import * as THREE from 'three';
 import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
-import { GROUPS, floorPlan, FLOOR_H, stairOf, stairX, inStairColumn, stairY, freeAt, placeOf, dims, cellsOf } from '../core/house.js';
+import { GROUPS, floorPlan, roomOf, FLOOR_H, stairOf, stairX, inStairColumn, stairY, freeAt, placeOf, dims, cellsOf } from '../core/house.js';
 import { houseFloor, homeThings, compassPedestal } from './interior.js';
 
 const WALL_ITEMS = new Set(['clock', 'picture', 'violin', 'mirror']);      // hung on a wall: they stay where they are
@@ -32,11 +32,9 @@ export function buildHomeWalk(opts) {
     const saved = placeOf(h, id); if (saved && saved.f < h.floors && !piece.userData.wall) { piece.userData.f = saved.f; piece.position.set(saved.x, 0, saved.z); piece.rotation.y = saved.ry || 0; }
     floors[piece.userData.f].add(piece); pieces.push(piece); return piece;
   };
-  for (let f = 0; f < h.floors; f++) plan[f].forEach((roomName, k) => {
-    if (!roomName) return;
-    for (const id of (GROUPS[roomName] || []).filter((x) => items.includes(x))) makePiece(id, f, CELLS[k][0], CELLS[k][1]);
-    if (roomName === 'living') { const cell = new THREE.Group(); cell.position.set(CELLS[k][0], 0, CELLS[k][1]); compassPedestal(cell, opts.pieces || [], lights); floors[f].add(cell); pieces.push(Object.assign(cell, { userData: { id: 'compass', f, hx: 0.4, hz: 0.4, fixed: true, x0: CELLS[k][0] + 2.45, z0: CELLS[k][1] - 1.25 } })); }
-  });
+  const where = roomOf(h);      // (25/11) every group of furniture has a room (the kitchen shares the living room in a one-floor house)
+  for (const [grp, ids] of Object.entries(GROUPS)) { const [f, k] = where[grp]; for (const id of ids.filter((x) => items.includes(x))) makePiece(id, f, CELLS[k][0], CELLS[k][1]); }
+  { const [f, k] = where.living; const cell = new THREE.Group(); cell.position.set(CELLS[k][0], 0, CELLS[k][1]); compassPedestal(cell, opts.pieces || [], lights); floors[f].add(cell); pieces.push(Object.assign(cell, { userData: { id: 'compass', f, hx: 0.4, hz: 0.4, fixed: true, x0: CELLS[k][0] + 2.45, z0: CELLS[k][1] - 1.25 } })); }
   // the hero: a copy wearing what the hero wears, with the walk and idle clips
   const av = opts.avatar && opts.avatar.root ? SkeletonUtils.clone(opts.avatar.root) : new THREE.Group();
   av.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.frustumCulled = false; } });
@@ -84,16 +82,33 @@ export function buildHomeWalk(opts) {
     /** A click (ndc = mouse in -1..1). Returns true when used. */
     click(ndc) {
       if (editing) {
-        if (held) { if (!placeOk(held)) { say('Chỗ này vướng tường, chọn chỗ khác nhé'); return true; } glow(held, false); const p = held; held = null; if (opts.onPlace) opts.onPlace(p.userData.id, { f: p.userData.f, x: p.position.x, z: p.position.z, ry: p.rotation.y }); say('✔ Đã đặt. Bấm đồ khác để sắp xếp tiếp · B xong'); return true; }
+        if (held) { if (!placeOk(held)) { say('Chỗ này vướng tường, chọn chỗ khác nhé'); return true; } glow(held, false); const p = held; held = null; p.position.y = 0; if (opts.onPlace) opts.onPlace(p.userData.id, { f: p.userData.f, x: p.position.x, z: p.position.z, ry: p.rotation.y }); say('✔ Đã đặt. Bấm đồ khác để sắp xếp tiếp · B xong'); return true; }
         const p = pieceAt(ndc); if (!p) return true;
         if (p.userData.wall || p.userData.fixed) { say('Đồ này gắn vào tường, không dời được'); return true; }
         held = p; heldWas = { p: p.position.clone(), r: p.rotation.y }; glow(p, true); say(`Đang cầm: ${p.userData.id} · di chuột để dời · R xoay · bấm để đặt · Esc thôi`); return true;
       }
       const at = floorPoint(ndc, me.stair >= 0 ? me.stair : me.f); if (at) me.route = { x: at.x, z: at.z }; return true;
     },
+    /** (25/11) Picks up a piece (the one just bought): arrange mode starts with it in the hero's hands, in front of the hero. */
+    pickUp(id) {
+      if (!opts.editable) return false; const p = pieces.find((x) => x.userData.id === id); if (!p || p.userData.fixed) return false;
+      if (!editing) this.setEditing(true); if (held && held !== p) { glow(held, false); }
+      if (p.userData.f !== me.f) { floors[me.f].add(p); p.userData.f = me.f; }
+      p.position.x = Math.round((me.x - Math.sin(me.yaw) * -2.2) * 4) / 4; p.position.z = Math.round((me.z + Math.cos(me.yaw) * 2.2) * 4) / 4;
+      held = p; heldWas = { p: p.position.clone(), r: p.rotation.y }; glow(p, true); say(`Đang cầm: ${id} · di chuột (hoặc đi lại) để chọn chỗ · ⟲ xoay · bấm sàn hoặc ✔ để đặt`); return true;
+    },
+    get holding() { return !!held; },
+    /** The on-screen buttons: 'arrange' (on/off), 'turn', 'drop' (put the piece down where it is), 'cancel'. */
+    tool(name) {
+      if (name === 'arrange') return this.setEditing(!editing);
+      if (name === 'turn' && held) { held.rotation.y += Math.PI / 4; return true; }
+      if (name === 'drop' && held) { if (!placeOk(held)) { say('Chỗ này vướng tường, chọn chỗ khác nhé'); return true; } glow(held, false); const p = held; held = null; p.position.y = 0; if (opts.onPlace) opts.onPlace(p.userData.id, { f: p.userData.f, x: p.position.x, z: p.position.z, ry: p.rotation.y }); say('✔ Đã đặt. Bấm đồ khác để dời tiếp · Xong để thoát'); return true; }
+      if (name === 'cancel') { if (held) { held.position.copy(heldWas.p); held.rotation.y = heldWas.r; glow(held, false); held = null; say('Đã thôi, đồ về chỗ cũ'); return true; } return this.setEditing(false); }
+      return false;
+    },
     key(code) {
       if (code === 'KeyB' && opts.editable) { this.setEditing(!editing); return true; }
-      if (editing && held && code === 'KeyR') { held.rotation.y += Math.PI / 2; return true; }
+      if (editing && held && code === 'KeyR') { held.rotation.y += Math.PI / 4; return true; }
       if (editing && code === 'Escape') { this.setEditing(false); return true; }
       return false;
     },
@@ -122,6 +137,7 @@ export function buildHomeWalk(opts) {
       const want = look.clone().addScaledVector(dir, tMax);
       camAt.lerp(want, Math.min(1, dt * 8)); camera.position.copy(camAt); camera.lookAt(look);
       // arrange mode: the piece in hand follows the mouse on its floor
+      if (editing && held && me.stair < 0 && held.userData.f !== me.f) { floors[me.f].add(held); held.userData.f = me.f; held.position.set(me.x, 0, me.z + 1.5); }      // (25/11) a piece in hand goes up and down the stairs with the hero
       if (editing && held && ctl.mouse) { const at = floorPoint(ctl.mouse, held.userData.f); if (at) { held.position.x = Math.round(at.x * 4) / 4; held.position.z = Math.round(at.z * 4) / 4; held.position.y = 0.04 + Math.sin(t * 6) * 0.03; } }
       if (editing && !held && ctl.mouse) { const p = pieceAt(ctl.mouse); if (p !== hover) { if (hover) glow(hover, false); hover = p && !p.userData.wall && !p.userData.fixed ? p : null; if (hover) glow(hover, true); } }
       else if (hover && !editing) { glow(hover, false); hover = null; }

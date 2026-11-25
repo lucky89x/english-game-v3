@@ -28,17 +28,25 @@ export function buyUpgrade(profile, id) {
 }
 /** Furniture groups: each room of the house gets one group (the item ids keep their place inside the room). */
 export const GROUPS = {
-  living: ['sofa', 'lamp', 'plant', 'picture', 'clock', 'rug'],
-  study: ['table', 'bookcase', 'desk'],
-  bedroom: ['bed', 'wardrobe', 'mirror'],
+  living: ['sofa', 'lamp', 'plant', 'picture', 'clock', 'rug', 'armchair', 'coffee_table', 'tv', 'fireplace', 'aquarium', 'beanbag', 'statue', 'vase', 'palm'],
+  study: ['table', 'bookcase', 'desk', 'globe', 'telescope', 'trophy', 'computer', 'chalkboard'],
+  bedroom: ['bed', 'wardrobe', 'mirror', 'nightstand', 'teddy', 'toybox', 'dresser'],
   music: ['guitar', 'piano', 'drum', 'violin'],
+  kitchen: ['fridge', 'stove', 'counter', 'dining'],      // (25/11) a room of its own once there is space (two floors); before that in the living room
 };
 /** Each floor has four rooms in a 2 x 2 block: back-left, back-right, front-left, front-right. A room name or '' for an empty room.
  *  With one floor everything is on the ground floor; the second floor takes the bedroom, the third the music room. */
 export function floorPlan(h) {
-  if (h.floors >= 3) return [['living', 'study', '', ''], ['', 'bedroom', '', ''], ['music', '', '', '']];      // (21/11) the room by the top of the stairs stays free
-  if (h.floors === 2) return [['living', 'study', '', 'music'], ['', 'bedroom', '', '']];
+  if (h.floors >= 3) return [['living', 'study', 'kitchen', ''], ['', 'bedroom', '', ''], ['music', '', '', '']];      // (21/11) the room by the top of the stairs stays free
+  if (h.floors === 2) return [['living', 'study', 'kitchen', 'music'], ['', 'bedroom', '', '']];
   return [['living', 'study', 'bedroom', 'music']];
+}
+/** The room each group of furniture stands in on this plan (a group with no room of its own goes to the living room): { group: [floor, cell] }. */
+export function roomOf(h) {
+  const plan = floorPlan(h), at = {};
+  plan.forEach((row, f) => row.forEach((name, k) => { if (name) at[name] = [f, k]; }));
+  for (const g of Object.keys(GROUPS)) if (!at[g]) at[g] = at.living;
+  return at;
 }
 /** The garden: how many vegetable beds and flower beds, trees, and whether the pond and the flower gate are there. */
 // (24/11) "the garden is too small to grow vegetables and flowers for income": the plot is bigger, with rows of beds (six to a row) north and south of the house.
