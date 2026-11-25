@@ -292,7 +292,7 @@ await ev(() => __eq.wild.mobs.forEach((m) => { if (!m.boss) m.dead = 0.1; }));
 await ev(() => { __eq.teleport(36, -16); __eq.player.yaw = 0; __eq.wild.rollCool = 0; }); await wait(300);
 const r0 = await ev(() => __eq.player.pos.z); await page.keyboard.press('KeyK'); await wait(250);
 check(await ev((z) => __eq.player.pos.z - z > 1.5, r0), 'K rolls Ngọc forward out of danger');
-await ev(async () => { const S = await import('./src/core/save.js'); const p = __eq.profile; p.gates = {}; p.stats.level = 4; p.stats.exp = 0; S.addExp(p, 900); __eq.refresh(); });
+await ev(async () => { const S = await import('./src/core/save.js'); const p = __eq.profile; p.gates = {}; p.stats.level = 4; p.stats.exp = 0; S.addExp(p, S.expNeed(4) + S.expNeed(5) + 500); __eq.refresh(); });
 check(await ev(() => __eq.profile.stats.level === 5), 'EXP stops at level 5 until the review');
 await ev(() => __eq.teleport(2.9, 15.6)); await wait(450);
 check((await page.textContent('#prompt')).includes('Cú Mèo: ôn tập') && (await page.textContent('#hud')).includes('ôn tập'), 'HUD and prompt send the child to the owl');
