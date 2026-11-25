@@ -20,11 +20,12 @@ export class Arcade {
     this.cv.addEventListener('pointerdown', (e) => { if (this.game && this.game.down) { this.cv.setPointerCapture(e.pointerId); this.game.down(...at(e)); } });
     this.cv.addEventListener('pointermove', (e) => { if (this.game && this.game.drag) this.game.drag(...at(e)); });
     this.cv.addEventListener('pointerup', (e) => { if (this.game && this.game.up) this.game.up(...at(e)); });
+    this.cv.addEventListener('pointercancel', (e) => { this.game?.up?.(...at(e)); });
     el.querySelector('#arcquit').addEventListener('click', () => this.close(null));
   }
   get open() { return !!this.game; }
   start(game) { const tune = game.music || [['🍬', 'candy'], ['🧱', 'blocks'], ['🎯', 'sling'], ['🏎', 'race'], ['🍳', 'jazz'], ['💇', 'lofi'], ['👗', 'synthwave'], ['🎣', 'fish'], ['🔒', 'chiptune']].find(([k]) => game.title.startsWith(k))?.[1]; if (tune) gameMusic(tune);      // (21/11) each mini game has its own tune
-    this.H = this.W / (game.aspect || 1); this.el.style.setProperty('--ar', String(game.aspect || 1)); this.game = game; this.t = 0; this.el.classList.toggle('big', !!game.big); this.el.classList.remove('hidden'); this.el.querySelector('#arctitle').textContent = game.title; this.el.querySelector('#archelp').textContent = game.help; }
+    this.H = this.W / (game.aspect || 1); this.el.style.setProperty('--ar', String(game.aspect || 1)); this.game = game; this.t = 0; this.cv.style.touchAction = game.directTouch ? 'none' : ''; this.el.classList.toggle('big', !!game.big); this.el.classList.remove('hidden'); this.el.querySelector('#arctitle').textContent = game.title; this.el.querySelector('#archelp').textContent = game.help; if (game.directTouch) this.update(0); }
   close(result) { const g = this.game; this.game = null; endMusic(); stopEngine(); if (g && g.dispose) g.dispose(); this.el.classList.add('hidden'); if (g) this.onFinish(g, result); }
   key(code) { if (!this.game) return false; if (code === 'Escape') this.close(null); else if (this.game.key) this.game.key(code); return true; }
   update(dt, held = new Set()) {

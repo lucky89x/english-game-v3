@@ -86,7 +86,7 @@ export const armorCost = (level) => Math.max(45, Math.round(mobGold(level) * 19 
 
 // ---------------------------------------------------------------- mini games: a fee to play, no pay afterwards
 /** Gold to enter a mini game (the child answers questions too). It grows with the level like the gold of the monsters. */
-export const GAME_FEE_K = { candy: 1, blocks: 1, sling: 1, race: 1.5, style: 1.5, cafe: 1.5, salon: 1.5, fishing: 0.8, apples: 0.8 };
+export const GAME_FEE_K = { candy: 1, blocks: 1, sling: 1, race: 1.5, style: 1.5, cafe: 1.5, salon: 1.5, fishing: 0.8, apples: 0.8, lantern_fair: 1.5 };
 export const gameFee = (game, level) => Math.max(5, Math.round((8 + 2 * level) * (GAME_FEE_K[game] || 1) / 5) * 5);
 
 // ---------------------------------------------------------------- at the top level of a map: gold fades away too (24/11)
