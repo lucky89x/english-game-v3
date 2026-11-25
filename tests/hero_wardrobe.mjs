@@ -14,7 +14,9 @@ const SETS = {
   cloth2: { top: 'hoodie:blue', bottom: 'shorts:black', feet: 'hightops:white' },
 };
 const info = {};
+const only = process.argv[3];
 for (const [name, worn] of Object.entries(SETS)) {
+  if (only && !only.split(',').includes(name)) continue;
   await page.evaluate((worn) => { const w = __eq.profile.wardrobe || (__eq.profile.wardrobe = { owned: [], worn: {} }); w.worn = worn; w.owned = Object.values(worn); __eq.applyLook(); }, worn);
   await page.waitForTimeout(9000);
   for (const [v, [yaw, pitch, dist]] of Object.entries({ f: [0.5, 0.1, 2.3], s: [0.5 + 1.57, 0.1, 2.3] })) {

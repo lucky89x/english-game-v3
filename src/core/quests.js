@@ -74,7 +74,7 @@ export function track(p, day, ev, n = 1) {
   for (const id of d.ids) { const q = DAILY.find((x) => x.id === id); if (q.ev !== ev) continue; const was = d.prog[id] || 0; if (was >= q.need) continue; d.prog[id] = Math.min(q.need, was + n); if (d.prog[id] >= q.need) out.push(q); }
   return out;
 }
-export const dailyReward = (p) => ({ gold: 20 + p.stats.level * 2, exp: Math.round(expNeed(p.stats.level) * 0.03) });      // (25/11) 3% of the bar for each of the three daily jobs
+export const dailyReward = (p) => ({ gold: 20 + p.stats.level * 2, exp: Math.round(expNeed(p.stats.level) * 0.01) });      // (25/11) 1% of the bar for each of the three daily jobs
 export function claimDaily(p, day, id) {
   const d = dailyOf(p, day), q = DAILY.find((x) => x.id === id);
   if (!q || !d.ids.includes(id) || d.claimed[id] || (d.prog[id] || 0) < q.need) return null;

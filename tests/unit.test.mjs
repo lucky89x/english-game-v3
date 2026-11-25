@@ -444,7 +444,7 @@ test('the sea (Map 2) opens at level 5 with the Slime King beaten and the owl re
   p.gates = { 5: true }; assert.equal(map2Ready(p), true); p.flags.map2 = true; assert.equal(S.unitOf(p), 2);
   p.flags.forest_open = true; p.stats.level = 9; p.gates[10] = true; assert.equal(forestReady(p), false); p.stats.level = 10; assert.equal(forestReady(p), true);
   p.unitPick = 5; assert.equal(S.unitOf(p), 5);
-  assert.ok(S.expTo(5) > 20000 && S.expTo(20) > S.expTo(5) * 3, 'the bar grows level after level (25/11: a week for Map 1)'); assert.equal(PR.scaleExp(1, 180), PR.expNeed(1), 'a reward of one old bar is one new bar');
+  assert.ok(S.expTo(5) > 20000 && S.expTo(20) > S.expTo(5) * 3, 'the bar grows level after level (25/11: a week for Map 1)'); assert.equal(PR.scaleExp(1, 180), Math.round(PR.expNeed(1) * PR.QUEST_SHARE), 'a reward of one old bar is QUEST_SHARE of one new bar');
 });
 test('grammar gate items: valid answers, English-only sentences with one blank, only written units', () => {
   for (const [id, list] of Object.entries(GRAMMAR)) for (const g of list) {

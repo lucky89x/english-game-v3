@@ -42,10 +42,10 @@ Công thức (`progress.js`): máu = công của bé trong đồ cùng cấp × 
 ## Trùm
 | Trùm | Map | Thức dậy ở cấp | Máu | Công | EXP lần đầu |
 |---|---|---|---|---|---|
-| Slime King | village | 4 | 845 | 22 | 5961 |
-| Ancient Golem | forest | 19 | 3302 | 56 | 26488 |
-| Mushroom Queen | forest | 17 | 2907 | 52 | 23205 |
-| Captain Octopus | harbor | 9 | 1520 | 34 | 11753 |
+| Slime King | village | 4 | 845 | 22 | 2555 |
+| Ancient Golem | forest | 19 | 3302 | 56 | 11352 |
+| Mushroom Queen | forest | 17 | 2907 | 52 | 9945 |
+| Captain Octopus | harbor | 9 | 1520 | 34 | 5037 |
 
 ## Vũ khí (công thức: 80% công cơ bản của cấp đó)
 | Cấp | Nơi bán | Món | Công | Giá |
