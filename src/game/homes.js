@@ -12,7 +12,7 @@ import { label, bake } from '../world/common.js';
 import { buildPlants } from '../world/plants.js';
 import { hangSign } from '../world/village.js';
 import { campStall } from '../world/stall.js';
-import { castleVilla } from '../world/castle.js';
+import { castleVilla, CASTLE_DOOR } from '../world/castle.js';
 
 const M = (color, rough = 0.85) => new THREE.MeshStandardMaterial({ color, roughness: rough });
 const HOUSE_FILE = ['bld_cottage_red_v02', 'bld_house_blue_v02', 'bld_cottage_red_v02', 'bld_house_blue_v02'];      // (24/11) four lots, two models, each tinted differently
@@ -226,6 +226,13 @@ export class Homes {
     try { this.root.add(await buildPlants(load)); } catch (e) { console.warn('plants', e); }      // (24/11) the user's plant pack
     this.refresh(true);
   }
+  /** (25/11) The Blender castle (tools/castle/build_castle.py) for 2 or 3 floors, loaded the first time a villa is shown; until then (or if the
+   *  file is missing) the code castle of world/castle.js stands in. */
+  castleGlb(n) {
+    this.castles = this.castles || {}; const c = this.castles[n];
+    if (c === undefined) { this.castles[n] = null; this.api.load(`bld_castle_villa_f${n}`).then((m) => { m.traverse((o) => { if (o.isMesh) { o.castShadow = o.receiveShadow = true; } }); this.castles[n] = m; this.refresh(true); }).catch(() => { this.castles[n] = false; }); }
+    return c || null;
+  }
   /** Rebuilds the signs and yards when an owner, a name or a bought garden thing changed. */
   refresh(force = false) {
     if (!this.lots.length) return;
@@ -239,7 +246,7 @@ export class Homes {
       // (25/11) the name board always hangs right over the door: on the villa's balcony, or at the door of the (taller) house
       const hh0 = p ? house(p) : null, isVilla = !!(hh0 && hh0.villa), tall = hh0 ? 1 + 0.38 * (hh0.floors - 1) : 1;
       if (lot.villa) { lot.villa.removeFromParent(); lot.villa = null; }
-      if (isVilla) { const v = castleVilla(Math.max(2, hh0.floors)); v.g.rotation.y = Math.PI / 2; v.g.position.set(h.x, gh(h.x, h.z) - 0.05, h.z); this.root.add(v.g); lot.villa = v.g; lot.signAt = [h.x + v.doorZ, gh(h.x, h.z) + v.signY, h.z]; }      // (25/11) the castle of the user's picture (world/castle.js)
+      if (isVilla) { const n = Math.max(2, Math.min(3, hh0.floors)), src = this.castleGlb(n), v = src ? { g: src.clone(true), signY: CASTLE_DOOR.signY, doorZ: CASTLE_DOOR.doorZ } : castleVilla(n); v.g.rotation.y = Math.PI / 2; v.g.position.set(h.x, gh(h.x, h.z) - 0.05, h.z); this.root.add(v.g); lot.villa = v.g; lot.signAt = [h.x + v.doorZ, gh(h.x, h.z) + v.signY, h.z]; }      // (25/11) the castle of the user's picture (world/castle.js)
       else lot.signAt = [h.door[0] - 0.3, gh(h.door[0], h.door[1]) + 4.7 * tall, h.door[1]];
       lot.sign = hangSign(p ? `NHÀ CỦA ${name.toLocaleUpperCase('vi')}` : 'NHÀ TRỐNG', p ? `${name}'s home` : 'Chưa có chủ', ...lot.signAt, Math.PI / 2, 1.25);      // the hero's own name (18/11)
       this.root.add(lot.sign);

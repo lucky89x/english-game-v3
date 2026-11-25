@@ -24,6 +24,8 @@ function banner(color) {
   return new THREE.MeshStandardMaterial({ map: bannerTex[color], transparent: true, alphaTest: 0.5, side: THREE.DoubleSide, roughness: 0.85 });
 }
 
+/** Where the door and the name board are (the same in the Blender castle bld_castle_villa_f2/f3.glb): the board's height, the door's depth. */
+export const CASTLE_DOOR = { signY: 1.0 + 3.0 + 0.35, doorZ: 2.3 + 0.06 + 0.4 };
 /** floors: 2 or 3. Returns { g, signY, doorZ } with the front facing +z (homes.js turns it to face the street). */
 export function castleVilla(floors = 2) {
   const g = new THREE.Group(), st = new THREE.Group(), S = 3.4, n = Math.max(2, floors), P = 1.0, H = n * S, TOP = P + H;
