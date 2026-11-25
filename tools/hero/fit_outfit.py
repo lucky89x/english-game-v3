@@ -65,14 +65,32 @@ for o in new:
     d = o.modifiers.new('dec', 'DECIMATE'); d.ratio = RATIO[nm]; o.name = 'Gear_goggles' if nm == 'goggles' else 'Outfit_' + nm
     bpy.context.view_layer.objects.active = o; bpy.ops.object.modifier_move_to_index(modifier='dec', index=0); bpy.ops.object.modifier_apply(modifier='dec')
     print('part', nm, len(o.data.polygons), 'tris')
+# (25/11 "the chest is whiter than the face") the outfit pieces came from another Tripo run whose skin is paler: their skin
+# pixels are shifted to the body's face tone (pixels with skin colour only, cloth untouched)
+def skin_of(px):
+    r, g, b = px[..., 0], px[..., 1], px[..., 2]
+    return (r > 0.8) & (g > 0.55) & (g < 0.8) & (b > 0.35) & (b < 0.62) & (r > g) & (g > b)
+def tex_of(o):
+    return next((n.image for m in o.data.materials for n in m.node_tree.nodes if n.type == 'TEX_IMAGE' and n.image and n.outputs[0].links and n.outputs[0].links[0].to_socket.name == 'Base Color'), None)
+face_img = tex_of(hero)
+if face_img:
+    fp = np.array(face_img.pixels[:]).reshape(-1, 4); want = np.median(fp[skin_of(fp)][:, :3], 0)
+    for o in bpy.data.objects:
+        if o.type == 'MESH' and o.name in ('Outfit_dress', 'Outfit_sleeve_l', 'Outfit_sleeve_r'):
+            img = tex_of(o)
+            if not img: continue
+            px = np.array(img.pixels[:]).reshape(-1, 4); m = skin_of(px)
+            if m.sum() < 50: continue
+            k = want / np.median(px[m][:, :3], 0); px[m, :3] = np.clip(px[m, :3] * k, 0, 1); img.pixels.foreach_set(px.ravel().astype(np.float32)); img.update()
+            print('skin matched', o.name, int(m.sum()), 'x', k.round(3))
 # lighten for the game: base colour only (the normal / metal-rough maps triple the download), parts at 1024 px, body at 2048
 for mat in bpy.data.materials:
     if not mat.use_nodes: continue
     bsdf = next((n for n in mat.node_tree.nodes if n.type == 'BSDF_PRINCIPLED'), None)
-    if not bsdf or mat.name.startswith('tripo_mat'): continue      # the body keeps its normal and metal-rough maps (they give the eyes their shine)
+    if not bsdf: continue      # (25/11) the body too: Tripo's metal-rough map made the skin metallic, which renders dark in the game (no reflections to show); painted look as Ngọc
     for name in ('Normal', 'Metallic', 'Roughness'):
         for l in list(bsdf.inputs[name].links): mat.node_tree.links.remove(l)
-    bsdf.inputs['Metallic'].default_value = 0.0; bsdf.inputs['Roughness'].default_value = 0.72
+    bsdf.inputs['Metallic'].default_value = 0.0; bsdf.inputs['Roughness'].default_value = 0.82
 for img in bpy.data.images:
     if img.size[0] > 1024 and 'basecolor' in img.name and 'tripo_part' in ' '.join(m.name for m in bpy.data.materials if m.use_nodes and any(n.type == 'TEX_IMAGE' and n.image == img for n in m.node_tree.nodes)) and not any(o.name == 'Hero' and o.data.materials and img in [n.image for n in o.data.materials[0].node_tree.nodes if n.type == 'TEX_IMAGE'] for o in bpy.data.objects): img.scale(1024, 1024)
 bpy.ops.export_scene.gltf(filepath=OUT, export_format='GLB', export_animations=True, export_skins=True, export_image_format='JPEG', export_jpeg_quality=85)
