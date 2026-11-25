@@ -44,15 +44,15 @@ export class Creator {
     const p = this.api.profile(), w = wardrobe(p), val = (slot, d) => { const it = w.worn[slot] && parse(w.worn[slot]); return it ? it.color : d; };
     const body = w.worn.body && parse(w.worn.body), bottom = w.worn.bottom && parse(w.worn.bottom);
     if (mode === 'new') p.lookPending = true;      // closed half way (the game shut): the creator opens again next time
-    this.mode = mode; this.before = JSON.stringify({ look: p.look || null, worn: w.worn });
-    this.d = { ...lookOf(p), style: val('style', 'short'), hair: val('haircolor', 'brown'), outfit: body ? 'dress' : bottom ? bottom.kind : 'trousers', top: val('top', 'white'), bottom: bottom ? bottom.color : 'brown', dress: body ? body.color : 'pink' };
+    this.mode = mode; this.before = JSON.stringify({ look: p.look || null, worn: w.worn, avatar: p.avatar || null });
+    this.d = { avatar: p.avatar || (mode === 'new' ? 'hero' : 'ngoc'), ...lookOf(p), style: val('style', 'short'), hair: val('haircolor', 'brown'), outfit: body ? 'dress' : bottom ? bottom.kind : 'trousers', top: val('top', 'white'), bottom: bottom ? bottom.color : 'brown', dress: body ? body.color : 'pink' };
     this.el.classList.remove('hidden'); this.api.focus(true); this.preview(); this.draw();
     return new Promise((ok) => (this.resolve = ok));
   }
   /** Puts the draft on the hero (the pieces are only owned once the child presses the button). */
   preview() {
-    const p = this.api.profile(), d = this.d; p.look = { face: d.face, skin: d.skin };
-    if (this.mode === 'new') {
+    const p = this.api.profile(), d = this.d; p.look = { face: d.face, skin: d.skin }; p.avatar = d.avatar;
+    if (this.mode === 'new' && d.avatar !== 'hero') {
       const w = wardrobe(p); w.worn.style = `hairstyle:${d.style}`; w.worn.haircolor = `haircolor:${d.hair}`;
       if (d.outfit === 'dress') { w.worn.body = `dress:${d.dress}`; w.worn.top = w.worn.bottom = null; }
       else { w.worn.body = null; w.worn.top = `top:${d.top}`; w.worn.bottom = `${d.outfit}:${d.bottom}`; }
@@ -61,7 +61,8 @@ export class Creator {
   }
   act(a, v) {
     const d = this.d; this.api.sfx('tick');
-    if (a === 'face') { d.face = v; speak(`a ${FACE_NAMES[v].toLowerCase()} face`); }
+    if (a === 'avatar') { d.avatar = v; speak(v === 'hero' ? 'Ruby, the adventurer' : 'Ngoc'); }
+    else if (a === 'face') { d.face = v; speak(`a ${FACE_NAMES[v].toLowerCase()} face`); }
     else if (a === 'skin') d.skin = v;
     else if (a === 'style') { d.style = v; speak(HAIR_EN[v]); }
     else if (a === 'hair') { d.hair = v; speak(`${v} hair`); }
@@ -76,21 +77,23 @@ export class Creator {
   }
   finish() {
     const p = this.api.profile(), d = this.d;
-    p.look = { face: d.face, skin: d.skin };
+    p.look = { face: d.face, skin: d.skin }; p.avatar = d.avatar;
     delete p.lookPending;
-    if (this.mode === 'new') starterLook(p, [['hairstyle', d.style], ['haircolor', d.hair], ...(d.outfit === 'dress' ? [['dress', d.dress]] : [['top', d.top], [d.outfit, d.bottom]])]);
+    if (this.mode === 'new' && d.avatar !== 'hero') starterLook(p, [['hairstyle', d.style], ['haircolor', d.hair], ...(d.outfit === 'dress' ? [['dress', d.dress]] : [['top', d.top], [d.outfit, d.bottom]])]);
     this.close(true);
   }
-  cancel() { const p = this.api.profile(), b = JSON.parse(this.before); if (b.look) p.look = b.look; else delete p.look; wardrobe(p).worn = b.worn; this.api.apply(); this.close(false); }
+  cancel() { const p = this.api.profile(), b = JSON.parse(this.before); if (b.look) p.look = b.look; else delete p.look; if (b.avatar) p.avatar = b.avatar; else delete p.avatar; wardrobe(p).worn = b.worn; this.api.apply(); this.close(false); }
   close(saved) { this.el.classList.add('hidden'); this.api.focus(false); this.api.sfx(saved ? 'correct' : 'tick'); const r = this.resolve; this.resolve = null; if (r) r(saved); }
   draw() {
     const d = this.d, p = this.api.profile(), on = (x, y) => (x === y ? ' on' : '');
     const swatches = (act, cur) => `<div class="row">${COLOR_NAMES.map((c) => `<button class="sw${on(c, cur)}" data-a="${act}" data-v="${c}" title="${c} · ${COL_VI[c]}" style="background:${COLORS[c]}"></button>`).join('')}</div>`;
     const name = String(p.name).replace(/[&<>"]/g, '');
     let html = `<h2>${this.mode === 'new' ? `✨ Create your hero` : '🪞 Magic mirror'}</h2><div class="sub">${this.mode === 'new' ? `Tạo nhân vật của <b>${name}</b>. Bấm để chọn, nhân vật bên phải đổi ngay. Kéo chuột trên nhân vật để xoay.` : 'Gương thần: đổi khuôn mặt và màu da miễn phí.'}</div>
-      <h3>Face <small>· khuôn mặt</small></h3><div class="row">${FACES.map((f) => `<button class="face${on(f, d.face)}" data-a="face" data-v="${f}"><img src="./assets/tex/face_${f}_thumb.jpg" alt="">${FACE_NAMES[f]}</button>`).join('')}</div>
-      <h3>Skin <small>· màu da</small></h3><div class="row">${Object.keys(SKINS).map((s) => `<button class="sw${on(s, d.skin)}" data-a="skin" data-v="${s}" title="${SKIN_NAMES[s]}" style="background:${SKINS[s]}"></button>`).join('')}</div>`;
-    if (this.mode === 'new') {
+      ${this.mode === 'new' ? `<h3>Hero <small>· nhân vật</small></h3><div class="row"><button class="${on('hero', d.avatar)}" data-a="avatar" data-v="hero">Ruby (new · mới)</button><button class="${on('ngoc', d.avatar)}" data-a="avatar" data-v="ngoc">Ngoc (classic · cũ)</button></div>` : ''}
+      ${d.avatar === 'hero' ? '' : `<h3>Face <small>· khuôn mặt</small></h3><div class="row">${FACES.map((f) => `<button class="face${on(f, d.face)}" data-a="face" data-v="${f}"><img src="./assets/tex/face_${f}_thumb.jpg" alt="">${FACE_NAMES[f]}</button>`).join('')}</div>
+      <h3>Skin <small>· màu da</small></h3><div class="row">${Object.keys(SKINS).map((s) => `<button class="sw${on(s, d.skin)}" data-a="skin" data-v="${s}" title="${SKIN_NAMES[s]}" style="background:${SKINS[s]}"></button>`).join('')}</div>`}`;
+    if (d.avatar === 'hero') html += `<div class="hint">Ruby đã mặc sẵn bộ đồ phiêu lưu (khăn đỏ, kính, ủng). Đồ mới sẽ mua ở tiệm may sau.</div>`;
+    else if (this.mode === 'new') {
       html += `<h3>Hair style <small>· kiểu tóc</small></h3><div class="row">${HAIR_STYLES.map((h) => `<button class="${on(h, d.style)}" data-a="style" data-v="${h}" title="${HAIR_VI[h]}">${h}</button>`).join('')}</div>
         <h3>Hair colour <small>· màu tóc: ${d.hair} (${COL_VI[d.hair]})</small></h3>${swatches('hair', d.hair)}
         <h3>Clothes <small>· trang phục</small></h3><div class="row">${OUTFIT.map((o) => `<button class="${on(o.id, d.outfit)}" data-a="outfit" data-v="${o.id}" title="${o.vi}">${o.en}</button>`).join('')}</div>`;

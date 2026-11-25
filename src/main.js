@@ -151,7 +151,7 @@ const dayNight = new DayNight({ scene, sky, sun, rim, hemi, sunDir });
 const manager = new THREE.LoadingManager();
 manager.onProgress = (_u, done, total) => { $('loadbar').style.width = Math.round((done / total) * 100) + '%'; };
 const loader = new GLTFLoader(manager), texLoader = new THREE.TextureLoader(manager), modelCache = new Map();
-{ const rawLoad = loader.loadAsync.bind(loader); loader.loadAsync = async (...a) => { const g = await rawLoad(...a); try { relaxArms(g); if (isPerson(g)) thicken(g); } catch (e) { /* the model keeps its pose */ } return g; }; }      // (24/11) relaxed arms for every person model (src/game/relax.js)
+{ const rawLoad = loader.loadAsync.bind(loader); loader.loadAsync = async (...a) => { const g = await rawLoad(...a); try { relaxArms(g); if (isPerson(g) && !/chr_hero/.test(String(a[0]))) thicken(g); } catch (e) { /* the model keeps its pose */ } return g; }; }      // (24/11) relaxed arms for every person model (src/game/relax.js)
 // Characters from tools/chibi05 (v04+): pieces marked eq_hidden (spare hair styles, clothes) start hidden, and *_tint
 // materials sample a grey palette whose 0.8 base tone stands for the colour in material extras eq_base (0.6038 = 0.8 sRGB in linear).
 const MAX_ANISO = Math.min(16, renderer.capabilities.getMaxAnisotropy());
@@ -924,8 +924,23 @@ const PROC_ONLY = new Set();      // kinds drawn only from outfit.js shapes (the
 const JEWEL = new Set(['necklace', 'earrings', 'tiara', 'hairclip']);
 const accScene = {};                       // kind -> loaded glTF scene, or null when the file is missing (the shapes from outfit.js take over)
 let lookShown = [], faceShown = '';
+/** (25/11) The body: Ngọc (older saves) or the Tripo hero (profile.avatar === 'hero', the default of new players). The model is swapped in place. */
+let avatarKind = 'ngoc', ngocGltf = null, swappingAvatar = false; const outlined = new WeakSet();
+async function swapAvatar(kind) {
+  if (swappingAvatar || !player) return; swappingAvatar = true;
+  try {
+    if (!ngocGltf) ngocGltf = { scene: player.root, animations: Object.values(player.actions).map((a) => a.getClip()) };
+    const g = kind === 'hero' ? await gltf('chr_hero_v01') : ngocGltf;
+    player.setModel(g); avatarKind = kind;
+    if (!outlined.has(player.root)) { outlined.add(player.root); addOutline(player.root); }
+    if (kind === 'ngoc') { tintBody(player.root, NGOC_COLORS); }
+    setSword(); setWear();
+  } catch (e) { console.warn('avatar', e); } finally { swappingAvatar = false; }
+  applyLook();
+}
 function applyLook() {
   if (!player || !profile) return;
+  const wantAvatar = profile.avatar === 'hero' ? 'hero' : 'ngoc'; if (wantAvatar !== avatarKind) { swapAvatar(wantAvatar); return; }
   for (const o of lookShown) o.removeFromParent(); lookShown = [];
   const root = player.root, bone = (re) => { let b = null; root.traverse((o) => { if (!b && o.isBone && re.test(o.name)) b = o; }); return b; };
   const worn = WR.wardrobe(profile).worn, val = (slot) => { const it = worn[slot] && WR.parse(worn[slot]); return it ? it.color : null; }, paint = (n, d) => (n && (WCOL[n] || WR.JEWEL_HEX[n])) || d;
@@ -1264,7 +1279,7 @@ async function boot() {
     { id: 'ward', icon: '👗', tip: 'Tủ đồ (V)', show: seaOpen, badge: (p) => 0, click: () => { if (profile) { wardPanel.show(); sfx('tick'); } } },
   ]);
   walkers = new Walkers(scene, (name) => loader.loadAsync(`./assets/models/${name}.glb`)); await walkers.init();      // villagers on the roads
-  for (const a of [player, tom, sam, ben, ...friends.map((f) => f.npc)]) addOutline(a.root);     // cartoon outlines (medium/high)
+  for (const a of [player, tom, sam, ben, ...friends.map((f) => f.npc)]) { addOutline(a.root); if (a === player) outlined.add(a.root); }     // cartoon outlines (medium/high)
   applyLook();
   const F = L.REGIONS.forest;
   crystals = new Crystals(scene, F.LANDMARKS.filter((l) => l.id !== 'tree'), F.walkHeight);

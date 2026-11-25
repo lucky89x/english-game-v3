@@ -6,16 +6,25 @@ const WALK = 6.4, RUN = 9.2, JUMP = 6.6, GRAVITY = 19;      // (21/11) "the hero
 
 export class Player {
   constructor(gltf, faceTextures) {
-    this.root = gltf.scene; this.mixer = new THREE.AnimationMixer(this.root); this.actions = {};
+    this.faceTextures = faceTextures; this.bindModel(gltf); this.blink = 2.5; this.faceHold = 0;
+    this.pos = new THREE.Vector3(); this.vy = 0; this.grounded = true; this.yaw = Math.PI; this.current = ''; this.route = null; this.lock = 0; this.stepTimer = 0; this.swim = null; this.noSwim = false; this.onSwim = null; this.swimBlock = null;
+    this.swingT = 0; this.swingDir = 1;
+    this.play('Idle');
+  }
+  /** (25/11) Binds a model (Ngọc, or the Tripo hero) to the player: clips, face decal, swing bones. Called again by setModel. */
+  bindModel(gltf) {
+    this.root = gltf.scene; this.mixer = new THREE.AnimationMixer(this.root); this.actions = {}; this.current = ''; this.face = null;
     for (const clip of gltf.animations) this.actions[clip.name] = this.mixer.clipAction(clip);
     for (const once of ['Jump', 'Land', 'Wave', 'Celebrate', 'Interact']) if (this.actions[once]) { this.actions[once].setLoop(THREE.LoopOnce); this.actions[once].clampWhenFinished = true; }
-    this.root.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.frustumCulled = false; if (o.material.name === 'NgocFace') this.face = o.material; } });
-    this.faceMaps = { happy: this.face ? this.face.map : null, ...faceTextures };
-    this.blink = 2.5; this.faceHold = 0;
-    this.pos = new THREE.Vector3(); this.vy = 0; this.grounded = true; this.yaw = Math.PI; this.current = ''; this.route = null; this.lock = 0; this.stepTimer = 0; this.swim = null; this.noSwim = false; this.onSwim = null; this.swimBlock = null;
-    this.bones = {}; this.root.traverse((o) => { if (o.isBone && ['upper_arm.R', 'forearm.R', 'chest', 'spine'].includes(o.name)) this.bones[o.name] = o; }); this.swingT = 0; this.swingDir = 1;
-    this.play('Idle');
+    this.root.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.frustumCulled = false; if (o.material && o.material.name === 'NgocFace') this.face = o.material; } });
+    this.faceMaps = { happy: this.face ? this.face.map : null, ...this.faceTextures };
+    this.bones = {}; this.root.traverse((o) => { if (o.isBone && ['upper_arm.R', 'forearm.R', 'chest', 'spine'].includes(o.name)) this.bones[o.name] = o; });
     this.mixer.addEventListener('finished', (e) => { if (['Land', 'Wave', 'Celebrate', 'Interact'].includes(e.action.getClip().name)) this.play('Idle'); });
+  }
+  /** Swaps the body for another model in place (same position and heading). */
+  setModel(gltf) {
+    const old = this.root, parent = old.parent; if (old === gltf.scene) return; this.mixer.stopAllAction();
+    this.bindModel(gltf); this.faceHold = 0; if (parent) { parent.remove(old); parent.add(this.root); } this.play('Idle'); this.sync();
   }
   place(x, z) { this.swim = null; this.seat = null; this.pos.set(x, L.walkHeight(x, z), z); this.vy = 0; this.grounded = true; this.route = null; this.sync(); }
   play(name, fade = 0.16) {

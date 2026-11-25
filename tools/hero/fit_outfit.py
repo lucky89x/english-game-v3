@@ -5,6 +5,7 @@ import bpy, sys, os, numpy as np
 from mathutils import Vector
 argv = sys.argv[sys.argv.index('--') + 1:]; OUTFIT, BODY, OUT = argv[:3]
 S = 0.771 / 0.45
+RATIO = {'dress': .12, 'sleeve_l': .1, 'sleeve_r': .1, 'boot_a': .07, 'boot_b': .07, 'scarf': .15, 'bag': .12, 'bag_strap': .15, 'strap': .2, 'pouch': .25, 'potion': .3, 'goggles': .15}      # outfit parts are 40-200k triangles as made: keep ~3-9k each
 PARTS = {'part_2': ('dress', 'torso'), 'part_12': ('sleeve_l', 'arm'), 'part_3': ('sleeve_r', 'arm'), 'part_4': ('scarf', 'torso'), 'part_1': ('boot_a', 'id'), 'part_11': ('boot_b', 'id'),
          'part_5': ('bag', 'torso'), 'part_8': ('bag_strap', 'torso'), 'part_14': ('strap', 'torso'), 'part_10': ('pouch', 'torso'), 'part_9': ('potion', 'torso'), 'part_7': ('goggles', 'head')}
 Z_TORSO = [(0, 0), (.24, .235), (.36, .36), (.71, .615), (.74, .64), (1.0, 1.0)]
@@ -57,8 +58,18 @@ for o in new:
         for k, wi in zip(ids, w):
             if wi > .02: o.vertex_groups[names[k]].add([vi], float(wi), 'REPLACE')
     m = o.modifiers.new('Armature', 'ARMATURE'); m.object = rig; o.parent = rig; o.matrix_parent_inverse.identity()
-    ratio = float(os.environ.get('OUTFIT_RATIO', '0.2')); d = o.modifiers.new('dec', 'DECIMATE'); d.ratio = ratio
+    d = o.modifiers.new('dec', 'DECIMATE'); d.ratio = RATIO[nm]; o.name = 'Gear_goggles' if nm == 'goggles' else 'Outfit_' + nm
     bpy.context.view_layer.objects.active = o; bpy.ops.object.modifier_move_to_index(modifier='dec', index=0); bpy.ops.object.modifier_apply(modifier='dec')
     print('part', nm, len(o.data.polygons), 'tris')
+# lighten for the game: base colour only (the normal / metal-rough maps triple the download), parts at 1024 px, body at 2048
+for mat in bpy.data.materials:
+    if not mat.use_nodes: continue
+    bsdf = next((n for n in mat.node_tree.nodes if n.type == 'BSDF_PRINCIPLED'), None)
+    if not bsdf: continue
+    for name in ('Normal', 'Metallic', 'Roughness'):
+        for l in list(bsdf.inputs[name].links): mat.node_tree.links.remove(l)
+    bsdf.inputs['Metallic'].default_value = 0.0; bsdf.inputs['Roughness'].default_value = 0.72
+for img in bpy.data.images:
+    if img.size[0] > 1024 and 'basecolor' in img.name and not any(o.name == 'Hero' and o.data.materials and img in [n.image for n in o.data.materials[0].node_tree.nodes if n.type == 'TEX_IMAGE'] for o in bpy.data.objects): img.scale(1024, 1024)
 bpy.ops.export_scene.gltf(filepath=OUT, export_format='GLB', export_animations=True, export_skins=True, export_image_format='JPEG', export_jpeg_quality=85)
 print('exported', OUT, os.path.getsize(OUT) // 1024, 'KB')
