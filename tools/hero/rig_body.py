@@ -61,10 +61,27 @@ for n in names:
     segs[n] = (np.array(h[:]), np.array(t[:]))
 D = np.stack([seg_dist(V, *segs[n]) for n in names], 1)
 Wt = 1.0 / (D + 0.015 * S) ** 4
+# (25/11 fix "the face is warped") the head is far wider than its bone, so plain distance gave the face and the side locks up to
+# half their weight from the shoulders and arms: lowering the arms dragged the face. Now the head, the face and every hair or bow
+# vertex (texture green < 0.45: brown hair, red bow; skin and the suit are > 0.6) follow the head bone only, the neck blends in
+# under the chin, and nothing below the neck takes the head bone.
+me = body.data; img = next(n.image for m in me.materials for n in m.node_tree.nodes if n.type == 'TEX_IMAGE' and 'basecolor' in n.image.name.lower())
+Wd, Hd = img.size; px = np.array(img.pixels[:]).reshape(Hd, Wd, 4)
+uv = np.zeros((len(me.vertices), 2)); uv[np.array([l.vertex_index for l in me.loops])] = np.array([d.uv[:] for d in me.uv_layers.active.data])
+green = px[np.clip((uv[:, 1] * Hd).astype(int), 0, Hd - 1), np.clip((uv[:, 0] * Wd).astype(int), 0, Wd - 1), 1]
+z, ax = V[:, 2] / S, np.abs(V[:, 0]) / S
+hair = green < 0.45
+is_head = hair | (z >= 0.66) | ((z >= 0.60) & (ax < 0.075))
+hi, ni = names.index('head'), names.index('neck')
+Wt[~is_head, hi] = 0
+Wt[is_head] = 0; Wt[is_head, hi] = 1.0
+chin = is_head & ~hair & (z < 0.64) & (ax < 0.075); t = np.clip((z[chin] - 0.58) / 0.06, 0, 1)
+Wt[chin, hi] = t; Wt[chin, ni] = 1 - t + 1e-6
+print('head-only vertices', int(is_head.sum()), 'hair', int(hair.sum()), 'chin blend', int(chin.sum()))
 keep = np.argsort(-Wt, 1)[:, :3]
 for n in names: body.vertex_groups.new(name=n)
 for vi in range(len(V)):
-    ids = keep[vi]; w = Wt[vi, ids]; w = w / w.sum()
+    ids = keep[vi]; w = Wt[vi, ids]; w = w / max(w.sum(), 1e-9)
     for k, wi in zip(ids, w):
         if wi > 0.02: body.vertex_groups[names[k]].add([vi], float(wi), 'REPLACE')
 mod = body.modifiers.new('Armature', 'ARMATURE')

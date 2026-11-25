@@ -51,10 +51,14 @@ for o in new:
     P *= S
     for v, p in zip(me.vertices, P): v.co = Vector(p)
     me.update()
-    D = np.stack([seg_dist(P, *segs[n]) for n in names], 1); Wt = 1.0 / (D + 0.015 * S) ** 4; keep = np.argsort(-Wt, 1)[:, :3]
+    D = np.stack([seg_dist(P, *segs[n]) for n in names], 1); Wt = 1.0 / (D + 0.015 * S) ** 4
+    hi = names.index('head')
+    if kind == 'head': Wt[:] = 0; Wt[:, hi] = 1.0      # (25/11) goggles ride the head only (distance alone gave them shoulder weight, as on the face)
+    else: Wt[:, hi] = 0                                 # nothing worn below the neck follows the head
+    keep = np.argsort(-Wt, 1)[:, :3]
     for n in names: o.vertex_groups.new(name=n)
     for vi in range(len(P)):
-        ids = keep[vi]; w = Wt[vi, ids]; w = w / w.sum()
+        ids = keep[vi]; w = Wt[vi, ids]; w = w / max(w.sum(), 1e-9)
         for k, wi in zip(ids, w):
             if wi > .02: o.vertex_groups[names[k]].add([vi], float(wi), 'REPLACE')
     m = o.modifiers.new('Armature', 'ARMATURE'); m.object = rig; o.parent = rig; o.matrix_parent_inverse.identity()
