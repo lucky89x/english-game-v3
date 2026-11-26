@@ -654,7 +654,7 @@ test('Map 2 (harbor, levels 5-10): own hunt board, Captain Octopus wakes at leve
   for (const m of ['crab', 'jelly', 'pirate']) assert.ok(R.MONSTERS[m].level >= 5 && R.MONSTERS[m].level <= 10, m + ' is a Map 2 level');
   const Q = await import('../src/core/quests.js'), q = { flags: {}, stats: { level: 30 }, gates: {} };
   const at = (id) => Q.MAIN.findIndex((x) => x.id === id);
-  assert.ok(at('owl5') < at('boss1') && at('boss1') < at('map2') && at('map2') < at('harbor') && at('harbor') < at('shops') && at('shops') < at('hunt3') && at('hunt3') < at('boss4') && at('boss4') < at('owl10'), 'the sea chain comes right after the village (levels 1-5 -> 5-10)');
+  assert.ok(at('boss1') < at('owl5') && at('owl5') < at('map2') && at('map2') < at('harbor') && at('harbor') < at('shops') && at('shops') < at('hunt3') && at('hunt3') < at('boss4') && at('boss4') < at('owl10'), 'the sea chain comes right after the village (levels 1-5 -> 5-10)');
   assert.ok(at('owl10') < at('crystals') && at('crystals') < at('hunt2') && at('hunt2') < at('owl15') && at('owl15') < at('boss3') && at('boss3') < at('boss2') && at('boss2') < at('owl20') && at('owl20') === Q.MAIN.length - 1, 'the forest chain (levels 10-20) ends with the Ancient Golem and the level-20 exam');
   assert.ok(R.map3Ready({ flags: { boss2: true }, gates: { 20: true }, stats: { level: 20 } }) && !R.map3Ready({ flags: { boss2: true }, gates: {}, stats: { level: 20 } }) && !R.map3Ready({ flags: {}, gates: { 20: true }, stats: { level: 20 } }), 'the next map needs the Ancient Golem and the level-20 exam');
   const shops = Q.MAIN.find((x) => x.id === 'shops'); assert.equal(shops.done(q), false);

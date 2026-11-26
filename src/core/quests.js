@@ -16,8 +16,8 @@ export const MAIN = [
   { id: 'bridge', en: 'Fix the South Bridge', vi: 'Gặp Sam ở cầu phía Nam, tìm dây thừng, khúc gỗ, rìu rồi sửa cầu.', done: (p) => !!p.flags.bridge_fixed, gold: 40, exp: 90 },
   { id: 'gate', en: 'The Word Keeper badge', vi: 'Báo tin cho Tom ở quảng trường: làng có màu trở lại, con nhận huy hiệu Người Giữ Chữ (hạng Tập sự). Cổng Rừng Ký Ức sẽ mở khi con lên cấp 10.', done: (p) => !!p.flags.forest_open, gold: 20, exp: 50 },
   // (24/11) the order of the world map: Starter Village (levels 1-5) -> Sunny Harbor (5-10) -> Memory Forest (10-20); every map has a hard level cap (core/progress.js)
-  { id: 'owl5', en: "The Owl's first review", vi: 'Lên cấp 5 (cấp cao nhất của làng) rồi gặp Cú Mèo cạnh chợ để ôn tập.', done: (p) => gate(p, 5), gold: 30, exp: 0 },
-  { id: 'boss1', en: 'The Slime King', vi: 'Đạt cấp 4, vào Đồng Hoang (bên kia cầu làng), đi hết các bãi quái tới phía Bắc và đánh bại Vua Slime.', done: (p) => !!p.flags.boss1, gold: 80, exp: 0 },
+  { id: 'boss1', en: 'The Slime King', vi: 'Sang Đồng Hoang (bên kia sông) đánh quái theo mũi tên vàng để lên cấp 4, rồi tìm Vua Slime ở phía Bắc đồng và đánh bại nó.', done: (p) => !!p.flags.boss1, gold: 80, exp: 0 },
+  { id: 'owl5', en: "The Owl's first review", vi: 'Đánh quái ở Đồng Hoang (bên kia sông) để lên cấp 5, cấp cao nhất của làng, rồi gặp Cú Mèo cạnh chợ để ôn tập.', done: (p) => gate(p, 5), gold: 30, exp: 0 },
   { id: 'map2', en: 'Explorer rank', vi: 'Lên cấp 5, thắng Vua Slime và qua cổng ôn tập của Cú Mèo: lên hạng Thám hiểm, Biển cả (Map 2, cấp 5–10, Unit 2) mở ra.', done: (p) => !!p.flags.map2, gold: 150, exp: 0, unlock: 'Map 2' },
   { id: 'harbor', en: 'Sail to Sunny Harbor', vi: 'Ra bến thuyền bên sông (chỗ chú Sam câu cá) rồi đi thuyền tới Cảng Mặt Trời.', done: (p) => !!p.flags.harbor_seen, gold: 100, exp: 200 },
   { id: 'shops', en: 'The three harbor shops', vi: 'Chơi đủ 3 trò ở cảng: Style Boutique (thời trang), Seaside Café (nấu ăn), Beauty Salon (làm đẹp).', done: (p) => ['style', 'cafe', 'salon'].every((k) => p.mini && p.mini.best && p.mini.best[k] !== undefined), gold: 120, exp: 300 },
