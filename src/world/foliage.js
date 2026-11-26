@@ -10,7 +10,8 @@ const C = (hex) => new THREE.Color(hex);
 
 /** One leafy ball: smooth, a few soft bumps, darker underneath, lighter on top. */
 function blob(r, x, y, z, low, high, seed, sy = 0.88) {
-  let g = new THREE.IcosahedronGeometry(r, 3); g.deleteAttribute('normal'); g.deleteAttribute('uv'); g = mergeVertices(g);
+  let g = new THREE.IcosahedronGeometry(r, 2);      // (26/11) detail 3 was 1,280 triangles a blob (a tree ~3,000, a bush ~1,600, hundreds of them); 2 is 320 and looks the same from the path
+  g.deleteAttribute('normal'); g.deleteAttribute('uv'); g = mergeVertices(g);
   const p = g.attributes.position, col = [], v = new THREE.Vector3(), a = C(low), b = C(high), c = new THREE.Color(), k = seed * 1.7;
   for (let i = 0; i < p.count; i++) {
     v.fromBufferAttribute(p, i); const n = v.clone().normalize();
@@ -59,13 +60,13 @@ const BUILD = {
   },
 };
 /** Little white five-petal flowers dotted over a bush (the pack's flower bush had them baked into its leaves). */
-function flowers(seed, n = 12) {
+function flowers(seed, n = 8) {
   const r = rng(seed), petals = [], cores = [];
   for (let i = 0; i < n; i++) {
     const a = r() * Math.PI * 2, up = 0.2 + r() * 0.7, d = Math.sqrt(1 - Math.min(1, up * up * 0.5)), cx = Math.cos(a) * 0.62 * d, cy = 0.42 + up * 0.42, cz = Math.sin(a) * 0.62 * d;
     const n0 = V(cx, cy - 0.35, cz).normalize(), q = new THREE.Quaternion().setFromUnitVectors(V(0, 1, 0), n0);
-    for (let k = 0; k < 5; k++) { const pg = new THREE.SphereGeometry(0.045, 6, 4); pg.scale(1, 0.25, 0.6); pg.translate(0.05, 0, 0); pg.rotateY(k * 1.2566); pg.applyQuaternion(q); pg.translate(cx, cy, cz); petals.push(pg); }
-    const cg = new THREE.SphereGeometry(0.025, 6, 4); cg.applyQuaternion(q); cg.translate(cx + n0.x * 0.012, cy + n0.y * 0.012, cz + n0.z * 0.012); cores.push(cg);
+    for (let k = 0; k < 5; k++) { const pg = new THREE.SphereGeometry(0.045, 5, 3); pg.scale(1, 0.25, 0.6); pg.translate(0.05, 0, 0); pg.rotateY(k * 1.2566); pg.applyQuaternion(q); pg.translate(cx, cy, cz); petals.push(pg); }
+    const cg = new THREE.SphereGeometry(0.025, 5, 3); cg.applyQuaternion(q); cg.translate(cx + n0.x * 0.012, cy + n0.y * 0.012, cz + n0.z * 0.012); cores.push(cg);
   }
   const mp = new THREE.Mesh(mergeGeometries(petals), new THREE.MeshStandardMaterial({ color: 0xfffaf0, roughness: 0.7 }));
   const mc = new THREE.Mesh(mergeGeometries(cores), new THREE.MeshStandardMaterial({ color: 0xf2b82a, roughness: 0.6 }));

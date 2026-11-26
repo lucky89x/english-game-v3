@@ -11,7 +11,7 @@ import { rule } from '../core/tiers.js';
 
 export const KART_NAMES = ['scarlet', 'azure', 'dune', 'violet', 'ranger', 'blossom'];
 export const KART_LABEL = ['Đỏ san hô', 'Xanh biển', 'Buggy vàng', 'Tím', 'Buggy xanh lá', 'Hồng'];
-export const RACE_FILES = [...KART_NAMES.map((n) => `race/kart_${n}`), ...['race_start_gate', 'race_grandstand', 'race_pit_tent', 'race_scoreboard', 'race_podium', 'race_chevron', 'race_flag', 'race_tire_stack', 'race_cone', 'race_hay_bales', 'race_lamp', 'race_banner', 'race_safety_barrier', 'bld_farm_barn', 'bld_anna_house', 'stall_fruit'].map((n) => `race/${n}`), 'prop_tree_pine_v01', 'prop_tree_round_v01'];
+export const RACE_FILES = [...KART_NAMES.map((n) => `race/kart_${n}`), ...['race_start_gate', 'race_grandstand', 'race_pit_tent', 'race_scoreboard', 'race_podium', 'race_chevron', 'race_flag', 'race_tire_stack', 'race_cone', 'race_hay_bales', 'race_lamp', 'race_banner', 'race_safety_barrier'].map((n) => `race/${n}`), 'bld_farm_barn', 'bld_anna_house', 'stall_fruit', 'prop_tree_pine_v01', 'prop_tree_round_v01'];      // (26/11) the barn, house and fruit stall are the village's own files (the copies in race/ were byte-identical)
 /** Loads every file with the game's cached loader (gltf(name) → { scene }); resolves to { shortName: scene }. */
 export async function loadRaceAssets(gltf) {
   const out = {};
