@@ -213,9 +213,9 @@ await run('harbor', async () => {        // Map 2 in Sunny Harbor: sea monsters,
   await ev(() => { const p = __eq.profile; p.flags.map2 = true; p.stats.level = 8; p.stats.hp = 9999; p.god = true; __eq.enterRegion('harbor'); });
   await page.waitForFunction(() => __eq.region === 'harbor' && __eq.started, null, { timeout: 480000 }); await wait(1000);
   const vis = await ev(() => __eq.wild.mobs.filter((m) => m.g.visible).map((m) => m.kind));
-  check(vis.length === 16 && vis.every((k) => ['crab', 'jelly', 'pirate', 'gull'].includes(k)), `Harbor at level 8: 16 sea monsters in four grounds, no boss yet, none from the other maps (${vis.length})`);
+  check(vis.length === 23 && vis.every((k) => ['crab', 'jelly', 'pirate', 'gull'].includes(k)), `Harbor at level 8: 23 sea monsters in four grounds, no boss yet, none from the other maps (${vis.length})`);
   check(await ev(() => __eq.wild.signs.filter((s) => s.visible).length === 4), 'Four ground signs stand in the harbor');
-  check(await ev(() => __eq.wild.mobs.filter((m) => m.region === 'harbor' && m.mixer).length === 17), 'The Blender monsters and the octopus carry their own Idle/Walk clips');
+  check(await ev(() => __eq.wild.mobs.filter((m) => m.region === 'harbor' && m.mixer).length === 24), 'The Blender monsters and the octopus carry their own Idle/Walk clips');
   await ev(() => { __eq.profile.stats.level = 9; }); await wait(900);
   check(await ev(() => __eq.wild.bosses[3].g.visible && __eq.wild.markers().some((m) => m.text === '♛')), 'Level 9: Captain Octopus rises by the lighthouse');
   check(await ev(() => __eq.chests.list.filter((c) => c.region === 'harbor' && c.g.visible).length === 6 && __eq.chests.list.filter((c) => c.region !== 'harbor').every((c) => !c.g.visible)), 'Six word chests in the harbor');
