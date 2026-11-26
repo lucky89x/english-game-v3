@@ -60,6 +60,7 @@ export class Pet {
     this.root.clear(); const body = new THREE.Group(); body.add(m.scene); this.body = body; this.root.add(body);
     m.scene.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.frustumCulled = false; } });
     this.mixer = new THREE.AnimationMixer(m.scene); this.actions = {}; this.cur = '';
+    this.hasClips = m.animations.length > 0;
     for (const c of m.animations) { const a = this.mixer.clipAction(c); this.actions[c.name] = a; if (!['idle', 'walk'].includes(c.name)) { a.setLoop(THREE.LoopOnce, 1); a.clampWhenFinished = true; } }
     this.fade('idle');
   }
@@ -82,6 +83,11 @@ export class Pet {
     } else { this.moving = false; this.yaw = turn(this.yaw, yaw, 3 * dt); }
     if (this.mixer) {      // rigged model: clips do the moving
       this.place(); this.body.rotation.set(0, this.yaw, 0); this.mixer.update(dt);
+      if (!this.hasClips) {      // (26/11) a still Tripo model: a hop while walking, a slow breath while it waits
+        const bb = this.body; bb.position.y = this.moving ? Math.abs(Math.sin(this.t * 9)) * 0.06 : 0; bb.scale.set(1, 1 + Math.sin(this.t * 2.2) * 0.012, 1); bb.rotation.z = this.moving ? Math.sin(this.t * 9) * 0.04 : 0;
+        if (this.trick) { this.trickT += dt; const k = this.trickT / 1.2; if (k >= 1) this.trick = ''; else { if (this.trick === 'spin') bb.rotation.y = this.yaw + k * Math.PI * 4; if (this.trick === 'jump') bb.position.y += Math.sin(k * Math.PI) * 0.5; if (this.trick === 'roll') bb.rotation.z = k * Math.PI * 2; if (this.trick === 'dance') { bb.rotation.y = this.yaw + Math.sin(k * 30) * 0.5; bb.position.y += Math.abs(Math.sin(k * 20)) * 0.12; } if (this.trick === 'wave') bb.rotation.z = Math.sin(k * 24) * 0.3; if (this.trick === 'sit') bb.scale.set(1.04, 0.8, 1.04); } }
+        return;
+      }
       if (this.trick) { const a = this.actions[this.trick]; if (a && this.trickT === 0) { a.reset().play(); if (this.actions[this.cur]) this.actions[this.cur].crossFadeTo(a, 0.12, false); this.cur = this.trick; this.trickLen = a.getClip().duration; }
         this.trickT += dt; if (!a || this.trickT >= (this.trickLen || 1.2)) { this.trick = ''; this.cur = ''; this.fade(this.moving ? 'walk' : 'idle'); } }
       else this.fade(this.moving ? 'walk' : 'idle');

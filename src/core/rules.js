@@ -16,7 +16,7 @@ export const MONSTERS = {
   goblin: mob(3, 'ranged', { el: 'ice', name: 'Frost Goblin', speed: 2.4, color: 0x4f9ad0, size: 1.0, model: 'goblin', fit: 0.8 }),
   red: mob(4, 'normal', { el: 'fire', name: 'Red Slime', speed: 2.5, color: 0xff7a6a, size: 1.25 }),
   imp: mob(5, 'ranged', { el: 'fire', name: 'Ember Imp', speed: 2.7, color: 0xd8402e, size: 1.0, model: 'imp', fit: 0.7 }),
-  golem: mob(5, 'elite', { el: 'thunder', name: 'Stone Golem', speed: 1.6, color: 0xa49aa6, size: 1.7 }),
+  golem: mob(5, 'elite', { el: 'thunder', name: 'Lava Golem', speed: 1.6, color: 0xa49aa6, size: 1.7 }),
   // Sunny Harbor (levels 5-10): the Blender models in assets/models/harbor_mob_*; `fit` scales the model, `model` names it
   crab: mob(5, 'normal', { el: 'ice', name: 'Beach Crab', speed: 2.3, color: 0xe2483e, size: 1.0, model: 'crab', fit: 1.0 }),
   jelly: mob(6, 'ranged', { el: 'thunder', name: 'Glow Jellyfish', speed: 1.9, color: 0xb48ae8, size: 1.0, fly: true, model: 'jelly', fit: 1.2 }),
@@ -27,7 +27,7 @@ export const MONSTERS = {
   wisp: mob(12, 'ranged', { el: 'thunder', name: 'Storm Wisp', speed: 2.8, color: 0xffe14a, size: 1.0, fly: true, hover: 0.05, model: 'wisp', fit: 1.3 }),
   fox: mob(14, 'normal', { el: 'fire', name: 'Ember Fox', speed: 3.0, color: 0xff8a3a, size: 1.0, model: 'fox', fit: 1.0 }),
   shroom: mob(16, 'elite', { el: 'ice', name: 'Angry Mushroom', ranged: true, speed: 1.8, color: 0xe2483e, size: 1.3 }),
-  orc: mob(18, 'elite', { el: 'wind', name: 'Gale Orc', speed: 2.1, color: 0x6fae3a, size: 1.15, model: 'orc', fit: 1.0 }),
+  orc: mob(18, 'elite', { el: 'wind', name: 'Elder Treant', speed: 2.1, color: 0x6fae3a, size: 1.15, model: 'orc', fit: 1.0 }),
 };
 // (24/11) Where monsters live: one hunting ground per kind, see core/zones.js (ZONES, spawnsOf). [kind, x, z] lists for the three maps.
 export const SPAWNS = spawnsOf('village'), FOREST_SPAWNS = spawnsOf('forest'), HARBOR_SPAWNS = spawnsOf('harbor');
@@ -315,7 +315,7 @@ export const HUNTS = [
   { kind: 'slime', need: 3, gold: 20, exp: 40, en: { easy: 'Please defeat three green slimes. They are eating my carrots!', hard: "Could you get rid of three green slimes? They've been eating my carrots all week." } },
   { kind: 'red', need: 2, gold: 35, exp: 70, en: { easy: 'Two red slimes are near the river. Please stop them!', hard: "Two red slimes have been seen near the river. Would you mind stopping them?" } },
   { kind: 'slime', need: 5, gold: 35, exp: 70, en: { easy: 'Five green slimes are in the meadow. Can you help?', hard: 'The meadow is full of green slimes again. Could you defeat five of them?' } },
-  { kind: 'golem', need: 1, gold: 60, exp: 120, en: { easy: 'A big stone golem is by the farm. Be careful!', hard: "A stone golem is standing near the farm. It's dangerous, so please be careful!" } },
+  { kind: 'golem', need: 1, gold: 60, exp: 120, en: { easy: 'A big lava golem is by the farm. Be careful!', hard: "A lava golem is standing near the farm. It's dangerous, so please be careful!" } },
   { kind: 'goblin', need: 3, gold: 40, exp: 90, en: { easy: 'Frost goblins froze our water bucket! Please stop three of them.', hard: "Three frost goblins have frozen the water in our buckets. Could you chase them away? Fire works well on ice!" } },
   { kind: 'imp', need: 3, gold: 60, exp: 150, en: { easy: 'Little fire imps are burning the grass. Please stop three!', hard: "Some fire imps keep setting the grass on fire near the golem fields. Would you stop three of them? Wind blows fire out!" } },
 ];
@@ -327,7 +327,7 @@ export const FOREST_HUNTS = [
   { kind: 'shroom', need: 4, gold: 90, exp: 360, en: { easy: 'Four angry mushrooms are in the forest. Be brave!', hard: "Four angry mushrooms are hiding among the trees. You'll need to be brave!" } },
   { kind: 'wisp', need: 3, gold: 80, exp: 300, en: { easy: 'Storm wisps are flickering over the trees. Please chase away three!', hard: "Three storm wisps keep flickering over the trees and frightening the deer. Could you chase them away? Wind slows them down!" } },
   { kind: 'fox', need: 3, gold: 90, exp: 340, en: { easy: 'Ember foxes are running through the camp. Please stop three!', hard: "Some ember foxes keep running through the camp and singeing our blankets. Would you stop three of them? Ice cools them down!" } },
-  { kind: 'orc', need: 3, gold: 100, exp: 420, en: { easy: 'Gale orcs are blowing down our tents. Please stop three!', hard: "Three gale orcs keep blowing our tents down at night. Could you stop them? Thunder beats wind!" } },
+  { kind: 'orc', need: 3, gold: 100, exp: 420, en: { easy: 'Elder treants are crushing our tents. Please stop three!', hard: "Three elder treants keep stomping on our tents at night. Could you stop them? Thunder beats wind!" } },
 ];
 /** Map 2 (Sunny Harbor) board: crabs, jellyfish and pirates (18/11). */
 export const HARBOR_HUNTS = [

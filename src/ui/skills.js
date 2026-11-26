@@ -119,6 +119,6 @@ export class SkillUI {
       <div class="ring">${ids.map((el) => `<div>${E[el].icon} <b>${E[el].en}</b> khắc ${E[SK.BEATS[el]].icon} <b>${E[SK.BEATS[el]].en}</b><br><small>${SK.BEAT_WHY[el]}</small></div>`).join('')}</div>
       <h3>Tương sinh · Combos</h3><div class="note">Phép trúng quái để lại <b>dấu hệ</b> 4 giây (chấm màu đổi màu). Phép tiếp theo nếu đúng hệ được dấu ấy <b>nuôi</b> sẽ nổ combo: hệ bị khắc nuôi hệ khắc nó.</div>
       <div class="ring">${Object.entries(SK.COMBOS).map(([k, c]) => { const [a, b] = k.split('>'); return `<div>${E[a].icon} rồi ${E[b].icon} → <b>${c.en}</b> · ${c.vi}<br><small>+${Math.round(c.bonus * 100)}% sát thương${c.stun ? `, choáng ${c.stun} giây` : ''}${c.chain ? `, lan sang ${c.chain} quái` : ''}${c.spread ? `, lửa lan sang ${c.spread} quái` : ''}</small></div>`; }).join('')}</div>
-      <h3>Hệ của quái</h3><div class="note">Đồng Hoang: slime xanh 🌪️ Gió, slime đỏ 🔥 Lửa, golem đá ⚡ Sét, yêu tinh băng ❄️ Băng, quỷ lửa 🔥 Lửa · Rừng: dơi 🌪️ Gió, nấm ❄️ Băng, orc gió 🌪️ Gió · Cảng: cua ❄️ Băng, sứa ⚡ Sét, cướp biển 🔥 Lửa · Boss: Vua Slime ❄️, Nữ hoàng Nấm 🌪️, Golem Cổ ⚡, Bạch Tuộc 🔥.</div>`;
+      <h3>Hệ của quái</h3><div class="note">Đồng Hoang: slime xanh 🌪️ Gió, slime đỏ 🔥 Lửa, golem dung nham ⚡ Sét, yêu tinh băng ❄️ Băng, quỷ lửa 🔥 Lửa · Rừng: dơi 🌪️ Gió, nấm ❄️ Băng, orc gió 🌪️ Gió · Cảng: cua ❄️ Băng, sứa ⚡ Sét, cướp biển 🔥 Lửa · Boss: Vua Slime ❄️, Nữ hoàng Nấm 🌪️, Golem Cổ ⚡, Bạch Tuộc 🔥.</div>`;
   }
 }

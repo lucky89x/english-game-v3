@@ -10,6 +10,7 @@ export const PETS = {
   puppy: { en: 'puppy', vi: 'chó con', icon: '🐶', name: 'Buddy', says: 'Woof woof! Let us go!', price: 120, shop: true },
   kitten: { en: 'kitten', vi: 'mèo con', icon: '🐱', name: 'Mimi', says: 'Meow! Nice to meet you!', price: 120, shop: true },
   bunny: { en: 'bunny', vi: 'thỏ con', icon: '🐰', name: 'Hoppy', says: 'Hop hop! Hello!', price: 90, shop: true },
+  ember: { en: 'ember fox', vi: 'cáo lửa', icon: '🦊', name: 'Blaze', says: 'Yip yip! My tail is warm!', price: 260, shop: true },
   duckling: { en: 'duckling', vi: 'vịt con', icon: '🐥', name: 'Ducky', says: 'Quack quack!', price: 70, shop: true },
 };
 /** The pets the hero owns (the one following is p.pet; the others wait at home in p.pets[kind]). */

@@ -152,7 +152,7 @@ const dayNight = new DayNight({ scene, sky, sun, rim, hemi, sunDir });
 const manager = new THREE.LoadingManager();
 manager.onProgress = (_u, done, total) => { $('loadbar').style.width = Math.round((done / total) * 100) + '%'; };
 const loader = new GLTFLoader(manager), texLoader = new THREE.TextureLoader(manager), modelCache = new Map();
-{ const rawLoad = loader.loadAsync.bind(loader); loader.loadAsync = async (...a) => { const g = await rawLoad(...a); try { relaxArms(g); if (isPerson(g) && !/chr_hero/.test(String(a[0]))) thicken(g); } catch (e) { /* the model keeps its pose */ } return g; }; }      // (24/11) relaxed arms for every person model (src/game/relax.js)
+{ const rawLoad = loader.loadAsync.bind(loader); loader.loadAsync = async (...a) => { const g = await rawLoad(...a); try { relaxArms(g); if (isPerson(g) && !/chr_(hero|girl)/.test(String(a[0]))) thicken(g); } catch (e) { /* the model keeps its pose */ } return g; }; }      // (24/11) relaxed arms for every person model (src/game/relax.js)
 // Characters from tools/chibi05 (v04+): pieces marked eq_hidden (spare hair styles, clothes) start hidden, and *_tint
 // materials sample a grey palette whose 0.8 base tone stands for the colour in material extras eq_base (0.6038 = 0.8 sRGB in linear).
 const MAX_ANISO = Math.min(16, renderer.capabilities.getMaxAnisotropy());
@@ -170,7 +170,7 @@ const SEA_FILES = { crab: 'harbor_mob_crab_v01', jelly: 'harbor_mob_jellyfish_v0
 const seaModel = (k) => gltf(SEA_FILES[k]).catch(() => null);
 /** Map 1 monsters and bosses (batch 13): swapped in by the Wild after the game has started. */
 // (24/11) the user's new monsters replace the old models kind by kind: wolf, magma crystal, boar, water slime, stone golem, dark bat, venom mushroom, carnivorous flower
-const MAP1_FILES = { goblin: 'mob_shadow_wolf', imp: 'mob_magma_crystal', orc: 'mob_rage_boar', slime: 'mob_water_slime', red: 'mob_slime_red_v01', golem: 'mob_stone_golem', bat: 'mob_dark_bat', shroom: 'mob_venom_mushroom', king: 'boss_slime_king_v02', ancient: 'boss_golem_ancient_v02', queen: 'boss_mushroom_queen_v02', bunny: 'mob_carnivorous_flower', wisp: 'mob_wisp_thunder_v01', fox: 'mob_fox_ember_v01' };
+const MAP1_FILES = { goblin: 'mob_shadow_wolf', imp: 'mob_magma_crystal', orc: 'mob_treant_elder', slime: 'mob_water_slime', red: 'mob_slime_red_v01', golem: 'mob_golem_lava', bat: 'mob_dark_bat', shroom: 'mob_mushroom_giant', king: 'boss_slime_king_v02', ancient: 'boss_golem_ancient_v02', queen: 'boss_mushroom_queen_v02', bunny: 'mob_carnivorous_flower', wisp: 'mob_wisp_thunder_v01', fox: 'mob_fox_ember_v01' };
 const map1Model = (k) => gltf(MAP1_FILES[k]).catch(() => null);
 const staticModel = async (name) => (await gltf(name)).scene.clone(true);
 const animatedModel = async (name) => { const g = await gltf(name); return { scene: SkeletonUtils.clone(g.scene), animations: g.animations }; };
@@ -936,15 +936,16 @@ const heroFit = (kind) => (globalThis.__heroFit && globalThis.__heroFit[kind]) |
 const accScene = {};                       // kind -> loaded glTF scene, or null when the file is missing (the shapes from outfit.js take over)
 let lookShown = [], faceShown = '';
 /** (25/11) The body: Ngọc (older saves) or the Tripo hero (profile.avatar === 'hero', the default of new players). The model is swapped in place. */
+const AVATAR_FILES = { hero: 'chr_hero_v01', girl1: 'chr_girl1_v01', girl2: 'chr_girl2_v01' };      // (26/11) Ruby and the two new Tripo girls (Luna, Mika): painted outfits, own rig on Ngọc's bones
 let avatarKind = 'ngoc', ngocGltf = null, swappingAvatar = false; const outlined = new WeakSet();
 async function swapAvatar(kind) {
   if (swappingAvatar || !player) return; swappingAvatar = true;
   try {
     if (!ngocGltf) ngocGltf = { scene: player.root, animations: Object.values(player.actions).map((a) => a.getClip()) };
-    const g = kind === 'hero' ? await gltf('chr_hero_v01') : ngocGltf;
+    const g = AVATAR_FILES[kind] ? await gltf(AVATAR_FILES[kind]) : ngocGltf;
     player.setModel(g); avatarKind = kind;
-    if (!outlined.has(player.root)) { outlined.add(player.root); addOutline(player.root, kind === 'hero' ? { thick: 0.005 } : undefined); }
-    if (kind === 'hero' && !player.root.userData.lit) { player.root.userData.lit = true; player.root.traverse((o) => { if (o.isMesh && !o.userData.outline && o.material && o.material.color) o.material.color.setScalar(1.15); }); }      // (25/11) the Tripo textures read darker than the painted world: +15 %
+    if (!outlined.has(player.root)) { outlined.add(player.root); addOutline(player.root, kind !== 'ngoc' ? { thick: 0.005 } : undefined); }
+    if (kind !== 'ngoc' && !player.root.userData.lit) { player.root.userData.lit = true; player.root.traverse((o) => { if (o.isMesh && !o.userData.outline && o.material && o.material.color) o.material.color.setScalar(1.15); }); }      // (25/11) the Tripo textures read darker than the painted world: +15 %
     if (kind === 'ngoc') { tintBody(player.root, NGOC_COLORS); }
     setSword(); setWear();
   } catch (e) { console.warn('avatar', e); } finally { swappingAvatar = false; }
@@ -952,7 +953,7 @@ async function swapAvatar(kind) {
 }
 function applyLook() {
   if (!player || !profile) return;
-  const wantAvatar = profile.avatar === 'hero' ? 'hero' : 'ngoc'; if (wantAvatar !== avatarKind) { swapAvatar(wantAvatar); return; }
+  const wantAvatar = AVATAR_FILES[profile.avatar] ? profile.avatar : 'ngoc'; if (wantAvatar !== avatarKind) { swapAvatar(wantAvatar); return; }
   for (const o of lookShown) o.removeFromParent(); lookShown = [];
   const root = player.root, bone = (re) => { let b = null; root.traverse((o) => { if (!b && o.isBone && re.test(o.name)) b = o; }); return b; };
   const worn = WR.wardrobe(profile).worn, val = (slot) => { const it = worn[slot] && WR.parse(worn[slot]); return it ? it.color : null; }, paint = (n, d) => (n && (WCOL[n] || WR.JEWEL_HEX[n])) || d;
@@ -967,6 +968,7 @@ function applyLook() {
     const hc = (slot) => (val(slot) ? paint(val(slot)) : null), tp = hc('body') || hc('top');
     tintHero(root, { top: tp, bottom: hc('body') || hc('bottom'), sleeves: tp, boots: kindOf0('feet') === 'boots' ? hc('feet') : null, hair: hc('haircolor') });
   }
+  if (avatarKind !== 'ngoc' && avatarKind !== 'hero') { syncOutlines(root); return; }      // (26/11) the two new girls wear their painted outfit; clothes and accessories for them come later
   const kindOf = (slot) => { const it = worn[slot] && WR.parse(worn[slot]); return it ? it.kind : null; };
   const baseK = (slot) => WR.baseOf(kindOf(slot));
   setClothes(root, { top: CLOTH.top[baseK('top')], bottom: CLOTH.bottom[baseK('bottom')], body: CLOTH.body[baseK('body')] });

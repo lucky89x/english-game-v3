@@ -13,7 +13,7 @@ export const ZONES = {
     { id: 'v_goblin', kind: 'goblin', x: 64, z: -32, r: 9, n: 4, vi: 'Bãi Yêu Tinh Băng', icon: '👺' },
     { id: 'v_red', kind: 'red', x: 72, z: 30, r: 9, n: 4, vi: 'Bãi Slime Đỏ', icon: '🔴' },
     { id: 'v_imp', kind: 'imp', x: 80, z: -8, r: 9, n: 4, vi: 'Bãi Quỷ Lửa Nhỏ', icon: '😈' },
-    { id: 'v_golem', kind: 'golem', x: 44, z: -70, r: 8, n: 2, vi: 'Bãi Golem Đá', icon: '🗿' },
+    { id: 'v_golem', kind: 'golem', x: 44, z: -70, r: 8, n: 2, vi: 'Bãi Golem Dung Nham', icon: '🌋' },
   ],
   harbor: [       // Sunny Harbor, levels 5-10
     { id: 'h_crab', kind: 'crab', x: 0, z: 56, r: 9, n: 5, vi: 'Bãi Cua Biển', icon: '🦀' },
@@ -26,7 +26,7 @@ export const ZONES = {
     { id: 'f_wisp', kind: 'wisp', x: 32, z: 40, r: 9, n: 4, vi: 'Bãi Ma Trơi Sét', icon: '✨' },
     { id: 'f_fox', kind: 'fox', x: -24, z: -26, r: 9, n: 4, vi: 'Bãi Cáo Lửa', icon: '🦊' },
     { id: 'f_shroom', kind: 'shroom', x: 64, z: -16, r: 8, n: 3, vi: 'Bãi Nấm Giận Dữ', icon: '🍄' },
-    { id: 'f_orc', kind: 'orc', x: 0, z: -64, r: 9, n: 3, vi: 'Bãi Orc Gió Lốc', icon: '🐗' },
+    { id: 'f_orc', kind: 'orc', x: 0, z: -64, r: 9, n: 3, vi: 'Bãi Người Cây Cổ Thụ', icon: '🌳' },
   ],
 };
 

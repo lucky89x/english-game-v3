@@ -1148,3 +1148,15 @@ test('hero accessory styles: five per type, files, prices', () => {
   }
   for (const k of Object.values(HSTYLES).flat().map((x) => x[0]).concat(['bracelet_hero'])) assert.ok(hexists(new URL(`../assets/models/acc_${k}_v01.glb`, import.meta.url)), `file for ${k}`);
 });
+
+// (26/11) the Tripo batch: monsters, pets and the two new playable girls
+import { existsSync as tripoExists, statSync as tripoSize } from 'node:fs';
+import { PETS as TRIPO_PETS, buyPet as tripoBuy } from '../src/core/pet.js';
+test('tripo batch: model files exist and are game-sized, the ember fox is a shop pet', () => {
+  for (const f of ['mob_golem_lava', 'mob_mushroom_giant', 'mob_treant_elder', 'pet_ember_v01', 'pet_puppy_v01', 'pet_kitten_v01', 'chr_girl1_v01', 'chr_girl2_v01']) {
+    const path = new URL(`../assets/models/${f}.glb`, import.meta.url);
+    assert.ok(tripoExists(path), f); assert.ok(tripoSize(path).size < 6e6, `${f} is under 6 MB`);
+  }
+  assert.equal(TRIPO_PETS.ember.shop, true); const p = { stats: { gold: 1000 }, pets: {} };
+  assert.ok(tripoBuy(p, 'ember').ok && p.pet.kind === 'ember' && p.stats.gold === 1000 - TRIPO_PETS.ember.price);
+});

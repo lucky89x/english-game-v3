@@ -29,6 +29,7 @@ const OUTFIT = [{ id: 'trousers', en: 'T-shirt + trousers', vi: 'áo + quần d�
 const COL_VI = { red: 'đỏ', blue: 'xanh dương', yellow: 'vàng', green: 'xanh lá', pink: 'hồng', purple: 'tím', black: 'đen', white: 'trắng', orange: 'cam', brown: 'nâu' };
 const pickOne = (a) => a[Math.floor(Math.random() * a.length)];
 
+const BAKED = ['hero', 'girl1', 'girl2'];      // the Tripo bodies: painted outfit, no face/skin/hair choices
 export class Creator {
   /** api: { profile(), apply() (redraws the hero), focus(on) (camera on the hero's front), sfx(name) } */
   constructor(api) {
@@ -52,7 +53,7 @@ export class Creator {
   /** Puts the draft on the hero (the pieces are only owned once the child presses the button). */
   preview() {
     const p = this.api.profile(), d = this.d; p.look = { face: d.face, skin: d.skin }; p.avatar = d.avatar;
-    if (this.mode === 'new' && d.avatar !== 'hero') {
+    if (this.mode === 'new' && !BAKED.includes(d.avatar)) {
       const w = wardrobe(p); w.worn.style = `hairstyle:${d.style}`; w.worn.haircolor = `haircolor:${d.hair}`;
       if (d.outfit === 'dress') { w.worn.body = `dress:${d.dress}`; w.worn.top = w.worn.bottom = null; }
       else { w.worn.body = null; w.worn.top = `top:${d.top}`; w.worn.bottom = `${d.outfit}:${d.bottom}`; }
@@ -61,7 +62,7 @@ export class Creator {
   }
   act(a, v) {
     const d = this.d; this.api.sfx('tick');
-    if (a === 'avatar') { d.avatar = v; speak(v === 'hero' ? 'Ruby, the adventurer' : 'Ngoc'); }
+    if (a === 'avatar') { d.avatar = v; speak(v === 'hero' ? 'Ruby, the adventurer' : v === 'girl1' ? 'Luna, the silver knight' : v === 'girl2' ? 'Mika, the sky dancer' : 'Ngoc'); }
     else if (a === 'face') { d.face = v; speak(`a ${FACE_NAMES[v].toLowerCase()} face`); }
     else if (a === 'skin') d.skin = v;
     else if (a === 'style') { d.style = v; speak(HAIR_EN[v]); }
@@ -79,7 +80,7 @@ export class Creator {
     const p = this.api.profile(), d = this.d;
     p.look = { face: d.face, skin: d.skin }; p.avatar = d.avatar;
     delete p.lookPending;
-    if (this.mode === 'new' && d.avatar !== 'hero') starterLook(p, [['hairstyle', d.style], ['haircolor', d.hair], ...(d.outfit === 'dress' ? [['dress', d.dress]] : [['top', d.top], [d.outfit, d.bottom]])]);
+    if (this.mode === 'new' && !BAKED.includes(d.avatar)) starterLook(p, [['hairstyle', d.style], ['haircolor', d.hair], ...(d.outfit === 'dress' ? [['dress', d.dress]] : [['top', d.top], [d.outfit, d.bottom]])]);
     this.close(true);
   }
   cancel() { const p = this.api.profile(), b = JSON.parse(this.before); if (b.look) p.look = b.look; else delete p.look; if (b.avatar) p.avatar = b.avatar; else delete p.avatar; wardrobe(p).worn = b.worn; this.api.apply(); this.close(false); }
@@ -89,10 +90,11 @@ export class Creator {
     const swatches = (act, cur) => `<div class="row">${COLOR_NAMES.map((c) => `<button class="sw${on(c, cur)}" data-a="${act}" data-v="${c}" title="${c} · ${COL_VI[c]}" style="background:${COLORS[c]}"></button>`).join('')}</div>`;
     const name = String(p.name).replace(/[&<>"]/g, '');
     let html = `<h2>${this.mode === 'new' ? `✨ Create your hero` : '🪞 Magic mirror'}</h2><div class="sub">${this.mode === 'new' ? `Tạo nhân vật của <b>${name}</b>. Bấm để chọn, nhân vật bên phải đổi ngay. Kéo chuột trên nhân vật để xoay.` : 'Gương thần: đổi khuôn mặt và màu da miễn phí.'}</div>
-      ${this.mode === 'new' ? `<h3>Hero <small>· nhân vật</small></h3><div class="row"><button class="${on('hero', d.avatar)}" data-a="avatar" data-v="hero">Ruby (new · mới)</button><button class="${on('ngoc', d.avatar)}" data-a="avatar" data-v="ngoc">Ngoc (classic · cũ)</button></div>` : ''}
-      ${d.avatar === 'hero' ? '' : `<h3>Face <small>· khuôn mặt</small></h3><div class="row">${FACES.map((f) => `<button class="face${on(f, d.face)}" data-a="face" data-v="${f}"><img src="./assets/tex/face_${f}_thumb.jpg" alt="">${FACE_NAMES[f]}</button>`).join('')}</div>
+      ${this.mode === 'new' ? `<h3>Hero <small>· nhân vật</small></h3><div class="row"><button class="${on('hero', d.avatar)}" data-a="avatar" data-v="hero">Ruby (new · mới)</button><button class="${on('girl1', d.avatar)}" data-a="avatar" data-v="girl1">Luna (new · mới)</button><button class="${on('girl2', d.avatar)}" data-a="avatar" data-v="girl2">Mika (new · mới)</button><button class="${on('ngoc', d.avatar)}" data-a="avatar" data-v="ngoc">Ngoc (classic · cũ)</button></div>` : ''}
+      ${BAKED.includes(d.avatar) ? '' : `<h3>Face <small>· khuôn mặt</small></h3><div class="row">${FACES.map((f) => `<button class="face${on(f, d.face)}" data-a="face" data-v="${f}"><img src="./assets/tex/face_${f}_thumb.jpg" alt="">${FACE_NAMES[f]}</button>`).join('')}</div>
       <h3>Skin <small>· màu da</small></h3><div class="row">${Object.keys(SKINS).map((s) => `<button class="sw${on(s, d.skin)}" data-a="skin" data-v="${s}" title="${SKIN_NAMES[s]}" style="background:${SKINS[s]}"></button>`).join('')}</div>`}`;
     if (d.avatar === 'hero') html += `<div class="hint">Ruby đã mặc sẵn bộ đồ phiêu lưu (khăn đỏ, kính, ủng). Đồ mới sẽ mua ở tiệm may sau.</div>`;
+    else if (BAKED.includes(d.avatar)) html += `<div class="hint">${d.avatar === 'girl1' ? 'Luna' : 'Mika'} đã mặc sẵn bộ đồ riêng. Đồ mới của bạn ấy sẽ có ở tiệm may sau.</div>`;
     else if (this.mode === 'new') {
       html += `<h3>Hair style <small>· kiểu tóc</small></h3><div class="row">${HAIR_STYLES.map((h) => `<button class="${on(h, d.style)}" data-a="style" data-v="${h}" title="${HAIR_VI[h]}">${h}</button>`).join('')}</div>
         <h3>Hair colour <small>· màu tóc: ${d.hair} (${COL_VI[d.hair]})</small></h3>${swatches('hair', d.hair)}

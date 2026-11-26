@@ -79,6 +79,8 @@ export class Tailor {
   /** the kinds a tab offers for this player (the hero: colours only for clothes, hair colour, all the accessory styles) */
   kindsOf(tabId) { const t = TABS.find((x) => x.id === tabId); return this.api.profile().avatar === 'hero' && HERO_ONLY_KINDS[tabId] ? HERO_ONLY_KINDS[tabId] : t.kinds; }
   draw() {
+    const p0 = this.api.profile();
+    if (p0.avatar === 'girl1' || p0.avatar === 'girl2') { this.el.innerHTML = `<header><span style="font-size:28px">🧵</span><h2>Mia's Tailor Shop</h2><button data-a="close">✕</button></header><div class="say">💬 <b>Mia:</b> What a lovely outfit! I do not have clothes for it yet.<br><small>Bộ đồ của nhân vật này đã may sẵn. Tiệm sẽ có đồ riêng cho bạn ấy sau.</small></div>`; return; }
     const p = this.api.profile(), w = wardrobe(p), tab = TABS.find((t) => t.id === this.tab), K = KINDS[this.kind], vals = K.vals || COLOR_NAMES, owned = new Set(w.owned);
     const kindBtn = (k) => `<button class="k${k === typeOf(this.kind) ? ' on' : ''}" data-a="kind" data-v="${k}"><i>${KINDS[k].icon}</i>${k === 'hairstyle' ? 'hair style' : k === 'haircolor' ? 'hair colour' : KINDS[k].en}<br><small>${KINDS[k].vi}</small></button>`;
     const valBtn = (c) => { const id = itemId(this.kind, c), cls = `${id === this.sel ? ' on' : ''}${owned.has(id) ? ' own' : ''}`;

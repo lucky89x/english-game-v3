@@ -370,7 +370,7 @@ export class Wild {
       if (m.mixer) {          // Blender monsters walk and idle by their own clips; jellyfish float
         if (m.once) { m.once.t += dt; if (m.once.t >= m.once.a.getClip().duration) m.once = null; }
         const want = m.once ? m.once.a : vx || vz ? m.walk : m.idle; if (want && m.cur !== want) { const prev = m.cur; m.cur = want; want.reset().play(); if (prev) prev.crossFadeTo(want, 0.25, false); }
-        m.mixer.update(dt); hop = m.def.fly ? (m.def.hover === undefined ? 0.8 : m.def.hover) + Math.sin(this.t * 2 + m.ph) * 0.12 : 0;
+        m.mixer.update(dt); if (m.idle || m.def.fly) hop = m.def.fly ? (m.def.hover === undefined ? 0.8 : m.def.hover) + Math.sin(this.t * 2 + m.ph) * 0.12 : 0;
       }
       m.g.position.set(m.x, L.groundHeight(m.x, m.z) + hop, m.z); if (vx || vz) m.g.rotation.y = Math.atan2(vx, vz);
       if (m.g.userData.wings) for (const [k, w] of m.g.userData.wings.entries()) w.rotation.z = (k ? -1 : 1) * Math.sin(this.t * 14 + m.ph) * 0.6;   // bats flap
