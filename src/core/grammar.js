@@ -1,6 +1,7 @@
 // Short grammar checks for the owl's knowledge gates at levels 10, 15, 20, 25 and 30 and for the map exams (N5; Unit 2 added 19/11). Sentences are original and follow
 // the grammar line of the unit's data file. Only units listed here have them; other units ask words only.
 // q: sentence with ___, options: forms of the same word, a: index of the right one, why: one-line Vietnamese reason.
+import { GRAMMAR_MORE, GRAMMAR_NOTES } from './grammar_units.js';
 export const GRAMMAR = {
   g6_u01: [
     { q: 'My brother ___ to school by bike every day.', options: ['rides', 'ride', 'is riding'], a: 0, why: 'every day → hiện tại đơn; he/she/it thêm -s.' },
@@ -99,6 +100,9 @@ export const GRAMMAR = {
     { q: 'The streets were empty ___ it was rush hour.', options: ['even though', 'so', 'because'], a: 0, why: 'trái với dự đoán → even though.' },
   ],
 };
+Object.assign(GRAMMAR, GRAMMAR_MORE);      // (26/11, turn 63) Units 3-12 of grades 6 and 8: core/grammar_units.js
+/** The one-card note of a unit's grammar ({ name, vi, ex: [[en, vi], [en, vi]] }) or null when none is written. */
+export const noteFor = (grade, unit) => GRAMMAR_NOTES[`g${grade}_u${String(unit).padStart(2, '0')}`] || null;
 /** Levels whose owl gate also asks two grammar questions. */
 export const GRAMMAR_GATES = Array.from({ length: 13 }, (_, i) => (i + 2) * 5);      // 10, 15 … 70
 /** Picks n grammar items for a grade and unit (shuffled with rnd); [] when the unit has none written. */

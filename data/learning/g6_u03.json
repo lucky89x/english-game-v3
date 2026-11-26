@@ -134,10 +134,15 @@
       "source": "game (21/11): topic word added by the game, not from the book"
     }
   ],
-  "grammar": [],
+  "grammar": [
+    "present continuous for actions happening now: Look! Mai is reading a magazine.",
+    "present continuous for future plans: We are visiting our grandparents tomorrow."
+  ],
   "activities": {},
   "version": 1,
   "source_note": "Từ vựng do chủ dự án chép từ sổ tay kiến thức; chưa có bài đọc hay hoạt động.",
   "vocabulary_checked": true,
-  "status": "vocab"
+  "status": "vocab",
+  "grammar_checked": false,
+  "grammar_note": "Frame from memory of the Global Success contents page; check against the textbook. Sentences are original."
 }

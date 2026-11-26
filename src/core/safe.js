@@ -11,5 +11,10 @@ export const SAFE = {
   mountain: [{ x: 0, z: 56, r: 9 }, { x: 2, z: 30, r: 14 }],
   ruins: [{ x: 0, z: 56, r: 9 }, { x: 3, z: 34, r: 13 }],
   sky: [{ x: 0, z: 56, r: 9 }, { x: 0, z: 44, r: 11 }],
+  fairy: [{ x: 0, z: 56, r: 9 }, { x: 0, z: 38, r: 13 }],      // (26/11, turn 63) maps 8-12
+  volcano: [{ x: 0, z: 56, r: 9 }, { x: 2, z: 44, r: 12 }],
+  crystal: [{ x: 0, z: 56, r: 9 }, { x: 2, z: 42, r: 12 }],
+  city: [{ x: 0, z: 56, r: 9 }, { x: 0, z: 46, r: 12 }],
+  dream: [{ x: 0, z: 56, r: 9 }, { x: 0, z: 46, r: 12 }],
 };
 export const inSafe = (region, x, z, pad = 0) => (SAFE[region] || []).some((s) => Math.hypot(x - s.x, z - s.z) < s.r + pad);

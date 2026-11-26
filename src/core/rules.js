@@ -53,6 +53,37 @@ export const MONSTERS = {
   sunfox: mob(39, 'normal', { el: 'fire', name: 'Sun Fox', speed: 3.4, color: 0xffc84a, size: 1.1, model: 'moonfox', fit: 1.0, tint: 0xffd070 }),
   stormbird: mob(41, 'ranged', { el: 'thunder', name: 'Storm Bird', speed: 3.2, color: 0xb090ff, size: 1.2, model: 'skybird', fit: 1.5, tint: 0xb8a0ff }),
   stormgolem: mob(43, 'elite', { el: 'thunder', name: 'Storm Golem', speed: 1.8, color: 0xa080ff, size: 1.3, model: 'icegolem', fit: 1.0, tint: 0xc0a8ff }),
+  // (26/11, turn 63) maps 8-12. Until each land has monsters of its own, most of these are models the game already has, in another colour (`tint`).
+  // Fairy Isle, levels 45-49
+  pixie: mob(45, 'ranged', { el: 'thunder', name: 'Firefly Pixie', speed: 3.0, color: 0xffa0e0, size: 0.9, fly: true, hover: 0.05, model: 'wisp', fit: 1.3, tint: 0xffb0e8 }),
+  snapper: mob(46, 'normal', { el: 'wind', name: 'Petal Snapper', speed: 2.6, color: 0xff9ad0, size: 1.1, model: 'flower', fit: 0.9, tint: 0xffc0f0 }),
+  dewfrog: mob(47, 'ranged', { el: 'ice', name: 'Dew Frog', speed: 2.8, color: 0x90c8ff, size: 1.1, model: 'frog', fit: 1.2, tint: 0x9ad0ff }),
+  sporeling: mob(48, 'normal', { el: 'wind', name: 'Hopping Mushroom', speed: 2.6, color: 0xd0a0ff, size: 0.9, model: 'shroomg', fit: 0.8, tint: 0xe0b8ff }),
+  thorn: mob(49, 'elite', { el: 'wind', name: 'Thorn Treant', speed: 2.0, color: 0x80b050, size: 1.25, model: 'treant', fit: 1.0, tint: 0xa8d070 }),
+  // Volcano Valley, levels 50-54
+  shard: mob(50, 'normal', { el: 'fire', name: 'Lava Shard', speed: 2.6, color: 0xff7a3a, size: 1.1, model: 'magma', fit: 0.75 }),
+  lavafox: mob(51, 'normal', { el: 'fire', name: 'Lava Fox', speed: 3.4, color: 0xff6a2a, size: 1.15, model: 'emberfox', fit: 1.0, tint: 0xffb090 }),
+  ashbat: mob(52, 'normal', { el: 'wind', name: 'Ash Bat', speed: 3.2, color: 0x8a7a70, size: 1.1, fly: true, hover: 1.1, model: 'bat', fit: 1.1, tint: 0xffa070 }),
+  ashwisp: mob(53, 'ranged', { el: 'thunder', name: 'Ash Wisp', speed: 2.8, color: 0xffc060, size: 1.1, fly: true, hover: 0.05, model: 'wisp', fit: 1.5, tint: 0xffc070 }),
+  titanling: mob(54, 'elite', { el: 'fire', name: 'Lava Golem', speed: 1.8, color: 0xe2603a, size: 1.3, model: 'lavagolem', fit: 1.0 }),
+  // Crystal Cave, levels 55-59
+  cavebat: mob(55, 'normal', { el: 'wind', name: 'Cave Bat', speed: 3.3, color: 0x8080ff, size: 1.1, fly: true, hover: 1.1, model: 'bat', fit: 1.1, tint: 0xa0a0ff }),
+  gemslime: mob(56, 'normal', { el: 'ice', name: 'Gem Slime', speed: 2.6, color: 0xd090ff, size: 1.1, model: 'wslime', fit: 1.2, tint: 0xe0a0ff }),
+  glowwisp: mob(57, 'ranged', { el: 'thunder', name: 'Glow Wisp', speed: 3.0, color: 0x80ffe0, size: 1.1, fly: true, hover: 0.05, model: 'wisp', fit: 1.5, tint: 0x90ffe8 }),
+  echo: mob(58, 'ranged', { el: 'ice', name: 'Echo Crystal', speed: 2.2, color: 0x60d0ff, size: 1.2, model: 'magma', fit: 0.8, tint: 0x70d8ff }),
+  gemgolem: mob(59, 'elite', { el: 'ice', name: 'Crystal Golem', speed: 1.8, color: 0xe0a0ff, size: 1.35, model: 'icegolem', fit: 1.0, tint: 0xe8b0ff }),
+  // Future City, levels 60-64 (robots drawn with Blender: tools/lands/build_robots.py)
+  drone: mob(60, 'ranged', { el: 'thunder', name: 'Spark Drone', speed: 3.2, color: 0xffe060, size: 1.0, fly: true, hover: 1.2, model: 'drone', fit: 1.0 }),
+  wheelbot: mob(61, 'normal', { el: 'wind', name: 'Wheel Bot', speed: 3.6, color: 0x60d0ff, size: 1.0, model: 'wheelbot', fit: 1.0 }),
+  boxbot: mob(62, 'normal', { el: 'fire', name: 'Box Bot', speed: 2.6, color: 0xffa040, size: 1.1, model: 'boxbot', fit: 1.0 }),
+  laser: mob(63, 'ranged', { el: 'fire', name: 'Laser Drone', speed: 3.2, color: 0xff5050, size: 1.1, fly: true, hover: 1.2, model: 'drone', fit: 1.0, tint: 0xff8080 }),
+  guardbot: mob(64, 'elite', { el: 'thunder', name: 'Guard Bot', speed: 2.0, color: 0xa0b0c0, size: 1.4, model: 'guardbot', fit: 1.0 }),
+  // Dream Kingdom, levels 65-69
+  nightbat: mob(65, 'normal', { el: 'wind', name: 'Nightmare Bat', speed: 3.4, color: 0xc080ff, size: 1.2, fly: true, hover: 1.1, model: 'bat', fit: 1.2, tint: 0xd090ff }),
+  dreamfox: mob(66, 'normal', { el: 'ice', name: 'Dream Fox', speed: 3.4, color: 0xffb0e0, size: 1.1, model: 'moonfox', fit: 1.0, tint: 0xffb8e8 }),
+  shade: mob(67, 'ranged', { el: 'wind', name: 'Whisper Shade', speed: 2.8, color: 0x6a5a9a, size: 1.1, fly: true, hover: 0.05, model: 'wraith', fit: 1.1 }),
+  sleepghost: mob(68, 'ranged', { el: 'thunder', name: 'Sleepy Ghost', speed: 2.8, color: 0xa0c0ff, size: 1.1, fly: true, hover: 0.05, model: 'ghost', fit: 1.4, tint: 0xb0d0ff }),
+  nightgolem: mob(69, 'elite', { el: 'thunder', name: 'Nightmare Golem', speed: 1.9, color: 0x8060c0, size: 1.4, model: 'icegolem', fit: 1.0, tint: 0x9070d0 }),
 };
 // (24/11) Where monsters live: one hunting ground per kind, see core/zones.js (ZONES, spawnsOf). [kind, x, z] lists for the three maps.
 export const SPAWNS = spawnsOf('village'), FOREST_SPAWNS = spawnsOf('forest'), HARBOR_SPAWNS = spawnsOf('harbor');
@@ -215,7 +246,8 @@ for (const [el, [en, vi, hệ, color]] of Object.entries(EL_NAMES)) {
   NEW_GEAR[`${en.toLowerCase()}_staff`] = { en: `${en} Staff`, vi: `trượng ${vi} (hệ ${hệ})`, slot: 'weapon', kind: 'staff', el, far: 0.5, eldmg: 0.15, level: 16, color, like: ({ fire: 'inferno_staff', ice: 'glacier_staff', wind: 'tempest_staff', thunder: 'storm_staff' })[el] };
 }
 // (26/11) maps 4-7: each land's merchant sells the gear of its levels (a plain blade, a staff, armour, a charm, and a blade and a staff of every element)
-const LAND_GEAR = [['desert', 22, 25, 'Dune', 'cồn cát'], ['mountain', 27, 30, 'Frostpeak', 'đỉnh băng'], ['ruins', 32, 35, 'Runic', 'cổ ngữ'], ['sky', 38, 44, 'Skyforged', 'thiên không']];
+const LAND_GEAR = [['desert', 22, 25, 'Dune', 'cồn cát'], ['mountain', 27, 30, 'Frostpeak', 'đỉnh băng'], ['ruins', 32, 35, 'Runic', 'cổ ngữ'], ['sky', 38, 44, 'Skyforged', 'thiên không'],
+  ['fairy', 47, 50, 'Petal', 'cánh hoa'], ['volcano', 52, 55, 'Ember', 'than hồng'], ['crystal', 57, 60, 'Prism', 'lăng kính'], ['city', 62, 65, 'Neon', 'neon'], ['dream', 67, 70, 'Starlight', 'ánh sao']];      // (26/11, turn 63) maps 8-12
 for (const [land, lo, hi, en, vi] of LAND_GEAR) {
   const k = en.toLowerCase();
   NEW_GEAR[`${k}_blade`] = { en: `${en} Blade`, vi: `kiếm ${vi}`, slot: 'weapon', level: lo, color: 0xe8d8a0, like: 'moon_sword', seller: land };
@@ -407,12 +439,43 @@ export const LAND_HUNTS = {
     J('sunfox', 4, 'Sun foxes are too hot for the garden. Please chase away four!', "Some sun foxes are drying out the star garden. Could you chase four of them away? Ice cools them down!"),
     J('stormgolem', 2, 'Two storm golems guard the arena road. Be brave!', "Two storm golems are guarding the road to the Sun Arena. You'll need all your courage!"),
   ],
+  // (26/11, turn 63) maps 8-12
+  fairy: [
+    J('pixie', 5, 'Firefly pixies pinch the dancers. Please chase away five!', "The firefly pixies kept pinching the dancers at last night's festival. Could you chase five of them away?"),
+    J('snapper', 5, 'Petal snappers ate the festival flags. Please stop five!', "Five petal snappers have eaten the flags for the fairy games. Would you mind stopping them? Thunder beats wind!"),
+    J('sporeling', 4, 'Hopping mushrooms jump on the game field. Please stop four!', "Some hopping mushrooms keep jumping all over the game field, so nobody can play. Could you stop four of them?"),
+    J('thorn', 2, 'Two thorn treants block the garden road. Be brave!', "Two thorn treants are blocking the road to the Thorn Garden. You will need to be brave!"),
+  ],
+  volcano: [
+    J('shard', 5, 'Lava shards are rolling into the camp. Please break five!', "Lava shards were rolling into the camp while we were sleeping. Could you break five of them?"),
+    J('lavafox', 5, 'Lava foxes burn our ropes. Please chase away five!', "The lava foxes have burnt nearly all our climbing ropes. Would you chase five of them away? Ice cools them down!"),
+    J('ashbat', 4, 'Ash bats fly over the road. Please stop four!', "Four ash bats were circling over the road when the last traveller came. Could you stop them?"),
+    J('titanling', 2, 'Two lava golems stand by the Fire Gate. Be careful!', "Two lava golems are standing by the Fire Gate. They are very strong, so be careful!"),
+  ],
+  crystal: [
+    J('cavebat', 5, 'Cave bats put out our lamps. Please chase away five!', "The cave bats keep putting out the miners' lamps. Could you chase five of them away?"),
+    J('gemslime', 5, 'Gem slimes are eating the crystals. Please stop five!', "Five gem slimes are eating the small crystals before we can dig them out. Would you mind stopping them?"),
+    J('echo', 4, 'Echo crystals repeat every word, too loudly! Please break four.', "Some echo crystals repeat everything we say so loudly that the tunnels shake. Could you break four of them?"),
+    J('gemgolem', 2, 'Two crystal golems guard the hollow. Be brave!', "Two crystal golems are guarding the way to the Dragon's Hollow. You'll need all your courage!"),
+  ],
+  city: [
+    J('drone', 5, 'Spark drones are buzzing round the station. Please stop five!', "Five spark drones are buzzing round the Sky Station and scaring the passengers. Could you stop them?"),
+    J('wheelbot', 5, 'Wheel bots race on the pavement. Please catch five!', "The wheel bots have been racing along the pavements all day. Would you catch five of them? Thunder beats wind!"),
+    J('boxbot', 4, 'Box bots are stacking boxes on the avenue. Please stop four!', "Four box bots keep piling boxes in the middle of the avenue. Could you stop them before the sky train arrives?"),
+    J('guardbot', 2, 'Two guard bots block the control centre. Be careful!', "Two guard bots are blocking the door of the control centre. They are the strongest robots in the city, so be careful!"),
+  ],
+  dream: [
+    J('nightbat', 5, 'Nightmare bats are waking the sleepers. Please chase away five!', "The nightmare bats keep waking everybody who is trying to sleep. Could you chase five of them away?"),
+    J('dreamfox', 5, 'Dream foxes steal the pillows. Please catch five!', "The dream foxes have stolen most of the pillows from the Pillow Garden. Would you catch five of them?"),
+    J('shade', 4, 'Whisper shades take the good dreams. Please stop four!', "Four whisper shades are taking the good dreams and leaving bad ones. Please stop them!"),
+    J('nightgolem', 2, 'Two nightmare golems guard the Silent Door. Be brave!', "Two nightmare golems are guarding the Silent Door of the Star Castle. This is the last road, so be brave!"),
+  ],
 };
 for (const list of Object.values(LAND_HUNTS)) for (const h of list) { const m = MONSTERS[h.kind]; h.exp = Math.round(m.exp * h.need * 1.3); h.gold = Math.round(m.gold * h.need * 1.6 / 5) * 5 || 5; }
 export const huntsOf = (region) => (LAND_HUNTS[region] || (region === 'forest' ? FOREST_HUNTS : region === 'harbor' ? HARBOR_HUNTS : HUNTS));
 export const huntLine = (h, grade) => h.en[grade >= 8 ? 'hard' : 'easy'];
 /** The hunt in progress for a board: profile.hunt (village), profile.hunt2 (forest) or profile.hunt3 (harbor). */
-export const HUNT_KEY = { village: 'hunt', forest: 'hunt2', harbor: 'hunt3', desert: 'hunt4', mountain: 'hunt5', ruins: 'hunt6', sky: 'hunt7' };
+export const HUNT_KEY = { village: 'hunt', forest: 'hunt2', harbor: 'hunt3', desert: 'hunt4', mountain: 'hunt5', ruins: 'hunt6', sky: 'hunt7', fairy: 'hunt8', volcano: 'hunt9', crystal: 'hunt10', city: 'hunt11', dream: 'hunt12' };
 export const hunt = (profile, region = 'village') => { const k = HUNT_KEY[region] || 'hunt'; return profile[k] || (profile[k] = { i: 0, got: 0, active: false, done: 0 }); };
 /** Counts a defeated monster for the active hunt on either board. Returns true when this kill finished one. */
 export function countKill(profile, kind) {
@@ -441,8 +504,14 @@ export const LAND_BOSSES = {
   mountain: boss(29, { id: 'icedragon', el: 'ice', flag: 'boss6', name: 'Ice Dragon', speed: 1.5, color: 0x8fd0ff, size: 1.0, region: 'mountain', model: 'icedragon', fit: 2.2 }),
   ruins: boss(34, { id: 'giant', el: 'thunder', flag: 'boss7', name: 'Stone Giant', speed: 1.3, color: 0x9a968a, size: 1.0, region: 'ruins', model: 'giant', fit: 0.75 }),
   sky: boss(44, { id: 'sundragon', el: 'fire', flag: 'boss8', name: 'Sun Dragon', speed: 1.6, color: 0xffb04a, size: 1.0, region: 'sky', model: 'sundragon', fit: 4.5 }),
+  // (26/11, turn 63) maps 8-12; the last one is Lord Hush himself
+  fairy: boss(49, { id: 'thornqueen', el: 'wind', flag: 'boss9', name: 'Thorn Queen', speed: 1.4, color: 0xc060c0, size: 1.0, region: 'fairy', model: 'queen', fit: 1.2, tint: 0xd8a0ff }),
+  volcano: boss(54, { id: 'magmatitan', el: 'fire', flag: 'boss10', name: 'Magma Titan', speed: 1.3, color: 0xff6030, size: 1.0, region: 'volcano', model: 'ancient', fit: 1.3, tint: 0xff9060 }),
+  crystal: boss(59, { id: 'crystaldragon', el: 'ice', flag: 'boss11', name: 'Crystal Dragon', speed: 1.5, color: 0xd8a0ff, size: 1.0, region: 'crystal', model: 'icedragon', fit: 2.6, tint: 0xe0a8ff }),
+  city: boss(64, { id: 'warden', el: 'thunder', flag: 'boss12', name: 'Iron Warden', speed: 1.4, color: 0x90a0b0, size: 1.0, region: 'city', model: 'warden', fit: 1.0 }),
+  dream: boss(69, { id: 'hush', el: 'wind', flag: 'boss13', name: 'Lord Hush', speed: 1.6, color: 0x4a3a6a, size: 1.0, region: 'dream', model: 'hush', fit: 1.5 }),
 };
-export const BOSS_VI = { boss1: 'Vua Slime', boss2: 'Golem Cổ', boss3: 'Nữ hoàng Nấm', boss4: 'Thuyền trưởng Bạch Tuộc', boss5: 'Rồng Cát', boss6: 'Rồng Băng', boss7: 'Người Khổng Lồ Đá', boss8: 'Rồng Mặt Trời' };
+export const BOSS_VI = { boss1: 'Vua Slime', boss2: 'Golem Cổ', boss3: 'Nữ hoàng Nấm', boss4: 'Thuyền trưởng Bạch Tuộc', boss5: 'Rồng Cát', boss6: 'Rồng Băng', boss7: 'Người Khổng Lồ Đá', boss8: 'Rồng Mặt Trời', boss9: 'Nữ hoàng Gai', boss10: 'Người Khổng Lồ Dung Nham', boss11: 'Rồng Pha Lê', boss12: 'Người Máy Canh Gác', boss13: 'Chúa tể Im Lặng' };
 /** (24/11) Map 2 (the sea, levels 5-10) opens once the Slime King is beaten and the hero has reached the village's top level (5) and passed the owl's review. */
 export const map2Ready = (profile) => !!(profile.flags.boss1 && profile.stats.level >= 5 && profile.gates && profile.gates[5]);
 /** Map 3 (the forest, levels 10-20) opens at level 10 with the owl's exam passed (and Tom's badge, `forest_open`). */

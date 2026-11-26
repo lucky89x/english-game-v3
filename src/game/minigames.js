@@ -5,6 +5,7 @@ import * as L from '../core/layout.js';
 import { today } from '../core/review.js';
 import { gameMusic, endMusic } from '../audio.js';
 import { addGood } from '../core/goods.js';
+import { LAND_GAMES } from '../core/regions/lands.js';
 import { ORCHARD_TREES, ORCHARD_CROWN, ORCHARD_R, MINI_BUILDINGS } from '../core/regions/village.js';
 import { siteBuilding } from '../world/arcade_sites.js';
 /** (24/11) A mini game pays no gold and no EXP any more: the child pays to enter, EXP comes only from quests and monsters. */
@@ -26,6 +27,7 @@ export const STARTS = [
   // (24/11) the race on the other maps: a different circuit, a higher tier, another host
   { id: 'race2h', region: 'harbor', x: -65, z: 40, text: 'E · Đua xe ven biển với cô Marina', sign: '🏎 Coast Race', board: true, host: { name: 'Marina', file: 'npc_ben_merchant_v02', tint: [0.8, 1.0, 1.2], hello: 'The coast road is waiting!' } },
   { id: 'race2f', region: 'forest', x: -81, z: 20, text: 'E · Đua xe trong rừng với bác Rowan', sign: '🏎 Forest Rally', board: true, host: { name: 'Rowan', file: 'npc_forest_herbalist', tint: [1.05, 0.95, 0.85], hello: 'Mind the bends in the trees!' } },
+  ...LAND_GAMES,      // (26/11, turn 63) the game masters of maps 4-12: core/regions/lands.js
 ];
 /** The landmark of the race places on the other maps (the solids are in each region's file). */
 export const OTHER_BUILDINGS = [{ region: 'harbor', kind: 'arch', x: -61, z: 40, yaw: -Math.PI / 2 }, { region: 'forest', kind: 'arch', x: -77, z: 20, yaw: -Math.PI / 2 }];
@@ -41,7 +43,7 @@ export const fishBar = (pos, centre, width, n = 23) => { let s = ''; const m = M
 export class MiniGames {
   /** api: { scene, player, ui, sfx(name), profile() -> profile, save(), onNote(), board(id) -> opens an arcade board game } */
   constructor(api) {
-    this.api = api; this.active = null; this.note = ''; this.t = 0; this.root = new THREE.Group(); api.scene.add(this.root); this.roots = { village: new THREE.Group(), harbor: new THREE.Group(), forest: new THREE.Group() }; for (const g of Object.values(this.roots)) this.root.add(g); this.region = L.NAME;      // (24/11) one group of things for each map
+    this.api = api; this.active = null; this.note = ''; this.t = 0; this.root = new THREE.Group(); api.scene.add(this.root); this.roots = { village: new THREE.Group(), harbor: new THREE.Group(), forest: new THREE.Group() }; for (const s of STARTS) if (s.region && !this.roots[s.region]) this.roots[s.region] = new THREE.Group();      // (26/11, turn 63) the lands of maps 4-12 for (const g of Object.values(this.roots)) this.root.add(g); this.region = L.NAME;      // (24/11) one group of things for each map
     const V = L.REGIONS.village, glow = (hex, k = 1.6) => new THREE.MeshStandardMaterial({ color: hex, emissive: hex, emissiveIntensity: k, roughness: 0.4 });
     // hidden stars
     // hidden stars (17/11: sharper): a bevelled gold star with a dark rim, a soft halo and a ring on the ground
@@ -105,7 +107,7 @@ export class MiniGames {
       return;
     }
     if (s.host && this.api.ui.toast) this.api.ui.toast(`${s.host.name}: ${s.host.hello}`);
-    if (s.board) return this.api.board(id);
+    if (s.board) return this.api.board(id, s);
     if (id === 'fish') { this.active = { id, s, cast: 0, caught: 0, pos: 0, centre: 0.5, width: 0.3, speed: 0.6, wait: 0, msg: '' }; this.newCast(); }
     if (id === 'race') { this.active = { id, s, i: 0, time: 0 }; this.rings.forEach((r, k) => { r.m.visible = k === 0; }); }
   }

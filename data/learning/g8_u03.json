@@ -194,10 +194,15 @@
       "source": "sgk_notes"
     }
   ],
-  "grammar": [],
+  "grammar": [
+    "simple and compound sentences with coordinating conjunctions and, but, or, so, for: Minh wanted to join the chess club, but there were no places left.",
+    "conjunctive adverbs however, therefore, otherwise: Social media is fun; however, it can take too much of your time."
+  ],
   "activities": {},
   "version": 1,
   "source_note": "Từ vựng do chủ dự án chép từ sổ tay kiến thức; chưa có bài đọc hay hoạt động.",
   "vocabulary_checked": true,
-  "status": "vocab"
+  "status": "vocab",
+  "grammar_checked": false,
+  "grammar_note": "Frame from memory of the Global Success contents page; check against the textbook. Sentences are original."
 }

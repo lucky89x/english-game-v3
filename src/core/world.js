@@ -1,4 +1,4 @@
-// The world of ten maps joined by portals (24/11, docs/THE_GIOI_10_MAP.md). Pure rules, tested in node:
+// The world of twelve maps (ten until 26/11) joined by portals (24/11, docs/THE_GIOI_10_MAP.md). Pure rules, tested in node:
 // which maps exist, which roads join them, what the child still needs for a road, and where each portal stands.
 // Three maps are built (village, harbor, forest); the other seven are listed so the world map and the portals can show them as
 // "coming soon" and the roads are in place when the maps arrive.
@@ -15,9 +15,13 @@ export const MAPS = [
   { no: 7, id: 'sky', region: 'sky', vi: 'Vương quốc trên trời', en: 'Sky Kingdom', lv: [35, 45], built: true, at: [0.423, 0.129] },
   { no: 6, id: 'ruins', region: 'ruins', vi: 'Khu di tích cổ', en: 'Ancient Ruins', lv: [25, 35], built: true,      // (26/11) the ruins are land 6 and the sky land 7: the order of the levels (and of the units)
     at: [0.81, 0.495] },
-  { no: 8, id: 'fairy', vi: 'Đảo thần tiên', en: 'Fairy Isle', lv: [30, 40], built: false, at: [0.138, 0.257] },
-  { no: 9, id: 'volcano', vi: 'Thung lũng núi lửa', en: 'Volcano Valley', lv: [40, 55], built: false, at: [0.68, 0.134] },
-  { no: 10, id: 'crystal', vi: 'Hang tinh thể', en: 'Crystal Cave', lv: [50, 70], built: false, at: [0.868, 0.225] },
+  // (26/11, turn 63) maps 8-12 are built on the frame of maps 4-7; five levels each up to the top level, 70. The Future City and the
+  // Dream Kingdom are the user's two new lands (12 lands = the 12 units of a school year); they are not in the map picture yet.
+  { no: 8, id: 'fairy', region: 'fairy', vi: 'Đảo thần tiên', en: 'Fairy Isle', lv: [45, 50], built: true, at: [0.138, 0.257] },
+  { no: 9, id: 'volcano', region: 'volcano', vi: 'Thung lũng núi lửa', en: 'Volcano Valley', lv: [50, 55], built: true, at: [0.68, 0.134] },
+  { no: 10, id: 'crystal', region: 'crystal', vi: 'Hang tinh thể', en: 'Crystal Cave', lv: [55, 60], built: true, at: [0.868, 0.225] },
+  { no: 11, id: 'city', region: 'city', vi: 'Thành phố tương lai', en: 'Future City', lv: [60, 65], built: true, at: [0.935, 0.60] },
+  { no: 12, id: 'dream', region: 'dream', vi: 'Vương quốc mộng mơ', en: 'Dream Kingdom', lv: [65, 70], built: true, at: [0.262, 0.105] },
 ];
 export const mapById = (id) => MAPS.find((m) => m.id === id) || null;
 export const mapNo = (id) => (mapById(id) || {}).no || 0;
@@ -32,9 +36,12 @@ export const ROADS = [
   { a: 'mountain', b: 'ruins', need: 'ruins' },
   { a: 'ruins', b: 'sky', need: 'sky' },
   { a: 'mountain', b: 'sky', need: 'sky' },
-  { a: 'sky', b: 'fairy', need: 'later' },
-  { a: 'mountain', b: 'volcano', need: 'later' },
-  { a: 'volcano', b: 'crystal', need: 'later' },
+  { a: 'sky', b: 'fairy', need: 'fairy' },
+  { a: 'fairy', b: 'volcano', need: 'volcano' },
+  { a: 'mountain', b: 'volcano', need: 'volcano' },
+  { a: 'volcano', b: 'crystal', need: 'crystal' },
+  { a: 'crystal', b: 'city', need: 'city' },
+  { a: 'city', b: 'dream', need: 'dream' },
 ];
 
 /** The conditions: what is missing (an array of Vietnamese lines; empty = open). */
@@ -49,6 +56,11 @@ export const CONDITIONS = {
   mountain: (p) => need(p, 'boss5', 'Rồng Cát ở Sa mạc', 25, 'Sa mạc'),
   ruins: (p) => need(p, 'boss6', 'Rồng Băng ở Núi tuyết', 30, 'Núi tuyết'),
   sky: (p) => need(p, 'boss7', 'Người Khổng Lồ Đá ở Di tích', 35, 'Di tích cổ'),
+  fairy: (p) => need(p, 'boss8', 'Rồng Mặt Trời ở Vương quốc trên trời', 45, 'Vương quốc trên trời'),      // (26/11, turn 63) maps 8-12
+  volcano: (p) => need(p, 'boss9', 'Nữ hoàng Gai ở Đảo thần tiên', 50, 'Đảo thần tiên'),
+  crystal: (p) => need(p, 'boss10', 'Người Khổng Lồ Dung Nham ở Núi lửa', 55, 'Thung lũng núi lửa'),
+  city: (p) => need(p, 'boss11', 'Rồng Pha Lê ở Hang tinh thể', 60, 'Hang tinh thể'),
+  dream: (p) => need(p, 'boss12', 'Người Máy Canh Gác ở Thành phố tương lai', 65, 'Thành phố tương lai'),
   later: () => ['Vùng đất này còn chìm trong Gió Đen. Sắp mở!'],
 };
 export const roadBetween = (a, b) => ROADS.find((r) => (r.a === a && r.b === b) || (r.a === b && r.b === a)) || null;
@@ -72,9 +84,14 @@ export const PORTALS = {
   forest: [{ x: -30, z: 57.5, r: 3.0, yaw: Math.PI, routes: ['village', 'desert'] }],
   harbor: [{ x: 46, z: 2, r: 3.0, yaw: -Math.PI / 2, routes: ['village'] }],
   desert: [{ x: 0, z: 64, r: 3.0, yaw: Math.PI, routes: ['forest', 'mountain'] }],
-  mountain: [{ x: 0, z: 64, r: 3.0, yaw: Math.PI, routes: ['desert', 'ruins', 'sky'] }],
+  mountain: [{ x: 0, z: 64, r: 3.0, yaw: Math.PI, routes: ['desert', 'ruins', 'sky', 'volcano'] }],
   ruins: [{ x: 0, z: 64, r: 3.0, yaw: Math.PI, routes: ['mountain', 'sky'] }],
-  sky: [{ x: 0, z: 64, r: 3.0, yaw: Math.PI, routes: ['ruins', 'mountain'] }],
+  sky: [{ x: 0, z: 64, r: 3.0, yaw: Math.PI, routes: ['ruins', 'mountain', 'fairy'] }],
+  fairy: [{ x: 0, z: 64, r: 3.0, yaw: Math.PI, routes: ['sky', 'volcano'] }],
+  volcano: [{ x: 0, z: 64, r: 3.0, yaw: Math.PI, routes: ['fairy', 'mountain', 'crystal'] }],
+  crystal: [{ x: 0, z: 64, r: 3.0, yaw: Math.PI, routes: ['volcano', 'city'] }],
+  city: [{ x: 0, z: 64, r: 3.0, yaw: Math.PI, routes: ['crystal', 'dream'] }],
+  dream: [{ x: 0, z: 64, r: 3.0, yaw: Math.PI, routes: ['city'] }],
 };
 export const portalsOf = (region) => PORTALS[region] || [];
 /** The portal the hero stands at (within its radius), or null. */

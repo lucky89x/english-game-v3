@@ -94,10 +94,15 @@
       "source": "game (21/11): topic word added by the game, not from the book"
     }
   ],
-  "grammar": [],
+  "grammar": [
+    "should / shouldn't for advice: You should clean the house before Tet. Children shouldn't eat too many sweets.",
+    "some / any: We have some peach blossoms. There aren't any balloons in the shop."
+  ],
   "activities": {},
   "version": 1,
   "source_note": "Từ vựng do chủ dự án chép từ sổ tay kiến thức; chưa có bài đọc hay hoạt động.",
   "vocabulary_checked": true,
-  "status": "vocab"
+  "status": "vocab",
+  "grammar_checked": false,
+  "grammar_note": "Frame from memory of the Global Success contents page; check against the textbook. Sentences are original."
 }

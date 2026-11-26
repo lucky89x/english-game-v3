@@ -95,7 +95,7 @@ export function recordSkill(profile, skill, correct, hints) {
 /** (24/11) The unit follows the MAP the child is in, and the grade she registered: Map N teaches Global Success Unit N
  *  (docs/LO_TRINH_12_UNIT.md; the world map of docs/THE_GIOI_10_MAP.md: 1 village, 2 sea, 3 forest…). The parent's unit picker is gone;
  *  `unitPick` stays only as an override for the admin and the tests. */
-export const MAP_NO = { village: 1, harbor: 2, isle: 2, forest: 3, desert: 4, mountain: 5, ruins: 6, sky: 7 };      // (26/11) maps 4-7 teach units 4-7
+export const MAP_NO = { village: 1, harbor: 2, isle: 2, forest: 3, desert: 4, mountain: 5, ruins: 6, sky: 7, fairy: 8, volcano: 9, crystal: 10, city: 11, dream: 12 };      // (26/11) maps 4-7 teach units 4-7
 export const unitOf = (profile) => profile.unitPick || MAP_NO[profile.region] || (profile.flags && profile.flags.map2 ? 2 : 1);
 /** Hit points grow with the level; equipment adds on top (profile.gear, later). */
 export const maxHp = (profile) => 100 + (profile.stats.level - 1) * 12 + ((profile.gear && profile.gear.hp) || 0) + rankHp(profile) + powers(profile).hp;      // + the Word Keeper rank (saga.js) and skill points (skills.js)

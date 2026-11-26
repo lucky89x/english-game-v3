@@ -1,5 +1,5 @@
 // The backbone story (19/11, docs/COT_TRUYEN.md, approved by the parent): the child is an apprentice Word Keeper. Lord Hush
-// broke the Language Compass into ten pieces and hid them in ten lands; each land's last boss guards one piece. Pure rules,
+// broke the Language Compass into twelve pieces (ten until 26/11) and hid them in twelve lands; each land's last boss guards one piece. Pure rules,
 // no DOM: the ten lands, the Word Keeper ranks (with a small bonus each),, the pieces found. (The drained-colour idea was
 // dropped on 20/11: the parent wants the full colours from the start.)
 
@@ -12,9 +12,11 @@ export const LANDS = [
   { map: 5, en: 'Snowy Peaks', vi: 'Núi tuyết', piece: 'boss6', guard: 'Ice Dragon' },
   { map: 6, en: 'Ancient Ruins', vi: 'Khu di tích cổ', piece: 'boss7', guard: 'Stone Giant' },
   { map: 7, en: 'Sky Kingdom', vi: 'Vương quốc trên trời', piece: 'boss8', guard: 'Sun Dragon' },
-  { map: 8, en: 'Fairy Isle', vi: 'Đảo thần tiên', piece: null },
-  { map: 9, en: 'Volcano Valley', vi: 'Thung lũng núi lửa', piece: null },
-  { map: 10, en: 'Crystal Cave', vi: 'Hang tinh thể', piece: null },
+  { map: 8, en: 'Fairy Isle', vi: 'Đảo thần tiên', piece: 'boss9', guard: 'Thorn Queen' },      // (26/11, turn 63) maps 8-12 are built
+  { map: 9, en: 'Volcano Valley', vi: 'Thung lũng núi lửa', piece: 'boss10', guard: 'Magma Titan' },
+  { map: 10, en: 'Crystal Cave', vi: 'Hang tinh thể', piece: 'boss11', guard: 'Crystal Dragon' },
+  { map: 11, en: 'Future City', vi: 'Thành phố tương lai', piece: 'boss12', guard: 'Iron Warden' },
+  { map: 12, en: 'Dream Kingdom', vi: 'Vương quốc mộng mơ', piece: 'boss13', guard: 'Lord Hush' },
 ];
 /** Word Keeper ranks: rank 1 comes with Tom's badge, then one more for each map exam passed. */
 export const RANKS = [
@@ -27,14 +29,17 @@ export const RANKS = [
   { en: 'Knight', vi: 'Hiệp sĩ', icon: '⚔️' },
   { en: 'Sage', vi: 'Hiền giả', icon: '📘' },
   { en: 'Champion', vi: 'Nhà vô địch', icon: '🏆' },
+  { en: 'Hero', vi: 'Anh hùng', icon: '🦸' },
+  { en: 'Legend', vi: 'Huyền thoại', icon: '🐉' },
   { en: 'Grand Keeper', vi: 'Đại hộ chữ', icon: '👑' },
   { en: 'Word Master', vi: 'Đại sư Ngôn Từ', icon: '🌟' },
+  { en: 'Voice of the World', vi: 'Tiếng nói của Thế giới', icon: '🌈' },
 ];
 const f = (p) => (p && p.flags) || {};
 /** 0 before Tom's badge, 1 Apprentice, 2 Explorer when the sea opens (map2 flag), 3 Ranger after the level-10 exam, 4 Pathfinder after the level-20 exam (24/11). */
 export function rankOf(p) {
   if (!f(p).badge1) return 0;
-  let r = 1; if (f(p).map2) r = 2; const g = p.gates || {}; if (g[10]) r = 3; if (g[20]) r = 4; if (g[25]) r = 5; if (g[30]) r = 6; if (g[35]) r = 7; if (g[45]) r = 8; return r;      // (26/11) one rank for the exam of every land
+  let r = 1; if (f(p).map2) r = 2; const g = p.gates || {}; if (g[10]) r = 3; if (g[20]) r = 4; if (g[25]) r = 5; if (g[30]) r = 6; if (g[35]) r = 7; if (g[45]) r = 8; if (g[50]) r = 9; if (g[55]) r = 10; if (g[60]) r = 11; if (g[65]) r = 12; if (g[70]) r = 13; return r;      // (26/11) one rank for the exam of every land
 }
 export const rankName = (p) => RANKS[rankOf(p)];
 /** A higher rank is stronger: +4 attack and +30 health for every rank above Apprentice. */
@@ -61,5 +66,14 @@ export function nextGoal(p) {
   if (!g[35]) return 'Lên cấp 35 và vượt bài thi của Cú Mèo ở Di tích để lên hạng Hiền giả, mở Vương quốc trên trời.';
   if (!fl.boss8) return 'Vương quốc trên trời (cấp 35–45): gặp Aria ở cổng trời, đi vòng quanh Cung điện Mây và hạ Rồng Mặt Trời ở đấu trường.';
   if (!g[45]) return 'Lên cấp 45 và vượt bài thi của Cú Mèo ở Vương quốc trên trời để lên hạng Nhà vô địch.';
-  return 'Con đã gom 7 mảnh La Bàn! Đảo thần tiên (Map 8) còn chìm trong Gió Đen, sắp mở.';
+  // (26/11, turn 63) maps 8-12
+  for (const [flag, top, vi, how, next] of [['boss9', 50, 'Đảo thần tiên (cấp 45–50)', 'gặp tiên Flora ở cổng tiên, đi theo hai nhánh đường hình chiếc lá và hạ Nữ hoàng Gai ở Vườn Gai', 'Thung lũng núi lửa'],
+    ['boss10', 55, 'Thung lũng núi lửa (cấp 50–55)', 'gặp chú Brann ở Trại Than Hồng, leo đường zíc zắc giữa các hồ dung nham và hạ Người Khổng Lồ Dung Nham ở Cổng Lửa', 'Hang tinh thể'],
+    ['boss11', 60, 'Hang tinh thể (cấp 55–60)', 'gặp Opal ở trại thợ mỏ, đi vòng Hồ Phát Sáng và hạ Rồng Pha Lê ở Hốc Rồng', 'Thành phố tương lai'],
+    ['boss12', 65, 'Thành phố tương lai (cấp 60–65)', 'gặp nhà phát minh Nova ở nhà ga, đi theo đại lộ và hạ Người Máy Canh Gác ở Trung tâm điều khiển', 'Vương quốc mộng mơ'],
+    ['boss13', 70, 'Vương quốc mộng mơ (cấp 65–70)', 'gặp Luma ở cổng mộng mơ, đi theo các con đường hình ngôi sao và gặp Chúa tể Im Lặng trước Lâu đài Ngôi Sao', '']]) {
+    if (!fl[flag]) return `${vi}: ${how}.`;
+    if (!g[top]) return next ? `Lên cấp ${top} và vượt bài thi của Cú Mèo để mở ${next}.` : 'Lên cấp 70 và vượt bài thi cuối cùng của Cú Mèo để nhận hạng cao nhất: Tiếng nói của Thế giới.';
+  }
+  return 'Con đã gom đủ 12 mảnh La Bàn và trả lại tiếng nói cho cả vương quốc. Hugh giờ là bạn của con: ghé thăm cậu ấy ở Vương quốc mộng mơ nhé!';
 }

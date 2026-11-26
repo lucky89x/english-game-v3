@@ -224,10 +224,15 @@
       "source": "sgk_notes"
     }
   ],
-  "grammar": [],
+  "grammar": [
+    "articles a / an / the: My mum takes an old bag to the market. Put the bottle in the recycling bin over there.",
+    "first conditional: If + present simple, will + verb: If we recycle paper, we will save many trees."
+  ],
   "activities": {},
   "version": 1,
   "source_note": "Từ vựng do chủ dự án chép từ sổ tay kiến thức; chưa có bài đọc hay hoạt động.",
   "vocabulary_checked": true,
-  "status": "vocab"
+  "status": "vocab",
+  "grammar_checked": false,
+  "grammar_note": "Frame from memory of the Global Success contents page; check against the textbook. Sentences are original."
 }

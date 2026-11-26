@@ -34,12 +34,16 @@ export const MAIN = [
   { id: 'owl20', en: 'Pathfinder rank exam', vi: 'Lên cấp 20 (cấp cao nhất của Rừng), làm bài thi 10 câu của Cú Mèo ở làng (Unit 3, đúng 8/10, đề mỗi lần khác): lên hạng Dẫn đường, Sa mạc cát vàng (Map 4, cấp 20–25) mở ra.', done: (p) => gate(p, 20), gold: 300, exp: 0, unlock: 'Map 4' },
   // (26/11) maps 4-7: for each land the keeper, two jobs from its board, its guard and the owl's exam at its top level
   ...[['desert', 'Golden Desert', 'Sa mạc cát vàng', 'Zara', 'hunt4', 'boss5', 'Sand Dragon', 'Rồng Cát ở Đền Mặt Trời', 25, 'Map 5'], ['mountain', 'Snowy Peaks', 'Núi tuyết', 'Bjorn', 'hunt5', 'boss6', 'Ice Dragon', 'Rồng Băng trên đỉnh núi', 30, 'Map 6'],
-    ['ruins', 'Ancient Ruins', 'Di tích cổ', 'Professor Ada', 'hunt6', 'boss7', 'Stone Giant', 'Người Khổng Lồ Đá ở cửa hầm', 35, 'Map 7'], ['sky', 'Sky Kingdom', 'Vương quốc trên trời', 'Aria', 'hunt7', 'boss8', 'Sun Dragon', 'Rồng Mặt Trời ở đấu trường', 45, 'Map 8']]
+    ['ruins', 'Ancient Ruins', 'Di tích cổ', 'Professor Ada', 'hunt6', 'boss7', 'Stone Giant', 'Người Khổng Lồ Đá ở cửa hầm', 35, 'Map 7'], ['sky', 'Sky Kingdom', 'Vương quốc trên trời', 'Aria', 'hunt7', 'boss8', 'Sun Dragon', 'Rồng Mặt Trời ở đấu trường', 45, 'Map 8'],
+    // (26/11, turn 63) maps 8-12
+    ['fairy', 'Fairy Isle', 'Đảo thần tiên', 'Flora', 'hunt8', 'boss9', 'Thorn Queen', 'Nữ hoàng Gai ở Vườn Gai', 50, 'Map 9'], ['volcano', 'Volcano Valley', 'Thung lũng núi lửa', 'Brann', 'hunt9', 'boss10', 'Magma Titan', 'Người Khổng Lồ Dung Nham ở Cổng Lửa', 55, 'Map 10'],
+    ['crystal', 'Crystal Cave', 'Hang tinh thể', 'Opal', 'hunt10', 'boss11', 'Crystal Dragon', 'Rồng Pha Lê ở Hốc Rồng', 60, 'Map 11'], ['city', 'Future City', 'Thành phố tương lai', 'Nova', 'hunt11', 'boss12', 'Iron Warden', 'Người Máy Canh Gác ở Trung tâm điều khiển', 65, 'Map 12'],
+    ['dream', 'Dream Kingdom', 'Vương quốc mộng mơ', 'Luma', 'hunt12', 'boss13', 'Lord Hush', 'Chúa tể Im Lặng trước Lâu đài Ngôi Sao', 70, '']]
     .flatMap(([land, en, vi, keeper, hk, flag, boss, bossVi, top, unlock]) => [
       { id: `${land}_meet`, en: `Arrive in the ${en}`, vi: `Qua cổng dịch chuyển tới ${vi} và nói chuyện với ${keeper} ở thị trấn cạnh cổng.`, done: (p) => !!(p.flags && p.flags['met_' + land]), gold: 150, exp: 300 },
       { id: `${land}_hunt`, en: `${en} hunter`, vi: `Hoàn thành 2 việc ở bảng săn quái của ${vi}.`, done: (p) => !!(p[hk] && p[hk].done >= 2), gold: 200, exp: 400 },
-      { id: `${land}_lesson`, en: `${keeper}'s word lessons`, vi: `Học 3 buổi "bài học từ" với ${keeper} (mỗi ngày một buổi, 5 từ của vùng).`, done: (p) => !!(p.lessons && p.lessons[land] >= 3), gold: 200, exp: 400 },
-      { id: `${land}_boss`, en: `Compass piece: the ${boss}`, vi: `Đạt cấp ${top - 1} và đánh bại ${bossVi} để lấy mảnh La Bàn của ${vi}.`, done: (p) => !!p.flags[flag], gold: 400, exp: 0 },
+      { id: `${land}_lesson`, en: `${keeper}'s lessons`, vi: `Học 3 buổi với ${keeper} (mỗi ngày một buổi: 5 từ và 1 trang ngữ pháp của Unit).`, done: (p) => !!(p.lessons && p.lessons[land] >= 3), gold: 200, exp: 400 },
+      { id: `${land}_boss`, en: `Compass piece: ${boss === 'Lord Hush' ? '' : 'the '}${boss}`, vi: `Đạt cấp ${top - 1} và đánh bại ${bossVi} để lấy mảnh La Bàn của ${vi}.`, done: (p) => !!p.flags[flag], gold: 400, exp: 0 },
       { id: `${land}_exam`, en: `The ${en} exam`, vi: `Lên cấp ${top} (cấp cao nhất của ${vi}) rồi làm bài thi 10 câu của Cú Mèo ở cạnh cổng.`, done: (p) => gate(p, top), gold: 400, exp: 0, unlock },
     ]),
 ];

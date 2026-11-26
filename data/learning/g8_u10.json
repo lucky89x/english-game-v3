@@ -189,10 +189,15 @@
       "source": "sgk_notes"
     }
   ],
-  "grammar": [],
+  "grammar": [
+    "prepositions of place and time: in, on, at, by, for, in + time: The call starts at seven on Sunday. Everyone will have a smartwatch in ten years.",
+    "possessive pronouns: mine, yours, his, hers, ours, theirs: This smartwatch is not mine. It is hers."
+  ],
   "activities": {},
   "version": 1,
   "source_note": "Từ vựng do chủ dự án chép từ sổ tay kiến thức; chưa có bài đọc hay hoạt động.",
   "vocabulary_checked": true,
-  "status": "vocab"
+  "status": "vocab",
+  "grammar_checked": false,
+  "grammar_note": "Frame from memory of the Global Success contents page; check against the textbook. Sentences are original."
 }

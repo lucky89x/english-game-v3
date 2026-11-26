@@ -29,6 +29,10 @@ export const VARIANTS = {
   village: { title: 'Kart Race', pts: CURVE_PTS, ground: 0x91ba68, sky: 0x9fd9ee, fogc: 0xb9e0e7, fogd: 0.0042, cruise: 16, rival: 0, trees: 110, houses: true, id: 'race2' },
   harbor: { title: 'Coast Race', pts: [[-120, -60], [-50, -66], [30, -66], [100, -58], [132, -20], [118, 24], [70, 40], [40, 22], [10, 40], [-20, 70], [-70, 66], [-110, 40], [-128, -10]], ground: 0xe4d29a, sky: 0x8fd0f0, fogc: 0xcde9f2, fogd: 0.0034, cruise: 18, rival: 0.04, trees: 34, houses: false, id: 'race2h' },
   forest: { title: 'Forest Rally', pts: [[-96, -44], [-48, -66], [4, -52], [48, -72], [98, -54], [122, -12], [102, 30], [64, 46], [36, 76], [-12, 68], [-44, 86], [-88, 68], [-104, 26], [-108, -12]], ground: 0x5d8c4c, sky: 0xa7cdb8, fogc: 0xbcd8c4, fogd: 0.0072, cruise: 17, rival: 0.07, trees: 230, houses: false, id: 'race2f' },
+  // (26/11, turn 63) the circuits of the later lands: the same roads in other colours, faster karts and a stronger rival
+  desert: { title: 'Dune Rally', pts: [[-120, -60], [-50, -66], [30, -66], [100, -58], [132, -20], [118, 24], [70, 40], [40, 22], [10, 40], [-20, 70], [-70, 66], [-110, 40], [-128, -10]], ground: 0xe8d08c, sky: 0xf4dca6, fogc: 0xf2e2b8, fogd: 0.0036, cruise: 19, rival: 0.1, trees: 14, houses: false, id: 'race2d' },
+  city: { title: 'Neon Grand Prix', pts: [[-96, -44], [-48, -66], [4, -52], [48, -72], [98, -54], [122, -12], [102, 30], [64, 46], [36, 76], [-12, 68], [-44, 86], [-88, 68], [-104, 26], [-108, -12]], ground: 0x59636f, sky: 0x39457a, fogc: 0x56649a, fogd: 0.0038, cruise: 21, rival: 0.14, trees: 20, houses: true, id: 'race2c' },
+  dream: { title: 'Star Race', pts: CURVE_PTS, ground: 0xc6b6f0, sky: 0x6a5ab0, fogc: 0xa898de, fogd: 0.004, cruise: 22, rival: 0.18, trees: 40, houses: false, id: 'race2s' },
 };
 const damp = (a, b, lambda, dt) => THREE.MathUtils.damp(a, b, lambda, dt);
 

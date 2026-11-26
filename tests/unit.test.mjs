@@ -405,7 +405,7 @@ test('at the top level of a map the gold of monsters and quests is halved and fa
   p.stats.level = 10; assert.equal(S.capGold(p, 100), 50, 'and has its own count at its own cap');
 });
 test('monsters: one level per kind, stats follow the level, one hunting ground per kind in the right map, the gear of the level wins', () => {
-  const R2 = { village: [1, 5], harbor: [5, 10], forest: [10, 20], desert: [20, 25], mountain: [25, 30], ruins: [30, 35], sky: [35, 45] };      // (26/11) maps 4-7 start at the top level of the land before
+  const R2 = { village: [1, 5], harbor: [5, 10], forest: [10, 20], desert: [20, 25], mountain: [25, 30], ruins: [30, 35], sky: [35, 45], fairy: [45, 50], volcano: [50, 55], crystal: [55, 60], city: [60, 65], dream: [65, 70] };      // (26/11) maps 4-7 start at the top level of the land before
   for (const [region, list] of Object.entries(ZONES)) {
     const kinds = list.map((z) => z.kind); assert.equal(new Set(kinds).size, kinds.length, region + ': one ground per kind');
     const levels = kinds.map((k) => MONSTERS[k].level); assert.deepEqual(levels, [...levels].sort((a, b) => a - b), region + ': the grounds climb with the level');
@@ -441,7 +441,7 @@ test('mini games: a fee that grows with the level, no pay; the race has no lette
 
 // ---------------------------------------------------------------- review round: pay limits, Map 2, units, grammar, old saves
 import { map2Ready, forestReady, BOSSES } from '../src/core/rules.js';
-import { GRAMMAR, grammarFor } from '../src/core/grammar.js';
+import { noteFor, GRAMMAR, grammarFor } from '../src/core/grammar.js';
 test('the sea (Map 2) opens at level 5 with the Slime King beaten and the owl review passed, the forest (Map 3) at level 10; the unit follows the map unless a parent picks one', () => {
   const p = S.newProfile('An', 8);
   assert.equal(S.unitOf(p), 1); assert.equal(BOSSES[0].level, 4, 'the Slime King wakes at level 4, one below the village cap'); assert.ok(BOSSES[1].level >= 19);
@@ -458,7 +458,8 @@ test('grammar gate items: valid answers, English-only sentences with one blank, 
     assert.ok(g.a >= 0 && g.a < g.options.length && new Set(g.options).size === g.options.length);
     assert.ok(!/[àáảãạăâđêôơư]/i.test(g.q + g.options.join('')), g.q); assert.ok(g.why.length > 3);
   }
-  assert.equal(grammarFor(6, 1).length, 2); assert.equal(grammarFor(9, 1).length, 2); assert.equal(grammarFor(7, 2).length, 2, 'Unit 2 has grammar since 19/11'); assert.equal(grammarFor(8, 2, 6).length, 6); assert.deepEqual(grammarFor(6, 3), [], 'Unit 3 is not written yet');
+  assert.equal(grammarFor(6, 1).length, 2); assert.equal(grammarFor(9, 1).length, 2); assert.equal(grammarFor(7, 2).length, 2, 'Unit 2 has grammar since 19/11'); assert.equal(grammarFor(8, 2, 6).length, 6); assert.deepEqual(grammarFor(7, 3), [], 'grades 7 and 9: Unit 3 is not written yet');
+  for (const g of [6, 8]) for (let u = 1; u <= 12; u++) { assert.equal(grammarFor(g, u, 10).length, 10, `(26/11) grade ${g} Unit ${u} has ten sentences`); const n = noteFor(g, u); assert.ok(n && n.name && n.vi.length <= 200 && n.ex.length === 2 && !/[àáảãạăâđêôơư]/i.test(n.ex[0][0] + n.ex[1][0]), `grade ${g} Unit ${u} has a grammar card`); }
 });
 test('old saves (v1 and v2 before bag, hunts, chests, gates) load and play on (K5)', () => {
   const v1 = S.migrate({ version: 1, name: 'Bé', grade: 8, quests: { village: { step: 'done' } }, flags: { forest_open: true }, words: { 'g8_u01:hobby': { box: 2, due: 1 } }, stats: { gold: 12 } });
@@ -563,7 +564,7 @@ test('map exam: papers differ and avoid the last one; pass mark is 8 of 10; thin
   assert.equal(g(10).pass, true); assert.equal(g(8).pass, true); assert.equal(g(7).pass, false); assert.equal(g(7).wrong.length, 3);
   const p = {}; Exam.recordExam(p, a.ids, false); Exam.recordExam(p, b.ids, true);
   assert.equal(p.exam.tries, 2); assert.equal(p.exam.passed, true); assert.deepEqual(p.exam.last.slice(0, 10), b.ids);
-  assert.deepEqual(Exam.EXAM_GATES, [10, 20, 25, 30, 35, 45]);
+  assert.deepEqual(Exam.EXAM_GATES, [10, 20, 25, 30, 35, 45, 50, 55, 60, 65, 70]);
 });
 
 // ---------------------------------------------------------------- mini game tiers (18/11)
@@ -656,8 +657,8 @@ test('Map 2 (harbor, levels 5-10): own hunt board, Captain Octopus wakes at leve
   const at = (id) => Q.MAIN.findIndex((x) => x.id === id);
   assert.ok(at('boss1') < at('owl5') && at('owl5') < at('map2') && at('map2') < at('harbor') && at('harbor') < at('shops') && at('shops') < at('hunt3') && at('hunt3') < at('boss4') && at('boss4') < at('owl10'), 'the sea chain comes right after the village (levels 1-5 -> 5-10)');
   assert.ok(at('owl10') < at('crystals') && at('crystals') < at('hunt2') && at('hunt2') < at('owl15') && at('owl15') < at('boss3') && at('boss3') < at('boss2') && at('boss2') < at('owl20') && at('owl20') < at('desert_meet'), 'the forest chain (levels 10-20) ends with the Ancient Golem and the level-20 exam');
-  for (const [a, b] of [['desert', 'mountain'], ['mountain', 'ruins'], ['ruins', 'sky']]) assert.ok(at(a + '_meet') < at(a + '_boss') && at(a + '_boss') < at(a + '_exam') && at(a + '_exam') < at(b + '_meet'), `${a} comes before ${b} (26/11)`);
-  assert.equal(at('sky_exam'), Q.MAIN.length - 1); assert.equal(new Set(Q.MAIN.map((q) => q.id)).size, Q.MAIN.length, 'quest ids are unique');
+  for (const [a, b] of [['desert', 'mountain'], ['mountain', 'ruins'], ['ruins', 'sky'], ['sky', 'fairy'], ['fairy', 'volcano'], ['volcano', 'crystal'], ['crystal', 'city'], ['city', 'dream']]) assert.ok(at(a + '_meet') < at(a + '_boss') && at(a + '_boss') < at(a + '_exam') && at(a + '_exam') < at(b + '_meet'), `${a} comes before ${b} (26/11)`);
+  assert.equal(at('dream_exam'), Q.MAIN.length - 1); assert.equal(new Set(Q.MAIN.map((q) => q.id)).size, Q.MAIN.length, 'quest ids are unique');
   assert.ok(R.map3Ready({ flags: { boss2: true }, gates: { 20: true }, stats: { level: 20 } }) && !R.map3Ready({ flags: { boss2: true }, gates: {}, stats: { level: 20 } }) && !R.map3Ready({ flags: {}, gates: { 20: true }, stats: { level: 20 } }), 'the next map needs the Ancient Golem and the level-20 exam');
   const shops = Q.MAIN.find((x) => x.id === 'shops'); assert.equal(shops.done(q), false);
   q.mini = { best: { style: 10, cafe: 20 } }; assert.equal(shops.done(q), false); q.mini.best.salon = 5; assert.equal(shops.done(q), true);
@@ -845,7 +846,7 @@ test('treasure maps: every map for every tier is English, solvable, and leads to
 });
 
 test('map exams ask the map just finished: level 10 is Unit 2 (the sea), level 20 is Unit 3 (the forest)', async () => {
-  const EX = await import('../src/core/exam.js'); assert.deepEqual(EX.EXAM_UNIT, { 10: 2, 20: 3, 25: 4, 30: 5, 35: 6, 45: 7 });
+  const EX = await import('../src/core/exam.js'); assert.deepEqual(EX.EXAM_UNIT, { 10: 2, 20: 3, 25: 4, 30: 5, 35: 6, 45: 7, 50: 8, 55: 9, 60: 10, 65: 11, 70: 12 });
   for (const g of EX.EXAM_GATES) assert.ok(EX.EXAM_UNIT[g], 'every exam gate has a unit');
   for (const grade of [6, 7, 8, 9]) assert.ok(grammarFor(grade, EX.EXAM_UNIT[10], 10).length >= 6, `grade ${grade}: the level-10 exam (Unit 2) has grammar`);      // Unit 3 grammar is not written yet: its exam falls back to words
 });
@@ -877,7 +878,7 @@ test('saga: badge and exams give ranks with bonuses, bosses give compass pieces'
   p.flags.map2 = true; assert.equal(SAGA.rankOf(p), 2); assert.equal(playerAtk(p), atk0 + 4); assert.equal(S.maxHp(p), hp0 + 30);
   p.flags.boss4 = true; p.gates = { 10: true }; assert.equal(SAGA.rankOf(p), 3); assert.deepEqual(SAGA.pieces(p), [1, 2]);
   p.flags.boss2 = true; p.gates[20] = true; assert.equal(SAGA.rankOf(p), 4); assert.deepEqual(SAGA.pieces(p), [1, 2, 3]);
-  assert.equal(SAGA.LANDS.length, 10);
+  assert.equal(SAGA.LANDS.length, 12); assert.ok(SAGA.LANDS.every((l) => l.piece), '(26/11) every land has a guard with a piece'); { const all = { flags: { badge1: true, map2: true }, gates: {} }; for (const g of [10, 20, 25, 30, 35, 45, 50, 55, 60, 65, 70]) all.gates[g] = true; assert.equal(SAGA.rankOf(all), 13); assert.ok(SAGA.RANKS[13], 'the last rank has a name'); }
   assert.ok(SAGA.nextGoal(p).length > 10);
 });
 
@@ -1111,11 +1112,11 @@ test('homes (24/11): four lots with bigger plots that do not touch each other, t
 });
 test('world (24/11): ten maps, roads between them, what a road needs, portals and where they stand', async () => {
   const W = await import('../src/core/world.js'), V = await import('../src/core/regions/village.js');
-  assert.equal(W.MAPS.length, 10); assert.deepEqual(W.MAPS.map((m) => m.no).sort((a, b) => a - b), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+  assert.equal(W.MAPS.length, 12); assert.deepEqual(W.MAPS.map((m) => m.no).sort((a, b) => a - b), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
   assert.equal(W.mapNo('village'), 1); assert.equal(W.mapNo('harbor'), 2); assert.equal(W.mapNo('forest'), 3); assert.equal(S.MAP_NO.harbor, W.mapNo('harbor')); assert.equal(S.MAP_NO.forest, W.mapNo('forest'));
-  assert.deepEqual(W.MAPS.filter((m) => m.built).map((m) => m.id).sort(), ['desert', 'forest', 'harbor', 'mountain', 'ruins', 'sky', 'village'], '(26/11) seven maps are built');
-  for (const id of ['desert', 'mountain', 'ruins', 'sky']) { assert.equal(S.MAP_NO[id], W.mapNo(id), id + ': the unit is the map number'); assert.ok((await import('../src/core/layout.js')).REGIONS[id], id + ' has a region'); }
-  assert.deepEqual(['desert', 'mountain', 'ruins', 'sky'].map((id) => W.mapNo(id)), [4, 5, 6, 7], 'the units follow the order of the levels');
+  assert.deepEqual(W.MAPS.filter((m) => m.built).map((m) => m.id).sort(), ['city', 'crystal', 'desert', 'dream', 'fairy', 'forest', 'harbor', 'mountain', 'ruins', 'sky', 'village', 'volcano'], '(26/11) all twelve maps are built');
+  for (const id of ['desert', 'mountain', 'ruins', 'sky', 'fairy', 'volcano', 'crystal', 'city', 'dream']) { assert.equal(S.MAP_NO[id], W.mapNo(id), id + ': the unit is the map number'); assert.ok((await import('../src/core/layout.js')).REGIONS[id], id + ' has a region'); }
+  assert.deepEqual(['desert', 'mountain', 'ruins', 'sky', 'fairy', 'volcano', 'crystal', 'city', 'dream'].map((id) => W.mapNo(id)), [4, 5, 6, 7, 8, 9, 10, 11, 12], 'the units follow the order of the levels');
   for (const r of W.ROADS) { assert.ok(W.mapById(r.a) && W.mapById(r.b), 'both ends exist'); }
   assert.deepEqual(W.neighbours('mountain').sort(), ['desert', 'ruins', 'sky', 'volcano'].sort(), 'the mountains are the crossroads of the plan');
   const p = { flags: {}, stats: { level: 3 }, gates: {} };
@@ -1124,11 +1125,12 @@ test('world (24/11): ten maps, roads between them, what a road needs, portals an
   p.stats.level = 10; p.gates[10] = true; assert.ok(W.canGo(p, 'village', 'forest').ok && W.canGo(p, 'forest', 'village').ok, 'a road works both ways');
   assert.equal(W.canGo(p, 'village', 'harbor').ok, false, 'the sea needs the Slime King and level 5 with the owl review'); p.flags.boss1 = true; p.gates[5] = true; assert.ok(W.canGo(p, 'village', 'harbor').ok);
   assert.equal(W.canGo(p, 'forest', 'desert').ok, false, 'the desert needs the Ancient Golem, level 20 and the exam'); assert.equal(W.canGo(p, 'village', 'desert').missing[0], 'Không có đường nối.');
-  { const q = { flags: { boss2: true }, stats: { level: 20 }, gates: { 20: true } }; assert.ok(W.canGo(q, 'forest', 'desert').ok); assert.equal(W.canGo(q, 'desert', 'mountain').ok, false); q.flags.boss5 = true; q.stats.level = 25; q.gates[25] = true; assert.ok(W.canGo(q, 'desert', 'mountain').ok); assert.equal(W.canGo(q, 'mountain', 'sky').ok, false, 'the sky needs the ruins first'); assert.equal(W.canGo(q, 'sky', 'fairy').built, false); }
-  assert.ok(W.canGo({ admin: true, flags: {} }, 'village', 'harbor').ok && W.canGo({ admin: true, flags: {} }, 'forest', 'desert').ok && !W.canGo({ admin: true, flags: {} }, 'sky', 'fairy').ok, 'the admin goes anywhere built, not into maps that do not exist');
+  { const q = { flags: { boss2: true }, stats: { level: 20 }, gates: { 20: true } }; assert.ok(W.canGo(q, 'forest', 'desert').ok); assert.equal(W.canGo(q, 'desert', 'mountain').ok, false); q.flags.boss5 = true; q.stats.level = 25; q.gates[25] = true; assert.ok(W.canGo(q, 'desert', 'mountain').ok); assert.equal(W.canGo(q, 'mountain', 'sky').ok, false, 'the sky needs the ruins first'); assert.equal(W.canGo(q, 'sky', 'fairy').ok, false, 'Fairy Isle is built now but still needs the Sun Dragon'); }
+  assert.ok(W.canGo({ admin: true, flags: {} }, 'village', 'harbor').ok && W.canGo({ admin: true, flags: {} }, 'forest', 'desert').ok && W.canGo({ admin: true, flags: {} }, 'sky', 'fairy').ok && !W.canGo({ admin: true, flags: {} }, 'village', 'dream').ok, 'the admin goes anywhere built, along the roads');
+  { const q = { flags: { boss8: true }, stats: { level: 45 }, gates: { 45: true } }; assert.ok(W.canGo(q, 'sky', 'fairy').ok); assert.equal(W.canGo(q, 'fairy', 'volcano').ok, false); q.flags.boss12 = true; q.stats.level = 65; q.gates[65] = true; assert.ok(W.canGo(q, 'city', 'dream').ok, 'the last land needs the Iron Warden, level 65 and the exam'); for (let i = 1; i < W.MAPS.length; i++) assert.ok(W.MAPS.find((m) => m.no === i + 1).lv[0] >= W.MAPS.find((m) => m.no === i).lv[0], 'the levels climb with the map number'); assert.equal(W.MAPS.find((m) => m.no === 12).lv[1], 70); }
   const gate = W.portalsOf('village')[0]; assert.deepEqual(gate.routes, ['forest', 'harbor'], 'two roads from the village gate: the child chooses');
   assert.equal(W.portalAt('village', gate.x, gate.z + 1), gate); assert.equal(W.portalAt('village', 0, 0), null);
-  for (const region of ['village', 'forest', 'harbor', 'desert', 'mountain', 'ruins', 'sky']) for (const pt of W.portalsOf(region)) { const R = (await import('../src/core/layout.js')).REGIONS[region]; assert.ok(R.walkable(pt.x, pt.z, 0.4), `${region} portal stands on walkable ground`); for (const to of pt.routes) assert.ok(W.roadBetween(region, to), `${region} -> ${to} is a road`); }
+  for (const region of ['village', 'forest', 'harbor', 'desert', 'mountain', 'ruins', 'sky', 'fairy', 'volcano', 'crystal', 'city', 'dream']) for (const pt of W.portalsOf(region)) { const R = (await import('../src/core/layout.js')).REGIONS[region]; assert.ok(R.walkable(pt.x, pt.z, 0.4), `${region} portal stands on walkable ground`); for (const to of pt.routes) assert.ok(W.roadBetween(region, to), `${region} -> ${to} is a road`); }
   assert.deepEqual(W.routesOf(p, 'village', gate).map((r) => [r.to, r.ok]), [['forest', true], ['harbor', true]]);
   assert.deepEqual(W.MAPS.slice(0, 3).map((m) => m.lv), [[1, 5], [5, 10], [10, 20]], 'the level ranges of the world map picture');
 });
@@ -1197,9 +1199,9 @@ test('save: a broken save is never treated as "nobody has played": the copy befo
 });
 
 // ---------------------------------------------------------------- (26/11) maps 4-7
-test('lands (maps 4-7): every place can be walked to, the grounds are full, each land has its people, shop, boss, jobs and unit', async () => {
+test('lands (maps 4-12): every place can be walked to, the grounds are full, each land has its people, shop, boss, jobs and unit', async () => {
   const LY = await import('../src/core/layout.js'), { LAND, LAND_IDS } = await import('../src/core/regions/lands.js'), RU = await import('../src/core/rules.js'), ZN = await import('../src/core/zones.js'), PRG = await import('../src/core/progress.js'), { FRIENDS, LAND_TALK } = await import('../src/game/content.js');
-  assert.deepEqual(LAND_IDS, ['desert', 'mountain', 'ruins', 'sky']);
+  assert.deepEqual(LAND_IDS, ['desert', 'mountain', 'ruins', 'sky', 'fairy', 'volcano', 'crystal', 'city', 'dream']);
   for (const id of LAND_IDS) {
     const R = LY.REGIONS[id], d = LAND[id], seen = new Set(), key = (x, z) => x + ',' + z, q = [[Math.round(R.SPAWN.x), Math.round(R.SPAWN.z)]]; seen.add(key(...q[0]));
     while (q.length) { const [x, z] = q.pop(); for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nx = x + dx, nz = z + dz, k = key(nx, nz); if (seen.has(k) || Math.hypot(nx, nz) > R.PLAY_RADIUS) continue; if (R.walkable(nx, nz, 0.35) && R.canStep(x, z, nx, nz)) { seen.add(k); q.push([nx, nz]); } } }
@@ -1217,8 +1219,16 @@ test('lands (maps 4-7): every place can be walked to, the grounds are full, each
     for (const role of ['keeper', 'merchant', 'owl']) assert.equal(Object.values(FRIENDS).filter((f) => f.region === id && f.role === role).length, 1, `${id}: one ${role}`);
     const t = LAND_TALK[id]; assert.ok(t.easy.length === 3 && t.hard.length === 3 && t.vi.length === 3 && t.after.length === 2 && t.boss === b.flag);
     for (const line of [...t.easy, ...t.hard, t.after[0]]) assert.ok(!/[àáảãạăâđêôơư]/i.test(line), 'English lines are English');
-    assert.ok(hexists(new URL(`../data/learning/g6_u0${d.no}.json`, import.meta.url)) && hexists(new URL(`../data/learning/g8_u0${d.no}.json`, import.meta.url)), `${id}: Unit ${d.no} exists for grades 6 and 8`);
+    assert.ok(hexists(new URL(`../data/learning/g6_u${String(d.no).padStart(2, '0')}.json`, import.meta.url)) && hexists(new URL(`../data/learning/g8_u${String(d.no).padStart(2, '0')}.json`, import.meta.url)), `${id}: Unit ${d.no} exists for grades 6 and 8`);
     const hero = S.newProfile('An', 6); hero.region = id; assert.equal(S.unitOf(hero), d.no); assert.equal(PRG.levelCap(hero), PRG.capOfRegion(id));
   }
   assert.ok(PRG.killsPerLevel(30) === PRG.KILLS_CAP && PRG.killsPerLevel(44) === PRG.KILLS_CAP, 'the later lands do not get longer and longer');
+  // (26/11, turn 63) a game master in every land, on ground the hero can stand on, away from the people and the board, running a game that exists
+  const STARTS = (await import('../src/core/regions/lands.js')).LAND_GAMES, GAMES = ['candy', 'blocks', 'sling', 'race2', 'fireflies', 'vault', 'courier', 'workshop'];
+  for (const id of LAND_IDS) {
+    const mine = STARTS.filter((s) => s.region === id), R = LY.REGIONS[id], d = LAND[id]; assert.ok(mine.length >= 1, `${id} has a mini game`);
+    for (const s of mine) { assert.ok(GAMES.includes(s.game) && s.host && s.board && s.sign, `${s.id}: a game of the arcade with a host`); assert.ok(R.walkable(s.x, s.z, 1.2), `${s.id} stands on free ground`);
+      for (const [nx, nz] of [d.keeper, d.merchant, [d.board.x, d.board.z], ...Object.values(FRIENDS).filter((f) => f.region === id).map((f) => f.at)]) assert.ok(Math.hypot(nx - s.x, nz - s.z) > 4, `${s.id} keeps 4 m from the people and the board (the E key)`); }
+  }
+  assert.equal(new Set(STARTS.map((s) => s.id)).size, STARTS.length, 'game ids are unique');
 });

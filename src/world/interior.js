@@ -123,9 +123,9 @@ function extraThings(g, items) {
 export function compassPedestal(g, pieces, lights) {
   const p = new THREE.Group(), stone = M(0xb8b0a0, 0.85), dark = M(0x4a4440, 0.8);
   cyl(p, 0.32, 0.4, 0.75, stone, 0, 0.375, 0, 12); cyl(p, 0.52, 0.48, 0.1, stone, 0, 0.8, 0, 24);
-  for (let i = 0; i < 10; i++) {
-    const have = pieces.includes(i + 1), a = i / 10 * Math.PI * 2;
-    const w = new THREE.Mesh(new THREE.CylinderGeometry(0.46, 0.46, have ? 0.07 : 0.03, 8, 1, false, a + 0.03, Math.PI * 2 / 10 - 0.06),
+  for (let i = 0; i < 12; i++) {      // (26/11, turn 63) twelve lands, twelve pieces
+    const have = pieces.includes(i + 1), a = i / 12 * Math.PI * 2;
+    const w = new THREE.Mesh(new THREE.CylinderGeometry(0.46, 0.46, have ? 0.07 : 0.03, 8, 1, false, a + 0.03, Math.PI * 2 / 12 - 0.06),
       have ? M(0xffcf3a, 0.3, { metalness: 0.6, emissive: 0xffa800, emissiveIntensity: 0.9 }) : dark);
     w.position.y = 0.87; p.add(w);
   }

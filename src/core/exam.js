@@ -3,15 +3,15 @@
 // Ten questions: 4 vocabulary (both directions), 3 grammar (pick the right form), 3 sentences (pick the correctly built
 // sentence among scrambled ones). Each paper is drawn at random and avoids what the last papers asked, while enough remains.
 
-export const EXAM_GATES = [10, 20, 25, 30, 35, 45];      // (26/11) and the last level of every land after it: 25 desert, 30 peaks, 35 ruins, 45 sky
+export const EXAM_GATES = [10, 20, 25, 30, 35, 45, 50, 55, 60, 65, 70];      // (26/11, turn 63) 50 fairy isle, 55 volcano, 60 crystal cave, 65 future city, 70 dream kingdom;      // (26/11) and the last level of every land after it: 25 desert, 30 peaks, 35 ruins, 45 sky
 export const EXAM_OLD = [10, 20];        // (24/11) 10 ends the sea (opens the forest), 20 ends the forest (opens the next map)
 /** The unit each map exam asks about: the map just finished (Map 1 = Unit 1, Map 2 = Unit 2), not the unit of the map it opens (19/11). */
-export const EXAM_UNIT = { 10: 2, 20: 3, 25: 4, 30: 5, 35: 6, 45: 7 };
+export const EXAM_UNIT = { 10: 2, 20: 3, 25: 4, 30: 5, 35: 6, 45: 7, 50: 8, 55: 9, 60: 10, 65: 11, 70: 12 };
 export const EXAM_TOTAL = 10, EXAM_PASS = 8;
 const shuffle = (a, rnd) => { const b = [...a]; for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; } return b; };
 
 /** Same words, wrong order: shuffles until it differs from the original (and from the others already offered). */
-const PROPER = /^(Mai|Nam|Lan|Tom|Ben|Sam|Pip|Anna|Rose|Lily|Mia|Leo|Viet|Vietnam|Hanoi|English|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday|Mr|Mrs|Ms|Tet)\b/;
+const PROPER = /^(Mai|Nam|Lan|Tom|Ben|Sam|Pip|Anna|Rose|Lily|Mia|Leo|Viet|Vietnam|Hanoi|English|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday|Mr|Mrs|Ms|Tet|Zara|Omar|Bjorn|Greta|Ada|Professor|Milo|Aria|Nimbus|Flora|Thistle|Brann|Cinder|Opal|Flint|Nova|Bolt|Luma|Dozy|Hugh|Lord|Hush|Fire|Sun|Ice|Sand|Stone|Thorn|Magma|Crystal|Iron|Moon|Star|Glow|Solar|Cloud|Fairy|Dream|Future|Mars|Earth|January|February|March|April|May|June|July|August|September|October|November|December)\b/;      // (26/11, turn 63) the people of maps 4-12, months
 export function scramble(sentence, rnd = Math.random, not = []) {
   // (26/11) the capital letter and the full stop gave the right sentence away (only it began with a capital and ended with a stop):
   // the wrong ones are re-dressed the same way, so the child has to read the word order

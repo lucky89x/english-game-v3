@@ -174,10 +174,15 @@
       "source": "sgk_notes"
     }
   ],
-  "grammar": [],
+  "grammar": [
+    "past simple (regular and irregular verbs, was / were, did): Our team won the match last Sunday. Did you take part in the marathon?",
+    "imperatives: Please wear your sports shoes. Don't pick the flowers."
+  ],
   "activities": {},
   "version": 1,
   "source_note": "Từ vựng do chủ dự án chép từ sổ tay kiến thức; chưa có bài đọc hay hoạt động.",
   "vocabulary_checked": true,
-  "status": "vocab"
+  "status": "vocab",
+  "grammar_checked": false,
+  "grammar_note": "Frame from memory of the Global Success contents page; check against the textbook. Sentences are original."
 }

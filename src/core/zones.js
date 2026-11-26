@@ -57,6 +57,42 @@ export const ZONES = {
     { id: 's_stormbird', kind: 'stormbird', x: 58, z: -10, r: 10, n: 6, vi: 'Bãi Chim Bão', icon: '🌩️' },
     { id: 's_stormgolem', kind: 'stormgolem', x: -36, z: -52, r: 9, n: 5, vi: 'Bãi Golem Bão', icon: '⛈️' },
   ],
+  // (26/11, turn 63) maps 8-12
+  fairy: [        // Fairy Isle: 45 to 50
+    { id: 'y_pixie', kind: 'pixie', x: -48, z: 30, r: 10, n: 7, vi: 'Bãi Tiên Đom Đóm', icon: '✨' },
+    { id: 'y_snapper', kind: 'snapper', x: 48, z: 32, r: 10, n: 7, vi: 'Bãi Hoa Cắn', icon: '🌸' },
+    { id: 'y_dewfrog', kind: 'dewfrog', x: 58, z: -12, r: 10, n: 7, vi: 'Bãi Ếch Sương', icon: '🐸' },
+    { id: 'y_sporeling', kind: 'sporeling', x: -56, z: -34, r: 10, n: 6, vi: 'Bãi Nấm Nhảy', icon: '🍄' },
+    { id: 'y_thorn', kind: 'thorn', x: 34, z: -50, r: 9, n: 5, vi: 'Bãi Người Cây Gai', icon: '🌿' },
+  ],
+  volcano: [      // Volcano Valley: 50 to 55
+    { id: 'o_shard', kind: 'shard', x: 46, z: 24, r: 9, n: 7, vi: 'Bãi Mảnh Dung Nham', icon: '🔥' },
+    { id: 'o_lavafox', kind: 'lavafox', x: -54, z: 40, r: 9, n: 7, vi: 'Bãi Cáo Lửa', icon: '🦊' },
+    { id: 'o_ashbat', kind: 'ashbat', x: -56, z: -2, r: 9, n: 7, vi: 'Bãi Dơi Tro', icon: '🦇' },
+    { id: 'o_ashwisp', kind: 'ashwisp', x: 52, z: -32, r: 10, n: 6, vi: 'Bãi Ma Trơi Tro', icon: '🌋' },
+    { id: 'o_titanling', kind: 'titanling', x: -40, z: -46, r: 9, n: 5, vi: 'Bãi Golem Nham Thạch', icon: '🪨' },
+  ],
+  crystal: [      // Crystal Cave: 55 to 60
+    { id: 'c_cavebat', kind: 'cavebat', x: -36, z: 60, r: 9, n: 7, vi: 'Bãi Dơi Hang', icon: '🦇' },
+    { id: 'c_gemslime', kind: 'gemslime', x: 36, z: 60, r: 9, n: 7, vi: 'Bãi Slime Đá Quý', icon: '💎' },
+    { id: 'c_glowwisp', kind: 'glowwisp', x: 62, z: -24, r: 9, n: 7, vi: 'Bãi Đốm Sáng', icon: '💡' },
+    { id: 'c_echo', kind: 'echo', x: -62, z: -24, r: 9, n: 6, vi: 'Bãi Tinh Thể Vọng', icon: '🔮' },
+    { id: 'c_gemgolem', kind: 'gemgolem', x: 30, z: -52, r: 9, n: 5, vi: 'Bãi Golem Pha Lê', icon: '🧊' },
+  ],
+  city: [         // Future City: 60 to 65
+    { id: 't_drone', kind: 'drone', x: 58, z: 46, r: 9, n: 7, vi: 'Bãi Drone Tia Điện', icon: '🛸' },
+    { id: 't_wheelbot', kind: 'wheelbot', x: -58, z: 46, r: 9, n: 7, vi: 'Bãi Robot Bánh Xe', icon: '🤖' },
+    { id: 't_boxbot', kind: 'boxbot', x: 62, z: -14, r: 9, n: 7, vi: 'Bãi Robot Hộp', icon: '📦' },
+    { id: 't_laser', kind: 'laser', x: -62, z: -14, r: 9, n: 6, vi: 'Bãi Drone Laser', icon: '🔴' },
+    { id: 't_guardbot', kind: 'guardbot', x: 30, z: -56, r: 9, n: 5, vi: 'Bãi Robot Canh Gác', icon: '🦾' },
+  ],
+  dream: [        // Dream Kingdom: 65 to 70
+    { id: 'n_nightbat', kind: 'nightbat', x: 52, z: 44, r: 9, n: 7, vi: 'Bãi Dơi Ác Mộng', icon: '🦇' },
+    { id: 'n_dreamfox', kind: 'dreamfox', x: -52, z: 44, r: 9, n: 7, vi: 'Bãi Cáo Mộng', icon: '🦊' },
+    { id: 'n_shade', kind: 'shade', x: 64, z: -22, r: 9, n: 7, vi: 'Bãi Bóng Thì Thầm', icon: '🌫️' },
+    { id: 'n_sleepghost', kind: 'sleepghost', x: -64, z: -22, r: 9, n: 6, vi: 'Bãi Ma Ngủ Gật', icon: '👻' },
+    { id: 'n_nightgolem', kind: 'nightgolem', x: 30, z: -50, r: 9, n: 5, vi: 'Bãi Golem Ác Mộng', icon: '🌑' },
+  ],
 };
 
 /** (25/11) The grounds are spread over the whole map (village: all along the east bank, which the bridge quest opens; harbour and forest:
