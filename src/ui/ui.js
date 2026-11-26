@@ -70,13 +70,13 @@ export class UI {
       <div class="chips"><span class="chip gold" title="Vàng"><i>●</i>${st.gold}</span><span class="chip word" title="Từ đã học"><i>✎</i>${learned}</span>${extra ? `<span class="chip star">${esc(extra)}</span>` : ''}${food ? `<span class="chip food" title="Bánh (phím Q)"><i>🍞</i>${food}</span>` : ''}</div>`;
   }
   /** Big centre banner for a level up or a reward. */
-  toast(text) { const el = $('toast'); if (!el) return; el.textContent = text; el.classList.remove('show'); void el.offsetWidth; el.classList.add('show'); }
+  toast(text) { const el = $('toast'); if (!el) return; el.textContent = text; el.style.animationDuration = Math.min(7, Math.max(2.2, 1 + String(text).length * 0.06)).toFixed(1) + 's'; el.style.fontSize = String(text).length > 60 ? '21px' : ''; el.classList.remove('show'); void el.offsetWidth; el.classList.add('show'); }      // (26/11) a long line stays long enough to be read
   /** clue: {text, key} | null; level 0..3; meaning: Vietnamese of the keyword */
   clue(clue, level, meaning, note) {
     const el = $('clue');
     if (!clue && !note) { el.classList.add('hidden'); return; }
     el.classList.remove('hidden');
-    if (!clue) { el.innerHTML = `<div class="en" style="font-size:17px">${esc(note)}</div>`; return; }
+    if (!clue) { el.innerHTML = typeof note === 'object' ? `<div class="en" style="font-size:17px">${esc(note.en)}</div><div style="font-size:14px;opacity:.85;margin-top:3px">${esc(note.vi)}</div>` : `<div class="en" style="font-size:17px">${esc(note)}</div>`; return; }      // (26/11) a note may carry its Vietnamese line
     let text = esc(clue.text);
     if (level >= 1) text = text.replace(esc(clue.key), `<mark>${esc(clue.key)}</mark>`);
     const canHint = clue.hints !== false;

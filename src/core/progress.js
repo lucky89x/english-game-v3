@@ -23,8 +23,11 @@ export const HIGHEST_SKILL_LEVEL = Math.max(...Object.values(TREE).flat().map((n
 // (25/11, "mỗi cấp cần số quái khác nhau; map 1 chơi khám phá cả tuần, 2-3 giờ mỗi ngày") The bar of a level is built from HOW MANY monsters
 // of that level fill it, so the numbers can be read and tuned: bar(L) = EXP of one monster of level L × kills needed at level L.
 // Kills needed to go from level L to L+1 by hunting monsters of level L: a table for the first map, a gentle climb after it.
-export const KILLS_TABLE = [60, 180, 380, 640];      // levels 1-4: kills needed if the hero took nothing from quests (quests pay only QUEST_SHARE of a bar, so the real number is a bit lower)
-export const killsPerLevel = (level) => (level <= KILLS_TABLE.length ? KILLS_TABLE[level - 1] : KILLS_TABLE[KILLS_TABLE.length - 1] + 15 * (level - KILLS_TABLE.length));
+// (26/11, after the full review) [60, 180, 380, 640] made the first map 1.260 monsters with half of them on one ground of four, and the
+// later maps 650-880 a level (10 h and 27 h of nothing but hitting). Now the count is lower and LEARNING fills the bar as well (LEARN below):
+// about 580 monsters for map 1, ~1.500 for map 2, ~3.900 for map 3 if the child learned nothing; a child who reads needs clearly fewer.
+export const KILLS_TABLE = [40, 100, 180, 260];      // levels 1-4: kills needed if the hero took nothing from quests or learning
+export const killsPerLevel = (level) => (level <= KILLS_TABLE.length ? KILLS_TABLE[level - 1] : KILLS_TABLE[KILLS_TABLE.length - 1] + 12 * (level - KILLS_TABLE.length));
 /** EXP of one normal monster of a level: a stronger monster pays clearly more, so fighting a level above you is worth the risk. */
 export const mobExp = (level) => 6 + 4 * level;
 export const expNeed = (level) => mobExp(level) * killsPerLevel(level);
@@ -35,6 +38,18 @@ const oldNeed = (level) => 180 + (level - 1) * 90;
 export const QUEST_SHARE = 0.25;
 /** A reward written in the old units (quests, story, daily jobs) as a share of the bar of the hero's level now (QUEST_SHARE of the old share). */
 export const scaleExp = (level, base) => Math.max(1, Math.round(base * expNeed(level) / oldNeed(level) * QUEST_SHARE));
+
+// ---------------------------------------------------------------- learning pays too (26/11, "tỉ lệ học phải đạt 30%")
+// Until now only monsters and quests filled the bar, so the fastest way to grow was to stop reading. Now every act of LEARNING pays a
+// share of the bar of the hero's level; each has its own natural limit a day (ten bubbles and five chests a map, one bonus a game),
+// so a week of play still takes a week, but the child who reads grows faster than the child who only hits.
+export const LEARN = { bubbleNew: 0.012, bubbleOld: 0.006, chest: 0.02, gate: 0.02 };
+export const learnExp = (level, share) => Math.max(1, Math.round(expNeed(level) * share));
+/** Every WORD_EVERY-th monster leaves a word behind; the right answer pays the EXP of one more monster of that kind. */
+export const WORD_EVERY = 3;
+/** Ben's word jars (26/11, the parent's rule: "cho EXP vừa, càng lên cấp càng giảm"): a share of the bar that shrinks with the level,
+ *  0.6% at level 1, 0.3% at 2, 0.15% at 4 … so the jars help a beginner and never replace the road ahead. */
+export const jarExp = (level) => Math.max(1, Math.round(expNeed(level) * 0.006 / Math.max(1, level)));
 
 // ---------------------------------------------------------------- the level cap of every map
 /** The map a region belongs to (the treasure isle is part of Map 2). */
@@ -89,7 +104,12 @@ export function bossStats(level) {
 }
 /** Share of a monster's EXP the hero gets: full when the monster is at or above the hero's level, 20% less for every level the hero
  *  is above it (never below 15%), and none at all when the map's cap is reached (grinding the same ground pays nothing). */
-export function expFactor(heroLevel, monsterLevel) { const d = heroLevel - monsterLevel; return d <= 0 ? 1 : Math.max(0.15, 1 - 0.2 * d); }
+export function expFactor(heroLevel, monsterLevel) {
+  const d = heroLevel - monsterLevel;
+  if (d < -OVER) return mobExp(heroLevel + OVER) / mobExp(monsterLevel);      // (26/11) a monster far above the hero pays like one OVER levels above: no jumping to the last ground at level 1
+  return d <= 0 ? 1 : Math.max(0.15, 1 - 0.2 * d);
+}
+export const OVER = 2;
 
 // ---------------------------------------------------------------- weapons and armour by level
 /** The tiers of gear, one set per map step: the weapon of a tier needs this level and adds `weaponAtk(level)`; the price is 15 kills' gold. */

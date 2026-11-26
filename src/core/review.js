@@ -8,15 +8,17 @@ export const today = () => Math.floor((Date.now() - new Date().getTimezoneOffset
 
 /** result: {correct, hints, ms}. Returns the updated row. */
 export function record(words, id, result, day = today()) {
+  const was = words[id] ? { due: words[id].due } : null; let keep = false;
   const row = words[id] || { box: 0, due: day, seen: 0, right: 0, wrong: 0, firstTry: 0, hints: 0, ms: 0, last: day };
   row.seen += 1; row.last = day; row.hints += result.hints || 0; row.ms = Math.round(result.ms || 0);
   if (!result.correct) { row.wrong += 1; row.box = 0; }
   else {
     row.right += 1;
-    if ((result.hints || 0) === 0) { row.firstTry += 1; row.box = Math.min(row.box + 1, MAX_BOX); }
-    else row.box = Math.min(Math.max(row.box, 1), 1);      // needed help: review again tomorrow
+    // (26/11) a word climbs one box only when it was DUE (or new): six right answers in one afternoon used to push it 30 days away
+    if ((result.hints || 0) === 0) { row.firstTry += 1; if (!was || was.due <= day) row.box = Math.min(row.box + 1, MAX_BOX); else keep = true; }
+    else row.box = 1;      // needed help: review again tomorrow
   }
-  row.due = day + INTERVAL_DAYS[row.box];
+  if (!keep) row.due = day + INTERVAL_DAYS[row.box];      // an early right answer leaves the date alone
   words[id] = row;
   return row;
 }

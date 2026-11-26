@@ -28,9 +28,15 @@ ipcMain.on('eq-save-folder', (e) => { e.returnValue = saveDir(); });
 ipcMain.on('eq-read-save', (e) => {
   try { e.returnValue = fs.readFileSync(path.join(saveDir(), 'store.json'), 'utf8'); } catch { e.returnValue = ''; }
 });
+// (26/11) the daily copies can be listed and read back from the admin panel ("Khôi phục bản sao lưu")
+ipcMain.on('eq-backups', (e) => { try { e.returnValue = fs.readdirSync(path.join(saveDir(), 'backups')).filter((f) => /^store-.*\.json$/.test(f)).sort().reverse(); } catch { e.returnValue = []; } });
+ipcMain.on('eq-read-backup', (e, name) => { try { e.returnValue = /^store-[\w.-]+\.json$/.test(String(name)) ? fs.readFileSync(path.join(saveDir(), 'backups', String(name)), 'utf8') : ''; } catch { e.returnValue = ''; } });
 ipcMain.on('eq-write-save', (e, text) => {
   try {
     const dir = saveDir(), bk = path.join(dir, 'backups'); fs.mkdirSync(bk, { recursive: true });
+    const cur = path.join(dir, 'store.json');      // (26/11) never lose a save with players to an empty or unreadable one: keep a rescue copy first
+    try { const old = fs.readFileSync(cur, 'utf8'); const had = (JSON.parse(old).profiles || []).length; let now = 0; try { now = (JSON.parse(text).profiles || []).length; } catch { now = 0; }
+      if (had > 0 && now === 0) fs.writeFileSync(path.join(bk, `store-rescue-${Date.now()}.json`), old); } catch { /* no file yet, or it was unreadable */ }
     const tmp = path.join(dir, 'store.json.tmp'); fs.writeFileSync(tmp, text); fs.renameSync(tmp, path.join(dir, 'store.json'));      // never leaves half a file
     const day = new Date().toISOString().slice(0, 10); fs.writeFileSync(path.join(bk, `store-${day}.json`), text);
     const old = fs.readdirSync(bk).filter((f) => /^store-.*\.json$/.test(f)).sort().slice(0, -14); for (const f of old) fs.unlinkSync(path.join(bk, f));
@@ -64,10 +70,15 @@ function createWindow() {
     if (input.type !== 'keyDown') return;
     if (input.key === 'F11') { win.setFullScreen(!win.isFullScreen()); e.preventDefault(); }
     if (input.key === 'F5') { win.webContents.reloadIgnoringCache(); e.preventDefault(); }
-    if (input.key === 'F12') { win.webContents.toggleDevTools(); e.preventDefault(); }
+    if (input.key === 'F12' && !app.isPackaged) { win.webContents.toggleDevTools(); e.preventDefault(); }      // (26/11) the installed game has no developer tools (a child could type gold in)
   });
-  win.webContents.setWindowOpenHandler(({ url }) => { shell.openExternal(url); return { action: 'deny' }; });
+  win.webContents.setWindowOpenHandler(({ url }) => { if (/^https:\/\//i.test(url)) shell.openExternal(url); return { action: 'deny' }; });      // only web pages, never files or other schemes
+  win.on('minimize', () => win.webContents.send('eq-hidden', true)); win.on('restore', () => win.webContents.send('eq-hidden', false));
 }
+
+// (26/11) one window only: two windows each kept the whole save in memory and the one that saved last wiped the other's progress
+if (!app.requestSingleInstanceLock()) app.quit();
+app.on('second-instance', () => { const w = BrowserWindow.getAllWindows()[0]; if (w) { if (w.isMinimized()) w.restore(); w.focus(); } });
 
 app.whenReady().then(() => {
   protocol.handle('app', (req) => {

@@ -10,10 +10,14 @@ export const EXAM_TOTAL = 10, EXAM_PASS = 8;
 const shuffle = (a, rnd) => { const b = [...a]; for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; } return b; };
 
 /** Same words, wrong order: shuffles until it differs from the original (and from the others already offered). */
+const PROPER = /^(Mai|Nam|Lan|Tom|Ben|Sam|Pip|Anna|Rose|Lily|Mia|Leo|Viet|Vietnam|Hanoi|English|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday|Mr|Mrs|Ms|Tet)\b/;
 export function scramble(sentence, rnd = Math.random, not = []) {
-  const words = sentence.split(/\s+/);
+  // (26/11) the capital letter and the full stop gave the right sentence away (only it began with a capital and ended with a stop):
+  // the wrong ones are re-dressed the same way, so the child has to read the word order
+  const end = (/[.?!]$/.exec(sentence) || [''])[0], bare = sentence.slice(0, sentence.length - end.length), words = bare.split(/\s+/);
   if (words.length < 3) return null;
-  for (let t = 0; t < 40; t++) { const s = shuffle(words, rnd).join(' '); if (s !== sentence && !not.includes(s)) return s; }
+  const lower = (w, first) => (first && w !== 'I' && !/^[A-Z][a-z]*[A-Z]/.test(w) && !PROPER.test(w) ? w.charAt(0).toLowerCase() + w.slice(1) : w), base = words.map((w, i) => lower(w, i === 0));
+  for (let t = 0; t < 40; t++) { const sh = shuffle(base, rnd), s = sh.map((w, i) => (i === 0 ? w.charAt(0).toUpperCase() + w.slice(1) : w)).join(' ') + end; if (s !== sentence && !not.includes(s)) return s; }
   return null;
 }
 

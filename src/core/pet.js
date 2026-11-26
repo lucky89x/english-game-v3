@@ -4,10 +4,10 @@
 // and a daily gift. Pure rules; the profile keeps pet = { kind, name, hunger, joy, bond, tricks, at, day, cares, gift }.
 export const PETS = {
   gull: { en: 'seagull', vi: 'hải âu', icon: '🕊️', name: 'Skye', says: 'Squawk! Hello, friend!' },
-  otter: { en: 'otter', vi: 'rái cá', icon: '🐾', name: 'Ollie', says: 'Eek eek! Let us play!' },
+  otter: { en: 'otter', vi: 'rái cá', icon: '🐾', name: 'Ollie', says: "Eek eek! Let's play!" },
   crab: { en: 'hermit crab', vi: 'cua ẩn sĩ', icon: '🦀', name: 'Coral', says: 'Click clack! Hi there!' },
   // (21/11) "a pet shop where the hero buys a pet to keep and care for every day": Penny's shop in the village (Map 1)
-  puppy: { en: 'puppy', vi: 'chó con', icon: '🐶', name: 'Buddy', says: 'Woof woof! Let us go!', price: 120, shop: true },
+  puppy: { en: 'puppy', vi: 'chó con', icon: '🐶', name: 'Buddy', says: "Woof woof! Let's go!", price: 120, shop: true },
   kitten: { en: 'kitten', vi: 'mèo con', icon: '🐱', name: 'Mimi', says: 'Meow! Nice to meet you!', price: 120, shop: true },
   bunny: { en: 'bunny', vi: 'thỏ con', icon: '🐰', name: 'Hoppy', says: 'Hop hop! Hello!', price: 90, shop: true },
   ember: { en: 'ember fox', vi: 'cáo lửa', icon: '🦊', name: 'Blaze', says: 'Yip yip! My tail is warm!', price: 260, shop: true },

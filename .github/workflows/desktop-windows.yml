@@ -24,7 +24,10 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
+      # (26/11) the rules are tested before anything is built: broken code no longer becomes an installer
+      - run: node --test tests/unit.test.mjs tests/lantern.test.mjs
+        working-directory: .
       - run: npm install --no-audit --no-fund
       - run: npm run dist:win
         env:

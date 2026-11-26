@@ -83,7 +83,7 @@ export class ReadAloud {
         if (a === 'mic') {
           busy = true; draw('Đang nghe… đọc to nào!'); const r = await listen(card.word); busy = false;
           if (r.error === 'unavailable') { draw('Máy này chưa kiểm tra được giọng đọc (cần Internet và micro). Con nghe lại từ rồi bấm Xong nhé.', 'bad'); this.el.querySelector('.row').insertAdjacentHTML('beforeend', '<button data-a="skip">Xong</button>'); return; }
-          if (r.error === 'denied') { draw('Chưa cho dùng micro: bấm vào biểu tượng khóa trên thanh địa chỉ để cho phép.', 'bad'); return; }
+          if (r.error === 'denied') { draw('Máy chưa có micro hoặc chưa cho dùng micro. Con nghe lại từ rồi bấm Bỏ qua nhé. (Bố mẹ: bấm biểu tượng khóa trên thanh địa chỉ để cho phép.)', 'bad'); this.el.querySelector('.row').insertAdjacentHTML('beforeend', '<button data-a="skip">Bỏ qua</button>'); return; }      // (26/11) this card had no way out without a microphone
           if (r.ok) { draw(`✔ Chuẩn rồi! (nghe thấy: "${r.heard}")`, 'ok'); setTimeout(() => close({ ok: true }), 900); return; }
           left -= 1; draw(r.error === 'none' ? 'Chưa nghe thấy gì. Đọc to hơn một chút nhé!' : `Nghe thấy: "${r.heard}". Chưa giống lắm, thử lại nhé!`, 'bad');
         }

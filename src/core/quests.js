@@ -27,7 +27,7 @@ export const MAIN = [
   { id: 'boss4', en: 'Compass piece 2: Captain Octopus', vi: 'Đạt cấp 9, ra mũi hải đăng phía Bắc cảng, đánh bại Thuyền trưởng Bạch Tuộc để lấy mảnh La Bàn của Biển cả.', done: (p) => !!p.flags.boss4, gold: 300, exp: 0 },
   { id: 'owl10', en: 'Ranger rank exam', vi: 'Lên cấp 10, về làng làm bài thi 10 câu của Cú Mèo (Unit 2, đúng 8/10, đề mỗi lần khác): lên hạng Kiểm lâm, Rừng Ký Ức (Map 3, cấp 10–20) mở ra.', done: (p) => gate(p, 10), gold: 200, exp: 0, unlock: 'Map 3' },
   { id: 'crystals', en: 'Echoes of the Forest', vi: 'Vào Rừng Ký Ức, theo lời Pip tìm 5 viên pha lê, trả lại ký ức cho cây cổ thụ: biết ai đang giữ mảnh La Bàn.', done: (p) => !!(p.quests && p.quests.forest && p.quests.forest.step === 'done'), gold: 60, exp: 150 },
-  { id: 'hunt2', en: 'Forest hunter', vi: 'Chương cuối Map 1: vào Rừng Ký Ức, hoàn thành 2 việc ở bảng săn quái cạnh đường vào rừng (dơi, nấm).', done: (p) => !!(p.hunt2 && p.hunt2.done >= 2), gold: 60, exp: 150 },
+  { id: 'hunt2', en: 'Forest hunter', vi: 'Vào Rừng Ký Ức, hoàn thành 2 việc ở bảng săn quái cạnh đường vào rừng (dơi, nấm khổng lồ).', done: (p) => !!(p.hunt2 && p.hunt2.done >= 2), gold: 60, exp: 150 },
   { id: 'owl15', en: 'Halfway hero', vi: 'Lên cấp 15 và qua cổng ôn tập của Cú Mèo.', done: (p) => gate(p, 15), gold: 50, exp: 0 },
   { id: 'boss3', en: 'The Mushroom Queen', vi: 'Rừng Ký Ức: đạt cấp 17, tìm bãi trống phía Tây tàn tích trong Rừng Ký Ức và đánh bại Nữ hoàng Nấm.', done: (p) => !!p.flags.boss3, gold: 150, exp: 0 },
   { id: 'boss2', en: 'Compass piece: the Ancient Golem', vi: 'Đạt cấp 19, tới khoảng trống phía Đông Bắc Rừng Ký Ức và đánh bại Golem Cổ để lấy mảnh La Bàn của rừng.', done: (p) => !!p.flags.boss2, gold: 120, exp: 0 },
@@ -74,7 +74,7 @@ export function track(p, day, ev, n = 1) {
   for (const id of d.ids) { const q = DAILY.find((x) => x.id === id); if (q.ev !== ev) continue; const was = d.prog[id] || 0; if (was >= q.need) continue; d.prog[id] = Math.min(q.need, was + n); if (d.prog[id] >= q.need) out.push(q); }
   return out;
 }
-export const dailyReward = (p) => ({ gold: 20 + p.stats.level * 2, exp: Math.round(expNeed(p.stats.level) * 0.01) });      // (25/11) 1% of the bar for each of the three daily jobs
+export const dailyReward = (p) => ({ gold: 20 + p.stats.level * 2, exp: Math.round(expNeed(p.stats.level) * 0.03) });      // (26/11) 3% of the bar for each of the three daily jobs (they are learning jobs; 1% was nothing)
 export function claimDaily(p, day, id) {
   const d = dailyOf(p, day), q = DAILY.find((x) => x.id === id);
   if (!q || !d.ids.includes(id) || d.claimed[id] || (d.prog[id] || 0) < q.need) return null;

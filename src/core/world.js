@@ -38,10 +38,10 @@ export const ROADS = [
 /** The conditions: what is missing (an array of Vietnamese lines; empty = open). */
 const f = (p) => (p && p.flags) || {};
 export const CONDITIONS = {
-  forest: (p) => { const m = []; if (!f(p).forest_open) m.push('Giúp Tom và Ben ở quảng trường để nhận huy hiệu Người Giữ Từ.'); if (!(p && p.stats && p.stats.level >= 10 && p.gates && p.gates[10])) m.push('Lên cấp 10 ở Biển cả (cấp 5–10) và qua bài thi của Cú Mèo để vào Rừng Ký Ức (cấp 10–20).'); return m; },
+  forest: (p) => { const m = []; if (!f(p).forest_open) m.push('Giúp Tom và Ben ở quảng trường để nhận huy hiệu Người Giữ Chữ.'); if (!(p && p.stats && p.stats.level >= 10 && p.gates && p.gates[10])) m.push('Lên cấp 10 ở Biển cả (cấp 5–10) và qua bài thi của Cú Mèo để vào Rừng Ký Ức (cấp 10–20).'); return m; },
   sea: (p) => { const m = []; if (!f(p).boss1) m.push('Đánh bại Vua Slime ở Đồng Hoang.'); if (!(p && p.stats && p.stats.level >= 5 && p.gates && p.gates[5])) m.push('Lên cấp 5 (cấp cao nhất của làng) và qua cổng ôn tập của Cú Mèo để mở Biển cả (cấp 5–10).'); return m; },
   coast: () => ['Con đường ven biển chưa làm xong: đi qua Làng.'],
-  later: () => ['Khu này sắp mở, em đang xây.'],
+  later: () => ['Vùng đất này còn chìm trong Gió Đen. Sắp mở!'],
 };
 export const roadBetween = (a, b) => ROADS.find((r) => (r.a === a && r.b === b) || (r.a === b && r.b === a)) || null;
 /** The maps joined to this one by a road (any state). */
@@ -50,7 +50,7 @@ export const neighbours = (id) => ROADS.filter((r) => r.a === id || r.b === id).
 export function canGo(profile, from, to) {
   const m = mapById(to), r = roadBetween(from, to);
   if (!m || !r) return { ok: false, missing: ['Không có đường nối.'], built: !!(m && m.built) };
-  if (!m.built || !(mapById(from) || {}).built) return { ok: false, missing: ['Khu này sắp mở, em đang xây.'], built: false };
+  if (!m.built || !(mapById(from) || {}).built) return { ok: false, missing: ['Vùng đất này còn chìm trong Gió Đen. Sắp mở!'], built: false };
   if (profile && profile.admin) return { ok: true, missing: [], built: true };
   const missing = (CONDITIONS[r.need] || CONDITIONS.later)(profile);
   return { ok: !missing.length, missing, built: true };

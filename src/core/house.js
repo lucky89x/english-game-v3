@@ -9,7 +9,7 @@ export const UPGRADES = [      // (21/11) "the upgrades are too cheap: after one
   { id: 'pen', en: 'Pig Pen', vi: 'Chuồng lợn: nuôi lợn con lớn lên rồi bán', cost: 900, level: 10, needs: (h) => !h.pen },
   { id: 'garden2', en: 'Big Garden', vi: 'Vườn rộng: nhiều luống rau, bồn hoa, ao nhỏ, cổng hoa', cost: 1600, level: 12, needs: (h) => h.garden === 1 },
   { id: 'floor3', en: 'Third Floor', vi: 'Tầng 3: phòng nhạc ở tầng áp mái', cost: 3200, level: 18, needs: (h) => h.floors === 2 },
-  { id: 'villa', en: 'Villa Style', vi: 'Biệt thự: cột đá, sàn đá hoa, đèn chùm, nhà ngoài sang trọng', cost: 6000, level: 25, needs: (h) => h.floors >= 2 && !h.villa },
+  { id: 'villa', en: 'Villa Style', vi: 'Biệt thự: cột đá, sàn đá hoa, đèn chùm, nhà ngoài sang trọng', cost: 6000, level: 18, needs: (h) => h.floors >= 2 && !h.villa },
 ];
 export const upgradeState = (profile, id) => {
   const u = UPGRADES.find((x) => x.id === id), h = house(profile); if (!u) return { ok: false, why: 'none' };

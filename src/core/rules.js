@@ -11,11 +11,11 @@ import { spawnsOf } from './zones.js';
 const mob = (level, role, o) => ({ level, role, ...mobStats(level, role), ...(role === 'ranged' ? { ranged: true } : role === 'elite' ? { elite: true } : {}), ...o });
 export const MONSTERS = {
   // Starter Village (levels 1-5): one ground for each kind, from the gate of the meadow out to the golem fields
-  bunny: mob(1, 'normal', { el: 'ice', name: 'Frost Bunny', speed: 2.6, color: 0xbfe8ff, size: 1.0, model: 'bunny', fit: 0.7 }),
-  slime: mob(2, 'normal', { el: 'wind', name: 'Green Slime', speed: 2.0, color: 0x7fd86a, size: 1.0 }),
-  goblin: mob(3, 'ranged', { el: 'ice', name: 'Frost Goblin', speed: 2.4, color: 0x4f9ad0, size: 1.0, model: 'goblin', fit: 0.8 }),
+  bunny: mob(1, 'normal', { el: 'ice', name: 'Snap Flower', speed: 2.6, color: 0xbfe8ff, size: 1.0, model: 'bunny', fit: 0.7 }),
+  slime: mob(2, 'normal', { el: 'wind', name: 'Water Slime', speed: 2.0, color: 0x7fd86a, size: 1.0 }),
+  goblin: mob(3, 'ranged', { el: 'ice', name: 'Shadow Wolf', speed: 2.4, color: 0x4f9ad0, size: 1.0, model: 'goblin', fit: 0.8 }),
   red: mob(4, 'normal', { el: 'fire', name: 'Red Slime', speed: 2.5, color: 0xff7a6a, size: 1.25 }),
-  imp: mob(5, 'ranged', { el: 'fire', name: 'Ember Imp', speed: 2.7, color: 0xd8402e, size: 1.0, model: 'imp', fit: 0.7 }),
+  imp: mob(5, 'ranged', { el: 'fire', name: 'Magma Crystal', speed: 2.7, color: 0xd8402e, size: 1.0, model: 'imp', fit: 0.7 }),
   golem: mob(5, 'elite', { el: 'thunder', name: 'Lava Golem', speed: 1.6, color: 0xa49aa6, size: 1.7 }),
   // Sunny Harbor (levels 5-10): the Blender models in assets/models/harbor_mob_*; `fit` scales the model, `model` names it
   crab: mob(5, 'normal', { el: 'ice', name: 'Beach Crab', speed: 2.3, color: 0xe2483e, size: 1.0, model: 'crab', fit: 1.0 }),
@@ -26,14 +26,14 @@ export const MONSTERS = {
   bat: mob(10, 'ranged', { el: 'wind', name: 'Shadow Bat', speed: 3.2, color: 0x6a4a9a, size: 1.0, fly: true, hover: 1.1 }),
   wisp: mob(12, 'ranged', { el: 'thunder', name: 'Storm Wisp', speed: 2.8, color: 0xffe14a, size: 1.0, fly: true, hover: 0.05, model: 'wisp', fit: 1.3 }),
   fox: mob(14, 'normal', { el: 'fire', name: 'Ember Fox', speed: 3.0, color: 0xff8a3a, size: 1.0, model: 'fox', fit: 1.0 }),
-  shroom: mob(16, 'elite', { el: 'ice', name: 'Angry Mushroom', ranged: true, speed: 1.8, color: 0xe2483e, size: 1.3 }),
+  shroom: mob(16, 'elite', { el: 'ice', name: 'Giant Mushroom', ranged: true, speed: 1.8, color: 0xe2483e, size: 1.3 }),
   orc: mob(18, 'elite', { el: 'wind', name: 'Elder Treant', speed: 2.1, color: 0x6fae3a, size: 1.15, model: 'orc', fit: 1.0 }),
 };
 // (24/11) Where monsters live: one hunting ground per kind, see core/zones.js (ZONES, spawnsOf). [kind, x, z] lists for the three maps.
 export const SPAWNS = spawnsOf('village'), FOREST_SPAWNS = spawnsOf('forest'), HARBOR_SPAWNS = spawnsOf('harbor');
 export { SAFE, inSafe } from './safe.js';
 /** (21/11) Monsters walk towards the hero at this share of their speed ("they rush in too fast"); they come back to life after RESPAWN seconds. */
-export const CHASE = 0.62, RESPAWN = { normal: 35, elite: 70, boss: 300 };
+export const CHASE = 0.62, RESPAWN = { normal: 20, elite: 45, boss: 300 };      // (26/11) was 35 / 70: a third of the hunting time was standing and waiting
 /** The hero's attack: grows with the level, weapon adds on top. */
 export const playerAtk = (profile) => Math.round((10 + (profile.stats.level - 1) * 2) * (bag(profile).weapon ? 1 : UNARMED)) + ((profile.gear && profile.gear.atk) || 0) + rankAtk(profile) + powers(profile).atk;      // + skill points (Fire Heart)      // + the Word Keeper rank (saga.js)
 /** Damage a monster deals after armour (never below 1). */
@@ -311,20 +311,20 @@ export const shopList = (seller) => Object.entries(ITEMS).filter(([, it]) => it.
 
 // ---------------------------------------------------------------- hunting quests and the boss
 /** English lines are original and short; grades 8-9 get longer sentences with the same job. */
-export const HUNTS = [
-  { kind: 'slime', need: 3, gold: 20, exp: 40, en: { easy: 'Please defeat three green slimes. They are eating my carrots!', hard: "Could you get rid of three green slimes? They've been eating my carrots all week." } },
-  { kind: 'red', need: 2, gold: 35, exp: 70, en: { easy: 'Two red slimes are near the river. Please stop them!', hard: "Two red slimes have been seen near the river. Would you mind stopping them?" } },
-  { kind: 'slime', need: 5, gold: 35, exp: 70, en: { easy: 'Five green slimes are in the meadow. Can you help?', hard: 'The meadow is full of green slimes again. Could you defeat five of them?' } },
-  { kind: 'golem', need: 1, gold: 60, exp: 120, en: { easy: 'A big lava golem is by the farm. Be careful!', hard: "A lava golem is standing near the farm. It's dangerous, so please be careful!" } },
-  { kind: 'goblin', need: 3, gold: 40, exp: 90, en: { easy: 'Frost goblins froze our water bucket! Please stop three of them.', hard: "Three frost goblins have frozen the water in our buckets. Could you chase them away? Fire works well on ice!" } },
-  { kind: 'imp', need: 3, gold: 60, exp: 150, en: { easy: 'Little fire imps are burning the grass. Please stop three!', hard: "Some fire imps keep setting the grass on fire near the golem fields. Would you stop three of them? Wind blows fire out!" } },
+export const HUNTS = [      // (26/11) the names follow the models the child really sees; one job for every ground, easy to hard
+  { kind: 'slime', need: 3, gold: 20, exp: 40, en: { easy: 'Please defeat three water slimes. They are eating my carrots!', hard: "Could you get rid of three water slimes? They've been eating my carrots all week." } },
+  { kind: 'bunny', need: 4, gold: 20, exp: 40, en: { easy: 'Snap flowers are biting our shoes! Please stop four of them.', hard: "Four snap flowers keep biting travellers' shoes by the meadow path. Could you stop them?" } },
+  { kind: 'goblin', need: 4, gold: 40, exp: 90, en: { easy: 'Shadow wolves are scaring the sheep. Please chase away four!', hard: "Four shadow wolves have been scaring the sheep at night. Could you chase them away? Fire works well on ice!" } },
+  { kind: 'red', need: 5, gold: 35, exp: 70, en: { easy: 'Five red slimes are near the river. Please stop them!', hard: "Five red slimes have been seen near the river. Would you mind stopping them?" } },
+  { kind: 'imp', need: 4, gold: 60, exp: 150, en: { easy: 'Magma crystals are burning the grass. Please break four!', hard: "Some magma crystals keep setting the grass on fire in the east field. Would you break four of them? Wind blows fire out!" } },
+  { kind: 'golem', need: 1, gold: 60, exp: 120, en: { easy: 'A big lava golem is east of the orchard. Be careful!', hard: "A lava golem is standing east of the orchard. It's dangerous, so please be careful!" } },
 ];
 /** The Forest of Memories (last chapter of Map 1) has its own board by the forest entrance, with its own jobs (17/11, retuned 19/11). */
 export const FOREST_HUNTS = [
   { kind: 'bat', need: 3, gold: 40, exp: 150, en: { easy: 'Shadow bats are flying over the path. Please chase away three of them!', hard: "Three shadow bats keep scaring travellers on the path. Could you chase them away?" } },
-  { kind: 'shroom', need: 2, gold: 55, exp: 200, en: { easy: 'Two angry mushrooms are near the camp. Please stop them!', hard: "Two angry mushrooms have been stamping around the camp. Would you mind stopping them?" } },
+  { kind: 'shroom', need: 2, gold: 55, exp: 200, en: { easy: 'Two giant mushrooms are east of the old tree. Please stop them!', hard: "Two giant mushrooms have been stamping around east of the old tree. Would you mind stopping them?" } },
   { kind: 'bat', need: 5, gold: 65, exp: 260, en: { easy: 'More bats are here tonight. Can you defeat five?', hard: "The bats have come back in a big group. Could you defeat five of them?" } },
-  { kind: 'shroom', need: 4, gold: 90, exp: 360, en: { easy: 'Four angry mushrooms are in the forest. Be brave!', hard: "Four angry mushrooms are hiding among the trees. You'll need to be brave!" } },
+  { kind: 'shroom', need: 4, gold: 90, exp: 360, en: { easy: 'Four giant mushrooms are in the forest. Be brave!', hard: "Four giant mushrooms are hiding among the trees. You'll need to be brave!" } },
   { kind: 'wisp', need: 3, gold: 80, exp: 300, en: { easy: 'Storm wisps are flickering over the trees. Please chase away three!', hard: "Three storm wisps keep flickering over the trees and frightening the deer. Could you chase them away? Wind slows them down!" } },
   { kind: 'fox', need: 3, gold: 90, exp: 340, en: { easy: 'Ember foxes are running through the camp. Please stop three!', hard: "Some ember foxes keep running through the camp and singeing our blankets. Would you stop three of them? Ice cools them down!" } },
   { kind: 'orc', need: 3, gold: 100, exp: 420, en: { easy: 'Elder treants are crushing our tents. Please stop three!', hard: "Three elder treants keep stomping on our tents at night. Could you stop them? Thunder beats wind!" } },

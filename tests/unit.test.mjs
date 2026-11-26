@@ -44,9 +44,12 @@ test('review: wrong repeats today, hint keeps the interval short, clean answers 
   assert.equal(R.record(w, 'a', { correct: true, hints: 1 }, 100).due, 101);
   R.record(w, 'a', { correct: true, hints: 0 }, 101);
   assert.equal(w.a.box, 2); assert.equal(w.a.due, 103);
-  for (let d = 0; d < 8; d++) R.record(w, 'a', { correct: true, hints: 0 }, 110 + d);
+  for (let k = 0; k < 8; k++) R.record(w, 'a', { correct: true, hints: 0 }, w.a.due);      // answered each time it is due
   assert.equal(w.a.box, R.MAX_BOX); assert.equal(w.a.due - w.a.last, 30);
-  assert.deepEqual(R.dueIds(w, 117), []);
+  const due0 = w.a.due, box0 = w.a.box; R.record(w, 'a', { correct: true, hints: 0 }, w.a.last + 1);      // (26/11) an early right answer does not push the word further away
+  assert.equal(w.a.due, due0); assert.equal(w.a.box, box0);
+  const c = {}; for (let k = 0; k < 6; k++) R.record(c, 'b', { correct: true, hints: 0 }, 200); assert.equal(c.b.box, 1, 'six right answers in one day are one step, not six');
+  assert.deepEqual(R.dueIds(w, w.a.last), []);
   assert.deepEqual(R.dueIds({ x: { box: 2, due: 5 }, y: { box: 0, due: 5 } }, 6), ['y', 'x']);
 });
 test('save: profiles are separate, saves are versioned, v1 migrates, newer versions are refused', () => {
@@ -419,7 +422,10 @@ test('monsters: one level per kind, stats follow the level, one hunting ground p
   const kills = (L) => PR.expNeed(L) / PR.mobStats(L).exp; for (const L of [1, 2, 3, 4, 10, 30, 60]) assert.equal(kills(L), PR.killsPerLevel(L), `level ${L}: the bar is exactly the kills of its level`);
   // (25/11) Map 1 is a week of play: each level asks clearly more kills than the one before, 1,000+ kills in all for levels 1-4, and a monster a level up pays more
   for (let L = 1; L < 4; L++) assert.ok(PR.killsPerLevel(L + 1) >= PR.killsPerLevel(L) * 1.4, `level ${L + 1} asks clearly more kills than level ${L}`);
-  assert.ok([1, 2, 3, 4].reduce((a, L) => a + PR.killsPerLevel(L), 0) >= 1000, 'Map 1 (levels 1-4) takes 1,000+ kills');
+  { const k1 = [1, 2, 3, 4].reduce((a, L) => a + PR.killsPerLevel(L), 0); assert.ok(k1 >= 400 && k1 <= 800, 'Map 1 (levels 1-4) takes 400-800 kills when nothing is learned (26/11: learning fills the bar too)'); }
+  assert.ok(PR.expFactor(1, 5) < 1 && PR.expFactor(1, 3) === 1 && Math.round(PR.mobExp(5) * PR.expFactor(1, 5)) === PR.mobExp(1 + PR.OVER), 'a monster far above the hero pays like one two levels above');
+  assert.ok(PR.jarExp(1) / PR.expNeed(1) > PR.jarExp(4) / PR.expNeed(4) * 3 && PR.jarExp(4) < PR.mobExp(4) * 2, "Ben's jars: a modest EXP, a smaller share of the bar at every level");
+  assert.ok(PR.learnExp(3, PR.LEARN.chest) > PR.mobExp(3) && PR.WORD_EVERY >= 2, 'learning pays EXP');
   assert.ok(PR.mobStats(2).exp >= PR.mobStats(1).exp * 1.3, 'a monster one level up pays at least 30% more EXP');
   // weapons: made for a level, price from the monsters' gold, sold in the map of that level
   for (const [id, it] of Object.entries(ITEMS)) if (it.slot === 'weapon' && !it.rare) { assert.ok(it.atk >= Math.round(PR.weaponAtk(it.level) * 0.7) && it.atk <= PR.weaponAtk(it.level), `${id} gives the attack of level ${it.level}`); assert.ok(it.cost >= 40); }
@@ -444,7 +450,7 @@ test('the sea (Map 2) opens at level 5 with the Slime King beaten and the owl re
   p.gates = { 5: true }; assert.equal(map2Ready(p), true); p.flags.map2 = true; assert.equal(S.unitOf(p), 2);
   p.flags.forest_open = true; p.stats.level = 9; p.gates[10] = true; assert.equal(forestReady(p), false); p.stats.level = 10; assert.equal(forestReady(p), true);
   p.unitPick = 5; assert.equal(S.unitOf(p), 5);
-  assert.ok(S.expTo(5) > 20000 && S.expTo(20) > S.expTo(5) * 3, 'the bar grows level after level (25/11: a week for Map 1)'); assert.equal(PR.scaleExp(1, 180), Math.round(PR.expNeed(1) * PR.QUEST_SHARE), 'a reward of one old bar is QUEST_SHARE of one new bar');
+  assert.ok(S.expTo(5) > 9000 && S.expTo(20) > S.expTo(5) * 3, 'the bar grows level after level (25/11: a week for Map 1)'); assert.equal(PR.scaleExp(1, 180), Math.round(PR.expNeed(1) * PR.QUEST_SHARE), 'a reward of one old bar is QUEST_SHARE of one new bar');
 });
 test('grammar gate items: valid answers, English-only sentences with one blank, only written units', () => {
   for (const [id, list] of Object.entries(GRAMMAR)) for (const g of list) {
@@ -988,7 +994,7 @@ test('safe places: no monster lives in one; the orchard, the mini games and the 
   for (const [kind, x, z] of SP21) assert.ok(!inSafe('village', x, z, 1), `${kind} at ${x},${z} spawns outside the safe places`);
   for (const [x, z] of [[40, 11], [36, 0], [45, 18], [-25, -76], [-62, -60], [-61, 68], [-82, 32], [0, 0], [-50, -5]]) assert.ok(inSafe('village', x, z), `${x},${z} is safe`);
   assert.ok(inSafe('harbor', -12, 2) && !inSafe('harbor', 12, 45));
-  assert.ok(CHASE < 0.8 && RESPAWN.normal >= 30 && RESPAWN.elite > RESPAWN.normal);
+  assert.ok(CHASE < 0.8 && RESPAWN.normal >= 15 && RESPAWN.elite > RESPAWN.normal);
 });
 test('quest trail: dots every metre or so along the path, the zigzag of the grid removed', () => {
   const path = [{ x: 0, z: 0 }, { x: 1, z: 0 }, { x: 2, z: 0 }, { x: 3, z: 0 }, { x: 3, z: 1 }, { x: 3, z: 2 }];
@@ -1159,4 +1165,28 @@ test('tripo batch: model files exist and are game-sized, the ember fox is a shop
   }
   assert.equal(TRIPO_PETS.ember.shop, true); const p = { stats: { gold: 1000 }, pets: {} };
   assert.ok(tripoBuy(p, 'ember').ok && p.pet.kind === 'ember' && p.stats.gold === 1000 - TRIPO_PETS.ember.price);
+});
+
+// ---------------------------------------------------------------- (26/11) the save survives a broken text
+test('save: a broken save is never treated as "nobody has played": the copy before it is used, one bad profile does not lose the others', () => {
+  const mk = () => { const m = new Map(); return { getItem: (k) => (m.has(k) ? m.get(k) : null), setItem: (k, v) => m.set(k, String(v)) }; };
+  const st = mk(), store = S.emptyStore(), a = S.newProfile('An', 6), b = S.newProfile('Bình', 8); a.stats.level = 4; a.stats.gold = 500; store.profiles.push(a, b);
+  S.persist(store, st); a.stats.gold = 600; S.persist(store, st);      // two different saves: the first is now the copy
+  st.setItem(S.KEY, st.getItem(S.KEY).slice(0, 80));                  // the main save is cut in half
+  const got = S.load(st);
+  assert.equal(got.profiles.length, 2, 'both children come back from the copy'); assert.equal(S.loadInfo.recovered, 'bak'); assert.equal(got.profiles[0].stats.gold, 500);
+  assert.ok(st.getItem(S.KEY + '.corrupt'), 'the broken text is kept aside');
+  S.persist(got, st); assert.equal(JSON.parse(st.getItem(S.KEY)).profiles.length, 2);
+  // nothing readable anywhere: an empty store, but the text is kept and the game is told
+  const st2 = mk(); st2.setItem(S.KEY, '{"version":2,"profiles":[{"name":"An"'); assert.equal(S.load(st2).profiles.length, 0); assert.equal(S.loadInfo.lost, true); assert.ok(st2.getItem(S.KEY + '.corrupt'));
+  // a save from a newer game is not wiped either
+  const st3 = mk(); st3.setItem(S.KEY, JSON.stringify({ version: 99, profiles: [a] })); S.load(st3); assert.equal(S.loadInfo.lost, true); assert.ok(st3.getItem(S.KEY + '.corrupt').includes('"version":99'));
+  // one broken entry, null fields, a NaN level: the good ones stay and the fields get their defaults
+  const st4 = mk(); st4.setItem(S.KEY, JSON.stringify({ version: 2, profiles: [a, null, 7, { name: 'C<b>', grade: 8, quests: null, flags: null, words: null, stats: { level: 'x', exp: null, gold: -5 } }] }));
+  const g4 = S.load(st4); assert.equal(g4.profiles.length, 2); const c = g4.profiles[1];
+  assert.deepEqual([c.name, c.stats.level, c.stats.exp, c.stats.gold], ['Cb', 1, 0, 0]); assert.deepEqual(c.quests, {}); assert.equal(S.addExp(c, undefined), 0); assert.ok(Number.isFinite(c.stats.exp));
+  // a v2 store that lost its version field is still a v2 store (it used to become one level-1 "player 1")
+  assert.equal(S.migrate({ profiles: [a, b] }).profiles.length, 2);
+  // an imported file cannot make itself the admin
+  const s5 = S.emptyStore(); const imp = S.importProfile(s5, JSON.stringify({ kind: 'english-quest-profile', version: 2, profile: { name: 'X', grade: 6, admin: true } })); assert.ok(!imp.admin && imp.stats.level === 1);
 });

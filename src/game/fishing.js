@@ -11,6 +11,8 @@ import { makeRowboat } from '../world/rowboat.js';
 export const SPOTS = { village: [{ x: 18.4, z: 19.2, name: 'bến sông' }], harbor: [{ x: 34, z: 28, name: 'cầu tàu nhỏ' }] };
 const EMOJI = '"Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif';
 
+/** Casts for one ticket. */
+export const CASTS = 8;
 export class Fishing {
   /** api: { scene, player, ui, sfx, profile(), tier(), onCatch(item) -> text, speak(en), gate(go) (the four words), loadStatic(name), loadAnimated(name) } */
   constructor(api) {
@@ -122,7 +124,7 @@ export class Fishing {
   /** E near a spot, or the key that goes with the current state. */
   interact(pos) {
     if (this.active) return { text: this.state === 'bite' ? 'E · Kéo cần lên!' : 'E · Thu cần câu', run: () => this.act() };
-    const s = this.near(pos); return s ? { text: `E · Câu cá ở ${s.name} (trả lời 4 từ, rồi ngồi thuyền chờ cá cắn)`, run: () => (this.api.gate ? this.api.gate(() => this.start(s)) : this.start(s)) } : null;
+    const s = this.near(pos); return s ? { text: `E · Câu cá ở ${s.name} (mỗi lượt 8 lần thả mồi)`, run: () => (this.api.gate ? this.api.gate(() => this.start(s)) : this.start(s)) } : null;
   }
   /** Looks round for water: the float goes 3.5–5 m away in the direction that is water, nearest to where the hero faces. */
   waterPoint(pos, yaw) {
@@ -137,6 +139,7 @@ export class Fishing {
     return null;
   }
   start(spot) {
+    this.casts = CASTS;      // (26/11) one ticket (the fee and the questions) = this many casts; before, one ticket fished for ever
     const p = this.api.player, w0 = this.waterPoint(p.pos, p.yaw);
     if (!w0) { this.api.ui.toast('Chỗ này không có nước để câu.'); return; }
     const b = this.boatPoint(p.pos, w0.a); let w = w0;
@@ -187,7 +190,7 @@ export class Fishing {
       if (this.t >= TIME) { this.state = 'jump'; this.t = 0; this.hook = { x: fx2, y: surf + 0.04 + bob + lift, z: fz2 }; this.startJump(); }
     } else if (this.state === 'jump') this.updateJump(dt);
     else if (this.state === 'result' && this.catchObj) this.holdCatch(dt, t);
-    if (this.state === 'result' && this.t > 2.4) { this.clearCatch(); this.fpos = null; this.state = 'wait'; this.t = 0; this.biteAt = 2.5 + Math.random() * 4.5; }
+    if (this.state === 'result' && this.t > 2.4) { this.clearCatch(); this.fpos = null; this.casts -= 1; if (this.casts <= 0) { this.api.ui.toast('Hết mồi rồi! Muốn câu tiếp thì gặp lại chú Sam nhé.'); this.stop(); return; } this.state = 'wait'; this.t = 0; this.biteAt = 2.5 + Math.random() * 4.5; }
     fw.position.y = L.WATER_LEVEL + 0.04 + bob + lift;
     this.rings.forEach((r, i) => { const k = ((t * (this.state === 'bite' ? 1.8 : 0.7) + i * 0.5) % 1); r.scale.setScalar(1 + k * (this.state === 'bite' ? 4 : 2.2)); r.material.opacity = ring * (1 - k) * 0.7; r.position.y = 0.02 - bob; });
     // rod in the hands, line to the float

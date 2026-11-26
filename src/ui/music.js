@@ -93,7 +93,6 @@ export class MusicRoom {
       if (a === 'play') this.play();
       if (a === 'stop') { this.stop(); this.render(); }
       if (a === 'say') speak(this.song.lines[Number(b.dataset.v)].en, true, 0.85);
-      if (a === 'kpop') window.open('https://www.youtube.com/@BLACKPINK', '_blank');
       if (a === 'own') { this.stop(); this.pick = this.songs[Number(b.dataset.v)]; this.render(); }
       if (a === 'learn') { this.stop(); this.pick = null; this.render(); }
       if (a === 'buy') this.playOwn();
@@ -126,7 +125,7 @@ export class MusicRoom {
   /** A whole song from the family's music, paid in gold; the words (if the family added them) are shown while it plays. */
   playOwn() {
     const p = this.api.profile(), s = this.pick; if (!s) return;
-    if (p.stats.gold < PLAY_PRICE) { this.say = `You need ${PLAY_PRICE} gold to play a song. Win some in the mini games!`; this.api.sfx('wrong'); this.render(); return; }
+    if (p.stats.gold < PLAY_PRICE) { this.say = `You need ${PLAY_PRICE} gold to play a song. Hunt monsters or sell fish to earn some!`; this.api.sfx('wrong'); this.render(); return; }
     this.stop(); p.stats.gold -= PLAY_PRICE; this.api.changed();
     const a = new Audio(s.url); this.audio = a; a.volume = 0.9;
     a.onended = () => { this.audio = null; if (this.api.track) this.api.track('song'); this.say = 'That was a great song! Want another one?'; this.render(); };
@@ -156,6 +155,6 @@ export class MusicRoom {
         <b style="font-size:13px;margin-top:6px">📻 Đài nhạc theo thể loại</b>${GENRES.map((gid) => `<button data-a="radio" data-v="${gid}" class="${this.radio === gid ? 'on' : ''}">📻 ${STYLES[gid].name}</button>`).join('')}${this.radio ? '<button data-a="radiooff">■ Tắt đài</button>' : ''}
         <b style="font-size:13px;margin-top:6px">🎧 Nghe nhạc (${PLAY_PRICE} ● / bài)</b>${own.length ? own.map((x, i) => `<button data-a="own" data-v="${i}" class="${pk === x ? 'on' : ''}">🎧 ${x.title}</button>`).join('') : `<small>Chưa có bài nào. Phụ huynh chép file nhạc (.mp3) vào thư mục: <b>${folder}</b></small>`}</div></div>
       <div class="sheet">${sheet}
-        <div class="kpop">🎤 <b>Nhạc K-pop (BLACKPINK…)</b>: game không tự chép bài hay lời có bản quyền. Phụ huynh có file nhạc thì chép vào thư mục nhạc ở trên (lời bài hát để file .txt cùng tên) là con nghe được ở đây. Hoặc nghe bản chính thức: <button data-a="kpop">Mở kênh BLACKPINK</button></div></div></div></div>`;
+        <div class="kpop">🎤 <b>Nhạc của nhà mình</b>: game không tự chép bài hay lời có bản quyền. Phụ huynh có file nhạc thì chép vào thư mục nhạc ở trên (lời bài hát để file .txt cùng tên) là con nghe được ở đây.</div></div></div></div>`;
   }
 }

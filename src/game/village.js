@@ -5,7 +5,8 @@
 import { unitOf } from '../core/save.js';
 import { mulberry32 } from '../core/regionkit.js';
 import * as Review from '../core/review.js';
-import { recordSkill, bonusExp } from '../core/save.js';
+import { recordSkill, bonusExp, addExp } from '../core/save.js';
+import { jarExp } from '../core/progress.js';
 import { BADGE } from './saga.js';
 
 export const CUSTOMERS = 5, JARS = 4;
@@ -35,7 +36,7 @@ export class VillageStory {
     else if (s === 'open') {
       profile.flags.forest_open = true; profile.flags.badge1 = true; this.api.sfx('fanfare');      // (19/11) Tom's Word Keeper badge
       ui.dialogue(BADGE(profile.name), () => this.set('done'));
-    } else ui.dialogue([{ who: 'Tom', en: 'The forest gate is in the north-west. Good luck!' }]);
+    } else ui.dialogue([{ who: 'Tom', en: 'The Wild Meadow is across the river. Grow strong there, then find the Slime King in the north!', vi: 'Đồng Hoang ở bên kia sông: đánh quái để lên cấp (theo mũi tên vàng), lên cấp 4 thì tìm Vua Slime ở phía Bắc. Sổ nhiệm vụ: phím N.' }]);
   }
 
   // ---------------------------------------------------------------- the letter
@@ -103,7 +104,7 @@ export class VillageStory {
     m.tries += 1;
     if (!ok) { if (m.tries === 1) m.missed.push(target); m.said = `That's "${given.word}"! I need "${target.word}".`; this.api.sfx('wrong'); this.api.save(); this.api.onChange(); return false; }
     const gold = m.tries === 1 ? 3 : 1; if (m.tries === 1) m.firstTry += 1;
-    m.gold += gold; profile.stats.gold += gold; bonusExp(profile, 5); m.said = ''; m.index += 1;
+    m.gold += gold; profile.stats.gold += gold; addExp(profile, Math.max(1, Math.round(jarExp(profile.stats.level) * (m.tries === 1 ? 1 : 0.5)))); m.said = ''; m.index += 1;      // (26/11) a modest EXP that shrinks as the hero grows; half when it took more than one try
     this.api.sfx('correct'); this.api.save();
     this.nextCustomer();
     return true;
@@ -138,7 +139,7 @@ export class VillageStory {
       if (left.length) ui.dialogue([{ who: 'Sam', en: `We still need: ${left.map((id) => (id === 'axe' ? 'an axe' : 'a ' + id)).join(', ')}.` }]);
       else { this.set('plan'); ui.dialogue([{ who: 'Sam', en: 'Great, we have everything! Pip, can you read the plan for us?' }, ...bridge.plan], () => this.askStep(0, false)); }
     } else if (s === 'plan') ui.dialogue(bridge.plan, () => this.askStep(this.q.order || 0, false));
-    else ui.dialogue([{ who: 'Sam', en: 'Good morning! The fish are jumping today.' }]);
+    else ui.dialogue([{ who: 'Sam', en: 'Hello! The fish are jumping today.' }]);
   }
   /** Ngọc picks up a thing on the ground. Decoys are explained and recorded, never taken. */
   pick(id) {

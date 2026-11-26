@@ -8,7 +8,7 @@ import { PLAY } from '../core/regions/harbor.js';
 import { ITEMS, bag, lootRoll, giveLoot, lootCloth, MONSTERS, SPAWNS, FOREST_SPAWNS, HARBOR_SPAWNS, HUNT_KEY, forestChapter, inSafe, CHASE, RESPAWN, playerAtk, hurt, inArc, huntsOf, hunt, countKill, huntLine, BOSSES, BOSS4, shieldDue } from '../core/rules.js';
 
 // BOARD: on the Quest Square since 17/11 (was out at 29, -14), facing the fountain
-export const BOARD = { x: -6.2, z: 0.6 }, BOSS_AT = { x: 38, z: -52 }, BOSS2_AT = { x: 49, z: -44 };      // (24/11) the Slime King in the meadow's far north, the Ancient Golem on the clearing in the north-east of the FOREST
+export const BOARD = { x: -6.2, z: 0.6 }, BOSS_AT = { x: 38, z: -52 }, BOSS2_AT = { x: 58, z: -44 };      // (26/11) beside the watchtower, not inside it      // (24/11) the Slime King in the meadow's far north, the Ancient Golem on the clearing in the north-east of the FOREST
 /** Map 2: the forest board by the entrance path, the Mushroom Queen's glade west of the old ruins (17/11). */
 export const FOREST_BOARD = { x: -33.5, z: 46 }, BOSS3_AT = { x: -46, z: -24 };
 /** Map 2 (Sunny Harbor, 18/11): the board beside the harbour square, Captain Octopus's cove next to the lighthouse. */
@@ -280,6 +280,7 @@ export class Wild {
   damage(m, amount, el = '', o = {}) {
     const p = this.api.profile(); if (!p || m.dead) return 0;
     if (m.shieldOn) { m.flash = 0.1; if (!this.shieldTold) { this.shieldTold = true; this.api.ui.toast('Word shield! Press E'); } return 0; }
+    m.aggro = 6;
     const pw = powers(p), f = elementFactor(el, m.def.el), combo = el && m.mark && m.mark.t > 0 ? comboOf(m.mark.el, el) : null;
     const crit = Math.random() < pw.crit, dmg = Math.max(1, Math.round(amount * f * (combo ? 1 + combo.bonus : 1) * (crit ? 1.8 : 1)));
     m.hp -= dmg; m.flash = 0.18; this.cue(m, 'Hit');
@@ -315,6 +316,7 @@ export class Wild {
     const cl = this.api.gainItems && lootCloth(p, m.boss ? m.def : { id: m.kind }, first, Math.random, (c) => this.api.owns && this.api.owns(c));      // (20/11) rare clothes and jewellery too
     if (cl) { this.api.sfx('fanfare'); this.api.gainItems([cl]); }
     this.api.save(); this.api.onChange();
+    if (!m.boss && this.api.wordDrop) this.api.wordDrop(m);      // (26/11) every few monsters leave a word behind: English inside the fight
   }
   /** E near the board, or near the shielded boss. */
   interact(pos) {
@@ -352,17 +354,18 @@ export class Wild {
       if (m.boss && p.stats.level < m.def.level) { m.g.visible = false; continue; }
       if (m.boss && !m.dead && !m.g.visible) { m.g.visible = true; this.place(m); }
       if (m.dying > 0) { m.dying -= dt; if (m.mixer) m.mixer.update(dt); if (m.dying <= 0) m.g.visible = false; }
-      if (m.dead) { m.dead -= dt; if (m.dead <= 0) { if (m.acts && m.acts.Death) { m.acts.Death.stop(); if (m.idle) { m.idle.reset().play(); m.cur = m.idle; } } m.dying = 0; m.dead = 0; m.hp = m.def.hp; if (m.boss) { m.broken = 0; m.shieldOn = false; m.shield.visible = false; } m.x = m.home.x; m.z = m.home.z; m.g.visible = true; this.place(m); } continue; }
+      if (m.dead) { m.dead -= dt; if (m.dead <= 0) { if (m.acts && m.acts.Death) { m.acts.Death.stop(); if (m.idle) { m.idle.reset().play(); m.cur = m.idle; } } m.dying = 0; m.dead = 0; m.aggro = 0; m.hp = m.def.hp; if (m.boss) { m.broken = 0; m.shieldOn = false; m.shield.visible = false; } m.x = m.home.x; m.z = m.home.z; m.g.visible = true; this.place(m); } continue; }
       const dx = player.pos.x - m.x, dz = player.pos.z - m.z, d = Math.hypot(dx, dz), far = Math.hypot(m.x - m.home.x, m.z - m.home.z);
       let vx = 0, vz = 0, chasing = false;
       const keep = m.def.ranged && !m.boss ? 5.5 : 0.9;      // (20/11) ranged monsters stop at about 5.5 m and cast
-      if (!frozen && !safe && d < (m.def.ranged ? 10 : 8) && far < 13) { fighting = chasing = true; if (d > keep) { vx = dx / d; vz = dz / d; } else if (m.def.ranged && !m.boss) m.g.rotation.y = Math.atan2(dx, dz); }
+      if (m.aggro > 0) m.aggro -= dt;      // (26/11) a monster that was hit comes for the hero from any distance (spells reach 18 m: it used to stand and take them)
+      if (!frozen && !safe && (d < (m.def.ranged ? 10 : 8) || m.aggro > 0) && far < (m.aggro > 0 ? 30 : 13)) { fighting = chasing = true; if (d > keep) { vx = dx / d; vz = dz / d; } else if (m.def.ranged && !m.boss) m.g.rotation.y = Math.atan2(dx, dz); }
       else if (far > 0.6) { vx = (m.home.x - m.x) / far; vz = (m.home.z - m.z) / far; if (far > 2) m.hp = Math.min(m.def.hp, m.hp + dt * 12); }
       // (20/11) spells: stunned monsters stand still, slowed ones walk at half speed, burning ones lose health, marks fade
       if (m.stun > 0) { m.stun -= dt; vx = vz = 0; }
       if (m.slow > 0) m.slow -= dt;
       if (m.mark && (m.mark.t -= dt) <= 0) m.mark = null;
-      if (m.burn) { m.burn.t -= dt; m.burnTick = (m.burnTick || 0) + dt; if (m.burnTick >= 1) { m.burnTick = 0; m.hp -= m.burn.dps; m.flash = 0.08; this.api.floater(m.x, m.z, String(m.burn.dps), '#ff8a3a', 0.75); if (m.hp <= 0) { m.burn = null; this.kill(m, p); continue; } } if (m.burn && m.burn.t <= 0) m.burn = null; }
+      if (m.burn) { m.burn.t -= dt; m.burnTick = (m.burnTick || 0) + dt; if (m.burnTick >= 1 && !m.shieldOn) { m.burnTick = 0; m.hp -= m.burn.dps; m.flash = 0.08; this.api.floater(m.x, m.z, String(m.burn.dps), '#ff8a3a', 0.75); if (m.hp <= 0) { m.burn = null; this.kill(m, p); continue; } } if (m.burn && m.burn.t <= 0) m.burn = null; }
       if (!m.elDot) this.elementDot(m);
       if (m.elDot) { m.elDot.position.y = m.bar.position.y; const want = m.mark ? m.mark.el : m.def.el; if (m.elShown !== want) { m.elShown = want; m.elDot.material.map = elementTex(want); m.elDot.material.needsUpdate = true; } }
       const sp = m.def.speed * (chasing ? CHASE : 1) * (m.slow > 0 ? 0.5 : 1), nx = m.x + vx * sp * dt, nz = m.z + vz * sp * dt; if ((vx || vz) && L.walkable(nx, nz, 0.45) && !inSafe(this.region, nx, nz, 1)) { m.x = nx; m.z = nz; }
@@ -380,7 +383,7 @@ export class Wild {
       m.hitCool = Math.max(0, m.hitCool - dt);
       if (m.shotCool === undefined) m.shotCool = 1 + (m.ph % 2);      // not all at once
       m.shotCool -= dt;
-      if (!frozen && !safe && !m.dead && !m.stun && (m.def.ranged || m.boss) && m.shotCool <= 0 && d > 2.6 && d < (m.boss ? 14 : 11)) {
+      if (!frozen && !safe && !m.dead && !m.stun && (m.def.ranged || m.boss) && m.shotCool <= 0 && d > 2.6 && d < (m.aggro > 0 ? 22 : m.boss ? 14 : 11)) {
         m.shotCool = m.boss ? 3.6 : 2.4 + (m.ph % 1.2); this.cue(m, m.acts && m.acts.Cast ? 'Cast' : 'Attack'); this.shoot(m, player.pos, m.boss ? 3 : 1);
       }
       if (!frozen && !safe && !this.iframes && d < 0.95 + m.def.size * 0.35 && m.hitCool <= 0) {

@@ -52,6 +52,7 @@ export class Tailor {
   get open() { return !this.el.classList.contains('hidden'); }
   key(code) { if (!this.open) return false; if (code === 'Escape' || code === 'KeyE') this.close(); return true; }
   show() {
+    this.tab = 'tops'; this.kind = this.kindsOf('tops')[0] || 'top';      // (26/11) the shelf of the child before stayed open: a piece the other hero cannot wear was sold
     const w = wardrobe(this.api.profile()); this.orig = { ...w.worn }; this.sel = null; this.say = { en: "Hello! I'm Mia. I make clothes and jewellery. What would you like?", vi: 'Chọn món, chọn màu để thử. Thích thì mua bằng vàng.' };
     this.el.classList.remove('hidden'); this.api.focus(true); this.draw(); speak(this.say.en);
   }

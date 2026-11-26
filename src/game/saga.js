@@ -7,7 +7,7 @@ export const BADGE = (name) => [
   { who: 'Tom', en: `Look, ${name}! Our village has its words back. You did it!` },
   { who: 'Tom', en: 'You helped us with English words. You are a real Word Keeper now!' },
   { who: '🥉 Word Keeper badge', en: 'Rank: Apprentice Word Keeper.', vi: 'Con nhận huy hiệu Người Giữ Chữ hạng Tập sự (xem ở thẻ Hành trình trong sổ nhiệm vụ, phím N). Mỗi lần lên hạng con mạnh hơn.' },
-  { who: 'Tom', en: 'One piece of the Language Compass is hidden in this land. The forest remembers where it is.' },
+  { who: 'Tom', en: 'One piece of the Language Compass is hidden in this land. The Slime King took it to the Wild Meadow, across the river.' },
   { who: 'Tom', en: 'Grow stronger first. The sea opens at level 5, and the forest at level 10. Good luck!', vi: 'Làng chỉ cho lên tới cấp 5. Lên cấp 5, đánh Vua Slime, qua cổng Cú Mèo để mở Biển cả; lên cấp 10 để mở Rừng Ký Ức (cổng ★ ở phía Tây Bắc làng).' },
 ];
 
@@ -15,9 +15,9 @@ export const BADGE = (name) => [
 export const FOREST_MEMORY = (right) => [
   { who: 'Ancient Tree', en: `My memories are back! You named ${right} of 3 on the first try.` },
   { who: 'Pip', en: 'Look! The crystals are showing an old memory…' },
-  { who: '🌑 A forest memory', en: 'Long ago, Lord Hush came to this forest. He wanted a world with no words, no songs and no laughing.' },
+  { who: '🌑 A forest memory', en: 'Long ago, Lord Hush came to this forest. He wanted a world with no words, no songs and no laughter.' },
   { who: '🌑 A forest memory', en: 'He gave the Compass piece of this land to the Ancient Golem. "Keep it. Let no one take it!" he said.' },
-  { who: 'Pip', en: 'The Ancient Golem lives on the clearing in the north-east of this forest. We must be strong to beat it.', vi: 'Mảnh La Bàn của rừng ở chỗ Golem Cổ (khoảng trống phía Đông Bắc rừng, cần cấp 19). Trước đó: luyện cấp ở các bãi quái, đánh Nữ hoàng Nấm.' },
+  { who: 'Pip', en: 'The Ancient Golem lives in the clearing in the north-east of this forest. We must be strong to beat it.', vi: 'Mảnh La Bàn của rừng ở chỗ Golem Cổ (khoảng trống phía Đông Bắc rừng, cần cấp 19). Trước đó: luyện cấp ở các bãi quái, đánh Nữ hoàng Nấm.' },
 ];
 
 /** First win against a boss: it wakes up from the Dark Wind. gold/exp are shown on the first page. */

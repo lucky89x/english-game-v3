@@ -38,7 +38,7 @@ export class AdminPanel {
     for (const pl of places) (by[pl.region] = by[pl.region] || []).push(pl);
     const step = (p.quests.village && p.quests.village.step) || 'arrive';
     this.el.innerHTML = `<h3>🛠 Quản trị · ${p.name} · lớp ${p.grade} · cấp ${p.stats.level} · ${p.stats.gold} vàng <button data-a="close" style="float:right">✕</button></h3>
-      <h4>Nhân vật</h4><div class="row">Cấp: <input id="adlv" type="number" min="1" max="60" value="${p.stats.level}" style="width:60px"><button data-a="level">Đặt cấp</button>
+      <h4>Nhân vật</h4><div class="row">Cấp: <input id="adlv" type="number" min="1" max="70" value="${p.stats.level}" style="width:60px"><button data-a="level">Đặt cấp</button>
         <button data-a="gold" data-v="1000">+1000 vàng</button><button data-a="heal">Hồi đầy máu</button>
         <button data-a="god">${p.god ? '✔ ' : ''}Không mất máu</button></div>
       <div class="row"><button data-a="magic">Học đủ phép (hệ đang chọn) + gán ô 1–3</button><button data-a="mp">Đầy mana</button><button data-a="potions">+10 bình máu/mana (túi V)</button><button data-a="loot">Nhận hết đồ hiếm</button></div>
@@ -57,7 +57,7 @@ export class AdminPanel {
     if (a === 'close') { this.el.classList.add('hidden'); return; }
     if (a === 'visit') { const o = (api.profiles ? api.profiles() : []).find((x) => x.id === v); if (o && api.visitHome) { this.el.classList.add('hidden'); api.visitHome(o); } return; }
     if (a === 'del') { const o = (api.profiles ? api.profiles() : []).find((x) => x.id === v); if (!o || o.admin) return; if (this.armedDel !== v) { this.armedDel = v; api.toast(`Bấm "Xoá" thêm lần nữa để xoá ${o.name} và cả nhà của bé`); this.render(); return; } this.armedDel = null; if (api.deleteProfile) api.deleteProfile(v); api.toast(`Đã xoá ${o.name} cùng nhà của bé`); this.render(); return; }
-    if (a === 'level') { const n = Math.max(1, Math.min(60, Number(this.el.querySelector('#adlv').value) || 1)); api.setLevel(n); api.toast(`Cấp ${n}`); }
+    if (a === 'level') { const n = Math.max(1, Math.min(70, Number(this.el.querySelector('#adlv').value) || 1)); api.setLevel(n); api.toast(`Cấp ${n}`); }
     if (a === 'gold') { api.addGold(Number(v)); }
     if (a === 'heal') { p.stats.hp = undefined; api.toast('Đầy máu'); }
     if (a === 'magic') { const m = SK.magic(p); if (!m.el) SK.chooseEl(p, 'fire'); for (const n of SK.TREE[m.el]) m.ranks[n.id] = SK.MAX_RANK; SK.spellsOf(m.el).forEach((n, i) => SK.assign(p, i, n.id)); m.mp = null; api.toast(`Đã học đủ phép hệ ${SK.ELEMENTS[m.el].vi}: phím 1–3; T mở bảng để đổi hệ`); }      // (21/11) one element

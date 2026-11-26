@@ -8,25 +8,25 @@ import { inSafe } from './safe.js';
 /** id, kind, centre x z, radius r, how many monsters n, the sign's name (Vietnamese) and emoji. Ordered by level inside each map. */
 export const ZONES = {
   village: [      // Starter Village, levels 1-5 (25/11: spread along the whole east bank, north to south; the far bank opens with the bridge)
-    { id: 'v_bunny', kind: 'bunny', x: 40, z: -16, r: 9, n: 5, vi: 'Bãi Thỏ Băng', icon: '🐰' },
-    { id: 'v_slime', kind: 'slime', x: 44, z: 52, r: 9, n: 5, vi: 'Bãi Slime Xanh', icon: '🟢' },
-    { id: 'v_goblin', kind: 'goblin', x: 64, z: -32, r: 9, n: 4, vi: 'Bãi Yêu Tinh Băng', icon: '👺' },
-    { id: 'v_red', kind: 'red', x: 72, z: 30, r: 9, n: 4, vi: 'Bãi Slime Đỏ', icon: '🔴' },
-    { id: 'v_imp', kind: 'imp', x: 80, z: -8, r: 9, n: 4, vi: 'Bãi Quỷ Lửa Nhỏ', icon: '😈' },
-    { id: 'v_golem', kind: 'golem', x: 44, z: -70, r: 8, n: 2, vi: 'Bãi Golem Dung Nham', icon: '🌋' },
+    { id: 'v_bunny', kind: 'bunny', x: 40, z: -16, r: 10, n: 7, vi: 'Bãi Hoa Ăn Thịt', icon: '🌺' },
+    { id: 'v_slime', kind: 'slime', x: 44, z: 52, r: 10, n: 7, vi: 'Bãi Slime Nước', icon: '💧' },
+    { id: 'v_goblin', kind: 'goblin', x: 64, z: -32, r: 10, n: 7, vi: 'Bãi Sói Bóng Tối', icon: '🐺' },
+    { id: 'v_red', kind: 'red', x: 72, z: 30, r: 10, n: 7, vi: 'Bãi Slime Đỏ', icon: '🔴' },
+    { id: 'v_imp', kind: 'imp', x: 80, z: -8, r: 10, n: 7, vi: 'Bãi Pha Lê Dung Nham', icon: '💎' },
+    { id: 'v_golem', kind: 'golem', x: 58, z: 4, r: 8, n: 3, vi: 'Bãi Golem Dung Nham', icon: '🌋' },      // (26/11) down from the north-east plateau (a cliff from the meadow side: the child could not find the way up)
   ],
   harbor: [       // Sunny Harbor, levels 5-10
-    { id: 'h_crab', kind: 'crab', x: 0, z: 56, r: 9, n: 5, vi: 'Bãi Cua Biển', icon: '🦀' },
-    { id: 'h_jelly', kind: 'jelly', x: -60, z: 16, r: 9, n: 4, vi: 'Bãi Sứa Phát Sáng', icon: '🪼' },
-    { id: 'h_gull', kind: 'gull', x: 16, z: -72, r: 9, n: 3, vi: 'Bãi Hải Âu Bão', icon: '🕊️' },
-    { id: 'h_pirate', kind: 'pirate', x: 20, z: -40, r: 9, n: 4, vi: 'Bãi Cướp Biển Nhí', icon: '🏴‍☠️' },
+    { id: 'h_crab', kind: 'crab', x: 0, z: 56, r: 10, n: 6, vi: 'Bãi Cua Biển', icon: '🦀' },
+    { id: 'h_jelly', kind: 'jelly', x: -60, z: 16, r: 10, n: 6, vi: 'Bãi Sứa Phát Sáng', icon: '🪼' },
+    { id: 'h_gull', kind: 'gull', x: 16, z: -72, r: 10, n: 6, vi: 'Bãi Hải Âu Bão', icon: '🕊️' },
+    { id: 'h_pirate', kind: 'pirate', x: 0, z: -46, r: 9, n: 5, vi: 'Bãi Cướp Biển Nhí', icon: '🏴‍☠️' },      // (26/11) off the lighthouse road (they stood on it and on a chest)
   ],
   forest: [       // Memory Forest, levels 10-20 (out from the entrance in the south-west)
-    { id: 'f_bat', kind: 'bat', x: -40, z: 28, r: 9, n: 5, vi: 'Bãi Dơi Bóng Tối', icon: '🦇' },
-    { id: 'f_wisp', kind: 'wisp', x: 32, z: 40, r: 9, n: 4, vi: 'Bãi Ma Trơi Sét', icon: '✨' },
-    { id: 'f_fox', kind: 'fox', x: -24, z: -26, r: 9, n: 4, vi: 'Bãi Cáo Lửa', icon: '🦊' },
-    { id: 'f_shroom', kind: 'shroom', x: 64, z: -16, r: 8, n: 3, vi: 'Bãi Nấm Giận Dữ', icon: '🍄' },
-    { id: 'f_orc', kind: 'orc', x: 0, z: -64, r: 9, n: 3, vi: 'Bãi Người Cây Cổ Thụ', icon: '🌳' },
+    { id: 'f_bat', kind: 'bat', x: -40, z: 28, r: 10, n: 7, vi: 'Bãi Dơi Bóng Tối', icon: '🦇' },
+    { id: 'f_wisp', kind: 'wisp', x: 14, z: 62, r: 9, n: 6, vi: 'Bãi Ma Trơi Sét', icon: '✨' },      // (26/11) away from the camp, its crystal and its chest
+    { id: 'f_fox', kind: 'fox', x: -24, z: -26, r: 10, n: 6, vi: 'Bãi Cáo Lửa', icon: '🦊' },
+    { id: 'f_shroom', kind: 'shroom', x: 48, z: -8, r: 10, n: 6, vi: 'Bãi Nấm Khổng Lồ', icon: '🍄' },      // (26/11) was on top of the east cliff (8 m up, no way from below)
+    { id: 'f_orc', kind: 'orc', x: 22, z: -44, r: 9, n: 5, vi: 'Bãi Người Cây Cổ Thụ', icon: '🌳' },      // (26/11) was on top of the north cliff (9.6 m up)
   ],
 };
 

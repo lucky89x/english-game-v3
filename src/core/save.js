@@ -11,13 +11,24 @@ export const GRADES = [6, 7, 8, 9];
 export function emptyStore() { return { version: SAVE_VERSION, last: '', profiles: [] }; }
 export function newProfile(name, grade, id) {
   return { id: id || 'p' + Date.now().toString(36) + Math.floor(Math.random() * 1e4).toString(36),
-    name: String(name || '').trim().slice(0, 20) || 'Người chơi', grade: GRADES.includes(grade) ? grade : 6, unit: 1,
+    name: String(name || '').replace(/[<>&"'`]/g, '').trim().slice(0, 20) || 'Người chơi', grade: GRADES.includes(grade) ? grade : 6, unit: 1,
     created: new Date().toISOString(), quests: {}, flags: {}, words: {}, skills: {}, stats: { gold: 0, exp: 0, level: 1 } };
 }
-/** v1 (single profile, no skills/unit) -> v2. Unknown newer versions are refused, never downgraded. */
+/** v1 (single profile, no skills/unit) -> v2. Unknown newer versions are refused, never downgraded.
+ *  (26/11) One broken profile no longer loses the others: entries that are not objects are dropped, missing or null fields get their
+ *  defaults, and level / exp / gold are forced back to numbers (a NaN there stopped the hero from ever levelling). */
+const obj = (x) => (x && typeof x === 'object' && !Array.isArray(x) ? x : {});
+const num = (x, d) => (Number.isFinite(Number(x)) && x !== null && x !== '' ? Number(x) : d);
+export function cleanProfile(p) {
+  const q = { ...newProfile(p.name, p.grade, p.id), ...p }, s = obj(p.stats);
+  q.name = String(q.name || '').replace(/[<>&"'`]/g, '').trim().slice(0, 20) || 'Người chơi';      // the name goes into the panels' HTML
+  q.quests = obj(p.quests); q.flags = obj(p.flags); q.words = obj(p.words); q.skills = obj(p.skills);
+  q.stats = { ...s, gold: Math.max(0, num(s.gold, 0)), exp: Math.max(0, num(s.exp, 0)), level: Math.max(1, Math.floor(num(s.level, 1))) };
+  return q;
+}
 export function migrate(data) {
   if (!data || typeof data !== 'object') return emptyStore();
-  let v = Number(data.version) || 1;
+  let v = Number(data.version) || (Array.isArray(data.profiles) ? SAVE_VERSION : 1);      // a v2 store that lost its version field is still a v2 store
   if (v > SAVE_VERSION) throw new Error('Tệp lưu từ phiên bản mới hơn (' + v + ')');
   if (v === 1) {
     const p = newProfile(data.name || 'Người chơi 1', Number(data.grade) || 6, 'legacy');
@@ -26,31 +37,47 @@ export function migrate(data) {
     v = 2;
   }
   data.version = v;
-  data.profiles = (data.profiles || []).map((p) => ({ ...newProfile(p.name, p.grade, p.id), ...p, stats: { gold: 0, exp: 0, level: 1, ...(p.stats || {}) } }));
+  data.profiles = (Array.isArray(data.profiles) ? data.profiles : []).filter((p) => p && typeof p === 'object').map(cleanProfile);
   return data;
 }
 /** The desktop app (desktop/preload.js) also keeps the save in a file; browsers have only the page storage. */
 const desk = () => (typeof globalThis.eqDesktop === 'object' && globalThis.eqDesktop) || null;
+const get = (storage, key) => { try { return storage.getItem(key); } catch { return null; } };
+const put = (storage, key, text) => { try { storage.setItem(key, text); return true; } catch { return false; } };
+const parse = (raw) => { if (!raw) return null; try { return migrate(JSON.parse(raw)); } catch { return null; } };
+/** What the last load() found: recovered = 'bak' | 'file' when the main save could not be read and a copy was used; lost = true when
+ *  nothing could be read at all (the unreadable text is kept under KEY + '.corrupt', never thrown away). The game tells the parent. */
+export const loadInfo = { recovered: '', lost: false };
+let goodText = null;      // the text of the save we last read or wrote successfully (so persist can tell a good save from a broken one cheaply)
+/** (26/11) A save that cannot be read is no longer treated as "nobody has played": the copy before the last save (.bak) is tried, then
+ *  the desktop file; the broken text is put aside. Before, the next save overwrote everything and the .bak was never read. */
 export function load(storage = globalThis.localStorage) {
-  try {
-    let raw = storage.getItem(KEY);
-    if (!raw && storage === globalThis.localStorage && desk()) { raw = desk().readSave(); if (raw) storage.setItem(KEY, raw); }      // empty page storage: restore from the file
-    return raw ? migrate(JSON.parse(raw)) : emptyStore();
-  } catch (e) { console.warn('save: cannot load, starting fresh', e); return emptyStore(); }
+  loadInfo.recovered = ''; loadInfo.lost = false; goodText = null;
+  const local = storage === globalThis.localStorage, d = local ? desk() : null;
+  const fileRaw = () => { try { return d ? d.readSave() : ''; } catch { return ''; } };
+  const raw = get(storage, KEY), main = parse(raw);
+  if (main) { goodText = raw; return main; }
+  if (raw) put(storage, KEY + '.corrupt', raw);          // unreadable (broken, or written by a newer game): keep it for a rescue
+  const bakRaw = raw ? get(storage, KEY + '.bak') : null, bak = parse(bakRaw);
+  if (bak) { loadInfo.recovered = 'bak'; put(storage, KEY, bakRaw); goodText = bakRaw; return bak; }
+  const fRaw = fileRaw(), file = parse(fRaw);
+  if (file) { if (raw) loadInfo.recovered = 'file'; put(storage, KEY, fRaw); goodText = fRaw; return file; }      // empty page storage: restore from the file (as before)
+  if (raw) { loadInfo.lost = true; console.warn('save: cannot read the save; it was kept under ' + KEY + '.corrupt'); }
+  return emptyStore();
 }
 export function persist(store, storage = globalThis.localStorage) {
-  const text = JSON.stringify(store);
-  const old = storage.getItem(KEY);
-  if (old) storage.setItem(KEY + '.bak', old);          // keep the last good save
-  storage.setItem(KEY, text);
-  if (storage === globalThis.localStorage && desk()) desk().writeSave(text);
+  const text = JSON.stringify(store), old = get(storage, KEY);
+  if (old && old !== text && (old === goodText || parse(old))) put(storage, KEY + '.bak', old);          // keep the last GOOD save (never a broken one)
+  let err = null; try { storage.setItem(KEY, text); goodText = text; } catch (e) { err = e; }
+  if (storage === globalThis.localStorage && desk()) { try { desk().writeSave(text); } catch (e) { err = err || e; } }      // the file is written even when the page storage is full
+  if (err) throw err;
 }
 export function exportProfile(profile) { return JSON.stringify({ kind: 'english-quest-profile', version: SAVE_VERSION, profile }, null, 2); }
 export function importProfile(store, text) {
   const data = JSON.parse(text);
   if (data.kind !== 'english-quest-profile' || !data.profile) throw new Error('Không phải tệp hồ sơ English Quest');
   if (Number(data.version) > SAVE_VERSION) throw new Error('Tệp hồ sơ từ phiên bản mới hơn');
-  const p = { ...newProfile(data.profile.name, data.profile.grade), ...data.profile };
+  const p = cleanProfile(data.profile); delete p.admin;      // (26/11) a file cannot make itself the admin; broken fields get their defaults
   const i = store.profiles.findIndex((x) => x.id === p.id);
   if (i >= 0) store.profiles[i] = p; else store.profiles.push(p);
   return p;
@@ -79,7 +106,7 @@ export function passGate(profile, level) { (profile.gates || (profile.gates = {}
 /** (24/11) The hero stops at the top level of the map they are in (core/progress.js `levelCap`): nothing earns EXP there any more, so
  *  grinding the same ground pays nothing and the child must move on. Returns how many levels were gained. */
 export function addExp(profile, amount) {
-  const s = profile.stats, cap = levelCap(profile);
+  const s = profile.stats, cap = levelCap(profile); amount = Number(amount) || 0; if (!Number.isFinite(s.exp)) s.exp = 0;      // never a NaN in the bar
   if (s.level >= cap) { s.exp = Math.min(s.exp, expNeed(s.level)); return 0; }
   s.exp += amount;
   let need = expNeed(s.level), ups = 0;

@@ -10,6 +10,13 @@ const FILES = ['tree_birch', 'tree_apple', 'bush_red_berries', 'bush_white_flowe
   'pumpkin', 'corn_plant_ripe', 'cabbage', 'apple_pile', 'apple_basket', 'apple_crate', 'corn_crate', 'orange_basket'];
 function mulberry32(seed) { let a = seed >>> 0; return () => { a |= 0; a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
 
+const CELL = 40, ROOTS = new Set();
+let DENSITY = 1;
+function applyDetail(root) { for (const c of root.userData.cells || []) if (c.thin) c.inst.count = Math.max(1, Math.ceil(c.full * DENSITY)); }
+/** Share of the grass, ferns and flowers that is drawn (graphics level): 1 = all of them. */
+export function plantDetail(density) { DENSITY = Math.max(0.05, Math.min(1, density)); for (const r of [...ROOTS]) { if (!r.parent) { ROOTS.delete(r); continue; } applyDetail(r); } }
+/** Hides the squares of small plants farther than `far` metres from the hero (called a few times a second). */
+export function plantCull(x, z, far) { for (const r of ROOTS) if (r.visible) for (const c of r.userData.cells) c.inst.visible = Math.hypot(c.x - x, c.z - z) < far + CELL * 0.7; }
 /** load(name) -> Promise<Object3D> (a clone of assets/models/<name>.glb). Returns a Group (add it to the scene; hide it outside the village). */
 export async function buildPlants(load, region = 'village') {
   const V = region === 'village', R = L.REGIONS[region], root = new THREE.Group(); root.name = 'plants-' + region;
@@ -40,15 +47,28 @@ export async function buildPlants(load, region = 'village') {
   const sp = STALLS.produce; put('corn_crate', sp.x - 0.3, sp.z - 2.7, 1.5, 0.3); put('apple_crate', sp.x - 0.2, sp.z + 2.7, 1.5, -0.2); put('orange_basket', sp.x - 1.6, sp.z + 2.9, 1.4, 0.8);
   }
   // draw each kind as instanced meshes
+  // (26/11) The grass, ferns and bushes are cut into CELL-metre squares, each its own instanced mesh with a bounding sphere, so the
+  // squares behind the camera are not drawn, the far ones are hidden (plantCull) and the low graphics levels draw fewer of them
+  // (plantDetail). Before, every plant of the map (about four million triangles in the village) was drawn in every frame.
   const tmp = new THREE.Matrix4(), mm = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), v = new THREE.Vector3(), sc = new THREE.Vector3();
+  const groundKind = new Set(GROUND.map((g) => g[0])), cells = [];
   for (const [kind, list] of Object.entries(lists)) {
     const scene = src[kind]; scene.updateMatrixWorld(true);
+    const small = groundKind.has(kind) || /^bush_/.test(kind), groups = new Map();
+    for (const p of list) { const key = small ? Math.floor(p.x / CELL) + ',' + Math.floor(p.z / CELL) : 'all'; if (!groups.has(key)) groups.set(key, []); groups.get(key).push(p); }
     scene.traverse((o) => {
       if (!o.isMesh) return;
-      const inst = new THREE.InstancedMesh(o.geometry, o.material, list.length), local = o.matrixWorld;
-      list.forEach((p, i) => { const y = R.groundHeight(p.x, p.z) + p.dy; q.setFromEuler(e.set(0, p.ry, 0)); mm.compose(v.set(p.x, y, p.z), q, sc.set(p.s, p.s, p.s)); tmp.multiplyMatrices(mm, local); inst.setMatrixAt(i, tmp); });
-      inst.instanceMatrix.needsUpdate = true; inst.castShadow = /tree|bush|crate|basket|pumpkin|corn/.test(kind); inst.receiveShadow = false; inst.frustumCulled = false; root.add(inst);
+      const local = o.matrixWorld;
+      for (const part of groups.values()) {
+        const inst = new THREE.InstancedMesh(o.geometry, o.material, part.length); let cx = 0, cz = 0;
+        part.forEach((p, i) => { const y = R.groundHeight(p.x, p.z) + p.dy; q.setFromEuler(e.set(0, p.ry, 0)); mm.compose(v.set(p.x, y, p.z), q, sc.set(p.s, p.s, p.s)); tmp.multiplyMatrices(mm, local); inst.setMatrixAt(i, tmp); cx += p.x; cz += p.z; });
+        inst.instanceMatrix.needsUpdate = true; inst.castShadow = /tree|bush|crate|basket|pumpkin|corn/.test(kind); inst.receiveShadow = false;
+        inst.computeBoundingSphere(); inst.frustumCulled = true;
+        if (small) cells.push({ inst, x: cx / part.length, z: cz / part.length, full: part.length, thin: groundKind.has(kind) });
+        root.add(inst);
+      }
     });
   }
+  root.userData.cells = cells; ROOTS.add(root); applyDetail(root);
   return root;
 }

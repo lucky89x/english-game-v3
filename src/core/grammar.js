@@ -60,7 +60,7 @@ export const GRAMMAR = {
     { q: '___ there any chairs in your living room?', options: ['Is', 'Are', 'Do'], a: 1, why: 'any + danh từ số nhiều → Are there ...?' },
     { q: 'There ___ a dishwasher in our kitchen. We wash the bowls by hand.', options: ["isn't", "aren't", "don't"], a: 0, why: "phủ định với a dishwasher (số ít): there isn't." },
     { q: 'How many bedrooms ___ there in your flat?', options: ['is', 'are', 'do'], a: 1, why: 'How many + danh từ số nhiều → are there?' },
-    { q: 'My cousins live in a country house. ___ house has a big garden.', options: ['Their', 'Her', 'Our'], a: 0, why: 'cousins = họ (they) → tính từ sở hữu their.' },
+    { q: 'My cousins live in a country house. ___ house has a big garden.', options: ['Their', 'Her', 'Its'], a: 0, why: 'cousins = họ (they) → tính từ sở hữu their.' },
   ],
   g7_u02: [            // should/shouldn't for advice, compound sentences with and/but/so/or (framework of Unit 2; sentences are original)
     { q: 'Eating too much sugar is bad for your teeth, so you ___ eat too many sweets.', options: ["shouldn't", 'should', 'ought'], a: 0, why: "lời khuyên không nên làm: shouldn't + V." },
@@ -68,7 +68,7 @@ export const GRAMMAR = {
     { q: 'I wanted to play football, ___ it was raining.', options: ['but', 'so', 'or'], a: 0, why: 'hai ý trái nhau → but.' },
     { q: 'My eyes are itchy, ___ I use eye drops.', options: ['so', 'but', 'or'], a: 0, why: 'kết quả/hệ quả → so.' },
     { q: 'We can eat tofu ___ soybeans to get protein.', options: ['or', 'but', 'so'], a: 0, why: 'hai lựa chọn → or.' },
-    { q: '___ I wear a hat when the sun is strong?', options: ['Should', 'Do', 'Am'], a: 0, why: 'hỏi xin lời khuyên: Should I + V?' },
+    { q: '___ I wear a hat when the sun is strong?', options: ['Should', 'Does', 'Am'], a: 0, why: 'hỏi xin lời khuyên: Should I + V?' },
     { q: 'Tom ___ eat fast food every day because it has too much fat.', options: ["shouldn't", 'should', "doesn't should"], a: 0, why: "quá nhiều chất béo → không nên: shouldn't + V." },
     { q: 'She has acne, ___ she washes her face twice a day.', options: ['so', 'but', 'or'], a: 0, why: 'kết quả → so.' },
     { q: 'You ___ pop your pimples. It can leave marks on your skin.', options: ["shouldn't", 'should', 'are'], a: 0, why: "có hại → không nên: shouldn't + V." },
@@ -76,7 +76,7 @@ export const GRAMMAR = {
   ],
   g8_u02: [            // comparative forms of adjectives and adverbs, as ... as (framework of Unit 2; sentences are original)
     { q: 'Life in the countryside is ___ than life in the city.', options: ['peaceful', 'more peaceful', 'most peaceful'], a: 1, why: 'tính từ dài + than → more + adj.' },
-    { q: 'The buffalo walks ___ than the cow.', options: ['slower', 'more slow', 'slowest'], a: 0, why: 'tính từ ngắn: slow → slower.' },
+    { q: 'The buffalo is ___ than the cow.', options: ['slower', 'more slow', 'slowest'], a: 0, why: 'tính từ ngắn: slow → slower (so sánh hơn + than).' },
     { q: 'This paddy field is ___ than that one.', options: ['large', 'larger', 'more large'], a: 1, why: 'tính từ ngắn tận cùng -e: large → larger.' },
     { q: 'Our village is not as ___ as the city, but it is quiet.', options: ['crowded', 'more crowded', 'crowdeder'], a: 0, why: 'not as + adj gốc + as.' },
     { q: 'Mai drives the tractor ___ than her brother. He is not careful.', options: ['more carefully', 'more careful', 'carefullier'], a: 0, why: 'trạng từ dài so sánh hơn: more + adv.' },
