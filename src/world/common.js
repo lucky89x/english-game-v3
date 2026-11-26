@@ -134,8 +134,9 @@ export function buildTerrain() {
   const seg = Math.max(180, Math.round(L.SIZE + 40)), geo = new THREE.PlaneGeometry(L.SIZE + 40, L.SIZE + 40, seg, seg);      // (24/11) about one vertex a metre, as before, on the bigger village map
   geo.rotateX(-Math.PI / 2);
   const p = geo.attributes.position, col = new Float32Array(p.count * 3);
-  const gA = C(0x62b83a), gB = C(0x9ad852), gC = C(0x3f9a3a), path = C(0xc9b58c), dirt = C(0xa98a5a), sand = C(0xe9dca6),
-    rock = C(0x9b99a8), rockL = C(0xbcb8c6), bed = C(0x2f9aa8), tmp = new THREE.Color(), lowSand = L.REGIONS[L.NAME].lowSand;      // the harbour beach (Map 2)
+  const PL = L.REGIONS[L.NAME].palette || {};      // (26/11) maps 4-7 colour their own ground: sand, snow, mossy stone, cloud
+  const gA = C(PL.a || 0x62b83a), gB = C(PL.b || 0x9ad852), gC = C(PL.far || 0x3f9a3a), path = C(PL.path || 0xc9b58c), dirt = C(PL.dirt || 0xa98a5a), sand = C(PL.sand || 0xe9dca6),
+    rock = C(PL.rock || 0x9b99a8), rockL = C(PL.rockL || 0xbcb8c6), bed = C(0x2f9aa8), tmp = new THREE.Color(), lowSand = L.REGIONS[L.NAME].lowSand;      // the harbour beach (Map 2)
   for (let i = 0; i < p.count; i++) {
     const x = p.getX(i), z = p.getZ(i), h = L.groundHeight(x, z);
     p.setY(i, h);

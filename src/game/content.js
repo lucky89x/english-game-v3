@@ -160,6 +160,19 @@ export const FRIENDS = {
   lily: { who: 'Lily', file: 'npc_lily_druid_v02', tint: { hair: '#e0702c', top: '#8cc25a', bottom: '#f0e6cc' }, at: [-12.5, 26.5, 1.2], lines: ['Hi! I am Lily. I look after the plants.', 'The flowers are happy today. Can you smell them?'] },
   rose: { who: 'Rose', file: 'npc_rose_baker_v02', tint: { hair: '#ee8a94', top: '#fbf6ec', bottom: '#c8352e' }, at: [5.8, -8.6, 0.6], shop: 'rose', lines: ['Hello! I am Rose. My bread is warm and soft. What would you like?'] },
   mia: { who: 'Mia', file: 'npc_mia_tailor_v01', tint: { hair: '#8a3d2a', top: '#f4ead8', bottom: '#7a4ab0' }, at: [9.5, 21.2, Math.PI], lines: ['Hi! I am Mia, the tailor. I make clothes and jewellery.', 'Come to the front of my stall and press E to try things on!'] },
+  // (26/11) maps 4-7: in each land a keeper who tells its story and gives the daily word lesson, a merchant, and the owl (the review and the exam of that land)
+  zara: { who: 'Zara', file: 'npc_desert_elder_v01', at: [-4, 36, 2.6], region: 'desert', role: 'keeper', lines: [] },
+  omar: { who: 'Omar', file: 'npc_desert_merchant_v01', at: [6.5, 34.4, 0], region: 'desert', role: 'merchant', lines: ['Welcome, traveller! Good blades and cool water. Take a look!'] },
+  bjorn: { who: 'Bjorn', file: 'npc_forge_blacksmith_v01', at: [-5, 34, 2.4], region: 'mountain', role: 'keeper', lines: [] },
+  greta: { who: 'Greta', file: 'npc_forest_herbalist', at: [9, 26.4, 0], region: 'mountain', role: 'merchant', lines: ['Come in from the cold! I have warm armour and hot soup.'] },
+  ada: { who: 'Professor Ada', file: 'npc_village_professor', at: [-5, 36, 2.6], region: 'ruins', role: 'keeper', lines: [] },
+  milo: { who: 'Milo', file: 'npc_desert_smith_v01', at: [10, 30.4, 0], region: 'ruins', role: 'merchant', lines: ['I dig up old swords and make them shine again. Have a look!'] },
+  aria: { who: 'Aria', file: 'npc_desert_guide_v01', at: [-4, 42, 2.8], region: 'sky', role: 'keeper', lines: [] },
+  nimbus: { who: 'Nimbus', file: 'npc_desert_merchant_v01', at: [10, 44.4, 0], region: 'sky', role: 'merchant', lines: ['Sky-forged gear, light as a cloud! What would you like?'] },
+  owl4: { who: 'Owl', file: 'npc_owl_v01', at: [5, 46, 3.4], region: 'desert', role: 'owl', lines: [] },
+  owl5: { who: 'Owl', file: 'npc_owl_v01', at: [-8, 46, 2.6], region: 'mountain', role: 'owl', lines: [] },
+  owl6: { who: 'Owl', file: 'npc_owl_v01', at: [-8, 50, 2.6], region: 'ruins', role: 'owl', lines: [] },
+  owl7: { who: 'Owl', file: 'npc_owl_v01', at: [8, 54, 3.6], region: 'sky', role: 'owl', lines: [] },
   anna: { who: 'Anna', file: 'npc_anna_bard_v02', tint: { hair: '#6b3a1e', top: '#3f6fc6', bottom: '#f4efe6' }, at: [-3.6, 7.6, 0.9], lines: ['Hi, I am Anna! I love singing in the square.', 'Listen… the river sings too. La la la!'] },
 };
 
@@ -173,3 +186,29 @@ export const OPENING = (name) => [
   { who: '📜 The Kingdom of Words', en: `Mr Tom, the old village leader, wrote a letter to a brave young explorer: ${name}!`, vi: `Ông Tom, trưởng làng, viết thư mời một nhà thám hiểm trẻ dũng cảm: ${name}!` },
   { who: '📜 The Kingdom of Words', en: `${name}, learn the lost words, help the people, find the ten pieces and stop Lord Hush. Your boat is going down the river to the Starter Village. The adventure begins!`, vi: `${name} ơi: học lại các từ đã mất, giúp mọi người, tìm đủ 10 mảnh La Bàn và chặn Chúa tể Im Lặng. Thuyền đang xuôi dòng tới Làng Khởi Đầu. Cuộc phiêu lưu bắt đầu!` },
 ];
+
+// ---------------------------------------------------------------- (26/11) the keepers of maps 4-7
+// Each land lost one KIND of words to the Dark Wind; the keeper tells it in two short pages (an easy line for grades 6-7, a longer
+// one for grades 8-9), says where the boss is, and after the boss is beaten speaks with the words that came back.
+export const LAND_TALK = {
+  desert: { who: 'Zara', boss: 'boss5', lost: 'questions',
+    easy: ['Welcome to the Golden Desert! I am Zara.', 'The Dark Wind took our questions. Nobody can ask "Where?" or "How much?" now.', 'The Sand Dragon has them in the Sun Temple, in the north. Get strong on the dunes first!'],
+    hard: ['Welcome to the Golden Desert, Word Keeper. My name is Zara, and I look after this oasis.', 'The Dark Wind has stolen our questions. Nobody here can ask where the water is or how much anything costs.', 'The Sand Dragon is keeping them in the Sun Temple to the north. You should train on the dunes before you go there.'],
+    vi: ['Bà Zara, người giữ ốc đảo.', 'Gió Đen lấy mất các CÂU HỎI của sa mạc: không ai hỏi được "Ở đâu?", "Bao nhiêu?".', 'Rồng Cát giữ mảnh La Bàn ở Đền Mặt Trời (phía Bắc, cấp 24). Bảng săn ở cạnh cổng, cửa hàng của Omar trong chợ, Cú Mèo đậu gần cổng.'],
+    after: ['Where are you going next? How are you? Ha! I can ask again. Thank you, Word Keeper!', 'Bà Zara lại hỏi được rồi! Mảnh La Bàn đang chỉ về Núi tuyết.'] },
+  mountain: { who: 'Bjorn', boss: 'boss6', lost: 'comparisons',
+    easy: ['Hello! I am Bjorn. Welcome to the Snowy Peaks.', 'The Dark Wind took our comparing words. Is this road safer? Is that peak higher? We cannot say!', 'The Ice Dragon sleeps on the summit, in the north. Follow the valley road.'],
+    hard: ['Good to see you! I am Bjorn, and this is the lodge of the Snowy Peaks.', 'The Dark Wind has taken our comparing words, so nobody can say which path is safer or which peak is the highest.', 'The Ice Dragon is sleeping on the summit. Follow the valley road north, and take the warmest armour you can find.'],
+    vi: ['Bác Bjorn, chủ nhà nghỉ trên núi.', 'Gió Đen lấy mất các LỜI SO SÁNH: không ai nói được đường nào an toàn hơn, đỉnh nào cao nhất.', 'Rồng Băng ngủ trên đỉnh núi (phía Bắc, cấp 29). Đi theo đường thung lũng; bảng săn ở cạnh cổng, cửa hàng của Greta cạnh lửa trại.'],
+    after: ['This peak is the highest, and you are the bravest! Listen to that, I can compare again!', 'Bác Bjorn lại so sánh được rồi! Mảnh La Bàn đang chỉ về Di tích cổ.'] },
+  ruins: { who: 'Professor Ada', boss: 'boss7', lost: 'stories',
+    easy: ['Hello! I am Professor Ada. I study these old ruins.', 'The Dark Wind took the stories. The walls do not remember what happened here.', 'The Stone Giant stands at the vault door, in the north. Walk along the old streets.'],
+    hard: ['Good day! I am Professor Ada, and I have been studying these ruins for years.', 'The Dark Wind has taken every story, so the walls no longer remember what happened here long ago.', 'The Stone Giant is guarding the vault door at the north end of the main street. Be careful, it has been there for centuries.'],
+    vi: ['Giáo sư Ada, người nghiên cứu di tích.', 'Gió Đen lấy mất các CÂU CHUYỆN đã qua: những bức tường không còn nhớ ngày xưa đã xảy ra chuyện gì.', 'Người Khổng Lồ Đá đứng ở cửa hầm phía Bắc (cấp 34). Đi theo các con phố cũ; bảng săn và quầy của Milo ở cạnh trại.'],
+    after: ['Long ago, children studied here. One of them was called Hugh… I can tell stories again!', 'Giáo sư Ada lại kể được chuyện ngày xưa. Cậu bé Hugh trong chuyện là ai nhỉ? Mảnh La Bàn chỉ lên trời.'] },
+  sky: { who: 'Aria', boss: 'boss8', lost: 'wishes',
+    easy: ['Hi! I am Aria. Welcome to the Sky Kingdom!', 'The Dark Wind took our wishes. Nobody can say what they will do tomorrow.', 'The Sun Dragon is in the Sun Arena, in the north. Walk round the Cloud Palace.'],
+    hard: ['Hi there! I am Aria, and I ring the wind bells of the Sky Kingdom.', 'The Dark Wind has taken our wishes, so nobody can say what they will do tomorrow or what they hope for.', 'The Sun Dragon is waiting in the Sun Arena at the north end of the island. Take the ring road round the Cloud Palace.'],
+    vi: ['Aria, người rung chuông gió.', 'Gió Đen lấy mất các LỜI ƯỚC: không ai nói được ngày mai mình sẽ làm gì.', 'Rồng Mặt Trời ở Đấu trường Mặt Trời (phía Bắc, cấp 44). Đi theo đường vòng quanh Cung điện Mây; bảng săn và quầy của Nimbus ở cạnh cổng trời.'],
+    after: ['Tomorrow I will ring every bell in the sky! I hope you will come back. I can wish again!', 'Aria lại nói được điều mình mong ước. Bảy mảnh La Bàn đã về tay con!'] },
+};

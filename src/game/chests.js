@@ -5,6 +5,7 @@ import * as L from '../core/layout.js';
 import { today } from '../core/review.js';
 import { spellable } from '../core/spell.js';
 import { PLAY } from '../core/regions/harbor.js';
+import { LAND, isLand } from '../core/regions/lands.js';
 
 export const CHEST_SPOTS = [[40, -20], [46, -30], [34, -34], [30, -28], [42, -40]];
 /** Chests in the Forest of Memories, the last chapter of Map 1 (they ask the words of the unit being studied, Unit 1). */
@@ -17,7 +18,7 @@ export class Chests {
   constructor(api) {
     this.api = api; this.root = new THREE.Group(); api.scene.add(this.root); this.t = 0;
     const wood = new THREE.MeshStandardMaterial({ color: 0x9a5a2c, roughness: 0.8 }), band = new THREE.MeshStandardMaterial({ color: 0xe2b04a, roughness: 0.3, metalness: 0.8 });
-    this.list = [...CHEST_SPOTS.map((p) => [...p, 'village']), ...FOREST_CHESTS.map((p) => [...p, 'forest']), ...HARBOR_CHESTS.map((p) => [...p, 'harbor'])].map(([x, z, region], i) => {
+    this.list = [...CHEST_SPOTS.map((p) => [...p, 'village']), ...FOREST_CHESTS.map((p) => [...p, 'forest']), ...HARBOR_CHESTS.map((p) => [...p, 'harbor']), ...Object.entries(LAND).flatMap(([k, d]) => d.chests.map((p) => [...p, k]))].map(([x, z, region], i) => {      // (26/11) five chests in each of maps 4-7, after the old ones so their numbers do not move
       const g = new THREE.Group(), y = L.REGIONS[region].groundHeight(x, z);
       const base = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.6, 0.75), wood); base.position.y = 0.3; g.add(base);
       const lid = new THREE.Group(); lid.position.set(0, 0.6, -0.375); g.add(lid);
@@ -26,14 +27,14 @@ export class Chests {
       const lock = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.22, 0.08), new THREE.MeshStandardMaterial({ color: 0xffd23c, emissive: 0xffb020, emissiveIntensity: 0.9, metalness: 0.6, roughness: 0.3 })); lock.position.set(0, 0.55, 0.4); g.add(lock);
       const glow = new THREE.Mesh(new THREE.SphereGeometry(0.9, 12, 8), new THREE.MeshBasicMaterial({ color: 0xffe28a, transparent: true, opacity: 0.18, depthWrite: false })); glow.position.y = 0.5; g.add(glow);
       g.traverse((o) => { if (o.isMesh && o !== glow) o.castShadow = true; });
-      g.position.set(x, y, z); g.rotation.y = region === 'harbor' ? Math.atan2(-12 - x, 2 - z) : Math.atan2(-x + 40, -z - 10) + Math.PI; this.root.add(g);
+      g.position.set(x, y, z); g.rotation.y = isLand(region) ? Math.atan2(-x, 30 - z) : region === 'harbor' ? Math.atan2(-12 - x, 2 - z) : Math.atan2(-x + 40, -z - 10) + Math.PI; this.root.add(g);
       return { i, x, z, g, lid, lock, glow, region };
     });
     this.setRegion(L.NAME);
   }
   get data() { const p = this.api.profile(); return p ? (p.chests || (p.chests = {})) : {}; }
   isOpen(c) { return this.data[c.i] === today(); }
-  setRegion(name) { this.region = name; this.root.visible = name === 'village' || name === 'forest' || name === 'harbor'; this.sync(); }
+  setRegion(name) { this.region = name; this.root.visible = name === 'village' || name === 'forest' || name === 'harbor' || isLand(name); this.sync(); }
   /** A chest takes part in this region (harbor ones once Map 2 is open; the forest is the last chapter of Map 1). */
   live(c) { const p = this.api.profile(); return c.region === this.region && (c.region !== 'harbor' || !!(p && p.flags.map2)); }
   sync() { for (const c of this.list) { c.g.visible = this.live(c); const o = this.isOpen(c); c.lid.rotation.x = o ? -1.9 : 0; c.lock.visible = !o; c.glow.visible = !o; } }

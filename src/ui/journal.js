@@ -77,7 +77,7 @@ export class Journal {
   }
   /** (19/11, the backbone story) the Journey card: the goal, the rank, the ten lands and the compass pieces found. */
   journeyHtml(p) {
-    const rank = SAGA.rankOf(p), r = SAGA.RANKS[rank], got = SAGA.pieces(p), atLand = p.flags.map3 || (p.gates && p.gates[10] && p.flags.forest_open) ? 3 : p.flags.map2 ? 2 : 1;      // (26/11) the forest is land 3
+    const rank = SAGA.rankOf(p), r = SAGA.RANKS[rank], got = SAGA.pieces(p), atLand = (() => { const g = p.gates || {}, f = p.flags; return f.boss7 && g[35] ? 7 : f.boss6 && g[30] ? 6 : f.boss5 && g[25] ? 5 : f.boss2 && g[20] ? 4 : g[10] && f.forest_open ? 3 : f.map2 ? 2 : 1; })();      // (26/11) the forest is land 3
     const ring = Array.from({ length: 10 }, (_, i) => `<span title="Mảnh ${i + 1}" style="display:inline-block;width:30px;height:30px;line-height:30px;margin:2px;border-radius:50%;text-align:center;font-weight:800;${got.includes(i + 1) ? 'background:#ffcf3a;box-shadow:0 0 8px #ffa800;color:#5a3a00' : 'background:#d9cbb0;color:#8a7a60'}">${i + 1}</span>`).join('');
     return `<div class="note"><b>Mục tiêu:</b> Chúa tể Im Lặng (Lord Hush) đã đập vỡ La Bàn Ngôn Từ thành 10 mảnh, giấu ở 10 vùng đất. Tìm đủ 10 mảnh, lên Tháp Pha Lê và trả lại tiếng nói cho cả vương quốc!</div>
       <div class="q cur"><span class="ic">${r.icon}</span><div><b>${p.name} · ${r.en} Word Keeper</b><div class="vi">Hạng: ${r.vi}${rank > 1 ? ` (+${SAGA.rankAtk(p)} công, +${SAGA.rankHp(p)} máu)` : ''}${rank < SAGA.RANKS.length - 1 ? ` · hạng sau: ${SAGA.RANKS[rank + 1].en} (${SAGA.RANKS[rank + 1].vi})` : ''}</div></div><div></div></div>

@@ -28,6 +28,35 @@ export const ZONES = {
     { id: 'f_shroom', kind: 'shroom', x: 48, z: -8, r: 10, n: 6, vi: 'Bãi Nấm Khổng Lồ', icon: '🍄' },      // (26/11) was on top of the east cliff (8 m up, no way from below)
     { id: 'f_orc', kind: 'orc', x: 22, z: -44, r: 9, n: 5, vi: 'Bãi Người Cây Cổ Thụ', icon: '🌳' },      // (26/11) was on top of the north cliff (9.6 m up)
   ],
+  // (26/11) maps 4-7 (core/regions/lands.js). The hero arrives at the top level of the land before, so the grounds start there.
+  desert: [       // Golden Desert: the hero comes at level 20, the land ends at 25
+    { id: 'd_spark', kind: 'spark', x: 34, z: 46, r: 10, n: 7, vi: 'Bãi Xương Rồng Tia Lửa', icon: '🌵' },
+    { id: 'd_scorpion', kind: 'scorpion', x: -44, z: 30, r: 10, n: 7, vi: 'Bãi Bọ Cạp Cát', icon: '🦂' },
+    { id: 'd_tcactus', kind: 'tcactus', x: 54, z: 6, r: 10, n: 7, vi: 'Bãi Xương Rồng Sấm', icon: '⚡' },
+    { id: 'd_djinn', kind: 'djinn', x: -46, z: -30, r: 10, n: 6, vi: 'Bãi Thần Gió Bụi', icon: '🌪️' },
+    { id: 'd_dino', kind: 'dino', x: 34, z: -40, r: 9, n: 5, vi: 'Bãi Khủng Long Lửa', icon: '🦖' },
+  ],
+  mountain: [     // Snowy Peaks: 25 to 30
+    { id: 'm_icebunny', kind: 'icebunny', x: -40, z: 46, r: 10, n: 7, vi: 'Bãi Thỏ Tuyết', icon: '🐇' },
+    { id: 'm_seal', kind: 'seal', x: 44, z: 40, r: 10, n: 7, vi: 'Bãi Hải Cẩu Băng', icon: '🦭' },
+    { id: 'm_frog', kind: 'frog', x: -52, z: 10, r: 10, n: 7, vi: 'Bãi Ếch Gió', icon: '🐸' },
+    { id: 'm_yeti', kind: 'yeti', x: 52, z: -12, r: 10, n: 6, vi: 'Bãi Người Tuyết Yeti', icon: '❄️' },
+    { id: 'm_icegolem', kind: 'icegolem', x: -30, z: -46, r: 9, n: 5, vi: 'Bãi Golem Băng', icon: '🧊' },
+  ],
+  ruins: [        // Ancient Ruins: 30 to 35
+    { id: 'r_ghost', kind: 'ghost', x: 50, z: 40, r: 10, n: 7, vi: 'Bãi Ma Sấm', icon: '👻' },
+    { id: 'r_moonfox', kind: 'moonfox', x: -50, z: 40, r: 10, n: 7, vi: 'Bãi Cáo Trăng', icon: '🌙' },
+    { id: 'r_wraith', kind: 'wraith', x: 54, z: -10, r: 10, n: 7, vi: 'Bãi Bóng Câm', icon: '🌫️' },
+    { id: 'r_whirl', kind: 'whirl', x: -18, z: -30, r: 9, n: 6, vi: 'Bãi Lốc Xoáy Nhỏ', icon: '🌀' },
+    { id: 'r_turtle', kind: 'turtle', x: -54, z: -22, r: 9, n: 5, vi: 'Bãi Rùa Đá Cổ', icon: '🐢' },
+  ],
+  sky: [          // Sky Kingdom: 35 to 45
+    { id: 's_skybird', kind: 'skybird', x: -50, z: 36, r: 10, n: 7, vi: 'Bãi Chim Gió', icon: '🐦' },
+    { id: 's_squid', kind: 'squid', x: 50, z: 36, r: 10, n: 7, vi: 'Bãi Mực Mây', icon: '🦑' },
+    { id: 's_sunfox', kind: 'sunfox', x: -58, z: -8, r: 10, n: 7, vi: 'Bãi Cáo Mặt Trời', icon: '🦊' },
+    { id: 's_stormbird', kind: 'stormbird', x: 58, z: -10, r: 10, n: 6, vi: 'Bãi Chim Bão', icon: '🌩️' },
+    { id: 's_stormgolem', kind: 'stormgolem', x: -36, z: -52, r: 9, n: 5, vi: 'Bãi Golem Bão', icon: '⛈️' },
+  ],
 };
 
 /** (25/11) The grounds are spread over the whole map (village: all along the east bank, which the bridge quest opens; harbour and forest:

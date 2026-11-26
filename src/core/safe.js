@@ -6,5 +6,10 @@ export const SAFE = {
     { x: -46, z: 2, r: 15 }, { x: -40, z: -18, r: 7 }, { x: -3, z: 50, r: 9 }, { x: -18, z: 50, r: 8 }],
   harbor: [{ x: -12, z: 2, r: 22 }, { x: 2, z: 16, r: 9 }, { x: 34, z: 28, r: 6 }, { x: 22, z: 28.6, r: 5 }, { x: -65, z: 40, r: 7 }],
   forest: [{ x: -30, z: 50, r: 9 }, { x: -81, z: 20, r: 7 }],
+  // (26/11) maps 4-7: the gate and the town of each land (the same numbers as LAND[..].safe in core/regions/lands.js)
+  desert: [{ x: 0, z: 56, r: 9 }, { x: 0, z: 30, r: 15 }],
+  mountain: [{ x: 0, z: 56, r: 9 }, { x: 2, z: 30, r: 14 }],
+  ruins: [{ x: 0, z: 56, r: 9 }, { x: 3, z: 34, r: 13 }],
+  sky: [{ x: 0, z: 56, r: 9 }, { x: 0, z: 44, r: 11 }],
 };
 export const inSafe = (region, x, z, pad = 0) => (SAFE[region] || []).some((s) => Math.hypot(x - s.x, z - s.z) < s.r + pad);

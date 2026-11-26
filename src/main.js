@@ -79,7 +79,8 @@ import { Fishing } from './game/fishing.js';
 import { house as houseOf, setPlace } from './core/house.js';
 import * as Farm from './core/farm.js';
 import { payNote } from './game/minigames.js';
-import { SAM_LINES, BRIDGE, BRIDGE_SPOTS, FRIENDS, OPENING } from './game/content.js';
+import { SAM_LINES, BRIDGE, BRIDGE_SPOTS, FRIENDS, OPENING, LAND_TALK } from './game/content.js';
+import { LAND, LAND_IDS, isLand } from './core/regions/lands.js';
 import { UI } from './ui/ui.js';
 import { Post } from './render/post.js';
 import { addOutline, showOutlines, syncOutlines } from './render/outline.js';
@@ -170,6 +171,12 @@ const gltf = (name) => { if (!modelCache.has(name)) modelCache.set(name, loader.
 /** Map 2 monsters (crab, jellyfish, pirate, Captain Octopus): fetched when the hero first sails to the harbor. */
 const SEA_FILES = { crab: 'harbor_mob_crab_v01', jelly: 'harbor_mob_jellyfish_v01', pirate: 'harbor_mob_pirate_v01', octopus: 'harbor_boss_octopus_v02', gull: 'mob_gull_storm_v01' };
 const seaModel = (k) => gltf(SEA_FILES[k]).catch(() => null);
+// (26/11) maps 4-7: the monsters and bosses of each land, fetched the first time the hero walks in (combat.addLand)
+const LAND_FILES = { spark: 'mob_cactus_spark_v01', scorpion: 'mob_scorpion_sand_v01', tcactus: 'mob_cactus_thunder_v01', djinn: 'mob_djinn_dust_v01', dino: 'mob_dino_fire_v01', sanddragon: 'boss_sand_dragon_v01',
+  icebunny: 'mob_bunny_ice_v01', seal: 'mob_seal_frost_v01', frog: 'mob_frog_wind_v01', yeti: 'mob_yeti_ice_v01', icegolem: 'mob_golem_ice', icedragon: 'mob_dragon_ice',
+  ghost: 'mob_ghost_thunder_v01', moonfox: 'mob_fox_moon_v01', wraith: 'mob_hush_wraith_v01', whirl: 'mob_whirl_wind_v01', turtle: 'mob_ancient_sea_turtle', giant: 'ev_boss_giant_v01',
+  skybird: 'mob_bird_wind_v01', squid: 'mob_squid_ice_v01', sundragon: 'boss_dragon_fire_v01' };
+const landModel = (k) => gltf(LAND_FILES[k]).catch(() => null);
 /** Map 1 monsters and bosses (batch 13): swapped in by the Wild after the game has started. */
 // (24/11) the user's new monsters replace the old models kind by kind: wolf, magma crystal, boar, water slime, stone golem, dark bat, venom mushroom, carnivorous flower
 const MAP1_FILES = { goblin: 'mob_shadow_wolf', imp: 'mob_magma_crystal', orc: 'mob_treant_elder', slime: 'mob_water_slime', red: 'mob_slime_red_v01', golem: 'mob_golem_lava', bat: 'mob_dark_bat', shroom: 'mob_mushroom_giant', king: 'boss_slime_king_v02', ancient: 'boss_golem_ancient_v02', queen: 'boss_mushroom_queen_v02', bunny: 'mob_carnivorous_flower', wisp: 'mob_wisp_thunder_v01', fox: 'mob_fox_ember_v01' };
@@ -264,6 +271,8 @@ const NOTES = {      // short English objectives for the village chain
   jars: "Help Ben at the market.", jars_play: "Help Ben at the market.", tom_bridge: 'Tom wants to see you at the square.',
   bridge: 'Meet Sam at the broken south bridge.', plan: 'Listen to Pip and put the steps in order.', open: 'Tom wants to see you at the square.', done: '',
 };
+/** (26/11) The next land (after the desert) the hero has just earned and has not been told about yet. */
+function pendingLand() { if (!profile || profile.admin) return null; for (const l of LAND_IDS) if (l !== 'desert' && !profile.flags['open_' + l] && WORLD.canGo(profile, LAND[l].from, l).ok) return l; return null; }
 /** (26/11) The goal card after the opening story: the current main quest in English with the Vietnamese "where / what" under it. */
 function questNote() { const mq = Q.mainCurrent(profile); return mq ? { en: `Quest: ${mq.en}  (N)`, vi: mq.vi } : null; }
 let shownLevel = 0, holdAnnounce = false;
@@ -278,8 +287,12 @@ function refresh() {
   }
   if (map3Ready(profile) && !profile.flags.map3 && !ui.busy && !holdAnnounce) {      // (24/11) same: wait for the Golem's farewell.  the Ancient Golem is beaten and the level-20 exam passed: the forest is finished (the next map, the desert, is still being built)
     profile.flags.map3 = true; save(); sfx('fanfare');
-    ui.dialogue([{ who: 'Tom', en: 'You beat the Ancient Golem! The forest is quiet again. A warm wind from the desert is calling you now.', vi: 'Con đã hoàn thành các map đã xây (Làng, Biển cả, Rừng)! Map tiếp theo · Sa mạc đang được xây, sắp mở. Cấp tối đa hiện giờ là 20 (cấp cao nhất của Rừng).' }]);
+    ui.dialogue([{ who: 'Tom', en: 'You beat the Ancient Golem! The forest is quiet again. A warm wind from the desert is calling you now.', vi: 'Con đã hoàn thành Rừng Ký Ức! Sa mạc cát vàng (cấp 20–25, Unit 4) đã mở: đi qua cổng dịch chuyển ở lối vào Rừng.' }, { who: '🧭 Word Keeper badge', en: 'Rank up: Pathfinder Word Keeper!', vi: 'Lên hạng Dẫn đường: mạnh hơn (+4 công, +30 máu).' }]);
   }
+  { const nl = pendingLand(); if (nl && !ui.busy && !holdAnnounce) {      // (26/11) maps 5-7 open the same way: the guard beaten and the owl's exam passed
+    profile.flags['open_' + nl] = true; save(); sfx('fanfare'); const m = WORLD.mapById(nl);
+    ui.dialogue([{ who: 'Pip', en: `A new land is open: the ${m.en}!`, vi: `Đã mở ${m.vi} (cấp ${Math.max(m.lv[0], WORLD.mapById(LAND[nl].from).lv[1])}–${m.lv[1]}, Unit ${m.no}): đi qua cổng dịch chuyển ở lối vào vùng này.` }, { who: '🧭 Word Keeper badge', en: 'Rank up!', vi: 'Lên một hạng Người Giữ Chữ: mạnh hơn (+4 công, +30 máu).' }]);
+  } }
   const learned = Review.learned(profile.words); if (journal) journal.sync(); if (toolbar) toolbar.sync(profile);
   if (L.NAME === 'isle') {
     ui.hud(profile, 'Đảo Kho Báu', [`🗺 ${Math.min(TR.state(profile).n, TR.MAX_DAILY)}/${TR.MAX_DAILY}`, Save.gateWaiting(profile) ? '🦉 ôn tập' : ''].filter(Boolean).join('  '), learned, bag(profile).food);
@@ -289,6 +302,10 @@ function refresh() {
     ui.hud(profile, 'Cảng Mặt Trời', [wild ? wild.huntNote() : '', Save.gateWaiting(profile) ? '🦉 ôn tập' : ''].filter(Boolean).join('  '), learned, bag(profile).food);
     const mq = Q.mainCurrent(profile);
     ui.clue(null, 0, '', questNote() || 'Welcome to Sunny Harbor! Take jobs from the board by the square.');
+    crystals.show([]);
+  } else if (isLand(L.NAME)) {
+    ui.hud(profile, LAND[L.NAME].vi, [wild ? wild.huntNote() : '', Save.gateWaiting(profile) ? '🦉 ôn tập' : ''].filter(Boolean).join('  '), learned, bag(profile).food);
+    ui.clue(null, 0, '', questNote() || `Welcome to the ${L.TITLE}!`);
     crystals.show([]);
   } else if (L.NAME === 'forest') {
     ui.hud(profile, 'Rừng Ký Ức', [`Pha lê ${quest.q.found.length}/5`, wild ? wild.huntNote() : '', Save.gateWaiting(profile) ? '🦉 ôn tập' : ''].filter(Boolean).join('  '), learned, bag(profile).food);
@@ -351,6 +368,7 @@ function huntGoal() {
   return { x: best.z.x, z: best.z.z, text: `${best.z.vi} · Lv ${best.lv}` };
 }
 function pickGoal(markers) {
+  if (Save.gateWaiting(profile) && isLand(L.NAME)) { const ow = friends.find((f) => f.region === L.NAME && f.role === 'owl'); if (ow) return { x: ow.npc.x, z: ow.npc.z, text: 'Cú Mèo' }; }
   if (Save.gateWaiting(profile)) return L.NAME === 'village' ? { x: OWL.x, z: OWL.z, text: 'Cú Mèo' } : { x: L.EXITS[0].x, z: L.EXITS[0].z, text: 'Về làng gặp Cú Mèo' };      // the owl lives in the village
   const story = markers.find((m) => !m.host && !m.color && ['!', '?', '✉', '★'].includes(m.text));
   if (story) return { x: story.x, z: story.z, text: story.text === '✉' ? 'Bức thư' : 'Nhiệm vụ' };
@@ -421,6 +439,9 @@ function placeActors() {
   } else if (L.NAME === 'harbor') {
     tom.hide(); ben.hide(); pip.root.visible = false; for (const f of friends) f.npc.hide();
     sam.move(30, 29.4, Math.PI);      // fishing at the end of the small pier
+  } else if (isLand(L.NAME)) {      // (26/11) maps 4-7: the keeper, the merchant and the owl of the land; Pip flies along
+    tom.hide(); ben.hide(); sam.hide(); for (const f of friends) { if (f.region === L.NAME) f.npc.move(...f.at); else f.npc.hide(); }
+    pip.root.visible = true; pip.place(L.SPAWN.x + 2.4, L.SPAWN.z - 2);
   } else {
     tom.move(L.ENTRANCE.x + 2.4, L.ENTRANCE.z - 12, 0.2); sam.move(30.2, 49.6, 2.2); ben.hide();
     for (const f of friends) { if (f.region === 'forest') f.npc.move(...f.at); else f.npc.hide(); }
@@ -487,7 +508,7 @@ async function enterRegionNow(name, at) {
   const q = QUALITY[quality]; world.setDetail(q.density, q.particles, q.far);
   scene.traverse((o) => { if (o.material) [].concat(o.material).forEach((m) => { if (m && typeof m === "object") m.needsUpdate = true; }); });
   try { await renderer.compileAsync(scene, camera); } catch { /* older browsers: shaders compile on first sight */ }      // no hitch when new things come into view
-  minimap.rebuild(); placeActors(); if (walkers) walkers.setRegion(name); if (mini) mini.setRegion(name); if (wild) { if (name === 'harbor') await wild.addHarbor(seaModel); wild.setRegion(name); } if (chests) chests.setRegion(name); if (spots) spots.setRegion(name); if (homes) homes.setRegion(name); if (forestStall) forestStall.visible = name === 'forest'; showOuter(name);
+  minimap.rebuild(); placeActors(); if (walkers) walkers.setRegion(name); if (mini) mini.setRegion(name); if (wild) { if (name === 'harbor') await wild.addHarbor(seaModel); if (isLand(name)) await wild.addLand(name, landModel); wild.setRegion(name); } if (chests) chests.setRegion(name); if (spots) spots.setRegion(name); if (homes) homes.setRegion(name); if (forestStall) forestStall.visible = name === 'forest'; showOuter(name);
   placeHomeDoor(name); buildPortals();
   let [x, z] = at || [L.SPAWN.x, L.SPAWN.z];
   if (!L.walkable(x, z, 0.4)) { const o = nearestWalkable(x, z); if (o) [x, z] = o; }      // never arrive in the water or inside a wall
@@ -542,6 +563,36 @@ function wordDrop(m) {
       });
     });
   }, 600);
+}
+/** (26/11) Maps 4-7. The keeper of a land tells what the Dark Wind took (grades 6-7 get the short lines, 8-9 the long ones), and
+ *  once a day gives a WORD LESSON: five words of the land's unit shown and read, then asked back (meaning, word, listening).
+ *  Every right answer pays a little EXP; three lessons finish the land's lesson quest. */
+const lessonReady = (land) => !(profile.lessonDay && profile.lessonDay[land] === Review.today());
+function keeperTalk(land) {
+  const t = LAND_TALK[land], who = t.who, lines = profile.grade >= 8 ? t.hard : t.easy, won = !!profile.flags[t.boss];
+  const first = !profile.flags['met_' + land]; profile.flags['met_' + land] = true; if (first) save();
+  const pages = won ? [{ who, en: t.after[0], vi: t.after[1] }] : lines.map((en, i) => ({ who, en, vi: t.vi[i] }));
+  const offer = () => { if (!lessonReady(land)) { ui.dialogue([{ who, en: 'We had our lesson today. Come back tomorrow!', vi: 'Hôm nay học rồi. Mai quay lại học 5 từ mới nhé.' }]); return; }
+    ui.choose({ who, en: 'Shall we learn five words of this land?', vi: 'Bài học từ hôm nay: 5 từ, mỗi câu đúng được EXP.' }, ['Yes, please! · Học luôn', 'Not now · Để sau'], (i) => { if (i === 0) wordLesson(land, who); }); };
+  ui.dialogue(first || !won ? pages : pages.slice(0, 1), offer); if (first) refresh();
+}
+function wordLesson(land, who) {
+  const pool = unitCards.filter((c) => c.word.length <= 18); if (pool.length < 4) { ui.dialogue([{ who, en: 'I have no words to teach yet…', vi: `Từ vựng Unit ${Save.unitOf(profile)} lớp ${profile.grade} chưa được soạn.` }]); return; }
+  const mix = (a) => [...a].sort(() => Math.random() - 0.5), fresh = mix(pool.filter((c) => !profile.words[c.id])), due = Review.dueIds(profile.words).map((id) => pool.find((c) => c.id === id)).filter(Boolean), rest = mix(pool);
+  const five = [...new Set([...fresh, ...due, ...rest])].slice(0, 5); let right = 0, gained = 0;
+  const ask = (n) => {
+    if (n >= five.length) {
+      (profile.lessonDay || (profile.lessonDay = {}))[land] = Review.today(); (profile.lessons || (profile.lessons = {}))[land] = ((profile.lessons[land]) || 0) + 1; save(); refresh(); sfx('fanfare');
+      ui.dialogue([{ who, en: right === five.length ? 'Perfect! You are a real Word Keeper.' : `Well done! ${right} of ${five.length}.`, vi: `Bài học hôm nay: đúng ${right}/${five.length}${gained ? `, +${gained} EXP` : ''}. Đã học ${profile.lessons[land]} buổi ở vùng này.` }]); return; }
+    const c = five[n], kind = ['mean', 'word', voiceOn() ? 'listen' : 'word'][n % 3], opts = mix([c, ...mix(pool.filter((x) => x.id !== c.id && x.vi !== c.vi && x.word !== c.word)).slice(0, 2)]), t0 = Date.now(), head = `${who} · ${n + 1}/${five.length}`;
+    if (kind === 'listen') speak(c.word, true, 0.8);
+    ui.choose(kind === 'mean' ? { who: head, en: `What does "${c.word}" mean?` } : kind === 'word' ? { who: head, en: `Which word means "${c.vi}"?` } : { who: head, en: '🔊 Listen! Which word did you hear?', vi: 'Nghe rồi chọn từ vừa đọc.' }, opts.map((o) => (kind === 'mean' ? o.vi : o.word)), (i) => {
+      const ok = opts[i].id === c.id; Review.record(profile.words, c.id, { correct: ok, hints: 0, ms: Date.now() - t0 }); Save.recordSkill(profile, kind === 'listen' ? 'listening' : 'vocabulary', ok, 0); sfx(ok ? 'correct' : 'wrong');
+      if (ok) { right += 1; const e = Save.atCap(profile) ? 0 : learnExp(profile.stats.level, LEARN.bubbleNew); Save.addExp(profile, e); gained += e; ask(n + 1); }
+      else ui.dialogue([{ who, en: `"${c.word}" means "${c.vi}".`, vi: `${c.word} = ${c.vi}` }], () => ask(n + 1));
+    });
+  };
+  teach(five, () => ask(0));
 }
 function teach(list, then, most = 5) {
   const seen = profile.seen || (profile.seen = {}), fresh = list.filter((c) => c && !seen[c.id] && !profile.words[c.id]).slice(0, most);
@@ -602,11 +653,13 @@ function track(ev, n = 1) {
   if (fp.up) { const nm = Family.SHIP_NAMES[fp.up]; ui.toast(`⚓ Tàu gia đình lên cấp ${fp.up + 1}: ${nm.en} (${nm.vi})! Mở sổ nhiệm vụ để nhận thưởng.`); sfx('fanfare'); }
   if (done.length || fp.n) save(); if (journal) journal.sync();
 }
+/** The highest land the hero has opened (its level cap is the one that counts for a reward, and its unit for the owl in the village). */
+function bestRegion() { for (const l of [...LAND_IDS].reverse()) if (WORLD.canGo(profile, LAND[l].from, l).ok) return l; return WORLD.canGo(profile, 'village', 'forest').ok ? 'forest' : profile.flags.map2 ? 'harbor' : 'village'; }
 function claimReward(r, what, main) {
   if (!r) return;
   // (26/11) the reward counts against the cap of the best map the hero has OPENED, not of the map they stand in: a level-10 hero claiming in
   // the village (home, owl, shops) got no EXP and half the gold. A story quest is done once, so its gold is never cut.
-  const here = profile.region, best = WORLD.canGo(profile, 'village', 'forest').ok ? 'forest' : profile.flags.map2 ? 'harbor' : 'village'; profile.region = best;
+  const here = profile.region, best = bestRegion(); profile.region = best;
   const capped = Save.atCap(profile), gold = main ? r.gold : Save.capGold(profile, r.gold); profile.stats.gold += gold; if (r.exp) Save.addExp(profile, r.exp); profile.region = here; sfx('fanfare'); save(); refresh();
   ui.toast(`🎁 ${what}: +${gold} vàng${r.exp && !capped ? `, +${r.exp} EXP` : ''}${capped ? ' (cấp tối đa của vùng: sang vùng mới để nhận đủ)' : ''}${r.bonusAll ? ' (thưởng xong cả 3!)' : ''}`);
 }
@@ -690,7 +743,7 @@ function leaveRoom() { if (!room) return; room.dispose(); room = null; document.
 function adminDelete(id) { const i = store.profiles.findIndex((p) => p.id === id && !p.admin); if (i < 0) return; store.profiles.splice(i, 1); if (store.last === id) store.last = profile.id; try { Save.persist(store); } catch (e) { console.warn('save failed', e); } if (homes) homes.refresh(true); }
 function adminPlaces() {
   const out = [], add = (region, name, x, z) => out.push({ region, name, x, z });
-  for (const r of ['village', 'forest', 'harbor', 'isle']) for (const l of L.REGIONS[r].LANDMARKS) add(r, l.label, ...(l.spot || [l.x, l.z]));
+  for (const r of ['village', 'forest', 'harbor', 'isle', ...LAND_IDS]) for (const l of L.REGIONS[r].LANDMARKS) add(r, l.label, ...(l.spot || [l.x, l.z]));
   add('village', 'Tom', 2.6, 9.6); add('village', 'Cửa hàng', SHOP_DOOR.x - 1, SHOP_DOOR.z); add('village', 'Cú Mèo', OWL.x, OWL.z + 1.2); add('village', 'Bảng săn quái', BOARD.x + 1.2, BOARD.z + 1);
   for (const st of STARTS) add(st.region || 'village', 'Trò: ' + st.sign.replace(/^\S+\s/, ''), st.x + 0.8, st.z + 0.8);
   add('village', 'Nhà của các con', HOMES[0].door[0] + 2, HOMES[0].door[1] + 1.5); add('village', 'Cửa hàng nội thất', FURNITURE.door[0] + 1.5, FURNITURE.door[1]);
@@ -818,7 +871,7 @@ async function chooseProfile(p) {
   if ((story.step === 'open' || story.step === 'done') && !p.flags.bridge_fixed) p.flags.bridge_fixed = true;   // saves from before the bridge quest
   applyBridge();
   $('mapbox').classList.remove('hidden');
-  await enterRegion(p.region === 'forest' && p.flags.forest_open ? 'forest' : (p.region === 'harbor' || p.region === 'isle') && p.flags.map2 ? p.region : 'village');
+  await enterRegion(isLand(p.region) && (p.admin || WORLD.canGo(p, LAND[p.region].from, p.region).ok) ? p.region : p.region === 'forest' && p.flags.forest_open ? 'forest' : (p.region === 'harbor' || p.region === 'isle') && p.flags.map2 ? p.region : 'village');
   started = true; renderGear(); if (admin) admin.sync();
   // (19/11) a new hero, or a save from before the creator: pick a face, hair and clothes first (tests skip it unless ?creator=1)
   if (!p.admin && (!p.look || p.lookPending) && (!navigator.webdriver || /[?&]creator=1/.test(location.search))) { await creator.show('new'); save(); refresh(); }
@@ -1217,6 +1270,16 @@ function interactTarget() {
     for (const f of [mini, wild, chests, spots]) { const c = f && f.interact(p); if (c) return c; }
     return null;
   }
+  if (isLand(L.NAME)) {
+    const d = LAND[L.NAME];
+    for (const f of friends) if (f.region === L.NAME && near(f.npc.x, f.npc.z, 2.8)) {
+      if (f.role === 'keeper') return { text: `E · Nói chuyện với ${f.who}`, run: () => keeperTalk(L.NAME) };
+      if (f.role === 'owl') return { text: 'E · Cú Mèo: ôn tập và bài thi', run: () => owlReview() };
+    }
+    if (near(d.shopAt[0], d.shopAt[1], 2.6)) { const m = friends.find((f) => f.region === L.NAME && f.role === 'merchant'); return { text: `E · Cửa hàng của ${m ? m.who : 'thương nhân'} (vũ khí, giáp, thuốc)`, run: () => ui.dialogue((m ? m.lines : []).map((en) => ({ who: m.who, en })), () => { enterRoom('forest'); shopWin.show(`${m ? m.who : 'Merchant'}'s Shop`, [L.NAME, 'healer', 'rose']); }) }; }
+    for (const f of [wild, chests, spots]) { const c = f && f.interact(p); if (c) return c; }
+    return null;
+  }
   if (L.NAME === 'forest') {
     const c = crystals.nearest(p);
     if (c) return { text: 'E · Chạm vào pha lê ký ức', run: () => { player.emote('Interact'); if (quest.touch(c)) player.emote('Celebrate'); } };
@@ -1467,7 +1530,7 @@ function frame() {
     if (playT > REST_MIN * 60 && !ui.busy && !frozenNow && !(wild && wild.fighting)) { playT = 0; restN += 1; sfx('tick'); ui.dialogue([{ who: 'Pip', en: `You have played for ${restN * REST_MIN} minutes. Time to rest your eyes!`, vi: `Con đã chơi ${restN * REST_MIN} phút rồi. Đứng dậy, uống nước, nhìn ra xa 5 phút cho mắt nghỉ nhé. Tiến độ đã được lưu.` }]); save(); }
   }
   const dt = Math.min(0.05, real); TIME.value += real; const t = TIME.value;
-  if (profile && started && !ui.busy && ((map2Ready(profile) && !profile.flags.map2) || (map3Ready(profile) && !profile.flags.map3))) refresh();      // (24/11) a map announcement that waited for a talk to end
+  if (profile && started && !ui.busy && ((map2Ready(profile) && !profile.flags.map2) || (map3Ready(profile) && !profile.flags.map3) || pendingLand())) refresh();      // (24/11) a map announcement that waited for a talk to end
   const frozen = ui.modal || !started || (arcade && arcade.open) || (shopWin && shopWin.open) || (packUI && packUI.open) || (fishing && fishing.active) || (music && music.open) || (journal && journal.open) || (homePanel && homePanel.open) || room || (dexPanel && dexPanel.open) || (wardPanel && wardPanel.open) || (creator && creator.open) || (tailor && tailor.open) || (skillUI && skillUI.open) || (petPanel && petPanel.open) || (trPanel && trPanel.open) || (worldUI && worldUI.open) || (reader && reader.open);
   frozenNow = !!frozen;
   if (arcade) arcade.update(real, keys);
@@ -1487,7 +1550,7 @@ function frame() {
   tom.update(dt, player.pos, talkingTo === 'Tom'); sam.update(dt, player.pos, talkingTo === 'Sam'); ben.update(dt, player.pos, talkingTo === 'Ben');
   for (const f of friends) f.npc.update(dt, player.pos, talkingTo === f.who);
   if (walkers && started) walkers.update(real, player.pos, ui.busy ? talkW : -1);
-  if (pip.root.visible) pip.update(dt, t, player, started && L.NAME === 'forest' && quest && quest.step !== 'intro');
+  if (pip.root.visible) pip.update(dt, t, player, started && ((L.NAME === 'forest' && quest && quest.step !== 'intro') || isLand(L.NAME)));      // (26/11) Pip flies along in maps 4-7
   if (floaters) floaters.update(real); if (spells) spells.update(real);
   if (profile && !profile.admin) SK.regen(profile, real, !(wild && wild.fighting));      // (21/11) faster out of a fight
   if (skillUI) skillUI.sync(started && !switching && !room && !frozen && !(mini && mini.active) && !(intro && intro.active));
@@ -1501,7 +1564,7 @@ function frame() {
   if (spots && started) spots.update(real);
   if (started && !switching) {      // (21/11) background music: the region's tune, the home tune indoors, the boss tune near an awake boss
     const boss = wild && wild.root.visible && wild.bosses.some((b) => b.g.visible && !b.dead && b.region === L.NAME && Math.hypot(b.x - player.pos.x, b.z - player.pos.z) < 16);
-    playMusic(room ? (room.kind === 'home' ? 'home' : room.kind === 'music' ? null : L.NAME === 'forest' ? 'forest' : 'village') : boss ? 'boss' : ({ village: 'village', forest: 'forest', harbor: 'harbor', isle: 'isle' })[L.NAME] || 'village');
+    playMusic(room ? (room.kind === 'home' ? 'home' : room.kind === 'music' ? null : L.NAME === 'forest' ? 'forest' : 'village') : boss ? 'boss' : ({ village: 'village', forest: 'forest', harbor: 'harbor', isle: 'isle', desert: 'desert', mountain: 'mountain', ruins: 'ruins', sky: 'sky' })[L.NAME] || 'village');
   }
   if (wild && started && !switching && wild.root.visible) { hoverTick = (hoverTick || 0) + real; if (hoverTick > 0.1) { hoverTick = 0; hoverPick(); } if (!frozen && !(player && player.swim) && !(input.x || input.z)) wild.autoHit(); }      // (21/11) hover ring; auto attack the locked target in reach
   if (wild && started && !switching) wild.update(real, !!frozen || !!(mini && mini.active));      // (26/11) no bites while ANY panel is open: the hero cannot move then (bag, skills, journal, home, world map…)      // (21/11) no monster bites during a mini game
@@ -1530,6 +1593,11 @@ function frame() {
       for (const st of STARTS) if (st.host && st.region === 'harbor') { const n = (profile.plays && profile.plays.day === Review.today() && profile.plays.n[st.id]) || 0; if (n < 3) markers.push({ x: st.x - 0.6, z: st.z + 0.4, text: '!', host: true }); }
     } else if (L.NAME === 'isle') {
       // Treasure Isle has no markers: the map is read on its card (M) and the place names stand on small signs
+    } else if (isLand(L.NAME)) {
+      const kp = friends.find((f) => f.region === L.NAME && f.role === 'keeper'), ow = friends.find((f) => f.region === L.NAME && f.role === 'owl');
+      if (kp && (!profile.flags['met_' + L.NAME] || lessonReady(L.NAME))) markers.push({ x: kp.npc.x, z: kp.npc.z, text: '!' });
+      if (ow && Save.gateWaiting(profile)) markers.push({ x: ow.npc.x, z: ow.npc.z, text: '🦉' });
+      markers.push(...wild.markers(), ...chests.markers(), ...spots.markers());
     } else if (L.NAME === 'forest') {
       if (quest.step === 'intro') markers.push({ x: tom.x, z: tom.z, text: '!' });
       if (quest.step === 'tree') { const s = landmark('tree').spot; markers.push({ x: s[0], z: s[1], text: '★' }); }
@@ -1546,7 +1614,6 @@ function frame() {
       if (st === 'gather') { const have = story.items;
         if (!have.includes('axe')) markers.push({ x: ben.x, z: ben.z, text: '!' });
         if (['rope', 'log', 'axe'].every((k) => have.includes(k))) markers.push({ x: sam.x, z: sam.z, text: '?' }); }
-      if (st === 'done' && quest.step !== 'done') markers.push({ x: L.EXITS[0].x, z: L.EXITS[0].z, text: '★' });
       if (story.market && Math.hypot(player.pos.x - BEN_MARKET.centre[0], player.pos.z - BEN_MARKET.centre[1]) > 15) story.leaveMarket();
       if (!story.market) markers.push(...mini.markers());
       for (const st of STARTS) if (st.host && (st.region || 'village') === L.NAME) {      // a glowing "!" over each mini game host while today's full-pay plays remain (18/11)

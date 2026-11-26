@@ -52,8 +52,27 @@ export function bossWake(flag, gold, exp, level) {
     ...HUSH(2),
     { who: 'Pip', en: 'The second piece is pointing to the Forest of Memories!', vi: 'Lên cấp 10 và qua bài thi 10 câu của Cú Mèo để lên hạng Kiểm lâm: Rừng Ký Ức (Map 3) mở ra.' },
   ];
+  const L4 = LAND_WAKE[flag];      // (26/11) maps 4-7: the guard wakes, gives the piece, Lord Hush shows a little more of himself, Pip points to the next land
+  if (L4) return [
+    { who: 'Ngọc', en: `I defeated the ${L4.name}! ${got}` },
+    { who: L4.name, en: L4.wake, vi: L4.wakeVi },
+    { who: `🧭 Compass piece ${L4.n}/10`, en: `You found piece number ${L4.n} of the Language Compass!`, vi: `Mảnh La Bàn số ${L4.n}! Đã đặt lên bệ La Bàn trong nhà của con. ${L4.back}` },
+    ...HUSH(L4.n),
+    { who: 'Pip', en: L4.next, vi: L4.nextVi },
+  ];
   return null;
 }
+/** What the guards of maps 4-7 say when the Dark Wind leaves them, and where the piece points. Each land had lost one kind of words. */
+const LAND_WAKE = {
+  boss5: { n: 4, name: 'Sand Dragon', wake: 'Hrrr… the sand is quiet. Where am I? Oh! I can ask questions again!', wakeVi: 'Rồng Cát tỉnh lại: sa mạc lấy lại được các CÂU HỎI.', back: 'Người sa mạc lại hỏi được "Where?", "How much?".',
+    next: 'The piece is pointing to the Snowy Peaks!', nextVi: 'Lên cấp 25, vượt bài thi của Cú Mèo ở Sa mạc để mở Núi tuyết (cấp 25–30, Unit 5).' },
+  boss6: { n: 5, name: 'Ice Dragon', wake: 'Brrr… I feel warmer. This peak is higher than the clouds, and now I can say so!', wakeVi: 'Rồng Băng tỉnh lại: núi lấy lại được các LỜI SO SÁNH.', back: 'Người miền núi lại nói được cái nào cao hơn, đường nào an toàn hơn.',
+    next: 'The piece is pointing to the Ancient Ruins!', nextVi: 'Lên cấp 30, vượt bài thi của Cú Mèo ở Núi tuyết để mở Di tích cổ (cấp 30–35, Unit 6).' },
+  boss7: { n: 6, name: 'Stone Giant', wake: 'Rumble… I remember now. Long ago, children played here. I guarded their stories.', wakeVi: 'Người Khổng Lồ Đá tỉnh lại: di tích lấy lại được các CÂU CHUYỆN đã qua.', back: 'Những bức tường lại kể được chuyện ngày xưa.',
+    next: 'The piece is pointing up… to the Sky Kingdom!', nextVi: 'Lên cấp 35, vượt bài thi của Cú Mèo ở Di tích để mở Vương quốc trên trời (cấp 35–45, Unit 7).' },
+  boss8: { n: 7, name: 'Sun Dragon', wake: 'Aaah… the wind is gentle again. Tomorrow I will fly over every land. I can make wishes again!', wakeVi: 'Rồng Mặt Trời tỉnh lại: bầu trời lấy lại được các LỜI ƯỚC cho ngày mai.', back: 'Người trên trời lại nói được ngày mai mình sẽ làm gì.',
+    next: 'Seven pieces! The Compass is pointing to an island far away…', nextVi: 'Lên cấp 45 và vượt bài thi của Cú Mèo. Đảo thần tiên (Map 8) còn chìm trong Gió Đen, sắp mở.' },
+};
 
 /** Lord Hush appears as a dark shadow after each compass piece. */
 export function HUSH(n) {
@@ -65,9 +84,26 @@ export function HUSH(n) {
     { who: '🌑 Lord Hush', en: 'Two pieces?! Hmm. You are stronger than I thought.' },
     { who: '🌑 Lord Hush', en: 'But the forest is full of old, angry memories. They will swallow your words!' },
   ];
-  return [
+  if (n === 3) return [
     { who: '🌑 Lord Hush', en: 'Three pieces?! Impossible!' },
     { who: '🌑 Lord Hush', en: 'But the desert is MY land. The sand will swallow your words!' },
+  ];
+  // (26/11) from the desert on he stops shouting: piece by piece the child learns why he hates words
+  if (n === 4) return [
+    { who: '🌑 Lord Hush', en: 'Shh… not so loud. You ask too many questions.' },
+    { who: '🌑 Lord Hush', en: 'I asked a question once. Everybody laughed. Go home, little Keeper.' },
+  ];
+  if (n === 5) return [
+    { who: '🌑 Lord Hush', en: 'Five pieces. You are better than I was. I was the smallest Word Keeper, you know.' },
+    { who: '🌑 Lord Hush', en: 'They said I was slower than the others. Words only hurt. The ruins remember.' },
+  ];
+  if (n === 6) return [
+    { who: '🌑 Lord Hush', en: 'So you found my old school in the ruins. My name was Hugh then.' },
+    { who: 'Pip', en: 'He sounded sad. Is that strange?', vi: 'Nghe ông ấy buồn nhỉ. Ngày xưa ông ấy cũng là một Người Giữ Chữ nhỏ tuổi.' },
+  ];
+  return [
+    { who: '🌑 Lord Hush', en: 'Seven pieces… I wished for a silent world. Is it so wrong to wish?' },
+    { who: 'Pip', en: 'He does not shout any more. Maybe he needs a word that nobody ever said to him.', vi: 'Ông ấy không còn quát nữa. Có lẽ ông ấy cần một lời mà chưa ai từng nói với mình.' },
   ];
 }
 

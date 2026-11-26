@@ -27,7 +27,9 @@ export const HIGHEST_SKILL_LEVEL = Math.max(...Object.values(TREE).flat().map((n
 // later maps 650-880 a level (10 h and 27 h of nothing but hitting). Now the count is lower and LEARNING fills the bar as well (LEARN below):
 // about 580 monsters for map 1, ~1.500 for map 2, ~3.900 for map 3 if the child learned nothing; a child who reads needs clearly fewer.
 export const KILLS_TABLE = [40, 100, 180, 260];      // levels 1-4: kills needed if the hero took nothing from quests or learning
-export const killsPerLevel = (level) => (level <= KILLS_TABLE.length ? KILLS_TABLE[level - 1] : KILLS_TABLE[KILLS_TABLE.length - 1] + 12 * (level - KILLS_TABLE.length));
+export const killsPerLevel = (level) => (level <= KILLS_TABLE.length ? KILLS_TABLE[level - 1] : Math.min(KILLS_CAP, KILLS_TABLE[KILLS_TABLE.length - 1] + 12 * (level - KILLS_TABLE.length)));
+/** (26/11, maps 4-7) the count stops growing here: the later lands are as long as the forest, not longer and longer. */
+export const KILLS_CAP = 360;
 /** EXP of one normal monster of a level: a stronger monster pays clearly more, so fighting a level above you is worth the risk. */
 export const mobExp = (level) => 6 + 4 * level;
 export const expNeed = (level) => mobExp(level) * killsPerLevel(level);

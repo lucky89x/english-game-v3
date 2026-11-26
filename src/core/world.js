@@ -10,10 +10,11 @@ export const MAPS = [
   { no: 1, id: 'village', region: 'village', vi: 'Làng Khởi Đầu', en: 'Starter Village', lv: [1, 5], built: true, at: [0.41, 0.776] },
   { no: 2, id: 'harbor', region: 'harbor', vi: 'Biển cả · Cảng Mặt Trời', en: 'Sunny Harbor', lv: [5, 10], built: true, at: [0.17, 0.7] },
   { no: 3, id: 'forest', region: 'forest', vi: 'Rừng xanh · Rừng Ký Ức', en: 'Forest of Memories', lv: [10, 20], built: true, at: [0.68, 0.76] },
-  { no: 4, id: 'desert', vi: 'Sa mạc cát vàng', en: 'Golden Desert', lv: [15, 25], built: false, at: [0.136, 0.417] },
-  { no: 5, id: 'mountain', vi: 'Núi non', en: 'Mountains', lv: [20, 30], built: false, at: [0.535, 0.342] },
-  { no: 6, id: 'sky', vi: 'Vương quốc trên trời', en: 'Sky Kingdom', lv: [35, 45], built: false, at: [0.423, 0.129] },
-  { no: 7, id: 'ruins', vi: 'Khu di tích cổ', en: 'Ancient Ruins', lv: [25, 35], built: false, at: [0.81, 0.495] },
+  { no: 4, id: 'desert', region: 'desert', vi: 'Sa mạc cát vàng', en: 'Golden Desert', lv: [15, 25], built: true, at: [0.136, 0.417] },
+  { no: 5, id: 'mountain', region: 'mountain', vi: 'Núi tuyết', en: 'Snowy Peaks', lv: [20, 30], built: true, at: [0.535, 0.342] },
+  { no: 7, id: 'sky', region: 'sky', vi: 'Vương quốc trên trời', en: 'Sky Kingdom', lv: [35, 45], built: true, at: [0.423, 0.129] },
+  { no: 6, id: 'ruins', region: 'ruins', vi: 'Khu di tích cổ', en: 'Ancient Ruins', lv: [25, 35], built: true,      // (26/11) the ruins are land 6 and the sky land 7: the order of the levels (and of the units)
+    at: [0.81, 0.495] },
   { no: 8, id: 'fairy', vi: 'Đảo thần tiên', en: 'Fairy Isle', lv: [30, 40], built: false, at: [0.138, 0.257] },
   { no: 9, id: 'volcano', vi: 'Thung lũng núi lửa', en: 'Volcano Valley', lv: [40, 55], built: false, at: [0.68, 0.134] },
   { no: 10, id: 'crystal', vi: 'Hang tinh thể', en: 'Crystal Cave', lv: [50, 70], built: false, at: [0.868, 0.225] },
@@ -26,10 +27,11 @@ export const ROADS = [
   { a: 'village', b: 'forest', need: 'forest' },
   { a: 'village', b: 'harbor', need: 'sea' },
   { a: 'harbor', b: 'forest', need: 'coast' },      // the coast road of the plan (2-3): not walkable yet, both maps are reached from the village
-  { a: 'forest', b: 'desert', need: 'later' },
-  { a: 'desert', b: 'mountain', need: 'later' },
-  { a: 'mountain', b: 'ruins', need: 'later' },
-  { a: 'mountain', b: 'sky', need: 'later' },
+  { a: 'forest', b: 'desert', need: 'desert' },
+  { a: 'desert', b: 'mountain', need: 'mountain' },
+  { a: 'mountain', b: 'ruins', need: 'ruins' },
+  { a: 'ruins', b: 'sky', need: 'sky' },
+  { a: 'mountain', b: 'sky', need: 'sky' },
   { a: 'sky', b: 'fairy', need: 'later' },
   { a: 'mountain', b: 'volcano', need: 'later' },
   { a: 'volcano', b: 'crystal', need: 'later' },
@@ -37,10 +39,16 @@ export const ROADS = [
 
 /** The conditions: what is missing (an array of Vietnamese lines; empty = open). */
 const f = (p) => (p && p.flags) || {};
+const need = (p, flag, bossVi, level, landVi) => { const m = []; if (!f(p)[flag]) m.push(`Đánh bại ${bossVi}.`); if (!(p && p.stats && p.stats.level >= level && p.gates && p.gates[level])) m.push(`Lên cấp ${level} (cấp cao nhất của ${landVi}) và qua bài thi của Cú Mèo.`); return m; };
 export const CONDITIONS = {
   forest: (p) => { const m = []; if (!f(p).forest_open) m.push('Giúp Tom và Ben ở quảng trường để nhận huy hiệu Người Giữ Chữ.'); if (!(p && p.stats && p.stats.level >= 10 && p.gates && p.gates[10])) m.push('Lên cấp 10 ở Biển cả (cấp 5–10) và qua bài thi của Cú Mèo để vào Rừng Ký Ức (cấp 10–20).'); return m; },
   sea: (p) => { const m = []; if (!f(p).boss1) m.push('Đánh bại Vua Slime ở Đồng Hoang.'); if (!(p && p.stats && p.stats.level >= 5 && p.gates && p.gates[5])) m.push('Lên cấp 5 (cấp cao nhất của làng) và qua cổng ôn tập của Cú Mèo để mở Biển cả (cấp 5–10).'); return m; },
   coast: () => ['Con đường ven biển chưa làm xong: đi qua Làng.'],
+  // (26/11) maps 4-7: the boss of the land before, its top level and the owl's exam at that level
+  desert: (p) => need(p, 'boss2', 'Golem Cổ ở Rừng Ký Ức', 20, 'Rừng Ký Ức'),
+  mountain: (p) => need(p, 'boss5', 'Rồng Cát ở Sa mạc', 25, 'Sa mạc'),
+  ruins: (p) => need(p, 'boss6', 'Rồng Băng ở Núi tuyết', 30, 'Núi tuyết'),
+  sky: (p) => need(p, 'boss7', 'Người Khổng Lồ Đá ở Di tích', 35, 'Di tích cổ'),
   later: () => ['Vùng đất này còn chìm trong Gió Đen. Sắp mở!'],
 };
 export const roadBetween = (a, b) => ROADS.find((r) => (r.a === a && r.b === b) || (r.a === b && r.b === a)) || null;
@@ -61,8 +69,12 @@ export const opened = (profile, id) => id === 'village' || neighbours(id).some((
 /** Where the portals stand. Each lists the maps it leads to (two or more: the child chooses) and where the hero arrives in the other map. */
 export const PORTALS = {
   village: [{ x: -30, z: -41.4, r: 3.2, yaw: 0, routes: ['forest', 'harbor'] }],
-  forest: [{ x: -30, z: 57.5, r: 3.0, yaw: Math.PI, routes: ['village'] }],
+  forest: [{ x: -30, z: 57.5, r: 3.0, yaw: Math.PI, routes: ['village', 'desert'] }],
   harbor: [{ x: 46, z: 2, r: 3.0, yaw: -Math.PI / 2, routes: ['village'] }],
+  desert: [{ x: 0, z: 64, r: 3.0, yaw: Math.PI, routes: ['forest', 'mountain'] }],
+  mountain: [{ x: 0, z: 64, r: 3.0, yaw: Math.PI, routes: ['desert', 'ruins', 'sky'] }],
+  ruins: [{ x: 0, z: 64, r: 3.0, yaw: Math.PI, routes: ['mountain', 'sky'] }],
+  sky: [{ x: 0, z: 64, r: 3.0, yaw: Math.PI, routes: ['ruins', 'mountain'] }],
 };
 export const portalsOf = (region) => PORTALS[region] || [];
 /** The portal the hero stands at (within its radius), or null. */

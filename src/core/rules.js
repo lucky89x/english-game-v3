@@ -28,6 +28,31 @@ export const MONSTERS = {
   fox: mob(14, 'normal', { el: 'fire', name: 'Ember Fox', speed: 3.0, color: 0xff8a3a, size: 1.0, model: 'fox', fit: 1.0 }),
   shroom: mob(16, 'elite', { el: 'ice', name: 'Giant Mushroom', ranged: true, speed: 1.8, color: 0xe2483e, size: 1.3 }),
   orc: mob(18, 'elite', { el: 'wind', name: 'Elder Treant', speed: 2.1, color: 0x6fae3a, size: 1.15, model: 'orc', fit: 1.0 }),
+  // (26/11) maps 4-7 (core/regions/lands.js): Blender monsters with their own clips; `model` is the key of LAND_FILES in main.js
+  // Golden Desert, levels 20-24
+  spark: mob(20, 'normal', { el: 'fire', name: 'Spark Cactus', speed: 2.4, color: 0x8fc24a, size: 1.0, model: 'spark', fit: 1.0 }),
+  scorpion: mob(21, 'normal', { el: 'fire', name: 'Sand Scorpion', speed: 2.8, color: 0xd9a04a, size: 1.0, model: 'scorpion', fit: 0.9 }),
+  tcactus: mob(22, 'ranged', { el: 'thunder', name: 'Thunder Cactus', speed: 2.2, color: 0x9ad04a, size: 1.0, model: 'tcactus', fit: 1.2 }),
+  djinn: mob(23, 'ranged', { el: 'wind', name: 'Dust Djinn', speed: 2.8, color: 0xd8b070, size: 1.0, fly: true, hover: 0.05, model: 'djinn', fit: 1.0 }),
+  dino: mob(24, 'elite', { el: 'fire', name: 'Fire Dino', speed: 3.0, color: 0xe2603a, size: 1.2, model: 'dino', fit: 1.1 }),
+  // Snowy Peaks, levels 25-29
+  icebunny: mob(25, 'normal', { el: 'ice', name: 'Snow Bunny', speed: 3.0, color: 0xdff2ff, size: 1.0, model: 'icebunny', fit: 1.1 }),
+  seal: mob(26, 'normal', { el: 'ice', name: 'Frost Seal', speed: 2.4, color: 0x9fc8e8, size: 1.0, model: 'seal', fit: 1.0 }),
+  frog: mob(27, 'ranged', { el: 'wind', name: 'Wind Frog', speed: 2.6, color: 0x7fd8a0, size: 1.0, model: 'frog', fit: 1.2 }),
+  yeti: mob(28, 'normal', { el: 'ice', name: 'Yeti', speed: 2.6, color: 0xf0f6ff, size: 1.25, model: 'yeti', fit: 1.4 }),
+  icegolem: mob(29, 'elite', { el: 'ice', name: 'Ice Golem', speed: 1.7, color: 0x8fd0ff, size: 1.2, model: 'icegolem', fit: 1.0 }),
+  // Ancient Ruins, levels 30-34
+  ghost: mob(30, 'ranged', { el: 'thunder', name: 'Thunder Ghost', speed: 2.8, color: 0xd0c8ff, size: 1.0, fly: true, hover: 0.05, model: 'ghost', fit: 1.4 }),
+  moonfox: mob(31, 'normal', { el: 'ice', name: 'Moon Fox', speed: 3.2, color: 0xbfd0ff, size: 1.0, model: 'moonfox', fit: 1.0 }),
+  wraith: mob(32, 'ranged', { el: 'wind', name: 'Hush Wraith', speed: 2.6, color: 0x5a4a7a, size: 1.0, fly: true, hover: 0.05, model: 'wraith', fit: 1.1 }),
+  whirl: mob(33, 'normal', { el: 'wind', name: 'Little Whirlwind', speed: 3.2, color: 0xbfe8d8, size: 1.0, fly: true, hover: 0.05, model: 'whirl', fit: 1.4 }),
+  turtle: mob(34, 'elite', { el: 'thunder', name: 'Stone Turtle', speed: 1.6, color: 0x8a9a7a, size: 1.4, model: 'turtle', fit: 1.5 }),
+  // Sky Kingdom, levels 35-43
+  skybird: mob(35, 'normal', { el: 'wind', name: 'Wind Bird', speed: 3.2, color: 0x9fe0ff, size: 1.0, model: 'skybird', fit: 1.5 }),
+  squid: mob(37, 'ranged', { el: 'ice', name: 'Cloud Squid', speed: 2.6, color: 0xdfeaff, size: 1.0, fly: true, hover: 0.05, model: 'squid', fit: 1.5 }),
+  sunfox: mob(39, 'normal', { el: 'fire', name: 'Sun Fox', speed: 3.4, color: 0xffc84a, size: 1.1, model: 'moonfox', fit: 1.0, tint: 0xffd070 }),
+  stormbird: mob(41, 'ranged', { el: 'thunder', name: 'Storm Bird', speed: 3.2, color: 0xb090ff, size: 1.2, model: 'skybird', fit: 1.5, tint: 0xb8a0ff }),
+  stormgolem: mob(43, 'elite', { el: 'thunder', name: 'Storm Golem', speed: 1.8, color: 0xa080ff, size: 1.3, model: 'icegolem', fit: 1.0, tint: 0xc0a8ff }),
 };
 // (24/11) Where monsters live: one hunting ground per kind, see core/zones.js (ZONES, spawnsOf). [kind, x, z] lists for the three maps.
 export const SPAWNS = spawnsOf('village'), FOREST_SPAWNS = spawnsOf('forest'), HARBOR_SPAWNS = spawnsOf('harbor');
@@ -189,7 +214,22 @@ for (const [el, [en, vi, hệ, color]] of Object.entries(EL_NAMES)) {
   NEW_GEAR[`${en.toLowerCase()}_blade`] = { en: `${en} Blade`, vi: `kiếm ${vi} (hệ ${hệ})`, slot: 'weapon', kind: 'sword', el, near: 0.45, eldmg: 0.15, level: 15, color, like: ({ fire: 'blaze_blade', ice: 'glacier_blade', wind: 'tempest_blade', thunder: 'storm_blade' })[el] };
   NEW_GEAR[`${en.toLowerCase()}_staff`] = { en: `${en} Staff`, vi: `trượng ${vi} (hệ ${hệ})`, slot: 'weapon', kind: 'staff', el, far: 0.5, eldmg: 0.15, level: 16, color, like: ({ fire: 'inferno_staff', ice: 'glacier_staff', wind: 'tempest_staff', thunder: 'storm_staff' })[el] };
 }
-for (const [id, it] of Object.entries(NEW_GEAR)) { ITEMS[id] = { ...it, seller: 'forest' }; LADDER[id] = it.level; }
+// (26/11) maps 4-7: each land's merchant sells the gear of its levels (a plain blade, a staff, armour, a charm, and a blade and a staff of every element)
+const LAND_GEAR = [['desert', 22, 25, 'Dune', 'cồn cát'], ['mountain', 27, 30, 'Frostpeak', 'đỉnh băng'], ['ruins', 32, 35, 'Runic', 'cổ ngữ'], ['sky', 38, 44, 'Skyforged', 'thiên không']];
+for (const [land, lo, hi, en, vi] of LAND_GEAR) {
+  const k = en.toLowerCase();
+  NEW_GEAR[`${k}_blade`] = { en: `${en} Blade`, vi: `kiếm ${vi}`, slot: 'weapon', level: lo, color: 0xe8d8a0, like: 'moon_sword', seller: land };
+  NEW_GEAR[`${k}_greatblade`] = { en: `${en} Greatblade`, vi: `đại kiếm ${vi}`, slot: 'weapon', level: hi, color: 0xfff0c0, like: 'moon_sword', seller: land };
+  NEW_GEAR[`${k}_mail`] = { en: `${en} Mail`, vi: `giáp ${vi}`, slot: 'armor', level: lo + 1, like: 'bark_armor', seller: land };
+  NEW_GEAR[`${k}_plate`] = { en: `${en} Plate`, vi: `giáp nặng ${vi}`, slot: 'armor', level: hi, like: 'bark_armor', seller: land };
+  NEW_GEAR[`${k}_charm`] = { en: `${en} Charm`, vi: `bùa ${vi}`, slot: 'charm', level: lo + 2, like: 'owl_feather', seller: land };
+  for (const [el, [, , hệ, color]] of Object.entries(EL_NAMES)) {
+    const E = el.charAt(0).toUpperCase() + el.slice(1);
+    NEW_GEAR[`${k}_${el}_blade`] = { en: `${en} ${E} Blade`, vi: `kiếm ${vi} (hệ ${hệ})`, slot: 'weapon', kind: 'sword', el, near: 0.5, eldmg: 0.18, level: lo + 1, color, like: ({ fire: 'blaze_blade', ice: 'glacier_blade', wind: 'tempest_blade', thunder: 'storm_blade' })[el], seller: land };
+    NEW_GEAR[`${k}_${el}_staff`] = { en: `${en} ${E} Staff`, vi: `trượng ${vi} (hệ ${hệ})`, slot: 'weapon', kind: 'staff', el, far: 0.55, eldmg: 0.18, level: lo + 2, color, like: ({ fire: 'inferno_staff', ice: 'glacier_staff', wind: 'tempest_staff', thunder: 'storm_staff' })[el], seller: land };
+  }
+}
+for (const [id, it] of Object.entries(NEW_GEAR)) { ITEMS[id] = { ...it, seller: it.seller || 'forest' }; LADDER[id] = it.level; }
 export const GEAR_LIKE = Object.fromEntries(Object.entries(NEW_GEAR).map(([id, it]) => [id, it.like]));      // gear.js shows these with the model of the older piece
 for (const [id, level] of Object.entries(LADDER)) {
   const it = ITEMS[id]; if (!it) continue; it.level = level; if (SELLER_OF[id]) it.seller = SELLER_OF[id];
@@ -340,15 +380,44 @@ export const HARBOR_HUNTS = [
 ];
 // (24/11) the pay of a job follows the monsters it asks for: the EXP and the gold they would give, a little more for the trouble
 for (const list of [HUNTS, FOREST_HUNTS, HARBOR_HUNTS]) for (const h of list) { const m = MONSTERS[h.kind]; h.exp = Math.round(m.exp * h.need * 1.3); h.gold = Math.round(m.gold * h.need * 1.6 / 5) * 5 || 5; }
-export const huntsOf = (region) => (region === 'forest' ? FOREST_HUNTS : region === 'harbor' ? HARBOR_HUNTS : HUNTS);
+/** (26/11) Maps 4-7: three jobs on each land's board; the hard line (grades 8-9) is a longer sentence with the same job. */
+const J = (kind, need, easy, hard) => ({ kind, need, gold: 0, exp: 0, en: { easy, hard } });
+export const LAND_HUNTS = {
+  desert: [
+    J('spark', 5, 'Spark cacti are burning the camel food. Please stop five!', "Five spark cacti keep setting the camels' hay on fire. Could you stop them before the caravan leaves?"),
+    J('scorpion', 5, 'Sand scorpions hide near the well. Please chase away five!', "Sand scorpions have been hiding near the well, so nobody dares to fetch water. Would you chase five of them away?"),
+    J('djinn', 4, 'Dust djinns blow sand over the road. Please stop four!', "Four dust djinns keep covering the temple road with sand. Could you stop them? Thunder beats wind!"),
+    J('dino', 2, 'Two fire dinos guard the old road. Be careful!', "Two fire dinos are guarding the old road to the temple. They are strong, so be careful!"),
+  ],
+  mountain: [
+    J('icebunny', 5, 'Snow bunnies are eating our winter carrots. Please stop five!', "The snow bunnies have eaten nearly all our winter carrots. Could you chase five of them away?"),
+    J('seal', 5, 'Frost seals froze the fishing hole. Please chase away five!', "Five frost seals have frozen the fishing hole again. Would you mind chasing them away? Fire melts ice!"),
+    J('yeti', 4, 'Yetis throw snowballs at the lodge! Please stop four.', "Some yetis keep throwing huge snowballs at the lodge windows. Could you stop four of them?"),
+    J('icegolem', 2, 'Two ice golems block the summit path. Be brave!', "Two ice golems are blocking the path to the summit gate. You will need to be brave!"),
+  ],
+  ruins: [
+    J('ghost', 5, 'Thunder ghosts scare the diggers. Please chase away five!', "Thunder ghosts keep frightening the diggers at night. Could you chase five of them away?"),
+    J('moonfox', 5, 'Moon foxes took our maps. Please catch five!', "The moon foxes have run off with our old maps. Would you catch five of them?"),
+    J('wraith', 4, 'Hush wraiths whisper in the library. Please stop four!', "Four hush wraiths are whispering in the lost library, and the books are losing their words. Please stop them!"),
+    J('turtle', 2, 'Two stone turtles sleep on the road. Wake them gently… with your sword!', "Two stone turtles have fallen asleep in the middle of the west road. Could you move them on? Wind works well on them!"),
+  ],
+  sky: [
+    J('skybird', 5, 'Wind birds stole the bell ropes. Please catch five!', "The wind birds have stolen the ropes of the wind bells. Could you catch five of them?"),
+    J('squid', 5, 'Cloud squids spray ink on the clouds. Please stop five!', "Five cloud squids keep spraying ink all over the white clouds. Would you mind stopping them? Fire works well on ice!"),
+    J('sunfox', 4, 'Sun foxes are too hot for the garden. Please chase away four!', "Some sun foxes are drying out the star garden. Could you chase four of them away? Ice cools them down!"),
+    J('stormgolem', 2, 'Two storm golems guard the arena road. Be brave!', "Two storm golems are guarding the road to the Sun Arena. You'll need all your courage!"),
+  ],
+};
+for (const list of Object.values(LAND_HUNTS)) for (const h of list) { const m = MONSTERS[h.kind]; h.exp = Math.round(m.exp * h.need * 1.3); h.gold = Math.round(m.gold * h.need * 1.6 / 5) * 5 || 5; }
+export const huntsOf = (region) => (LAND_HUNTS[region] || (region === 'forest' ? FOREST_HUNTS : region === 'harbor' ? HARBOR_HUNTS : HUNTS));
 export const huntLine = (h, grade) => h.en[grade >= 8 ? 'hard' : 'easy'];
 /** The hunt in progress for a board: profile.hunt (village), profile.hunt2 (forest) or profile.hunt3 (harbor). */
-export const HUNT_KEY = { village: 'hunt', forest: 'hunt2', harbor: 'hunt3' };
+export const HUNT_KEY = { village: 'hunt', forest: 'hunt2', harbor: 'hunt3', desert: 'hunt4', mountain: 'hunt5', ruins: 'hunt6', sky: 'hunt7' };
 export const hunt = (profile, region = 'village') => { const k = HUNT_KEY[region] || 'hunt'; return profile[k] || (profile[k] = { i: 0, got: 0, active: false, done: 0 }); };
 /** Counts a defeated monster for the active hunt on either board. Returns true when this kill finished one. */
 export function countKill(profile, kind) {
   let done = false;
-  for (const region of ['village', 'forest', 'harbor']) {
+  for (const region of Object.keys(HUNT_KEY)) {
     const h = hunt(profile, region), list = huntsOf(region), q = list[h.i % list.length];
     if (!h.active || q.kind !== kind || h.got >= q.need) continue;
     h.got += 1; if (h.got >= q.need) done = true;
@@ -366,13 +435,23 @@ export const BOSS3 = boss(17, { id: 'queen', el: 'wind', flag: 'boss3', name: 'M
 /** Map 2's main boss: Captain Octopus on the north point beside the lighthouse (the Blender octopus, 3 word shields). */
 export const BOSS4 = boss(9, { id: 'octopus', el: 'fire', flag: 'boss4', name: 'Captain Octopus', speed: 1.4, color: 0xc0397a, size: 2.4, region: 'harbor', model: 'octopus', fit: 1.0 });
 export const BOSSES = [BOSS, BOSS2, BOSS3, BOSS4];
+/** (26/11) Maps 4-7: the boss of each land guards its piece of the Compass. Built with the land (combat.addLand), not with the old three. */
+export const LAND_BOSSES = {
+  desert: boss(24, { id: 'sanddragon', el: 'fire', flag: 'boss5', name: 'Sand Dragon', speed: 1.5, color: 0xd9a04a, size: 1.0, region: 'desert', model: 'sanddragon', fit: 0.8 }),
+  mountain: boss(29, { id: 'icedragon', el: 'ice', flag: 'boss6', name: 'Ice Dragon', speed: 1.5, color: 0x8fd0ff, size: 1.0, region: 'mountain', model: 'icedragon', fit: 2.2 }),
+  ruins: boss(34, { id: 'giant', el: 'thunder', flag: 'boss7', name: 'Stone Giant', speed: 1.3, color: 0x9a968a, size: 1.0, region: 'ruins', model: 'giant', fit: 0.75 }),
+  sky: boss(44, { id: 'sundragon', el: 'fire', flag: 'boss8', name: 'Sun Dragon', speed: 1.6, color: 0xffb04a, size: 1.0, region: 'sky', model: 'sundragon', fit: 4.5 }),
+};
+export const BOSS_VI = { boss1: 'Vua Slime', boss2: 'Golem Cổ', boss3: 'Nữ hoàng Nấm', boss4: 'Thuyền trưởng Bạch Tuộc', boss5: 'Rồng Cát', boss6: 'Rồng Băng', boss7: 'Người Khổng Lồ Đá', boss8: 'Rồng Mặt Trời' };
 /** (24/11) Map 2 (the sea, levels 5-10) opens once the Slime King is beaten and the hero has reached the village's top level (5) and passed the owl's review. */
 export const map2Ready = (profile) => !!(profile.flags.boss1 && profile.stats.level >= 5 && profile.gates && profile.gates[5]);
 /** Map 3 (the forest, levels 10-20) opens at level 10 with the owl's exam passed (and Tom's badge, `forest_open`). */
 export const forestReady = (profile) => !!(profile.flags.forest_open && profile.stats.level >= 10 && profile.gates && profile.gates[10]);
 /** The forest chapter of Map 1 (monsters, hunt board, the Mushroom Queen) wakes once the crystal quest is done, so a young hero finds the forest quiet at first. */
 export const forestChapter = (profile) => !!(profile.quests && profile.quests.forest && profile.quests.forest.step === 'done');
-export const map3Ready = (profile) => !!(profile.flags.boss2 && profile.gates && profile.gates[20]);      // (24/11) the forest is finished: the Ancient Golem is beaten and the level-20 exam passed (the desert, Map 4, is still to be built)
+export const map3Ready = (profile) => !!(profile.flags.boss2 && profile.gates && profile.gates[20]);
+/** (26/11) The hero has opened the land that comes after `flag`'s boss: used for the announcements of maps 5-7. */
+export const landDone = (profile, flag, level) => !!(profile.flags[flag] && profile.gates && profile.gates[level]);      // (24/11) the forest is finished: the Ancient Golem is beaten and the level-20 exam passed (the desert, Map 4, is still to be built)
 
 // ---------------------------------------------------------------- mini games
 // (24/11) A mini game costs gold to enter (progress.js `gameFee`) and pays nothing afterwards: no gold, no EXP (the old daily pay limits are gone).

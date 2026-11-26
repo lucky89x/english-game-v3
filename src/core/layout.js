@@ -4,8 +4,9 @@ import forest from './regions/forest.js';
 import harbor from './regions/harbor.js';
 import isle from './regions/isle.js';
 import village from './regions/village.js';
+import { desert, mountain, ruins, sky } from './regions/lands.js';
 export { mulberry32, WATER_LEVEL, BRIDGE_LEN, BRIDGE_RISE } from './regionkit.js';
-export const REGIONS = { forest, village, harbor, isle };
+export const REGIONS = { forest, village, harbor, isle, desert, mountain, ruins, sky };      // (26/11) maps 4-7: core/regions/lands.js
 let cur = forest;
 export let NAME, TITLE, SIZE, PLAY_RADIUS, RIVER_START, RIVER_END, WATERFALL, BRIDGES, STONES_Z, STONES, LANDMARKS, ENTRANCE, SPAWN, EXITS, PATHS, SOLIDS, TREES, ROCKS;
 const listeners = [];

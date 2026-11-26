@@ -5,7 +5,9 @@ import * as THREE from 'three';
 import * as L from '../core/layout.js';
 import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
 import { PLAY } from '../core/regions/harbor.js';
-import { ITEMS, bag, lootRoll, giveLoot, lootCloth, MONSTERS, SPAWNS, FOREST_SPAWNS, HARBOR_SPAWNS, HUNT_KEY, forestChapter, inSafe, CHASE, RESPAWN, playerAtk, hurt, inArc, huntsOf, hunt, countKill, huntLine, BOSSES, BOSS4, shieldDue } from '../core/rules.js';
+import { ITEMS, bag, lootRoll, giveLoot, lootCloth, MONSTERS, SPAWNS, FOREST_SPAWNS, HARBOR_SPAWNS, HUNT_KEY, forestChapter, inSafe, CHASE, RESPAWN, playerAtk, hurt, inArc, huntsOf, hunt, countKill, huntLine, BOSSES, BOSS4, shieldDue, LAND_BOSSES, BOSS_VI } from '../core/rules.js';
+import { LAND, isLand } from '../core/regions/lands.js';
+import { spawnsOf } from '../core/zones.js';
 
 // BOARD: on the Quest Square since 17/11 (was out at 29, -14), facing the fountain
 export const BOARD = { x: -6.2, z: 0.6 }, BOSS_AT = { x: 38, z: -52 }, BOSS2_AT = { x: 58, z: -44 };      // (26/11) beside the watchtower, not inside it      // (24/11) the Slime King in the meadow's far north, the Ancient Golem on the clearing in the north-east of the FOREST
@@ -13,8 +15,8 @@ export const BOARD = { x: -6.2, z: 0.6 }, BOSS_AT = { x: 38, z: -52 }, BOSS2_AT 
 export const FOREST_BOARD = { x: -33.5, z: 46 }, BOSS3_AT = { x: -46, z: -24 };
 /** Map 2 (Sunny Harbor, 18/11): the board beside the harbour square, Captain Octopus's cove next to the lighthouse. */
 export const HARBOR_BOARD = PLAY.board, BOSS4_AT = PLAY.boss;
-const BOARD_OF = { village: BOARD, forest: FOREST_BOARD, harbor: HARBOR_BOARD };
-const BOSS_NAMES = { boss1: 'Vua Slime', boss2: 'Golem Cổ', boss3: 'Nữ hoàng Nấm', boss4: 'Thuyền trưởng Bạch Tuộc' };
+const BOARD_OF = { village: BOARD, forest: FOREST_BOARD, harbor: HARBOR_BOARD, ...Object.fromEntries(Object.entries(LAND).map(([k, d]) => [k, d.board])) };      // (26/11) maps 4-7 have their board in the town by the gate
+const BOSS_NAMES = BOSS_VI;
 import { addExp, maxHp, killExp, atCap, capGold } from '../core/save.js';
 import { levelCap } from '../core/progress.js';
 import { compact, label } from '../world/common.js';
@@ -70,14 +72,14 @@ export class Wild {
     this.boss = this.bosses[0];
     // quest boards: the Quest Square in the village, the entrance path in the forest
     this.boards = [];
-    for (const [at, region] of [[BOARD, 'village'], [FOREST_BOARD, 'forest'], [HARBOR_BOARD, 'harbor']]) {
+    for (const [at, region] of [[BOARD, 'village'], [FOREST_BOARD, 'forest'], [HARBOR_BOARD, 'harbor'], ...Object.entries(LAND).map(([k, d]) => [d.board, k])]) {
       const wood = new THREE.MeshStandardMaterial({ color: 0x8a5a30, roughness: 0.85 }), g = new THREE.Group();
       for (const sx of [-0.7, 0.7]) { const p = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.08, 2.2, 6), wood); p.position.set(sx, 1.1, 0); g.add(p); }
       const b = new THREE.Mesh(new THREE.BoxGeometry(1.7, 1.0, 0.1), new THREE.MeshStandardMaterial({ color: 0xc89a5a, roughness: 0.9 })); b.position.y = 1.6; g.add(b);
       for (const [x, y, c] of [[-0.45, 1.7, 0xfff4dc], [0.15, 1.55, 0xfff4dc], [0.55, 1.75, 0xffd8a0]]) { const n = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.45, 0.02), new THREE.MeshStandardMaterial({ color: c })); n.position.set(x, y, 0.06); n.rotation.z = (x * 3) % 0.2; g.add(n); }
       const roof = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.1, 0.5), wood); roof.position.y = 2.2; g.add(roof);
       compact(g); g.traverse((o) => { if (o.isMesh) o.castShadow = true; });
-      g.position.set(at.x, L.REGIONS[region].groundHeight(at.x, at.z), at.z); g.rotation.y = region === 'village' ? Math.atan2(-at.x, 4 - at.z) : region === 'harbor' ? 0.55 : Math.PI / 2; g.scale.setScalar(1.25); this.root.add(g);
+      g.position.set(at.x, L.REGIONS[region].groundHeight(at.x, at.z), at.z); g.rotation.y = region === 'village' ? Math.atan2(-at.x, 4 - at.z) : region === 'harbor' ? 0.55 : isLand(region) ? Math.atan2(-at.x, 50 - at.z) : Math.PI / 2; g.scale.setScalar(1.25); this.root.add(g);
       this.boards.push({ at, region, g }); if (region === 'village') this.boardMesh = g;
     }
     // (24/11) a floating sign over the middle of every hunting ground: its name, its level, one kind of monster only
@@ -164,7 +166,7 @@ export class Wild {
   }
   /** Village: meadow monsters, bosses and the board. Forest: Map 2 monsters, only once Map 2 is open. */
   setRegion(name) {
-    this.clearShots(); this.target = this.hover = null; this.region = name; this.root.visible = name === 'village' || name === 'forest' || name === 'harbor'; for (const b of this.boards || []) b.g.visible = b.region === name;
+    this.clearShots(); this.target = this.hover = null; this.region = name; this.root.visible = name === 'village' || name === 'forest' || name === 'harbor' || isLand(name); for (const b of this.boards || []) b.g.visible = b.region === name;
     for (const m of this.mobs) { if (m.region === name) this.place(m); else m.g.visible = false; if (!m.lvTag && m.bar) this.tagLevel(m); }
     for (const sg of this.signs || []) sg.visible = sg.userData.region === name;
   }
@@ -174,14 +176,14 @@ export class Wild {
     const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: LVTEX[lv], depthTest: false, transparent: true })); sp.scale.set(0.55, 0.3, 1); sp.position.set(0, m.bar.position.y + 0.3, 0); sp.renderOrder = 7; m.g.add(sp); m.lvTag = sp;
   }
   /** The region's fighting content is on: always in the village; the forest after the crystal quest (last chapter of Map 1); the harbor once Map 2 is open. */
-  on(region, p) { return region === 'village' || region === 'forest' || !!(p && p.flags.map2); }      // (24/11) the forest is only reached at level 10, so its monsters are always awake
+  on(region, p) { return region === 'village' || region === 'forest' || isLand(region) || !!(p && p.flags.map2); }      // (24/11) the forest is only reached at level 10, so its monsters are always awake
   /** A monster takes part when it lives in this region and that region's fighting content is on. */
   here(m, p) { return m.region === this.region && this.on(m.region, p); }
   /** A monster made from a Blender model (rigged, with Idle and Walk clips). Own copies of the materials, so a hit can flash it. */
   glbBody(def, gltf) {
     const g = new THREE.Group(), inner = SkeletonUtils.clone(gltf.scene), mats = [];
     inner.scale.setScalar((def.fit || 1) / def.size);
-    inner.traverse((o) => { if (!o.isMesh) return; o.castShadow = true; o.frustumCulled = false; const c = o.material.clone(); o.material = c; mats.push({ mat: c, e: c.emissive ? c.emissive.clone() : null, k: c.emissiveIntensity === undefined ? 1 : c.emissiveIntensity }); });
+    inner.traverse((o) => { if (!o.isMesh) return; o.castShadow = true; o.frustumCulled = false; const c = o.material.clone(); if (def.tint && c.color) c.color.multiply(new THREE.Color(def.tint)); o.material = c; mats.push({ mat: c, e: c.emissive ? c.emissive.clone() : null, k: c.emissiveIntensity === undefined ? 1 : c.emissiveIntensity }); });
     inner.updateMatrixWorld(true); const box = new THREE.Box3().setFromObject(inner); g.add(inner);
     const mixer = new THREE.AnimationMixer(inner), act = {}; for (const c of gltf.animations) act[c.name] = mixer.clipAction(c);
     if (!act.Attack && (act.Weapon || act.Punch)) act.Attack = act.Weapon || act.Punch;      // (20/11) Quaternius clip names
@@ -220,6 +222,26 @@ export class Wild {
     });
     this.bosses.push(this.makeBoss(BOSS4, BOSS4_AT, eye, src.octopus));
     for (const m of this.mobs) if (m.region === 'harbor') { m.g.visible = this.region === 'harbor' && !m.boss; if (this.region === 'harbor') this.place(m); }
+  }
+  /** (26/11) Maps 4-7: the monsters of a land and its boss, built the first time the hero walks in (so the models are only fetched then).
+   *  load(key) -> a loaded glTF or null; key is the monster's `model`. A model that did not load leaves a coloured blob. */
+  async addLand(region, load) {
+    this.lands = this.lands || {}; if (this.lands[region] || !isLand(region)) return; this.lands[region] = true;
+    const bossDef = LAND_BOSSES[region], spawns = spawnsOf(region), keys = [...new Set([...spawns.map(([k]) => MONSTERS[k].model), bossDef.model])], src = {};
+    for (const k of keys) { try { src[k] = await load(k); } catch { src[k] = null; } }
+    const eye = new THREE.MeshBasicMaterial({ color: 0x24140c });
+    spawns.forEach(([kind, x, z], n) => {
+      const def = MONSTERS[kind], i = this.mobs.length, gl = src[def.model]; let g, body = null, parts = {}, top = 1.3;
+      if (gl) { parts = this.glbBody(def, gl); g = parts.g; top = parts.top + 0.25; }
+      else { g = new THREE.Group(); body = new THREE.Mesh(new THREE.SphereGeometry(0.5, 14, 10), new THREE.MeshStandardMaterial({ color: def.color, roughness: 0.4, emissive: def.color, emissiveIntensity: 0.12 })); body.position.y = def.fly ? 1.2 : 0.45; body.castShadow = true; g.add(body);
+        for (const sx of [-1, 1]) { const e = new THREE.Mesh(new THREE.SphereGeometry(0.085, 8, 6), eye); e.position.set(sx * 0.17, body.position.y + 0.06, 0.44); g.add(e); } }
+      const { bar, back } = this.mobBars(g, top, false); g.scale.setScalar(def.size); this.root.add(g);
+      if (parts.idle) parts.idle.time = (n * 0.37) % parts.idle.getClip().duration;
+      this.mobs.push({ i, kind, def, region, g, body, bar, back, home: { x, z }, x, z, hp: def.hp, dead: 0, hitCool: 0, flash: 0, ph: n * 1.3, mats: parts.mats, mixer: parts.mixer, idle: parts.idle, walk: parts.walk, acts: parts.acts, cur: parts.idle });
+      g.visible = false;
+    });
+    this.bosses.push(this.makeBoss(bossDef, LAND[region].boss, eye, src[bossDef.model]));
+    for (const m of this.mobs) if (m.region === region) { m.g.visible = this.region === region && !m.boss; if (this.region === region) this.place(m); if (!m.lvTag && m.bar) this.tagLevel(m); }
   }
   /** Map 1 (batch 13, 19/11): swaps the code-built meadow and forest monsters and the three bosses for the Blender models.
    *  load(kind) -> a loaded glTF or null; kinds are the monster keys (slime, red, golem, bat, shroom) and the boss ids (king, ancient, queen).
