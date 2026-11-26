@@ -1,0 +1,10 @@
+MỎ VÀNG SƯƠNG NÚI
+Trò mới dành cho map núi. Chưa nối vào bản đồ. Nhận cards của Unit hiện tại.
+Canh móc lắc và chạm Thả móc. Vàng 35 điểm, ngọc 60, đá 5. Vật nặng kéo chậm. Có nút Thả vật và tạm dừng.
+Thu 180 điểm trong 65 giây. Mỗi lượt kéo được vật mở túi từ, đọc nghĩa Việt và chọn từ Anh. Đúng cộng 15 điểm trong ván. Đồng hồ dừng khi đọc. Sai vẫn hiện đáp án để học lại.
+Hết giờ có nút chơi lại. Hoàn thành có nút Nhận thưởng theo hợp đồng của game. Trò chỉ trả kết quả, không cộng vàng/EXP và không thu phí.
+Cards rỗng báo Unit chưa được soạn, rồi cho luyện bộ từ cơ bản ghi rõ nguồn id miner_basic. Không dùng nội dung lớp khác.
+Vẽ trực tiếp canvas, không ảnh, âm thanh, mô hình hay phụ thuộc ngoài.
+Nguồn tham khảo cơ chế Gold Miner truyền thống
+https://arcadethunder.com/puzzle-games/gold-miner
+Móc lắc tự động, mục tiêu trong thời gian giới hạn và tốc độ kéo phụ thuộc vật nặng. Mã, nội dung học và hình vẽ được viết mới.
