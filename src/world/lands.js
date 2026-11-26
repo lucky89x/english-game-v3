@@ -55,10 +55,10 @@ function banks(R, color, emissive, overhead = 22) {
   const m = merged(parts, new THREE.MeshStandardMaterial({ color, roughness: 1, emissive, emissiveIntensity: 0.25 })); m.userData.far = true; return m;
 }
 /** A still pool that glows a little (pond, lake, lava): a disc just above the ground; `pulse` makes it breathe. */
-function pool(x, z, r, color, { y = 0.14, opacity = 0.9, pulse = 0, glow = false } = {}) {
-  const mat = glow ? new THREE.MeshBasicMaterial({ color, transparent: opacity < 1, opacity }) : new THREE.MeshStandardMaterial({ color, roughness: 0.12, metalness: 0.1, transparent: true, opacity, emissive: color, emissiveIntensity: 0.25 });
+function pool(x, z, r, color, { y = 0.14, opacity = 0.9, pulse = 0, glow = false, hot = null } = {}) {
+  const mat = glow ? new THREE.MeshBasicMaterial({ color, transparent: opacity < 1, opacity, toneMapped: false }) : new THREE.MeshStandardMaterial({ color, roughness: 0.12, metalness: 0.1, transparent: true, opacity, emissive: color, emissiveIntensity: 0.25 });
   const m = new THREE.Mesh(new THREE.CircleGeometry(r, 40), mat); m.rotation.x = -Math.PI / 2; m.position.set(x, gy(x, z) + y, z); m.receiveShadow = !glow;
-  if (pulse) { const base = new THREE.Color(color), hot = base.clone().lerp(new THREE.Color(0xffffff), 0.35); m.userData.update = (t) => { mat.color.copy(base).lerp(hot, 0.5 + 0.5 * Math.sin(t * pulse + x)); }; }
+  if (pulse) { const base = new THREE.Color(color), top = hot === null ? base.clone().lerp(new THREE.Color(0xffffff), 0.35) : new THREE.Color(hot); m.userData.update = (t) => { mat.color.copy(base).lerp(top, 0.5 + 0.5 * Math.sin(t * pulse + x)); }; }
   return m;
 }
 /** One crystal: a six-sided shaft with a point, leaning a little. */
@@ -117,15 +117,15 @@ export async function landExtras(add, loadModel, shadowed) {
     add(drift({ n: 360, color: 0xffc8f0, size: 30, fall: -0.35, sway: 1.3, high: 10, opacity: 0.8 }));
   }
   if (L.NAME === 'volcano') {
-    for (const [x, z, r] of R.lava || []) { add(pool(x, z, r - 0.6, 0xff6a1a, { y: 0.22, opacity: 1, pulse: 1.4, glow: true })); const rim = new THREE.Mesh(new THREE.TorusGeometry(r - 0.3, 0.55, 6, 28), new THREE.MeshStandardMaterial({ color: 0x241c1c, roughness: 1, flatShading: true })); rim.rotation.x = Math.PI / 2; rim.position.set(x, gy(x, z) + 0.2, z); rim.scale.z = 0.7; add(rim); }
+    for (const [x, z, r] of R.lava || []) { add(pool(x, z, r - 0.6, 0xf03a00, { y: 0.22, opacity: 1, pulse: 1.4, glow: true, hot: 0xff9a18 })); const rim = new THREE.Mesh(new THREE.TorusGeometry(r - 0.3, 0.55, 6, 28), new THREE.MeshStandardMaterial({ color: 0x241c1c, roughness: 1, flatShading: true })); rim.rotation.x = Math.PI / 2; rim.position.set(x, gy(x, z) + 0.2, z); rim.scale.z = 0.7; add(rim); }
     // Fire Mountain behind the gate: a broken cone with a glowing mouth and rivers of lava down its side
-    const cone = new THREE.Group(), rock = new THREE.MeshStandardMaterial({ color: 0x2c2626, roughness: 1, flatShading: true }), fire = new THREE.MeshBasicMaterial({ color: 0xff7a1a, fog: false });
+    const cone = new THREE.Group(), rock = new THREE.MeshStandardMaterial({ color: 0x2c2626, roughness: 1, flatShading: true }), fire = new THREE.MeshBasicMaterial({ color: 0xff5a10, fog: false, toneMapped: false });
     cone.add(new THREE.Mesh(new THREE.CylinderGeometry(11, 52, 62, 22, 4, true), rock));
     const mouth = new THREE.Mesh(new THREE.CircleGeometry(10.6, 22), fire); mouth.rotation.x = -Math.PI / 2; mouth.position.y = 30.5; cone.add(mouth);
     for (const a of [0.3, 1.5, 2.6, 4.0, 5.2]) { const st = new THREE.Mesh(new THREE.CylinderGeometry(11.15, 52.15, 62, 3, 1, true, a, 0.07 + (a % 1) * 0.05), fire); cone.add(st); }
     const smoke = new THREE.Group(), sm = new THREE.MeshBasicMaterial({ color: 0x3a3232, transparent: true, opacity: 0.55, depthWrite: false, fog: false });
     for (let i = 0; i < 7; i++) { const b = new THREE.Mesh(new THREE.SphereGeometry(7 + i * 1.4, 10, 8), sm); b.userData.k = i; smoke.add(b); }
-    smoke.userData.update = (t) => { for (const b of smoke.children) { const u = ((t * 0.035 + b.userData.k / 7) % 1); b.position.set(Math.sin(u * 5 + b.userData.k) * 6 + u * 26, 64 + u * 46, 0); b.scale.setScalar(0.6 + u * 1.3); } fire.color.setHSL(0.06, 1, 0.5 + 0.06 * Math.sin(t * 2)); };
+    smoke.userData.update = (t) => { for (const b of smoke.children) { const u = ((t * 0.035 + b.userData.k / 7) % 1); b.position.set(Math.sin(u * 5 + b.userData.k) * 6 + u * 26, 64 + u * 46, 0); b.scale.setScalar(0.6 + u * 1.3); } fire.color.setHSL(0.05, 1, 0.5 + 0.05 * Math.sin(t * 2)); };
     cone.position.set(0, 30, -128); cone.userData.far = true; add(cone); smoke.position.set(0, 0, -128); smoke.userData.far = true; add(smoke);
     add(drift({ n: 420, color: 0xff9a3a, size: 30, fall: -1.1, sway: 1.1, high: 13, opacity: 0.85 }));
   }

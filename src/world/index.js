@@ -21,7 +21,7 @@ export async function buildWorld(scene, loadModel, loadAnimated) {
   const updaters = [], add = (o) => { root.add(o); if (o.userData.update) updaters.push(o.userData.update); return o; };
   add(buildTerrain());
   const HERE = L.REGIONS[L.NAME], flora = HERE.flora || 'full', none = () => { const g = new THREE.Group(); g.userData.full = 0; return g; };      // (26/11) maps 4-7: no meadow grass on sand and snow, no far mountains round the sky island
-  const detail = { cobbles: add(buildCobbles()), grass: add(flora === 'none' ? none() : buildGrass()), flowers: add(flora === 'full' ? buildFlowers() : none()), far: add(L.isSea() || HERE.noFar ? new THREE.Group() : mountains()), critters: add(flora === 'full' ? critters() : none()) };      // no mountains round a harbour: open sea to the horizon
+  const detail = { cobbles: add(HERE.noCobbles ? none() : buildCobbles()), grass: add(flora === 'none' ? none() : buildGrass()), flowers: add(flora === 'full' ? buildFlowers() : none()), far: add(L.isSea() || HERE.noFar ? new THREE.Group() : mountains()), critters: add(flora === 'full' ? critters() : none()) };      // no mountains round a harbour: open sea to the horizon
   if (HERE.land) { add(buildTrees()); add(buildRocks()); if (flora === 'sparse') add(bushes()); }      // a dry land: no river, no fences, no farm animals
   else { add(buildWater()); add(buildTrees()); add(buildRocks()); add(buildFences()); add(riverside()); add(bushes()); add(creatures(await animalModels(loadModel, loadAnimated))); if (L.WATERFALL) add(fallRocks()); }
   // models from files (houses, bridge, gate) get the same painted surface as the generated scenery

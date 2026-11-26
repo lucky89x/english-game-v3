@@ -297,7 +297,8 @@ const CITY_DECOR = [
 ];
 const city = makeRegion({
   name: 'city', title: 'Future City', land: true, size: 200, playRadius: 82, seed: 20261204, trees: 0, rocks: 0, roughness: 0.12, ...DRY,
-  palette: { a: 0xa9b9c9, b: 0xbdcbd9, far: 0x8ea0b4, path: 0x3b444f, dirt: 0x59636f, sand: 0xd0dae4, rock: 0x7a8694, rockL: 0x9aa6b4 }, flora: 'none',
+  palette: { a: 0xa9b9c9, b: 0xbdcbd9, far: 0x8ea0b4, path: 0x3b444f, dirt: 0x59636f, sand: 0xd0dae4, rock: 0x7a8694, rockL: 0x9aa6b4 }, flora: 'none', noCobbles: true,      // smooth dark roads, not village cobbles
+ 
   landmarks: [
     { id: 'station', en: 'station', vi: 'nhà ga', label: 'Sky Station', x: 0, z: 50, spot: [0, 46] },
     { id: 'tower', en: 'solar tower', vi: 'tháp năng lượng mặt trời', label: 'Solar Tower', x: 0, z: -12, spot: [0, 1] },
@@ -333,7 +334,7 @@ const DREAM_DECOR = [
 const seg = (a, b, w = 2.6) => P(w, a, [+((a[0] + b[0]) / 2).toFixed(1), +((a[1] + b[1]) / 2).toFixed(1)], b);
 const dream = makeRegion({
   name: 'dream', title: 'Dream Kingdom', land: true, size: 200, playRadius: 82, seed: 20261205, trees: 0, rocks: 14, roughness: 0.2, ...DRY,
-  palette: { a: 0xc6b6f0, b: 0xe0d2fa, far: 0xf4ecff, path: 0xfff0c2, dirt: 0xeedca8, sand: 0xfaf2ff, rock: 0xd8ccf4, rockL: 0xffffff }, flora: 'none', noFar: true, clouds: true, hour: 18.7,
+  palette: { a: 0xc6b6f0, b: 0xe0d2fa, far: 0xf4ecff, path: 0xfff0c2, dirt: 0xeedca8, sand: 0xfaf2ff, rock: 0xd8ccf4, rockL: 0xffffff }, flora: 'none', noFar: true, clouds: true, hour: 18.25,
   landmarks: [
     { id: 'gate', en: 'dream gate', vi: 'cổng mộng mơ', label: 'Dream Gate', x: 0, z: 52, spot: [0, 48] },
     { id: 'fountain', en: 'star fountain', vi: 'đài phun nước ngôi sao', label: 'Star Fountain', x: 0, z: 0, spot: [0, 7] },
