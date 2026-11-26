@@ -48,7 +48,7 @@ export function findPath(ax, az, bx, bz) {
       const ni = nz * N + nx;
       if (!grid[ni] || closed[ni]) continue;
       if (dx && dz && (!grid[z * N + nx] || !grid[nz * N + x])) continue;          // no corner cutting
-      if (!canStep(cx(x), cx(z), cx(nx), cx(nz), 0.3) && !canStep(cx(nx), cx(nz), cx(x), cx(z), 0.3)) continue;
+      if (!canStep(cx(x), cx(z), cx(nx), cx(nz), 0.3)) continue;      // (26/11) the way the hero walks, like the hero's own step: a cliff no longer counts as a road because one can jump DOWN it
       const ng = g[cur] + (dx && dz ? 1.414 : 1);
       if (ng < g[ni]) { g[ni] = ng; came[ni] = cur; push(ni, ng + Math.hypot(nx - tx, nz - tz)); }
     }

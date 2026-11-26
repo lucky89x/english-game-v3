@@ -2,6 +2,8 @@
 // solids); wheel over the map zooms only the map; the planned route and quest markers are shown.
 import * as L from '../core/layout.js';
 import { findPath, snap } from '../core/nav.js';
+import { ZONES } from '../core/zones.js';
+import { MONSTERS } from '../core/rules.js';
 
 const BASE = 2;                     // px per metre in the pre-rendered map image
 export class Minimap {
@@ -55,6 +57,10 @@ export class Minimap {
     ctx.drawImage(this.bg, w / 2 - (player.x + L.SIZE / 2) * s, h / 2 - (player.z + L.SIZE / 2) * s, L.SIZE * s, L.SIZE * s);
     if (this.route) { ctx.strokeStyle = '#ff5a3c'; ctx.lineWidth = 2.5; ctx.setLineDash([5, 4]); ctx.beginPath(); this.route.forEach((p, i) => { const [mx, my] = this.toMap(p.x, p.z); if (i) ctx.lineTo(mx, my); else ctx.moveTo(mx, my); }); ctx.stroke(); ctx.setLineDash([]); }
     ctx.font = '700 10px sans-serif'; ctx.textAlign = 'center';
+    // (26/11) the hunting grounds: a ring, the icon and the level, the ground of the hero's level in gold ("where do I go to fight?")
+    for (const z of ZONES[L.NAME] || []) { const [mx, my] = this.toMap(z.x, z.z), r = z.r * s, lv = (MONSTERS[z.kind] || {}).level || 1, mine = this.level && lv === this.level; if (mx < -r || my < -r || mx > w + r || my > h + r) continue;
+      ctx.lineWidth = mine ? 2.5 : 1.5; ctx.strokeStyle = mine ? '#ffc21a' : 'rgba(200,40,40,.75)'; ctx.fillStyle = mine ? 'rgba(255,200,40,.18)' : 'rgba(220,60,60,.10)'; ctx.beginPath(); ctx.arc(mx, my, Math.max(5, r), 0, 7); ctx.fill(); ctx.stroke();
+      ctx.font = '700 10px system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.strokeText(`${z.icon} Lv ${lv}`, mx, my + 3); ctx.fillStyle = '#7a1a1a'; ctx.fillText(`${z.icon} Lv ${lv}`, mx, my + 3); }
     for (const l of L.LANDMARKS) { const [mx, my] = this.toMap(l.x, l.z); if (mx < -30 || my < -10 || mx > w + 30 || my > h + 10) continue; ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.strokeText(l.label, mx, my + 3); ctx.fillStyle = '#3a2410'; ctx.fillText(l.label, mx, my + 3); }
     for (const m of markers) {
       if (m.small) { const [sx, sy] = this.toMap(m.x, m.z); if (sx < 0 || sy < 0 || sx > w || sy > h) continue; ctx.fillStyle = m.color; ctx.strokeStyle = '#3a2410'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(sx, sy, 3.2, 0, 7); ctx.fill(); ctx.stroke(); continue; }

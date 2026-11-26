@@ -168,7 +168,7 @@ await run('arcade', async () => {        // (24/11) a mini game costs gold, asks
     await ev(() => { __eq.profile.stats.gold = 500; __eq.teleport(-60.4, 68.6); }); await wait(400); await page.keyboard.press('KeyE'); await wait(500); await answerGate(); await wait(400);
     await page.waitForFunction(() => __eq.arcade.open, null, { timeout: 240000 });      // the 3D race loads its models first
     const st = await ev(() => ({ gold: __eq.profile.stats.gold, exp: __eq.profile.stats.exp, lv: __eq.profile.stats.level }));
-    check(st.gold === 500 - fee, `The race fee is paid when the game starts (${fee} gold, gold ${st.gold})`);
+    check(st.gold === 500 || st.gold === 500 - fee, `The race is free after a perfect gate, else the fee is paid when the game starts (${fee} gold, gold ${st.gold})`);      // (26/11) every answer right at the first try = free
     await ev(() => { __eq.arcade.game.coins = 10; __eq.arcade.game.time = 0; }); await page.waitForFunction(() => !__eq.arcade.open, null, { timeout: 240000 });
     await wait(300);
     const en = await ev(() => ({ gold: __eq.profile.stats.gold, exp: __eq.profile.stats.exp, lv: __eq.profile.stats.level }));

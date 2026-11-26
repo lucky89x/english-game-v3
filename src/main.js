@@ -176,6 +176,9 @@ const MAP1_FILES = { goblin: 'mob_shadow_wolf', imp: 'mob_magma_crystal', orc: '
 const map1Model = (k) => gltf(MAP1_FILES[k]).catch(() => null);
 const staticModel = async (name) => (await gltf(name)).scene.clone(true);
 const animatedModel = async (name) => { const g = await gltf(name); return { scene: SkeletonUtils.clone(g.scene), animations: g.animations }; };
+/** (26/11) A copy of a model with its own materials (so it can be tinted) that SHARES the mesh data and the pictures with every other copy.
+ *  The villagers and the game hosts used to download and decode their 2048-pixel pictures twelve times over. */
+const ownLook = async (name) => { const g = await animatedModel(name); g.scene.traverse((o) => { if (o.isMesh && o.material) o.material = Array.isArray(o.material) ? o.material.map((m) => m.clone()) : o.material.clone(); }); return g; };
 const faceTex = async (name) => { const t = await texLoader.loadAsync(`./assets/tex/ngoc_face_${name}.png`); t.flipY = false; t.colorSpace = THREE.SRGBColorSpace; return t; };
 
 const ui = new UI(), store = Save.load();
@@ -1384,7 +1387,7 @@ async function boot() {
     { id: 'pet', icon: '🐾', tip: 'Thú cưng (P)', show: () => !!profile, click: () => { if (profile) { petPanel.show(); sfx('tick'); } } },
     { id: 'ward', icon: '👗', tip: 'Tủ đồ (U)', show: () => !!profile, badge: (p) => 0, click: () => { if (profile) { wardPanel.show(); sfx('tick'); } } },
   ]);
-  walkers = new Walkers(scene, (name) => loader.loadAsync(`./assets/models/${name}.glb`)); await walkers.init();      // villagers on the roads
+  walkers = new Walkers(scene, ownLook); await walkers.init();      // villagers on the roads
   for (const a of [player, tom, sam, ben, ...friends.map((f) => f.npc)]) { addOutline(a.root); if (a === player) outlined.add(a.root); }     // cartoon outlines (medium/high)
   applyLook();
   const F = L.REGIONS.forest;
@@ -1436,7 +1439,7 @@ async function boot() {
   packUI = new PackUI({ profile: () => profile, sfx, toast: (t) => ui.toast(t), changed: () => { save(); refresh(); }, hpMax: () => Save.maxHp(profile), focus: creatorCamera, look: () => { setSword(); setWear(); }, swing: () => player.swing() });      // (21/11) the hero stands beside the bag and shows each piece
   skillUI = new SkillUI({ profile: () => profile, spells, sfx, usePotion, toast: (t) => ui.toast(t), atk: () => playerAtk(profile), changed: () => { save(); refresh(); } });      // the Blender monsters replace the shapes a moment after the game starts (not awaited: a slow download must not hold the boot)
   mini = new MiniGames({ scene, player, ui, sfx, track, gate: (who, game, go) => gameGate(who, game, go), profile: () => profile, save, onNote: refresh, board: (id) => { if (id === 'lantern_fair') { const activities = [fireflies, vault, courier, workshop]; ui.choose({ who: 'Hội Đèn Làng', en: 'Where shall we go tonight?', vi: 'Chọn một trò để bắt đầu.' }, ['Lối đom đóm · Nối chữ', 'Hầm thẻ đồng · Mở khóa', 'Chuyến thư đêm · Lái xe', 'Hồ sơ xưởng đồng hồ · Điều tra', 'Trở về làng'], (i) => { if (activities[i]) gameGate('Leo', 'lantern_fair', () => arcade.start(activities[i](unitCards))); }); return; } const t = tierOf(profile.stats.level), go = async () => { let g; if (id.startsWith('race2')) { try { raceAssets = raceAssets || await loadRaceAssets(gltf); g = raceGame3d({ assets: raceAssets, cards: unitCards, tier: t, variant: id === 'race2h' ? 'harbor' : id === 'race2f' ? 'forest' : 'village' }); } catch (e) { console.warn('race3d: ' + e.message); g = raceGame(Math.random, [], t); } } else g = ({ candy: () => candyGame(Math.random, t), blocks: () => blocksGame(Math.random, unitCards, t), sling: () => slingGame(Math.random, t) })[id](); arcade.start(withTier(g, t)); }; gameGate(id === 'candy' ? 'Mimi' : id === 'blocks' ? 'Max' : id === 'sling' ? 'Rex' : id === 'race2h' ? 'Marina' : id === 'race2f' ? 'Rowan' : 'Leo', id.startsWith('race2') ? 'race' : id, go); } });
-  await mini.addHosts((name) => loader.loadAsync(`./assets/models/${name}.glb`));      // a host by each mini game
+  await mini.addHosts(ownLook);      // a host by each mini game
   admin = new AdminPanel({ profile: () => profile, profiles: () => store.profiles, visitHome: (o) => goHome(o, true, false, true), deleteProfile: adminDelete, places: adminPlaces, go: adminGo, unlockAll: adminUnlock, setStep: adminStep,
     resetForest: () => { delete profile.quests.forest; if (L.NAME === 'forest') enterRegion('forest'); }, setGrade: (g) => { profile.grade = g; save(); chooseProfile(profile); },
     setLevel: adminLevel, addGold: (n) => { profile.stats.gold += n; }, changed: () => { save(); refresh(); setSword(); setWear(); }, toast: (t) => ui.toast(t) });
@@ -1553,7 +1556,7 @@ function frame() {
       markers.push(...wild.markers(), ...chests.markers(), ...spots.markers());
       if (Save.gateWaiting(profile)) markers.push({ x: OWL.x, z: OWL.z, text: '🦉', color: '#ffe28a' });
     }
-    minimap.draw(player.pos, player.yaw, markers); questMarks(markers); guideGoal = pickGoal(markers); if (homes) homes.refresh(); plantCull(player.pos.x, player.pos.z, QUALITY[quality].plantFar); }
+    minimap.level = profile && !profile.admin ? profile.stats.level : 0; minimap.draw(player.pos, player.yaw, markers); questMarks(markers); guideGoal = pickGoal(markers); if (homes) homes.refresh(); plantCull(player.pos.x, player.pos.z, QUALITY[quality].plantFar); }
     autosave += dt; if (autosave > 20 && !(tailor && tailor.open)) { autosave = 0; save(); }      // (26/11) not while clothes are being tried on at the tailor's (they were saved as worn)
   }
   renderer.info.reset();
