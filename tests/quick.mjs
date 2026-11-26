@@ -59,7 +59,7 @@ await run('combat', async () => {
   check(await ev(() => __eq.profile.flags.boss1 && !__eq.profile.flags.map2) && (await page.textContent('#dialog')).includes('Slime King'), 'Slime King beaten: flag saved, the sea still closed (needs level 5 and the owl review)');
   await closeDialogs();
   await ev(() => { __eq.profile.stats.level = 5; __eq.profile.gates = { 5: true }; __eq.refresh(); }); await wait(300);
-  check(await ev(() => __eq.profile.flags.map2) && (await page.textContent('#dialog')).includes('Map 2'), 'Level 5 with the king beaten and the owl review passed: Map 2 (the sea) opens');
+  check(await ev(() => __eq.profile.flags.map2) && (await page.textContent('#dialog')).includes('Biển cả'), 'Level 5 with the king beaten and the owl review passed: Map 2 (the sea) opens');
   await closeDialogs(); await wait(800);
   check(await ev(() => __eq.chests.api.cards().every((c) => c.id.startsWith('g8_u01:')) && __eq.chests.api.cards().length > 0), 'Words follow the map (24/11): still in the village, so still Unit 1 although Map 2 is open');
   // (20/11) magic skills: T opens the skill book, a learnt spell goes to slot 1, key 1 casts it on a slime (energy spent, element ring)
