@@ -296,7 +296,7 @@ export function buildTrees() {
 }
 export function buildRocks() {
   const geo = lumpy(new THREE.IcosahedronGeometry(1, 1), 0.2, 3, false), n = geo.attributes.position.count, col = new Float32Array(n * 3);
-  const a = C(0x9d9aa8), b = C(0xc3bfcc), moss = C(0x74b84a), t = new THREE.Color();
+  const HR = L.REGIONS[L.NAME], a = C(0x9d9aa8), b = C(0xc3bfcc), moss = C(HR.snow || HR.clouds ? 0xffffff : HR.palette && HR.flora === 'none' ? HR.palette.b : 0x74b84a), t = new THREE.Color();      // (26/11) snow, cloud or sand on top of the rocks of maps 4-7 instead of moss
   for (let i = 0; i < n; i++) { const y = geo.attributes.position.getY(i); t.copy(a).lerp(b, 0.5 + 0.5 * Math.sin(i * 1.7)); if (y > 0.55) t.lerp(moss, 0.75); col.set([t.r, t.g, t.b], i * 3); }
   geo.setAttribute('color', new THREE.BufferAttribute(col, 3)); geo.deleteAttribute('uv');
   return instanced(geo, std({ flatShading: true }), L.ROCKS, (r, p, e, s) => { p.set(r.x, L.groundHeight(r.x, r.z) + 0.25 * r.s, r.z); e.set(0, r.rot, 0); s.set(r.s, r.s * 0.72, r.s * 0.9); });

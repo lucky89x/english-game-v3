@@ -20,7 +20,14 @@ Chỉ những thứ Blender vẽ bằng script không đẹp được (vật h�
 | 5 | `desert_temple.glb` | Mốc của Map 4 Sa mạc | `stylized chibi desert temple gate with sandstone pillars and blue tile dome, hand-painted warm colors, chunky rounded shapes, toy-like, game asset, no base` |
 | 6 | `desert_boss_sphinx.glb` (tuỳ chọn) | Trùm phụ Map 4 (trùm chính đã có rồng cát) | `cute stylized stone sphinx guardian with cracked sandstone body and glowing blue eyes, chibi proportions, hand-painted, sitting pose, no base` |
 
-Map 4 Sa mạc **không cần chờ Tripo**: nhà, NPC, quái (bọ cạp, thần gió, xương rồng) và trùm rồng cát đã có sẵn trong `assets/models` từ các lô Blender trước. Mục 5 và 6 chỉ làm đẹp thêm.
+**Map 4–7 đã dựng xong (26/11) bằng mô hình có sẵn**, không chờ Tripo. Các mục dưới đây chỉ để đẹp hơn; có file nào em thay vào mốc tương ứng.
+
+| # | Tên file gợi ý | Thay cho | Câu lệnh gợi ý |
+|---|---|---|---|
+| 7 | `ice_dragon_rigged.glb` | Trùm Núi tuyết (đang là mô hình đứng im) | nếu Tripo cho xuất có xương và hoạt ảnh thì xuất kèm; không thì em gắn xương |
+| 8 | `mountain_lodge.glb` | Nhà nghỉ Núi tuyết (đang mượn nhà trọ của làng) | `cozy stylized chibi mountain lodge, log walls, thick snow on the roof, warm windows, stone chimney, hand-painted, chunky shapes, no base` |
+| 9 | `cloud_palace.glb` | Cung điện Mây ở Trời (đang mượn tháp sa mạc) | `cute stylized cloud palace with white towers, golden domes and blue flags, standing on a puffy cloud, hand-painted, chibi toy style, no base` |
+| 10 | `ruins_statue.glb` | Tượng ở sân cột Di tích | `ancient stone statue of a kind owl scholar holding an open book, mossy and cracked, stylized chibi, hand-painted, no base` |
 
 ## Không cần làm
 - Cây, bụi, cỏ: em giảm lưới gói hiện có và dựng thêm bằng Blender.

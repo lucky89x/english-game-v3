@@ -21,15 +21,16 @@ export class Minimap {
   renderBase() {
     const n = L.SIZE * BASE, cv = document.createElement('canvas'), SEA = L.isSea(), SAND = L.REGIONS[L.NAME].lowSand || (() => false); cv.width = cv.height = n;
     const ctx = cv.getContext('2d'), img = ctx.createImageData(n, n);
+    const PL = L.REGIONS[L.NAME].palette, rgb = (h) => [h >> 16 & 255, h >> 8 & 255, h & 255], PA = PL && rgb(PL.a), PB = PL && rgb(PL.b), PF = PL && rgb(PL.far), PP = PL && rgb(PL.path);      // (26/11) maps 4-7: sand, snow, mossy stone, cloud
     for (let pz = 0; pz < n; pz++) for (let px = 0; px < n; px++) {
       const x = px / BASE - L.SIZE / 2, z = pz / BASE - L.SIZE / 2, h = L.groundHeight(x, z);
-      let c = [110, 196, 86];
-      if (Math.hypot(x, z) > L.PLAY_RADIUS) c = SEA ? [72, 178, 226] : [70, 150, 78];      // the harbour island sits in open sea
-      else if (L.pathDistance(x, z) < 0) c = SEA ? [196, 150, 96] : [236, 214, 160];      // boardwalk
+      let c = PA || [110, 196, 86];
+      if (Math.hypot(x, z) > L.PLAY_RADIUS) c = SEA ? [72, 178, 226] : PF || [70, 150, 78];      // the harbour island sits in open sea
+      else if (L.pathDistance(x, z) < 0) c = SEA ? [196, 150, 96] : PP || [236, 214, 160];      // boardwalk
       else if (h < L.WATER_LEVEL + 0.12 && (SEA || z > L.RIVER_START - 1)) c = [72, 178, 226];
       else if (SEA && h < 0.62 && SAND(x, z)) c = [240, 226, 174];
       else if (h > 6) c = [168, 164, 180];
-      else if (h > 2.2) c = [134, 204, 100];
+      else if (h > 2.2) c = PB || [134, 204, 100];
       img.data.set([...c, 255], (pz * n + px) * 4);
     }
     ctx.putImageData(img, 0, 0);
