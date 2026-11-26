@@ -45,24 +45,31 @@ Hiện mỗi vùng mới dùng lại một trò có sẵn dưới tên của vù
 
 Nguyên tắc tiêu vàng: vé vào tăng theo cấp (đã có), phần thưởng là **đồ trang trí nhà** chứ không phải vàng hay EXP, nên vàng chảy từ đánh quái sang nhà. Không làm trò may rủi kiểu quay thưởng.
 
-## 3. Nhà của bé đi theo 12 map (ĐỀ XUẤT; phần nền ĐÃ CÓ)
+## 3. Nhà của bé đi theo 12 map (bước 1 ĐÃ LÀM 27/11; còn lại ĐỀ XUẤT)
 
-Đã có: nhà 1–3 tầng và biệt thự, đặt đồ, sơn tường và sàn, vườn, trang trại, bệ La Bàn (nay 12 ô), **cửa nhà thần kỳ ở cổng mọi vùng** (bấm E là về nhà, ra lại đúng vùng đang đứng).
+Nền có sẵn: nhà 1–3 tầng và biệt thự, đặt đồ, sơn tường và sàn, vườn, trang trại, bệ La Bàn 12 ô, **cửa nhà thần kỳ ở cổng mọi vùng** (bấm E là về nhà, ra lại đúng vùng đang đứng).
 
-Còn thiếu là **lý do quay về nhà sau mỗi buổi chơi**. Đề xuất một vòng lặp:
+Vòng lặp: đánh quái, học bài → vàng và đồ lưu niệm của vùng → bày trong nhà → điểm Ấm cúng tăng → quyền lợi (giấc ngủ cho thêm EXP) → lại lên đường.
 
-> đánh quái, học bài → vàng và đồ lưu niệm của vùng → bày trong nhà → điểm Ấm cúng tăng → mở quyền lợi và khách tới thăm → khách ra yêu cầu bằng tiếng Anh → làm xong có quà → lại lên đường.
+**ĐÃ LÀM (lượt 64, luật ở `src/core/homeplay.js`):**
 
-1. **Bộ lưu niệm 12 vùng.** Mỗi vùng 6 món theo chủ đề (4 món bán ở thương nhân, 1 món trong rương, 1 món chỉ trùm rơi). Đủ bộ thì phòng có hiệu ứng của vùng (tuyết rơi, đom đóm, sao lơ lửng) và một danh hiệu. Tên món là từ vựng trong sách khi được: Unit 2 lớp 6 (lamp, sofa, cupboard), Unit 10 lớp 6 (smart TV, robot helper, solar panel).
-2. **Nhãn từ.** Món nào cũng có nhãn tiếng Anh. Lần đầu bày, bé nghe và chọn đúng tên thì món đó "thuộc" và cộng thêm điểm Ấm cúng. Bấm vào món đồ là nghe đọc.
-3. **Trò "Find it!" ở nhà.** Pip nói "Where is the lamp?" hoặc "It is next to the bed", bé chạy tới đúng món. Ôn từ và giới từ ngay trong căn nhà của mình.
-4. **Khách tới thăm.** Người bé đã giúp ở mỗi vùng ghé nhà theo ngày (cuối cùng là Hugh). Khách đưa một yêu cầu dùng đúng ngữ pháp của Unit vùng đó: "Can you put the vase on the table?", "Which chair is more comfortable?". Làm đúng được quà hiếm.
-5. **Tủ cúp và tường ảnh.** Cúp nhỏ của từng trùm, huy hiệu hạng, ảnh chụp ở mỗi vùng. Bé nhìn nhà là thấy mình đã đi được bao xa.
-6. **Phòng có việc để làm.** Phòng học (ôn từ sai, làm lại bài thi, bảng Word Wall đếm từ đã thuộc); Xưởng (ghép vật liệu vùng thành đồ); Vườn giống cây các vùng (xương rồng, hoa tuyết, nấm tiên, cây pha lê) lớn theo ngày thật.
-7. **Điểm Ấm cúng đổi ra quyền lợi.** Ngủ ở nhà hồi đầy máu và được "Rested" +10% EXP trong 20 phút (giới hạn mỗi ngày); các mốc mở khung nhà, thú, trang phục.
-8. **Hai anh chị em.** Thăm nhà nhau (đã có), thêm nút "thích", bảng Ấm cúng của gia đình, mỗi tuần một chủ đề trang trí.
+| Phần | Cách chơi | Tiếng Anh | Chỗ trong mã |
+|---|---|---|---|
+| Nhãn từ | Đứng cạnh một món đồ bấm **F**: nghe tên, chọn đúng 1 trong 3 từ là món đó được dán nhãn (hiện tên nổi phía trên). Món đã có nhãn thì F đọc lại tên. | nghe và nhận từ; 60 tên đồ vật | `main.js homeTouch`, `homeWord` |
+| Điểm Ấm cúng | Đồ đạc 1–6 điểm, nhãn +2, đồ lưu niệm 8, cúp trùm 5, mỗi nâng cấp 8, màu sơn 3, mảnh La Bàn 4. 10 hạng từ Bare tới Palace of Words. | tên hạng bằng tiếng Anh | `homeplay.js comfort`, bảng trong danh sách nhà (phím L) |
+| Giấc ngủ | F cạnh giường (hoặc nút trong danh sách): hồi đầy máu, 20 phút sau đó quái cho thêm 5–14% EXP theo hạng Ấm cúng. Mỗi ngày một lần, phải có giường. | | `homeplay.js startRest`, `save.js restMul` |
+| Find it! | Phím **G**: Pip gọi 5 món ("Find the lamp!", "Find the thing next to the bed!"), bé chạy tới đúng món rồi bấm F. Hai ván đầu mỗi ngày có EXP. Lớp 8 gặp câu "next to" nhiều hơn. | nghe lệnh, giới từ vị trí | `homeplay.js findRound`, `main.js homeFind` |
+| Đồ lưu niệm 12 vùng | Mỗi vùng từ Map 4 có một món chỉ thương nhân vùng đó bán (chậu xương rồng, quả cầu tuyết, bình cổ, đèn mây, đèn nấm, đèn dung nham, cụm pha lê, robot đồ chơi, đèn ngủ ngôi sao). | tên món | `rules.js sv_*`, mô hình `tools/lands/build_souvenirs.py` |
+| Cúp trùm | Hạ trùm nào, cúp của trùm đó tự về phòng học (13 cúp). | tên trùm | `homeplay.js syncTrophies` |
 
-Thứ tự nên làm: (a) nhãn từ + Find it + điểm Ấm cúng, chỉ cần mã, dùng 16 mô hình `home_*` đang có; (b) bộ lưu niệm và cúp trùm, em vẽ bằng Blender được; (c) khách tới thăm và vườn giống cây.
+**CÒN ĐỀ XUẤT (chưa làm):**
+
+1. **Khách tới thăm.** Người bé đã giúp ở mỗi vùng ghé nhà theo ngày (cuối cùng là Hugh), đưa một yêu cầu dùng đúng ngữ pháp của Unit vùng đó: "Can you put the vase on the table?", "Which chair is more comfortable?". Làm đúng được quà hiếm.
+2. **Đủ bộ thì phòng đổi cảnh.** Mỗi vùng thêm 3–5 món nữa; đủ bộ thì phòng có hiệu ứng của vùng (tuyết rơi, đom đóm, sao lơ lửng) và một danh hiệu.
+3. **Tường ảnh.** Ảnh chụp ở mỗi vùng treo trong nhà.
+4. **Phòng có việc để làm.** Phòng học (ôn từ sai, làm lại bài thi, bảng Word Wall đếm từ đã thuộc); Xưởng (ghép vật liệu vùng thành đồ); Vườn giống cây các vùng lớn theo ngày thật.
+5. **Hai anh chị em.** Điểm Ấm cúng hiện trên biển nhà ngoài làng, nút "thích" khi thăm nhà nhau, mỗi tuần một chủ đề trang trí.
+6. **Phần thưởng mini game là đồ trang trí nhà** (xem mục 2) thay cho vàng.
 
 ## 4. Mô hình
 

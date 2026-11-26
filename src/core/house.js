@@ -26,10 +26,15 @@ export function buyUpgrade(profile, id) {
   if (id === 'garden1') h.garden = 1; else if (id === 'garden2') h.garden = 2; else if (id === 'floor2') h.floors = 2; else if (id === 'floor3') h.floors = 3; else if (id === 'coop') h.coop = true; else if (id === 'pen') h.pen = true; else h.villa = true;
   return { ok: true, why: '' };
 }
+/** (27/11, turn 64) Souvenirs of the lands (living room) and boss trophies (study): the model each one uses (assets/models/<file>_v01.glb).
+ *  They stand in a row along the back wall of their room until the child moves them. */
+export const SOUVENIRS = ['sv_cactus', 'sv_snowglobe', 'sv_vase', 'sv_cloudlamp', 'sv_mushroom', 'sv_lavalamp', 'sv_crystal', 'sv_toyrobot', 'sv_nightlight'];
+export const TROPHIES = Array.from({ length: 13 }, (_, i) => 'trophy_boss' + (i + 1));
+export const SHOW_FILE = { ...Object.fromEntries(SOUVENIRS.map((id) => [id, 'home_' + id])), ...Object.fromEntries(TROPHIES.map((id) => [id, 'home_trophy'])) };
 /** Furniture groups: each room of the house gets one group (the item ids keep their place inside the room). */
 export const GROUPS = {
-  living: ['sofa', 'lamp', 'plant', 'picture', 'clock', 'rug', 'armchair', 'coffee_table', 'tv', 'fireplace', 'aquarium', 'beanbag', 'statue', 'vase', 'palm'],
-  study: ['table', 'bookcase', 'desk', 'globe', 'telescope', 'trophy', 'computer', 'chalkboard'],
+  living: ['sofa', 'lamp', 'plant', 'picture', 'clock', 'rug', 'armchair', 'coffee_table', 'tv', 'fireplace', 'aquarium', 'beanbag', 'statue', 'vase', 'palm', ...SOUVENIRS],
+  study: ['table', 'bookcase', 'desk', 'globe', 'telescope', 'trophy', 'computer', 'chalkboard', ...TROPHIES],
   bedroom: ['bed', 'wardrobe', 'mirror', 'nightstand', 'teddy', 'toybox', 'dresser'],
   music: ['guitar', 'piano', 'drum', 'violin'],
   kitchen: ['fridge', 'stove', 'counter', 'dining'],      // (25/11) a room of its own once there is space (two floors); before that in the living room

@@ -310,7 +310,7 @@ test('shop: buying needs gold and level, puts the item on, owned items are free 
   p.stats.hp = 30; assert.equal(eat(p, S.maxHp(p)), 50); assert.equal(p.stats.hp, 80); assert.equal(bag(p).food, 1);
   p.stats.hp = S.maxHp(p); assert.equal(eat(p, S.maxHp(p)), 0, 'not wasted at full health'); assert.equal(bag(p).food, 1);
   assert.deepEqual(shopList('rose'), ['clover', 'bread', 'fire_amulet', 'ice_amulet', 'wind_amulet', 'thunder_amulet']); assert.equal(shopList('forge').length, 13);      // + element swords, staffs, amulets (20/11)
-  for (const it of Object.values(ITEMS)) assert.ok(it.en && it.vi && it.cost > 0);
+  for (const it of Object.values(ITEMS)) assert.ok(it.en && it.vi && (it.cost > 0 || it.trophy));
 });
 
 // ---------------------------------------------------------------- match-3 rules
@@ -1231,4 +1231,41 @@ test('lands (maps 4-12): every place can be walked to, the grounds are full, eac
       for (const [nx, nz] of [d.keeper, d.merchant, [d.board.x, d.board.z], ...Object.values(FRIENDS).filter((f) => f.region === id).map((f) => f.at)]) assert.ok(Math.hypot(nx - s.x, nz - s.z) > 4, `${s.id} keeps 4 m from the people and the board (the E key)`); }
   }
   assert.equal(new Set(STARTS.map((s) => s.id)).size, STARTS.length, 'game ids are unique');
+});
+test('home life (27/11): word labels, comfort levels, a sleep a day, Find it! rounds with one answer', async () => {
+  const H = await import('../src/core/homeplay.js'), RU = await import('../src/core/rules.js'), HS = await import('../src/core/house.js');
+  const p = S.newProfile('An', 6); p.home = { items: ['bed', 'lamp', 'sofa', 'table', 'rug', 'clock'] };
+  const c0 = H.comfort(p); assert.equal(c0.level, 0); assert.equal(c0.score, c0.parts.furniture); assert.ok(c0.next > c0.score && c0.rest === 5);
+  assert.equal(H.addLabel(p, 'statue'), false, 'only a piece the child owns can be labelled'); assert.equal(H.addLabel(p, 'bed'), true); assert.equal(H.addLabel(p, 'bed'), false, 'a label counts once');
+  assert.equal(H.comfort(p).score, c0.score + H.LABEL_POINTS); assert.ok(H.isLabelled(p, 'bed') && !H.isLabelled(p, 'lamp'));
+  for (const id of Object.keys(RU.ITEMS)) { const it = RU.ITEMS[id], pts = H.piecePoints(id); assert.ok(it.land ? pts === H.SOUVENIR_POINTS : it.trophy ? pts === H.TROPHY_POINTS : it.slot === 'home' || it.slot === 'yard' ? pts >= 1 && pts <= 6 : pts === 0, id); }
+  // a full house reaches the top level; every level has a name; the levels climb
+  const rich = S.newProfile('Bo', 8); rich.home = { items: Object.keys(RU.ITEMS).filter((id) => ['home', 'yard'].includes(RU.ITEMS[id].slot)) }; for (const id of rich.home.items) H.addLabel(rich, id);
+  rich.house = { floors: 3, villa: true, garden: 2, coop: true, pen: true, paint: { wall: 'mint', floor: 'walnut' } }; Object.assign(rich.flags, { boss1: true, boss4: true, boss2: true });
+  const cr = H.comfort(rich); assert.equal(cr.level, H.COMFORT_LEVELS.length - 1, `a full house is a dream home (${cr.score} points)`); assert.equal(cr.next, null); assert.equal(cr.parts.compass, 3 * H.COMPASS_POINTS); assert.ok(cr.score > H.COMFORT_LEVELS[H.COMFORT_LEVELS.length - 1].at, 'the top level can be reached'); assert.equal(cr.parts.paint, 2 * H.PAINT_POINTS);
+  for (let i = 1; i < H.COMFORT_LEVELS.length; i++) assert.ok(H.COMFORT_LEVELS[i].at > H.COMFORT_LEVELS[i - 1].at && H.restPct(i) > H.restPct(i - 1));
+  { const mid = S.newProfile('Chi', 6); mid.home = { items: ['bed', 'wardrobe', 'table', 'lamp', 'desk', 'rug', 'plant', 'sofa', 'bookcase', 'mirror'] }; for (const id of mid.home.items) H.addLabel(mid, id); const lv = H.comfort(mid).level; assert.ok(lv >= 2 && lv <= 4, `ten labelled pieces make a cosy home (level ${lv})`); }
+  // a sleep: needs a bed, once a day, more EXP from monsters until it ends
+  const q = S.newProfile('Dan', 6); q.home = { items: ['lamp'] }; assert.equal(H.canRest(q, 'd1').why, 'bed'); assert.equal(H.startRest(q, 0, 'd1').ok, false); q.home.items.push('bed');
+  const base = S.killExp(q, 100, 1), r = H.startRest(q, 1000, 'd1'); assert.ok(r.ok && r.pct === 5 && r.minutes === H.REST_MINUTES); assert.equal(H.canRest(q, 'd1').why, 'day'); assert.ok(H.canRest(q, 'd2').ok, 'again the next day');
+  assert.equal(S.restMul(q, 2000), 1.05); assert.equal(S.restMul(q, 1000 + H.REST_MINUTES * 60000 + 1), 1, 'over after twenty minutes'); assert.equal(H.restLeft(q, 1000), H.REST_MINUTES); assert.equal(H.restLeft(q, 9e12), 0);
+  q.rest.until = Date.now() + 60000; assert.equal(S.killExp(q, 100, 1), Math.round(base * 1.05), 'monsters give more while rested'); assert.equal(S.restMul({}), 1); assert.equal(S.restMul(null), 1);
+  // Find it!: a round names a piece of the house; a "next to" clue has exactly one answer; rounds avoid what was asked
+  const list = [{ id: 'bed', f: 0, x: 0, z: 0 }, { id: 'lamp', f: 0, x: 1, z: 0 }, { id: 'sofa', f: 0, x: 6, z: 0 }, { id: 'table', f: 0, x: 7.5, z: 1 }, { id: 'rug', f: 1, x: 0, z: 0 }];
+  assert.equal(H.findRound(list.slice(0, 2)), null, 'too few pieces'); let next = 0; const rnd = (() => { let a = 7; return () => { a = (a * 16807) % 2147483647; return a / 2147483647; }; })();
+  for (let i = 0; i < 200; i++) { const g = H.findRound(list, { hard: i % 2 === 0, rnd }); assert.ok(list.some((x) => x.id === g.target) && /^Find the /.test(g.en) && !/[àáảãạăâđêôơư]/i.test(g.en));
+    if (g.kind === 'next') { next += 1; const ref = list.find((x) => x.id === g.ref); assert.equal(H.neighbour(list, ref).id, g.target, 'the thing next to the reference is the target'); assert.ok(g.en.includes(RU.ITEMS[g.ref].en.toLowerCase())); } else assert.ok(g.en.includes(RU.ITEMS[g.target].en.toLowerCase())); }
+  assert.ok(next > 20, 'some rounds use "next to"'); assert.equal(H.neighbour(list, list[4]), null, 'nothing else upstairs');
+  { const asked = []; for (let i = 0; i < 5; i++) { const g = H.findRound(list, { not: asked, rnd }); assert.ok(!asked.includes(g.target), 'five rounds, five different things'); asked.push(g.target); } }
+  const f = S.newProfile('Em', 6); assert.ok(H.findPays(f, 'd1') && H.findPays(f, 'd1')); assert.equal(H.findPays(f, 'd1'), false, 'the third game of a day is for fun'); assert.ok(H.findPays(f, 'd2'));
+  assert.ok(HS.UPGRADES.length === H.MAX_UPGRADES);
+  // souvenirs: one for each land of maps 4-12, sold by that land's merchant only; trophies: one for each guard, never for sale, they arrive by themselves
+  const { LAND_IDS } = await import('../src/core/regions/lands.js'), sv = Object.entries(RU.ITEMS).filter(([, it]) => it.land), tr = Object.entries(RU.ITEMS).filter(([, it]) => it.trophy);
+  assert.deepEqual(sv.map(([, it]) => it.land), LAND_IDS, 'a souvenir for every land, in the order of the lands'); assert.deepEqual(sv.map(([id]) => id), HS.SOUVENIRS);
+  for (const [id, it] of sv) { assert.ok(it.seller === it.land && RU.shopList(it.land).includes(id) && it.slot === 'home' && it.cost >= 1000); assert.ok(HS.GROUPS.living.includes(id) && hexists(new URL(`../assets/models/${HS.SHOW_FILE[id]}_v01.glb`, import.meta.url)), id + ' has a room and a model'); }
+  for (let i = 1; i < sv.length; i++) assert.ok(sv[i][1].cost > sv[i - 1][1].cost && sv[i][1].level > sv[i - 1][1].level, 'dearer in the later lands');
+  assert.equal(tr.length, 13); assert.deepEqual(tr.map(([id]) => id).sort(), [...HS.TROPHIES].sort()); for (const [id, it] of tr) { assert.ok(it.cost === 0 && it.seller === 'boss' && HS.GROUPS.study.includes(id) && !/[àáảãạăâđêôơư]/i.test(it.en)); assert.equal(RU.buy(Object.assign(S.newProfile('T', 6), { home: { items: [id] } }), id).ok, false, 'a trophy cannot be bought twice'); }
+  assert.ok(hexists(new URL('../assets/models/home_trophy_v01.glb', import.meta.url)));
+  const hero = S.newProfile('Ha', 6); assert.deepEqual(H.syncTrophies(hero), []); hero.flags.boss1 = true; hero.flags.boss5 = true; hero.flags.map2 = true;
+  assert.deepEqual(H.syncTrophies(hero), ['trophy_boss1', 'trophy_boss5']); assert.deepEqual(H.syncTrophies(hero), [], 'once'); assert.equal(H.comfort(hero).parts.furniture, 2 * H.TROPHY_POINTS);
 });

@@ -28,7 +28,7 @@ export function buildHomeWalk(opts) {
     tmp.updateMatrixWorld(true); const box = new THREE.Box3().setFromObject(tmp); if (box.isEmpty()) return null;
     const c = box.getCenter(new THREE.Vector3()), size = box.getSize(new THREE.Vector3()), piece = new THREE.Group();
     for (const ch of [...tmp.children]) { ch.position.x -= c.x; ch.position.z -= c.z; piece.add(ch); }
-    piece.position.set(cx + c.x, 0, cz + c.z); piece.userData = { id, f, hx: size.x / 2, hz: size.z / 2, flat: size.y < 0.15, wall: WALL_ITEMS.has(id) || box.min.y > 0.8 };
+    piece.position.set(cx + c.x, 0, cz + c.z); piece.userData = { id, f, hx: size.x / 2, hz: size.z / 2, top: box.max.y, flat: size.y < 0.15, wall: WALL_ITEMS.has(id) || box.min.y > 0.8 };
     const saved = placeOf(h, id); if (saved && saved.f < h.floors && !piece.userData.wall) { piece.userData.f = saved.f; piece.position.set(saved.x, 0, saved.z); piece.rotation.y = saved.ry || 0; }
     floors[piece.userData.f].add(piece); pieces.push(piece); return piece;
   };
@@ -75,6 +75,18 @@ export function buildHomeWalk(opts) {
   const glow = (p, on) => p && p.traverse((o) => { if (o.isMesh && o.material && o.material.emissive) { if (on) { o.userData.e0 = o.userData.e0 || o.material.emissive.clone(); o.material = o.material.clone(); o.material.emissive.setRGB(0.35, 0.28, 0.05); } else if (o.userData.e0) o.material.emissive.copy(o.userData.e0); } });
   const placeOk = (p) => { const r = Math.min(p.userData.hx, p.userData.hz) * 0.6; return freeAt(h, p.userData.f, p.position.x, p.position.z, Math.min(0.5, r)); };
   const say = (s) => { if (opts.hint && s !== onOff) { onOff = s; opts.hint(s); } };
+  // (27/11) the piece the hero stands by (word labels, Find it!): the nearest one within reach on the hero's floor, with its name floating over it
+  let nearP = null, tag = null;
+  const nearest = () => {
+    if (me.stair >= 0) return null; let best = null, bd = 1.5;
+    for (const p of pieces) { const u = p.userData; if (u.f !== me.f || u.fixed) continue; const d = Math.max(0, Math.hypot(p.position.x - me.x, p.position.z - me.z) - Math.max(u.hx, u.hz) * 0.8) + (u.flat ? 0.7 : 0); if (d < bd) { bd = d; best = p; } }
+    return best;
+  };
+  const retag = () => {
+    if (tag) { tag.removeFromParent(); if (tag.material) { if (tag.material.map) tag.material.map.dispose(); tag.material.dispose(); } tag = null; }
+    if (!nearP || !opts.tag) return; tag = opts.tag(nearP.userData.id); if (!tag) return;
+    tag.position.set(nearP.position.x, Math.min(FLOOR_H - 0.5, Math.max(1.1, (nearP.userData.top || 1) + 0.45)), nearP.position.z); tag.renderOrder = 5; floors[nearP.userData.f].add(tag);
+  };
   return {
     scene, camera, walk: true, me,
     get editing() { return editing; },
@@ -98,6 +110,14 @@ export function buildHomeWalk(opts) {
       held = p; heldWas = { p: p.position.clone(), r: p.rotation.y }; glow(p, true); say(`Đang cầm: ${id} · di chuột (hoặc đi lại) để chọn chỗ · ⟲ xoay · bấm sàn hoặc ✔ để đặt`); return true;
     },
     get holding() { return !!held; },
+    /** (27/11) The id of the piece the hero stands by (null on the stairs, while arranging, or away from everything). */
+    get nearId() { return nearP ? nearP.userData.id : null; },
+    /** Draws the floating name again (after the piece got its label). */
+    retag,
+    /** The pieces of the house for Find it!: [{ id, f, x, z }] (the compass stand is not one). */
+    list() { return pieces.filter((p) => !p.userData.fixed).map((p) => ({ id: p.userData.id, f: p.userData.f, x: p.position.x, z: p.position.z })); },
+    /** A piece lights up for a moment (the right or the wrong answer). */
+    flash(id, ms = 900) { const p = pieces.find((x) => x.userData.id === id); if (!p) return; glow(p, true); setTimeout(() => glow(p, false), ms); },
     /** The on-screen buttons: 'arrange' (on/off), 'turn', 'drop' (put the piece down where it is), 'cancel'. */
     tool(name) {
       if (name === 'arrange') return this.setEditing(!editing);
@@ -136,6 +156,7 @@ export function buildHomeWalk(opts) {
       let tMax = dist; ['x', 'y', 'z'].forEach((k, i) => { const d = dir[k], o = look[k]; if (Math.abs(d) < 1e-4) return; const tb = ((d > 0 ? lim[i][1] : lim[i][0]) - o) / d; if (tb < tMax) tMax = Math.max(0.9, tb); });
       const want = look.clone().addScaledVector(dir, tMax);
       camAt.lerp(want, Math.min(1, dt * 8)); camera.position.copy(camAt); camera.lookAt(look);
+      { const n = editing ? null : nearest(); if (n !== nearP) { nearP = n; retag(); } }      // (27/11) the name of the piece the hero stands by
       // arrange mode: the piece in hand follows the mouse on its floor
       if (editing && held && me.stair < 0 && held.userData.f !== me.f) { floors[me.f].add(held); held.userData.f = me.f; held.position.set(me.x, 0, me.z + 1.5); }      // (25/11) a piece in hand goes up and down the stairs with the hero
       if (editing && held && ctl.mouse) { const at = floorPoint(ctl.mouse, held.userData.f); if (at) { held.position.x = Math.round(at.x * 4) / 4; held.position.z = Math.round(at.z * 4) / 4; held.position.y = 0.04 + Math.sin(t * 6) * 0.03; } }

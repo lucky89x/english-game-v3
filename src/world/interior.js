@@ -2,6 +2,7 @@
 // one of these rooms instead of the village, with the shop / music / quest window docked on the right. Rooms are
 // built from simple shapes in the game's warm palette: plank floor, panelled walls, beams, glowing windows and
 // lanterns, a rug, and furniture for each house. The camera drifts slowly so the room feels alive.
+import { SOUVENIRS, TROPHIES, SHOW_FILE } from '../core/house.js';
 import * as THREE from 'three';
 import { GROUPS, floorPlan, roomOf, paintOf, WALL_COLORS, FLOOR_COLORS, FLOOR_H, dims, stairOf, stairX, STAIR_HALF, DOOR_HALF, cellsOf } from '../core/house.js';
 import { buildHomeWalk } from './homewalk.js';
@@ -59,6 +60,9 @@ export function homeThings(g, items, lights, model) {
     m.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } }); g.add(m); return true;
   };
   const has = (id) => items.includes(id), wood = M(0x9a6436), dark = M(0x5a3416), white = M(0xf4efe6, 0.7);
+  // (27/11, turn 64) souvenirs and trophies: each on its own stand, in a row along the back wall (a plain block until the model is loaded)
+  SOUVENIRS.forEach((id, k) => { if (!has(id)) return; const x = -3.3 + k * 0.78, z = -2.75; if (!put(SHOW_FILE[id], x, 0, z)) box(g, 0.4, 0.9, 0.4, M(0xd9a85a), x, 0.45, z); });
+  TROPHIES.forEach((id, k) => { if (!has(id)) return; const x = -3.4 + k * 0.55, z = -2.8; if (!put(SHOW_FILE[id], x, 0, z, 0, 0.85)) box(g, 0.3, 1.0, 0.3, M(0xffcf3a, 0.4), x, 0.5, z); });
   if (has('rug') && !put('home_rug', -0.2, 0.04, 0.9, 0, [2.4, 1, 1.7])) { const r = new THREE.Mesh(new THREE.CircleGeometry(1.5, 32), M(0x3d6fc6, 0.95)); r.rotation.x = -Math.PI / 2; r.scale.set(1.4, 1, 1); r.position.set(-0.2, 0.04, 0.9); g.add(r);
     const r2 = new THREE.Mesh(new THREE.RingGeometry(1.15, 1.32, 32), M(0xffd23c, 0.95)); r2.rotation.x = -Math.PI / 2; r2.scale.set(1.4, 1, 1); r2.position.set(-0.2, 0.05, 0.9); g.add(r2); }
   if (has('bed') && !put('home_bed', -2.8, 0, -1.95, 0, 1.0)) { box(g, 1.5, 0.4, 2.2, wood, -2.8, 0.2, -1.85); box(g, 1.4, 0.22, 2.05, white, -2.8, 0.51, -1.85); box(g, 1.42, 0.12, 1.3, M(0xe2483e, 0.9), -2.8, 0.66, -1.4);

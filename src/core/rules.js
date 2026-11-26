@@ -178,6 +178,16 @@ export const ITEMS = {
   picture: { en: 'Picture', vi: 'bức tranh', slot: 'home', cost: 50, level: 1, seller: 'home' },
   rug: { en: 'Rug', vi: 'tấm thảm', slot: 'home', cost: 60, level: 1, seller: 'home' },
   plant: { en: 'Pot Plant', vi: 'chậu cây', slot: 'home', cost: 30, level: 1, seller: 'home' },
+  // (27/11, turn 64) souvenirs: one for each land of maps 4-12, sold only by that land's merchant, so the home shows where the child has been
+  sv_cactus: { en: 'Cactus Pot', vi: 'chậu xương rồng', slot: 'home', cost: 400, level: 20, seller: 'desert', land: 'desert' },
+  sv_snowglobe: { en: 'Snow Globe', vi: 'quả cầu tuyết', slot: 'home', cost: 500, level: 25, seller: 'mountain', land: 'mountain' },
+  sv_vase: { en: 'Ancient Vase', vi: 'chiếc bình cổ', slot: 'home', cost: 600, level: 30, seller: 'ruins', land: 'ruins' },
+  sv_cloudlamp: { en: 'Cloud Lamp', vi: 'đèn đám mây', slot: 'home', cost: 800, level: 35, seller: 'sky', land: 'sky' },
+  sv_mushroom: { en: 'Mushroom Lamp', vi: 'đèn cây nấm', slot: 'home', cost: 1000, level: 45, seller: 'fairy', land: 'fairy' },
+  sv_lavalamp: { en: 'Lava Lamp', vi: 'đèn dung nham', slot: 'home', cost: 1200, level: 50, seller: 'volcano', land: 'volcano' },
+  sv_crystal: { en: 'Crystal', vi: 'cụm pha lê', slot: 'home', cost: 1400, level: 55, seller: 'crystal', land: 'crystal' },
+  sv_toyrobot: { en: 'Toy Robot', vi: 'robot đồ chơi', slot: 'home', cost: 1700, level: 60, seller: 'city', land: 'city' },
+  sv_nightlight: { en: 'Night Light', vi: 'đèn ngủ ngôi sao', slot: 'home', cost: 2000, level: 65, seller: 'dream', land: 'dream' },
   // (25/11) "more kinds of furniture, so every child's home is different": 22 more pieces, from cheap toys to a statue
   armchair: { en: 'Armchair', vi: 'ghế bành', slot: 'home', cost: 140, level: 2, seller: 'home' },
   coffee_table: { en: 'Coffee Table', vi: 'bàn trà', slot: 'home', cost: 90, level: 1, seller: 'home' },
@@ -511,7 +521,10 @@ export const LAND_BOSSES = {
   city: boss(64, { id: 'warden', el: 'thunder', flag: 'boss12', name: 'Iron Warden', speed: 1.4, color: 0x90a0b0, size: 1.0, region: 'city', model: 'warden', fit: 1.0 }),
   dream: boss(69, { id: 'hush', el: 'wind', flag: 'boss13', name: 'Lord Hush', speed: 1.6, color: 0x4a3a6a, size: 1.0, region: 'dream', model: 'hush', fit: 1.5 }),
 };
+/** (27/11, turn 64) A trophy for the home from every guard: not for sale, it arrives when the guard is beaten (core/homeplay.js `syncTrophies`). */
+export const trophyOf = (flag) => 'trophy_' + flag;
 export const BOSS_VI = { boss1: 'Vua Slime', boss2: 'Golem Cổ', boss3: 'Nữ hoàng Nấm', boss4: 'Thuyền trưởng Bạch Tuộc', boss5: 'Rồng Cát', boss6: 'Rồng Băng', boss7: 'Người Khổng Lồ Đá', boss8: 'Rồng Mặt Trời', boss9: 'Nữ hoàng Gai', boss10: 'Người Khổng Lồ Dung Nham', boss11: 'Rồng Pha Lê', boss12: 'Người Máy Canh Gác', boss13: 'Chúa tể Im Lặng' };
+for (const b of [...BOSSES, ...Object.values(LAND_BOSSES)]) ITEMS[trophyOf(b.flag)] = { en: `${b.name} Trophy`, vi: `cúp ${BOSS_VI[b.flag]}`, slot: 'home', cost: 0, level: 1, seller: 'boss', trophy: b.flag };
 /** (24/11) Map 2 (the sea, levels 5-10) opens once the Slime King is beaten and the hero has reached the village's top level (5) and passed the owl's review. */
 export const map2Ready = (profile) => !!(profile.flags.boss1 && profile.stats.level >= 5 && profile.gates && profile.gates[5]);
 /** Map 3 (the forest, levels 10-20) opens at level 10 with the owl's exam passed (and Tom's badge, `forest_open`). */

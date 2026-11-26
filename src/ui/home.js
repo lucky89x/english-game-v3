@@ -1,6 +1,8 @@
 // Inside a child's home (18/11): the room is drawn behind (world/interior.js 'home'); this card lists what stands in
 // the house and the yard, and what can still be bought, with the English name and the shop that sells it.
-import { ITEMS, home, buy } from '../core/rules.js';
+import { ITEMS, home, buy, BOSS_VI } from '../core/rules.js';
+import { mapById } from '../core/world.js';
+import { comfort, isLabelled, canRest, restLeft, COMFORT_LEVELS, LABEL_POINTS, REST_MINUTES, FIND_ROUNDS } from '../core/homeplay.js';
 import { house, UPGRADES, upgradeState, buyUpgrade, WALL_COLORS, FLOOR_COLORS, paintOf, paintCost, ownsPaint, buyPaint } from '../core/house.js';
 
 const CSS = `
@@ -27,10 +29,10 @@ export class HomePanel {
   constructor(api) {
     this.api = api; const st = document.createElement('style'); st.textContent = CSS; document.head.appendChild(st);
     this.el = document.createElement('div'); this.el.id = 'homewin'; this.el.className = 'hidden'; document.body.appendChild(this.el);
-    this.hint = document.createElement('div'); this.hint.id = 'homehint'; this.base = 'WASD / bấm chuột: đi lại · L: danh sách, nâng cấp, màu nhà · B: sắp xếp đồ · E: ra ngoài'; this.hint.textContent = this.base; document.body.appendChild(this.hint); this.inside = false;
+    this.hint = document.createElement('div'); this.hint.id = 'homehint'; this.base = 'WASD / bấm chuột: đi lại · F: tên món đồ, dán nhãn, ngủ · G: Find it! · L: danh sách · B: sắp xếp · E: ra ngoài'; this.hint.textContent = this.base; document.body.appendChild(this.hint); this.inside = false;
     // (25/11) buttons on screen for arranging (mouse and touch): arrange on/off, turn, put down, cancel
     this.tools = document.createElement('div'); this.tools.id = 'hometools';
-    this.tools.innerHTML = '<button data-t="arrange">🛠 Sắp xếp đồ</button><button data-t="turn">⟲ Xoay 45°</button><button class="go" data-t="drop">✔ Đặt ở đây</button><button class="no" data-t="cancel">✖ Thôi</button>';
+    this.tools.innerHTML = '<button data-t="arrange">🛠 Sắp xếp đồ</button><button data-t="turn">⟲ Xoay 45°</button><button class="go" data-t="drop">✔ Đặt ở đây</button><button class="no" data-t="cancel">✖ Thôi</button><button data-t="touch">🏷 Tên món đồ (F)</button><button data-t="find">🔎 Find it! (G)</button>';
     document.body.appendChild(this.tools);
     this.tools.addEventListener('pointerdown', (e) => e.stopPropagation()); this.tools.addEventListener('click', (e) => { e.stopPropagation(); const b = e.target.closest('button'); if (!b || !this.api.tool) return; this.api.tool(b.dataset.t); this.syncTools(); });
     setInterval(() => this.syncTools(), 400);
@@ -43,6 +45,8 @@ export class HomePanel {
       if (b && b.dataset.a === 'take') { this.takeItem(b.dataset.v); return; }
       if (b && b.dataset.a === 'reset') { this.resetHouse(); return; }
       if (b && b.dataset.a === 'arrange') { this.hide(); if (this.api.setEditing) this.api.setEditing(true); return; }
+      if (b && b.dataset.a === 'find') { this.hide(); if (this.api.find) this.api.find(); return; }
+      if (b && b.dataset.a === 'rest') { if (this.api.rest) this.api.rest(); return; }
       if (b && b.dataset.a === 'quiz') this.startQuiz();
       if (b && b.dataset.a === 'ans') this.answer(Number(b.dataset.v));
     });
@@ -52,7 +56,8 @@ export class HomePanel {
   syncTools() {
     const on = this.inside && this.mine && !this.open, ed = !!(this.api.editing && this.api.editing()), hold = !!(this.api.holding && this.api.holding());
     this.tools.classList.toggle('on', on); if (!on) return;
-    const [a, t, d, c] = this.tools.children; a.textContent = ed ? '✔ Xong sắp xếp' : '🛠 Sắp xếp đồ'; t.classList.toggle('hide', !hold); d.classList.toggle('hide', !hold); c.classList.toggle('hide', !ed);
+    const [a, t, d, c, w, f] = this.tools.children, fg = !!(this.api.finding && this.api.finding()); a.textContent = ed ? '✔ Xong sắp xếp' : '🛠 Sắp xếp đồ'; t.classList.toggle('hide', !hold); d.classList.toggle('hide', !hold); c.classList.toggle('hide', !ed);
+    a.classList.toggle('hide', fg); w.classList.toggle('hide', ed); f.classList.toggle('hide', ed); w.textContent = fg ? '✔ Chọn món này (F)' : '🏷 Tên món đồ (F)'; f.textContent = fg ? '✖ Thôi Find it! (G)' : '🔎 Find it! (G)';      // (27/11) the names of things and Find it!
   }
   /** The line at the bottom while inside: the arrange-mode help, or the keys. */
   setHint(t) { this.hint.textContent = t || this.base; }
@@ -85,16 +90,34 @@ export class HomePanel {
   }
   paint() {
     const owner = this.owner, mine = this.mine;
-    const adm = this.admin, have = home(owner).items, lvl = adm ? 99 : owner.stats.level, gold = adm ? 1e9 : owner.stats.gold, row = (slot) => Object.entries(ITEMS).filter(([, it]) => it.slot === slot)
-      .map(([id, it]) => `<div class="it ${have.includes(id) ? '' : 'no'}"><b>${it.en}</b>${it.vi}${have.includes(id) ? (adm ? ` ✔<br><button data-a="take" data-v="${id}">Gỡ</button>` : ' ✔') : `<br><small>${it.cost} ● · cần cấp ${it.level}</small>${mine ? `<br><button data-a="buy" data-v="${id}" ${lvl < it.level ? 'disabled title="Chưa đủ cấp"' : gold < it.cost ? 'title="Chưa đủ vàng"' : ''}>Mua</button>` : ''}`}</div>`).join('');
+    const adm = this.admin, have = home(owner).items, lvl = adm ? 99 : owner.stats.level, gold = adm ? 1e9 : owner.stats.gold, row = (slot) => Object.entries(ITEMS).filter(([, it]) => it.slot === slot && !it.land && !it.trophy)
+      .map(([id, it]) => `<div class="it ${have.includes(id) ? '' : 'no'}"><b>${it.en}</b>${it.vi}${have.includes(id) ? (adm ? ` ✔<br><button data-a="take" data-v="${id}">Gỡ</button>` : slot === 'home' ? (isLabelled(owner, id) ? ' 🏷' : ' ✔<br><small>chưa dán nhãn (F)</small>') : ' ✔') : `<br><small>${it.cost} ● · cần cấp ${it.level}</small>${mine ? `<br><button data-a="buy" data-v="${id}" ${lvl < it.level ? 'disabled title="Chưa đủ cấp"' : gold < it.cost ? 'title="Chưa đủ vàng"' : ''}>Mua</button>` : ''}`}</div>`).join('');
     const n = have.length, total = Object.values(ITEMS).filter((it) => it.slot === 'home' || it.slot === 'yard').length;
     this.el.innerHTML = `<div class="book"><header><span style="font-size:28px">🏠</span><h2>${mine ? 'My home' : `${owner.name}'s home`} · Nhà của ${owner.name}</h2><button data-a="exit">Ra ngoài (E)</button></header><button class="x" data-a="close" title="Đóng (X)">✕</button>
       <div class="note">${mine ? `Nhà của con. Mua đồ, sơn tường ngay ở đây (tốn vàng, con có ${owner.stats.gold} ●); đồ mua về tự đặt vào nhà hoặc sân. Bấm ✕ góc trên bên phải để đóng.` : `Con đang thăm nhà của ${owner.name}. Chỉ ${owner.name} mới mua được đồ cho nhà này.`} (${n}/${total})</div>
       ${adm ? `<div class="flash">🛠 <b>Quyền admin</b>: làm gì với nhà này cũng không tốn vàng của ${owner.name}. <button data-a="reset">Đặt lại nhà</button></div>` : ''}
-      ${this.msg ? `<div class="flash"><b>${this.msg}</b></div>` : ''}${mine ? this.paintBox() : ''}
+      ${this.msg ? `<div class="flash"><b>${this.msg}</b></div>` : ''}${this.comfortBox(mine && !adm)}${mine ? this.paintBox() : ''}
       ${this.upgradesBox(mine)}
       ${this.quizBox(mine && !adm)}
+      ${this.showBox()}
       <h3>🛒 In the house · Cửa hàng đồ trong nhà</h3><div class="grid">${row('home')}</div><h3>🌳 In the yard · Đồ ngoài sân</h3><div class="grid">${row('yard')}</div></div>`;
+  }
+  /** (27/11) Souvenirs (one from each land of maps 4-12, bought from that land's merchant) and the trophies of the guards. */
+  showBox() {
+    const o = this.owner, have = home(o).items, cell = (id, it, how) => `<div class="it ${have.includes(id) ? '' : 'no'}"><b>${it.en}</b>${it.vi}${have.includes(id) ? (isLabelled(o, id) ? ' 🏷' : ' ✔<br><small>chưa dán nhãn (F)</small>') : `<br><small>${how}</small>`}</div>`;
+    const sv = Object.entries(ITEMS).filter(([, it]) => it.land), tr = Object.entries(ITEMS).filter(([, it]) => it.trophy);
+    return `<h3>🧳 Souvenirs · Đồ lưu niệm các vùng (${sv.filter(([id]) => have.includes(id)).length}/${sv.length})</h3><div class="note">Mỗi vùng từ Map 4 có một món, chỉ thương nhân của vùng đó bán. Mỗi món +8 Ấm cúng.</div><div class="grid">${sv.map(([id, it]) => cell(id, it, `${(mapById(it.land) || {}).vi || it.land} · ${it.cost} ● · cấp ${it.level}`)).join('')}</div>
+      <h3>🏆 Trophies · Cúp trùm (${tr.filter(([id]) => have.includes(id)).length}/${tr.length})</h3><div class="note">Hạ trùm nào, cúp của trùm đó tự về phòng học. Mỗi cúp +5 Ấm cúng.</div><div class="grid">${tr.map(([id, it]) => cell(id, it, `hạ ${BOSS_VI[it.trophy]}`)).join('')}</div>`;
+  }
+  /** (27/11) Comfort: what the home is worth (furniture, word labels, upgrades, colours, compass pieces), its level, and what it gives. */
+  comfortBox(mine) {
+    const o = this.owner, c = comfort(o), lv = COMFORT_LEVELS, have = home(o).items.filter((id) => ITEMS[id] && ITEMS[id].slot === 'home'), lab = have.filter((id) => isLabelled(o, id)).length;
+    const from = lv[c.level].at, pct = c.next ? Math.round((c.score - from) / (c.next - from) * 100) : 100, today = this.api.today(), cr = canRest(o, today), left = restLeft(o, Date.now());
+    const bar = `<div style="height:10px;border-radius:6px;background:#e6d2a8;overflow:hidden;margin:3px 0"><div style="height:100%;width:${pct}%;background:linear-gradient(90deg,#ffb84a,#ff8a5a)"></div></div>`;
+    const rest = !mine ? '' : left ? `😴 Đang khoẻ: +${o.rest.pct}% EXP, còn ${left} phút.` : cr.ok ? `<button data-a="rest">🛏 Ngủ một giấc</button> hồi đầy máu, +${c.rest}% EXP từ quái trong ${REST_MINUTES} phút (mỗi ngày một lần).` : cr.why === 'bed' ? '🛏 Mua giường (Bed) để ngủ: hồi máu và thêm EXP.' : '🛏 Hôm nay con ngủ rồi.';
+    return `<h3>🏡 Comfort · Ấm cúng: ${c.score} điểm · hạng ${c.level} ${c.en} (${c.vi})</h3>${bar}
+      <div class="note">${c.next ? `Còn ${c.next - c.score} điểm nữa lên hạng ${c.level + 1} ${lv[c.level + 1].en} (${lv[c.level + 1].vi}).` : 'Hạng cao nhất!'} Đồ đạc ${c.parts.furniture} · nhãn từ ${c.parts.labels} (${lab}/${have.length} món, mỗi nhãn +${LABEL_POINTS}) · nâng cấp ${c.parts.house} · màu sơn ${c.parts.paint} · mảnh La Bàn ${c.parts.compass}.</div>
+      ${mine ? `<div class="note">${rest}</div><div class="note"><button data-a="find">🔎 Find it!</button> Pip gọi tên ${FIND_ROUNDS} món đồ bằng tiếng Anh, con chạy tới đúng món (phím G). Đứng cạnh một món đồ bấm <b>F</b> để nghe tên và dán nhãn.</div>` : ''}`;
   }
   /** (21/11) "change the colours as the owner likes; arrange the furniture" */
   paintBox() {

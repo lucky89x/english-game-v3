@@ -119,7 +119,9 @@ export const bonusExp = (profile, base) => addExp(profile, scaleExp(profile.stat
 /** Is the hero at the top level of this map (no more EXP here)? */
 export const atCap = (profile) => profile.stats.level >= levelCap(profile);
 /** EXP a kill of a monster of level `mLevel` really gives: the base EXP, less for monsters far below the hero, none at the cap. */
-export function killExp(profile, base, mLevel) { return atCap(profile) ? 0 : Math.max(1, Math.round(base * expFactor(profile.stats.level, mLevel || 1))); }
+/** (27/11) After a sleep at home (core/homeplay.js) monsters give a little more EXP until `rest.until`. */
+export const restMul = (profile, now = Date.now()) => (profile && profile.rest && profile.rest.until > now ? 1 + (Number(profile.rest.pct) || 0) / 100 : 1);
+export function killExp(profile, base, mLevel) { return atCap(profile) ? 0 : Math.max(1, Math.round(base * expFactor(profile.stats.level, mLevel || 1) * restMul(profile))); }
 /** (24/11) Gold of a monster or a quest for this hero: full below the map's top level; at the top level half, fading to none with every reward
  *  taken there (`profile.capN[cap]` counts them; a new map has a new cap, so the gold comes back). */
 export function capGold(profile, gold) {

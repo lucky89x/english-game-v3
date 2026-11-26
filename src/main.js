@@ -73,6 +73,8 @@ import { armorMesh, charmMesh, GEAR_FILE } from './game/gear.js';
 import { Walkers } from './game/walkers.js';
 import { ShopWindow } from './ui/shop.js';
 import { ITEMS, bag, wear, buy, eat, shopList, map2Ready, map3Ready, playerAtk, useQuick, MONSTERS } from './core/rules.js';
+import * as HomePlay from './core/homeplay.js';
+import { SHOW_FILE } from './core/house.js';
 import { ZONES } from './core/zones.js';
 import { PackUI } from './ui/pack.js';
 import { Fishing } from './game/fishing.js';
@@ -296,22 +298,23 @@ function refresh() {
     profile.flags['open_' + nl] = true; save(); sfx('fanfare'); const m = WORLD.mapById(nl);
     ui.dialogue([{ who: 'Pip', en: `A new land is open: the ${m.en}!`, vi: `Đã mở ${m.vi} (cấp ${Math.max(m.lv[0], WORLD.mapById(LAND[nl].from).lv[1])}–${m.lv[1]}, Unit ${m.no}): đi qua cổng dịch chuyển ở lối vào vùng này.` }, { who: '🧭 Word Keeper badge', en: 'Rank up!', vi: 'Lên một hạng Người Giữ Chữ: mạnh hơn (+4 công, +30 máu).' }]);
   } }
+  trophyNews();      // (27/11) a beaten guard's trophy goes to the home
   const learned = Review.learned(profile.words); if (journal) journal.sync(); if (toolbar) toolbar.sync(profile);
   if (L.NAME === 'isle') {
-    ui.hud(profile, 'Đảo Kho Báu', [`🗺 ${Math.min(TR.state(profile).n, TR.MAX_DAILY)}/${TR.MAX_DAILY}`, Save.gateWaiting(profile) ? '🦉 ôn tập' : ''].filter(Boolean).join('  '), learned, bag(profile).food);
+    ui.hud(profile, 'Đảo Kho Báu', [`🗺 ${Math.min(TR.state(profile).n, TR.MAX_DAILY)}/${TR.MAX_DAILY}`, Save.gateWaiting(profile) ? '🦉 ôn tập' : '', restNote()].filter(Boolean).join('  '), learned, bag(profile).food);
     ui.clue(null, 0, '', treasureMap() ? 'Read the treasure map (M), walk the steps and dig with E!' : 'You found today’s treasures. Come back tomorrow!');
     crystals.show([]);
   } else if (L.NAME === 'harbor') {
-    ui.hud(profile, 'Cảng Mặt Trời', [wild ? wild.huntNote() : '', Save.gateWaiting(profile) ? '🦉 ôn tập' : ''].filter(Boolean).join('  '), learned, bag(profile).food);
+    ui.hud(profile, 'Cảng Mặt Trời', [wild ? wild.huntNote() : '', Save.gateWaiting(profile) ? '🦉 ôn tập' : '', restNote()].filter(Boolean).join('  '), learned, bag(profile).food);
     const mq = Q.mainCurrent(profile);
     ui.clue(null, 0, '', questNote() || 'Welcome to Sunny Harbor! Take jobs from the board by the square.');
     crystals.show([]);
   } else if (isLand(L.NAME)) {
-    ui.hud(profile, LAND[L.NAME].vi, [wild ? wild.huntNote() : '', Save.gateWaiting(profile) ? '🦉 ôn tập' : ''].filter(Boolean).join('  '), learned, bag(profile).food);
+    ui.hud(profile, LAND[L.NAME].vi, [wild ? wild.huntNote() : '', Save.gateWaiting(profile) ? '🦉 ôn tập' : '', restNote()].filter(Boolean).join('  '), learned, bag(profile).food);
     ui.clue(null, 0, '', questNote() || `Welcome to the ${L.TITLE}!`);
     crystals.show([]);
   } else if (L.NAME === 'forest') {
-    ui.hud(profile, 'Rừng Ký Ức', [`Pha lê ${quest.q.found.length}/5`, wild ? wild.huntNote() : '', Save.gateWaiting(profile) ? '🦉 ôn tập' : ''].filter(Boolean).join('  '), learned, bag(profile).food);
+    ui.hud(profile, 'Rừng Ký Ức', [`Pha lê ${quest.q.found.length}/5`, wild ? wild.huntNote() : '', Save.gateWaiting(profile) ? '🦉 ôn tập' : '', restNote()].filter(Boolean).join('  '), learned, bag(profile).food);
     const c = quest.clue, t = quest.targetId ? landmark(quest.targetId) : null;
     if (quest.step === 'seek') { if (c) ui.clue(c, quest.q.hint, `${t.en} = ${t.vi}`); else ui.clue(null, 0, '', `Lời gợi ý cho lớp ${profile.grade} chưa được soạn.`); }
     else if (quest.step === 'intro') ui.clue(null, 0, '', 'Talk to Tom at the forest gate. (E)');
@@ -319,7 +322,7 @@ function refresh() {
     else ui.clue(null, 0, '', questNote() || 'The forest remembers its words again. You can explore!');
     crystals.show(quest.crystalIds());
   } else {
-    ui.hud(profile, 'Làng Khởi Đầu', [mini ? `★ ${mini.data.stars.length}/${STARS.length}` : '', wild ? wild.huntNote() : '', Save.gateWaiting(profile) ? '🦉 ôn tập' : ''].filter(Boolean).join('  '), learned, bag(profile).food);
+    ui.hud(profile, 'Làng Khởi Đầu', [mini ? `★ ${mini.data.stars.length}/${STARS.length}` : '', wild ? wild.huntNote() : '', Save.gateWaiting(profile) ? '🦉 ôn tập' : '', restNote()].filter(Boolean).join('  '), learned, bag(profile).food);
     const c = story.customer;
     if (c) ui.clue({ who: `Traveller ${c.index + 1}/${c.total}`, text: c.said || `A jar of "${c.target.word}", please!`, key: c.target.word, hints: false, tip: 'Đi tới hũ có nghĩa đúng rồi nhấn E' }, c.said ? 1 : 0, '');
     else if (mini && mini.note) ui.clue(null, 0, '', mini.note);
@@ -741,7 +744,7 @@ function sellFish() {
   ui.dialogue([{ who: 'Fishmonger', en: `Fresh fish! ${r.n} things for ${r.gold} gold. Thank you!`, vi: `Bán ${r.n} món được ${r.gold} vàng.` }]);
 }
 /** Blender furniture for the rooms (home_*_v01.glb) is fetched the first time it is needed; a missing file falls back to the shapes. */
-const HOME_FILE = { bed: 'home_bed', wardrobe: 'home_wardrobe', mirror: 'home_mirror', table: 'home_table_chairs', sofa: 'home_sofa', lamp: 'home_lamp', bookcase: 'home_bookcase', desk: 'home_desk', clock: 'home_clock', picture: 'home_picture', rug: 'home_rug', plant: 'home_plant', guitar: 'home_guitar', piano: 'home_piano', drum: 'home_drum', violin: 'home_violin' };
+const HOME_FILE = { ...SHOW_FILE, bed: 'home_bed', wardrobe: 'home_wardrobe', mirror: 'home_mirror', table: 'home_table_chairs', sofa: 'home_sofa', lamp: 'home_lamp', bookcase: 'home_bookcase', desk: 'home_desk', clock: 'home_clock', picture: 'home_picture', rug: 'home_rug', plant: 'home_plant', guitar: 'home_guitar', piano: 'home_piano', drum: 'home_drum', violin: 'home_violin' };
 const homeScenes = {};
 const homeModel = (file) => (homeScenes[file] ? homeScenes[file].clone(true) : null);
 const loadHomeModels = (items) => Promise.all(items.map((id) => HOME_FILE[id]).filter((f) => f && homeScenes[f] === undefined).map((f) => { homeScenes[f] = null; return staticModel(`${f}_v01`).then((m) => { homeScenes[f] = m; }, () => {}); }));
@@ -753,17 +756,92 @@ function plantMenu(i) {
     if (r.ok) { sfx('tick'); speak(`I planted ${ids[k]} seeds.`, true); save(); refresh(); homes.syncFarm(true); } else ui.toast(r.why === 'gold' ? 'Chưa đủ vàng mua hạt.' : 'Luống này đã có cây.');
   });
 }
+// ---------------------------------------------------------------- (27/11, turn 64) life in the house (rules: core/homeplay.js)
+// F by a piece of furniture: its English name; the first time the child "labels" it (hears the word, picks it) and the home gets
+// more comfortable. F by one's own bed: a sleep once a day (full health, a little more EXP from monsters for a while).
+// G: Find it! Pip names five things ("Find the lamp!", "Find the thing next to the bed!") and the child walks to each.
+let homeOwner = null, homeMine = false, findGame = null;
+const homeTag = (id) => { const it = ITEMS[id]; if (!it) return null; return label(findGame ? '❓' : HomePlay.isLabelled(homeOwner, id) ? `🏷 ${it.en}` : '❓ F', { size: 34, scale: 0.9 }); };
+const restNote = () => { const m = profile ? HomePlay.restLeft(profile, Date.now()) : 0; return m ? `😴 +${profile.rest.pct}% EXP ${m}′` : ''; };
+/** The home went up a comfort level since the child was last told: say so (once). */
+/** The trophies of beaten guards arrive in the home by themselves (also for a save from before the trophies existed). */
+function trophyNews() {
+  if (!profile || profile.admin) return; const got = HomePlay.syncTrophies(profile); if (!got.length) return;
+  save(); ui.toast(got.length === 1 ? `🏆 ${ITEMS[got[0]].en} (${ITEMS[got[0]].vi}) đã được đặt trong phòng học ở nhà con: +${HomePlay.TROPHY_POINTS} Ấm cúng.` : `🏆 ${got.length} chiếc cúp trùm đã được đặt trong phòng học ở nhà con.`); comfortNews();
+}
+function comfortNews() {
+  if (!profile || profile.admin) return; const c = HomePlay.comfort(profile);
+  if (c.level > (profile.comfortSeen || 0)) { profile.comfortSeen = c.level; save(); sfx('fanfare'); ui.toast(`🏡 Nhà của con lên hạng ${c.level}: ${c.en} · ${c.vi}! Ngủ ở nhà nay được +${c.rest}% EXP.`); }
+}
+function homeTouch() {
+  if (!room || !room.walk || ui.busy || room.editing) return; const id = room.nearId;
+  if (!id || !ITEMS[id]) { ui.toast(findGame ? `${findGame.q.en} · lại gần món đồ rồi bấm F` : 'Lại gần một món đồ rồi bấm F để nghe tên tiếng Anh của nó.'); return; }
+  if (findGame) { findAnswer(id); return; }
+  if (id === 'bed' && homeMine && HomePlay.canRest(profile, Review.today()).ok) {
+    ui.choose({ who: '🛏 Bed', en: 'Would you like to sleep for a while?', vi: `Ngủ một giấc: hồi đầy máu, ${HomePlay.REST_MINUTES} phút sau đó quái cho thêm +${HomePlay.comfort(profile).rest}% EXP (mỗi ngày một lần).` }, ['Sleep · Ngủ một giấc', 'Just the word · Chỉ nghe tên'], (i) => { if (i === 0) homeRest(); else homeWord(id); });
+    return;
+  }
+  homeWord(id);
+}
+function homeWord(id) {
+  const it = ITEMS[id];
+  if (!homeMine || HomePlay.isLabelled(profile, id)) { speak(it.en, true); ui.toast(`🏷 ${it.en} · ${it.vi}`); return; }
+  const others = Object.keys(ITEMS).filter((x) => ITEMS[x].slot === 'home' && x !== id && ITEMS[x].en !== it.en).sort(() => Math.random() - 0.5).slice(0, 2), opts = [id, ...others].sort(() => Math.random() - 0.5);
+  speak(it.en, true, 0.8);
+  ui.choose({ who: '🏷 Word label', en: '🔊 Listen! Which word is the name of this thing?', vi: `Dán nhãn tiếng Anh cho: ${it.vi}` }, opts.map((x) => ITEMS[x].en), (i) => {
+    const ok = opts[i] === id; Save.recordSkill(profile, 'vocabulary', ok, 0); sfx(ok ? 'correct' : 'wrong');
+    if (!ok) { speak(it.en, true); ui.dialogue([{ who: 'Pip', en: `This is the ${it.en.toLowerCase()}. Listen again and try once more!`, vi: `${it.en} = ${it.vi}. Bấm F để thử lại.` }]); return; }
+    HomePlay.addLabel(profile, id); const e = Save.atCap(profile) ? 0 : learnExp(profile.stats.level, LEARN.bubbleNew); Save.addExp(profile, e); save(); refresh();
+    if (room && room.walk) { room.retag(); room.flash(id); } speak(it.en, true);
+    ui.toast(`🏷 ${it.en} = ${it.vi} · +${HomePlay.LABEL_POINTS} Ấm cúng (${HomePlay.comfort(profile).score} điểm)${e ? ` · +${e} EXP` : ''}`); comfortNews();
+  });
+}
+function homeRest() {
+  const r = HomePlay.startRest(profile, Date.now(), Review.today());
+  if (!r.ok) { ui.toast(r.why === 'bed' ? 'Nhà chưa có giường (Bed): mua trong danh sách (phím L) rồi mới ngủ được.' : 'Hôm nay con ngủ rồi. Mai ngủ tiếp nhé!'); return; }
+  profile.stats.hp = Save.maxHp(profile); save(); refresh(); sfx('fanfare'); if (homePanel && homePanel.open) homePanel.paint();
+  ui.dialogue([{ who: 'Pip', en: 'Good night… Good morning! You slept well.', vi: `Hồi đầy máu. Trong ${r.minutes} phút tới, quái cho thêm +${r.pct}% EXP (nhà càng ấm cúng càng được nhiều).` }]);
+}
+const findHint = () => (findGame && findGame.q ? `🔎 ${findGame.n + 1}/${HomePlay.FIND_ROUNDS} · ${findGame.q.en} · F: chọn món đang đứng cạnh · G: thôi chơi` : '');
+function homeFind() {
+  if (!room || !room.walk || ui.busy || room.editing) return;
+  if (findGame) { findGame = null; homePanel.setHint(''); room.retag(); ui.toast('Đã dừng Find it!'); return; }
+  if (!HomePlay.findRound(room.list())) { ui.toast('Nhà cần ít nhất 3 món đồ mới chơi Find it! được.'); return; }
+  findGame = { n: 0, right: 0, asked: [], tries: 0, gained: 0, q: null, pays: homeMine && HomePlay.findPays(profile, Review.today()) }; homePanel.hide(); room.retag(); findNext();
+}
+function findNext() {
+  const g = findGame; if (!g) return;
+  if (g.n >= HomePlay.FIND_ROUNDS) {
+    findGame = null; homePanel.setHint(''); if (room && room.walk) room.retag(); save(); refresh(); sfx('fanfare');
+    ui.dialogue([{ who: 'Pip', en: g.right === HomePlay.FIND_ROUNDS ? 'You found everything at the first try! You know your home so well.' : `You found ${g.right} of ${HomePlay.FIND_ROUNDS} at the first try. Well done!`, vi: `Find it!: đúng ngay ${g.right}/${HomePlay.FIND_ROUNDS}${g.gained ? `, +${g.gained} EXP` : g.pays ? '' : ' (hôm nay đã hết lượt có EXP, chơi cho vui)'}.` }]);
+    return;
+  }
+  g.q = HomePlay.findRound(room.list(), { not: g.asked, hard: profile.grade >= 8 }); g.asked.push(g.q.target); g.tries = 0; speak(g.q.en, true); homePanel.setHint(findHint());
+}
+function findAnswer(id) {
+  const g = findGame, ok = id === g.q.target, it = ITEMS[id]; sfx(ok ? 'correct' : 'wrong'); room.flash(id);
+  if (!ok) {
+    g.tries += 1; Save.recordSkill(profile, 'listening', false, 0);
+    if (g.tries >= 3) { const t = ITEMS[g.q.target]; ui.toast(`Đáp án: ${t.en} = ${t.vi}. Sang câu tiếp nhé!`); g.n += 1; findNext(); return; }
+    speak(`That is the ${it.en.toLowerCase()}. ${g.q.en}`, true); ui.toast(`Đây là ${it.en} (${it.vi}). ${g.q.en}`); return;
+  }
+  if (g.tries === 0) { g.right += 1; Save.recordSkill(profile, 'listening', true, 0); if (g.pays && !Save.atCap(profile)) { const e = learnExp(profile.stats.level, LEARN.bubbleOld); Save.addExp(profile, e); g.gained += e; } }
+  ui.toast(`✔ ${it.en} = ${it.vi}`); g.n += 1; findNext();
+}
 /** (21/11) Into a child's house: the hero walks inside (world/homewalk.js); the list (L) and the arrange mode (B) are on top.
  *  keepList: the list stays open (after an upgrade or a new colour, the house is rebuilt around the hero). */
 async function goHome(o, mine, keepList = false, admin = false) {
+  if (o === profile) trophyNews();      // the trophies of beaten guards stand in the study
   const items = [...homesItems(o)]; await loadHomeModels(items); const was = room && room.walk ? { ...room.me } : null;
+  homeOwner = o; homeMine = !!mine && o === profile; const keepFind = keepList ? findGame : null;
   enterRoom('home', { items, model: homeModel, pieces: Saga.pieces(o), house: houseOf(o), editable: mine, avatar: { root: player.root, clips: Object.values(player.actions).map((a) => a.getClip()) },
-    onPlace: (id, at) => { setPlace(houseOf(o), id, at); save(); }, hint: (t) => homePanel.setHint(t) });
+    onPlace: (id, at) => { setPlace(houseOf(o), id, at); save(); }, hint: (t) => homePanel.setHint(findGame && !t ? findHint() : t), tag: homeTag });
+  findGame = keepFind;
   if (room && room.walk) { room.yaw0 = cam.yaw; if (was && was.f < houseOf(o).floors) Object.assign(room.me, { f: was.f, x: was.x, z: was.z, y: was.y, stair: was.stair }); }
   homePanel.show(o, mine, keepList, admin); if (!keepList && !mine) homePanel.hide();      // (24/11) the child sees the shop list as soon as they walk in (✕ closes it); a visitor only looks around
 }
 function enterRoom(kind, opts) { leaveRoom(); room = buildRoom(kind, opts); room.kind = kind; document.body.classList.add('inroom'); if (room.walk) { cam.minPitch = -0.6; cam.maxPitch = 1.45; } sfx('tick'); }
-function leaveRoom() { if (!room) return; room.dispose(); room = null; document.body.classList.remove('inroom'); cam.minPitch = 0.05; cam.maxPitch = 1.25; cam.tPitch = Math.min(1.25, Math.max(0.05, cam.tPitch)); }
+function leaveRoom() { if (!room) return; findGame = null; room.dispose(); room = null; document.body.classList.remove('inroom'); cam.minPitch = 0.05; cam.maxPitch = 1.25; cam.tPitch = Math.min(1.25, Math.max(0.05, cam.tPitch)); }
 /** (24/11) The admin removes a child: the profile goes, and with it the home, the things in it and the progress (all of it lives in the profile). */
 function adminDelete(id) { const i = store.profiles.findIndex((p) => p.id === id && !p.admin); if (i < 0) return; store.profiles.splice(i, 1); if (store.last === id) store.last = profile.id; try { Save.persist(store); } catch (e) { console.warn('save failed', e); } if (homes) homes.refresh(true); }
 function adminPlaces() {
@@ -1379,6 +1457,8 @@ function onKey(e) {
   if (shopWin && shopWin.key(e.code)) { e.preventDefault(); return; }
   if (music && music.key(e.code)) { e.preventDefault(); return; }
   if (journal && !ui.busy && journal.key(e.code)) { e.preventDefault(); return; }
+  if (room && ui.busy) { if (ui.key(e)) e.preventDefault(); return; }      // (27/11) a talk inside a house takes the keys: E used to shut the talk AND leave the house
+  if (room && room.walk && !(homePanel && homePanel.open) && !ui.busy && !room.editing && (e.code === 'KeyF' || e.code === 'KeyG')) { if (e.code === 'KeyF') homeTouch(); else homeFind(); e.preventDefault(); return; }      // (27/11) F: the name of the thing, G: Find it!
   if (room && room.walk && !(homePanel && homePanel.open) && room.key(e.code)) { e.preventDefault(); return; }      // B arrange, R turn, Esc
   if (homePanel && homePanel.key(e.code)) { e.preventDefault(); return; }
   if (dexPanel && dexPanel.key(e.code)) { e.preventDefault(); return; }
@@ -1454,7 +1534,7 @@ async function boot() {
     homes = new Homes({ scene, load: staticModel, profiles: () => store.profiles, models: { garden: await opt('prop_vegetable_garden_v01'), tree: await opt('prop_tree_round_v01'), flowers: await opt('yard_flowerbed_v01'), bench: await opt('yard_bench_v01'), mailbox: await opt('yard_mailbox_v01'), garden_lamp: await opt('yard_garden_lamp_v01') } });
     await homes.build(); homes.setRegion(L.NAME);
     try { outerRing = await buildOuter(staticModel); for (const g of Object.values(outerRing)) scene.add(g); showOuter(L.NAME); } catch (e) { console.warn('outer ring', e); }      // (24/11) cottages and plants round the edge of the harbour and forest
-    homePanel = new HomePanel({ onClose: leaveRoom, rebuild: (o) => { const p = goHome(o, homePanel.mine, true, homePanel.admin); if (homes) homes.refresh(true); return p; }, setEditing: (on) => room && room.walk && room.setEditing(on), pickUp: (id) => room && room.walk && room.pickUp && room.pickUp(id), tool: (n) => room && room.walk && room.tool && room.tool(n), editing: () => !!(room && room.walk && room.editing), holding: () => !!(room && room.walk && room.holding), profile: () => profile, today: () => Review.today(), changed: () => { save(); refresh(); }, sfx, track }); }
+    homePanel = new HomePanel({ onClose: leaveRoom, rebuild: (o) => { const p = goHome(o, homePanel.mine, true, homePanel.admin); if (homes) homes.refresh(true); return p; }, setEditing: (on) => room && room.walk && room.setEditing(on), pickUp: (id) => room && room.walk && room.pickUp && room.pickUp(id), tool: (n) => (n === 'touch' ? homeTouch() : n === 'find' ? homeFind() : room && room.walk && room.tool && room.tool(n)), find: () => homeFind(), rest: () => homeRest(), finding: () => !!findGame, editing: () => !!(room && room.walk && room.editing), holding: () => !!(room && room.walk && room.holding), profile: () => profile, today: () => Review.today(), changed: () => { save(); refresh(); comfortNews(); }, sfx, track }); }
   journal = new Journal({ profile: () => profile, today: () => Review.today(), onClose: leaveRoom,
     store: () => store, claimShip: () => { const r = Family.claim(store, profile); if (r) { sfx('fanfare'); save(); refresh(); ui.toast(`⚓ Thưởng tàu gia đình: +${r.gold} vàng`); } },
     claimMain: (id) => claimReward(Q.claimMain(profile, id), 'Nhiệm vụ chính', true), claimDaily: (id) => claimReward(Q.claimDaily(profile, Review.today(), id), 'Nhiệm vụ ngày') });
