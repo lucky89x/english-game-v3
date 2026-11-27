@@ -16,8 +16,8 @@ export const isLabelled = (p, id) => !!labels(p)[id];
 export function addLabel(p, id) { if (!ITEMS[id] || !home(p).items.includes(id) || labels(p)[id]) return false; labels(p)[id] = true; return true; }
 
 /** Comfort points of one piece: dearer pieces count more (1 to 6); a labelled piece counts LABEL_POINTS more. */
-export const LABEL_POINTS = 2, UPGRADE_POINTS = 8, PAINT_POINTS = 3, COMPASS_POINTS = 4, SOUVENIR_POINTS = 8, TROPHY_POINTS = 5, FRIEND_POINTS = 3;      // a souvenir of a land and a boss trophy count more than furniture
-export const piecePoints = (id) => { const it = ITEMS[id]; return !it || (it.slot !== 'home' && it.slot !== 'yard') ? 0 : it.land ? SOUVENIR_POINTS : it.trophy ? TROPHY_POINTS : Math.max(1, Math.min(6, Math.round(it.cost / 150))); };
+export const LABEL_POINTS = 2, UPGRADE_POINTS = 8, PAINT_POINTS = 3, COMPASS_POINTS = 4, SOUVENIR_POINTS = 8, TROPHY_POINTS = 5, FRIEND_POINTS = 3, PRIZE_POINTS = 6;      // a souvenir of a land and a boss trophy count more than furniture
+export const piecePoints = (id) => { const it = ITEMS[id]; return !it || (it.slot !== 'home' && it.slot !== 'yard') ? 0 : it.land ? SOUVENIR_POINTS : it.trophy ? TROPHY_POINTS : it.prize ? PRIZE_POINTS : Math.max(1, Math.min(6, Math.round(it.cost / 150))); };
 export const COMFORT_LEVELS = [
   { at: 0, en: 'Bare', vi: 'Trống trải' }, { at: 12, en: 'Tidy', vi: 'Gọn gàng' }, { at: 30, en: 'Cosy', vi: 'Ấm cúng' }, { at: 55, en: 'Homely', vi: 'Thân thương' },
   { at: 90, en: 'Charming', vi: 'Xinh xắn' }, { at: 135, en: 'Lovely', vi: 'Đáng yêu' }, { at: 190, en: 'Splendid', vi: 'Lộng lẫy' }, { at: 255, en: 'Grand', vi: 'Tráng lệ' },

@@ -26,7 +26,9 @@ Map N dạy Unit N của lớp bé. Mỗi vùng bị Gió Đen lấy mất một
 - Ngữ pháp: Unit 1–12 lớp 6 và lớp 8 đã soạn (10 câu + 1 thẻ ghi nhớ mỗi Unit, `src/core/grammar_units.js`). Khung chủ đề lấy theo trí nhớ về mục lục sách, **cần giáo viên đối chiếu**; ba chỗ còn nghi: lớp 6 Unit 12 (so sánh nhất tính từ dài, can/could), lớp 8 Unit 5 (mạo từ), lớp 8 Unit 10 (by/for). Lớp 7, 9 mới có Unit 1–2.
 - Ảnh bản đồ thế giới (`assets/ui/world_map.jpg`) mới vẽ 10 vùng: cần anh tạo lại ảnh có thêm Thành phố tương lai và Vương quốc mộng mơ (hai huy hiệu đang đặt tạm ở góc phải và góc trên).
 
-## 2. Mini game riêng cho từng map (ĐỀ XUẤT)
+## 2. Mini game riêng cho từng map (6 trò ĐÃ LÀM ở lượt 68, 4 trò còn ĐỀ XUẤT)
+
+**Đã làm (27/11, lượt 68; bản đầu, cải tiến sau):** Bazaar Bargain (map 4), Snow Slide (5), Rune Decoder (6), Balloon Ride (7), Gem Mine (10), Robot Builder (11). Luật ở `src/core/landgames.js`, hình ở `src/ui/landgames.js`, chủ trò trong `LAND_GAMES`. Mỗi trò có một **giải thưởng là đồ trang trí cho nhà**, nhận một lần khi đạt điểm (`PRIZES`): thảm chợ phiên, người tuyết, cột đá cổ, đèn ngôi sao, rương đá quý, robot giúp việc (mỗi món +6 Ấm cúng; mô hình mượn tạm đồ có sẵn). Khác với bảng dưới ở vài chỗ: Bazaar hỏi tổng tiền (đáp án là số viết bằng chữ) chứ chưa có tiền thối; Gem Mine đào 10 nhát trên tường 25 ô, ô khoá hỏi nghĩa của từ; Robot Builder là đọc đơn đặt hàng rồi tô màu đầu, thân, chân (có câu "the same colour as", "not", "If…"), chưa có robot về nhà làm việc. Còn đề xuất: Mushroom Says (3), Fairy Games (8), Rescue Run (9), Dream Weaver (12).
 
 Hiện mỗi vùng mới dùng lại một trò có sẵn dưới tên của vùng (để bé có chỗ tiêu vàng ngay). Dưới đây là trò **riêng** nên làm dần; trò nào cũng có tiếng Anh nằm trong cách chơi, không phải câu hỏi chặn cửa.
 
@@ -45,9 +47,9 @@ Hiện mỗi vùng mới dùng lại một trò có sẵn dưới tên của vù
 
 Nguyên tắc tiêu vàng: vé vào tăng theo cấp (đã có), phần thưởng là **đồ trang trí nhà** chứ không phải vàng hay EXP, nên vàng chảy từ đánh quái sang nhà. Không làm trò may rủi kiểu quay thưởng.
 
-## 2a. Danh sách mini game HIỆN CÓ và chỗ đặt (rà 27/11, lượt 67)
+## 2a. Danh sách mini game HIỆN CÓ và chỗ đặt (rà 27/11, lượt 67; thêm 6 trò ở lượt 68)
 
-Có **10 nhóm trò** (17 trò nếu tính riêng 4 trò chữ của Hội Đèn, 3 trò phục vụ ở cảng và 3 hoạt động trong nhà), đặt ở **26 chỗ** trên 12 map. Mọi trò trừ phần ở nhà đều thu phí vàng theo cấp của bé và hỏi 3 câu ở cổng (đúng hết thì miễn phí lượt đó và được EXP); chơi xong không thưởng vàng.
+Có **16 nhóm trò** (23 trò nếu tính riêng 4 trò chữ của Hội Đèn, 3 trò phục vụ ở cảng và 3 hoạt động trong nhà), đặt ở **32 chỗ** trên 12 map. Mọi trò trừ phần ở nhà đều thu phí vàng theo cấp của bé và hỏi 3 câu ở cổng (đúng hết thì miễn phí lượt đó và được EXP); chơi xong không thưởng vàng.
 
 | Trò (cách chơi) | Tiếng Anh trong trò | Phí ở cấp 1 / 20 / 70 | Đặt ở đâu |
 |---|---|---|---|
@@ -59,6 +61,12 @@ Có **10 nhóm trò** (17 trò nếu tính riêng 4 trò chữ của Hội Đèn
 | **Hứng táo** | không | 10 / 40 / 120 | Làng (vườn táo phía Đông, cô Hana) |
 | **Câu cá** | tên cá trong sổ cá | 10 / 40 / 120 | Làng (bến sông) · Biển (cầu tàu nhỏ, có thuyền) |
 | **Style · Café · Salon** (3 trò phục vụ khách) | đọc yêu cầu của khách bằng tiếng Anh | 15 / 70 / 220 | Biển: tiệm quần áo, quán cà phê, tiệm làm đẹp ở Cảng Mặt Trời |
+| **Bazaar Bargain** (bán hàng: cộng tiền) | câu hỏi How much…?, số đếm viết bằng chữ, số nhiều | 10 / 50 / 150 | Sa mạc (cô Layla, cạnh cổng phía Tây) |
+| **Snow Slide** (trượt tuyết 3 làn) | so sánh hơn: chọn dạng đúng của tính từ | 10 / 50 / 150 | Núi tuyết (anh Olaf) |
+| **Rune Decoder** (xếp phiến đá thành câu) | trật tự từ trong câu | 10 / 50 / 150 | Di tích (cô Iris) |
+| **Balloon Ride** (hứng chữ cái theo thứ tự) | nghe, nhớ và đánh vần từ của Unit | 10 / 50 / 150 | Trời (chú Felix) |
+| **Gem Mine** (đào 10 nhát trên tường 25 ô) | ô khoá hỏi nghĩa của từ | 10 / 50 / 150 | Hang tinh thể (bác Garnet) |
+| **Robot Builder** (đọc đơn, tô màu robot) | màu sắc, the same as, not, câu If | 10 / 50 / 150 | Thành phố (kỹ sư Nova) |
 | **Đào kho báu** | đọc chỉ dẫn | 2 lần mỗi ngày | Đảo Kho Báu (đi thuyền từ cảng) |
 | **Trong nhà**: Find it!, Home words, tiếp khách | nghe lệnh, tên đồ vật, ngữ pháp | không mất phí | nhà của bé (vào được từ cổng mọi vùng) |
 
@@ -71,17 +79,17 @@ Ngoài ra có **phòng nhạc của Anna** ở Làng (nghe và học lời bài 
 | 1 Làng | Hội Đèn (4 trò chữ), Xếp kẹo, Xếp hình, Bắn ná, Đua xe, Hứng táo, Câu cá, phòng nhạc |
 | 2 Biển | Đua ven biển, Style, Café, Salon, Câu cá; Đảo Kho Báu: đào kho báu |
 | 3 Rừng | Đua trong rừng |
-| 4 Sa mạc | Dune Rally (đua) |
-| 5 Núi tuyết | Snowball Shot (bắn) |
-| 6 Di tích | Rune Blocks (xếp hình) |
-| 7 Trời | Cloud Candy (xếp kẹo) |
+| 4 Sa mạc | Dune Rally (đua), **Bazaar Bargain** |
+| 5 Núi tuyết | Snowball Shot (bắn), **Snow Slide** |
+| 6 Di tích | Rune Blocks (xếp hình), **Rune Decoder** |
+| 7 Trời | Cloud Candy (xếp kẹo), **Balloon Ride** |
 | 8 Đảo tiên | Firefly Path (nối chữ) |
 | 9 Núi lửa | Lava Shot (bắn) |
-| 10 Hang tinh thể | Crystal Vault (mở khoá chữ) |
-| 11 Thành phố | Neon Grand Prix (đua), Robot Workshop (điều tra) |
+| 10 Hang tinh thể | Crystal Vault (mở khoá chữ), **Gem Mine** |
+| 11 Thành phố | Neon Grand Prix (đua), Robot Workshop (điều tra), **Robot Builder** |
 | 12 Mộng mơ | Dream Candy (xếp kẹo), Star Race (đua) |
 
-**Nhận xét:**
+**Nhận xét (viết ở lượt 67; lượt 68 đã xử lý ý 2 và ý 4 cho sáu vùng, map 3, 8, 9, 12 vẫn như cũ):**
 - Làng có 8 trò, các map 3–10 mỗi map chỉ 1 trò: bé rời Làng là ít chỗ chơi hẳn.
 - Map 4–12 chưa có trò nào của riêng vùng: chỉ là trò của Làng đổi tên, đổi màu (riêng đua xe có đổi vòng đua). Bé sẽ nhận ra sau map thứ hai.
 - Ở Làng, 4 chủ trò đứng ở vành ngoài, xa trung tâm (80–90 m): bé khó tình cờ gặp. Ở các vùng mới thì ngược lại, chủ trò đứng ngay cạnh cổng.
@@ -141,6 +149,34 @@ Luật ở `src/core/buddies.js`; người và lời thoại điều khiển ở
 | 12 Mộng mơ | hạ 25 quái | học 10 từ mới |
 
 **Chưa làm**: hai bạn chưa góp mặt trong các cảnh cắt của cốt truyện (lúc hạ trùm, cảnh kết với Hugh); chưa có trang "Nhật ký của Mai" trong sổ tay để đọc lại; bạn đi cùng chưa giúp đánh quái; mô hình riêng (chờ Tripo).
+
+## 3c. Việc nhỏ của ba nhà thám hiểm (ĐÃ LÀM lượt 68)
+
+Minh, Sora, Bella (nhân vật máy, lượt 67) nay nhờ bé **12 việc nhỏ, mỗi map một việc**, chia đều mỗi bạn 4 việc (ít bằng một nửa số việc của Kit và Mai). Luật ở `src/core/crowd.js` (`FAVOURS`, `favourState`, `favourAccept`, `favourTurnIn`, `count`).
+
+| Map | Ai nhờ | Việc |
+|---|---|---|
+| 1 Làng | Minh | đọc 5 bong bóng chữ |
+| 2 Biển | Sora | mở 3 rương khoá chữ |
+| 3 Rừng | Bella | chơi xong 2 ván mini game |
+| 4 Sa mạc | Minh | trả lời đúng 20 câu |
+| 5 Núi tuyết | Sora | đọc 8 bong bóng chữ |
+| 6 Di tích | Bella | mở 4 rương |
+| 7 Trời | Minh | chơi 3 ván mini game |
+| 8 Đảo tiên | Sora | trả lời đúng 30 câu |
+| 9 Núi lửa | Bella | đọc 10 bong bóng chữ |
+| 10 Hang tinh thể | Minh | mở 5 rương |
+| 11 Thành phố | Sora | chơi 4 ván mini game |
+| 12 Mộng mơ | Bella | trả lời đúng 40 câu |
+
+- Cố ý chọn các việc Kit và Mai KHÔNG nhờ (hai bạn ấy nhờ hạ quái, bảng săn, học từ, buổi học, nhãn, khách), để bé có lý do đọc bong bóng, mở rương, chơi mini game.
+- Đếm từ lúc nhận (`profile.tally`, tăng trong `main.js track()`); việc của map N chỉ hiện khi bé đã tới map N; mỗi bạn hỏi một lần mỗi lần bé vào vùng, bé từ chối thì bạn chỉ trò chuyện.
+- Thưởng: vàng bằng nửa một việc của Kit/Mai + một ít EXP học; KHÔNG có chỉ số vĩnh viễn, nên bé bỏ qua cũng không thiệt.
+- Chưa làm: dấu ! trên đầu nhà thám hiểm khi có việc, danh sách việc trong sổ tay, phần thưởng khi làm đủ 12 việc.
+
+## 3d. Chơi chung qua mạng (NGHIÊN CỨU, chưa làm)
+
+Xem `docs/NGHIEN_CUU_CHOI_ONLINE.md`: bốn cách nối máy, năm bậc đồng bộ, an toàn cho trẻ, đề xuất làm mạng trong nhà trước, và bốn câu cần anh chọn.
 
 ## 4. Mô hình
 

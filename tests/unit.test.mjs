@@ -310,7 +310,7 @@ test('shop: buying needs gold and level, puts the item on, owned items are free 
   p.stats.hp = 30; assert.equal(eat(p, S.maxHp(p)), 50); assert.equal(p.stats.hp, 80); assert.equal(bag(p).food, 1);
   p.stats.hp = S.maxHp(p); assert.equal(eat(p, S.maxHp(p)), 0, 'not wasted at full health'); assert.equal(bag(p).food, 1);
   assert.deepEqual(shopList('rose'), ['clover', 'bread', 'fire_amulet', 'ice_amulet', 'wind_amulet', 'thunder_amulet']); assert.equal(shopList('forge').length, 13);      // + element swords, staffs, amulets (20/11)
-  for (const it of Object.values(ITEMS)) assert.ok(it.en && it.vi && (it.cost > 0 || it.trophy));
+  for (const it of Object.values(ITEMS)) assert.ok(it.en && it.vi && (it.cost > 0 || it.trophy || it.prize));
 });
 
 // ---------------------------------------------------------------- match-3 rules
@@ -1224,7 +1224,7 @@ test('lands (maps 4-12): every place can be walked to, the grounds are full, eac
   }
   assert.ok(PRG.killsPerLevel(30) === PRG.KILLS_CAP && PRG.killsPerLevel(44) === PRG.KILLS_CAP, 'the later lands do not get longer and longer');
   // (26/11, turn 63) a game master in every land, on ground the hero can stand on, away from the people and the board, running a game that exists
-  const STARTS = (await import('../src/core/regions/lands.js')).LAND_GAMES, GAMES = ['candy', 'blocks', 'sling', 'race2', 'fireflies', 'vault', 'courier', 'workshop'];
+  const STARTS = (await import('../src/core/regions/lands.js')).LAND_GAMES, GAMES = ['candy', 'blocks', 'sling', 'race2', 'fireflies', 'vault', 'courier', 'workshop', 'bazaar', 'slide', 'mine', 'rune', 'balloon', 'robot'];
   for (const id of LAND_IDS) {
     const mine = STARTS.filter((s) => s.region === id), R = LY.REGIONS[id], d = LAND[id]; assert.ok(mine.length >= 1, `${id} has a mini game`);
     for (const s of mine) { assert.ok(GAMES.includes(s.game) && s.host && s.board && s.sign, `${s.id}: a game of the arcade with a host`); assert.ok(R.walkable(s.x, s.z, 1.2), `${s.id} stands on free ground`);
@@ -1238,7 +1238,7 @@ test('home life (27/11): word labels, comfort levels, a sleep a day, Find it! ro
   const c0 = H.comfort(p); assert.equal(c0.level, 0); assert.equal(c0.score, c0.parts.furniture); assert.ok(c0.next > c0.score && c0.rest === 5);
   assert.equal(H.addLabel(p, 'statue'), false, 'only a piece the child owns can be labelled'); assert.equal(H.addLabel(p, 'bed'), true); assert.equal(H.addLabel(p, 'bed'), false, 'a label counts once');
   assert.equal(H.comfort(p).score, c0.score + H.LABEL_POINTS); assert.ok(H.isLabelled(p, 'bed') && !H.isLabelled(p, 'lamp'));
-  for (const id of Object.keys(RU.ITEMS)) { const it = RU.ITEMS[id], pts = H.piecePoints(id); assert.ok(it.land ? pts === H.SOUVENIR_POINTS : it.trophy ? pts === H.TROPHY_POINTS : it.slot === 'home' || it.slot === 'yard' ? pts >= 1 && pts <= 6 : pts === 0, id); }
+  for (const id of Object.keys(RU.ITEMS)) { const it = RU.ITEMS[id], pts = H.piecePoints(id); assert.ok(it.land ? pts === H.SOUVENIR_POINTS : it.trophy ? pts === H.TROPHY_POINTS : it.prize ? pts === H.PRIZE_POINTS : it.slot === 'home' || it.slot === 'yard' ? pts >= 1 && pts <= 6 : pts === 0, id); }
   // a full house reaches the top level; every level has a name; the levels climb
   const rich = S.newProfile('Bo', 8); rich.home = { items: Object.keys(RU.ITEMS).filter((id) => ['home', 'yard'].includes(RU.ITEMS[id].slot)) }; for (const id of rich.home.items) H.addLabel(rich, id);
   rich.house = { floors: 3, villa: true, garden: 2, coop: true, pen: true, paint: { wall: 'mint', floor: 'walnut' } }; Object.assign(rich.flags, { boss1: true, boss4: true, boss2: true });
@@ -1315,4 +1315,55 @@ test('other explorers (27/11): three of them, a level for the land, tales that u
     for (let n = 0; n < 24; n++) for (const b of C.BOTS) { const t = C.tale(b, { places, top: 24, n }); assert.ok(t.en && t.vi && !/[àáảãạăâđêôơư]/i.test(t.en), `${id}: ${t.en}`); assert.ok(!/undefined|null/.test(t.en + t.vi)); assert.ok(/^[\x20-\x7e’]+$/.test(t.en), `no signs or emoji in what they say: ${t.en}`); seen.add(t.en); }
     assert.ok(seen.size >= 12, `${id}: they do not say the same thing again and again (${seen.size})`); assert.ok([...seen].some((x) => places.some((p) => x.includes(p.label.replace(/^The /, 'the ')))), `${id}: some tales name a place of the land`); }
   assert.ok(C.tale(C.BOTS[0], {}).en, 'a land without places: a story instead');
+});
+test('land games (27/11): the bazaar sums are right, the slide has one right form, the mine has ten gems, prizes go to the home', async () => {
+  const G = await import('../src/core/landgames.js'), RU = await import('../src/core/rules.js'), HS = await import('../src/core/house.js'), { LAND_GAMES } = await import('../src/core/regions/lands.js');
+  const rnd = (() => { let a = 5; return () => { a = (a * 16807) % 2147483647; return a / 2147483647; }; })();
+  assert.equal(G.numberWord(0), 'zero'); assert.equal(G.numberWord(13), 'thirteen'); assert.equal(G.numberWord(40), 'forty'); assert.equal(G.numberWord(47), 'forty-seven'); assert.equal(G.numberWord(99), 'ninety-nine');
+  for (let i = 0; i < 300; i++) { const r = G.bazaarRound(i % 8, rnd); assert.equal(r.shelf.length, 6); assert.equal(r.total, r.buy.reduce((n, [g, k]) => n + g.price * k, 0)); assert.equal(r.options[r.a], G.numberWord(r.total)); assert.equal(new Set(r.options).size, 3);
+    assert.ok(/^How much (is|are) .+\?$/.test(r.ask) && !/undefined/.test(r.ask), r.ask); for (const [g] of r.buy) assert.ok(r.shelf.includes(g), 'what is asked for is on the stall'); assert.equal(/^How much is /.test(r.ask), r.buy.length === 1 && r.buy[0][1] === 1, 'is for one thing, are for more: ' + r.ask); assert.ok(!/ a [aeiou]/.test(r.ask), 'an before a vowel: ' + r.ask); }
+  assert.equal(G.bazaarRound(0, rnd).buy.length, 1); assert.equal(G.bazaarRound(5, rnd).buy.length, 2, 'later customers ask for two kinds');
+  for (const [adj, right, w1, w2, sentence] of G.COMPARE) { assert.equal(new Set([right, w1, w2]).size, 3, adj); assert.equal(sentence.split('___').length, 2); assert.ok(/ than /.test(sentence) && right !== adj); }
+  const order = G.slideOrder(rnd); assert.equal(new Set(order).size, G.COMPARE.length); for (let k = 0; k < 40; k++) { const gt = G.slideGate(k, order, rnd); assert.equal(gt.signs[gt.a], gt.right); assert.equal(gt.signs.length, 3); }
+  for (let i = 0; i < 20; i++) { const wall = G.mineWall(rnd); assert.equal(wall.length, 25); assert.equal(wall.filter((x) => x === 'gem').length, 10); assert.equal(wall.filter((x) => x === 'lock').length, 6); }
+  assert.equal(G.mineGems('gem'), 1); assert.equal(G.mineGems('lock', true), 2); assert.equal(G.mineGems('lock', false), 0); assert.equal(G.mineGems('none'), 0); assert.equal(G.mineQuestion([{ id: 1, word: 'a', vi: 'b' }]), null);
+  const cards = Array.from({ length: 8 }, (_, i) => ({ id: 'c' + i, word: 'word' + i, vi: 'nghĩa ' + i })); for (let i = 0; i < 30; i++) { const q = G.mineQuestion(cards, rnd); assert.equal(q.options[q.a], q.card.vi); assert.equal(new Set(q.options).size, 3); }
+  assert.ok(G.PRIZES.mine.score <= 10 + 6 * 2 && G.PRIZES.mine.score > 6, 'the mine prize needs luck or right words, and can be won');
+  for (const [id, pz] of Object.entries(G.PRIZES)) { const it = RU.ITEMS[pz.item]; assert.ok(it && it.prize === id && it.cost === 0 && it.seller === 'prize' && HS.GAME_PRIZES.includes(pz.item) && HS.GROUPS.living.includes(pz.item), id); assert.ok(hexists(new URL(`../assets/models/${HS.SHOW_FILE[pz.item]}_v01.glb`, import.meta.url)), pz.item + ' has a model'); assert.ok(LAND_GAMES.some((s) => s.game === id), id + ' has a game master in a land'); assert.ok(G.wonPrize(id, pz.score) && !G.wonPrize(id, pz.score - 1)); }
+  assert.equal(G.wonPrize('candy', 999), false, 'only the lands\' own games have prizes'); assert.ok(RU.shopList('prize').length === 6 && RU.buy(Object.assign(S.newProfile('P', 6), { home: { items: ['gm_carpet'] } }), 'gm_carpet').ok === false);
+});
+test('explorers\' favours (27/11): one small favour for each land, fewer than Kit and Mai, counted from the moment it is taken', async () => {
+  const C = await import('../src/core/crowd.js'), B = await import('../src/core/buddies.js');
+  assert.equal(C.FAVOURS.length, 12); assert.ok(C.FAVOURS.length < B.QUESTS.length, 'fewer than the friends\' jobs'); assert.deepEqual(C.FAVOURS.map((f) => f.region), B.MAP_IDS);
+  for (const b of C.BOTS) assert.equal(C.FAVOURS.filter((f) => f.who === b.id).length, 4, b.id);
+  for (const f of C.FAVOURS) { assert.ok(C.TALLIES.includes(f.kind) && f.need > 0 && f.en && f.thanks && f.vi.includes(String(f.need)), f.id); assert.ok(/^[\x20-\x7e]+$/.test(f.en + f.thanks), f.id + ' plain English'); assert.ok(!Object.keys(B.COUNTERS).includes(f.kind), 'not what Kit and Mai already ask for'); }
+  const p = S.newProfile('F', 6); assert.equal(C.favourState(p, 'minh').status, 'offer'); assert.equal(C.favourState(p, 'sora').status, 'none', 'Sora\'s first favour is at the sea'); assert.equal(C.favourTurnIn(p, 'minh'), null);
+  C.count(p, 'bubble', 3); C.count(p, 'kill', 9); assert.deepEqual(p.tally, { bubble: 3 }); assert.equal(C.favourAccept(p, 'minh').id, 'fav1'); assert.equal(C.favourAccept(p, 'minh'), null);
+  assert.deepEqual([C.favourState(p, 'minh').status, C.favourState(p, 'minh').got], ['active', 0], 'bubbles read before do not count'); C.count(p, 'bubble', 4); assert.equal(C.favourState(p, 'minh').got, 4); C.count(p, 'bubble'); assert.equal(C.favourState(p, 'minh').status, 'ready');
+  const out = C.favourTurnIn(p, 'minh'); assert.ok(out.gold >= 10 && out.gold % 5 === 0 && out.gold <= B.turnIn(Object.assign(S.newProfile('K', 6), { kills: 99, buddy: { kit: 0, mai: 0, active: { kit: { id: B.QUESTS.find((q) => q.who === 'kit').id, base: 0 } }, met: {} } }), 'kit').gold, 'a favour pays less than a friend\'s job');
+  assert.equal(C.favoursDone(p), 1); assert.equal(C.favourState(p, 'minh').status, 'none', 'the next one waits for the desert');
+});
+test('land games, the second three (27/11): runes make the sentence, balloon rows hold the next letter, robot orders have one answer', async () => {
+  const G = await import('../src/core/landgames.js');
+  const rnd = (() => { let a = 11; return () => { a = (a * 16807) % 2147483647; return a / 2147483647; }; })();
+  assert.ok(G.RUNES.length >= 12); for (const s of G.RUNES) { const n = s.split(' ').length; assert.ok(n >= 5 && n <= 8 && /^[A-Z].*[.?]$/.test(s) && /^[\x20-\x7e]+$/.test(s), s); }
+  const order = G.runeOrder(rnd); assert.equal(new Set(order).size, G.RUNES.length);
+  for (let k = 0; k < 60; k++) { const r = G.runeRound(k, order, rnd); assert.equal(r.words.join(' '), r.text); assert.deepEqual([...r.tiles].sort(), [...r.words].sort()); assert.notEqual(r.tiles.join(' '), r.text, 'mixed up'); }
+  const cards = [{ id: 'a', word: 'School', vi: 'trường' }, { id: 'b', word: 'ice cream', vi: 'kem' }, { id: 'c', word: 'pen', vi: 'bút' }]; const few = G.balloonWords(cards, rnd); assert.equal(few.length, G.BALLOON_N); assert.ok(few.every((w) => /^[a-z]{3,8}$/.test(w.word) && w.vi)); assert.ok(few.some((w) => w.word === 'school') && !few.some((w) => / /.test(w.word)), 'plain unit words are used, phrases are not');
+  const many = Array.from({ length: 9 }, (_, i) => ({ id: 'w' + i, word: 'word' + 'abcdefghi'[i], vi: 'x' })); assert.ok(G.balloonWords(many, rnd).every((w) => w.id), 'enough unit words: only the unit\'s');
+  for (const [word] of G.BALLOON_WORDS) for (let i = 0; i < word.length; i++) { const row = G.balloonRow(word, i, rnd); assert.equal(row.letters[row.a], word[i]); assert.equal(new Set(row.letters).size, 3); assert.equal(new Set(row.cols).size, 3); assert.ok(row.cols.every((c) => c >= 0 && c < G.BALLOON_COLS)); }
+  for (let i = 0; i < 300; i++) { const k = i % G.ROBOT_ROUNDS, o = G.robotOrder(k, rnd), w = o.want; assert.ok(G.ROBOT_PARTS.every((p) => G.ROBOT_COLOURS.includes(w[p])), o.text); assert.notEqual(w.head, w.legs); assert.ok(G.robotRight(w, { ...w }) && !G.robotRight(w, { ...w, body: '' }));
+    assert.ok(o.text.includes(w.head) && o.text.includes(w.legs) && !/undefined/.test(o.text), o.text); if (k < 2) assert.ok(o.text.includes(`${w.body} body`)); else if (k < 4) assert.ok(/same colour as the (head|legs)/.test(o.text) && (w.body === w.head || w.body === w.legs)); else { assert.ok(o.text.includes(`If the head is ${w.head}, the body is ${w.body}.`)); const other = /If the head is (\w+), the body is (\w+)\. The legs/.exec(o.text); assert.ok(other && other[1] !== w.head, 'the second if is about another head: ' + o.text); } }
+});
+test('no code hides behind a // comment in the middle of a line (27/11: the mini games\' signs and hosts vanished this way)', async () => {
+  const fs = await import('node:fs'), path = await import('node:path'), root = new URL('../src/', import.meta.url).pathname, files = [];
+  const walk = (d) => { for (const e of fs.readdirSync(d, { withFileTypes: true })) { const f = path.join(d, e.name); if (e.isDirectory()) walk(f); else if (f.endsWith('.js')) files.push(f); } }; walk(root);
+  const bad = [];
+  for (const f of files) fs.readFileSync(f, 'utf8').split('\n').forEach((line, n) => {
+    const m = /(?<![:'"`/])\/\/(?!\/)(.*)$/.exec(line); if (!m) return; const c = m[1];
+    if (/;\s*(for|if|const|let|return|this\.|[A-Za-z_.]+\s*\()\s*/.test(c) && /[;{}]\s*(\/\/.*)?$/.test(c)) bad.push(`${path.relative(root, f)}:${n + 1}`);
+  });
+  assert.deepEqual(bad, [], 'a comment that swallows statements: move it to the end of the line');
+  const mg = fs.readFileSync(path.join(root, 'game/minigames.js'), 'utf8'); assert.ok(/\n[^\n/]*for \(const g of Object\.values\(this\.roots\)\) this\.root\.add\(g\)/.test(mg), 'the mini games\' groups are added to the scene');
+  const mainJs = fs.readFileSync(path.join(root, 'main.js'), 'utf8'), land = mainJs.slice(mainJs.indexOf('function interactTarget')); assert.ok(/if \(isLand\(L\.NAME\)\) \{[\s\S]*?for \(const f of \[mini, wild, chests, spots\]\)/.test(land.slice(0, land.indexOf("if (L.NAME === 'forest')"))), 'the game masters of maps 4-12 answer to E');
 });

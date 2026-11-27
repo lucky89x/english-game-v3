@@ -76,6 +76,8 @@ import { ITEMS, bag, wear, buy, eat, shopList, map2Ready, map3Ready, playerAtk, 
 import * as HomePlay from './core/homeplay.js';
 import * as Guests from './core/guests.js';
 import * as Buddies from './core/buddies.js';
+import * as LandGames from './core/landgames.js';
+import { bazaarGame, slideGame, mineGame, runeGame, balloonGame, robotGame } from './ui/landgames.js';
 import { Crowd, stepTo, faceTo, spotNear } from './game/crowd.js';
 import * as CrowdRules from './core/crowd.js';
 import { SHOW_FILE } from './core/house.js';
@@ -682,6 +684,7 @@ let admin = null, music = null, journal = null;
 function track(ev, n = 1) {
   if (!profile) return;
   const done = Q.track(profile, Review.today(), ev, n);
+  CrowdRules.count(profile, ev, n);      // (27/11, turn 68) the explorers' favours count bubbles, chests, mini games and right answers
   for (const q of done) { ui.toast('📜 Xong nhiệm vụ ngày: ' + q.en); sfx('fanfare'); }
   const fp = Family.addPoints(store, profile, ev, Review.today());      // the family ship and the weekly board (19/11)
   if (fp.up) { const nm = Family.SHIP_NAMES[fp.up]; ui.toast(`⚓ Tàu gia đình lên cấp ${fp.up + 1}: ${nm.en} (${nm.vi})! Mở sổ nhiệm vụ để nhận thưởng.`); sfx('fanfare'); }
@@ -934,6 +937,16 @@ function buddyTalk(b) {
 /** (27/11, turn 67) Another explorer met on the road: something about where they are going or what happened to them, or a question for the hero. */
 function botTalk(bot, n) {
   const who = bot.name, zones = ZONES[L.NAME] || [], top = zones.reduce((m, z) => Math.max(m, (MONSTERS[z.kind] || {}).level || 0), 0);
+  const fs = CrowdRules.favourState(profile, bot.id), f = fs.favour;      // (27/11, turn 68) a small favour, one for each land in all
+  if (fs.status === 'ready') {
+    const out = CrowdRules.favourTurnIn(profile, bot.id), gold = Save.capGold(profile, out.gold), e = Save.atCap(profile) ? 0 : learnExp(profile.stats.level, LEARN.bubbleOld); profile.stats.gold += gold; Save.addExp(profile, e); save(); refresh(); sfx('fanfare');
+    ui.dialogue([{ who, en: f.thanks, vi: `Xong việc giúp ${who}: +${gold} vàng${e ? `, +${e} EXP` : ''}. Đã giúp các bạn thám hiểm ${CrowdRules.favoursDone(profile)}/${CrowdRules.FAVOURS.length} việc.` }]); return;
+  }
+  if (fs.status === 'offer' && !bot.asked) {
+    bot.asked = true;      // asked once each time the hero comes to a land; after a "no" they just chat
+    ui.choose({ who, en: f.en, vi: `${who} nhờ một việc nhỏ: ${f.vi}` }, ['Sure! · Được thôi', 'Sorry, not now. · Để sau nhé'], (j) => { if (j === 0) { CrowdRules.favourAccept(profile, bot.id); save(); sfx('tick'); ui.toast(`Đã nhận việc của ${who}: ${f.vi}`); } else ui.dialogue([{ who, en: 'No problem. See you around!' }]); }); return;
+  }
+  if (fs.status === 'active' && n % 2 === 0) { ui.dialogue([{ who, en: f.en, vi: `${f.vi} Đã được ${fs.got}/${fs.need}.` }]); return; }
   if (n % 3 === 2) { const c = Buddies.CHATS[(n + bot.id.length) % Buddies.CHATS.length]; ui.choose({ who, en: c.ask, vi: c.vi }, c.answers.map((a) => a[0]), (i) => { speak(c.answers[i][0], true); ui.dialogue([{ who, en: c.answers[i][1] }]); }); return; }
   const t = CrowdRules.tale(bot, { places: L.REGIONS[L.NAME].LANDMARKS || [], top, n }); ui.dialogue([{ who, en: t.en, vi: t.vi }]);
 }
@@ -1545,7 +1558,7 @@ function interactTarget() {
       if (f.role === 'owl') return { text: 'E · Cú Mèo: ôn tập và bài thi', run: () => owlReview() };
     }
     if (near(d.shopAt[0], d.shopAt[1], 2.6)) { const m = friends.find((f) => f.region === L.NAME && f.role === 'merchant'); return { text: `E · Cửa hàng của ${m ? m.who : 'thương nhân'} (vũ khí, giáp, thuốc)`, run: () => ui.dialogue((m ? m.lines : []).map((en) => ({ who: m.who, en })), () => { enterRoom('forest'); shopWin.show(`${m ? m.who : 'Merchant'}'s Shop`, [L.NAME, 'healer', 'rose']); }) }; }
-    for (const f of [wild, chests, spots]) { const c = f && f.interact(p); if (c) return c; }
+    for (const f of [mini, wild, chests, spots]) { const c = f && f.interact(p); if (c) return c; }      // (27/11, turn 68) mini was missing: the game masters of maps 4-12 could not be spoken to
     return null;
   }
   if (L.NAME === 'forest') {
@@ -1746,10 +1759,11 @@ async function boot() {
     if (!res) return;
     if (g.onResult) return g.onResult(res);
     const best = mini.data.best, record = best[res.id] === undefined || res.score > best[res.id]; if (record) best[res.id] = res.score;
+    let prize = ''; if (LandGames.wonPrize(res.id, res.score)) { const id = LandGames.PRIZES[res.id].item, h = profile.home || (profile.home = { items: [] }); if (ITEMS[id] && !h.items.includes(id)) { h.items.push(id); prize = `🎁 Giải thưởng: ${ITEMS[id].en} (${ITEMS[id].vi}) đã được đặt trong nhà của con, +${HomePlay.PRIZE_POINTS} Ấm cúng!`; sfx('fanfare'); } }      // (27/11, turn 68) a land's own game pays with a thing for the home
     save(); refresh();      // (24/11) no gold and no EXP for a mini game: the child paid to enter
     track('mini'); if (['style', 'cafe', 'salon'].includes(res.id)) track('sea_game'); if (res.fish) catchFish(res.fish); if (res.unlock && res.unlock.length) gainItems(res.unlock); for (const c of res.words || []) (profile.seen || (profile.seen = {}))[c.id] = Review.today();      // words met inside the game count as seen
-    ui.dialogue([{ who: 'Ngọc', en: res.text, vi: [record ? 'Kỷ lục mới của con!' : '', payNote()].filter(Boolean).join(' ') }],
-      () => { if (res.words && res.words.length >= 2) hostQuiz(res.id === 'blocks' ? 'Max' : 'Leo', res.words); });
+    ui.dialogue([{ who: 'Ngọc', en: res.text, vi: [prize, record ? 'Kỷ lục mới của con!' : '', prize ? '' : payNote()].filter(Boolean).join(' ') }],
+      () => { if (prize) comfortNews(); if (res.words && res.words.length >= 2 && !LandGames.PRIZES[res.id]) hostQuiz(res.id === 'blocks' ? 'Max' : 'Leo', res.words); });
   });
   spots = new WordSpots({ scene, profile: () => profile, cards: () => unitCards, learn: learnWord });
   chests = new Chests({ scene, profile: () => profile, cards: () => unitCards, dueIds: () => Review.dueIds(profile.words),
@@ -1795,6 +1809,8 @@ async function boot() {
   mini = new MiniGames({ scene, player, ui, sfx, track, gate: (who, game, go) => gameGate(who, game, go), profile: () => profile, save, onNote: refresh, board: (id, st) => {
     if (st && st.game) {      // (26/11, turn 63) the game masters of maps 4-12: a game of the arcade under the land's own name
       const who = st.host.name, k = st.game, tr = tierOf(profile.stats.level), lantern = { fireflies, vault, courier, workshop }[k];
+      const own = { bazaar: () => bazaarGame(), slide: () => slideGame(), mine: () => mineGame(unitCards), rune: () => runeGame(), balloon: () => balloonGame(unitCards), robot: () => robotGame() }[k];      // (27/11, turn 68) games made for a land
+      if (own) { gameGate(who, k, () => arcade.start(own())); return; }
       if (lantern) { gameGate(who, 'lantern_fair', () => arcade.start(lantern(unitCards))); return; }
       gameGate(who, k === 'race2' ? 'race' : k, async () => { let g; if (k === 'race2') { try { raceAssets = raceAssets || await loadRaceAssets(gltf); g = raceGame3d({ assets: raceAssets, cards: unitCards, tier: tr, variant: st.variant }); } catch (e) { console.warn('race3d: ' + e.message); g = raceGame(Math.random, [], tr); } } else g = ({ candy: () => candyGame(Math.random, tr), blocks: () => blocksGame(Math.random, unitCards, tr), sling: () => slingGame(Math.random, tr) })[k](); arcade.start(withTier(g, tr)); });
       return;

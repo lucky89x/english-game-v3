@@ -109,6 +109,19 @@ Mười món này em đã vẽ bằng Blender (khối đơn giản, một màu m
 
 Lưu ý: Tripo không làm được kính trong suốt (quả cầu tuyết, đèn dung nham). Anh cứ để nó dựng đặc; em tách phần kính và làm trong lại trong Blender.
 
+## Giải thưởng mini game cho nhà (thêm 27/11, lượt 68)
+
+Sáu trò riêng của vùng trả thưởng bằng một món đồ trang trí. Hiện đang mượn mô hình ngoài trời có sẵn (thu nhỏ lại): dùng được nhưng không hợp phòng lắm. Đồ nhỏ: 1.500–2.500 tam giác sau khi em giảm; chỉ món đồ, không bệ, không nền.
+
+| # | Tên file | Món | Thắng trò | Câu lệnh |
+|---|---|---|---|---|
+| 37 | `home_gm_carpet.glb` | Bazaar Carpet | Bazaar Bargain | `small rectangular oriental carpet lying flat, red and gold woven pattern with tassels on both short ends, stylized chibi, hand-painted, single object, white background` |
+| 38 | `home_gm_snowman.glb` | Snowman | Snow Slide | `small cute indoor snowman toy, three snowballs, carrot nose, red scarf, blue bucket hat, twig arms, chibi toy style, hand-painted, single object, no base, white background` |
+| 39 | `home_gm_runestone.glb` | Rune Pillar | Rune Decoder | `short ancient stone pillar with glowing green runes carved around it, a little moss, cracked top, stylized chibi, hand-painted, single object, no base, white background` |
+| 40 | `home_gm_starlamp.glb` | Star Lantern | Balloon Ride | `floor lantern shaped like a golden five-pointed star on a thin wooden stand, warm glow, small cloud ornament at the foot, chibi style, hand-painted, single object, white background` |
+| 41 | `home_gm_gemchest.glb` | Gem Chest | Gem Mine | `small open wooden treasure chest with iron bands, full of purple, blue and pink gems, stylized chibi, hand-painted, single object, no base, white background` |
+| 42 | `home_gm_robot.glb` | Helper Robot | Robot Builder | `friendly small helper robot holding a feather duster, round white body, blue head with two big eyes, short yellow legs, chibi toy style, hand-painted, standing, single object, no base, white background` |
+
 ## Không cần làm
 - Cây, bụi, cỏ: em giảm lưới gói hiện có và dựng thêm bằng Blender.
 - Hoạt ảnh cho quái và thú Tripo đang đứng im: em gắn xương trong Blender.

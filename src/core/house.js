@@ -30,10 +30,14 @@ export function buyUpgrade(profile, id) {
  *  They stand in a row along the back wall of their room until the child moves them. */
 export const SOUVENIRS = ['sv_cactus', 'sv_snowglobe', 'sv_vase', 'sv_cloudlamp', 'sv_mushroom', 'sv_lavalamp', 'sv_crystal', 'sv_toyrobot', 'sv_nightlight'];
 export const TROPHIES = Array.from({ length: 13 }, (_, i) => 'trophy_boss' + (i + 1));
-export const SHOW_FILE = { ...Object.fromEntries(SOUVENIRS.map((id) => [id, 'home_' + id])), ...Object.fromEntries(TROPHIES.map((id) => [id, 'home_trophy'])) };
+/** (27/11, turn 68) Prizes of the lands' mini games (models the game already has). */
+export const GAME_PRIZES = ['gm_carpet', 'gm_snowman', 'gm_gemchest', 'gm_runestone', 'gm_starlamp', 'gm_robot'];
+/** How big each prize stands in the room (the models were made for the open air). */
+export const PRIZE_SCALE = { gm_snowman: 0.7, gm_gemchest: 0.8, gm_runestone: 0.55, gm_starlamp: 0.6, gm_robot: 0.6 };
+export const SHOW_FILE = { ...Object.fromEntries(SOUVENIRS.map((id) => [id, 'home_' + id])), ...Object.fromEntries(TROPHIES.map((id) => [id, 'home_trophy'])), gm_carpet: 'map3_carpet', gm_snowman: 'ev_snowman', gm_gemchest: 'map3_chest', gm_runestone: 'map3_ruin_pillar', gm_starlamp: 'ev_lantern_star', gm_robot: 'mob_robot_box' };
 /** Furniture groups: each room of the house gets one group (the item ids keep their place inside the room). */
 export const GROUPS = {
-  living: ['sofa', 'lamp', 'plant', 'picture', 'clock', 'rug', 'armchair', 'coffee_table', 'tv', 'fireplace', 'aquarium', 'beanbag', 'statue', 'vase', 'palm', ...SOUVENIRS],
+  living: ['sofa', 'lamp', 'plant', 'picture', 'clock', 'rug', 'armchair', 'coffee_table', 'tv', 'fireplace', 'aquarium', 'beanbag', 'statue', 'vase', 'palm', ...SOUVENIRS, ...GAME_PRIZES],
   study: ['table', 'bookcase', 'desk', 'globe', 'telescope', 'trophy', 'computer', 'chalkboard', ...TROPHIES],
   bedroom: ['bed', 'wardrobe', 'mirror', 'nightstand', 'teddy', 'toybox', 'dresser'],
   music: ['guitar', 'piano', 'drum', 'violin'],

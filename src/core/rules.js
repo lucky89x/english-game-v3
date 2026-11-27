@@ -188,6 +188,13 @@ export const ITEMS = {
   sv_crystal: { en: 'Crystal', vi: 'cụm pha lê', slot: 'home', cost: 1400, level: 55, seller: 'crystal', land: 'crystal' },
   sv_toyrobot: { en: 'Toy Robot', vi: 'robot đồ chơi', slot: 'home', cost: 1700, level: 60, seller: 'city', land: 'city' },
   sv_nightlight: { en: 'Night Light', vi: 'đèn ngủ ngôi sao', slot: 'home', cost: 2000, level: 65, seller: 'dream', land: 'dream' },
+  // (27/11, turn 68) prizes of the lands' own mini games (core/landgames.js): not for sale, won once with a good score
+  gm_carpet: { en: 'Bazaar Carpet', vi: 'tấm thảm chợ phiên', slot: 'home', cost: 0, level: 1, seller: 'prize', prize: 'bazaar' },
+  gm_snowman: { en: 'Snowman', vi: 'người tuyết', slot: 'home', cost: 0, level: 1, seller: 'prize', prize: 'slide' },
+  gm_gemchest: { en: 'Gem Chest', vi: 'rương đá quý', slot: 'home', cost: 0, level: 1, seller: 'prize', prize: 'mine' },
+  gm_runestone: { en: 'Rune Pillar', vi: 'cột đá cổ', slot: 'home', cost: 0, level: 1, seller: 'prize', prize: 'rune' },
+  gm_starlamp: { en: 'Star Lantern', vi: 'đèn ngôi sao', slot: 'home', cost: 0, level: 1, seller: 'prize', prize: 'balloon' },
+  gm_robot: { en: 'Helper Robot', vi: 'robot giúp việc', slot: 'home', cost: 0, level: 1, seller: 'prize', prize: 'robot' },
   // (25/11) "more kinds of furniture, so every child's home is different": 22 more pieces, from cheap toys to a statue
   armchair: { en: 'Armchair', vi: 'ghế bành', slot: 'home', cost: 140, level: 2, seller: 'home' },
   coffee_table: { en: 'Coffee Table', vi: 'bàn trà', slot: 'home', cost: 90, level: 1, seller: 'home' },

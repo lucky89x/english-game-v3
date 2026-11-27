@@ -43,7 +43,7 @@ export const fishBar = (pos, centre, width, n = 23) => { let s = ''; const m = M
 export class MiniGames {
   /** api: { scene, player, ui, sfx(name), profile() -> profile, save(), onNote(), board(id) -> opens an arcade board game } */
   constructor(api) {
-    this.api = api; this.active = null; this.note = ''; this.t = 0; this.root = new THREE.Group(); api.scene.add(this.root); this.roots = { village: new THREE.Group(), harbor: new THREE.Group(), forest: new THREE.Group() }; for (const s of STARTS) if (s.region && !this.roots[s.region]) this.roots[s.region] = new THREE.Group();      // (26/11, turn 63) the lands of maps 4-12 for (const g of Object.values(this.roots)) this.root.add(g); this.region = L.NAME;      // (24/11) one group of things for each map
+    this.api = api; this.active = null; this.note = ''; this.t = 0; this.root = new THREE.Group(); api.scene.add(this.root); this.roots = { village: new THREE.Group(), harbor: new THREE.Group(), forest: new THREE.Group() }; for (const s of STARTS) if (s.region && !this.roots[s.region]) this.roots[s.region] = new THREE.Group(); for (const g of Object.values(this.roots)) this.root.add(g); this.region = L.NAME;      // (24/11) one group of things for each map; (26/11, turn 63) also the lands of maps 4-12
     const V = L.REGIONS.village, glow = (hex, k = 1.6) => new THREE.MeshStandardMaterial({ color: hex, emissive: hex, emissiveIntensity: k, roughness: 0.4 });
     // hidden stars
     // hidden stars (17/11: sharper): a bevelled gold star with a dark rim, a soft halo and a ring on the ground

@@ -91,7 +91,7 @@ export class HomePanel {
   }
   paint() {
     const owner = this.owner, mine = this.mine;
-    const adm = this.admin, have = home(owner).items, lvl = adm ? 99 : owner.stats.level, gold = adm ? 1e9 : owner.stats.gold, row = (slot) => Object.entries(ITEMS).filter(([, it]) => it.slot === slot && !it.land && !it.trophy)
+    const adm = this.admin, have = home(owner).items, lvl = adm ? 99 : owner.stats.level, gold = adm ? 1e9 : owner.stats.gold, row = (slot) => Object.entries(ITEMS).filter(([, it]) => it.slot === slot && !it.land && !it.trophy && !it.prize)
       .map(([id, it]) => `<div class="it ${have.includes(id) ? '' : 'no'}"><b>${it.en}</b>${it.vi}${have.includes(id) ? (adm ? ` ✔<br><button data-a="take" data-v="${id}">Gỡ</button>` : slot === 'home' ? (isLabelled(owner, id) ? ' 🏷' : ' ✔<br><small>chưa dán nhãn (F)</small>') : ' ✔') : `<br><small>${it.cost} ● · cần cấp ${it.level}</small>${mine ? `<br><button data-a="buy" data-v="${id}" ${lvl < it.level ? 'disabled title="Chưa đủ cấp"' : gold < it.cost ? 'title="Chưa đủ vàng"' : ''}>Mua</button>` : ''}`}</div>`).join('');
     const n = have.length, total = Object.values(ITEMS).filter((it) => it.slot === 'home' || it.slot === 'yard').length;
     this.el.innerHTML = `<div class="book"><header><span style="font-size:28px">🏠</span><h2>${mine ? 'My home' : `${owner.name}'s home`} · Nhà của ${owner.name}</h2><button data-a="exit">Ra ngoài (E)</button></header><button class="x" data-a="close" title="Đóng (X)">✕</button>
@@ -112,8 +112,9 @@ export class HomePanel {
   /** (27/11) Souvenirs (one from each land of maps 4-12, bought from that land's merchant) and the trophies of the guards. */
   showBox() {
     const o = this.owner, have = home(o).items, cell = (id, it, how) => `<div class="it ${have.includes(id) ? '' : 'no'}"><b>${it.en}</b>${it.vi}${have.includes(id) ? (isLabelled(o, id) ? ' 🏷' : ' ✔<br><small>chưa dán nhãn (F)</small>') : `<br><small>${how}</small>`}</div>`;
-    const sv = Object.entries(ITEMS).filter(([, it]) => it.land), tr = Object.entries(ITEMS).filter(([, it]) => it.trophy);
+    const sv = Object.entries(ITEMS).filter(([, it]) => it.land), tr = Object.entries(ITEMS).filter(([, it]) => it.trophy), pz = Object.entries(ITEMS).filter(([, it]) => it.prize), GAME = { bazaar: 'Bazaar Bargain ở Sa mạc', slide: 'Snow Slide ở Núi tuyết', mine: 'Gem Mine ở Hang tinh thể', rune: 'Rune Decoder ở Di tích', balloon: 'Balloon Ride ở Vương quốc trên Trời', robot: 'Robot Builder ở Thành phố' };
     return `<h3>🧳 Souvenirs · Đồ lưu niệm các vùng (${sv.filter(([id]) => have.includes(id)).length}/${sv.length})</h3><div class="note">Mỗi vùng từ Map 4 có một món, chỉ thương nhân của vùng đó bán. Mỗi món +8 Ấm cúng.</div><div class="grid">${sv.map(([id, it]) => cell(id, it, `${(mapById(it.land) || {}).vi || it.land} · ${it.cost} ● · cấp ${it.level}`)).join('')}</div>
+      <h3>🎁 Game prizes · Giải thưởng mini game (${pz.filter(([id]) => have.includes(id)).length}/${pz.length})</h3><div class="note">Chơi mini game riêng của vùng đạt điểm cao lần đầu là được. Mỗi món +6 Ấm cúng.</div><div class="grid">${pz.map(([id, it]) => cell(id, it, `thắng ${GAME[it.prize] || it.prize}`)).join('')}</div>
       <h3>🏆 Trophies · Cúp trùm (${tr.filter(([id]) => have.includes(id)).length}/${tr.length})</h3><div class="note">Hạ trùm nào, cúp của trùm đó tự về phòng học. Mỗi cúp +5 Ấm cúng.</div><div class="grid">${tr.map(([id, it]) => cell(id, it, `hạ ${BOSS_VI[it.trophy]}`)).join('')}</div>`;
   }
   /** (27/11) Comfort: what the home is worth (furniture, word labels, upgrades, colours, compass pieces), its level, and what it gives. */
