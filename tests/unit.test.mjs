@@ -1467,3 +1467,17 @@ test('review notes: a note keeps its place, the list survives a full storage, th
   assert.equal(N.remove(list, 1), true); assert.equal(N.remove(list, 99), false); assert.equal(N.add(list, { text: 'mới' }).id, 3, 'a new note never takes the number of an old one that is still there');
   assert.ok(N.KINDS.some((k) => k[0] === 'vfx') && N.LEVELS.length === 3 && N.kindVi('vfx') === 'Hiệu ứng chiêu' && N.levelVi('idea') === 'Ý tưởng');
 });
+
+// (27/11, turn 73) A real save written by the game of 25/11 (tests/fixtures; the browser side is tests/save_old.mjs): an update of the
+// game must read it and hand every field back as it was. A change to the shape of a profile field has to keep this test green.
+test('a real save from an older game (25/11) loads with every field kept, and saving it again changes nothing', async () => {
+  const fs = await import('node:fs'), raw = JSON.parse(fs.readFileSync(new URL('./fixtures/save_2026-11-25.json', import.meta.url), 'utf8')).storage[S.KEY];
+  const before = JSON.parse(raw), st = mem(); st.setItem(S.KEY, raw);
+  const store = S.load(st); assert.equal(S.loadInfo.recovered, ''); assert.equal(S.loadInfo.lost, false);
+  assert.equal(store.profiles.length, before.profiles.length); assert.ok(before.profiles.length >= 1);
+  for (const [i, old] of before.profiles.entries()) { const p = store.profiles[i];
+    assert.ok(old.stats.level > 1 && Object.keys(old.words).length > 10, 'the fixture is a played save');
+    for (const k of Object.keys(old)) assert.deepEqual(p[k], old[k], 'field ' + k + ' of ' + old.name); }
+  S.persist(store, st); assert.deepEqual(JSON.parse(st.getItem(S.KEY)), JSON.parse(JSON.stringify(store)));
+  const again = S.load(st); assert.deepEqual(again, JSON.parse(JSON.stringify(store)));
+});
