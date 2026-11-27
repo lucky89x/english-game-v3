@@ -1587,7 +1587,7 @@ function interactTarget() {
       if (f.role === 'keeper') return { text: `E · Nói chuyện với ${f.who}`, run: () => keeperTalk(L.NAME) };
       if (f.role === 'owl') return { text: 'E · Cú Mèo: ôn tập và bài thi', run: () => owlReview() };
     }
-    if (near(d.shopAt[0], d.shopAt[1], 2.6)) { const m = friends.find((f) => f.region === L.NAME && f.role === 'merchant'); return { text: `E · Cửa hàng của ${m ? m.who : 'thương nhân'} (vũ khí, giáp, thuốc)`, run: () => ui.dialogue((m ? m.lines : []).map((en) => ({ who: m.who, en })), () => { enterRoom('forest'); shopWin.show(`${m ? m.who : 'Merchant'}'s Shop`, [L.NAME, 'healer', 'rose']); }) }; }
+    if (near(d.shopAt[0], d.shopAt[1], 2.6)) { const m = friends.find((f) => f.region === L.NAME && f.role === 'merchant'); return { text: `E · Cửa hàng của ${m ? m.who : 'thương nhân'} (vũ khí, giáp, thuốc)`, run: () => ui.dialogue((m ? m.lines : []).map((en) => ({ who: m.who, en })), () => { enterRoom('forest'); shopWin.show(`${m ? m.who : 'Merchant'}'s Shop`, [L.NAME, 'healer', 'rose'], { [L.NAME]: { name: m ? m.who : 'Merchant', icon: '🧳', title: `🧳 ${m ? m.who : 'Merchant'}'s goods`, sub: `Gear and souvenirs of this land · vũ khí, giáp và quà lưu niệm của ${d.vi}`, talk: m ? m.lines : [] } }); }) }; }
     for (const f of [mini, wild, chests, spots]) { const c = f && f.interact(p); if (c) return c; }      // (27/11, turn 68) mini was missing: the game masters of maps 4-12 could not be spoken to
     return null;
   }

@@ -1,4 +1,4 @@
-// Quick browser checks (3–5 min) for small changes: node tests/quick.mjs [--only boot,combat,unit,owl,exam,arcade,map2,harbor,extras,forest,bag,shop,intro,admin,voice,world,friends,touch]
+// Quick browser checks (3–5 min) for small changes: node tests/quick.mjs [--only boot,combat,unit,owl,exam,arcade,map2,harbor,extras,forest,bag,shop,intro,admin,voice,world,lands,friends,touch] [--lands desert,sky]
 // Each group sets up the state it needs through the debug API, so groups run on their own. The full story
 // (Chapter I, bridge, forest quest, reload) stays in tests/e2e.mjs, run once per batch of changes.
 import { serve, open } from './shot.mjs';
@@ -411,6 +411,75 @@ await run('world', async () => {         // (24/11) portals at the map edges, th
   await page.click('#worldwin .x'); await wait(200);
   check(!(await page.isVisible('#worldwin')) && await ev(() => __eq.errors.length === 0), 'The map closes, no script errors ' + await ev(() => __eq.errors.join(' | ').slice(0, 300)));
 });
+await run('lands', async () => {         // (27/11) the nine lands of maps 4-12, one after the other (about 25 minutes without a GPU): each loads, shows only its own monsters, and its keeper (with the daily lesson), owl, shop, hunt board, game masters, chest, word bubble, portal and guard are there and answer
+  const { LAND, LAND_GAMES } = await import(new URL('../src/core/regions/lands.js', import.meta.url)), W = await import(new URL('../src/core/world.js', import.meta.url));
+  const only = process.argv.includes('--lands') ? process.argv[process.argv.indexOf('--lands') + 1].split(',') : null;      // --lands desert,sky: only these
+  const prompt = async (re) => { await page.waitForFunction((src) => new RegExp(src).test(document.querySelector('#prompt').textContent), re.source, { timeout: 45000 }).catch(() => {}); return page.textContent('#prompt'); };
+  const solve = () => ev(async () => {          // the right option of the question on screen; -1 when it is not a question this test knows
+    if (!document.querySelector('#dialog .opts')) return -1;
+    const en = document.querySelector('#dialog .en').textContent, opts = __eq.ui.options || [], cards = [...__eq.chests.api.cards(), ...Object.keys(__eq.profile.words).map(__eq.cardOf).filter(Boolean)];
+    if (en.includes('___')) { const G = await import('./src/core/grammar.js'), g = Object.values(G.GRAMMAR).flat().find((x) => x.q === en); return g ? opts.indexOf(g.options[g.a]) : -1; }
+    const mean = /What does "(.+)" mean/.exec(en); if (mean) { const c = cards.find((x) => x.word === mean[1] && opts.includes(x.vi)); return c ? opts.indexOf(c.vi) : -1; }
+    const word = /Which word means "(.+)"\?/.exec(en); if (word) { const c = cards.find((x) => x.vi === word[1] && opts.includes(x.word)); return c ? opts.indexOf(c.word) : -1; }
+    return -1;
+  });
+  const talkThrough = async (max = 70) => {      // pages with E, questions with their right answer, any other choice with its first option, until the talk closes
+    let asked = 0, unknown = 0;
+    for (let k = 0; k < max && await page.isVisible('#dialog'); k++) {
+      const before = await ev(() => { const e = document.querySelector('#dialog .en'); return e ? e.textContent : ''; }), choice = await page.isVisible('#dialog .opts'), i = choice ? await solve() : -1;
+      if (choice && i >= 0) asked += 1; else if (choice && !/Shall we learn/.test(before)) unknown += 1;
+      await page.keyboard.press(choice ? 'Digit' + (Math.max(0, i) + 1) : 'KeyE');
+      await page.waitForFunction((b) => { const d = document.querySelector('#dialog'), e = document.querySelector('#dialog .en'); return !d || d.classList.contains('hidden') || !e || e.textContent !== b; }, before, { timeout: 15000 }).catch(() => {}); await wait(150);
+    }
+    return { asked, unknown, open: await page.isVisible('#dialog') };
+  };
+  const pad = (n) => String(n).padStart(2, '0');
+  await ev(async () => { (await import('./src/ui/speech.js')).setVoice(false); });      // no "listen and choose" questions: this test cannot hear (the third word of a lesson is a listening one when the voice is on)
+  for (const land of Object.keys(LAND)) {
+    if (only && !only.includes(land)) continue;
+    const d = LAND[land], t0 = Date.now();
+    await closeDialogs();
+    await ev((l) => { const p = __eq.profile; p.god = true; p.stats.level = 70; p.stats.hp = 99999; p.stats.gold = 9000; p.gates = Object.fromEntries([5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70].map((g) => [g, true])); if (p.lessonDay) delete p.lessonDay[l]; __eq.friendsStay = true; __eq.enterRegion(l); }, land);
+    await page.waitForFunction((l) => __eq.region === l && __eq.started, land, { timeout: 480000 });
+    await page.waitForFunction((l) => __eq.wild.mobs.some((m) => m.region === l && !m.boss && m.g.visible), land, { timeout: 180000 }).catch(() => {}); await wait(600); await closeDialogs();
+    const st = await ev((l) => { const w = __eq.wild, mine = w.mobs.filter((m) => m.region === l && !m.boss), vis = w.mobs.filter((m) => m.g.visible && !m.boss), cards = __eq.chests.api.cards();
+      return { mine: mine.length, vis: vis.length, own: vis.every((m) => m.region === l), kinds: new Set(mine.map((m) => m.kind)).size, boss: (w.bosses || []).filter((b) => b.def.region === l).map((b) => ({ name: b.def.name, shown: b.g.visible })),
+        cards: cards.length, unit: (cards[0] || {}).id || '', grade: __eq.profile.grade, buddies: __eq.buddies.filter((b) => b.npc.root.visible).length, crowd: !!__eq.crowd.on, portals: __eq.portals ? __eq.portals.children.length : 0, saved: __eq.profile.region }; }, land);
+    check(st.saved === land && st.own && st.vis === st.mine && st.mine >= 20 && st.kinds >= 4, `${land}: the land loads and only its own monsters are out (${st.vis} of ${st.mine}, ${st.kinds} kinds)`);
+    check(st.cards >= 8 && st.unit.startsWith(`g${st.grade}_u${pad(d.no)}:`), `${land}: the words are Unit ${d.no} of the child's grade (${st.cards} cards, ${st.unit})`);
+    check(st.boss.length === 1 && st.boss[0].shown, `${land}: its guard is there at the top level (${st.boss.map((b) => b.name + (b.shown ? '' : ' HIDDEN')).join(', ') || 'none'})`);
+    check(st.buddies === 2 && st.crowd && st.portals >= 1, `${land}: Kit and Mai, the other explorers and a portal arch are there (${st.buddies} friends, crowd ${st.crowd}, ${st.portals} arch)`);
+    // the keeper and the daily lesson: five words and two sentences of the unit's grammar
+    const who = await ev((l) => { const f = __eq.friends.find((x) => x.region === l && x.role === 'keeper'); if (!f) return ''; __eq.teleport(f.npc.x + 0.9, f.npc.z + 0.9); return f.who; }, land);
+    { const t = await prompt(/Nói chuyện với/); check(!!who && t.includes(who), `${land}: the keeper answers E [${t}]`); }
+    const exp0 = await ev(() => __eq.profile.skills && __eq.profile.skills.grammar ? __eq.profile.skills.grammar.attempts : 0);
+    await page.keyboard.press('KeyE'); await wait(500); const talk = await talkThrough();
+    const les = await ev((l) => ({ n: (__eq.profile.lessons || {})[l] || 0, day: !!(__eq.profile.lessonDay || {})[l], gram: (__eq.profile.skills && __eq.profile.skills.grammar ? __eq.profile.skills.grammar.attempts : 0) }), land);
+    check(les.n >= 1 && les.day && talk.asked === 7 && talk.unknown === 0 && !talk.open && les.gram - exp0 === 2, `${land}: ${who}'s lesson runs to its end: 5 words and 2 grammar sentences (${talk.asked} answered, ${talk.unknown} not understood, grammar counted ${les.gram - exp0})`);
+    await closeDialogs();
+    // the owl, the shop, the hunt board
+    const owl = await ev((l) => { const f = __eq.friends.find((x) => x.region === l && x.role === 'owl'); if (!f) return false; __eq.teleport(f.npc.x + 0.9, f.npc.z + 0.9); return true; }, land);
+    { const t = owl ? await prompt(/Cú Mèo/) : ''; check(owl && t.includes('Cú Mèo'), `${land}: the owl is here for the reviews and the exam [${t}]`); }
+    await ev(([x, z]) => __eq.teleport(x, z), d.shopAt);
+    { const t = await prompt(/Cửa hàng/); check(t.includes('Cửa hàng'), `${land}: the shop answers E [${t}]`); await page.keyboard.press('KeyE'); await wait(400);
+      for (let k = 0; k < 8 && !(await page.isVisible('#shopwin')); k++) { await page.keyboard.press('KeyE'); await wait(600); }
+      const goods = await page.isVisible('#shopwin') ? await ev(() => document.querySelectorAll('#shopwin button[data-act="buy"]').length) : -1;
+      check(goods >= 4, `${land}: the shop opens with goods to buy (${goods})`);
+      for (let k = 0; k < 4 && await page.isVisible('#shopwin'); k++) { await page.keyboard.press('Escape'); await wait(700); }
+      check(!(await page.isVisible('#shopwin')) && await ev(() => !__eq.room), `${land}: Esc leaves the shop`); }
+    await ev(([x, z]) => __eq.teleport(x + 1.2, z + 1), [d.board.x, d.board.z]);
+    { const t = await prompt(/Bảng nhiệm vụ/); check(t.includes('Bảng nhiệm vụ'), `${land}: the hunt board answers E [${t}]`); }
+    // the game masters, a chest, a word bubble, the portal
+    for (const g of LAND_GAMES.filter((x) => x.region === land)) { await ev(([x, z]) => __eq.teleport(x + 0.9, z + 1.1), [g.x, g.z]); const t = await prompt(new RegExp(g.text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))); check(t === g.text, `${land}: game master ${g.host ? g.host.name : g.id} [${t}]`); }
+    await ev(([x, z]) => __eq.teleport(x + 0.8, z + 0.6), d.chests[0]);
+    { const t = await prompt(/[Rr]ương/); check(/[Rr]ương/.test(t), `${land}: a chest stands where the map says [${t}]`); }
+    await ev(([x, z]) => __eq.teleport(x + 0.6, z + 0.5), d.spots[0]);
+    { const t = await prompt(/bong bóng chữ/); check(t.includes('bong bóng chữ'), `${land}: a word bubble floats where the map says [${t}]`); }
+    const pt = W.portalsOf(land)[0]; if (pt) { await ev(([x, z]) => __eq.teleport(x, z), [pt.x, pt.z]); const t = await prompt(/Cổng dịch chuyển/); check(t.includes('Cổng dịch chuyển'), `${land}: the portal answers E [${t}]`); } else check(false, `${land}: has a portal in core/world.js`);
+    check(await ev(() => __eq.errors.length === 0), `${land}: no script errors (${((Date.now() - t0) / 1000).toFixed(0)} s)` + (await ev(() => (__eq.errors.length ? ' ' + __eq.errors.join(' | ').slice(0, 300) : ''))));
+  }
+});
+
 await run('friends', async () => {       // (27/11) Kit standing near the owl took E from the owl: a friend who only stands near answers last, one who has walked up to the hero answers first
   await ev(() => { const p = __eq.profile; p.stats.level = 12; p.gates = { 5: true, 10: true }; __eq.enterRegion('village'); }); await page.waitForFunction(() => __eq.region === 'village' && __eq.started, null, { timeout: 480000 }); await wait(800); await closeDialogs();
   const prompt = async (re) => { await page.waitForFunction((src) => new RegExp(src).test(document.querySelector('#prompt').textContent), re.source, { timeout: 60000 }).catch(() => {}); return page.textContent('#prompt'); };

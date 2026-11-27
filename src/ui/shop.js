@@ -49,6 +49,7 @@ const CSS = `
 #shopwin button:disabled { opacity:.45; cursor:default; } #shopwin button.sell { background:#e8f4ff; } #shopwin button.quest { background:#c8f0b0; }
 #shopwin .counter { margin-top:12px; display:grid; grid-template-columns:190px 1fr; gap:12px; }
 #shopwin .keeper { background:rgba(255,243,214,.95); border:3px solid #7a4a1a; border-radius:14px; padding:8px; text-align:center; }
+#shopwin .keeper .face { width:150px; height:150px; margin:0 auto; display:flex; align-items:center; justify-content:center; font-size:84px; border-radius:50% 50% 12px 12px; border:4px solid #e2b04a; background:#fff8e6; }
 #shopwin .keeper img { width:150px; height:150px; object-fit:cover; object-position:top; border-radius:50% 50% 12px 12px; border:4px solid #e2b04a; background:#fff; }
 #shopwin .keeper b { display:block; font-size:16px; margin:2px 0; }
 #shopwin .bubble { position:relative; background:#fff; border:2px solid #b07a3c; border-radius:12px; padding:6px 8px; font-size:13px; font-weight:700; min-height:40px; text-align:left; margin:6px 0; }
@@ -80,9 +81,11 @@ export class ShopWindow {
       this.act(act, id, b.dataset.k);
     });
   }
-  show(title = 'Village Shop', counters = ['forge', 'rose']) {
-    this.title = title; this.counters = counters; this.open = true; this.quiz = null;
+  /** extra: keepers for counters this file does not know, { counterId: { name, icon, title, sub, talk: [lines] } } (the merchants of maps 4-12). */
+  show(title = 'Village Shop', counters = ['forge', 'rose'], extra = {}) {
+    this.title = title; this.counters = counters; this.extra = extra || {}; this.open = true; this.quiz = null;
     this.say = { forge: 'Welcome! Look at my blades.', rose: 'Hello! Fresh bread today!', forest: 'Welcome to my camp, brave explorer!', harbor: 'Welcome to my stall by the sea!', healer: 'Hello! Potions for health and mana.', market: 'I buy what you catch, pick and grow!' };
+    for (const k of counters) if (!this.say[k]) this.say[k] = this.keeper(k).talk[0] || 'Welcome!';
     this.msg = 'Buy = mua · Wear = mặc · Sell = bán lại nửa giá. Bấm 📜 để nhận nhiệm vụ từ vựng của chủ quầy.';
     this.render(); this.el.classList.remove('hidden');
   }
@@ -111,7 +114,7 @@ export class ShopWindow {
   }
   act(what, id, k) {
     const p = this.api.profile(), it = ITEMS[id], b = bag(p);
-    if (what === 'talk') { const lines = KEEPERS[k].talk; this.say[k] = lines[Math.floor(Math.random() * lines.length)]; speak(this.say[k]); this.quiz = null; }
+    if (what === 'talk') { const lines = this.keeper(k).talk; this.say[k] = lines[Math.floor(Math.random() * lines.length)]; speak(this.say[k]); this.quiz = null; }
     if (what === 'quest') this.startQuest(k);
     if (what === 'ans') { this.answer(Number(id)); this.render(); return; }
     if (what === 'buy') { const r = buy(p, id); this.msg = r.ok ? (it.slot === 'home' || it.slot === 'yard' ? `You bought the ${it.en}! It is in your home now.` : `You bought the ${it.en}!`) : r.why === 'have' ? `You already have a ${it.en} at home.` : r.why === 'gold' ? `Not enough gold: the ${it.en} costs ${it.cost} ●.` : `The ${it.en} is for level ${it.level} heroes.`; this.api.sfx(r.ok ? 'correct' : 'wrong'); }
@@ -139,10 +142,15 @@ export class ShopWindow {
     return list.map((it) => `<div class="card"><span class="tag">${it.price} ●</span><span class="ic">${it.icon}</span><b>${it.en}</b><span class="vi">${it.vi}</span><span class="st">có ${it.n} · được ${it.price * it.n} ●</span><div class="row"><button class="sell" data-act="sellgood" data-id="${it.id}">Sell all ${it.n}</button></div></div>`).join('')
       + `<div class="card" style="justify-content:center"><b>Total · tổng</b><span class="st" style="font-size:18px">${total} ●</span><div class="row"><button data-act="sellgood" data-id="">💰 Sell everything</button></div></div>`;
   }
+  /** (27/11) The keeper of a counter. A counter without one of its own (the shops of maps 4-12 opened with the land's name and crashed here, so those shops never opened) gets the keeper the game passed in, or a plain merchant. */
+  keeper(k) {
+    const kp = KEEPERS[k] || (this.extra && this.extra[k]) || {};
+    return { name: kp.name || 'Merchant', img: kp.img || '', icon: kp.icon || '🛍️', title: kp.title || '🛍️ Goods of this land', sub: kp.sub || 'Gear · đồ của vùng này', talk: kp.talk && kp.talk.length ? kp.talk : ['Welcome, traveller! Take a look.'] };
+  }
   counter(k) {
-    const kp = KEEPERS[k], q = this.quiz && this.quiz.k === k ? this.quiz : null;
+    const kp = this.keeper(k), q = this.quiz && this.quiz.k === k ? this.quiz : null;
     const opts = q ? `<div class="opts">${q.opts.map((id, i) => `<button data-act="ans" data-id="${i}">${i + 1}. ${ITEMS[id].en}</button>`).join('')}</div>` : '';
-    return `<div class="counter"><div class="keeper"><img src="${kp.img}" alt="${kp.name}"><b>${kp.name}</b><div class="bubble">${this.say[k] || ''}${opts}</div>
+    return `<div class="counter"><div class="keeper">${kp.img ? `<img src="${kp.img}" alt="${kp.name}">` : `<div class="face">${kp.icon}</div>`}<b>${kp.name}</b><div class="bubble">${this.say[k] || ''}${opts}</div>
         <button data-act="talk" data-k="${k}">💬 Talk</button> <button class="quest" data-act="quest" data-k="${k}">📜 Word quest</button></div>
       <div class="shelfbox"><h3>${kp.title} <small>· ${kp.sub}</small></h3><div class="shelf">${k === 'market' ? this.marketShelf() : shopList(k).map((id) => this.card(id)).join('')}</div></div></div>`;
   }
