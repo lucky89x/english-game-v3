@@ -1,128 +1,138 @@
-# Mô hình cần anh tạo bằng Tripo3D (cập nhật 27/11, lượt 66)
+# Mô hình cần anh tạo bằng Tripo3D: danh sách làm MỘT ĐỢT (cập nhật 27/11, lượt 69)
 
-Chỉ những thứ Blender vẽ bằng script không đẹp được (vật hữu cơ, công trình mốc, nhân vật). Phụ kiện, quần áo, đồ đạc, cây cỏ, nhà thường: em tự dựng bằng Blender, anh không cần làm.
+Đây là danh sách đã rà lại và gộp từ các lần trước: **53 mô hình, chia 5 nhóm**. Mỗi câu lệnh đã viết đầy đủ và có cùng một "đuôi phong cách", anh chỉ việc **dán nguyên dòng** vào Tripo, không cần ghép thêm gì. Chỉ gồm những thứ Blender vẽ bằng script không đẹp được (người, sinh vật, công trình mốc, đồ có nét vẽ tay). Game đang chạy đủ bằng mô hình mượn hoặc bản tạm, nên có file nào em thay cái đó, không có gì phải chờ.
 
-## Cách xuất để đỡ tốn công xử lý
-- Định dạng **GLB**, một file một mô hình, không kèm bệ đá hay nền.
-- Nhân vật: tư thế **chữ T**, tay tách khỏi thân, có rig nếu Tripo cho chọn.
-- Nếu có ô chọn số mặt: 30–50 nghìn là đủ (em giảm tiếp còn 6–12 nghìn).
-- Đẩy lên nhánh `work-<ngày-giờ>` như mọi lần rồi báo tên nhánh. File thô không commit vào nhánh game.
-- Thêm vào cuối mỗi câu lệnh: `original design, not based on any existing game or film character`.
+So với danh sách cũ: bỏ 2 mục không cần (tượng nhân sư tuỳ chọn, rồng băng "có xương": em tự gắn xương); thêm nhân vật nam cho người chơi (cần cho chơi chung qua mạng), 3 nhà thám hiểm Minh, Sora, Bella, trùm cuối Chúa tể Im Lặng và 8 quái của Map 8, 9, 10, 12 (trước ghi "chưa cần", nay đưa vào để anh làm một thể). Số thứ tự đổi thành mã nhóm (A1, B2…).
 
-## Danh sách theo thứ tự ưu tiên
+## 1. Cài đặt chung trên Tripo (làm một lần)
 
-| # | Tên file gợi ý | Dùng ở đâu | Câu lệnh gợi ý |
+- Chế độ **Text to 3D**, bản model mới nhất. Xuất **GLB có texture**, một file một mô hình.
+- **Face limit**: đặt theo dòng "Cài đặt" của từng nhóm. Nếu Tripo không có ô này thì cứ xuất mặc định, em giảm bằng `tools/tripo/optimize.py`. Đừng xuất thấp hơn số ghi: giảm từ lưới dày cho hình đẹp hơn là bắt Tripo dựng thưa.
+- Nếu có ô **Negative prompt**, dán dòng này cho mọi mô hình: `base, pedestal, ground plane, text, logo, watermark, realistic, photorealistic, glossy, metallic skin, extra limbs, fused fingers, weapon in hand, scary, blood`
+- Nếu có chọn **phong cách (Style)**: để mặc định hoặc "Cartoon"; không chọn Lego, Voxel, Clay.
+- Nếu có chọn **PBR**: bật hay tắt đều được (em đặt lại độ kim loại về 0, nếu không da sẽ tối trong game).
+- Tripo thường cho vài bản nháp: chọn bản **đầu to, màu phẳng, không bóng loáng, các phần tách nhau rõ**. Người và trùm: tay chân không dính vào thân.
+- **Đặt đúng tên file** ở cột "Tên file". Đẩy cả lô lên nhánh `work-<ngày-giờ>` như mọi lần rồi báo tên nhánh; file thô không commit vào nhánh game.
+
+## 2. Nếu không đủ lượt tạo (credit): làm theo thứ tự này
+
+1. **A1–A6** (Kit, Mai, nhân vật nam, Minh, Sora, Bella): bé nhìn thấy suốt trò chơi.
+2. **Nhóm E** (16 món đồ trong nhà): nhỏ, tạo nhanh, bé ngắm trong nhà mỗi ngày.
+3. **Nhóm B** (5 trùm) và **A7** (Hugh): cảnh quan trọng nhất của mỗi vùng.
+4. **A8–A12** (5 người giữ vùng).
+5. **Nhóm C** (8 quái), rồi **nhóm D** (12 công trình).
+
+## Nhóm A. Người (12 mô hình)
+
+Cài đặt: Face limit **40.000** (em giảm còn 8–12 nghìn). Tư thế chữ T; nếu có nút Auto-rig / Rigging thì bật (humanoid). Ảnh vân 1024 hoặc mặc định. Chọn bản nháp có **hai tay tách hẳn khỏi thân, ngón tay không dính vào quần áo, tóc không che mặt**.
+
+| # | Tên file | Ai, dùng ở đâu | Câu lệnh (dán nguyên dòng) |
 |---|---|---|---|
-| 1 | `kit_boy.glb` | Kit: bạn đối thủ 13 tuổi trong truyện, kiêm nhân vật nam cho người chơi | `full body chibi boy adventurer, age 13, big head, messy short hair, tool belt with small wrench, simple tunic, shorts and boots, T-pose, arms away from body, soft hand-painted look, no baked highlights, white background` |
-| 2 | `lighthouse_isle.glb` | Mốc của map Biển (thay hải đăng dựng bằng code) | `stylized chibi fantasy lighthouse on a small rocky islet, red and white striped tower, tiny keeper cottage, wooden stairs, hand-painted soft colors, chunky rounded shapes, game asset, no base, no text` |
-| 3 | `ancient_tree.glb` | Cây Cổ Thụ của Rừng | `giant ancient oak tree with thick twisted roots, round puffy leaf clusters, hanging paper lanterns, stylized chibi fantasy, hand-painted texture, chunky low-poly look, no base` |
-| 4 | `east_watchtower.glb` | Mốc bờ Đông của Làng (ngã ba ra các bãi quái) | `small stylized stone watchtower with wooden roof and a flag, mossy stones, chibi fantasy village style, hand-painted, chunky shapes, no base` |
-| 5 | `desert_temple.glb` | Mốc của Map 4 Sa mạc | `stylized chibi desert temple gate with sandstone pillars and blue tile dome, hand-painted warm colors, chunky rounded shapes, toy-like, game asset, no base` |
-| 6 | `desert_boss_sphinx.glb` (tuỳ chọn) | Trùm phụ Map 4 (trùm chính đã có rồng cát) | `cute stylized stone sphinx guardian with cracked sandstone body and glowing blue eyes, chibi proportions, hand-painted, sitting pose, no base` |
+| A1 | `kit_boy.glb` | Kit, người bạn đồng hành (đang mượn mô hình chú Sam thu nhỏ) | `full body chibi boy adventurer, age 13, messy short brown hair, cheerful confident grin, green tunic with rolled sleeves, brown shorts, leather boots, tool belt with a small wrench, goggles pushed up on the forehead, big head, small body about three heads tall, T-pose, arms straight out away from the body, legs slightly apart, empty hands, plain white background, stylized chibi fantasy game asset, hand-painted soft colors, chunky rounded shapes, matte surface, no baked highlights, original design, not based on any existing game or film character` |
+| A2 | `mai_girl.glb` | Mai, người bạn đồng hành giữ cuốn nhật ký từ (đang mượn cô Mia) | `full body chibi girl, age 12, two short black braids, round glasses, gentle friendly smile, yellow raincoat-style jacket, blue skirt, white socks and red shoes, small satchel with a notebook and a pencil, big head, small body about three heads tall, T-pose, arms straight out away from the body, legs slightly apart, empty hands, plain white background, stylized chibi fantasy game asset, hand-painted soft colors, chunky rounded shapes, matte surface, no baked highlights, original design, not based on any existing game or film character` |
+| A3 | `chr_boy1.glb` | Nhân vật NAM cho người chơi (hiện game chỉ có nhân vật nữ; cần khi bạn nam vào chơi chung) | `full body chibi boy hero, age 11, short black hair, bright eyes, big smile, white shirt under a blue sleeveless vest, dark blue shorts, brown boots, red scarf around the neck, big head, small body about three heads tall, T-pose, arms straight out away from the body, legs slightly apart, empty hands, plain white background, stylized chibi fantasy game asset, hand-painted soft colors, chunky rounded shapes, matte surface, no baked highlights, original design, not based on any existing game or film character` |
+| A4 | `chr_minh_boy.glb` | Minh, nhà thám hiểm khác trên đường (đang mượn mô hình người dẫn đường sa mạc) | `full body chibi boy explorer, age 12, short spiky dark hair, blue cap worn backwards, light blue jacket, grey trousers, sneakers, big green backpack with a rolled map, big head, small body about three heads tall, T-pose, arms straight out away from the body, legs slightly apart, empty hands, plain white background, stylized chibi fantasy game asset, hand-painted soft colors, chunky rounded shapes, matte surface, no baked highlights, original design, not based on any existing game or film character` |
+| A5 | `chr_sora_girl.glb` | Sora, nhà thám hiểm khác (đang mượn cô Mia đổi màu) | `full body chibi girl explorer, age 11, short dark purple bob hair with a star hair clip, teal hoodie, cream shorts, purple leggings, hiking boots, small round shoulder bag, big head, small body about three heads tall, T-pose, arms straight out away from the body, legs slightly apart, empty hands, plain white background, stylized chibi fantasy game asset, hand-painted soft colors, chunky rounded shapes, matte surface, no baked highlights, original design, not based on any existing game or film character` |
+| A6 | `chr_bella_girl.glb` | Bella, nhà thám hiểm khác (đang mượn cô Mia đổi màu) | `full body chibi girl explorer, age 12, curly blonde ponytail with a pink ribbon, pink jacket, purple pleated skirt, white sneakers, binoculars hanging on the chest, big head, small body about three heads tall, T-pose, arms straight out away from the body, legs slightly apart, empty hands, plain white background, stylized chibi fantasy game asset, hand-painted soft colors, chunky rounded shapes, matte surface, no baked highlights, original design, not based on any existing game or film character` |
+| A7 | `chr_hugh_boy.glb` | Hugh, cậu bé sau khi hết làm Chúa tể Im Lặng (cảnh kết) | `full body chibi shy boy, age 12, messy dark hair, gentle small smile, dark purple cloak with the hood pulled back, grey tunic, small glowing golden compass hanging from the neck, big head, small body about three heads tall, T-pose, arms straight out away from the body, legs slightly apart, empty hands, plain white background, stylized chibi fantasy game asset, hand-painted soft colors, chunky rounded shapes, matte surface, no baked highlights, original design, not based on any existing game or film character` |
+| A8 | `npc_flora_fairy.glb` | Tiên Flora, người giữ Đảo Thần Tiên (Map 8) | `full body chibi fairy girl, pink hair with a flower crown, green leaf dress, bare feet with ankle vines, two small rounded wings on the back, big head, small body about three heads tall, T-pose, arms straight out away from the body, legs slightly apart, empty hands, plain white background, stylized chibi fantasy game asset, hand-painted soft colors, chunky rounded shapes, matte surface, no baked highlights, original design, not based on any existing game or film character` |
+| A9 | `npc_brann_firewatcher.glb` | Chú Brann, người giữ Thung lũng Núi Lửa (Map 9) | `full body chibi old fire-watcher man, grey beard, kind eyes, heavy brown leather coat, thick gloves, goggles on the forehead, small lantern on the belt, big head, small body about three heads tall, T-pose, arms straight out away from the body, legs slightly apart, empty hands, plain white background, stylized chibi fantasy game asset, hand-painted soft colors, chunky rounded shapes, matte surface, no baked highlights, original design, not based on any existing game or film character` |
+| A10 | `npc_opal_miner.glb` | Opal, người giữ Hang Tinh Thể (Map 10) | `full body chibi miner girl, age 12, long brown braid, yellow helmet with a small lamp, blue overalls over a striped shirt, sturdy boots, small pickaxe strapped on the back, big head, small body about three heads tall, T-pose, arms straight out away from the body, legs slightly apart, empty hands, plain white background, stylized chibi fantasy game asset, hand-painted soft colors, chunky rounded shapes, matte surface, no baked highlights, original design, not based on any existing game or film character` |
+| A11 | `npc_nova_inventor.glb` | Kỹ sư Nova, người giữ Thành phố Tương Lai (Map 11) | `full body chibi young woman inventor, short teal hair, white lab coat with glowing blue lines, dark trousers, tool belt, small round glasses, big head, small body about three heads tall, T-pose, arms straight out away from the body, legs slightly apart, empty hands, plain white background, stylized chibi fantasy game asset, hand-painted soft colors, chunky rounded shapes, matte surface, no baked highlights, original design, not based on any existing game or film character` |
+| A12 | `npc_luma_dreamweaver.glb` | Luma, người giữ Vương quốc Mộng Mơ (Map 12) | `full body chibi dream weaver girl, long lavender hair with small golden stars, pale yellow robe with a purple sash, crescent moon staff strapped on the back, big head, small body about three heads tall, T-pose, arms straight out away from the body, legs slightly apart, empty hands, plain white background, stylized chibi fantasy game asset, hand-painted soft colors, chunky rounded shapes, matte surface, no baked highlights, original design, not based on any existing game or film character` |
 
-**Map 4–7 đã dựng xong (26/11) bằng mô hình có sẵn**, không chờ Tripo. Các mục dưới đây chỉ để đẹp hơn; có file nào em thay vào mốc tương ứng.
+## Nhóm B. Trùm (5 mô hình)
 
-| # | Tên file gợi ý | Thay cho | Câu lệnh gợi ý |
+Cài đặt: Face limit **50.000** (em giảm còn 10–14 nghìn). Không cần rig (em gắn xương). Chọn bản nháp **chân tay tách nhau, không dính vào thân**.
+
+| # | Tên file | Thay cho | Câu lệnh (dán nguyên dòng) |
 |---|---|---|---|
-| 7 | `ice_dragon_rigged.glb` | Trùm Núi tuyết (đang là mô hình đứng im) | nếu Tripo cho xuất có xương và hoạt ảnh thì xuất kèm; không thì em gắn xương |
-| 8 | `mountain_lodge.glb` | Nhà nghỉ Núi tuyết (đang mượn nhà trọ của làng) | `cozy stylized chibi mountain lodge, log walls, thick snow on the roof, warm windows, stone chimney, hand-painted, chunky shapes, no base` |
-| 9 | `cloud_palace.glb` | Cung điện Mây ở Trời (đang mượn tháp sa mạc) | `cute stylized cloud palace with white towers, golden domes and blue flags, standing on a puffy cloud, hand-painted, chibi toy style, no base` |
-| 10 | `ruins_statue.glb` | Tượng ở sân cột Di tích | `ancient stone statue of a kind owl scholar holding an open book, mossy and cracked, stylized chibi, hand-painted, no base` |
+| B1 | `boss_thorn_queen.glb` | Nữ hoàng Gai, Map 8 (đang mượn Nữ hoàng Nấm đổi màu) | `fairy queen made of rose vines and thorns, a big red rose flower as her skirt, leaf crown, small dark wings, thorny vine arms, big head, chibi proportions, friendly-scary for children, not gory, standing in a neutral pose with arms and legs apart from the body, no base, plain white background, stylized chibi fantasy game asset, hand-painted soft colors, chunky rounded shapes, matte surface, no baked highlights, original design, not based on any existing game or film character` |
+| B2 | `boss_magma_titan.glb` | Người Khổng Lồ Dung Nham, Map 9 (đang mượn Golem Cổ) | `lava titan, black rock body with glowing orange cracks, very big fists, small glowing yellow eyes, short legs, big head, chibi proportions, friendly-scary for children, not gory, standing in a neutral pose with arms and legs apart from the body, no base, plain white background, stylized chibi fantasy game asset, hand-painted soft colors, chunky rounded shapes, matte surface, no baked highlights, original design, not based on any existing game or film character` |
+| B3 | `boss_crystal_dragon.glb` | Rồng Pha Lê, Map 10 (đang mượn Rồng Băng) | `crystal dragon standing on four legs, body covered in purple and blue gem shards, short wings spread to the sides, long tail held up, big head, chibi proportions, friendly-scary for children, not gory, standing in a neutral pose with arms and legs apart from the body, no base, plain white background, stylized chibi fantasy game asset, hand-painted soft colors, chunky rounded shapes, matte surface, no baked highlights, original design, not based on any existing game or film character` |
+| B4 | `boss_iron_warden.glb` | Người Máy Canh Gác, Map 11 (bản hiện tại em vẽ bằng khối đơn giản) | `big guardian robot, rounded white and steel armor, glowing blue visor, round chest light, chunky arms, standing in T-pose, big head, chibi proportions, friendly-scary for children, not gory, standing in a neutral pose with arms and legs apart from the body, no base, plain white background, stylized chibi fantasy game asset, hand-painted soft colors, chunky rounded shapes, matte surface, no baked highlights, original design, not based on any existing game or film character` |
+| B5 | `boss_lord_hush.glb` | Chúa tể Im Lặng, trùm cuối Map 12 (đang mượn mô hình khác) | `tall hooded shadow lord, long dark purple cloak with torn edges, pale cracked mask with no mouth, two soft glowing eyes, long sleeves hiding the hands, floating a little above the ground, big head, chibi proportions, friendly-scary for children, not gory, standing in a neutral pose with arms and legs apart from the body, no base, plain white background, stylized chibi fantasy game asset, hand-painted soft colors, chunky rounded shapes, matte surface, no baked highlights, original design, not based on any existing game or film character` |
 
-## Map 8–12 (thêm 26/11, lượt 63)
+## Nhóm C. Quái thường (8 mô hình, mỗi vùng 2 con)
 
-Khung 5 vùng đã chạy bằng cảnh vẽ bằng mã và quái mượn mô hình cũ đổi màu. Danh sách dưới xếp theo mức "đáng làm": trùm và người giữ vùng trước (bé nhìn gần, lâu), công trình mốc sau. Có file nào em thay vào ngay, không phải sửa bản đồ.
+Cài đặt: Face limit **25.000** (em giảm còn 3–6 nghìn). Không cần rig. Bốn vùng này hiện mượn quái cũ đổi màu.
 
-**Trùm (mỗi con một file, tư thế đứng, không bệ):**
-
-| # | Tên file gợi ý | Thay cho | Câu lệnh gợi ý |
+| # | Tên file | Vùng | Câu lệnh (dán nguyên dòng) |
 |---|---|---|---|
-| 11 | `boss_thorn_queen.glb` | Nữ hoàng Gai (đang mượn Nữ hoàng Nấm đổi màu) | `cute stylized fairy queen made of rose vines and thorns, big rose flower as a skirt, leaf crown, small wings, chibi proportions, hand-painted, soft colors, standing pose, no base` |
-| 12 | `boss_magma_titan.glb` | Người Khổng Lồ Dung Nham (mượn Golem Cổ) | `chunky stylized lava titan, black rock body with glowing orange cracks, big fists, small glowing eyes, friendly-scary, chibi proportions, hand-painted, standing pose, no base` |
-| 13 | `boss_crystal_dragon.glb` | Rồng Pha Lê (mượn Rồng Băng) | `cute stylized crystal dragon, body covered in purple and blue gem shards, big eyes, short wings, chibi proportions, hand-painted, standing on four legs, no base` |
-| 14 | `boss_iron_warden.glb` | Người Máy Canh Gác (em đã vẽ bản khối đơn giản) | `big friendly-scary guardian robot, rounded white and steel armor, glowing blue visor, chest light, chunky arms, toy-like chibi style, hand-painted, T-pose, no base` |
-| 15 | `chr_hugh_boy.glb` | Hugh sau khi hết làm Chúa tể Im Lặng (cảnh kết) | `full body chibi shy boy age 12, dark purple hooded cloak pulled back, messy hair, gentle smile, holding a small glowing compass, T-pose, arms away from body, soft hand-painted look, white background` |
+| C1 | `mob_fairy_wisp.glb` | Đảo Thần Tiên (Map 8) | `round firefly sprite with a glowing yellow lantern tail, four tiny wings spread out, small antennae, cute, big eyes, chibi proportions, standing in a neutral pose with all legs apart, no base, plain white background, stylized chibi fantasy game asset, hand-painted soft colors, chunky rounded shapes, matte surface, no baked highlights, original design, not based on any existing game or film character` |
+| C2 | `mob_thorn_sprout.glb` | Đảo Thần Tiên (Map 8) | `walking rosebud creature with a grumpy face, two thorny vine arms, short root feet, green leaves as a collar, cute, big eyes, chibi proportions, standing in a neutral pose with all legs apart, no base, plain white background, stylized chibi fantasy game asset, hand-painted soft colors, chunky rounded shapes, matte surface, no baked highlights, original design, not based on any existing game or film character` |
+| C3 | `mob_lava_fox.glb` | Thung lũng Núi Lửa (Map 9) | `small fox with black fur and glowing orange cracks, ember-flame tail held up, standing on four legs, cute, big eyes, chibi proportions, standing in a neutral pose with all legs apart, no base, plain white background, stylized chibi fantasy game asset, hand-painted soft colors, chunky rounded shapes, matte surface, no baked highlights, original design, not based on any existing game or film character` |
+| C4 | `mob_ash_beetle.glb` | Thung lũng Núi Lửa (Map 9) | `round beetle with a black rock shell and glowing orange seams, six short legs, two small horns, cute, big eyes, chibi proportions, standing in a neutral pose with all legs apart, no base, plain white background, stylized chibi fantasy game asset, hand-painted soft colors, chunky rounded shapes, matte surface, no baked highlights, original design, not based on any existing game or film character` |
+| C5 | `mob_cave_bat.glb` | Hang Tinh Thể (Map 10) | `chubby purple bat with wings spread wide, crystal-tipped ears, tiny fangs, cute, big eyes, chibi proportions, standing in a neutral pose with all legs apart, no base, plain white background, stylized chibi fantasy game asset, hand-painted soft colors, chunky rounded shapes, matte surface, no baked highlights, original design, not based on any existing game or film character` |
+| C6 | `mob_gem_crab.glb` | Hang Tinh Thể (Map 10) | `crab with blue and pink crystals growing on its grey shell, two big claws raised, six legs, cute, big eyes, chibi proportions, standing in a neutral pose with all legs apart, no base, plain white background, stylized chibi fantasy game asset, hand-painted soft colors, chunky rounded shapes, matte surface, no baked highlights, original design, not based on any existing game or film character` |
+| C7 | `mob_dream_sheep.glb` | Vương quốc Mộng Mơ (Map 12) | `fluffy cloud sheep in pastel purple wool, sleepy half-closed eyes, a small golden star on the forehead, standing on four legs, cute, big eyes, chibi proportions, standing in a neutral pose with all legs apart, no base, plain white background, stylized chibi fantasy game asset, hand-painted soft colors, chunky rounded shapes, matte surface, no baked highlights, original design, not based on any existing game or film character` |
+| C8 | `mob_grumpy_cloud.glb` | Vương quốc Mộng Mơ (Map 12) | `small dark storm cloud creature with a grumpy face, two stubby arms, a tiny yellow lightning bolt as a tail, cute, big eyes, chibi proportions, standing in a neutral pose with all legs apart, no base, plain white background, stylized chibi fantasy game asset, hand-painted soft colors, chunky rounded shapes, matte surface, no baked highlights, original design, not based on any existing game or film character` |
 
-**Người giữ vùng (tư thế chữ T, có rig nếu được):**
+## Nhóm D. Công trình mốc (12 mô hình)
 
-| # | Tên file gợi ý | Ai | Câu lệnh gợi ý |
+Cài đặt: Face limit **50.000** (em giảm còn 5–10 nghìn). Một file một công trình. Các vùng đã chạy bằng công trình mượn hoặc vẽ bằng mã; có file nào em thay cái đó, không phải sửa bản đồ.
+
+| # | Tên file | Ở đâu | Câu lệnh (dán nguyên dòng) |
 |---|---|---|---|
-| 16 | `npc_flora_fairy.glb` | Tiên Flora (Map 8) | `full body chibi fairy girl, pink hair with flower crown, leaf dress, small transparent wings, T-pose, arms away from body, soft hand-painted look, white background` |
-| 17 | `npc_brann_firewatcher.glb` | Chú Brann (Map 9) | `full body chibi old fire-watcher man, grey beard, heavy leather coat, goggles on forehead, lantern on belt, T-pose, arms away from body, soft hand-painted look, white background` |
-| 18 | `npc_opal_miner.glb` | Opal (Map 10) | `full body chibi miner girl age 12, helmet with a small lamp, overalls, pickaxe on her back, braided hair, T-pose, arms away from body, soft hand-painted look, white background` |
-| 19 | `npc_nova_inventor.glb` | Nova (Map 11) | `full body chibi young woman inventor, short teal hair, white lab coat with glowing lines, tool belt, T-pose, arms away from body, soft hand-painted look, white background` |
-| 20 | `npc_luma_dreamweaver.glb` | Luma (Map 12) | `full body chibi dream weaver girl, long lavender hair with small stars, pale yellow robe, crescent moon staff on her back, T-pose, arms away from body, soft hand-painted look, white background` |
+| D1 | `lighthouse_isle.glb` | Hải đăng, Biển cả (Map 2) | `fantasy lighthouse on a small rocky islet, red and white striped tower, tiny keeper cottage, wooden stairs, one building only, no ground, no base, no people, no text, plain white background, stylized chibi fantasy game asset, hand-painted soft colors, chunky rounded shapes, matte surface, no baked highlights, original design, not based on any existing game or film character` |
+| D2 | `ancient_tree.glb` | Cây Cổ Thụ, Rừng Ký Ức (Map 3) | `giant ancient oak tree with thick twisted roots, round puffy leaf clusters, hanging paper lanterns, one tree only, no ground, no base, no people, no text, plain white background, stylized chibi fantasy game asset, hand-painted soft colors, chunky rounded shapes, matte surface, no baked highlights, original design, not based on any existing game or film character` |
+| D3 | `east_watchtower.glb` | Tháp canh bờ Đông, Làng (Map 1) | `small stone watchtower with a wooden roof and a flag, mossy stones, wooden ladder, one building only, no ground, no base, no people, no text, plain white background, stylized chibi fantasy game asset, hand-painted soft colors, chunky rounded shapes, matte surface, no baked highlights, original design, not based on any existing game or film character` |
+| D4 | `desert_temple.glb` | Đền cổng, Sa mạc (Map 4) | `desert temple gate with sandstone pillars and a blue tile dome, warm colors, palm-leaf carvings, one building only, no ground, no base, no people, no text, plain white background, stylized chibi fantasy game asset, hand-painted soft colors, chunky rounded shapes, matte surface, no baked highlights, original design, not based on any existing game or film character` |
+| D5 | `mountain_lodge.glb` | Nhà nghỉ, Núi Tuyết (Map 5; đang mượn nhà trọ của làng) | `cozy mountain lodge with log walls, thick snow on the roof, warm yellow windows, stone chimney, one building only, no ground, no base, no people, no text, plain white background, stylized chibi fantasy game asset, hand-painted soft colors, chunky rounded shapes, matte surface, no baked highlights, original design, not based on any existing game or film character` |
+| D6 | `ruins_statue.glb` | Tượng ở sân cột, Di tích Cổ (Map 6) | `ancient stone statue of a kind owl scholar holding an open book, mossy and cracked, one statue only, no ground, no base, no people, no text, plain white background, stylized chibi fantasy game asset, hand-painted soft colors, chunky rounded shapes, matte surface, no baked highlights, original design, not based on any existing game or film character` |
+| D7 | `cloud_palace.glb` | Cung điện Mây, Trời (Map 7; đang mượn tháp sa mạc) | `cloud palace with white towers, golden domes and blue flags, standing on one puffy cloud, one building only, no ground, no base, no people, no text, plain white background, stylized chibi fantasy game asset, hand-painted soft colors, chunky rounded shapes, matte surface, no baked highlights, original design, not based on any existing game or film character` |
+| D8 | `fairy_mushroom_house.glb` | Nhà nấm, Đảo Thần Tiên (Map 8) | `cozy mushroom house with a red cap roof with white dots, round wooden door, small windows, flower pots, one building only, no ground, no base, no people, no text, plain white background, stylized chibi fantasy game asset, hand-painted soft colors, chunky rounded shapes, matte surface, no baked highlights, original design, not based on any existing game or film character` |
+| D9 | `volcano_forge_gate.glb` | Cổng Lửa, Núi Lửa (Map 9) | `black stone gate with glowing orange lava runes and two fire bowls on the sides, one gate only, no ground, no base, no people, no text, plain white background, stylized chibi fantasy game asset, hand-painted soft colors, chunky rounded shapes, matte surface, no baked highlights, original design, not based on any existing game or film character` |
+| D10 | `crystal_gate.glb` | Hốc Rồng, Hang Tinh Thể (Map 10) | `cave entrance framed by giant purple and blue crystals, softly glowing, one cave entrance only, no ground, no base, no people, no text, plain white background, stylized chibi fantasy game asset, hand-painted soft colors, chunky rounded shapes, matte surface, no baked highlights, original design, not based on any existing game or film character` |
+| D11 | `future_station.glb` | Nhà ga, Thành phố Tương Lai (Map 11) | `small futuristic train station with a white curved roof, glass walls, solar panels, glowing blue lines, toy-like, one building only, no ground, no base, no people, no text, plain white background, stylized chibi fantasy game asset, hand-painted soft colors, chunky rounded shapes, matte surface, no baked highlights, original design, not based on any existing game or film character` |
+| D12 | `star_castle.glb` | Lâu đài Ngôi Sao, Mộng Mơ (Map 12; đang mượn biệt thự) | `dreamy castle with tall towers, a golden star on the top, a crescent moon window, pastel purple and gold, one building only, no ground, no base, no people, no text, plain white background, stylized chibi fantasy game asset, hand-painted soft colors, chunky rounded shapes, matte surface, no baked highlights, original design, not based on any existing game or film character` |
 
-**Công trình mốc (một file một công trình, không nền):**
+## Nhóm E. Đồ trong nhà (16 mô hình)
 
-| # | Tên file gợi ý | Ở đâu | Câu lệnh gợi ý |
+Cài đặt: Face limit **8.000** (em giảm còn 1.500–2.500). Chỉ món đồ, không bàn, không bệ (em đặt lên đôn gỗ có sẵn). Tripo không làm được kính trong suốt (quả cầu tuyết, đèn dung nham): cứ để nó dựng đặc, em tách phần kính trong Blender. **Tên file phải đúng** thì em thay vào không cần sửa mã.
+
+| # | Tên file | Món (bé có được nhờ) | Câu lệnh (dán nguyên dòng) |
 |---|---|---|---|
-| 21 | `fairy_mushroom_house.glb` | Nhà nấm Map 8 (đang là cây nấm phóng to) | `cozy stylized mushroom house, red cap roof with white dots, round door, small windows, flower pots, chibi fairy village style, hand-painted, chunky shapes, no base` |
-| 22 | `volcano_forge_gate.glb` | Cổng Lửa Map 9 | `stylized black stone gate with glowing lava runes and two fire bowls, chunky fantasy shapes, hand-painted, game asset, no base` |
-| 23 | `crystal_gate.glb` | Hốc Rồng Map 10 | `stylized cave entrance framed by giant purple and blue crystals, glowing softly, chunky shapes, hand-painted, game asset, no base` |
-| 24 | `future_station.glb` | Nhà ga Map 11 | `small cute futuristic train station, white curved roof, glass walls, solar panels, glowing blue lines, toy-like chibi style, hand-painted, no base` |
-| 25 | `star_castle.glb` | Lâu đài Ngôi Sao Map 12 (đang mượn biệt thự) | `dreamy stylized castle with tall towers, star on the top, crescent moon window, pastel purple and gold, puffy cloud at the base, chibi toy style, hand-painted, no base` |
+| E1 | `home_sv_cactus.glb` | Cactus Pot (mua ở Sa mạc) | `potted cactus with two small arms and pink flowers, terracotta pot with a painted zigzag pattern, single small object, no base, no table, plain white background, stylized chibi fantasy game asset, hand-painted soft colors, chunky rounded shapes, matte surface, no baked highlights, original design, not based on any existing game or film character` |
+| E2 | `home_sv_snowglobe.glb` | Snow Globe (mua ở Núi Tuyết) | `snow globe with a tiny pine tree, a small log cabin and a snowman inside, blue wooden foot with gold trim, single small object, no base, no table, plain white background, stylized chibi fantasy game asset, hand-painted soft colors, chunky rounded shapes, matte surface, no baked highlights, original design, not based on any existing game or film character` |
+| E3 | `home_sv_vase.glb` | Ancient Vase (mua ở Di tích) | `ancient clay vase with two handles, painted blue and ochre geometric bands, small cracks, single small object, no base, no table, plain white background, stylized chibi fantasy game asset, hand-painted soft colors, chunky rounded shapes, matte surface, no baked highlights, original design, not based on any existing game or film character` |
+| E4 | `home_sv_cloudlamp.glb` | Cloud Lamp (mua ở Trời) | `table lamp shaped like a puffy white cloud with three small golden stars hanging under it, short brass stand, single small object, no base, no table, plain white background, stylized chibi fantasy game asset, hand-painted soft colors, chunky rounded shapes, matte surface, no baked highlights, original design, not based on any existing game or film character` |
+| E5 | `home_sv_mushroom.glb` | Mushroom Lamp (mua ở Đảo Thần Tiên) | `night lamp shaped like a red mushroom with white dots and a smaller mushroom beside it, tiny round door in the stem, mossy foot, single small object, no base, no table, plain white background, stylized chibi fantasy game asset, hand-painted soft colors, chunky rounded shapes, matte surface, no baked highlights, original design, not based on any existing game or film character` |
+| E6 | `home_sv_lavalamp.glb` | Lava Lamp (mua ở Núi Lửa) | `lava lamp with a black rock foot with glowing orange cracks, body filled with orange and yellow blobs, small metal cap, single small object, no base, no table, plain white background, stylized chibi fantasy game asset, hand-painted soft colors, chunky rounded shapes, matte surface, no baked highlights, original design, not based on any existing game or film character` |
+| E7 | `home_sv_crystal.glb` | Crystal (mua ở Hang Tinh Thể) | `cluster of purple, blue and pink faceted crystals growing from a small grey rock, single small object, no base, no table, plain white background, stylized chibi fantasy game asset, hand-painted soft colors, chunky rounded shapes, matte surface, no baked highlights, original design, not based on any existing game or film character` |
+| E8 | `home_sv_toyrobot.glb` | Toy Robot (mua ở Thành phố) | `retro toy robot with a boxy light blue body, round yellow eyes, red antenna, wind-up key on the back, standing, single small object, no base, no table, plain white background, stylized chibi fantasy game asset, hand-painted soft colors, chunky rounded shapes, matte surface, no baked highlights, original design, not based on any existing game or film character` |
+| E9 | `home_sv_nightlight.glb` | Night Light (mua ở Mộng Mơ) | `night light shaped like a smiling golden star resting on a small crescent moon, pastel purple round foot, single small object, no base, no table, plain white background, stylized chibi fantasy game asset, hand-painted soft colors, chunky rounded shapes, matte surface, no baked highlights, original design, not based on any existing game or film character` |
+| E10 | `home_trophy.glb` | Cúp trùm (một mô hình dùng chung cho 13 cúp) | `golden trophy cup with two handles and a blue gem on top, on a small dark wooden plinth with an empty brass plate, single small object, no base, no table, plain white background, stylized chibi fantasy game asset, hand-painted soft colors, chunky rounded shapes, matte surface, no baked highlights, original design, not based on any existing game or film character` |
+| E11 | `home_gm_carpet.glb` | Bazaar Carpet (thắng trò Bazaar Bargain) | `small rectangular oriental carpet lying flat, red and gold woven pattern, tassels on both short ends, single small object, no base, no table, plain white background, stylized chibi fantasy game asset, hand-painted soft colors, chunky rounded shapes, matte surface, no baked highlights, original design, not based on any existing game or film character` |
+| E12 | `home_gm_snowman.glb` | Snowman (thắng trò Snow Slide) | `small indoor snowman toy made of three snowballs, carrot nose, red scarf, blue bucket hat, twig arms, single small object, no base, no table, plain white background, stylized chibi fantasy game asset, hand-painted soft colors, chunky rounded shapes, matte surface, no baked highlights, original design, not based on any existing game or film character` |
+| E13 | `home_gm_runestone.glb` | Rune Pillar (thắng trò Rune Decoder) | `short ancient stone pillar with glowing green runes carved around it, a little moss, cracked top, single small object, no base, no table, plain white background, stylized chibi fantasy game asset, hand-painted soft colors, chunky rounded shapes, matte surface, no baked highlights, original design, not based on any existing game or film character` |
+| E14 | `home_gm_starlamp.glb` | Star Lantern (thắng trò Balloon Ride) | `floor lantern shaped like a golden five-pointed star on a thin wooden stand, small cloud ornament at the foot, single small object, no base, no table, plain white background, stylized chibi fantasy game asset, hand-painted soft colors, chunky rounded shapes, matte surface, no baked highlights, original design, not based on any existing game or film character` |
+| E15 | `home_gm_gemchest.glb` | Gem Chest (thắng trò Gem Mine) | `small open wooden treasure chest with iron bands, full of purple, blue and pink gems, single small object, no base, no table, plain white background, stylized chibi fantasy game asset, hand-painted soft colors, chunky rounded shapes, matte surface, no baked highlights, original design, not based on any existing game or film character` |
+| E16 | `home_gm_robot.glb` | Helper Robot (thắng trò Robot Builder) | `small friendly helper robot holding a feather duster, round white body, blue head with two big eyes, short yellow legs, standing, single small object, no base, no table, plain white background, stylized chibi fantasy game asset, hand-painted soft colors, chunky rounded shapes, matte surface, no baked highlights, original design, not based on any existing game or film character` |
 
-Quái thường của map 8, 9, 10, 12: chưa cần. Khi anh muốn, mỗi vùng chọn 2 con đặc trưng (tiên đom đóm, cáo dung nham, dơi hang, cừu mộng mơ…) là đủ khác biệt; số còn lại vẫn mượn mô hình cũ.
+## 3. Số tam giác trong game (để anh biết vì sao có các con số trên)
 
-## Hai người bạn đồng hành: Kit và Mai (thêm 27/11, lượt 66)
+Game phải chạy được trên máy không có card đồ hoạ rời, nên cả cảnh ngoài trời em giữ dưới khoảng 700 nghìn tam giác, và một căn nhà có thể bày tới 60 món đồ.
 
-Hai bạn này đã có trong game ở cả 12 vùng (đứng cạnh cổng, nói chuyện, đi cùng, giao việc), hiện mượn mô hình người lớn thu nhỏ (Kit mượn Sam, Mai mượn Mia). Đây là hai mô hình nên làm trước mọi thứ khác: bé gặp họ suốt trò chơi. Tư thế chữ T, tay tách khỏi thân, có rig nếu được; xuất 30–50 nghìn mặt, em giảm còn 8–12 nghìn tam giác và gắn vào bộ xương đang dùng để có đủ dáng đứng, đi, chạy, nói.
-
-| # | Tên file | Ai | Câu lệnh gợi ý |
+| Loại mô hình | Trong game (sau khi em giảm) | Ảnh vân | Anh xuất từ Tripo (Face limit) |
 |---|---|---|---|
-| 1 | `kit_boy.glb` | Kit: cậu bạn 13 tuổi thích chế tạo, lúc đầu ganh đua, sau thành bạn thân | (câu lệnh ở mục 1 của bảng bên dưới) |
-| 36 | `mai_girl.glb` | Mai: cô bạn 12 tuổi giữ cuốn nhật ký từ, hiền, cẩn thận | `full body chibi girl age 12, big head, two short braids, round glasses, yellow raincoat-style jacket, blue skirt, small satchel with a notebook and a pencil, friendly smile, T-pose, arms away from body, soft hand-painted look, no baked highlights, white background, original design, not based on any existing game or film character` |
+| Đồ trong nhà (nhóm E) | 1.500–2.500 tam giác | 512 px | 8.000 |
+| Quái thường (nhóm C) | 3.000–6.000 | 512–1024 px | 25.000 |
+| Người (nhóm A) | 8.000–12.000 | 1024 px | 40.000 |
+| Trùm (nhóm B) | 10.000–14.000 | 1024 px | 50.000 |
+| Công trình mốc (nhóm D) | 5.000–10.000 | 1024 px | 50.000 |
 
-## Số tam giác phù hợp với game (thêm 27/11)
+Mô hình đang dùng để anh so: thú đồng hành 3 nghìn, golem dung nham 6 nghìn, rồng băng 14 nghìn; đồ lưu niệm em vẽ bằng Blender 400–1.400.
 
-Game phải chạy được trên máy không có card đồ hoạ rời, nên cả cảnh ngoài trời em giữ dưới khoảng 700 nghìn tam giác, và một căn nhà có thể bày tới 60 món đồ. Vì vậy mỗi loại mô hình có một mức riêng. Cột "sau khi em giảm" là con số cuối cùng nằm trong game; anh không cần đạt đúng số đó, chỉ cần xuất gần cột bên phải.
+## 4. Sau khi anh gửi file, em làm gì
 
-| Loại mô hình | Sau khi em giảm (trong game) | Ảnh vân | Anh xuất từ Tripo |
-|---|---|---|---|
-| Đồ lưu niệm, đồ trang trí nhỏ trong nhà | 1.500–2.500 tam giác | 512 px | 5–10 nghìn mặt |
-| Quái thường | 3.000–6.000 | 512–1024 px | 20–30 nghìn mặt |
-| Trùm | 10.000–14.000 | 1024 px | 30–50 nghìn mặt |
-| Người (người giữ vùng, nhân vật người chơi) | 8.000–12.000 | 1024 px | 30–50 nghìn mặt, tư thế chữ T, có rig nếu được |
-| Công trình mốc, nhà | 5.000–10.000 | 1024 px | 30–50 nghìn mặt |
+- Giảm lưới và thu ảnh vân theo bảng trên; đặt độ kim loại về 0; kiểm màu bằng ảnh chụp trong game.
+- Người (nhóm A): gắn vào bộ xương đang dùng để có đủ dáng đứng, đi, chạy, nói (`tools/tripo/rig_girl.py`). Trùm và quái: gắn xương đơn giản để có dáng đứng thở, đi, đánh.
+- Đồ trong nhà: tách phần kính, đặt đúng cỡ trong phòng.
+- Nhân vật nam `chr_boy1.glb`: thêm vào màn tạo nhân vật; quần áo vẽ liền thân như Luna, Mika (chưa đổi màu được).
 
-- Nếu Tripo có ô giới hạn số mặt (Face Limit) hoặc chế độ Low Poly thì đặt theo cột bên phải. Không có thì cứ xuất mặc định (lô trước của anh khoảng một trăm nghìn mặt mỗi mô hình): em giảm bằng `tools/tripo/optimize.py`, chỉ tốn thêm thời gian tải file.
-- Đừng xuất thấp hơn cột bên phải: giảm từ mô hình dày xuống cho ra hình đẹp hơn là bắt Tripo dựng thưa ngay từ đầu.
-- Mô hình đang dùng để anh so: thú đồng hành 3 nghìn, golem dung nham 6 nghìn, rồng băng 14 nghìn; đồ lưu niệm em vẽ bằng Blender 400–1.400.
+## 5. Không cần làm
 
-## Đồ lưu niệm và cúp cho nhà (thêm 27/11)
-
-Mười món này em đã vẽ bằng Blender (khối đơn giản, một màu mỗi phần) để game chạy được ngay. Vẽ bằng script không ra được nét vẽ tay và chi tiết nhỏ, nên muốn đẹp thì nên làm bằng Tripo. Mỗi món một file, **chỉ có món đồ, không kèm bàn hay bệ** (em đặt lên chiếc đôn gỗ có sẵn cho đồng bộ). Xuất 5–10 nghìn mặt; em giảm còn 1.500–2.500 tam giác, ảnh 512 px. Đặt đúng tên file thì em thay vào, không phải sửa mã.
-
-| # | Tên file | Món | Vùng | Câu lệnh gợi ý |
-|---|---|---|---|---|
-| 26 | `home_sv_cactus.glb` | Cactus Pot | Sa mạc | `cute stylized potted cactus with two small arms and pink flowers, terracotta pot with a painted zigzag pattern, chibi toy style, hand-painted soft colors, single object, no base, white background` |
-| 27 | `home_sv_snowglobe.glb` | Snow Globe | Núi tuyết | `cute snow globe with a tiny pine tree, a small log cabin and a snowman inside, blue wooden base with gold trim, chibi toy style, hand-painted, single object, white background` |
-| 28 | `home_sv_vase.glb` | Ancient Vase | Di tích | `ancient clay vase with two handles, painted blue and ochre geometric bands, small cracks, stylized chibi, hand-painted, single object, no base, white background` |
-| 29 | `home_sv_cloudlamp.glb` | Cloud Lamp | Trời | `cute table lamp shaped like a puffy white cloud with three small golden stars hanging under it, short brass stand, chibi toy style, hand-painted soft colors, single object, white background` |
-| 30 | `home_sv_mushroom.glb` | Mushroom Lamp | Đảo tiên | `cute night lamp shaped like a red mushroom with white dots and a smaller mushroom beside it, tiny round door and window in the stem, mossy foot, chibi fairy style, hand-painted, single object, white background` |
-| 31 | `home_sv_lavalamp.glb` | Lava Lamp | Núi lửa | `stylized lava lamp, black rock foot with glowing orange cracks, body filled with orange and yellow blobs, small metal cap, chibi toy style, hand-painted, single object, white background` |
-| 32 | `home_sv_crystal.glb` | Crystal | Hang tinh thể | `cluster of purple, blue and pink crystals growing from a small grey rock, faceted shapes, stylized chibi, hand-painted, single object, no base, white background` |
-| 33 | `home_sv_toyrobot.glb` | Toy Robot | Thành phố | `cute retro toy robot, boxy light blue body, round yellow eyes, red antenna, wind-up key on the back, chibi toy style, hand-painted, standing, single object, no base, white background` |
-| 34 | `home_sv_nightlight.glb` | Night Light | Mộng mơ | `night light shaped like a smiling golden star resting on a small crescent moon, pastel purple round foot, chibi toy style, hand-painted soft colors, single object, white background` |
-| 35 | `home_trophy.glb` | Cúp trùm (dùng chung cho 13 cúp) | Phòng học | `golden trophy cup with two handles and a blue gem on top, standing on a dark wooden plinth with an empty brass plate, stylized chibi, hand-painted, single object, white background` |
-
-Lưu ý: Tripo không làm được kính trong suốt (quả cầu tuyết, đèn dung nham). Anh cứ để nó dựng đặc; em tách phần kính và làm trong lại trong Blender.
-
-## Giải thưởng mini game cho nhà (thêm 27/11, lượt 68)
-
-Sáu trò riêng của vùng trả thưởng bằng một món đồ trang trí. Hiện đang mượn mô hình ngoài trời có sẵn (thu nhỏ lại): dùng được nhưng không hợp phòng lắm. Đồ nhỏ: 1.500–2.500 tam giác sau khi em giảm; chỉ món đồ, không bệ, không nền.
-
-| # | Tên file | Món | Thắng trò | Câu lệnh |
-|---|---|---|---|---|
-| 37 | `home_gm_carpet.glb` | Bazaar Carpet | Bazaar Bargain | `small rectangular oriental carpet lying flat, red and gold woven pattern with tassels on both short ends, stylized chibi, hand-painted, single object, white background` |
-| 38 | `home_gm_snowman.glb` | Snowman | Snow Slide | `small cute indoor snowman toy, three snowballs, carrot nose, red scarf, blue bucket hat, twig arms, chibi toy style, hand-painted, single object, no base, white background` |
-| 39 | `home_gm_runestone.glb` | Rune Pillar | Rune Decoder | `short ancient stone pillar with glowing green runes carved around it, a little moss, cracked top, stylized chibi, hand-painted, single object, no base, white background` |
-| 40 | `home_gm_starlamp.glb` | Star Lantern | Balloon Ride | `floor lantern shaped like a golden five-pointed star on a thin wooden stand, warm glow, small cloud ornament at the foot, chibi style, hand-painted, single object, white background` |
-| 41 | `home_gm_gemchest.glb` | Gem Chest | Gem Mine | `small open wooden treasure chest with iron bands, full of purple, blue and pink gems, stylized chibi, hand-painted, single object, no base, white background` |
-| 42 | `home_gm_robot.glb` | Helper Robot | Robot Builder | `friendly small helper robot holding a feather duster, round white body, blue head with two big eyes, short yellow legs, chibi toy style, hand-painted, standing, single object, no base, white background` |
-
-## Không cần làm
-- Cây, bụi, cỏ: em giảm lưới gói hiện có và dựng thêm bằng Blender.
+- Cây, bụi, cỏ, đá, nhà thường, đồ đạc, phụ kiện, quần áo, kiểu tóc, vũ khí, giáp: em dựng bằng Blender (phải khớp thân nhân vật hoặc dùng số lượng lớn).
 - Hoạt ảnh cho quái và thú Tripo đang đứng im: em gắn xương trong Blender.
-- Phụ kiện, quần áo, kiểu tóc, vũ khí, giáp, đồ đạc: Blender (cần khớp thân nhân vật).
+- Chủ trò mini game (Layla, Olaf, Iris…): dùng chung mô hình dân làng đổi màu là đủ.

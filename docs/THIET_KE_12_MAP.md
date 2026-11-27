@@ -174,11 +174,16 @@ Minh, Sora, Bella (nhân vật máy, lượt 67) nay nhờ bé **12 việc nhỏ
 - Thưởng: vàng bằng nửa một việc của Kit/Mai + một ít EXP học; KHÔNG có chỉ số vĩnh viễn, nên bé bỏ qua cũng không thiệt.
 - Chưa làm: dấu ! trên đầu nhà thám hiểm khi có việc, danh sách việc trong sổ tay, phần thưởng khi làm đủ 12 việc.
 
-## 3d. Chơi chung qua mạng (NGHIÊN CỨU, chưa làm)
+## 3d. Chơi chung qua mạng (bậc 1 và 2 ĐÃ LÀM lượt 69; bậc 3–5 chưa)
 
-Xem `docs/NGHIEN_CUU_CHOI_ONLINE.md`: bốn cách nối máy, năm bậc đồng bộ, an toàn cho trẻ, đề xuất làm mạng trong nhà trước, và bốn câu cần anh chọn.
+Anh chọn 27/11: các bé ở máy khác nhau, gặp nhau trong game, chung một máy chủ cho vài bạn, dùng tài khoản Cloudflare của anh.
+
+- **Đã có**: máy chủ phòng `server/room.js` (Cloudflare Worker + Durable Object, gói miễn phí); vào phòng bằng mã 6 ký tự, tối đa 8 bạn; đứng cùng vùng thì thấy nhau (thân hình, da, tóc, màu và kiểu quần áo, bảng tên xanh nhạt + cấp, chấm trên bản đồ nhỏ); 18 câu tiếng Anh có sẵn (phím C), E cạnh bạn = Hello!; bảng 👫 (phím Y) ghi ai ở vùng nào; tự nối lại khi rớt mạng; bố mẹ bật, tắt và nhập địa chỉ máy chủ trong bảng Quản trị.
+- **Anh cần làm một lần**: đưa máy chủ lên Cloudflare theo `docs/HUONG_DAN_CHOI_CHUNG.md` (6 bước), báo địa chỉ để em ghi vào `data/online.json`.
+- **Chưa làm**: phụ kiện, vũ khí, thú cưng của bạn; bậc 3 thi mini game (đua xe, Snow Slide, Bazaar: gửi hạt giống ván + điểm); bậc 4 thăm nhà, tặng quà; bậc 5 đánh chung quái, trùm; "chìa khoá gia đình" nếu có người lạ dùng máy chủ.
+- Nghiên cứu ban đầu (4 cách nối máy, 5 bậc): `docs/NGHIEN_CUU_CHOI_ONLINE.md`.
 
 ## 4. Mô hình
 
 - Cảnh riêng của map 8–12 hiện vẽ bằng mã (hoa khổng lồ, hồ dung nham, núi lửa, tinh thể, tháp kính, tàu trên không, trăng sao). Quái map 8, 9, 10, 12 dùng lại mô hình cũ đổi màu; robot map 11 và trùm Người Máy Canh Gác em đã vẽ bằng Blender (`tools/lands/build_robots.py`).
-- Cái cần đẹp hơn mức Blender dựng bằng script: xem `docs/YEU_CAU_MO_HINH_TRIPO.md` (đã thêm câu lệnh cho map 8–12).
+- Cái cần đẹp hơn mức Blender dựng bằng script: xem `docs/YEU_CAU_MO_HINH_TRIPO.md` (lượt 69: gộp thành MỘT đợt 53 mô hình, 5 nhóm A–E, mỗi câu lệnh viết đầy đủ để dán thẳng vào Tripo).

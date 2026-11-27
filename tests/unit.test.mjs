@@ -1367,3 +1367,67 @@ test('no code hides behind a // comment in the middle of a line (27/11: the mini
   const mg = fs.readFileSync(path.join(root, 'game/minigames.js'), 'utf8'); assert.ok(/\n[^\n/]*for \(const g of Object\.values\(this\.roots\)\) this\.root\.add\(g\)/.test(mg), 'the mini games\' groups are added to the scene');
   const mainJs = fs.readFileSync(path.join(root, 'main.js'), 'utf8'), land = mainJs.slice(mainJs.indexOf('function interactTarget')); assert.ok(/if \(isLand\(L\.NAME\)\) \{[\s\S]*?for \(const f of \[mini, wild, chests, spots\]\)/.test(land.slice(0, land.indexOf("if (L.NAME === 'forest')"))), 'the game masters of maps 4-12 answer to E');
 });
+
+// (27/11, turn 69) playing together: the rules both the game and the room server use (core/net.js), and the room itself (net/online.js) on a made-up line
+test('online play: codes, cleaning of everything a client may send, and the sender', async () => {
+  const N = await import('../src/core/net.js');
+  let k = 0; const code = N.newCode(() => (k++ * 0.137) % 1); assert.equal(code.length, N.CODE_LEN); assert.equal(N.cleanCode(code), code);
+  for (let i = 0; i < 200; i++) assert.equal(N.cleanCode(N.newCode()).length, N.CODE_LEN, 'every new code is a good code');
+  assert.equal(N.cleanCode(' abc-234 '), 'ABC234'); for (const bad of ['', 'ABC23', 'ABC2345', 'ABCO23', 'ABCI23', 'ABC023', 'ABC123', 'AB<234', null, 123456]) assert.equal(N.cleanCode(bad), '', String(bad));
+  assert.equal(N.roomUrl('https://eq.example.workers.dev/', 'abc234'), 'wss://eq.example.workers.dev/room/ABC234'); assert.equal(N.roomUrl('ws://127.0.0.1:8787', 'ABC234'), 'ws://127.0.0.1:8787/room/ABC234');
+  for (const bad of ['', 'eq.workers.dev', 'https://a.dev/path', 'javascript://x', 'https://a b.dev']) assert.equal(N.roomUrl(bad, 'ABC234'), '', bad); assert.equal(N.roomUrl('https://a.dev', 'nope'), '');
+  assert.equal(N.cleanName('  An   <b>Nguyễn</b> 😀 '), 'An bNguyễnb'); assert.equal(N.cleanName('x'.repeat(40)).length, 16); assert.equal(N.cleanName('<>'), 'Friend'); assert.equal(N.cleanName(null), 'Friend');
+  const look = N.cleanLook({ a: 'robot', k: 'green', s: 'mohawk', h: '#FF0000', t: 'red', b: '#12345', ct: 'hoodie', cb: 'kilt', evil: '<script>' });
+  assert.deepEqual(look, { a: 'ngoc', k: 'light', s: 'short', h: '#ff0000', t: null, b: null, f: null, ct: 'hoodie', cb: null, cd: null }, 'a look keeps only known kinds and real colours');
+  assert.deepEqual(N.cleanMove({ x: '12.3456', z: 1e9, h: NaN, y: -99, a: 2.4, more: 1 }), { x: 12.35, z: 600, h: 0, y: -7, a: 2 });
+  assert.equal(N.animName(N.animCode('Run')), 'Run'); assert.equal(N.animName(N.animCode('Backflip')), 'Idle'); assert.equal(N.animName(999), 'Idle');
+  // messages: only the five kinds, each cleaned; no way to send words of one's own
+  assert.equal(N.cleanMsg(null), null); assert.equal(N.cleanMsg({ t: 'chat', text: 'hi' }), null); assert.equal(N.cleanMsg({ t: 'hi', v: N.PROTO + 1, n: 'A' }), null);
+  assert.deepEqual(N.cleanMsg({ t: 'hi', v: N.PROTO, n: 'An', lv: 300, r: 'moon', look: null, text: 'free' }), { t: 'hi', n: 'An', lv: 99, look: N.cleanLook(null), r: 'village' });
+  assert.deepEqual(N.cleanMsg({ t: 's', k: 2, text: 'my own words' }), { t: 's', k: 2 }); for (const bad of [-1, N.PHRASES.length, 1.5, '2', null]) assert.equal(N.cleanMsg({ t: 's', k: bad }), null);
+  assert.deepEqual(N.cleanMsg({ t: 'r', r: 'home' }), { t: 'r', r: 'home' }); assert.equal(N.cleanMsg({ t: 'u', lv: 0, look: {} }).lv, 1);
+  for (const m of [{ t: 'hi', v: N.PROTO, n: 'A', lv: 1, look: {}, r: 'city' }, { t: 'm', x: 1, z: 2, h: 3, y: 1, a: 1 }]) assert.ok(JSON.stringify(N.cleanMsg(m)).length < N.MSG_MAX);
+  assert.ok(N.PHRASES.length >= 12); for (const p of N.PHRASES) { assert.ok(/^[A-Z][A-Za-z' ,]+[.!?]$/.test(p.en), p.en); assert.ok(p.vi.length > 2); if (p.anim) assert.ok(N.ANIMS.includes(p.anim)); }
+  assert.equal(new Set(N.PHRASES.map((p) => p.en)).size, N.PHRASES.length);
+  for (const r of Object.keys((await import('../src/core/save.js')).MAP_NO)) assert.ok(N.REGIONS.includes(r), 'every land can be named: ' + r);
+  // the sender: nothing while standing still, a place when it changed, a sign of life now and then
+  const at = { x: 1, z: 1, h: 0, y: 0, a: 0 }; assert.equal(N.shouldSend(null, at, 0), true);
+  const last = { ...at, at: 1000 }; assert.equal(N.shouldSend(last, at, 1500), false, 'standing still sends nothing'); assert.equal(N.shouldSend(last, { ...at, x: 1.5 }, 1050), false, 'never faster than SEND_MS');
+  assert.equal(N.shouldSend(last, { ...at, x: 1.5 }, 1000 + N.SEND_MS), true); assert.equal(N.shouldSend(last, { ...at, a: 1 }, 1300), true); assert.equal(N.shouldSend(last, { ...at, y: 0.5 }, 1300), true); assert.equal(N.shouldSend(last, at, 1000 + N.STILL_MS), true);
+  const p = { x: 0, z: 0, h: 0, y: 3.1 }; N.glide(p, { x: 2, z: 0, h: 0, y: -3.1 }, 0.1); assert.ok(p.x > 0.5 && p.x < 2); assert.ok(p.y > 3.1, 'turns the short way round');
+  N.glide(p, { x: 100, z: 0, h: 1, y: 0 }, 0.016); assert.equal(p.x, 100, 'a far jump is a jump');
+  assert.ok(N.closeText(N.CLOSE.full).includes(String(N.ROOM_MAX))); assert.ok(N.closeText(1006).length > 10);
+  // a full day of four children moving all the time stays inside the free plan (100,000 requests a day; 20 messages in = 1 request)
+  const perHour = 3600000 / N.SEND_MS; assert.ok(4 * 4 * perHour / 20 < 100000 * 0.5, 'four children, four hours, always moving: under half the daily allowance');
+});
+test('online play: the room on a made-up line (join, friends, lines, lands, leaving)', async () => {
+  const N = await import('../src/core/net.js'), { Online } = await import('../src/net/online.js');
+  const socks = []; const realWS = globalThis.WebSocket;
+  globalThis.WebSocket = class { constructor(url) { this.url = url; this.readyState = 0; this.sent = []; socks.push(this); } send(t) { this.sent.push(JSON.parse(t)); } close(code) { this.readyState = 3; if (this.onclose) this.onclose({ code: code || 1000 }); }
+    open() { this.readyState = 1; this.onopen(); } get(m) { this.onmessage({ data: JSON.stringify(m) }); } };
+  try {
+    const peers = { map: new Map(), region: '', get list() { return [...this.map.values()]; }, get(id) { return this.map.get(id) || null; }, setRegion(r) { this.region = r; }, add(p) { this.map.set(p.id, { ...p }); }, remove(id) { this.map.delete(id); }, clear() { this.map.clear(); },
+      move(id, at) { const p = this.map.get(id); if (p) p.at = at; }, enter(id, r) { const p = this.map.get(id); if (p) p.r = r; }, card(id, lv, look) { const p = this.map.get(id); if (p) { p.lv = lv; p.look = look; } }, say(id, text) { const p = this.map.get(id); if (p) p.said = text; } };
+    const toasts = [], spoken = []; let server = '', region = 'village', lv = 5, place = { x: 1, z: 2, h: 0, y: 0, a: 0 };
+    const on = new Online({ server: () => server, region: () => region, me: () => ({ n: 'An', lv, look: N.cleanLook({}), r: region }), place: () => place, peers, toast: (t) => toasts.push(t), speak: (t) => spoken.push(t), act() {}, changed() {} });
+    assert.equal(on.ready, false); assert.equal(on.join('ABC234'), false, 'no address: no line'); assert.equal(socks.length, 0);
+    server = 'https://room.example.workers.dev'; assert.equal(on.join('abc'), false); assert.ok(on.note.includes('6')); assert.equal(socks.length, 0, 'a bad code opens nothing');
+    assert.equal(on.join('abc234'), true); const ws = socks[0]; assert.equal(ws.url, 'wss://room.example.workers.dev/room/ABC234'); assert.equal(on.state, 'connecting');
+    ws.open(); assert.deepEqual(ws.sent[0], { t: 'hi', v: N.PROTO, n: 'An', lv: 5, look: N.cleanLook({}), r: 'village' }); assert.equal(on.send, undefined);
+    ws.get({ t: 'you', id: 2, max: 8, list: [{ id: 1, n: '<Bình>', lv: 9, look: { a: 'hero' }, r: 'village', at: { x: 5, z: 5, h: 0, y: 0, a: 0 } }] });
+    assert.equal(on.on, true); assert.equal(on.friends.length, 1); assert.equal(on.friends[0].n, 'Bình', 'names are cleaned on arrival too'); assert.equal(on.friends[0].here, true);
+    on.tick(1000); assert.equal(ws.sent.filter((m) => m.t === 'm').length, 1); on.tick(1100); on.tick(2000); assert.equal(ws.sent.filter((m) => m.t === 'm').length, 1, 'standing still: one message');
+    place = { ...place, x: 3 }; on.tick(2200); assert.equal(ws.sent.filter((m) => m.t === 'm').length, 2);
+    ws.get({ t: 'in', p: { id: 3, n: 'Chi', lv: 2, look: {}, r: 'forest' } }); assert.equal(on.friends.length, 2); on.tick(2300); assert.equal(ws.sent.filter((m) => m.t === 'm').length, 3, 'a newcomer is told where this child stands');
+    ws.get({ t: 's', id: 1, k: 3 }); assert.equal(peers.get(1).said, N.PHRASES[3].en); assert.ok(toasts.at(-1).includes('Bình') && toasts.at(-1).includes(N.PHRASES[3].en)); assert.equal(spoken.at(-1), N.PHRASES[3].en);
+    const nt = toasts.length; ws.get({ t: 's', id: 1, k: 999 }); ws.get({ t: 's', id: 77, k: 1 }); ws.get({ t: 'chat', text: 'x' }); assert.equal(toasts.length, nt, 'unknown lines and strangers are ignored');
+    assert.equal(on.say(0, 10000), true); assert.equal(on.say(1, 10100), false, 'not two lines at once'); assert.equal(on.say(1, 10000 + N.SAY_GAP), true); assert.deepEqual(ws.sent.filter((m) => m.t === 's').map((m) => m.k), [0, 1]);
+    region = 'forest'; on.tick(20000); assert.deepEqual(ws.sent.filter((m) => m.t === 'r').pop(), { t: 'r', r: 'forest' }); assert.equal(peers.region, 'forest'); assert.equal(on.friends.find((f) => f.id === 3).here, true); assert.equal(on.friends.find((f) => f.id === 1).here, false);
+    lv = 6; on.tick(30000); assert.equal(ws.sent.filter((m) => m.t === 'u').pop().lv, 6, 'a new level is told');
+    ws.get({ t: 'out', id: 1 }); assert.equal(on.friends.length, 1);
+    ws.close(1006); assert.equal(on.state, 'retry'); assert.equal(on.friends.length, 0, 'a dropped line empties the room until it is back');
+    on.leave(); assert.equal(on.state, 'off'); assert.equal(on.code, '');
+    on.join('ABC234'); socks.at(-1).open(); socks.at(-1).close(N.CLOSE.full); assert.equal(on.state, 'failed'); assert.ok(on.note.includes(String(N.ROOM_MAX)), 'a full room says so');
+    on.leave();
+  } finally { globalThis.WebSocket = realWS; }
+});

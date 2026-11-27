@@ -1,5 +1,7 @@
 # Nghiên cứu: cho hai bé chơi chung qua mạng (27/11, lượt 68)
 
+> **Cập nhật 27/11, lượt 69: anh đã chọn.** Các bé chơi ở các máy khác nhau, muốn gặp nhau trong game, chung một máy chủ cho vài bạn, anh đã có tài khoản Cloudflare → làm **cách D** (máy chủ trung chuyển trên Cloudflare) với **bậc 1 và 2** (thấy nhau, câu nói có sẵn). Đã có mã: `server/room.js`, `src/core/net.js`, `src/net/`, `src/game/peers.js`, `src/ui/online.js`. Cách đưa máy chủ lên và cách chơi: `docs/HUONG_DAN_CHOI_CHUNG.md`. Phòng tối đa 8 bạn (file này trước ghi 4); nút 👫 có sẵn khi bản game đã có địa chỉ máy chủ, bố mẹ tắt được trên từng máy (trước ghi "mặc định tắt"). Phần dưới giữ lại làm tài liệu nghiên cứu.
+
 Anh hỏi: "nghiên cứu việc kết nối mạng để cho bé chơi với nhau online". Đây là bản nghiên cứu, **chưa viết dòng mã nào**. Cuối file có 4 câu cần anh chọn.
 
 ## 1. Hiện trạng của game

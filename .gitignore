@@ -2,3 +2,4 @@ node_modules/
 __pycache__/
 desktop/node_modules/
 desktop/dist/
+server/.wrangler/

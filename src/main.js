@@ -80,6 +80,10 @@ import * as LandGames from './core/landgames.js';
 import { bazaarGame, slideGame, mineGame, runeGame, balloonGame, robotGame } from './ui/landgames.js';
 import { Crowd, stepTo, faceTo, spotNear } from './game/crowd.js';
 import * as CrowdRules from './core/crowd.js';
+import { Peers } from './game/peers.js';
+import { Online } from './net/online.js';
+import { OnlinePanel } from './ui/online.js';
+import { animCode } from './core/net.js';
 import { SHOW_FILE } from './core/house.js';
 import { ZONES } from './core/zones.js';
 import { PackUI } from './ui/pack.js';
@@ -205,7 +209,7 @@ let profile = null, quest = null, story = null, world = null, player = null, cam
 let shopWin = null, walkers = null, talkW = -1, touch = null, quality = localStorage.getItem('eq-quality') || 'medium', perfOn = false, started = false, switching = false, wordIds = {}, jarKey = '';
 const keys = new Set();
 let raceAssets = null;
-const game = { errors, voiceDisable, get reader() { return reader; }, SK, games: { raceGame, raceGame3d, slingGame, candyGame }, goHome: (o, mine) => goHome(o || profile, mine !== false), get room() { return room; }, get homes() { return homes; }, get buddies() { return buddies; }, get crowd() { return crowd; }, Farm, get trail() { return guide && guide.trail; }, get tom() { return tom; }, get fishing() { return fishing; }, get profile() { return profile; }, get quest() { return quest; }, get story() { return story; }, get player() { return player; }, get cam() { return cam; }, get minimap() { return minimap; }, ui, L, stats: { fps: 0, ms: 0, calls: 0, tris: 0 },
+const game = { errors, voiceDisable, get reader() { return reader; }, SK, games: { raceGame, raceGame3d, slingGame, candyGame }, goHome: (o, mine) => goHome(o || profile, mine !== false), get room() { return room; }, get homes() { return homes; }, get buddies() { return buddies; }, get crowd() { return crowd; }, get online() { return online; }, get peers() { return peers; }, get onlineUI() { return onlineUI; }, Farm, get trail() { return guide && guide.trail; }, get tom() { return tom; }, get fishing() { return fishing; }, get profile() { return profile; }, get quest() { return quest; }, get story() { return story; }, get player() { return player; }, get cam() { return cam; }, get minimap() { return minimap; }, ui, L, stats: { fps: 0, ms: 0, calls: 0, tris: 0 },
   teleport(x, z) { player.place(x, z); cam.target.set(x, player.pos.y + 1.25, z); }, applyLook, syncPet, get dayNight() { return dayNight; }, get digs() { return digMeshes; }, catchFish, gainItems, cardsOfUnit: (n) => cardsOfUnit(n), get pet() { return petObj; }, get petPanel() { return petPanel; },  setQuality, key: (code) => onKey({ code, preventDefault() {} }), get started() { return started && !switching; }, get worldUI() { return worldUI; }, openPortal, travelTo, get portals() { return portalGroup; }, get region() { return L.NAME; }, chooseProfile, enterRegion, MARKET_JARS, BRIDGE_SPOTS, get mini() { return mini; }, get wild() { return wild; }, get scene() { return scene; }, openShop, get sword() { return swordMesh; }, get armor() { return armorShown; }, setWear, openBag: () => openBag(), get arcade() { return arcade; }, get chests() { return chests; }, get spots() { return spots; }, get admin() { return admin; }, get friends() { return friends; }, get walkers() { return walkers; }, get shopWin() { return shopWin; }, get music() { return music; }, get journal() { return journal; }, get spells() { return spells; }, get floaters() { return floaters; }, get skillUI() { return skillUI; }, get intro() { return intro; }, cardOf: (id) => cardOfFn(id), pause: (on) => renderer.setAnimationLoop(on ? null : frame), renderNow: () => { post.setSun(camera, sunDir); post.render(scene, camera); },      // tests: stop drawing while another page is checked
   post, refresh: () => refresh(), refreshGear: () => { setSword(); setWear(); } };
 if (navigator.webdriver || /[?&]debug=1/.test(location.search)) globalThis.__eq = game;      // (26/11) the test hook is not in the children's game (a console line gave gold)
@@ -772,6 +776,31 @@ function plantMenu(i) {
 let homeOwner = null, homeMine = false, findGame = null, homeGuest = null, visit = null;
 const buddies = [];      // (27/11, turn 66) Kit and Mai: { id, who, npc, follow, followT, sayT }
 let crowd = null;      // (27/11, turn 67) the other explorers (game/crowd.js)
+// (27/11, turn 69) Playing together: the room (net/online.js), the other children drawn here (game/peers.js), the panel (ui/online.js).
+// The server's address comes from data/online.json, or from what a parent typed in the admin panel; a parent can also switch it off on this machine.
+let online = null, peers = null, onlineUI = null, onlineFile = '';
+const peerBodies = new Map();      // bodies never shown themselves: the hero's own model carries her sword and accessories, so the friends are cloned from a clean copy
+const peerBody = (kind) => { const file = AVATAR_FILES[kind] || 'chr_ngoc_adventurer_v05'; if (!peerBodies.has(file)) peerBodies.set(file, loader.loadAsync(`./assets/models/${file}.glb`).then(prepModel)); return peerBodies.get(file); };
+const onlineSet = () => { try { return { off: localStorage.getItem('eq-online-off') === '1', own: localStorage.getItem('eq-online-server') || '', file: onlineFile }; } catch { return { off: false, own: '', file: onlineFile }; } };
+const onlineServer = () => { const o = onlineSet(); return o.off ? '' : o.own || o.file; };
+const netRegion = () => (room ? 'home' : L.NAME);
+/** What the other children see of this one: the body, the skin, the hair and the colours and kinds of the clothes (no accessories yet). */
+function netLook() {
+  const worn = WR.wardrobe(profile).worn, it = (slot) => (worn[slot] && WR.parse(worn[slot])) || null;
+  const col = (slot) => { const i = it(slot); return i ? WCOL[i.color] || WR.JEWEL_HEX[i.color] || null : null; }, base = (slot) => { const i = it(slot); return i ? WR.baseOf(i.kind) : null; };
+  const dress = col('body'), feet = it('feet'), style = it('style');
+  return { a: AVATAR_FILES[profile.avatar] && !avatarFailed[profile.avatar] ? profile.avatar : 'ngoc', k: lookOf(profile).skin, s: style ? style.color : 'short', h: col('haircolor'), t: dress || col('top'), b: dress || col('bottom'),
+    f: feet && feet.kind === 'boots' ? col('feet') : null, ct: CLOTH.top[base('top')] || null, cb: CLOTH.bottom[base('bottom')] || null, cd: CLOTH.body[base('body')] || null };
+}
+function dressPeer(root, look) {
+  if (look.a === 'ngoc') {
+    tintSkin(root, look.k); tintBody(root, { hair: look.h || NGOC_COLORS.hair, top: look.t || NGOC_COLORS.top, bottom: look.b || NGOC_COLORS.bottom });
+    setHairStyle(root, look.s); setClothes(root, { top: look.ct, bottom: look.cb, body: look.cd });
+    return;
+  }
+  root.traverse((o) => { if (o.isMesh && o.material && o.material.color) o.material.color.setScalar(1.15); });      // the Tripo textures read darker than the painted world (as for the hero)
+  if (look.a === 'hero') tintHero(root, { top: look.t, bottom: look.b, sleeves: look.t, boots: look.f, hair: look.h });
+}
 const homeTag = (id) => { if (id === 'guest') return homeGuest ? label(`💬 ${homeGuest.who} · F`, { size: 34, scale: 0.9 }) : null; const it = ITEMS[id]; if (!it) return null; return label(findGame ? '❓' : HomePlay.isLabelled(homeOwner, id) ? `🏷 ${it.en}` : '❓ F', { size: 34, scale: 0.9 }); };
 const restNote = () => { const m = profile ? HomePlay.restLeft(profile, Date.now()) : 0; return m ? `😴 +${profile.rest.pct}% EXP ${m}′` : ''; };
 /** The home went up a comfort level since the child was last told: say so (once). */
@@ -1141,6 +1170,7 @@ function wordBook() {
 }
 async function reloadUnit() { learning(profile, await loadGrade(profile.grade)); save(); refresh(); }
 async function chooseProfile(p) {
+  if (online && online.code) online.leave();      // another child at this machine: the room is left
   leaveRoom(); if (intro) { intro.active = false; if (intro.boat) intro.boat.visible = false; } playT = 0; restN = 0;      // (26/11) nothing of the player before stays (their room, the opening boat)
   unlock(); profile = p; store.last = p.id; started = false; shownLevel = 0;
   if (p.flags.forest_open && !p.flags.badge1) p.flags.badge1 = true;      // saves from before the badge: Tom already opened the forest
@@ -1624,6 +1654,7 @@ function interactTarget() {
     return { text: 'E · Nói chuyện với ' + f.who, run: () => ui.dialogue(f.lines.map((en) => ({ who: f.who, en }))) };
   }
   { const c = crowd && crowd.interact(player.pos); if (c) return c; }      // (27/11, turn 67) another explorer
+  { const fp = peers && online && online.on && peers.near(player.pos); if (fp) return { text: `E · Chào ${fp.n} (Hello!)`, run: () => online.say(0) }; }      // (27/11, turn 69) a friend of the room
   for (const b of buddies) if (b.follow && near(b.npc.x, b.npc.z, 2.6)) return { text: `E · Nói chuyện với ${b.who}`, run: () => buddyTalk(b) };      // a friend walking along: only when nothing else is in reach
   return null;
 }
@@ -1649,6 +1680,9 @@ function onKey(e) {
   if (wardPanel && wardPanel.key(e.code)) { e.preventDefault(); return; }
   if (petPanel && petPanel.key(e.code)) { e.preventDefault(); return; }
   if (trPanel && trPanel.key(e.code)) { e.preventDefault(); return; }
+  if (onlineUI && onlineUI.key(e.code)) { e.preventDefault(); return; }
+  if (e.code === 'KeyY' && profile && online && online.ready && !ui.modal) { onlineUI.show(); sfx('tick'); e.preventDefault(); return; }      // (27/11, turn 69) the room panel
+  if (e.code === 'KeyC' && profile && online && online.on && !ui.busy) { onlineUI.showSay(); e.preventDefault(); return; }      // the ready-made lines
   if (e.code === 'KeyM' && profile && trPanel && L.NAME === 'isle') { trPanel.show(); sfx('tick'); e.preventDefault(); return; }
   if (e.code === 'KeyO' && profile && worldUI) { if (worldUI.open) worldUI.hide(); else openWorldMap(); e.preventDefault(); return; }      // (24/11) world map
   if (e.code === 'KeyP' && profile && petPanel) { petPanel.show(); sfx('tick'); e.preventDefault(); return; }      // (21/11) pets from Map 1 too
@@ -1712,6 +1746,14 @@ async function boot() {
       buddies.push({ id, who: Buddies.BUDDIES[id].who, npc, follow: false, followT: 0, sayT: 60, mode: 'roam', home: [0, 0], tx: 0, tz: 0, idleT: 0, askT: 30, called: false, callT: 0, why: '' }); } catch (e) { console.warn('buddy ' + id + ': ' + e.message); }
   }
   crowd = new Crowd({ scene, load: gltf, label, tint: tintBody, fallbackClips: ngoc.animations, onHello: (bot, line) => { if (!ui.busy) ui.toast(`${bot.name}: ${line}`); }, onTalk: (bot, n) => botTalk(bot, n) }); await crowd.init();      // (27/11, turn 67) three other young explorers on the roads
+  peers = new Peers({ scene, body: peerBody, label, dress: dressPeer, clips: ngoc.animations });      // (27/11, turn 69) playing together
+  online = new Online({ server: onlineServer, region: netRegion, peers, toast: (t) => ui.toast(t), speak: (en) => speak(en),
+    me: () => ({ n: profile ? profile.name : 'Friend', lv: profile ? profile.stats.level : 1, look: profile ? netLook() : {}, r: netRegion() }),
+    place: () => (started && profile && !room ? { x: player.pos.x, z: player.pos.z, h: player.pos.y, y: player.root.rotation.y, a: animCode(player.current) } : null),
+    act: (anim) => { if (player.actions[anim] && !player.swim && !room) player.play(anim); },
+    changed: () => { if (onlineUI) onlineUI.render(); if (toolbar) toolbar.sync(profile); } });
+  onlineUI = new OnlinePanel({ online, sfx, landVi: (id) => (id === 'home' ? 'đang ở trong nhà' : (WORLD.mapById(id === 'isle' ? 'harbor' : id) || {}).vi || id) });
+  fetch('./data/online.json').then((r) => (r.ok ? r.json() : null)).then((j) => { if (j && typeof j.server === 'string') onlineFile = j.server.trim(); if (toolbar) toolbar.sync(profile); }).catch(() => {});
   tintBody(player.root, NGOC_COLORS); setHairStyle(player.root, 'short');
   shopWin = new ShopWindow({ profile: () => profile, sfx, track, onClose: leaveRoom, today: () => Review.today(), changed: () => { setSword(); setWear(); save(); refresh(); if (homes) homes.refresh(); } });
   music = new MusicRoom({ profile: () => profile, sfx, track, onClose: leaveRoom, changed: () => { save(); refresh(); } });
@@ -1740,6 +1782,7 @@ async function boot() {
     { id: 'dex', icon: '🐠', tip: 'Album biển (G)', show: seaOpen, click: () => { if (profile) openDex(); } },
     { id: 'map', icon: '🗺️', tip: 'Bản đồ kho báu (M)', show: () => L.NAME === 'isle', click: () => { if (profile) { trPanel.show(); sfx('tick'); } } },
     { id: 'pet', icon: '🐾', tip: 'Thú cưng (P)', show: () => !!profile, click: () => { if (profile) { petPanel.show(); sfx('tick'); } } },
+    { id: 'room', icon: '👫', tip: 'Chơi chung với bạn (Y)', show: () => !!profile && !!online && online.ready, badge: () => (online && online.on ? online.friends.length + 1 : 0), click: () => { if (profile) { onlineUI.toggle(); sfx('tick'); } } },
     { id: 'ward', icon: '👗', tip: 'Tủ đồ (U)', show: () => !!profile, badge: (p) => 0, click: () => { if (profile) { wardPanel.show(); sfx('tick'); } } },
   ]);
   walkers = new Walkers(scene, ownLook); await walkers.init();      // villagers on the roads
@@ -1817,7 +1860,7 @@ async function boot() {
     }
     if (id === 'lantern_fair') { const activities = [fireflies, vault, courier, workshop]; ui.choose({ who: 'Hội Đèn Làng', en: 'Where shall we go tonight?', vi: 'Chọn một trò để bắt đầu.' }, ['Lối đom đóm · Nối chữ', 'Hầm thẻ đồng · Mở khóa', 'Chuyến thư đêm · Lái xe', 'Hồ sơ xưởng đồng hồ · Điều tra', 'Trở về làng'], (i) => { if (activities[i]) gameGate('Leo', 'lantern_fair', () => arcade.start(activities[i](unitCards))); }); return; } const t = tierOf(profile.stats.level), go = async () => { let g; if (id.startsWith('race2')) { try { raceAssets = raceAssets || await loadRaceAssets(gltf); g = raceGame3d({ assets: raceAssets, cards: unitCards, tier: t, variant: id === 'race2h' ? 'harbor' : id === 'race2f' ? 'forest' : 'village' }); } catch (e) { console.warn('race3d: ' + e.message); g = raceGame(Math.random, [], t); } } else g = ({ candy: () => candyGame(Math.random, t), blocks: () => blocksGame(Math.random, unitCards, t), sling: () => slingGame(Math.random, t) })[id](); arcade.start(withTier(g, t)); }; gameGate(id === 'candy' ? 'Mimi' : id === 'blocks' ? 'Max' : id === 'sling' ? 'Rex' : id === 'race2h' ? 'Marina' : id === 'race2f' ? 'Rowan' : 'Leo', id.startsWith('race2') ? 'race' : id, go); } });
   await mini.addHosts(ownLook);      // a host by each mini game
-  admin = new AdminPanel({ profile: () => profile, profiles: () => store.profiles, visitHome: (o) => goHome(o, true, false, true), deleteProfile: adminDelete, places: adminPlaces, go: adminGo, unlockAll: adminUnlock, setStep: adminStep,
+  admin = new AdminPanel({ online: { get: onlineSet, set: (o) => { try { if (o.off != null) localStorage.setItem('eq-online-off', o.off ? '1' : '0'); if (o.own != null) localStorage.setItem('eq-online-server', o.own); } catch { /* no storage */ } if (online && online.code && !onlineServer()) online.leave(); if (toolbar) toolbar.sync(profile); } }, profile: () => profile, profiles: () => store.profiles, visitHome: (o) => goHome(o, true, false, true), deleteProfile: adminDelete, places: adminPlaces, go: adminGo, unlockAll: adminUnlock, setStep: adminStep,
     resetForest: () => { delete profile.quests.forest; if (L.NAME === 'forest') enterRegion('forest'); }, setGrade: (g) => { profile.grade = g; save(); chooseProfile(profile); },
     setLevel: adminLevel, addGold: (n) => { profile.stats.gold += n; }, changed: () => { save(); refresh(); setSword(); setWear(); }, toast: (t) => ui.toast(t) });
   minimap = new Minimap($('minimap'), (path) => { player.route = path.slice(1); });
@@ -1865,6 +1908,8 @@ function frame() {
   for (const f of friends) f.npc.update(dt, player.pos, talkingTo === f.who);
   for (const b of buddies) updateBuddy(b, dt, talkingTo === b.who, real);
   if (crowd && started && !room) crowd.update(dt, player.pos, talkingTo, ui.busy || !!(wild && wild.fighting) || !!(arcade && arcade.open), real);
+  if (peers) peers.update(dt, real);
+  if (online && started && profile) online.tick(performance.now());
   if (walkers && started) walkers.update(real, player.pos, ui.busy ? talkW : -1);
   if (pip.root.visible) pip.update(dt, t, player, started && ((L.NAME === 'forest' && quest && quest.step !== 'intro') || isLand(L.NAME)));      // (26/11) Pip flies along in maps 4-7
   if (floaters) floaters.update(real); if (spells) spells.update(real);
@@ -1913,7 +1958,7 @@ function frame() {
       const kp = friends.find((f) => f.region === L.NAME && f.role === 'keeper'), ow = friends.find((f) => f.region === L.NAME && f.role === 'owl');
       if (kp && (!profile.flags['met_' + L.NAME] || lessonReady(L.NAME))) markers.push({ x: kp.npc.x, z: kp.npc.z, text: '!' });
       if (ow && Save.gateWaiting(profile)) markers.push({ x: ow.npc.x, z: ow.npc.z, text: '🦉' });
-      markers.push(...wild.markers(), ...chests.markers(), ...spots.markers());
+      markers.push(...wild.markers(), ...chests.markers(), ...spots.markers()); if (peers) markers.push(...peers.markers());
       for (const b of buddies) if (b.npc.x < 1e5) { const st = Buddies.state(profile, b.id).status; if (st === 'offer' || !Buddies.record(profile).met[b.id]) markers.push({ x: b.npc.x, z: b.npc.z, text: '!' }); else if (st === 'ready') markers.push({ x: b.npc.x, z: b.npc.z, text: '?' }); }      // (27/11, turn 66)
     } else if (L.NAME === 'forest') {
       if (quest.step === 'intro') markers.push({ x: tom.x, z: tom.z, text: '!' });
@@ -1937,7 +1982,7 @@ function frame() {
         const n = (profile.plays && profile.plays.day === Review.today() && profile.plays.n[st.id]) || 0;
         if (n < 3) markers.push({ x: st.x - 0.6, z: st.z + 0.4, text: '!', host: true });
       }
-      markers.push(...wild.markers(), ...chests.markers(), ...spots.markers());
+      markers.push(...wild.markers(), ...chests.markers(), ...spots.markers()); if (peers) markers.push(...peers.markers());
       if (Save.gateWaiting(profile)) markers.push({ x: OWL.x, z: OWL.z, text: '🦉', color: '#ffe28a' });
     }
     minimap.level = profile && !profile.admin ? profile.stats.level : 0; minimap.draw(player.pos, player.yaw, markers); questMarks(markers); guideGoal = pickGoal(markers); if (homes) homes.refresh(); plantCull(player.pos.x, player.pos.z, QUALITY[quality].plantFar); }

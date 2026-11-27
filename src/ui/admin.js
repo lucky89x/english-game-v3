@@ -45,6 +45,7 @@ export class AdminPanel {
       <div class="row">Lớp: ${[6, 7, 8, 9].map((g) => `<button data-a="grade" data-v="${g}">${g === p.grade ? '✔ ' : ''}Lớp ${g}</button>`).join('')}</div>
       <h4>🏠 Vào nhà từng người chơi (toàn quyền: sơn, mua, nâng cấp, gỡ đồ, bày trí, không tốn vàng của bé)</h4><div class="row">${(this.api.profiles ? this.api.profiles() : []).filter((o) => !o.admin).map((o) => `<button data-a="visit" data-v="${o.id}">🏠 ${o.name} (lớp ${o.grade}, ${o.stats.gold} vàng)</button>`).join('') || 'Chưa có người chơi nào.'}</div>
       <h4>🗑 Xoá người chơi (xoá luôn nhà, đồ và tiến độ của bé đó)</h4><div class="row">${(this.api.profiles ? this.api.profiles() : []).filter((o) => !o.admin).map((o) => `<button data-a="del" data-v="${o.id}" style="${this.armedDel === o.id ? 'background:#8a2a22' : ''}">${this.armedDel === o.id ? 'Chắc chắn xoá ' : 'Xoá '}${o.name}</button>`).join('') || '<small>Chưa có bé nào.</small>'}</div>
+      ${this.onlineRows()}
       <h4>Mở khóa</h4><div class="row"><button data-a="unlock">Mở hết (rừng, cầu, Map 2, boss, cổng Cú Mèo)</button><button data-a="limits">Xóa giới hạn mini game hôm nay</button>
         <button data-a="daily">Mở lại rương + bong bóng hôm nay</button></div>
       <h4>Nhiệm vụ làng (Chương I)</h4><div class="row">${STEPS.map(([k, t]) => `<button data-a="step" data-v="${k}">${k === step ? '✔ ' : ''}${t}</button>`).join('')}</div>
@@ -52,7 +53,17 @@ export class AdminPanel {
       ${Object.entries(by).map(([r, list]) => `<h4>Đi tới · ${r === 'village' ? 'Làng Khởi Đầu (Map 1)' : r === 'forest' ? 'Rừng Ký Ức' : r === 'harbor' ? 'Cảng Mặt Trời (Map 2)' : r}</h4><div class="row">${list.map((pl, i) => `<button data-a="go" data-v="${r}|${i}">${pl.name}</button>`).join('')}</div>`).join('')}`;
     this.list = by;
   }
+  /** (27/11, turn 69) Playing together through the room server: on or off on this machine, and the server's address. */
+  onlineRows() {
+    const o = this.api.online ? this.api.online.get() : null; if (!o) return '';
+    const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    return `<h4>👫 Chơi chung qua mạng (máy chủ phòng)</h4><div class="row"><button data-a="net-off">${o.off ? 'Đang TẮT trên máy này · bấm để bật' : '✔ Đang bật · bấm để tắt trên máy này'}</button></div>
+      <div class="row">Địa chỉ máy chủ: <input id="adsrv" type="text" value="${esc(o.own)}" placeholder="${esc(o.file || 'https://english-quest-room.….workers.dev')}" style="width:250px;cursor:text"><button data-a="net-save">Lưu</button></div>
+      <div class="row" style="color:#9cc4ff">${o.file ? 'Để trống = dùng địa chỉ có sẵn trong game: ' + esc(o.file) : 'Game chưa có địa chỉ sẵn: dán địa chỉ máy chủ phòng vào ô trên.'}</div>`;
+  }
   act(a, v) {
+    if (a === 'net-off' && this.api.online) { const o = this.api.online.get(); this.api.online.set({ off: !o.off }); this.api.toast(o.off ? 'Chơi chung: bật' : 'Chơi chung: tắt trên máy này'); this.render(); return; }
+    if (a === 'net-save' && this.api.online) { const t = String(this.el.querySelector('#adsrv').value || '').trim(); if (t && !/^(https?|wss?):\/\/[a-z0-9.-]+(:\d+)?\/?$/i.test(t)) { this.api.toast('Địa chỉ phải có dạng https://tên.workers.dev'); return; } this.api.online.set({ own: t }); this.api.toast(t ? 'Đã lưu địa chỉ máy chủ phòng' : 'Dùng địa chỉ có sẵn trong game'); this.render(); return; }
     const p = this.api.profile(), api = this.api;
     if (a === 'close') { this.el.classList.add('hidden'); return; }
     if (a === 'visit') { const o = (api.profiles ? api.profiles() : []).find((x) => x.id === v); if (o && api.visitHome) { this.el.classList.add('hidden'); api.visitHome(o); } return; }

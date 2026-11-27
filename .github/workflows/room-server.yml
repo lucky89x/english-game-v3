@@ -1,0 +1,42 @@
+# Puts the room server (server/room.js: the small relay for playing together) on Cloudflare Workers.
+# It runs when the server's files change on the game branch, or by hand (Actions -> Room server -> Run workflow).
+# It needs two repository secrets, added once (docs/HUONG_DAN_CHOI_CHUNG.md):
+#   CLOUDFLARE_API_TOKEN   an API token made from the template "Edit Cloudflare Workers"
+#   CLOUDFLARE_ACCOUNT_ID  the account ID shown on the Workers page of the Cloudflare dashboard
+# Without them the job only says so and ends green: the game itself is not affected.
+name: Room server (Cloudflare)
+on:
+  workflow_dispatch:
+  push:
+    branches: [fable/web-rebuild]
+    paths: ['server/**', 'src/core/net.js', '.github/workflows/room-server.yml']
+permissions:
+  contents: read
+concurrency:
+  group: room-server
+  cancel-in-progress: true
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node --test tests/unit.test.mjs
+      - name: Secrets present?
+        id: has
+        shell: bash
+        run: |
+          if [ -n "$CF_TOKEN" ] && [ -n "$CF_ACCOUNT" ]; then echo "ok=true" >> "$GITHUB_OUTPUT"; else echo "ok=false" >> "$GITHUB_OUTPUT"; echo "::warning::CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID are not set: the room server was not deployed (see docs/HUONG_DAN_CHOI_CHUNG.md)"; fi
+      - name: Deploy to Cloudflare Workers
+        if: steps.has.outputs.ok == 'true'
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: server
+          command: deploy
