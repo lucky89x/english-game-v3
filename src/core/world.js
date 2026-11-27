@@ -67,6 +67,8 @@ export const roadBetween = (a, b) => ROADS.find((r) => (r.a === a && r.b === b) 
 /** The maps joined to this one by a road (any state). */
 export const neighbours = (id) => ROADS.filter((r) => r.a === id || r.b === id).map((r) => (r.a === id ? r.b : r.a));
 /** Can the child go from this map to that one? { ok, missing[], built } — the admin goes anywhere that is built. */
+/** The levels a land is really played at: it starts where the land before it ends (the desert's list says 15, but the forest goes up to 20). */
+export const levelsOf = (m) => { const prev = MAPS.find((x) => x.no === m.no - 1); return [Math.max(m.lv[0], prev ? prev.lv[1] : 1), m.lv[1]]; };
 export function canGo(profile, from, to) {
   const m = mapById(to), r = roadBetween(from, to);
   if (!m || !r) return { ok: false, missing: ['Không có đường nối.'], built: !!(m && m.built) };

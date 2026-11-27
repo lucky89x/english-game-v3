@@ -1,9 +1,10 @@
-// Quick browser checks (3–5 min) for small changes: node tests/quick.mjs [--only boot,combat,owl,arcade,unit,forest]
+// Quick browser checks (3–5 min) for small changes: node tests/quick.mjs [--only boot,combat,unit,owl,exam,arcade,map2,harbor,extras,forest,bag,shop,intro,admin,voice,world,friends,touch]
 // Each group sets up the state it needs through the debug API, so groups run on their own. The full story
 // (Chapter I, bridge, forest quest, reload) stays in tests/e2e.mjs, run once per batch of changes.
 import { serve, open } from './shot.mjs';
 const only = process.argv.includes('--only') ? process.argv[process.argv.indexOf('--only') + 1].split(',') : null;
 let failed = 0;
+// (27/11) Kit and Mai walk up to a new child to say hello and then E is theirs: the checks here were written before them, so the friends stay where they are (__eq.friendsStay)
 const check = (ok, name) => { if (!ok) failed++; console.log((ok ? 'PASS: ' : 'FAIL: ') + name); };
 const { server, url } = await serve(); const { browser, page, logs } = await open(url);
 const ev = (f, a) => page.evaluate(f, a), wait = (ms) => page.waitForTimeout(ms);
@@ -22,7 +23,7 @@ const closeDialogs = async () => { for (let k = 0; k < 14 && await page.isVisibl
 const run = async (name, fn) => { if (only && !only.includes(name)) return; const t = Date.now(); await fn(); console.log(`  [${name}] ${((Date.now() - t) / 1000).toFixed(0)} s`); };
 
 await page.click('#mnew'); await page.fill('#mname', 'Quick'); await page.click('[data-g="8"]'); await page.click('#mgo');
-await page.waitForFunction(() => __eq.started, null, { timeout: 90000 }); await page.evaluate(() => __eq.voiceDisable(true));      // headless Chromium has no speech service: the reading check is tested in its own group
+await page.waitForFunction(() => __eq.started, null, { timeout: 90000 }); await page.evaluate(() => { __eq.voiceDisable(true); __eq.friendsStay = true; });      // headless Chromium has no speech service: the reading check is tested in its own group
 await ev(() => { const p = __eq.profile; p.flags.forest_open = true; p.flags.bridge_fixed = true; p.stats.hp = 9999; __eq.wild.mobs.forEach((m) => { if (!m.boss) { m.dead = 999; m.g.visible = false; } }); __eq.refresh(); });
 
 await run('boot', async () => {
@@ -96,20 +97,22 @@ await run('owl', async () => {
   await closeDialogs(); await wait(1000);
   await ev(() => __eq.teleport(2.9, 15.6)); await wait(450);
   await page.keyboard.press('KeyE'); await wait(250);
-  check((await page.textContent('#dialog')).includes('ngữ pháp'), 'Gate 15 announces grammar questions');
+  { const t = await page.textContent('#dialog'), okG = t.includes('ngữ pháp'); check(okG, 'Gate 15 announces grammar questions'); if (!okG) console.log('  owl said:', JSON.stringify(t.slice(0, 200)), JSON.stringify(await ev(() => ({ grade: __eq.profile.grade, name: __eq.profile.name, region: __eq.profile.region, land: __eq.region, level: __eq.profile.stats.level, gates: __eq.profile.gates, card: (__eq.chests.api.cards()[0] || {}).id, pos: [__eq.player.pos.x, __eq.player.pos.z] })))); }
   await page.keyboard.press('KeyE'); await wait(300);
-  let grammar = 0;
+  let grammar = 0; const seenQ = [];
   for (let n = 0; n < 7; n++) {
     await passCards();
     const pick = await ev(async () => {
       const en = document.querySelector('#dialog .en').textContent, vi = ((document.querySelector('#dialog .vi') || {}).textContent || '').trim(), cards = [...__eq.chests.api.cards(), ...Object.keys(__eq.profile.words).map(__eq.cardOf).filter(Boolean)], m = /"(.+)" mean/.exec(en);
-      if (en.includes('___')) { const G = await import('./src/core/grammar.js'); const g = G.GRAMMAR.g8_u01.find((x) => x.q === en); return { i: __eq.ui.options.indexOf(g.options[g.a]), g: 1 }; }
-      if (m) return { i: __eq.ui.options.indexOf(cards.find((x) => x.word === m[1]).vi), g: 0 };
-      return { i: __eq.ui.options.indexOf(cards.find((x) => x.vi === vi).word), g: 0 };
+      if (en.includes('___')) { const G = await import('./src/core/grammar.js'); const g = G.GRAMMAR.g8_u01.find((x) => x.q === en); return { i: __eq.ui.options.indexOf(g.options[g.a]), g: 1, en }; }
+      if (m) return { i: __eq.ui.options.indexOf(cards.find((x) => x.word === m[1]).vi), g: 0, en };
+      return { i: __eq.ui.options.indexOf(cards.find((x) => x.vi === vi).word), g: 0, en: en + ' / ' + vi };
     });
-    grammar += pick.g; await page.keyboard.press('Digit' + (pick.i + 1)); await wait(300);
+    const before = await ev(() => { const e = document.querySelector('#dialog .en'); return e ? e.textContent : ''; });
+    grammar += pick.g; seenQ.push(pick.en); await page.keyboard.press('Digit' + (pick.i + 1));
+    await page.waitForFunction((b) => { const e = document.querySelector('#dialog .en'); return !e || e.textContent !== b; }, before, { timeout: 20000 }).catch(() => {}); await wait(200);      // the next question must be on screen before it is read (a slow machine could read the old one: one full run of two failed here)
   }
-  check(grammar === 2, 'Two grammar questions (Unit 1 grade 8: verb + V-ing)');
+  check(grammar === 2, 'Two grammar questions (Unit 1 grade 8: verb + V-ing)'); if (grammar !== 2) console.log('  owl asked:', JSON.stringify(seenQ), '| now:', JSON.stringify((await page.textContent('#dialog')).slice(0, 160)));
   check(await ev(() => __eq.profile.gates[15] && __eq.profile.stats.level >= 15 && __eq.profile.skills.grammar.attempts === 2) && (await page.textContent('#dialog')).includes('Wonderful'), '7 of 7: gate 15 passes, grammar counted');
   await closeDialogs();
 });
@@ -136,7 +139,7 @@ await run('exam', async () => {        // map exam at level 10 (the sea, Unit 2)
     return done;
   };
   await askOwl();
-  check((await page.textContent('#dialog')).includes('8/10') && (await page.textContent('#dialog')).includes('khác nhau'), 'Level 10 gate announces the exam: 8 of 10, a different paper each time');
+  { const t = await page.textContent('#dialog'), okX = t.includes('8/10') && t.includes('khác nhau'); check(okX, 'Level 10 gate announces the exam: 8 of 10, a different paper each time'); if (!okX) console.log('  owl said:', JSON.stringify(t.slice(0, 220)), JSON.stringify(await ev(() => ({ busy: __eq.ui.busy, level: __eq.profile.stats.level, gates: __eq.profile.gates, pos: [__eq.player.pos.x, __eq.player.pos.z] })))); }
   await page.keyboard.press('KeyE'); await wait(300);
   const first = await ev(() => __eq.ui.options.length);
   await sit(3);          // 7 of 10
@@ -184,7 +187,7 @@ await run('map2', async () => {        // the forest (Map 3, levels 10-20, 24/11
   await page.waitForFunction(() => __eq.region === 'forest' && __eq.started, null, { timeout: 480000 });
   await ev(() => { __eq.wild.mobs.forEach((m) => { if (m.region === 'forest' && !m.boss) m.dead = 0; }); });      // an earlier group may have felled some
   await page.waitForFunction(() => __eq.wild.mobs.filter((m) => m.g.visible).length >= 19, null, { timeout: 240000 }).catch(() => {}); await wait(500);
-  check(await ev(() => __eq.profile.region === 'forest' && __eq.wild.mobs.filter((m) => m.g.visible).every((m) => m.region === 'forest') && __eq.wild.mobs.filter((m) => m.g.visible).length === 19), 'Forest: 19 monsters in five grounds (bats, wisps, foxes, mushrooms, orcs), none from the meadow ' + await ev(() => __eq.wild.mobs.filter((m) => m.g.visible).map((m) => m.kind).join(',')));
+  check(await ev(() => __eq.profile.region === 'forest' && __eq.wild.mobs.filter((m) => m.g.visible).every((m) => m.region === 'forest') && __eq.wild.mobs.filter((m) => m.g.visible).length === __eq.wild.mobs.filter((m) => m.region === 'forest' && !m.boss).length && __eq.wild.mobs.filter((m) => m.g.visible).length >= 19 && new Set(__eq.wild.mobs.filter((m) => m.g.visible).map((m) => m.kind)).size === 5), 'Forest: every monster of its five grounds is out (bats, wisps, foxes, mushrooms, orcs; 30 since 26/11), none from the meadow ' + await ev(() => __eq.wild.mobs.filter((m) => m.g.visible).map((m) => m.kind).join(',')));
   check(await ev(() => __eq.wild.mobs.filter((m) => m.g.visible).every((m) => m.lvTag)), 'Every monster carries its level tag');
   check(await ev(() => __eq.wild.signs.filter((s) => s.visible).length === 5), 'Five ground signs stand in the forest');
   const r = await ev(() => { const w = __eq.wild, m = w.mobs.find((m) => m.kind === 'bat' && !m.dead), e0 = __eq.profile.stats.exp, l0 = __eq.profile.stats.level; w.kill(m, __eq.profile); return { exp: __eq.profile.stats.exp !== e0 || __eq.profile.stats.level !== l0, dead: m.dead > 0 }; });
@@ -212,6 +215,7 @@ await run('harbor', async () => {        // Map 2 in Sunny Harbor: sea monsters,
   await closeDialogs();
   await ev(() => { const p = __eq.profile; p.flags.map2 = true; p.stats.level = 8; p.stats.hp = 9999; p.god = true; __eq.enterRegion('harbor'); });
   await page.waitForFunction(() => __eq.region === 'harbor' && __eq.started, null, { timeout: 480000 }); await wait(1000);
+  await page.waitForFunction(() => __eq.wild.mobs.some((m) => m.region === 'harbor' && m.g.visible), null, { timeout: 120000 }).catch(() => {}); await wait(300);      // the monsters are shown by the first frame after arriving (a second or more on a machine without GPU)
   const vis = await ev(() => __eq.wild.mobs.filter((m) => m.g.visible).map((m) => m.kind));
   check(vis.length === 23 && vis.every((k) => ['crab', 'jelly', 'pirate', 'gull'].includes(k)), `Harbor at level 8: 23 sea monsters in four grounds, no boss yet, none from the other maps (${vis.length})`);
   check(await ev(() => __eq.wild.signs.filter((s) => s.visible).length === 4), 'Four ground signs stand in the harbor');
@@ -337,7 +341,7 @@ await run('intro', async () => {        // a new child starts in front of their 
   await ev(() => __eq.pause(true)); const tp = await browser.newPage({ viewport: { width: 1024, height: 700 } }); tp.setDefaultTimeout(120000); await tp.goto(url + '?intro=1');
   await tp.waitForFunction(() => globalThis.__eq && document.getElementById('loading').classList.contains('hidden') && !document.getElementById('menu').classList.contains('hidden'), null, { timeout: 180000 });
   await tp.click('#mnew'); await tp.fill('#mname', 'Boat'); await tp.click('[data-g="6"]'); await tp.click('#mgo');
-  await tp.waitForFunction(() => __eq.started, null, { timeout: 120000 }); await tp.waitForTimeout(1500);
+  await tp.waitForFunction(() => __eq.started, null, { timeout: 120000 }); await tp.evaluate(() => { __eq.friendsStay = true; }); await tp.waitForTimeout(1500);
   check((await tp.textContent('#dialog')).includes('Kingdom of Words') && !(await tp.isVisible('[data-act="skip"]')), 'Opening story first, with no skip button');
   for (let k = 0; k < 6 && await tp.isVisible('#dialog'); k++) { await tp.keyboard.press('KeyE'); await tp.waitForTimeout(250); }
   await tp.waitForTimeout(800);
@@ -356,7 +360,7 @@ await run('admin', async () => {        // admin account (password 321) and clic
   await tp.waitForFunction(() => globalThis.__eq && document.getElementById('loading').classList.contains('hidden') && !document.getElementById('menu').classList.contains('hidden'), null, { timeout: 180000 });
   await tp.click('#madmin'); await tp.fill('#mpass', '123'); await tp.click('#mpok');
   check((await tp.textContent('#mpmsg')).includes('Sai'), 'Admin: a wrong password is refused');
-  await tp.fill('#mpass', '321'); await tp.click('#mpok'); await tp.waitForFunction(() => __eq.started, null, { timeout: 120000 }); await tp.waitForTimeout(800);
+  await tp.fill('#mpass', '321'); await tp.click('#mpok'); await tp.waitForFunction(() => __eq.started, null, { timeout: 120000 }); await tp.evaluate(() => { __eq.friendsStay = true; }); await tp.waitForTimeout(800);
   check(await tp.isVisible('#adminbtn'), 'Admin: the 🛠 button appears');
   await tp.click('#adminbtn'); await tp.waitForTimeout(400);
   check(await tp.isVisible('#admin') && (await tp.textContent('#admin')).includes('Nữ hoàng Nấm'), 'Admin panel lists places in every map');
@@ -398,20 +402,31 @@ await run('world', async () => {         // (24/11) portals at the map edges, th
   await page.click('#worldwin button.go:not(:disabled)'); await page.waitForFunction(() => __eq.region === 'forest' && __eq.started, null, { timeout: 480000 }); await wait(800);
   check(await ev(() => __eq.portals && __eq.portals.children.length === 1 && __eq.profile.region === 'forest'), 'The forest portal took the hero to the forest, which has its own portal');
   await ev(() => __eq.teleport(-30, 56)); await wait(400); await page.keyboard.press('KeyE'); await wait(500);
-  check(await page.isVisible('#worldwin .route') && (await page.locator('#worldwin .route').count()) === 1, 'The forest portal leads one way: back to the village');
+  check(await page.isVisible('#worldwin .route') && (await page.locator('#worldwin .route').count()) === 2 && await ev(() => document.querySelectorAll('#worldwin button.go:disabled').length === 1 && document.querySelectorAll('#worldwin button.go:not(:disabled)').length === 1), 'The forest portal has two roads: back to the village (open) and on to the desert (locked until the forest is finished)');
   await page.click('#worldwin button.go:not(:disabled)'); await page.waitForFunction(() => __eq.region === 'village' && __eq.started, null, { timeout: 480000 }); await wait(800);
   await page.keyboard.press('KeyO'); await wait(500);
-  check(await page.locator('#worldwin .node').count() === 10 && await page.locator('#worldwin .node.soon').count() === 7, 'O opens the world map: ten maps, seven of them still coming');
+  check(await page.locator('#worldwin .node').count() === 12 && await page.locator('#worldwin .node.soon').count() === 0 && await page.locator('#worldwin .node.lock').count() >= 9, 'O opens the world map: twelve maps, all built, the far ones locked');
   await page.click('#worldwin .node[data-id="desert"]'); await wait(200);
-  check((await page.textContent('#worldwin .info')).includes('sắp mở'), 'A map not built yet says it is coming');
+  { const t = await page.textContent('#worldwin .info'); check(t.includes('🔒') && t.includes('Sa mạc') && !t.includes('sắp mở'), 'A locked map says what is missing: ' + t.replace(/\s+/g, ' ').slice(0, 120)); }
   await page.click('#worldwin .x'); await wait(200);
   check(!(await page.isVisible('#worldwin')) && await ev(() => __eq.errors.length === 0), 'The map closes, no script errors ' + await ev(() => __eq.errors.join(' | ').slice(0, 300)));
 });
+await run('friends', async () => {       // (27/11) Kit standing near the owl took E from the owl: a friend who only stands near answers last, one who has walked up to the hero answers first
+  await ev(() => { const p = __eq.profile; p.stats.level = 12; p.gates = { 5: true, 10: true }; __eq.enterRegion('village'); }); await page.waitForFunction(() => __eq.region === 'village' && __eq.started, null, { timeout: 480000 }); await wait(800); await closeDialogs();
+  const prompt = async (re) => { await page.waitForFunction((src) => new RegExp(src).test(document.querySelector('#prompt').textContent), re.source, { timeout: 60000 }).catch(() => {}); return page.textContent('#prompt'); };
+  await ev(() => { const k = __eq.buddies.find((b) => b.id === 'kit'); __eq.teleport(2.9, 15.6); k.follow = false; k.mode = 'roam'; k.idleT = 9999; k.npc.move(3.9, 16.5, 0); });
+  { const t = await prompt(/Cú Mèo/); check(t.includes('Cú Mèo'), 'Kit stands beside the owl: E is still the owl\'s [' + t + ']'); }
+  await ev(() => { const k = __eq.buddies.find((b) => b.id === 'kit'); k.mode = 'come'; k.called = true; k.callT = 9999; });
+  { const t = await prompt(/muốn nói chuyện/); check(t.includes('Kit') && t.includes('muốn nói chuyện'), 'Kit has walked up and called: E answers Kit first [' + t + ']'); }
+  await ev(() => { const k = __eq.buddies.find((b) => b.id === 'kit'); k.mode = 'roam'; k.called = false; k.idleT = 9999; k.npc.move(k.home[0], k.home[1], 0); __eq.teleport(k.home[0] + 1.1, k.home[1] + 0.4); });
+  { const t = await prompt(/Nói chuyện với (Kit|Mai)/); check(/Nói chuyện với (Kit|Mai)/.test(t), 'With nothing else in reach, E talks to the friend standing near [' + t + ']'); }
+});
+
 await run('touch', async () => {         // T4: a tablet page (?touch=1) with the joystick and buttons
   await ev(() => __eq.pause(true)); const tp = await browser.newPage({ viewport: { width: 1024, height: 700 } }); await tp.goto(url + '?touch=1');
   await tp.waitForFunction(() => globalThis.__eq && document.getElementById('loading').classList.contains('hidden') && !document.getElementById('menu').classList.contains('hidden'), null, { timeout: 180000 });
   tp.setDefaultTimeout(120000); await tp.click('#mnew'); await tp.fill('#mname', 'Tab'); await tp.click('[data-g="6"]'); await tp.click('#mgo');
-  await tp.waitForFunction(() => __eq.started, null, { timeout: 90000 }); await tp.waitForTimeout(500);
+  await tp.waitForFunction(() => __eq.started, null, { timeout: 90000 }); await tp.evaluate(() => { __eq.friendsStay = true; }); await tp.waitForTimeout(500);
   check(await tp.isVisible('#touch .stick') && await tp.isVisible('#touch [data-k="KeyE"]'), 'Tablet: joystick and buttons shown');
   const p0 = await tp.evaluate(() => ({ x: __eq.player.pos.x, z: __eq.player.pos.z }));
   const box = await tp.locator('#touch .stick').boundingBox(), cx = box.x + box.width / 2, cy = box.y + box.height / 2;

@@ -2,7 +2,7 @@
 //  - chooser: pressing E at a portal lists the maps it leads to (one or more), each open or locked with what is still missing.
 //  - map: the ten maps of the world with the roads between them; the maps the child can reach light up, the others show what they need.
 //    The background is `assets/ui/world_map.jpg` when the user's map picture is there, a painted parchment otherwise.
-import { MAPS, ROADS, canGo, mapById, neighbours, portalAt } from '../core/world.js';
+import { MAPS, ROADS, canGo, mapById, neighbours, portalAt, levelsOf } from '../core/world.js';
 
 const CSS = `#worldwin { position:fixed; inset:0; z-index:58; display:flex; align-items:center; justify-content:center; background:rgba(30,16,6,.55); font-family:system-ui,sans-serif; }
 #worldwin.hidden { display:none; }
@@ -46,7 +46,7 @@ export class WorldUI {
   /** The portal card: routes = [{ to, map, ok, missing[] }]. */
   chooser(routes, title = 'Cổng dịch chuyển') {
     this.mode = 'portal'; this.el.className = '';
-    const rows = routes.map((r) => `<div class="route ${r.ok ? '' : 'lock'}"><img class="routeimg" src="./assets/ui/world_${r.map.id}.jpg" alt="" onerror="this.remove()"><div class="t"><b>${r.ok ? '✨' : '🔒'} ${r.map.vi}</b><small>${r.map.en} · cấp ${r.map.lv[0]}–${r.map.lv[1]}</small>${r.ok ? '' : `<div class="need">${r.missing.join(' ')}</div>`}</div><button class="go" data-a="go" data-v="${r.to}" ${r.ok ? '' : 'disabled'}>${r.ok ? 'Đi' : 'Khóa'}</button></div>`).join('');
+    const rows = routes.map((r) => `<div class="route ${r.ok ? '' : 'lock'}"><img class="routeimg" src="./assets/ui/world_${r.map.id}.jpg" alt="" onerror="this.remove()"><div class="t"><b>${r.ok ? '✨' : '🔒'} ${r.map.vi}</b><small>${r.map.en} · cấp ${levelsOf(r.map)[0]}–${levelsOf(r.map)[1]}</small>${r.ok ? '' : `<div class="need">${r.missing.join(' ')}</div>`}</div><button class="go" data-a="go" data-v="${r.to}" ${r.ok ? '' : 'disabled'}>${r.ok ? 'Đi' : 'Khóa'}</button></div>`).join('');
     this.el.innerHTML = `<div class="box"><button class="x" data-a="close" title="Đóng">✕</button><h2>🌀 ${title}</h2><div class="sub">${routes.length > 1 ? 'Hai đường đi: chọn nơi con muốn tới.' : 'Con muốn đi tới nơi này?'}</div>${rows}</div>`;
   }
   /** The world map. Travelling from it needs a portal: the button shows only next to the right portal. */
@@ -68,8 +68,10 @@ export class WorldUI {
     if (!m.built) body = '<div class="need">Vùng này sắp mở, đang được xây.</div>';
     else if (m.id === here) body = '<div>📍 Con đang ở đây.</div>';
     else { const c = canGo(p, here, m.id); const portal = this.near; const rt = portal && portal.routes.includes(m.id);
-      body = c.built && c.ok ? (rt ? `<button class="go" data-a="go" data-v="${m.id}">Đi tới ${m.vi}</button>` : '<div>Đường đã mở. Hãy tới cổng dịch chuyển ở rìa bản đồ để đi.</div>') : `<div class="need">🔒 ${c.missing.join(' ')}</div>`; }
-    box.innerHTML = `<img class="${m.built ? '' : 'soon'}" src="./assets/ui/world_${m.id}.jpg" alt="" onerror="this.remove()"><div><b style="font-size:17px">${m.no}. ${m.vi}</b> <small>(${m.en} · cấp ${m.lv[0]}–${m.lv[1]})</small><br>${body}</div>`;
+      const via = neighbours(m.id).map(mapById).filter((x) => x && x.id !== here && x.no < m.no).sort((a, b) => b.no - a.no)[0], far = !neighbours(m.id).includes(here) && via ? canGo(p, via.id, m.id) : null;      // (27/11) a land that is not next door: say which land the road goes through and what it asks, not "no road"
+      body = c.built && c.ok ? (rt ? `<button class="go" data-a="go" data-v="${m.id}">Đi tới ${m.vi}</button>` : '<div>Đường đã mở. Hãy tới cổng dịch chuyển ở rìa bản đồ để đi.</div>')
+        : far ? (far.ok ? `<div>Đường đã mở: tới cổng dịch chuyển ở ${via.vi} để đi.</div>` : `<div class="need">🔒 Đường tới đây đi qua ${via.vi}. ${far.missing.join(' ')}</div>`) : `<div class="need">🔒 ${c.missing.join(' ')}</div>`; }
+    box.innerHTML = `<img class="${m.built ? '' : 'soon'}" src="./assets/ui/world_${m.id}.jpg" alt="" onerror="this.remove()"><div><b style="font-size:17px">${m.no}. ${m.vi}</b> <small>(${m.en} · cấp ${levelsOf(m)[0]}–${levelsOf(m)[1]})</small><br>${body}</div>`;
   }
   /** Fades to white, runs the move, fades back. */
   async travel(to) {

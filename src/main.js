@@ -209,7 +209,7 @@ let profile = null, quest = null, story = null, world = null, player = null, cam
 let shopWin = null, walkers = null, talkW = -1, touch = null, quality = localStorage.getItem('eq-quality') || 'medium', perfOn = false, started = false, switching = false, wordIds = {}, jarKey = '';
 const keys = new Set();
 let raceAssets = null;
-const game = { errors, voiceDisable, get reader() { return reader; }, SK, games: { raceGame, raceGame3d, slingGame, candyGame }, goHome: (o, mine) => goHome(o || profile, mine !== false), get room() { return room; }, get homes() { return homes; }, get buddies() { return buddies; }, get crowd() { return crowd; }, get online() { return online; }, get peers() { return peers; }, get onlineUI() { return onlineUI; }, Farm, get trail() { return guide && guide.trail; }, get tom() { return tom; }, get fishing() { return fishing; }, get profile() { return profile; }, get quest() { return quest; }, get story() { return story; }, get player() { return player; }, get cam() { return cam; }, get minimap() { return minimap; }, ui, L, stats: { fps: 0, ms: 0, calls: 0, tris: 0 },
+const game = { friendsStay: false, errors, voiceDisable, get reader() { return reader; }, SK, games: { raceGame, raceGame3d, slingGame, candyGame }, goHome: (o, mine) => goHome(o || profile, mine !== false), get room() { return room; }, get homes() { return homes; }, get buddies() { return buddies; }, get crowd() { return crowd; }, get online() { return online; }, get peers() { return peers; }, get onlineUI() { return onlineUI; }, Farm, get trail() { return guide && guide.trail; }, get tom() { return tom; }, get fishing() { return fishing; }, get profile() { return profile; }, get quest() { return quest; }, get story() { return story; }, get player() { return player; }, get cam() { return cam; }, get minimap() { return minimap; }, ui, L, stats: { fps: 0, ms: 0, calls: 0, tris: 0 },
   teleport(x, z) { player.place(x, z); cam.target.set(x, player.pos.y + 1.25, z); }, applyLook, syncPet, get dayNight() { return dayNight; }, get digs() { return digMeshes; }, catchFish, gainItems, cardsOfUnit: (n) => cardsOfUnit(n), get pet() { return petObj; }, get petPanel() { return petPanel; },  setQuality, key: (code) => onKey({ code, preventDefault() {} }), get started() { return started && !switching; }, get worldUI() { return worldUI; }, openPortal, travelTo, get portals() { return portalGroup; }, get region() { return L.NAME; }, chooseProfile, enterRegion, MARKET_JARS, BRIDGE_SPOTS, get mini() { return mini; }, get wild() { return wild; }, get scene() { return scene; }, openShop, get sword() { return swordMesh; }, get armor() { return armorShown; }, setWear, openBag: () => openBag(), get arcade() { return arcade; }, get chests() { return chests; }, get spots() { return spots; }, get admin() { return admin; }, get friends() { return friends; }, get walkers() { return walkers; }, get shopWin() { return shopWin; }, get music() { return music; }, get journal() { return journal; }, get spells() { return spells; }, get floaters() { return floaters; }, get skillUI() { return skillUI; }, get intro() { return intro; }, cardOf: (id) => cardOfFn(id), pause: (on) => renderer.setAnimationLoop(on ? null : frame), renderNow: () => { post.setSun(camera, sunDir); post.render(scene, camera); },      // tests: stop drawing while another page is checked
   post, refresh: () => refresh(), refreshGear: () => { setSword(); setWear(); } };
 if (navigator.webdriver || /[?&]debug=1/.test(location.search)) globalThis.__eq = game;      // (26/11) the test hook is not in the children's game (a console line gave gold)
@@ -922,7 +922,7 @@ function updateBuddy(b, dt, talking, rt = dt) {      // dt: the step for walking
   }
   // strolling round their spot
   if (b.askT <= 0) {
-    const why = busy || !started || buddies.some((o) => o !== b && (o.mode === 'come' || o.follow)) ? '' : buddyReason(b); b.askT = 15;      // one friend at a time: the other waits their turn
+    const why = busy || !started || game.friendsStay || buddies.some((o) => o !== b && (o.mode === 'come' || o.follow)) ? '' : buddyReason(b); b.askT = 15;      // one friend at a time: the other waits their turn
     if (why && (why !== 'chat' || d < 35)) {
       if (d > 40) { const at = spotNear(px, pz); if (!at) return; n.x = at[0]; n.z = at[1]; n.root.position.set(n.x, L.walkHeight(n.x, n.z), n.z); }      // out in the land: the friend turns up a little way off and runs over
       b.mode = 'come'; b.why = why; b.called = false; b.stuck = 0; return;
@@ -1556,7 +1556,7 @@ function buildPortals() {
   scene.add(portalGroup);
 }
 function interactTarget() {
-  for (const b of buddies) if (!b.follow && b.npc.root.visible && near(b.npc.x, b.npc.z, 2.6)) return { text: b.mode === 'come' ? `E · ${b.who} muốn nói chuyện với con` : `E · Nói chuyện với ${b.who}`, run: () => buddyTalk(b) };      // (27/11, turn 66) Kit and Mai
+  for (const b of buddies) if (!b.follow && b.mode === 'come' && b.npc.root.visible && near(b.npc.x, b.npc.z, 2.6)) return { text: `E · ${b.who} muốn nói chuyện với con`, run: () => buddyTalk(b) };      // (27/11) only a friend who has walked up to the hero comes first; one who just stands near no longer takes E from the owl, a shop or a chest
   if (fishing) { const f = fishing.interact(player.pos); if (f && (fishing.active || !(arcade && arcade.open))) return f; }      // (20/11) fishing spots and the rod in hand
   const p = player.pos;
   { const pt = WORLD.portalAt(L.NAME, p.x, p.z); if (pt) return { text: 'E · Cổng dịch chuyển', run: () => openPortal(pt) }; }      // (24/11) every map edge is a portal; two roads: the child chooses
@@ -1655,7 +1655,7 @@ function interactTarget() {
   }
   { const c = crowd && crowd.interact(player.pos); if (c) return c; }      // (27/11, turn 67) another explorer
   { const fp = peers && online && online.on && peers.near(player.pos); if (fp) return { text: `E · Chào ${fp.n} (Hello!)`, run: () => online.say(0) }; }      // (27/11, turn 69) a friend of the room
-  for (const b of buddies) if (b.follow && near(b.npc.x, b.npc.z, 2.6)) return { text: `E · Nói chuyện với ${b.who}`, run: () => buddyTalk(b) };      // a friend walking along: only when nothing else is in reach
+  for (const b of buddies) if (b.npc.root.visible && near(b.npc.x, b.npc.z, 2.6)) return { text: `E · Nói chuyện với ${b.who}`, run: () => buddyTalk(b) };      // a friend walking along: only when nothing else is in reach
   return null;
 }
 function onKey(e) {

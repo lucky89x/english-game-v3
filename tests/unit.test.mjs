@@ -1431,3 +1431,10 @@ test('online play: the room on a made-up line (join, friends, lines, lands, leav
     on.leave();
   } finally { globalThis.WebSocket = realWS; }
 });
+
+// (27/11) the world map shows the levels a land is really played at: each land starts where the one before it ends
+test('world map: the levels shown for a land start at the top level of the land before it', async () => {
+  const W = await import('../src/core/world.js'), byNo = [...W.MAPS].sort((a, b) => a.no - b.no);
+  assert.deepEqual(W.levelsOf(W.mapById('village')), [1, 5]); assert.deepEqual(W.levelsOf(W.mapById('desert')), [20, 25]); assert.deepEqual(W.levelsOf(W.mapById('mountain')), [25, 30]); assert.deepEqual(W.levelsOf(W.mapById('ruins')), [30, 35]); assert.deepEqual(W.levelsOf(W.mapById('dream')), [65, 70]);
+  for (let i = 1; i < byNo.length; i++) { const [lo, hi] = W.levelsOf(byNo[i]); assert.equal(lo, W.levelsOf(byNo[i - 1])[1], byNo[i].id + ' starts where ' + byNo[i - 1].id + ' ends'); assert.ok(hi > lo); }
+});
