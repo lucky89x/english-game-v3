@@ -75,6 +75,7 @@ import { ShopWindow } from './ui/shop.js';
 import { ITEMS, bag, wear, buy, eat, shopList, map2Ready, map3Ready, playerAtk, useQuick, MONSTERS } from './core/rules.js';
 import * as HomePlay from './core/homeplay.js';
 import * as Guests from './core/guests.js';
+import * as Buddies from './core/buddies.js';
 import { SHOW_FILE } from './core/house.js';
 import { ZONES } from './core/zones.js';
 import { PackUI } from './ui/pack.js';
@@ -200,7 +201,7 @@ let profile = null, quest = null, story = null, world = null, player = null, cam
 let shopWin = null, walkers = null, talkW = -1, touch = null, quality = localStorage.getItem('eq-quality') || 'medium', perfOn = false, started = false, switching = false, wordIds = {}, jarKey = '';
 const keys = new Set();
 let raceAssets = null;
-const game = { errors, voiceDisable, get reader() { return reader; }, SK, games: { raceGame, raceGame3d, slingGame, candyGame }, goHome: (o, mine) => goHome(o || profile, mine !== false), get room() { return room; }, get homes() { return homes; }, Farm, get trail() { return guide && guide.trail; }, get tom() { return tom; }, get fishing() { return fishing; }, get profile() { return profile; }, get quest() { return quest; }, get story() { return story; }, get player() { return player; }, get cam() { return cam; }, get minimap() { return minimap; }, ui, L, stats: { fps: 0, ms: 0, calls: 0, tris: 0 },
+const game = { errors, voiceDisable, get reader() { return reader; }, SK, games: { raceGame, raceGame3d, slingGame, candyGame }, goHome: (o, mine) => goHome(o || profile, mine !== false), get room() { return room; }, get homes() { return homes; }, get buddies() { return buddies; }, Farm, get trail() { return guide && guide.trail; }, get tom() { return tom; }, get fishing() { return fishing; }, get profile() { return profile; }, get quest() { return quest; }, get story() { return story; }, get player() { return player; }, get cam() { return cam; }, get minimap() { return minimap; }, ui, L, stats: { fps: 0, ms: 0, calls: 0, tris: 0 },
   teleport(x, z) { player.place(x, z); cam.target.set(x, player.pos.y + 1.25, z); }, applyLook, syncPet, get dayNight() { return dayNight; }, get digs() { return digMeshes; }, catchFish, gainItems, cardsOfUnit: (n) => cardsOfUnit(n), get pet() { return petObj; }, get petPanel() { return petPanel; },  setQuality, key: (code) => onKey({ code, preventDefault() {} }), get started() { return started && !switching; }, get worldUI() { return worldUI; }, openPortal, travelTo, get portals() { return portalGroup; }, get region() { return L.NAME; }, chooseProfile, enterRegion, MARKET_JARS, BRIDGE_SPOTS, get mini() { return mini; }, get wild() { return wild; }, get scene() { return scene; }, openShop, get sword() { return swordMesh; }, get armor() { return armorShown; }, setWear, openBag: () => openBag(), get arcade() { return arcade; }, get chests() { return chests; }, get spots() { return spots; }, get admin() { return admin; }, get friends() { return friends; }, get walkers() { return walkers; }, get shopWin() { return shopWin; }, get music() { return music; }, get journal() { return journal; }, get spells() { return spells; }, get floaters() { return floaters; }, get skillUI() { return skillUI; }, get intro() { return intro; }, cardOf: (id) => cardOfFn(id), pause: (on) => renderer.setAnimationLoop(on ? null : frame), renderNow: () => { post.setSun(camera, sunDir); post.render(scene, camera); },      // tests: stop drawing while another page is checked
   post, refresh: () => refresh(), refreshGear: () => { setSword(); setWear(); } };
 if (navigator.webdriver || /[?&]debug=1/.test(location.search)) globalThis.__eq = game;      // (26/11) the test hook is not in the children's game (a console line gave gold)
@@ -300,6 +301,7 @@ function refresh() {
     ui.dialogue([{ who: 'Pip', en: `A new land is open: the ${m.en}!`, vi: `Đã mở ${m.vi} (cấp ${Math.max(m.lv[0], WORLD.mapById(LAND[nl].from).lv[1])}–${m.lv[1]}, Unit ${m.no}): đi qua cổng dịch chuyển ở lối vào vùng này.` }, { who: '🧭 Word Keeper badge', en: 'Rank up!', vi: 'Lên một hạng Người Giữ Chữ: mạnh hơn (+4 công, +30 máu).' }]);
   } }
   trophyNews();      // (27/11) a beaten guard's trophy goes to the home
+  buddyNews();      // (27/11, turn 66) a friend's job is done
   const learned = Review.learned(profile.words); if (journal) journal.sync(); if (toolbar) toolbar.sync(profile);
   if (L.NAME === 'isle') {
     ui.hud(profile, 'Đảo Kho Báu', [`🗺 ${Math.min(TR.state(profile).n, TR.MAX_DAILY)}/${TR.MAX_DAILY}`, Save.gateWaiting(profile) ? '🦉 ôn tập' : '', restNote()].filter(Boolean).join('  '), learned, bag(profile).food);
@@ -434,7 +436,8 @@ function applyBridge() {
   const changed = L.setBridgeOpen('village', 'south', open);
   if (L.NAME === 'village' && world) { world.setBridgeOpen('south', open); if (changed && minimap) minimap.rebuild(); }
 }
-function placeActors() {
+function placeActors() { placeActorsNow(); placeBuddies(); }
+function placeActorsNow() {
   if (L.NAME === 'village') {
     tom.move(2.6, 7.6, -0.4); ben.move(BEN_MARKET.npc[0], BEN_MARKET.npc[1], Math.PI / 2);      // (24/11) Ben stands at his own word-jar stall
     sam.move(...SAM_HOME, 1.2);
@@ -762,6 +765,7 @@ function plantMenu(i) {
 // more comfortable. F by one's own bed: a sleep once a day (full health, a little more EXP from monsters for a while).
 // G: Find it! Pip names five things ("Find the lamp!", "Find the thing next to the bed!") and the child walks to each.
 let homeOwner = null, homeMine = false, findGame = null, homeGuest = null, visit = null;
+const buddies = [];      // (27/11, turn 66) Kit and Mai: { id, who, npc, follow, followT, sayT }
 const homeTag = (id) => { if (id === 'guest') return homeGuest ? label(`💬 ${homeGuest.who} · F`, { size: 34, scale: 0.9 }) : null; const it = ITEMS[id]; if (!it) return null; return label(findGame ? '❓' : HomePlay.isLabelled(homeOwner, id) ? `🏷 ${it.en}` : '❓ F', { size: 34, scale: 0.9 }); };
 const restNote = () => { const m = profile ? HomePlay.restLeft(profile, Date.now()) : 0; return m ? `😴 +${profile.rest.pct}% EXP ${m}′` : ''; };
 /** The home went up a comfort level since the child was last told: say so (once). */
@@ -831,6 +835,69 @@ function findAnswer(id) {
   }
   if (g.tries === 0) { g.right += 1; Save.recordSkill(profile, 'listening', true, 0); if (g.pays && !Save.atCap(profile)) { const e = learnExp(profile.stats.level, LEARN.bubbleOld); Save.addExp(profile, e); g.gained += e; } }
   ui.toast(`✔ ${it.en} = ${it.vi}`); g.n += 1; findNext();
+}
+// ---------------------------------------------------------------- (27/11, turn 66) Kit and Mai, the hero's friends (rules: core/buddies.js)
+// They wait near the gate of every land. E beside one: a greeting that follows the story, then a choice: their job (one per land,
+// in order through the twelve maps), a little chat in English, or "come with me" (the friend walks along for a few minutes).
+const BUDDY_WALK = 300;      // seconds a friend walks along before going back to wait
+function placeBuddies() {
+  const admin = !profile || profile.admin, sp = L.SPAWN || { x: 0, z: 0 };
+  buddies.forEach((b, k) => {
+    b.follow = false; if (admin || L.NAME === 'isle') { b.npc.hide(); return; }
+    const side = k ? -1 : 1; let at = null;
+    for (let r = 0; r < 14 && !at; r++) for (const [ox, oz] of [[4.5 * side, 3.5], [5.5 * side, 0.5], [4 * side, -3.5], [7 * side, 3], [7.5 * side, -2], [3 * side, 6]]) { const x = sp.x + ox + side * r * 0.9, z = sp.z + oz - r * 0.5; if (L.walkable(x, z, 0.7) && !(L.inWater && L.inWater(x, z)) && !WORLD.portalAt(L.NAME, x, z) && !friends.some((f) => f.npc.x < 1e5 && Math.hypot(f.npc.x - x, f.npc.z - z) < 3.2) && !STARTS.some((g) => (g.region || 'village') === L.NAME && Math.hypot(g.x - x, g.z - z) < 4)) { at = [x, z]; break; } }
+    if (at) b.npc.move(at[0], at[1], Math.atan2(sp.x - at[0], sp.z - at[1])); else b.npc.hide();
+  });
+}
+function updateBuddy(b, dt, talking) {
+  const n = b.npc; if (n.x > 1e5) return;
+  if (!b.follow || talking || room) { n.update(dt, player.pos, talking); return; }
+  b.followT -= dt; if (b.followT <= 0) { b.follow = false; if (!ui.busy) ui.toast(`${b.who}: I will wait here. See you soon!`); return; }
+  const side = b.id === 'kit' ? 1.2 : -1.2, yaw = player.yaw || 0, tx = player.pos.x - Math.sin(yaw) * 1.7 + Math.cos(yaw) * side, tz = player.pos.z - Math.cos(yaw) * 1.7 - Math.sin(yaw) * side, dx = tx - n.x, dz = tz - n.z, dd = Math.hypot(dx, dz);
+  const jump = () => { if (L.walkable(tx, tz, 0.4)) { n.x = tx; n.z = tz; } else { n.x = player.pos.x; n.z = player.pos.z; } };
+  let moving = false;
+  if (dd > 28 || player.swim) { if (!player.swim) jump(); }
+  else if (dd > 0.7) { const sp = dd > 5 ? 7.6 : Math.min(4.4, dd * 3), nx = n.x + dx / dd * sp * dt, nz = n.z + dz / dd * sp * dt; if (L.walkable(nx, nz, 0.35)) { n.x = nx; n.z = nz; moving = true; } else if (dd > 7) jump(); let diff = Math.atan2(dx, dz) - n.root.rotation.y; diff = Math.atan2(Math.sin(diff), Math.cos(diff)); n.root.rotation.y += diff * Math.min(1, dt * 10); n.play(sp > 5 && n.actions.Run ? 'Run' : 'Walk'); }
+  if (!moving) { let diff = Math.atan2(player.pos.x - n.x, player.pos.z - n.z) - n.root.rotation.y; diff = Math.atan2(Math.sin(diff), Math.cos(diff)); if (dd <= 0.7) { n.root.rotation.y += diff * Math.min(1, dt * 4); n.play('Idle'); } }
+  n.root.position.set(n.x, L.walkHeight(n.x, n.z), n.z); n.root.visible = true; if (n.mixer) n.mixer.update(dt);
+  b.sayT -= dt; if (b.sayT <= 0 && !ui.busy && !(wild && wild.fighting)) { b.sayT = 70 + Math.random() * 50; ui.toast(`${b.who}: ${Buddies.REMARKS[Math.floor(Math.random() * Buddies.REMARKS.length)]}`); }
+}
+/** A job has just been finished and the child has not been told: one line, once. */
+function buddyNews() {
+  if (!profile || profile.admin) return; const r = Buddies.record(profile);
+  for (const b of buddies) { const st = Buddies.state(profile, b.id), a = r.active[b.id]; if (st.status === 'ready' && a && !a.told) { a.told = true; sfx('correct'); ui.toast(`${b.who}: You did it! Come and see me. · Xong việc của ${b.who}: tới gặp bạn ấy nhận thưởng.`); } }
+}
+function buddyTalk(b) {
+  const def = Buddies.BUDDIES[b.id], who = def.who, r = Buddies.record(profile);
+  if (!r.met[b.id]) { r.met[b.id] = true; save(); ui.dialogue([{ who, en: def.hello[0], vi: def.vi }, { who, en: def.hello[1] }], () => buddyTalk(b)); return; }
+  const st = Buddies.state(profile, b.id), q = st.quest;
+  if (st.status === 'ready') {
+    const out = Buddies.turnIn(profile, b.id), gold = Save.capGold(profile, out.gold), e = Save.atCap(profile) ? 0 : learnExp(profile.stats.level, LEARN.gate); profile.stats.gold += gold; Save.addExp(profile, e); if (b.id === 'mai') profile.stats.hp = Math.min(Save.maxHp(profile), (profile.stats.hp ?? 0) + Buddies.MAI_HP);
+    save(); refresh(); sfx('fanfare'); track('shopquest');
+    const pages = b.id === 'kit' ? [{ who, en: 'Ha! Not bad at all. Give me your weapon… there. It hits a little harder now.', vi: `Xong việc của Kit: +${gold} vàng${e ? `, +${e} EXP` : ''}, vũ khí mạnh hơn mãi mãi (+${Buddies.KIT_ATK} công). Đã giúp Kit ${r.kit}/12 việc.` }]
+      : [{ who, en: 'Thank you! Take this lucky charm. And here is a page of my diary.', vi: `Xong việc của Mai: +${gold} vàng${e ? `, +${e} EXP` : ''}, bùa may (+${Buddies.MAI_HP} máu mãi mãi). Đã giúp Mai ${r.mai}/12 việc.` }, { who: `📖 Mai's diary ${r.mai}/12`, en: out.page, vi: 'Nhật ký của Mai kể về cậu bé Hugh, người sau này thành Chúa tể Im Lặng.' }];
+    ui.dialogue(pages, () => { const nx = Buddies.state(profile, b.id); if (nx.status === 'later') ui.toast(`${who} sẽ có việc mới khi con tới vùng tiếp theo.`); });
+    return;
+  }
+  const no = Save.MAP_NO[L.NAME] || 1, land = Saga.LANDS[no - 1], hi = Buddies.greeting(b.id, { bossDown: !!(land && land.piece && profile.flags[land.piece]), level: profile.stats.level, cap: levelCap(profile) });
+  const job = st.status === 'offer' ? 'Can I help you? · Bạn cần giúp gì không?' : st.status === 'active' ? `About your job… · Việc đang làm (${st.got}/${st.need})` : null;
+  const opts = [...(job ? [job] : []), "Let's chat! · Trò chuyện", b.follow ? 'Wait here, please. · Bạn chờ ở đây nhé' : 'Come with me! · Đi cùng mình nhé', 'See you! · Tạm biệt'], base = job ? 0 : -1;
+  ui.choose({ who, en: hi, vi: st.status === 'later' ? `${who} sẽ có việc mới khi con tới vùng tiếp theo.` : st.status === 'done' ? `Con đã giúp ${who} đủ 12 việc. Cảm ơn con!` : '' }, opts, (i) => {
+    const k = i - base - 1;      // 0 chat, 1 walk, 2 bye (after the job line when there is one)
+    if (job && i === 0) {
+      if (st.status === 'offer') ui.choose({ who, en: q.en, vi: `Việc ${q.map}/12 của ${who}: ${q.vi}` }, ['OK, I will do it! · Nhận việc', 'Not now. · Để sau'], (j) => { if (j === 0) { Buddies.accept(profile, b.id); save(); sfx('tick'); ui.toast(`Đã nhận việc của ${who}: ${q.vi}`); } });
+      else ui.dialogue([{ who, en: q.en, vi: `${q.vi} Đã được ${st.got}/${st.need}.` }]);
+    } else if (k === 0) buddyChat(b);
+    else if (k === 1) { b.follow = !b.follow; b.followT = BUDDY_WALK; b.sayT = 40; ui.toast(b.follow ? `${who}: Great, let's go! · ${who} đi cùng con vài phút.` : `${who}: OK, I will wait here.`); if (!b.follow) placeBuddies(); }
+  });
+}
+function buddyChat(b) {
+  const who = b.who, r = Buddies.record(profile), list = Buddies.CHATS, n = (r.chatN = ((r.chatN || 0) + 1 + Math.floor(Math.random() * 2)) % list.length), c = list[n];
+  ui.choose({ who, en: c.ask, vi: c.vi }, c.answers.map((a) => a[0]), (i) => {
+    const today = Review.today(), day = r.chatDay || (r.chatDay = {}), first = day[b.id] !== today; let e = 0;
+    if (first) { day[b.id] = today; e = Save.atCap(profile) ? 0 : learnExp(profile.stats.level, LEARN.bubbleOld); Save.addExp(profile, e); Save.recordSkill(profile, 'speaking', true, 0); save(); refresh(); }
+    speak(c.answers[i][0], true); ui.dialogue([{ who, en: c.answers[i][1], vi: e ? `Trò chuyện với ${who}: +${e} EXP (lần đầu mỗi ngày).` : '' }]);
+  });
 }
 // ---------------------------------------------------------------- (27/11, turn 65) a guest at home (rules: core/guests.js)
 // Once a day a friend waits inside the house. F beside them: they ask three things in English: show me a piece, help me with a
@@ -1400,6 +1467,7 @@ function buildPortals() {
   scene.add(portalGroup);
 }
 function interactTarget() {
+  for (const b of buddies) if (!b.follow && b.npc.root.visible && near(b.npc.x, b.npc.z, 2.4)) return { text: `E · Nói chuyện với ${b.who}`, run: () => buddyTalk(b) };      // (27/11, turn 66) Kit and Mai
   if (fishing) { const f = fishing.interact(player.pos); if (f && (fishing.active || !(arcade && arcade.open))) return f; }      // (20/11) fishing spots and the rod in hand
   const p = player.pos;
   { const pt = WORLD.portalAt(L.NAME, p.x, p.z); if (pt) return { text: 'E · Cổng dịch chuyển', run: () => openPortal(pt) }; }      // (24/11) every map edge is a portal; two roads: the child chooses
@@ -1496,6 +1564,7 @@ function interactTarget() {
     if (f.shop) return { text: 'E · Cửa hàng của ' + f.who + ' (Village Shop: vũ khí, máu, mana, bán hàng)', run: () => villageShop(f.shop) };      // (21/11) one shop for all
     return { text: 'E · Nói chuyện với ' + f.who, run: () => ui.dialogue(f.lines.map((en) => ({ who: f.who, en }))) };
   }
+  for (const b of buddies) if (b.follow && near(b.npc.x, b.npc.z, 2.6)) return { text: `E · Nói chuyện với ${b.who}`, run: () => buddyTalk(b) };      // a friend walking along: only when nothing else is in reach
   return null;
 }
 function onKey(e) {
@@ -1576,6 +1645,12 @@ async function boot() {
   pip = new Pip(pipG.scene); scene.add(pip.root);
   const usedFiles = new Set();      // two friends may share a model file (Mia uses Rose's): the second gets its own copy
   let oldRigClips = null; for (const f of Object.values(FRIENDS)) { let g = await gltf(f.file); if (usedFiles.has(f.file)) { const sc = SkeletonUtils.clone(g.scene); sc.traverse((o) => { if (o.isMesh) o.material = o.material.clone(); }); g = { ...g, scene: sc }; } usedFiles.add(f.file); if (!g.animations.length && !oldRigClips) { try { oldRigClips = (await gltf('chr_ngoc_adventurer_v04')).animations; } catch (e) { oldRigClips = []; } } let bun = false; g.scene.traverse((o) => { if (o.isBone && o.name === 'bun') bun = true; }); const npc = new Npc(g, ...f.at, bun && oldRigClips && oldRigClips.length ? oldRigClips : ngoc.animations); if (f.tint) tintBody(npc.root, f.tint); scene.add(npc.root); friends.push({ ...f, npc }); }      // (25/11) Lily, Rose, Anna are on the OLD skeleton (v04, with a 'bun' bone): Ngọc v05's clips lifted their hips and folded their legs away
+  // (27/11, turn 66) the hero's two friends, Kit and Mai (core/buddies.js): borrowed models at a child's size until their own arrive
+  for (const [id, file, tint, mul] of [['kit', 'npc_sam_fisherman_v02', null, [0.75, 0.95, 1.25]], ['mai', 'npc_mia_tailor_v01', { hair: '#2a2030', top: '#ffd24a', bottom: '#3f6fc6' }, null]]) {
+    try { const g = await gltf(file), sc = SkeletonUtils.clone(g.scene); sc.traverse((o) => { if (o.isMesh) { o.material = o.material.clone(); if (mul) o.material.color.multiply(new THREE.Color(...mul)); } });
+      const npc = new Npc({ scene: sc, animations: g.animations }, 0, 0, 0, ngoc.animations); if (tint) tintBody(npc.root, tint); npc.root.scale.setScalar(0.84); npc.hide(); scene.add(npc.root);
+      buddies.push({ id, who: Buddies.BUDDIES[id].who, npc, follow: false, followT: 0, sayT: 60, moving: false }); } catch (e) { console.warn('buddy ' + id + ': ' + e.message); }
+  }
   tintBody(player.root, NGOC_COLORS); setHairStyle(player.root, 'short');
   shopWin = new ShopWindow({ profile: () => profile, sfx, track, onClose: leaveRoom, today: () => Review.today(), changed: () => { setSword(); setWear(); save(); refresh(); if (homes) homes.refresh(); } });
   music = new MusicRoom({ profile: () => profile, sfx, track, onClose: leaveRoom, changed: () => { save(); refresh(); } });
@@ -1724,6 +1799,7 @@ function frame() {
   const talkingTo = ui.busy && ui.pages ? ui.pages[0].who : '';
   tom.update(dt, player.pos, talkingTo === 'Tom'); sam.update(dt, player.pos, talkingTo === 'Sam'); ben.update(dt, player.pos, talkingTo === 'Ben');
   for (const f of friends) f.npc.update(dt, player.pos, talkingTo === f.who);
+  for (const b of buddies) updateBuddy(b, dt, talkingTo === b.who);
   if (walkers && started) walkers.update(real, player.pos, ui.busy ? talkW : -1);
   if (pip.root.visible) pip.update(dt, t, player, started && ((L.NAME === 'forest' && quest && quest.step !== 'intro') || isLand(L.NAME)));      // (26/11) Pip flies along in maps 4-7
   if (floaters) floaters.update(real); if (spells) spells.update(real);
@@ -1773,6 +1849,7 @@ function frame() {
       if (kp && (!profile.flags['met_' + L.NAME] || lessonReady(L.NAME))) markers.push({ x: kp.npc.x, z: kp.npc.z, text: '!' });
       if (ow && Save.gateWaiting(profile)) markers.push({ x: ow.npc.x, z: ow.npc.z, text: '🦉' });
       markers.push(...wild.markers(), ...chests.markers(), ...spots.markers());
+      for (const b of buddies) if (b.npc.x < 1e5) { const st = Buddies.state(profile, b.id).status; if (st === 'offer' || !Buddies.record(profile).met[b.id]) markers.push({ x: b.npc.x, z: b.npc.z, text: '!' }); else if (st === 'ready') markers.push({ x: b.npc.x, z: b.npc.z, text: '?' }); }      // (27/11, turn 66)
     } else if (L.NAME === 'forest') {
       if (quest.step === 'intro') markers.push({ x: tom.x, z: tom.z, text: '!' });
       if (quest.step === 'tree') { const s = landmark('tree').spot; markers.push({ x: s[0], z: s[1], text: '★' }); }

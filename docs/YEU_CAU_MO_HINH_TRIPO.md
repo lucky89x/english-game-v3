@@ -1,4 +1,4 @@
-# Mô hình cần anh tạo bằng Tripo3D (cập nhật 27/11, lượt 65)
+# Mô hình cần anh tạo bằng Tripo3D (cập nhật 27/11, lượt 66)
 
 Chỉ những thứ Blender vẽ bằng script không đẹp được (vật hữu cơ, công trình mốc, nhân vật). Phụ kiện, quần áo, đồ đạc, cây cỏ, nhà thường: em tự dựng bằng Blender, anh không cần làm.
 
@@ -64,6 +64,15 @@ Khung 5 vùng đã chạy bằng cảnh vẽ bằng mã và quái mượn mô h�
 | 25 | `star_castle.glb` | Lâu đài Ngôi Sao Map 12 (đang mượn biệt thự) | `dreamy stylized castle with tall towers, star on the top, crescent moon window, pastel purple and gold, puffy cloud at the base, chibi toy style, hand-painted, no base` |
 
 Quái thường của map 8, 9, 10, 12: chưa cần. Khi anh muốn, mỗi vùng chọn 2 con đặc trưng (tiên đom đóm, cáo dung nham, dơi hang, cừu mộng mơ…) là đủ khác biệt; số còn lại vẫn mượn mô hình cũ.
+
+## Hai người bạn đồng hành: Kit và Mai (thêm 27/11, lượt 66)
+
+Hai bạn này đã có trong game ở cả 12 vùng (đứng cạnh cổng, nói chuyện, đi cùng, giao việc), hiện mượn mô hình người lớn thu nhỏ (Kit mượn Sam, Mai mượn Mia). Đây là hai mô hình nên làm trước mọi thứ khác: bé gặp họ suốt trò chơi. Tư thế chữ T, tay tách khỏi thân, có rig nếu được; xuất 30–50 nghìn mặt, em giảm còn 8–12 nghìn tam giác và gắn vào bộ xương đang dùng để có đủ dáng đứng, đi, chạy, nói.
+
+| # | Tên file | Ai | Câu lệnh gợi ý |
+|---|---|---|---|
+| 1 | `kit_boy.glb` | Kit: cậu bạn 13 tuổi thích chế tạo, lúc đầu ganh đua, sau thành bạn thân | (câu lệnh ở mục 1 của bảng bên dưới) |
+| 36 | `mai_girl.glb` | Mai: cô bạn 12 tuổi giữ cuốn nhật ký từ, hiền, cẩn thận | `full body chibi girl age 12, big head, two short braids, round glasses, yellow raincoat-style jacket, blue skirt, small satchel with a notebook and a pencil, friendly smile, T-pose, arms away from body, soft hand-painted look, no baked highlights, white background, original design, not based on any existing game or film character` |
 
 ## Số tam giác phù hợp với game (thêm 27/11)
 

@@ -1,6 +1,6 @@
 // Local, versioned saves with several child profiles. Nothing leaves the browser.
 // Layout: { version, last, profiles: [{ id, name, grade, unit, created, quests, flags, words, skills, stats }] }
-import { rankHp } from './saga.js';
+import { rankHp, buddyHp } from './saga.js';
 import { powers } from './skills.js';
 import { expNeed, expTo, levelCap, expFactor, capGoldFactor, scaleExp } from './progress.js';
 export { expNeed, expTo, scaleExp };      // (24/11) the curve moved to progress.js, next to the level caps
@@ -98,7 +98,7 @@ export function recordSkill(profile, skill, correct, hints) {
 export const MAP_NO = { village: 1, harbor: 2, isle: 2, forest: 3, desert: 4, mountain: 5, ruins: 6, sky: 7, fairy: 8, volcano: 9, crystal: 10, city: 11, dream: 12 };      // (26/11) maps 4-7 teach units 4-7
 export const unitOf = (profile) => profile.unitPick || MAP_NO[profile.region] || (profile.flags && profile.flags.map2 ? 2 : 1);
 /** Hit points grow with the level; equipment adds on top (profile.gear, later). */
-export const maxHp = (profile) => 100 + (profile.stats.level - 1) * 12 + ((profile.gear && profile.gear.hp) || 0) + rankHp(profile) + powers(profile).hp;      // + the Word Keeper rank (saga.js) and skill points (skills.js)
+export const maxHp = (profile) => 100 + (profile.stats.level - 1) * 12 + ((profile.gear && profile.gear.hp) || 0) + rankHp(profile) + buddyHp(profile) + powers(profile).hp;      // + the Word Keeper rank (saga.js) and skill points (skills.js)
 /** Knowledge gates: at these levels the bar fills but the next level waits for a short word review (the owl). */
 export const GATES = Array.from({ length: 14 }, (_, i) => (i + 1) * 5);          // every 5 levels up to 70 (the owl's review)
 export const gateWaiting = (profile) => { const L = profile.stats.level; return GATES.includes(L) && !(profile.gates && profile.gates[L]) ? L : 0; };

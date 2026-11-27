@@ -72,6 +72,33 @@ Vòng lặp: đánh quái, học bài → vàng và đồ lưu niệm của vùn
 5. **Hai anh chị em.** Điểm Ấm cúng hiện trên biển nhà ngoài làng, nút "thích" khi thăm nhà nhau, mỗi tuần một chủ đề trang trí.
 6. **Phần thưởng mini game là đồ trang trí nhà** (xem mục 2) thay cho vàng.
 
+## 3b. Hai người bạn đồng hành và chuỗi nhiệm vụ 12 map (ĐÃ LÀM lượt 66)
+
+Luật ở `src/core/buddies.js`; người và lời thoại điều khiển ở `main.js` (`buddyTalk`, `updateBuddy`, `placeBuddies`).
+
+- **Kit** (cậu bạn thích chế tạo): lúc đầu ganh đua ("mình sẽ tìm mảnh La Bàn trước!"), từ Sa mạc thì hợp tác, tới Mộng mơ thì cùng bé đi gặp Hugh. Việc của Kit thiên về chiến đấu: hạ quái, làm việc ở bảng săn. Xong mỗi việc: vàng, EXP, **+1 công mãi mãi**.
+- **Mai** (cô bạn giữ nhật ký từ): việc của Mai thiên về học: học từ mới, học một buổi với người giữ vùng, dán nhãn đồ ở nhà, tiếp khách ở nhà. Xong mỗi việc: vàng, EXP, **+6 máu mãi mãi** và **một trang nhật ký**. Mười hai trang kể Hugh hồi nhỏ, khớp với lời Chúa tể Im Lặng nói sau mỗi mảnh La Bàn; trang cuối là lời bé sẽ nói với Hugh.
+- **Mỗi bạn một việc mỗi map**, theo thứ tự: việc của map N mở khi bé tới map N và đã xong việc map N−1 của bạn đó. Số việc đếm từ những gì bé thật sự làm sau khi nhận (số quái, số từ, số buổi học…), nên nhiệm vụ của hai bạn chạy song song với nhiệm vụ chính chứ không chặn nó.
+- **Gặp ở đâu**: hai bạn đứng cạnh cổng của mọi vùng. Dấu **!** là có việc mới, dấu **?** là xong việc, tới nhận thưởng.
+- **Nói chuyện** (phím E): lời chào đổi theo tình hình cốt truyện của vùng (chưa đủ cấp, sắp đánh trùm, đã hạ trùm), rồi chọn: việc của bạn, trò chuyện (bạn hỏi một câu tiếng Anh, bé chọn câu trả lời; lần đầu mỗi ngày có EXP), rủ đi cùng (bạn đi theo 5 phút, thỉnh thoảng nói một câu).
+
+| Map | Việc của Kit | Việc của Mai |
+|---|---|---|
+| 1 Làng | hạ 5 quái | học 5 từ mới |
+| 2 Biển | hạ 8 quái | học 6 từ mới |
+| 3 Rừng | hạ 12 quái | học 8 từ mới |
+| 4 Sa mạc | 1 việc bảng săn | 1 buổi học với Zara |
+| 5 Núi tuyết | hạ 15 quái | dán nhãn 3 món đồ ở nhà |
+| 6 Di tích | 1 việc bảng săn | học 8 từ mới |
+| 7 Trời | hạ 20 quái | 1 buổi học với Aria |
+| 8 Đảo tiên | 1 việc bảng săn | tiếp 1 vị khách ở nhà |
+| 9 Núi lửa | hạ 20 quái | học 8 từ mới |
+| 10 Hang tinh thể | 1 việc bảng săn | 1 buổi học với Opal |
+| 11 Thành phố | hạ 25 quái | dán nhãn 3 món đồ ở nhà |
+| 12 Mộng mơ | hạ 25 quái | học 10 từ mới |
+
+**Chưa làm**: hai bạn chưa góp mặt trong các cảnh cắt của cốt truyện (lúc hạ trùm, cảnh kết với Hugh); chưa có trang "Nhật ký của Mai" trong sổ tay để đọc lại; bạn đi cùng chưa giúp đánh quái; mô hình riêng (chờ Tripo).
+
 ## 4. Mô hình
 
 - Cảnh riêng của map 8–12 hiện vẽ bằng mã (hoa khổng lồ, hồ dung nham, núi lửa, tinh thể, tháp kính, tàu trên không, trăng sao). Quái map 8, 9, 10, 12 dùng lại mô hình cũ đổi màu; robot map 11 và trùm Người Máy Canh Gác em đã vẽ bằng Blender (`tools/lands/build_robots.py`).

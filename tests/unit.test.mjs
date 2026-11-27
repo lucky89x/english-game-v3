@@ -1290,3 +1290,19 @@ test('guests at home (27/11): a friend a day, three things asked in English, a v
   assert.equal(H.comfort(p).score, c0 + H.FRIEND_POINTS); assert.equal(G.finishVisit(p, 'tom', 'd2').first, false); assert.equal(H.comfort(p).parts.friends, H.FRIEND_POINTS, 'a friend counts once'); assert.equal(G.friendsMade(p), 1);
   assert.ok(RU.ITEMS.bed);
 });
+test('friends (27/11): Kit and Mai have one job in every land, in order, counted from what the hero really does', async () => {
+  const B = await import('../src/core/buddies.js'), SG = await import('../src/core/saga.js'), RU = await import('../src/core/rules.js');
+  assert.equal(B.QUESTS.length, 24); for (const who of ['kit', 'mai']) assert.deepEqual(B.QUESTS.filter((q) => q.who === who).map((q) => q.map), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+  for (const q of B.QUESTS) { assert.ok(B.COUNTERS[q.kind] && q.need > 0 && q.en && q.vi && !/[àáảãạăâđêôơư]/i.test(q.en), q.id); if (q.who === 'mai') assert.ok(q.page && q.page.startsWith(`Page ${q.map}.`) && !/[àáảãạăâđêôơư]/i.test(q.page)); if (q.kind === 'lessons') assert.ok(q.map >= 4, 'keeper lessons exist from map 4'); }
+  assert.equal(B.MAP_IDS.length, 12); const W = await import('../src/core/world.js'); B.MAP_IDS.forEach((id, i) => assert.equal(W.mapNo(id), i + 1));
+  const p = S.newProfile('An', 6); assert.equal(B.state(p, 'kit').status, 'offer'); assert.equal(B.turnIn(p, 'kit'), null, 'nothing to hand in before the job is taken');
+  p.kills = 7; assert.equal(B.accept(p, 'kit').id, 'kit1'); assert.equal(B.accept(p, 'kit'), null, 'one job at a time'); assert.deepEqual([B.state(p, 'kit').status, B.state(p, 'kit').got], ['active', 0], 'kills before the job do not count');
+  p.kills = 10; assert.equal(B.state(p, 'kit').got, 3); p.kills = 40; assert.deepEqual([B.state(p, 'kit').status, B.state(p, 'kit').got], ['ready', 5]);
+  const atk0 = RU.playerAtk(p), out = B.turnIn(p, 'kit'); assert.ok(out.gold >= 20 && out.quest.id === 'kit1' && out.page === null); assert.equal(RU.playerAtk(p), atk0 + B.KIT_ATK, "Kit's thanks: a sharper weapon");
+  assert.equal(B.state(p, 'kit').status, 'later', 'the next job waits in the next land'); Object.assign(p.flags, { boss1: true }); p.stats.level = 5; p.gates = { 5: true }; assert.equal(B.state(p, 'kit').status, 'offer', 'open once the sea is reached');
+  const hp0 = S.maxHp(p); B.accept(p, 'mai'); p.words = { a: { right: 1 }, b: { right: 2 }, c: { right: 0 }, d: { right: 1 }, e: { right: 1 }, f: { right: 3 } }; assert.equal(B.state(p, 'mai').status, 'ready');
+  const m = B.turnIn(p, 'mai'); assert.ok(m.page.startsWith('Page 1.')); assert.equal(S.maxHp(p), hp0 + B.MAI_HP); assert.deepEqual(B.pages(p), [m.page]); assert.equal(SG.buddyAtk(p), 1); assert.equal(SG.buddyHp(p), 6); assert.equal(SG.buddyAtk({}), 0);
+  const adm = Object.assign(S.newProfile('Ad', 8), { admin: true }); for (let i = 0; i < 12; i++) { assert.equal(B.state(adm, 'kit').status, 'offer'); const q = B.accept(adm, 'kit'); adm.kills = (adm.kills || 0) + 99; adm.hunt = { done: (adm.hunt ? adm.hunt.done : 0) + 1 }; assert.equal(B.turnIn(adm, 'kit').quest.id, q.id); } assert.equal(B.state(adm, 'kit').status, 'done');
+  for (const c of B.CHATS) { assert.ok(c.ask.endsWith('?') && c.vi && c.answers.length === 3); for (const [a, r] of c.answers) assert.ok(a && r && !/[àáảãạăâđêôơư]/i.test(a + r)); }
+  assert.ok(B.REMARKS.length >= 8); for (const who of ['kit', 'mai']) { assert.notEqual(B.greeting(who, { bossDown: true }), B.greeting(who, { bossDown: false, level: 1, cap: 5 })); assert.ok(B.BUDDIES[who].hello.length === 2 && B.BUDDIES[who].vi); }
+});

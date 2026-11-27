@@ -1,5 +1,5 @@
 // Combat and reward numbers in one place (no three.js, tested in node).
-import { rankAtk } from './saga.js';
+import { rankAtk, buddyAtk } from './saga.js';
 import { UNARMED } from './progress.js';
 import { powers, resisted, mpOf, restoreMp, FEEDS } from './skills.js';
 import { mobStats, bossStats, weaponAtk, weaponCost, armorDef, armorHp, armorCost, mobGold } from './progress.js';
@@ -91,7 +91,7 @@ export { SAFE, inSafe } from './safe.js';
 /** (21/11) Monsters walk towards the hero at this share of their speed ("they rush in too fast"); they come back to life after RESPAWN seconds. */
 export const CHASE = 0.62, RESPAWN = { normal: 20, elite: 45, boss: 300 };      // (26/11) was 35 / 70: a third of the hunting time was standing and waiting
 /** The hero's attack: grows with the level, weapon adds on top. */
-export const playerAtk = (profile) => Math.round((10 + (profile.stats.level - 1) * 2) * (bag(profile).weapon ? 1 : UNARMED)) + ((profile.gear && profile.gear.atk) || 0) + rankAtk(profile) + powers(profile).atk;      // + skill points (Fire Heart)      // + the Word Keeper rank (saga.js)
+export const playerAtk = (profile) => Math.round((10 + (profile.stats.level - 1) * 2) * (bag(profile).weapon ? 1 : UNARMED)) + ((profile.gear && profile.gear.atk) || 0) + rankAtk(profile) + buddyAtk(profile) + powers(profile).atk;      // + skill points (Fire Heart)      // + the Word Keeper rank (saga.js)
 /** Damage a monster deals after armour (never below 1). */
 export const hurt = (atk, profile, el = '') => resisted(profile, Math.max(1, atk - ((profile.gear && profile.gear.def) || 0) - powers(profile).def), el);      // + Ice Skin and the element resistance (20/11)
 /** A target is hit when it is close and roughly in front of the attacker. */

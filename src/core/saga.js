@@ -45,6 +45,9 @@ export const rankName = (p) => RANKS[rankOf(p)];
 /** A higher rank is stronger: +4 attack and +30 health for every rank above Apprentice. */
 export const rankAtk = (p) => Math.max(0, rankOf(p) - 1) * 4;
 export const rankHp = (p) => Math.max(0, rankOf(p) - 1) * 30;
+/** (27/11, turn 66) The two friends (core/buddies.js): every job done for Kit is +1 attack, every job done for Mai +6 health. */
+export const buddyAtk = (p) => ((p && p.buddy && p.buddy.kit) || 0) * 1;
+export const buddyHp = (p) => ((p && p.buddy && p.buddy.mai) || 0) * 6;
 /** Compass pieces found: the numbers of the lands whose guard is beaten. */
 export const pieces = (p) => LANDS.filter((l) => l.piece && f(p)[l.piece]).map((l) => l.map);
 /** The next thing the story wants, in one Vietnamese line (the Journey card). */
