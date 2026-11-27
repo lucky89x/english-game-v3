@@ -61,10 +61,11 @@ Vòng lặp: đánh quái, học bài → vàng và đồ lưu niệm của vùn
 | Find it! | Phím **G**: Pip gọi 5 món ("Find the lamp!", "Find the thing next to the bed!"), bé chạy tới đúng món rồi bấm F. Hai ván đầu mỗi ngày có EXP. Lớp 8 gặp câu "next to" nhiều hơn. | nghe lệnh, giới từ vị trí | `homeplay.js findRound`, `main.js homeFind` |
 | Đồ lưu niệm 12 vùng | Mỗi vùng từ Map 4 có một món chỉ thương nhân vùng đó bán (chậu xương rồng, quả cầu tuyết, bình cổ, đèn mây, đèn nấm, đèn dung nham, cụm pha lê, robot đồ chơi, đèn ngủ ngôi sao). | tên món | `rules.js sv_*`, mô hình `tools/lands/build_souvenirs.py` |
 | Cúp trùm | Hạ trùm nào, cúp của trùm đó tự về phòng học (13 cúp). | tên trùm | `homeplay.js syncTrophies` |
+| Khách tới thăm (lượt 65) | Mỗi ngày một người bé đã giúp đứng chờ trong nhà (Tom, Sam, Lily, rồi người giữ từng vùng, cuối cùng là Hugh). F cạnh khách: khách nhờ 3 việc: chỉ một món đồ, sửa một câu ngữ pháp của Unit vùng khách, đặt món này cạnh món kia (phím B). Xong được vàng, EXP; bạn mới tới lần đầu +3 Ấm cúng. | nghe yêu cầu lịch sự (Can you…?), ngữ pháp Unit, next to | `core/guests.js`, `main.js guestTalk`, `visitStep` |
 
 **CÒN ĐỀ XUẤT (chưa làm):**
 
-1. **Khách tới thăm.** Người bé đã giúp ở mỗi vùng ghé nhà theo ngày (cuối cùng là Hugh), đưa một yêu cầu dùng đúng ngữ pháp của Unit vùng đó: "Can you put the vase on the table?", "Which chair is more comfortable?". Làm đúng được quà hiếm.
+1. **Khách tới thăm, phần mở rộng.** Thêm kiểu yêu cầu (on / under / between, so sánh hai món), quà hiếm khi một người bạn tới đủ 3 lần, khách ngồi xuống ghế hoặc đi lại trong nhà.
 2. **Đủ bộ thì phòng đổi cảnh.** Mỗi vùng thêm 3–5 món nữa; đủ bộ thì phòng có hiệu ứng của vùng (tuyết rơi, đom đóm, sao lơ lửng) và một danh hiệu.
 3. **Tường ảnh.** Ảnh chụp ở mỗi vùng treo trong nhà.
 4. **Phòng có việc để làm.** Phòng học (ôn từ sai, làm lại bài thi, bảng Word Wall đếm từ đã thuộc); Xưởng (ghép vật liệu vùng thành đồ); Vườn giống cây các vùng lớn theo ngày thật.

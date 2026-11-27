@@ -3,6 +3,7 @@
 import { ITEMS, home, buy, BOSS_VI } from '../core/rules.js';
 import { mapById } from '../core/world.js';
 import { comfort, isLabelled, canRest, restLeft, COMFORT_LEVELS, LABEL_POINTS, REST_MINUTES, FIND_ROUNDS } from '../core/homeplay.js';
+import { todayGuest, friendsMade, roster, GUESTS } from '../core/guests.js';
 import { house, UPGRADES, upgradeState, buyUpgrade, WALL_COLORS, FLOOR_COLORS, paintOf, paintCost, ownsPaint, buyPaint } from '../core/house.js';
 
 const CSS = `
@@ -102,6 +103,12 @@ export class HomePanel {
       ${this.showBox()}
       <h3>🛒 In the house · Cửa hàng đồ trong nhà</h3><div class="grid">${row('home')}</div><h3>🌳 In the yard · Đồ ngoài sân</h3><div class="grid">${row('yard')}</div></div>`;
   }
+  /** (27/11, turn 65) Today's guest, and how many friends have visited. */
+  guestLine() {
+    const o = this.owner, g = todayGuest(o, this.api.today()), n = friendsMade(o), all = roster(o).length;
+    if (!all) return '👋 Khách tới thăm: giúp dân làng xong (nhận huy hiệu của Tom) là bắt đầu có khách ghé nhà mỗi ngày.';
+    return `👋 ${g ? `<b>${g.who}</b> đang chờ trong nhà, cạnh cửa: đứng cạnh bấm <b>F</b>. Khách nhờ 3 việc bằng tiếng Anh (chỉ đồ, sửa câu, xếp đồ), xong có vàng và EXP.` : 'Hôm nay con đã tiếp khách. Mai có khách khác.'} Đã có ${n}/${GUESTS.length} người bạn tới thăm (mỗi người +3 Ấm cúng).`;
+  }
   /** (27/11) Souvenirs (one from each land of maps 4-12, bought from that land's merchant) and the trophies of the guards. */
   showBox() {
     const o = this.owner, have = home(o).items, cell = (id, it, how) => `<div class="it ${have.includes(id) ? '' : 'no'}"><b>${it.en}</b>${it.vi}${have.includes(id) ? (isLabelled(o, id) ? ' 🏷' : ' ✔<br><small>chưa dán nhãn (F)</small>') : `<br><small>${how}</small>`}</div>`;
@@ -116,8 +123,8 @@ export class HomePanel {
     const bar = `<div style="height:10px;border-radius:6px;background:#e6d2a8;overflow:hidden;margin:3px 0"><div style="height:100%;width:${pct}%;background:linear-gradient(90deg,#ffb84a,#ff8a5a)"></div></div>`;
     const rest = !mine ? '' : left ? `😴 Đang khoẻ: +${o.rest.pct}% EXP, còn ${left} phút.` : cr.ok ? `<button data-a="rest">🛏 Ngủ một giấc</button> hồi đầy máu, +${c.rest}% EXP từ quái trong ${REST_MINUTES} phút (mỗi ngày một lần).` : cr.why === 'bed' ? '🛏 Mua giường (Bed) để ngủ: hồi máu và thêm EXP.' : '🛏 Hôm nay con ngủ rồi.';
     return `<h3>🏡 Comfort · Ấm cúng: ${c.score} điểm · hạng ${c.level} ${c.en} (${c.vi})</h3>${bar}
-      <div class="note">${c.next ? `Còn ${c.next - c.score} điểm nữa lên hạng ${c.level + 1} ${lv[c.level + 1].en} (${lv[c.level + 1].vi}).` : 'Hạng cao nhất!'} Đồ đạc ${c.parts.furniture} · nhãn từ ${c.parts.labels} (${lab}/${have.length} món, mỗi nhãn +${LABEL_POINTS}) · nâng cấp ${c.parts.house} · màu sơn ${c.parts.paint} · mảnh La Bàn ${c.parts.compass}.</div>
-      ${mine ? `<div class="note">${rest}</div><div class="note"><button data-a="find">🔎 Find it!</button> Pip gọi tên ${FIND_ROUNDS} món đồ bằng tiếng Anh, con chạy tới đúng món (phím G). Đứng cạnh một món đồ bấm <b>F</b> để nghe tên và dán nhãn.</div>` : ''}`;
+      <div class="note">${c.next ? `Còn ${c.next - c.score} điểm nữa lên hạng ${c.level + 1} ${lv[c.level + 1].en} (${lv[c.level + 1].vi}).` : 'Hạng cao nhất!'} Đồ đạc ${c.parts.furniture} · nhãn từ ${c.parts.labels} (${lab}/${have.length} món, mỗi nhãn +${LABEL_POINTS}) · nâng cấp ${c.parts.house} · màu sơn ${c.parts.paint} · mảnh La Bàn ${c.parts.compass} · bạn tới thăm ${c.parts.friends}.</div>
+      ${mine ? `<div class="note">${this.guestLine()}</div><div class="note">${rest}</div><div class="note"><button data-a="find">🔎 Find it!</button> Pip gọi tên ${FIND_ROUNDS} món đồ bằng tiếng Anh, con chạy tới đúng món (phím G). Đứng cạnh một món đồ bấm <b>F</b> để nghe tên và dán nhãn.</div>` : ''}`;
   }
   /** (21/11) "change the colours as the owner likes; arrange the furniture" */
   paintBox() {

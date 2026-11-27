@@ -74,6 +74,7 @@ import { Walkers } from './game/walkers.js';
 import { ShopWindow } from './ui/shop.js';
 import { ITEMS, bag, wear, buy, eat, shopList, map2Ready, map3Ready, playerAtk, useQuick, MONSTERS } from './core/rules.js';
 import * as HomePlay from './core/homeplay.js';
+import * as Guests from './core/guests.js';
 import { SHOW_FILE } from './core/house.js';
 import { ZONES } from './core/zones.js';
 import { PackUI } from './ui/pack.js';
@@ -760,8 +761,8 @@ function plantMenu(i) {
 // F by a piece of furniture: its English name; the first time the child "labels" it (hears the word, picks it) and the home gets
 // more comfortable. F by one's own bed: a sleep once a day (full health, a little more EXP from monsters for a while).
 // G: Find it! Pip names five things ("Find the lamp!", "Find the thing next to the bed!") and the child walks to each.
-let homeOwner = null, homeMine = false, findGame = null;
-const homeTag = (id) => { const it = ITEMS[id]; if (!it) return null; return label(findGame ? '❓' : HomePlay.isLabelled(homeOwner, id) ? `🏷 ${it.en}` : '❓ F', { size: 34, scale: 0.9 }); };
+let homeOwner = null, homeMine = false, findGame = null, homeGuest = null, visit = null;
+const homeTag = (id) => { if (id === 'guest') return homeGuest ? label(`💬 ${homeGuest.who} · F`, { size: 34, scale: 0.9 }) : null; const it = ITEMS[id]; if (!it) return null; return label(findGame ? '❓' : HomePlay.isLabelled(homeOwner, id) ? `🏷 ${it.en}` : '❓ F', { size: 34, scale: 0.9 }); };
 const restNote = () => { const m = profile ? HomePlay.restLeft(profile, Date.now()) : 0; return m ? `😴 +${profile.rest.pct}% EXP ${m}′` : ''; };
 /** The home went up a comfort level since the child was last told: say so (once). */
 /** The trophies of beaten guards arrive in the home by themselves (also for a save from before the trophies existed). */
@@ -775,6 +776,8 @@ function comfortNews() {
 }
 function homeTouch() {
   if (!room || !room.walk || ui.busy || room.editing) return; const id = room.nearId;
+  if (id === 'guest') { guestTalk(); return; }
+  if (visit && id && ITEMS[id] && ['show', 'next'].includes(visit.tasks[visit.i].kind)) { visitShow(id); return; }
   if (!id || !ITEMS[id]) { ui.toast(findGame ? `${findGame.q.en} · lại gần món đồ rồi bấm F` : 'Lại gần một món đồ rồi bấm F để nghe tên tiếng Anh của nó.'); return; }
   if (findGame) { findAnswer(id); return; }
   if (id === 'bed' && homeMine && HomePlay.canRest(profile, Review.today()).ok) {
@@ -805,6 +808,7 @@ function homeRest() {
 const findHint = () => (findGame && findGame.q ? `🔎 ${findGame.n + 1}/${HomePlay.FIND_ROUNDS} · ${findGame.q.en} · F: chọn món đang đứng cạnh · G: thôi chơi` : '');
 function homeFind() {
   if (!room || !room.walk || ui.busy || room.editing) return;
+  if (visit) { ui.toast(`${visit.guest.who} đang chờ: ${visit.tasks[visit.i].en}`); return; }
   if (findGame) { findGame = null; homePanel.setHint(''); room.retag(); ui.toast('Đã dừng Find it!'); return; }
   if (!HomePlay.findRound(room.list())) { ui.toast('Nhà cần ít nhất 3 món đồ mới chơi Find it! được.'); return; }
   findGame = { n: 0, right: 0, asked: [], tries: 0, gained: 0, q: null, pays: homeMine && HomePlay.findPays(profile, Review.today()) }; homePanel.hide(); room.retag(); findNext();
@@ -828,20 +832,67 @@ function findAnswer(id) {
   if (g.tries === 0) { g.right += 1; Save.recordSkill(profile, 'listening', true, 0); if (g.pays && !Save.atCap(profile)) { const e = learnExp(profile.stats.level, LEARN.bubbleOld); Save.addExp(profile, e); g.gained += e; } }
   ui.toast(`✔ ${it.en} = ${it.vi}`); g.n += 1; findNext();
 }
+// ---------------------------------------------------------------- (27/11, turn 65) a guest at home (rules: core/guests.js)
+// Once a day a friend waits inside the house. F beside them: they ask three things in English: show me a piece, help me with a
+// sentence (the grammar of their land's unit), put one piece next to another (arrange mode, B). The visit pays gold and EXP,
+// and every new friend who has visited makes the home a little more comfortable.
+const visitHint = () => (visit ? `💬 ${visit.guest.who} ${visit.i + 1}/${visit.tasks.length} · ${visit.tasks[visit.i].en}${visit.tasks[visit.i].kind === 'put' ? ' · B: sắp xếp đồ' : ' · F: chọn món đang đứng cạnh'}` : '');
+function guestTalk() {
+  const g = homeGuest; if (!g) return;
+  if (!visit && profile.guestDay === Review.today()) { ui.dialogue([{ who: g.who, en: 'It was lovely to see your home. See you another day!', vi: 'Hôm nay con đã tiếp khách xong. Mai có khách khác tới.' }]); return; }
+  if (visit) { const t = visit.tasks[visit.i]; speak(t.en, true); if (t.kind === 'grammar') visitGrammar(); else ui.dialogue([{ who: g.who, en: t.en, vi: t.vi }]); return; }
+  const unit = g.unit, tasks = Guests.planVisit(room.list(), { grammar: grammarFor(profile.grade, unit, 10) });
+  if (!tasks.length) { ui.dialogue([{ who: g.who, en: `${g.hi} Oh… it is a little empty here.`, vi: 'Nhà cần ít nhất 3 món đồ thì khách mới có chuyện để hỏi. Mua thêm đồ (phím L) nhé!' }]); return; }
+  visit = { guest: g, tasks, i: 0, right: 0, gained: 0 };
+  ui.dialogue([{ who: g.who, en: g.hi, vi: `${g.who} tới thăm nhà con và sẽ nhờ ${tasks.length} việc bằng tiếng Anh. Làm xong có quà!` }], () => visitStep());
+}
+function visitStep() {
+  const v = visit; if (!v || !room || !room.walk) return;
+  if (v.i >= v.tasks.length) {
+    const r = Guests.finishVisit(profile, v.guest.id, Review.today()), gold = Save.capGold(profile, r.gold), e = Save.atCap(profile) ? 0 : learnExp(profile.stats.level, LEARN.chest); profile.stats.gold += gold; Save.addExp(profile, e);
+    visit = null; homePanel.setHint(''); save(); refresh(); sfx('fanfare'); track('shopquest');
+    ui.dialogue([{ who: v.guest.who, en: 'Thank you for having me! Your home is wonderful. Here is a little gift.', vi: `Xong chuyến thăm: +${gold} vàng${e + v.gained ? `, +${e + v.gained} EXP` : ''}${r.first ? `, +${HomePlay.FRIEND_POINTS} Ấm cúng (bạn mới tới thăm lần đầu)` : ''}. Mai sẽ có khách khác.` }], () => comfortNews());
+    return;
+  }
+  const t = v.tasks[v.i]; speak(t.en, true); homePanel.setHint(visitHint());
+  if (t.kind === 'grammar') visitGrammar(); else if (t.kind === 'put' && Guests.putDone(room.list(), t.a, t.b)) visitRight(); else ui.dialogue([{ who: v.guest.who, en: t.en, vi: t.vi }]);
+}
+function visitRight() {
+  const v = visit; if (!v) return; sfx('correct'); const e = Save.atCap(profile) ? 0 : learnExp(profile.stats.level, LEARN.bubbleOld); Save.addExp(profile, e); v.gained += e; v.right += 1; v.i += 1; visitStep();
+}
+function visitGrammar() {
+  const v = visit, g = v.tasks[v.i].item, order = [0, 1, 2].sort(() => Math.random() - 0.5), full = g.q.replace('___', g.options[g.a]);
+  ui.choose({ who: v.guest.who, en: `Help me say this the right way: ${g.q}`, vi: 'Chọn dạng đúng điền vào chỗ trống.' }, order.map((i) => g.options[i]), (i) => {
+    const ok = order[i] === g.a; Save.recordSkill(profile, 'grammar', ok, 0);
+    if (ok) { speak(full, true); visitRight(); } else { sfx('wrong'); ui.dialogue([{ who: v.guest.who, en: full, vi: `${g.why} Mình sang việc tiếp nhé.` }], () => { v.i += 1; visitStep(); }); }
+  });
+}
+function visitShow(id) {
+  const v = visit, t = v.tasks[v.i], it = ITEMS[id]; room.flash(id);
+  if (id === t.target) { Save.recordSkill(profile, 'listening', true, 0); ui.toast(`✔ ${it.en} = ${it.vi}`); visitRight(); return; }
+  sfx('wrong'); Save.recordSkill(profile, 'listening', false, 0); speak(`That is the ${it.en.toLowerCase()}. ${t.en}`, true); ui.toast(`Đây là ${it.en} (${it.vi}). ${t.en}`);
+}
+/** A piece was put down: was it what the guest asked? */
+function visitPut() { const v = visit; if (!v || !room || !room.walk) return; const t = v.tasks[v.i]; if (t.kind === 'put' && Guests.putDone(room.list(), t.a, t.b)) { if (room.editing) room.setEditing(false); ui.toast(`✔ ${ITEMS[t.a].en} next to the ${ITEMS[t.b].en.toLowerCase()}`); visitRight(); } }
 /** (21/11) Into a child's house: the hero walks inside (world/homewalk.js); the list (L) and the arrange mode (B) are on top.
  *  keepList: the list stays open (after an upgrade or a new colour, the house is rebuilt around the hero). */
 async function goHome(o, mine, keepList = false, admin = false) {
   if (o === profile) trophyNews();      // the trophies of beaten guards stand in the study
   const items = [...homesItems(o)]; await loadHomeModels(items); const was = room && room.walk ? { ...room.me } : null;
-  homeOwner = o; homeMine = !!mine && o === profile; const keepFind = keepList ? findGame : null;
+  homeOwner = o; homeMine = !!mine && o === profile; const keepFind = keepList ? findGame : null, keepVisit = keepList ? visit : null;
+  let guest = null; const gdef = homeMine && !admin && !profile.admin ? (keepVisit ? keepVisit.guest : Guests.todayGuest(profile, Review.today())) : null;      // (27/11, turn 65) today's guest waits inside
+  if (gdef) { try { const gm = await gltf(gdef.file), root = SkeletonUtils.clone(gm.scene); root.traverse((n) => { if (n.isMesh) n.material = n.material.clone(); }); const tn = (FRIENDS[gdef.id] || {}).tint; if (tn) tintBody(root, tn);
+    guest = { root, clips: gm.animations.length ? gm.animations : (await gltf('chr_ngoc_adventurer_v04')).animations, def: gdef }; } catch (e) { console.warn('guest: ' + e.message); } }
+  homeGuest = guest ? gdef : null;
   enterRoom('home', { items, model: homeModel, pieces: Saga.pieces(o), house: houseOf(o), editable: mine, avatar: { root: player.root, clips: Object.values(player.actions).map((a) => a.getClip()) },
-    onPlace: (id, at) => { setPlace(houseOf(o), id, at); save(); }, hint: (t) => homePanel.setHint(findGame && !t ? findHint() : t), tag: homeTag });
-  findGame = keepFind;
+    hint: (t) => homePanel.setHint(t || (findGame ? findHint() : visit ? visitHint() : '')), tag: homeTag, guest,
+    onPlace: (id, at) => { setPlace(houseOf(o), id, at); save(); visitPut(); } });
+  findGame = keepFind; visit = keepVisit;
   if (room && room.walk) { room.yaw0 = cam.yaw; if (was && was.f < houseOf(o).floors) Object.assign(room.me, { f: was.f, x: was.x, z: was.z, y: was.y, stair: was.stair }); }
   homePanel.show(o, mine, keepList, admin); if (!keepList && !mine) homePanel.hide();      // (24/11) the child sees the shop list as soon as they walk in (✕ closes it); a visitor only looks around
 }
 function enterRoom(kind, opts) { leaveRoom(); room = buildRoom(kind, opts); room.kind = kind; document.body.classList.add('inroom'); if (room.walk) { cam.minPitch = -0.6; cam.maxPitch = 1.45; } sfx('tick'); }
-function leaveRoom() { if (!room) return; findGame = null; room.dispose(); room = null; document.body.classList.remove('inroom'); cam.minPitch = 0.05; cam.maxPitch = 1.25; cam.tPitch = Math.min(1.25, Math.max(0.05, cam.tPitch)); }
+function leaveRoom() { if (!room) return; findGame = null; visit = null; homeGuest = null; room.dispose(); room = null; document.body.classList.remove('inroom'); cam.minPitch = 0.05; cam.maxPitch = 1.25; cam.tPitch = Math.min(1.25, Math.max(0.05, cam.tPitch)); }
 /** (24/11) The admin removes a child: the profile goes, and with it the home, the things in it and the progress (all of it lives in the profile). */
 function adminDelete(id) { const i = store.profiles.findIndex((p) => p.id === id && !p.admin); if (i < 0) return; store.profiles.splice(i, 1); if (store.last === id) store.last = profile.id; try { Save.persist(store); } catch (e) { console.warn('save failed', e); } if (homes) homes.refresh(true); }
 function adminPlaces() {
@@ -1751,6 +1802,7 @@ function frame() {
     autosave += dt; if (autosave > 20 && !(tailor && tailor.open)) { autosave = 0; save(); }      // (26/11) not while clothes are being tried on at the tailor's (they were saved as worn)
   }
   renderer.info.reset();
+  if (homePanel && homePanel.hint) homePanel.hint.style.visibility = ui.busy ? 'hidden' : '';      // (27/11, turn 65) the line of keys at the bottom lay over the answers of a question asked inside the house
   if (room) { room.update(real, camera.aspect, room.walk ? { input: homePanel && homePanel.open || ui.modal ? {} : rawInput, yaw: cam.yaw - (room.yaw0 || 0), pitch: cam.pitch, dist: cam.dist, mouse: hoverNdc() } : undefined); post.setSun(room.camera, sunDir); post.render(room.scene, room.camera); }
   else { post.setSun(camera, sunDir); post.render(scene, camera); }
   acc += raw; frames++; worstNow = Math.max(worstNow, raw * 1000);

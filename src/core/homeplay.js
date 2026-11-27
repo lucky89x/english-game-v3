@@ -16,7 +16,7 @@ export const isLabelled = (p, id) => !!labels(p)[id];
 export function addLabel(p, id) { if (!ITEMS[id] || !home(p).items.includes(id) || labels(p)[id]) return false; labels(p)[id] = true; return true; }
 
 /** Comfort points of one piece: dearer pieces count more (1 to 6); a labelled piece counts LABEL_POINTS more. */
-export const LABEL_POINTS = 2, UPGRADE_POINTS = 8, PAINT_POINTS = 3, COMPASS_POINTS = 4, SOUVENIR_POINTS = 8, TROPHY_POINTS = 5;      // a souvenir of a land and a boss trophy count more than furniture
+export const LABEL_POINTS = 2, UPGRADE_POINTS = 8, PAINT_POINTS = 3, COMPASS_POINTS = 4, SOUVENIR_POINTS = 8, TROPHY_POINTS = 5, FRIEND_POINTS = 3;      // a souvenir of a land and a boss trophy count more than furniture
 export const piecePoints = (id) => { const it = ITEMS[id]; return !it || (it.slot !== 'home' && it.slot !== 'yard') ? 0 : it.land ? SOUVENIR_POINTS : it.trophy ? TROPHY_POINTS : Math.max(1, Math.min(6, Math.round(it.cost / 150))); };
 export const COMFORT_LEVELS = [
   { at: 0, en: 'Bare', vi: 'Trống trải' }, { at: 12, en: 'Tidy', vi: 'Gọn gàng' }, { at: 30, en: 'Cosy', vi: 'Ấm cúng' }, { at: 55, en: 'Homely', vi: 'Thân thương' },
@@ -25,7 +25,7 @@ export const COMFORT_LEVELS = [
 ];
 /** The trophies of the guards the child has beaten go to the home by themselves. Returns the ids that were added now. */
 export function syncTrophies(p) { const got = [], h = home(p); for (const [flag, on] of Object.entries(p.flags || {})) { const id = trophyOf(flag); if (on && ITEMS[id] && ITEMS[id].trophy === flag && !h.items.includes(id)) { h.items.push(id); got.push(id); } } return got; }
-/** { score, parts: { furniture, labels, house, paint, compass }, level (0…7), en, vi, next (points of the next level, or null), rest (% more EXP after a sleep) }. */
+/** { score, parts: { furniture, labels, house, paint, compass, friends }, level (0…7), en, vi, next (points of the next level, or null), rest (% more EXP after a sleep) }. */
 export function comfort(p) {
   const items = home(p).items || [], lb = labels(p), h = house(p), pt = paintOf(h);
   const parts = {
@@ -34,6 +34,7 @@ export function comfort(p) {
     house: (h.floors - 1 + (h.villa ? 1 : 0) + h.garden + (h.coop ? 1 : 0) + (h.pen ? 1 : 0)) * UPGRADE_POINTS,
     paint: ((pt.wall !== PAINT_FREE.wall ? 1 : 0) + (pt.floor !== PAINT_FREE.floor ? 1 : 0)) * PAINT_POINTS,
     compass: compassPieces(p).length * COMPASS_POINTS,
+    friends: Object.values(p.guests || {}).filter((n) => n > 0).length * FRIEND_POINTS,      // (27/11, turn 65) every friend who has come to visit (core/guests.js)
   };
   const score = Object.values(parts).reduce((a, b) => a + b, 0); let level = 0; COMFORT_LEVELS.forEach((l, i) => { if (score >= l.at) level = i; });
   const nx = COMFORT_LEVELS[level + 1];

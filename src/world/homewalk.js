@@ -35,6 +35,15 @@ export function buildHomeWalk(opts) {
   const where = roomOf(h);      // (25/11) every group of furniture has a room (the kitchen shares the living room in a one-floor house)
   for (const [grp, ids] of Object.entries(GROUPS)) { const [f, k] = where[grp]; for (const id of ids.filter((x) => items.includes(x))) makePiece(id, f, CELLS[k][0], CELLS[k][1]); }
   { const [f, k] = where.living; const cell = new THREE.Group(); cell.position.set(CELLS[k][0], 0, CELLS[k][1]); compassPedestal(cell, opts.pieces || [], lights); floors[f].add(cell); pieces.push(Object.assign(cell, { userData: { id: 'compass', f, hx: 0.4, hz: 0.4, fixed: true, x0: CELLS[k][0] + 2.45, z0: CELLS[k][1] - 1.25 } })); }
+  // (27/11, turn 65) today's guest (core/guests.js): stands just inside the door, breathing; F beside them starts the visit
+  let guestG = null, guestMix = null;
+  if (opts.guest && opts.guest.root) {
+    guestG = opts.guest.root; guestG.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.frustumCulled = false; } });
+    let gx = -hw / 2 + 2.6, gz = hd - 3.4; for (const [dx, dz] of [[0, 0], [1.2, 0], [0, -1.2], [-1.4, 0], [2.4, -1], [0, 1.2]]) if (freeAt(h, 0, gx + dx, gz + dz, 0.4) && !pieces.some((p) => p.userData.f === 0 && !p.userData.flat && Math.hypot(p.position.x - gx - dx, p.position.z - gz - dz) < Math.max(p.userData.hx, p.userData.hz) + 0.5)) { gx += dx; gz += dz; break; }
+    guestG.position.set(gx, 0, gz); guestG.rotation.y = 0.5; floors[0].add(guestG);
+    guestG.userData = { id: 'guest', f: 0, hx: 0.35, hz: 0.35, top: 1.7, fixed: true, guest: true, x0: gx, z0: gz }; pieces.push(guestG);
+    guestMix = new THREE.AnimationMixer(guestG); const idle = (opts.guest.clips || []).find((c) => c.name === 'Idle') || (opts.guest.clips || [])[0]; if (idle) guestMix.clipAction(idle).play();
+  }
   // the hero: a copy wearing what the hero wears, with the walk and idle clips
   const av = opts.avatar && opts.avatar.root ? SkeletonUtils.clone(opts.avatar.root) : new THREE.Group();
   av.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.frustumCulled = false; } });
@@ -79,7 +88,7 @@ export function buildHomeWalk(opts) {
   let nearP = null, tag = null;
   const nearest = () => {
     if (me.stair >= 0) return null; let best = null, bd = 1.5;
-    for (const p of pieces) { const u = p.userData; if (u.f !== me.f || u.fixed) continue; const d = Math.max(0, Math.hypot(p.position.x - me.x, p.position.z - me.z) - Math.max(u.hx, u.hz) * 0.8) + (u.flat ? 0.7 : 0); if (d < bd) { bd = d; best = p; } }
+    for (const p of pieces) { const u = p.userData; if (u.f !== me.f || (u.fixed && !u.guest)) continue; const d = Math.max(0, Math.hypot(p.position.x - me.x, p.position.z - me.z) - Math.max(u.hx, u.hz) * 0.8) + (u.flat ? 0.7 : 0); if (d < bd) { bd = d; best = p; } }
     return best;
   };
   const retag = () => {
@@ -115,7 +124,9 @@ export function buildHomeWalk(opts) {
     /** Draws the floating name again (after the piece got its label). */
     retag,
     /** The pieces of the house for Find it!: [{ id, f, x, z }] (the compass stand is not one). */
-    list() { return pieces.filter((p) => !p.userData.fixed).map((p) => ({ id: p.userData.id, f: p.userData.f, x: p.position.x, z: p.position.z })); },
+    list() { return pieces.filter((p) => !p.userData.fixed).map((p) => ({ id: p.userData.id, f: p.userData.f, x: p.position.x, z: p.position.z, wall: !!p.userData.wall, flat: !!p.userData.flat })); },
+    /** (27/11, turn 65) Where today's guest stands ({ x, z }) or null. */
+    get guestAt() { return guestG ? { x: guestG.position.x, z: guestG.position.z } : null; },
     /** A piece lights up for a moment (the right or the wrong answer). */
     flash(id, ms = 900) { const p = pieces.find((x) => x.userData.id === id); if (!p) return; glow(p, true); setTimeout(() => glow(p, false), ms); },
     /** The on-screen buttons: 'arrange' (on/off), 'turn', 'drop' (put the piece down where it is), 'cancel'. */
@@ -141,7 +152,7 @@ export function buildHomeWalk(opts) {
       else if (me.route) { const dx = me.route.x - me.x, dz = me.route.z - me.z, d = Math.hypot(dx, dz); if (d < 0.25) me.route = null; else { mx = dx / d; mz = dz / d; speed = 3.0; } }
       let moved = false;
       if (speed) { const n = Math.ceil(speed * dt / 0.12); for (let i = 0; i < n; i++) moved = step(mx * speed * dt / n, mz * speed * dt / n) || moved; if (!moved) me.route = null; let d = Math.atan2(mx, mz) - me.yaw; d = Math.atan2(Math.sin(d), Math.cos(d)); me.yaw += d * Math.min(1, dt * 12); }
-      play(moved ? (speed > 3.5 ? 'Run' : 'Walk') : 'Idle'); mixer.update(dt);
+      play(moved ? (speed > 3.5 ? 'Run' : 'Walk') : 'Idle'); mixer.update(dt); if (guestMix) guestMix.update(dt);
       av.position.set(me.x, me.y, me.z); av.rotation.y = me.yaw;
       // what is shown: the hero's floor and those below (the floor above appears once the hero is high on the stairs)
       const top = me.stair >= 0 ? (me.y - me.stair * FLOOR_H > FLOOR_H * 0.65 ? me.stair + 1 : me.stair) : me.f;
@@ -164,6 +175,6 @@ export function buildHomeWalk(opts) {
       else if (hover && !editing) { glow(hover, false); hover = null; }
       for (const l of lights) if (l.isPointLight) { if (l.userData.base === undefined) l.userData.base = l.intensity; l.intensity = l.userData.base * (1 + Math.sin(t * 7 + l.position.x) * 0.03); }
     },
-    dispose() { mixer.stopAllAction(); av.removeFromParent(); scene.traverse((o) => { if (o.geometry) o.geometry.dispose(); }); },      // the hero's copy shares the hero's geometry: left alone
+    dispose() { mixer.stopAllAction(); if (guestMix) guestMix.stopAllAction(); if (guestG) guestG.removeFromParent(); av.removeFromParent(); scene.traverse((o) => { if (o.geometry) o.geometry.dispose(); }); },      // the hero's copy shares the hero's geometry: left alone
   };
 }

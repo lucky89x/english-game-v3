@@ -1,4 +1,4 @@
-# Mô hình cần anh tạo bằng Tripo3D (cập nhật 26/11, lượt 63)
+# Mô hình cần anh tạo bằng Tripo3D (cập nhật 27/11, lượt 65)
 
 Chỉ những thứ Blender vẽ bằng script không đẹp được (vật hữu cơ, công trình mốc, nhân vật). Phụ kiện, quần áo, đồ đạc, cây cỏ, nhà thường: em tự dựng bằng Blender, anh không cần làm.
 
@@ -64,6 +64,41 @@ Khung 5 vùng đã chạy bằng cảnh vẽ bằng mã và quái mượn mô h�
 | 25 | `star_castle.glb` | Lâu đài Ngôi Sao Map 12 (đang mượn biệt thự) | `dreamy stylized castle with tall towers, star on the top, crescent moon window, pastel purple and gold, puffy cloud at the base, chibi toy style, hand-painted, no base` |
 
 Quái thường của map 8, 9, 10, 12: chưa cần. Khi anh muốn, mỗi vùng chọn 2 con đặc trưng (tiên đom đóm, cáo dung nham, dơi hang, cừu mộng mơ…) là đủ khác biệt; số còn lại vẫn mượn mô hình cũ.
+
+## Số tam giác phù hợp với game (thêm 27/11)
+
+Game phải chạy được trên máy không có card đồ hoạ rời, nên cả cảnh ngoài trời em giữ dưới khoảng 700 nghìn tam giác, và một căn nhà có thể bày tới 60 món đồ. Vì vậy mỗi loại mô hình có một mức riêng. Cột "sau khi em giảm" là con số cuối cùng nằm trong game; anh không cần đạt đúng số đó, chỉ cần xuất gần cột bên phải.
+
+| Loại mô hình | Sau khi em giảm (trong game) | Ảnh vân | Anh xuất từ Tripo |
+|---|---|---|---|
+| Đồ lưu niệm, đồ trang trí nhỏ trong nhà | 1.500–2.500 tam giác | 512 px | 5–10 nghìn mặt |
+| Quái thường | 3.000–6.000 | 512–1024 px | 20–30 nghìn mặt |
+| Trùm | 10.000–14.000 | 1024 px | 30–50 nghìn mặt |
+| Người (người giữ vùng, nhân vật người chơi) | 8.000–12.000 | 1024 px | 30–50 nghìn mặt, tư thế chữ T, có rig nếu được |
+| Công trình mốc, nhà | 5.000–10.000 | 1024 px | 30–50 nghìn mặt |
+
+- Nếu Tripo có ô giới hạn số mặt (Face Limit) hoặc chế độ Low Poly thì đặt theo cột bên phải. Không có thì cứ xuất mặc định (lô trước của anh khoảng một trăm nghìn mặt mỗi mô hình): em giảm bằng `tools/tripo/optimize.py`, chỉ tốn thêm thời gian tải file.
+- Đừng xuất thấp hơn cột bên phải: giảm từ mô hình dày xuống cho ra hình đẹp hơn là bắt Tripo dựng thưa ngay từ đầu.
+- Mô hình đang dùng để anh so: thú đồng hành 3 nghìn, golem dung nham 6 nghìn, rồng băng 14 nghìn; đồ lưu niệm em vẽ bằng Blender 400–1.400.
+
+## Đồ lưu niệm và cúp cho nhà (thêm 27/11)
+
+Mười món này em đã vẽ bằng Blender (khối đơn giản, một màu mỗi phần) để game chạy được ngay. Vẽ bằng script không ra được nét vẽ tay và chi tiết nhỏ, nên muốn đẹp thì nên làm bằng Tripo. Mỗi món một file, **chỉ có món đồ, không kèm bàn hay bệ** (em đặt lên chiếc đôn gỗ có sẵn cho đồng bộ). Xuất 5–10 nghìn mặt; em giảm còn 1.500–2.500 tam giác, ảnh 512 px. Đặt đúng tên file thì em thay vào, không phải sửa mã.
+
+| # | Tên file | Món | Vùng | Câu lệnh gợi ý |
+|---|---|---|---|---|
+| 26 | `home_sv_cactus.glb` | Cactus Pot | Sa mạc | `cute stylized potted cactus with two small arms and pink flowers, terracotta pot with a painted zigzag pattern, chibi toy style, hand-painted soft colors, single object, no base, white background` |
+| 27 | `home_sv_snowglobe.glb` | Snow Globe | Núi tuyết | `cute snow globe with a tiny pine tree, a small log cabin and a snowman inside, blue wooden base with gold trim, chibi toy style, hand-painted, single object, white background` |
+| 28 | `home_sv_vase.glb` | Ancient Vase | Di tích | `ancient clay vase with two handles, painted blue and ochre geometric bands, small cracks, stylized chibi, hand-painted, single object, no base, white background` |
+| 29 | `home_sv_cloudlamp.glb` | Cloud Lamp | Trời | `cute table lamp shaped like a puffy white cloud with three small golden stars hanging under it, short brass stand, chibi toy style, hand-painted soft colors, single object, white background` |
+| 30 | `home_sv_mushroom.glb` | Mushroom Lamp | Đảo tiên | `cute night lamp shaped like a red mushroom with white dots and a smaller mushroom beside it, tiny round door and window in the stem, mossy foot, chibi fairy style, hand-painted, single object, white background` |
+| 31 | `home_sv_lavalamp.glb` | Lava Lamp | Núi lửa | `stylized lava lamp, black rock foot with glowing orange cracks, body filled with orange and yellow blobs, small metal cap, chibi toy style, hand-painted, single object, white background` |
+| 32 | `home_sv_crystal.glb` | Crystal | Hang tinh thể | `cluster of purple, blue and pink crystals growing from a small grey rock, faceted shapes, stylized chibi, hand-painted, single object, no base, white background` |
+| 33 | `home_sv_toyrobot.glb` | Toy Robot | Thành phố | `cute retro toy robot, boxy light blue body, round yellow eyes, red antenna, wind-up key on the back, chibi toy style, hand-painted, standing, single object, no base, white background` |
+| 34 | `home_sv_nightlight.glb` | Night Light | Mộng mơ | `night light shaped like a smiling golden star resting on a small crescent moon, pastel purple round foot, chibi toy style, hand-painted soft colors, single object, white background` |
+| 35 | `home_trophy.glb` | Cúp trùm (dùng chung cho 13 cúp) | Phòng học | `golden trophy cup with two handles and a blue gem on top, standing on a dark wooden plinth with an empty brass plate, stylized chibi, hand-painted, single object, white background` |
+
+Lưu ý: Tripo không làm được kính trong suốt (quả cầu tuyết, đèn dung nham). Anh cứ để nó dựng đặc; em tách phần kính và làm trong lại trong Blender.
 
 ## Không cần làm
 - Cây, bụi, cỏ: em giảm lưới gói hiện có và dựng thêm bằng Blender.

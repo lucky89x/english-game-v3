@@ -1269,3 +1269,24 @@ test('home life (27/11): word labels, comfort levels, a sleep a day, Find it! ro
   const hero = S.newProfile('Ha', 6); assert.deepEqual(H.syncTrophies(hero), []); hero.flags.boss1 = true; hero.flags.boss5 = true; hero.flags.map2 = true;
   assert.deepEqual(H.syncTrophies(hero), ['trophy_boss1', 'trophy_boss5']); assert.deepEqual(H.syncTrophies(hero), [], 'once'); assert.equal(H.comfort(hero).parts.furniture, 2 * H.TROPHY_POINTS);
 });
+test('guests at home (27/11): a friend a day, three things asked in English, a visit pays and makes a friend', async () => {
+  const G = await import('../src/core/guests.js'), H = await import('../src/core/homeplay.js'), RU = await import('../src/core/rules.js');
+  const p = S.newProfile('An', 6); assert.deepEqual(G.roster(p), []); assert.equal(G.todayGuest(p, 'd1'), null, 'nobody before the first badge');
+  p.flags.badge1 = true; assert.equal(G.todayGuest(p, 'd1').id, 'tom'); Object.assign(p.flags, { map2: true, boss2: true, boss5: true });
+  assert.deepEqual(G.roster(p).map((g) => g.id), ['tom', 'sam', 'lily', 'zara']); const seen = new Set(); for (let d = 0; d < 40; d++) { const g = G.todayGuest(p, '2026-12-' + d); assert.equal(G.todayGuest(p, '2026-12-' + d), g, 'the same guest all day'); seen.add(g.id); } assert.equal(seen.size, 4, 'every friend comes some day');
+  assert.deepEqual(G.GUESTS.map((g) => g.unit), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], 'one friend for each unit'); assert.equal(new Set(G.GUESTS.map((g) => g.needs)).size, 12);
+  for (const g of G.GUESTS) { assert.ok(hexists(new URL(`../assets/models/${g.file}.glb`, import.meta.url)), g.id + ' has a model'); assert.ok(g.hi && !/[àáảãạăâđêôơư]/i.test(g.hi + g.who)); }
+  const list = [{ id: 'bed', f: 0, x: 0, z: 0 }, { id: 'lamp', f: 0, x: 1, z: 0 }, { id: 'sofa', f: 0, x: 6, z: 0 }, { id: 'table', f: 0, x: 7.5, z: 1 }, { id: 'rug', f: 0, x: 3, z: 3, flat: true }, { id: 'clock', f: 0, x: 0, z: -5, wall: true }];
+  assert.deepEqual(G.planVisit(list.slice(0, 2)), [], 'an empty house: nothing to ask'); const rnd = (() => { let a = 11; return () => { a = (a * 16807) % 2147483647; return a / 2147483647; }; })();
+  for (let i = 0; i < 100; i++) {
+    const withG = i % 2 === 0, t = G.planVisit(list, { grammar: withG ? grammarFor(6, 1, 10) : [], rnd }); assert.equal(t.length, 3); assert.equal(t[0].kind, 'show'); assert.equal(t[1].kind, withG ? 'grammar' : 'next'); assert.equal(t[2].kind, 'put');
+    for (const k of t) assert.ok(k.en && k.vi && !/[àáảãạăâđêôơư]/i.test(k.en), 'English asks, Vietnamese helps');
+    if (!withG) assert.equal(H.neighbour(list, list.find((x) => x.id === t[1].ref)).id, t[1].target, '"next to" has one answer');
+    const a = list.find((x) => x.id === t[2].a), b = list.find((x) => x.id === t[2].b); assert.ok(!a.wall && !a.flat && !b.wall && !b.flat && a.id !== b.id, 'pieces that can be carried and stood by'); assert.ok(!G.HEAVY.has(a.id), 'the guest asks for a light piece to be moved (' + a.id + ')'); assert.equal(G.putDone(list, a.id, b.id), false, 'not done before the child moves it');
+    assert.ok(G.putDone(list.map((x) => (x.id === a.id ? { ...x, x: b.x + 1, z: b.z } : x)), a.id, b.id), 'done once the piece stands beside the other');
+  }
+  assert.equal(G.putDone([{ id: 'bed', f: 0, x: 0, z: 0 }, { id: 'lamp', f: 1, x: 0.5, z: 0 }], 'lamp', 'bed'), false, 'another floor is not next to');
+  const c0 = H.comfort(p).score, r = G.finishVisit(p, 'tom', 'd1'); assert.ok(r.gold >= 20 && r.first); assert.equal(G.todayGuest(p, 'd1'), null, 'one visit a day'); assert.ok(G.todayGuest(p, 'd2'));
+  assert.equal(H.comfort(p).score, c0 + H.FRIEND_POINTS); assert.equal(G.finishVisit(p, 'tom', 'd2').first, false); assert.equal(H.comfort(p).parts.friends, H.FRIEND_POINTS, 'a friend counts once'); assert.equal(G.friendsMade(p), 1);
+  assert.ok(RU.ITEMS.bed);
+});
