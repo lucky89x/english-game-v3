@@ -1306,3 +1306,13 @@ test('friends (27/11): Kit and Mai have one job in every land, in order, counted
   for (const c of B.CHATS) { assert.ok(c.ask.endsWith('?') && c.vi && c.answers.length === 3); for (const [a, r] of c.answers) assert.ok(a && r && !/[àáảãạăâđêôơư]/i.test(a + r)); }
   assert.ok(B.REMARKS.length >= 8); for (const who of ['kit', 'mai']) { assert.notEqual(B.greeting(who, { bossDown: true }), B.greeting(who, { bossDown: false, level: 1, cap: 5 })); assert.ok(B.BUDDIES[who].hello.length === 2 && B.BUDDIES[who].vi); }
 });
+test('other explorers (27/11): three of them, a level for the land, tales that use the places of the land', async () => {
+  const C = await import('../src/core/crowd.js'), LY = await import('../src/core/layout.js');
+  assert.equal(C.BOTS.length, 3); assert.equal(new Set(C.BOTS.map((b) => b.name)).size, 3); for (const b of C.BOTS) { assert.ok(hexists(new URL(`../assets/models/${b.file}.glb`, import.meta.url)), b.id + ' has a model'); assert.ok(b.scale > 0.7 && b.scale < 1, 'a child-sized figure'); }
+  for (const b of C.BOTS) { assert.ok(C.botLevel(b, 1, 5) >= 1 && C.botLevel(b, 1, 5) <= 5); assert.ok(C.botLevel(b, 65, 70) >= 65 && C.botLevel(b, 65, 70) <= 70); assert.equal(C.botLevel(b, 5, 5), 5); }
+  for (const [en, vi] of C.TALES) assert.ok(en && vi && !/[àáảãạăâđêôơư]/i.test(en) && /[.!?]$/.test(en)); for (const h of C.HELLOS) assert.ok(!/[àáảãạăâđêôơư]/i.test(h));
+  for (const id of ['village', 'harbor', 'forest', 'desert', 'city', 'dream']) { const places = LY.REGIONS[id].LANDMARKS, seen = new Set();
+    for (let n = 0; n < 24; n++) for (const b of C.BOTS) { const t = C.tale(b, { places, top: 24, n }); assert.ok(t.en && t.vi && !/[àáảãạăâđêôơư]/i.test(t.en), `${id}: ${t.en}`); assert.ok(!/undefined|null/.test(t.en + t.vi)); assert.ok(/^[\x20-\x7e’]+$/.test(t.en), `no signs or emoji in what they say: ${t.en}`); seen.add(t.en); }
+    assert.ok(seen.size >= 12, `${id}: they do not say the same thing again and again (${seen.size})`); assert.ok([...seen].some((x) => places.some((p) => x.includes(p.label.replace(/^The /, 'the ')))), `${id}: some tales name a place of the land`); }
+  assert.ok(C.tale(C.BOTS[0], {}).en, 'a land without places: a story instead');
+});

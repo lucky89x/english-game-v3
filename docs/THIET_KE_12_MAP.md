@@ -45,6 +45,49 @@ Hiện mỗi vùng mới dùng lại một trò có sẵn dưới tên của vù
 
 Nguyên tắc tiêu vàng: vé vào tăng theo cấp (đã có), phần thưởng là **đồ trang trí nhà** chứ không phải vàng hay EXP, nên vàng chảy từ đánh quái sang nhà. Không làm trò may rủi kiểu quay thưởng.
 
+## 2a. Danh sách mini game HIỆN CÓ và chỗ đặt (rà 27/11, lượt 67)
+
+Có **10 nhóm trò** (17 trò nếu tính riêng 4 trò chữ của Hội Đèn, 3 trò phục vụ ở cảng và 3 hoạt động trong nhà), đặt ở **26 chỗ** trên 12 map. Mọi trò trừ phần ở nhà đều thu phí vàng theo cấp của bé và hỏi 3 câu ở cổng (đúng hết thì miễn phí lượt đó và được EXP); chơi xong không thưởng vàng.
+
+| Trò (cách chơi) | Tiếng Anh trong trò | Phí ở cấp 1 / 20 / 70 | Đặt ở đâu |
+|---|---|---|---|
+| **Xếp kẹo** (nối 3) | chủ trò hỏi lại từ cuối trò | 10 / 50 / 150 | Làng (vành ngoài Tây Bắc, cô Mimi) · Trời (Cloud Candy) · Mộng mơ (Dream Candy) |
+| **Xếp hình** (khối rơi) | mỗi hàng xoá tặng một từ | 10 / 50 / 150 | Làng (vành ngoài phía Tây, bác Max) · Di tích (Rune Blocks) |
+| **Bắn ná / bắn cung** | hỏi lại từ cuối trò | 10 / 50 / 150 | Làng (vành ngoài Tây Bắc, chú Rex) · Núi tuyết (Snowball Shot) · Núi lửa (Lava Shot) |
+| **Đua xe 3D** | nhặt xu chữ cái để đánh vần | 15 / 70 / 220 | Làng (vành ngoài Tây Nam, anh Leo) · Biển (Coast Race) · Rừng (Forest Rally) · Sa mạc (Dune Rally) · Thành phố (Neon Grand Prix) · Mộng mơ (Star Race) |
+| **Hội Đèn Làng: 4 trò chữ** (Lối đom đóm nối chữ, Hầm thẻ đồng mở khoá, Chuyến thư đêm lái xe, Hồ sơ xưởng đồng hồ điều tra) | cả trò là đọc và ghép từ | 15 / 70 / 220 | Làng (quảng trường, chọn 1 trong 4) · Đảo tiên (riêng Lối đom đóm) · Hang tinh thể (riêng Hầm khoá) · Thành phố (riêng Hồ sơ xưởng) |
+| **Hứng táo** | không | 10 / 40 / 120 | Làng (vườn táo phía Đông, cô Hana) |
+| **Câu cá** | tên cá trong sổ cá | 10 / 40 / 120 | Làng (bến sông) · Biển (cầu tàu nhỏ, có thuyền) |
+| **Style · Café · Salon** (3 trò phục vụ khách) | đọc yêu cầu của khách bằng tiếng Anh | 15 / 70 / 220 | Biển: tiệm quần áo, quán cà phê, tiệm làm đẹp ở Cảng Mặt Trời |
+| **Đào kho báu** | đọc chỉ dẫn | 2 lần mỗi ngày | Đảo Kho Báu (đi thuyền từ cảng) |
+| **Trong nhà**: Find it!, Home words, tiếp khách | nghe lệnh, tên đồ vật, ngữ pháp | không mất phí | nhà của bé (vào được từ cổng mọi vùng) |
+
+Ngoài ra có **phòng nhạc của Anna** ở Làng (nghe và học lời bài hát; không phải trò tính điểm) và 12 ngôi sao ẩn quanh Làng.
+
+**Theo từng map:**
+
+| Map | Mini game đang có |
+|---|---|
+| 1 Làng | Hội Đèn (4 trò chữ), Xếp kẹo, Xếp hình, Bắn ná, Đua xe, Hứng táo, Câu cá, phòng nhạc |
+| 2 Biển | Đua ven biển, Style, Café, Salon, Câu cá; Đảo Kho Báu: đào kho báu |
+| 3 Rừng | Đua trong rừng |
+| 4 Sa mạc | Dune Rally (đua) |
+| 5 Núi tuyết | Snowball Shot (bắn) |
+| 6 Di tích | Rune Blocks (xếp hình) |
+| 7 Trời | Cloud Candy (xếp kẹo) |
+| 8 Đảo tiên | Firefly Path (nối chữ) |
+| 9 Núi lửa | Lava Shot (bắn) |
+| 10 Hang tinh thể | Crystal Vault (mở khoá chữ) |
+| 11 Thành phố | Neon Grand Prix (đua), Robot Workshop (điều tra) |
+| 12 Mộng mơ | Dream Candy (xếp kẹo), Star Race (đua) |
+
+**Nhận xét:**
+- Làng có 8 trò, các map 3–10 mỗi map chỉ 1 trò: bé rời Làng là ít chỗ chơi hẳn.
+- Map 4–12 chưa có trò nào của riêng vùng: chỉ là trò của Làng đổi tên, đổi màu (riêng đua xe có đổi vòng đua). Bé sẽ nhận ra sau map thứ hai.
+- Ở Làng, 4 chủ trò đứng ở vành ngoài, xa trung tâm (80–90 m): bé khó tình cờ gặp. Ở các vùng mới thì ngược lại, chủ trò đứng ngay cạnh cổng.
+- Chưa trò nào trả thưởng bằng đồ trang trí nhà, nên mini game và nhà chưa nối với nhau.
+- Chưa chơi thử bằng tay các chủ trò ở map 4–12 (mới kiểm bằng unit test là vị trí đứng được và trò tồn tại).
+
 ## 3. Nhà của bé đi theo 12 map (bước 1 ĐÃ LÀM 27/11; còn lại ĐỀ XUẤT)
 
 Nền có sẵn: nhà 1–3 tầng và biệt thự, đặt đồ, sơn tường và sàn, vườn, trang trại, bệ La Bàn 12 ô, **cửa nhà thần kỳ ở cổng mọi vùng** (bấm E là về nhà, ra lại đúng vùng đang đứng).
