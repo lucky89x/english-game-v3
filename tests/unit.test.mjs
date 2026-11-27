@@ -1481,3 +1481,21 @@ test('a real save from an older game (25/11) loads with every field kept, and sa
   S.persist(store, st); assert.deepEqual(JSON.parse(st.getItem(S.KEY)), JSON.parse(JSON.stringify(store)));
   const again = S.load(st); assert.deepEqual(again, JSON.parse(JSON.stringify(store)));
 });
+
+test('backups (desktop app): a day is named, its children are listed, one child is taken back and nobody else changes', async () => {
+  const fs = await import('node:fs'), raw = JSON.parse(fs.readFileSync(new URL('./fixtures/save_2026-11-25.json', import.meta.url), 'utf8')).storage[S.KEY];
+  assert.equal(S.backupLabel('store-2026-11-25.json'), 'Ngày 25/11/2026'); assert.match(S.backupLabel('store-rescue-1795000000000.json'), /^Bản cứu hộ \d\d\/\d\d \d\d:\d\d$/);
+  assert.match(S.backupLabel('store-before-1795000000000.json'), /^Trước lần khôi phục /); assert.equal(S.backupLabel('odd.json'), 'odd.json');
+  const kids = S.backupInfo(raw); assert.equal(kids.length, 1); const an = kids[0]; assert.equal(an.name, 'An'); assert.equal(an.level, 5); assert.equal(an.gold, 438); assert.equal(an.words, 22);
+  assert.equal(S.backupInfo('{ broken'), null); assert.equal(S.backupInfo(''), null); assert.equal(S.backupInfo(JSON.stringify({ version: 99, profiles: [] })), null, 'a copy written by a newer game is not read');
+  // today's game: An lost her progress, Bình has played on, the admin account is there
+  const store = S.emptyStore(), lost = S.newProfile('An', 6, an.id), binh = S.newProfile('Bình', 8, 'b1'), boss = { ...S.newProfile('Quản trị', 6, 'adm'), admin: true };
+  binh.stats.level = 12; binh.stats.gold = 900; store.profiles.push(lost, binh, boss); const binhText = JSON.stringify(binh), bossText = JSON.stringify(boss);
+  const back = S.restoreProfile(store, raw, an.id);
+  assert.equal(store.profiles.length, 3); assert.equal(store.profiles[0], back); assert.equal(back.stats.level, 5); assert.equal(back.stats.gold, 438); assert.equal(Object.keys(back.words).length, 22);
+  assert.equal(JSON.stringify(store.profiles[1]), binhText, 'the other child keeps today\'s progress'); assert.equal(JSON.stringify(store.profiles[2]), bossText);
+  store.profiles.splice(0, 1); S.restoreProfile(store, raw, an.id); assert.equal(store.profiles.length, 3, 'a deleted child comes back as one more child'); assert.equal(store.profiles[2].name, 'An');
+  assert.throws(() => S.restoreProfile(store, raw, 'nobody'), /không có người chơi/); assert.throws(() => S.restoreProfile(store, '{ broken', an.id), /Không đọc được/);
+  const evil = JSON.stringify({ version: 2, profiles: [{ ...S.newProfile('X', 6, 'adm'), admin: true }, S.newProfile('Y', 6, 'adm')] });
+  assert.equal(S.backupInfo(evil).length, 1, 'an admin profile in a copy is not offered'); assert.throws(() => S.restoreProfile(store, evil, 'adm'), /Quản trị/); assert.equal(JSON.stringify(store.profiles.find((p) => p.id === 'adm')), bossText);
+});

@@ -82,6 +82,29 @@ export function importProfile(store, text) {
   if (i >= 0) store.profiles[i] = p; else store.profiles.push(p);
   return p;
 }
+/** (27/11, turn 73) The desktop app keeps a copy of the save for each day (Documents/EnglishQuest/backups). The admin panel lists them,
+ *  shows which children one holds, and takes ONE child back from it: the other children keep today's progress. */
+export function backupLabel(name) {
+  const two = (n) => String(n).padStart(2, '0'); let m = /^store-(\d{4})-(\d\d)-(\d\d)\.json$/.exec(String(name));
+  if (m) return `Ngày ${m[3]}/${m[2]}/${m[1]}`;
+  m = /^store-(rescue|before)-(\d+)\.json$/.exec(String(name)); if (!m) return String(name);
+  const d = new Date(Number(m[2]));
+  return `${m[1] === 'rescue' ? 'Bản cứu hộ' : 'Trước lần khôi phục'} ${two(d.getDate())}/${two(d.getMonth() + 1)} ${two(d.getHours())}:${two(d.getMinutes())}`;
+}
+/** The children in a backup text: [{ id, name, grade, level, gold, words }], or null when the text cannot be read. */
+export function backupInfo(text) {
+  const s = parse(text); if (!s) return null;
+  return s.profiles.filter((p) => !p.admin).map((p) => ({ id: p.id, name: p.name, grade: p.grade, level: p.stats.level, gold: p.stats.gold, words: Object.keys(p.words).length }));
+}
+/** Puts the child `id` of the backup into the store (in the place of the same child, or as one more child). The admin account is never touched. */
+export function restoreProfile(store, text, id) {
+  const s = parse(text); if (!s) throw new Error('Không đọc được bản sao lưu này');
+  const p = s.profiles.find((x) => x.id === id && !x.admin); if (!p) throw new Error('Bản sao lưu này không có người chơi đó');
+  const i = store.profiles.findIndex((x) => x.id === id);
+  if (i >= 0 && store.profiles[i].admin) throw new Error('Không khôi phục đè lên tài khoản Quản trị');
+  if (i >= 0) store.profiles[i] = p; else store.profiles.push(p);
+  return p;
+}
 /** Per skill counters: {attempts, correct, firstTry, hints}. */
 /** hooks.skill(profile, correct): set by the game to count right answers for the daily quests. */
 export const hooks = { skill: null };

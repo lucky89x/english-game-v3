@@ -1092,6 +1092,16 @@ async function goHome(o, mine, keepList = false, admin = false) {
 function enterRoom(kind, opts) { leaveRoom(); room = buildRoom(kind, opts); room.kind = kind; document.body.classList.add('inroom'); if (room.walk) { cam.minPitch = -0.6; cam.maxPitch = 1.45; } sfx('tick'); }
 function leaveRoom() { if (!room) return; findGame = null; visit = null; homeGuest = null; room.dispose(); room = null; document.body.classList.remove('inroom'); cam.minPitch = 0.05; cam.maxPitch = 1.25; cam.tPitch = Math.min(1.25, Math.max(0.05, cam.tPitch)); }
 /** (24/11) The admin removes a child: the profile goes, and with it the home, the things in it and the progress (all of it lives in the profile). */
+// (27/11, turn 73) The daily copies of the save that the desktop app keeps: listed, read and taken back from the admin panel.
+const adminBackups = () => { const d = globalThis.eqDesktop; if (!d || !d.backups) return null; try { return d.backups() || []; } catch { return []; } };
+const adminBackupRead = (name) => { try { return globalThis.eqDesktop.readBackup(name) || ''; } catch { return ''; } };
+function adminRestore(name, id) {
+  const d = globalThis.eqDesktop, text = adminBackupRead(name);
+  Save.backupInfo(text).find((k) => k.id === id).id;          // throws before anything is touched when the copy or the child cannot be read
+  try { Save.persist(store); } catch (e) { console.warn('save failed', e); }      // the file holds the game as it is now…
+  try { if (d.keepCopy) d.keepCopy(); } catch (e) { console.warn('copy before restore failed', e); }      // …and that file is put aside
+  const p = Save.restoreProfile(store, text, id); Save.persist(store); if (homes) homes.refresh(true); return p;
+}
 function adminDelete(id) { const i = store.profiles.findIndex((p) => p.id === id && !p.admin); if (i < 0) return; store.profiles.splice(i, 1); if (store.last === id) store.last = profile.id; try { Save.persist(store); } catch (e) { console.warn('save failed', e); } if (homes) homes.refresh(true); }
 function adminPlaces() {
   const out = [], add = (region, name, x, z) => out.push({ region, name, x, z });
@@ -1909,7 +1919,7 @@ async function boot() {
     spells: () => SK.SPELLS.map((n) => ({ id: n.id, en: n.en || n.id, vi: n.vi || '', el: n.el })), demo: (id) => (room ? 'place' : spells.demo(id)), slow: (k) => { spells.slow = k; },
     meta: () => ({ build: (document.querySelector('meta[name="eq-build"]') || {}).content || '', quality, screen: `${innerWidth}x${innerHeight}`, gpu: (() => { try { const gl = renderer.getContext(), e = gl.getExtension('WEBGL_debug_renderer_info'); return e ? gl.getParameter(e.UNMASKED_RENDERER_WEBGL) : ''; } catch { return ''; } })() }),
     saveFile: (name, text) => { try { if (globalThis.eqDesktop && globalThis.eqDesktop.saveNotes) return globalThis.eqDesktop.saveNotes(name, text) || ''; } catch { /* fall back to a download */ } const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: 'application/json' })); a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000); return ''; } });      // (27/11, turn 72) the admin's review notes on F1
-  admin = new AdminPanel({ online: { get: onlineSet, set: (o) => { try { if (o.off != null) localStorage.setItem('eq-online-off', o.off ? '1' : '0'); if (o.own != null) localStorage.setItem('eq-online-server', o.own); } catch { /* no storage */ } if (online && online.code && !onlineServer()) online.leave(); if (toolbar) toolbar.sync(profile); } }, profile: () => profile, profiles: () => store.profiles, visitHome: (o) => goHome(o, true, false, true), deleteProfile: adminDelete, places: adminPlaces, go: adminGo, unlockAll: adminUnlock, setStep: adminStep,
+  admin = new AdminPanel({ online: { get: onlineSet, set: (o) => { try { if (o.off != null) localStorage.setItem('eq-online-off', o.off ? '1' : '0'); if (o.own != null) localStorage.setItem('eq-online-server', o.own); } catch { /* no storage */ } if (online && online.code && !onlineServer()) online.leave(); if (toolbar) toolbar.sync(profile); } }, profile: () => profile, profiles: () => store.profiles, backups: adminBackups, backupRead: adminBackupRead, restore: adminRestore, visitHome: (o) => goHome(o, true, false, true), deleteProfile: adminDelete, places: adminPlaces, go: adminGo, unlockAll: adminUnlock, setStep: adminStep,
     resetForest: () => { delete profile.quests.forest; if (L.NAME === 'forest') enterRegion('forest'); }, setGrade: (g) => { profile.grade = g; save(); chooseProfile(profile); },
     setLevel: adminLevel, addGold: (n) => { profile.stats.gold += n; }, changed: () => { save(); refresh(); setSword(); setWear(); }, toast: (t) => ui.toast(t) });
   minimap = new Minimap($('minimap'), (path) => { player.route = path.slice(1); });

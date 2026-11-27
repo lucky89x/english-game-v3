@@ -4,8 +4,10 @@
 // daily game limits, change the grade, and turn on "no damage". The password only keeps children from opening it
 // by accident: it is not real security (anyone can read the game's files).
 import * as SK from '../core/skills.js';
+import * as Save from '../core/save.js';
 import { ITEMS, bag, giveLoot } from '../core/rules.js';
 export const ADMIN_PASS = '321';
+const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const STEPS = [['arrive', 'Gặp Tom lần đầu'], ['letter_find', 'Tìm bức thư'], ['letter_return', 'Mang thư về'], ['jars', 'Hũ chữ của Ben'], ['tom_bridge', 'Tom báo cầu gãy'],
   ['bridge', 'Gặp Sam ở cầu'], ['gather', 'Tìm dây, gỗ, rìu'], ['plan', 'Pip đọc kế hoạch'], ['open', 'Báo Tom (mở rừng)'], ['done', 'Xong Chương I']];
 const CSS = `
@@ -45,6 +47,7 @@ export class AdminPanel {
       <div class="row">Lớp: ${[6, 7, 8, 9].map((g) => `<button data-a="grade" data-v="${g}">${g === p.grade ? '✔ ' : ''}Lớp ${g}</button>`).join('')}</div>
       <h4>🏠 Vào nhà từng người chơi (toàn quyền: sơn, mua, nâng cấp, gỡ đồ, bày trí, không tốn vàng của bé)</h4><div class="row">${(this.api.profiles ? this.api.profiles() : []).filter((o) => !o.admin).map((o) => `<button data-a="visit" data-v="${o.id}">🏠 ${o.name} (lớp ${o.grade}, ${o.stats.gold} vàng)</button>`).join('') || 'Chưa có người chơi nào.'}</div>
       <h4>🗑 Xoá người chơi (xoá luôn nhà, đồ và tiến độ của bé đó)</h4><div class="row">${(this.api.profiles ? this.api.profiles() : []).filter((o) => !o.admin).map((o) => `<button data-a="del" data-v="${o.id}" style="${this.armedDel === o.id ? 'background:#8a2a22' : ''}">${this.armedDel === o.id ? 'Chắc chắn xoá ' : 'Xoá '}${o.name}</button>`).join('') || '<small>Chưa có bé nào.</small>'}</div>
+      ${this.backupRows()}
       ${this.onlineRows()}
       <h4>Mở khóa</h4><div class="row"><button data-a="unlock">Mở hết (rừng, cầu, Map 2, boss, cổng Cú Mèo)</button><button data-a="limits">Xóa giới hạn mini game hôm nay</button>
         <button data-a="daily">Mở lại rương + bong bóng hôm nay</button></div>
@@ -53,10 +56,26 @@ export class AdminPanel {
       ${Object.entries(by).map(([r, list]) => `<h4>Đi tới · ${r === 'village' ? 'Làng Khởi Đầu (Map 1)' : r === 'forest' ? 'Rừng Ký Ức' : r === 'harbor' ? 'Cảng Mặt Trời (Map 2)' : r}</h4><div class="row">${list.map((pl, i) => `<button data-a="go" data-v="${r}|${i}">${pl.name}</button>`).join('')}</div>`).join('')}`;
     this.list = by;
   }
+  /** (27/11, turn 73) The daily copies of the save (desktop app): pick a day, see the children in it, take one child back. */
+  backupRows() {
+    const head = '<h4>💾 Khôi phục bản sao lưu (lấy lại tiến độ của MỘT bé từ một ngày trước; các bé khác giữ nguyên)</h4>';
+    const names = this.api.backups ? this.api.backups() : null;
+    if (!names) return head + '<div class="row" style="color:#9cc4ff">Chỉ có ở bản cài trên Windows (.exe): game tự giữ bản sao mỗi ngày trong Documents\\EnglishQuest\\backups.</div>';
+    if (!names.length) return head + '<div class="row" style="color:#9cc4ff">Chưa có bản sao lưu nào (bản sao đầu tiên được ghi sau lần lưu đầu tiên).</div>';
+    let out = head + `<div class="row">${names.slice(0, 34).map((n) => `<button data-a="bk-open" data-v="${esc(n)}" style="${this.bkOpen === n ? 'background:#2a5a8a' : ''}">${esc(Save.backupLabel(n))}</button>`).join('')}</div>`;
+    if (!this.bkOpen || !names.includes(this.bkOpen)) return out + '<div class="row" style="color:#9cc4ff">Bấm một ngày để xem trong bản sao đó có những bé nào.</div>';
+    const kids = Save.backupInfo(this.api.backupRead(this.bkOpen)), now = this.api.profiles ? this.api.profiles() : [];
+    if (!kids) return out + '<div class="row" style="color:#ffb0a0">Không đọc được bản sao này (file hỏng hoặc do bản game mới hơn ghi).</div>';
+    if (!kids.length) return out + '<div class="row" style="color:#9cc4ff">Bản sao này chưa có bé nào.</div>';
+    for (const k of kids) { const cur = now.find((o) => o.id === k.id), armed = this.armedBk === k.id;
+      out += `<div class="row"><b>${esc(k.name)}</b> · lớp ${k.grade} · cấp ${k.level} · ${k.gold} vàng · ${k.words} từ đã học
+        <small style="color:#9cc4ff">(${cur ? `trong game hiện nay: cấp ${cur.stats.level} · ${cur.stats.gold} vàng · ${Object.keys(cur.words || {}).length} từ` : 'hiện không có trong game: khôi phục sẽ thêm bé lại'})</small>
+        <button data-a="bk-restore" data-v="${esc(k.id)}" style="${armed ? 'background:#8a2a22' : ''}">${armed ? `Chắc chắn: đưa ${esc(k.name)} về bản này` : `Khôi phục ${esc(k.name)}`}</button></div>`; }
+    return out;
+  }
   /** (27/11, turn 69) Playing together through the room server: on or off on this machine, and the server's address. */
   onlineRows() {
     const o = this.api.online ? this.api.online.get() : null; if (!o) return '';
-    const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
     return `<h4>👫 Chơi chung qua mạng (máy chủ phòng)</h4><div class="row"><button data-a="net-off">${o.off ? 'Đang TẮT trên máy này · bấm để bật' : '✔ Đang bật · bấm để tắt trên máy này'}</button></div>
       <div class="row">Địa chỉ máy chủ: <input id="adsrv" type="text" value="${esc(o.own)}" placeholder="${esc(o.file || 'https://english-quest-room.….workers.dev')}" style="width:250px;cursor:text"><button data-a="net-save">Lưu</button></div>
       <div class="row" style="color:#9cc4ff">${o.file ? 'Để trống = dùng địa chỉ có sẵn trong game: ' + esc(o.file) : 'Game chưa có địa chỉ sẵn: dán địa chỉ máy chủ phòng vào ô trên.'}</div>`;
@@ -64,6 +83,13 @@ export class AdminPanel {
   act(a, v) {
     if (a === 'net-off' && this.api.online) { const o = this.api.online.get(); this.api.online.set({ off: !o.off }); this.api.toast(o.off ? 'Chơi chung: bật' : 'Chơi chung: tắt trên máy này'); this.render(); return; }
     if (a === 'net-save' && this.api.online) { const t = String(this.el.querySelector('#adsrv').value || '').trim(); if (t && !/^(https?|wss?):\/\/[a-z0-9.-]+(:\d+)?\/?$/i.test(t)) { this.api.toast('Địa chỉ phải có dạng https://tên.workers.dev'); return; } this.api.online.set({ own: t }); this.api.toast(t ? 'Đã lưu địa chỉ máy chủ phòng' : 'Dùng địa chỉ có sẵn trong game'); this.render(); return; }
+    if (a === 'bk-open') { this.bkOpen = this.bkOpen === v ? null : v; this.armedBk = null; this.render(); return; }
+    if (a === 'bk-restore' && this.api.restore) {
+      const k = (Save.backupInfo(this.api.backupRead(this.bkOpen)) || []).find((x) => x.id === v); if (!k) return;
+      if (this.armedBk !== v) { this.armedBk = v; this.api.toast(`Bấm lần nữa để thay tiến độ hiện nay của ${k.name} bằng bản "${Save.backupLabel(this.bkOpen)}"`); this.render(); return; }
+      this.armedBk = null;
+      try { this.api.restore(this.bkOpen, v); this.api.toast(`Đã khôi phục ${k.name} (cấp ${k.level}). Bản lưu ngay trước đó được giữ lại trong danh sách.`); } catch (e) { this.api.toast('Không khôi phục được: ' + e.message); }
+      this.render(); return; }
     const p = this.api.profile(), api = this.api;
     if (a === 'close') { this.el.classList.add('hidden'); return; }
     if (a === 'visit') { const o = (api.profiles ? api.profiles() : []).find((x) => x.id === v); if (o && api.visitHome) { this.el.classList.add('hidden'); api.visitHome(o); } return; }

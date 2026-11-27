@@ -31,6 +31,19 @@ ipcMain.on('eq-read-save', (e) => {
 // (26/11) the daily copies can be listed and read back from the admin panel ("Khôi phục bản sao lưu")
 ipcMain.on('eq-backups', (e) => { try { e.returnValue = fs.readdirSync(path.join(saveDir(), 'backups')).filter((f) => /^store-.*\.json$/.test(f)).sort().reverse(); } catch { e.returnValue = []; } });
 ipcMain.on('eq-read-backup', (e, name) => { try { e.returnValue = /^store-[\w.-]+\.json$/.test(String(name)) ? fs.readFileSync(path.join(saveDir(), 'backups', String(name)), 'utf8') : ''; } catch { e.returnValue = ''; } });
+// The 14 newest daily copies are kept, and the 10 newest of each other kind (rescue copies, copies made before a restore).
+// (27/11: before, every rescue copy pushed one daily copy out, because all names were trimmed as one list.)
+function trimBackups(bk) {
+  const all = fs.readdirSync(bk), drop = (list, keep) => { for (const f of list.sort().slice(0, -keep)) fs.unlinkSync(path.join(bk, f)); };
+  drop(all.filter((f) => /^store-\d{4}-\d\d-\d\d\.json$/.test(f)), 14);
+  drop(all.filter((f) => /^store-rescue-\d+\.json$/.test(f)), 10); drop(all.filter((f) => /^store-before-\d+\.json$/.test(f)), 10);
+}
+// (27/11) Before the admin takes a child back from a backup, the save as it is now is put aside: a restore can be undone.
+ipcMain.on('eq-keep-copy', (e) => {
+  try { const dir = saveDir(), bk = path.join(dir, 'backups'), name = `store-before-${Date.now()}.json`; fs.mkdirSync(bk, { recursive: true });
+    fs.copyFileSync(path.join(dir, 'store.json'), path.join(bk, name)); trimBackups(bk); e.returnValue = name;
+  } catch (err) { console.warn('copy before restore failed', err.message); e.returnValue = ''; }
+});
 ipcMain.on('eq-write-save', (e, text) => {
   try {
     const dir = saveDir(), bk = path.join(dir, 'backups'); fs.mkdirSync(bk, { recursive: true });
@@ -39,7 +52,7 @@ ipcMain.on('eq-write-save', (e, text) => {
       if (had > 0 && now === 0) fs.writeFileSync(path.join(bk, `store-rescue-${Date.now()}.json`), old); } catch { /* no file yet, or it was unreadable */ }
     const tmp = path.join(dir, 'store.json.tmp'); fs.writeFileSync(tmp, text); fs.renameSync(tmp, path.join(dir, 'store.json'));      // never leaves half a file
     const day = new Date().toISOString().slice(0, 10); fs.writeFileSync(path.join(bk, `store-${day}.json`), text);
-    const old = fs.readdirSync(bk).filter((f) => /^store-.*\.json$/.test(f)).sort().slice(0, -14); for (const f of old) fs.unlinkSync(path.join(bk, f));
+    trimBackups(bk);
   } catch (err) { console.warn('save file failed', err.message); }
 });
 

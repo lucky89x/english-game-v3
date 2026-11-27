@@ -8,6 +8,7 @@ contextBridge.exposeInMainWorld('eqDesktop', {
   saveFolder: () => ipcRenderer.sendSync('eq-save-folder'),
   backups: () => ipcRenderer.sendSync('eq-backups'),
   readBackup: (name) => ipcRenderer.sendSync('eq-read-backup', String(name)),
+  keepCopy: () => ipcRenderer.sendSync('eq-keep-copy'),      // (27/11) the save as it is now, put aside before a restore
   onHidden: (fn) => ipcRenderer.on('eq-hidden', (_e, hidden) => fn(!!hidden)),
   musicList: () => ipcRenderer.sendSync('eq-music-list'),
   musicFolder: () => ipcRenderer.sendSync('eq-music-folder'),
