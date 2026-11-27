@@ -57,6 +57,12 @@ ipcMain.on('eq-music-list', (e) => {
   } catch { e.returnValue = []; }
 });
 ipcMain.on('eq-music-folder', (e) => { e.returnValue = musicDir(); });
+// (27/11) The parent's review notes (F1 in the admin account): each export is one file in Documents/EnglishQuest/gop-y.
+ipcMain.on('eq-save-notes', (e, name, text) => {
+  try { if (!/^english-quest-gop-y-[\d-]+\.json$/.test(String(name)) || String(text).length > 40e6) { e.returnValue = ''; return; }
+    const dir = path.join(saveDir(), 'gop-y'); fs.mkdirSync(dir, { recursive: true }); const file = path.join(dir, String(name)); fs.writeFileSync(file, String(text)); e.returnValue = file; shell.showItemInFolder(file);
+  } catch (err) { console.warn('notes file failed', err.message); e.returnValue = ''; }
+});
 
 function createWindow() {
   const win = new BrowserWindow({

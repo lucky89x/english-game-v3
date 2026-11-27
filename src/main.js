@@ -84,6 +84,7 @@ import { Peers } from './game/peers.js';
 import { Online } from './net/online.js';
 import { OnlinePanel } from './ui/online.js';
 import { animCode } from './core/net.js';
+import { NotesPanel } from './ui/notes.js';
 import { SHOW_FILE } from './core/house.js';
 import { ZONES } from './core/zones.js';
 import { PackUI } from './ui/pack.js';
@@ -209,7 +210,7 @@ let profile = null, quest = null, story = null, world = null, player = null, cam
 let shopWin = null, walkers = null, talkW = -1, touch = null, quality = localStorage.getItem('eq-quality') || 'medium', perfOn = false, started = false, switching = false, wordIds = {}, jarKey = '';
 const keys = new Set();
 let raceAssets = null;
-const game = { friendsStay: false, errors, voiceDisable, get reader() { return reader; }, SK, games: { raceGame, raceGame3d, slingGame, candyGame }, goHome: (o, mine) => goHome(o || profile, mine !== false), get room() { return room; }, get homes() { return homes; }, get buddies() { return buddies; }, get crowd() { return crowd; }, get online() { return online; }, get peers() { return peers; }, get onlineUI() { return onlineUI; }, Farm, get trail() { return guide && guide.trail; }, get tom() { return tom; }, get fishing() { return fishing; }, get profile() { return profile; }, get quest() { return quest; }, get story() { return story; }, get player() { return player; }, get cam() { return cam; }, get minimap() { return minimap; }, ui, L, stats: { fps: 0, ms: 0, calls: 0, tris: 0 },
+const game = { friendsStay: false, errors, voiceDisable, get reader() { return reader; }, SK, games: { raceGame, raceGame3d, slingGame, candyGame }, goHome: (o, mine) => goHome(o || profile, mine !== false), get room() { return room; }, get homes() { return homes; }, get buddies() { return buddies; }, get crowd() { return crowd; }, get notes() { return notesUI; }, get online() { return online; }, get peers() { return peers; }, get onlineUI() { return onlineUI; }, Farm, get trail() { return guide && guide.trail; }, get tom() { return tom; }, get fishing() { return fishing; }, get profile() { return profile; }, get quest() { return quest; }, get story() { return story; }, get player() { return player; }, get cam() { return cam; }, get minimap() { return minimap; }, ui, L, stats: { fps: 0, ms: 0, calls: 0, tris: 0 },
   teleport(x, z) { player.place(x, z); cam.target.set(x, player.pos.y + 1.25, z); }, applyLook, syncPet, get dayNight() { return dayNight; }, get digs() { return digMeshes; }, catchFish, gainItems, cardsOfUnit: (n) => cardsOfUnit(n), get pet() { return petObj; }, get petPanel() { return petPanel; },  setQuality, key: (code) => onKey({ code, preventDefault() {} }), get started() { return started && !switching; }, get worldUI() { return worldUI; }, openPortal, travelTo, get portals() { return portalGroup; }, get region() { return L.NAME; }, chooseProfile, enterRegion, MARKET_JARS, BRIDGE_SPOTS, get mini() { return mini; }, get wild() { return wild; }, get scene() { return scene; }, openShop, get sword() { return swordMesh; }, get armor() { return armorShown; }, setWear, openBag: () => openBag(), get arcade() { return arcade; }, get chests() { return chests; }, get spots() { return spots; }, get admin() { return admin; }, get friends() { return friends; }, get walkers() { return walkers; }, get shopWin() { return shopWin; }, get music() { return music; }, get journal() { return journal; }, get spells() { return spells; }, get floaters() { return floaters; }, get skillUI() { return skillUI; }, get intro() { return intro; }, cardOf: (id) => cardOfFn(id), pause: (on) => renderer.setAnimationLoop(on ? null : frame), renderNow: () => { post.setSun(camera, sunDir); post.render(scene, camera); },      // tests: stop drawing while another page is checked
   post, refresh: () => refresh(), refreshGear: () => { setSword(); setWear(); } };
 if (navigator.webdriver || /[?&]debug=1/.test(location.search)) globalThis.__eq = game;      // (26/11) the test hook is not in the children's game (a console line gave gold)
@@ -775,7 +776,49 @@ function plantMenu(i) {
 // G: Find it! Pip names five things ("Find the lamp!", "Find the thing next to the bed!") and the child walks to each.
 let homeOwner = null, homeMine = false, findGame = null, homeGuest = null, visit = null;
 const buddies = [];      // (27/11, turn 66) Kit and Mai: { id, who, npc, follow, followT, sayT }
-let crowd = null;      // (27/11, turn 67) the other explorers (game/crowd.js)
+let crowd = null;
+// (27/11, turn 72) The admin's review notes (F1, ui/notes.js): where a note is made, what was clicked, a picture, markers in the world.
+let notesUI = null, noteGroup = null, noteGod = false;      // noteGod: what "no damage" was before the panel opened (monsters do not hurt the admin while a note is being written)
+function noteContext() {
+  const m = WORLD.mapById(L.NAME === 'isle' ? 'harbor' : L.NAME), w = { region: L.NAME, land: m ? m.vi : L.NAME, x: player.pos.x, z: player.pos.z, quality, grade: profile ? profile.grade : null, level: profile ? profile.stats.level : null };
+  if (room) w.inside = room.kind === 'home' || room.walk ? 'nhà' : 'cửa hàng';
+  try { if (!room && !ui.busy) { const t = interactTarget(); if (t && t.text) w.near = t.text; } } catch { /* nothing in reach */ }
+  if (wild && wild.root.visible && !room) { let bd = 10; for (const x of [...wild.mobs, ...(wild.bosses || [])]) if (x.g.visible && !x.dead) { const d = Math.hypot(x.x - player.pos.x, x.z - player.pos.z); if (d < bd) { bd = d; w.mob = `${x.def.name || x.kind || 'quái'} (cấp ${x.def.level || '?'}, cách ${d.toFixed(0)} m)`; } } }
+  const dlg = document.querySelector('#dialog'); if (dlg && !dlg.classList.contains('hidden')) w.dialog = dlg.innerText;
+  const wins = [[shopWin, () => 'Cửa hàng: ' + shopWin.title], [arcade, () => 'Mini game: ' + ((arcade.game && arcade.game.title) || '')], [worldUI, () => 'Bản đồ thế giới'], [skillUI, () => 'Bảng kỹ năng'], [packUI, () => 'Túi đồ'], [journal, () => 'Sổ tay'], [homePanel, () => 'Bảng nhà'], [wardPanel, () => 'Tủ đồ'], [petPanel, () => 'Thú cưng'], [onlineUI, () => 'Chơi chung'], [music, () => 'Phòng nhạc'], [dexPanel, () => 'Album biển']];
+  w.window = wins.filter(([o]) => o && o.open === true).map(([, f]) => { try { return f(); } catch { return ''; } }).filter(Boolean).join(', ');
+  if (spells && spells.last && Date.now() - spells.last.at < 15000) w.spell = spells.last.id;      // only a spell cast a moment ago belongs to the place
+  try { const q = Q.mainCurrent(profile); if (q) w.quest = q.en; } catch { /* no main quest */ }
+  return w;
+}
+/** What lies under a click in the 3D scene: the spot on the ground and the nearest thing with a name. */
+function notePick(cx, cy) {
+  const r = canvas.getBoundingClientRect(), ray = new THREE.Raycaster(); ray.setFromCamera(new THREE.Vector2(((cx - r.left) / r.width) * 2 - 1, -((cy - r.top) / r.height) * 2 + 1), camera);
+  const hit = new THREE.Vector3(); if (!ray.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 1, 0), -player.pos.y), hit)) return null;
+  const y = L.groundHeight(hit.x, hit.z); ray.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 1, 0), -y), hit);      // a second look at the height of the ground there
+  let name = '', bd = 3.2; const see = (x, z, n) => { const d = Math.hypot(x - hit.x, z - hit.z); if (n && d < bd) { bd = d; name = n; } };
+  if (wild && wild.root.visible) for (const x of [...wild.mobs, ...(wild.bosses || [])]) if (x.g.visible && !x.dead) see(x.x, x.z, `quái ${x.def.name || x.kind}`);
+  for (const a of [tom, sam, ben]) if (a && a.root.visible) see(a.x, a.z, a === tom ? 'Tom' : a === sam ? 'Sam' : 'Ben');
+  for (const f of friends) if (f.region === L.NAME && f.npc.root.visible) see(f.npc.x, f.npc.z, f.who);
+  for (const b of buddies) if (b.npc.root.visible) see(b.npc.x, b.npc.z, b.who);
+  for (const st of STARTS) if ((st.region || 'village') === L.NAME) see(st.x, st.z, st.sign || st.text);
+  for (const l of (L.REGIONS[L.NAME].LANDMARKS || [])) { const sp = l.spot || [l.x, l.z]; see(sp[0], sp[1], l.name || l.vi || l.id); }
+  see(player.pos.x, player.pos.z, 'nhân vật của mình');
+  return { picked: name || 'mặt đất', px: hit.x, pz: hit.z };
+}
+function noteCapture() {
+  try { game.renderNow(); const cv = document.createElement('canvas'), w = 560, h = Math.round(w * canvas.height / canvas.width); cv.width = w; cv.height = h; cv.getContext('2d').drawImage(canvas, 0, 0, w, h); return cv.toDataURL('image/jpeg', 0.55); } catch { return ''; }
+}
+function noteMarks(list) {
+  if (noteGroup) { noteGroup.traverse((o) => { if (o.material) { if (o.material.map) o.material.map.dispose(); o.material.dispose(); } }); noteGroup.removeFromParent(); noteGroup = null; }
+  if (!list || room) return; noteGroup = new THREE.Group(); scene.add(noteGroup);
+  for (const n of list) if (n.where.region === L.NAME && !n.done) { const x = n.where.px ?? n.where.x, z = n.where.pz ?? n.where.z; if (x == null || z == null) continue; const sp = label(`📝 #${n.id}`, { size: 30, scale: 0.6, color: '#3a2400', bg: 'rgba(255,214,110,0.95)' }); sp.position.set(x, L.groundHeight(x, z) + 2.7, z); noteGroup.add(sp); }
+}
+async function noteGo(n) { const w = n.where; if (!w.region || w.x == null) { ui.toast('Ghi chú này không có vị trí trong bản đồ'); return; } if (room) leaveRoom(); await adminGo(w.region, w.x, w.z); if (notesUI && notesUI.open) noteMarks(notesUI.list); }
+// (27/11, turn 72) the redrawn spells: a heavy hit shakes the camera a little and lights the scene round it for a moment
+let shakeAmp = 0, fxLightT = 0, fxLightPow = 0; const fxLight = new THREE.PointLight(0xffffff, 0, 16, 2); scene.add(fxLight);
+const fxShake = (a) => { shakeAmp = Math.max(shakeAmp, Math.min(1, a)); };
+const fxFlash = (at, hex, power) => { fxLight.color.set(hex); fxLight.position.set(at.x, at.y + 1.2, at.z); fxLightPow = 22 * power; fxLightT = 0.26; };      // (27/11, turn 67) the other explorers (game/crowd.js)
 // (27/11, turn 69) Playing together: the room (net/online.js), the other children drawn here (game/peers.js), the panel (ui/online.js).
 // The server's address comes from data/online.json, or from what a parent typed in the admin panel; a parent can also switch it off on this machine.
 let online = null, peers = null, onlineUI = null, onlineFile = '';
@@ -1171,6 +1214,7 @@ function wordBook() {
 async function reloadUnit() { learning(profile, await loadGrade(profile.grade)); save(); refresh(); }
 async function chooseProfile(p) {
   if (online && online.code) online.leave();      // another child at this machine: the room is left
+  if (notesUI && notesUI.open) notesUI.hide();
   leaveRoom(); if (intro) { intro.active = false; if (intro.boat) intro.boat.visible = false; } playT = 0; restN = 0;      // (26/11) nothing of the player before stays (their room, the opening boat)
   unlock(); profile = p; store.last = p.id; started = false; shownLevel = 0;
   if (p.flags.forest_open && !p.flags.badge1) p.flags.badge1 = true;      // saves from before the badge: Tom already opened the forest
@@ -1660,6 +1704,7 @@ function interactTarget() {
 }
 function onKey(e) {
   if (!started) return;
+  if (e.code === 'F1') { if (notesUI && profile && profile.admin) notesUI.toggle(); else if (profile) ui.toast('Sổ góp ý (F1) chỉ mở trong tài khoản Quản trị'); e.preventDefault(); return; }      // (27/11, turn 72) the admin's review notes
   if (player && player.swim && !e.repeat && !ui.modal) {      // (20/11) in deep water a tap on a move key is a stroke too
     const ix = e.code === 'KeyA' || e.code === 'ArrowLeft' ? -1 : e.code === 'KeyD' || e.code === 'ArrowRight' ? 1 : 0, iz = e.code === 'KeyW' || e.code === 'ArrowUp' || e.code === 'Space' ? 1 : e.code === 'KeyS' || e.code === 'ArrowDown' ? -1 : 0;
     if (ix || iz) { player.keyStroke(ix, iz, cam.yaw); e.preventDefault(); return; }
@@ -1712,7 +1757,7 @@ function onKey(e) {
 // held for a moment instead (renewed by the key repeat), so walking works with Unikey or Windows Telex switched on.
 const softKeys = new Map(); let imeTold = false;
 addEventListener('keydown', (e) => {
-  if (e.target.tagName === 'INPUT') return;
+  if (/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;      // typing a room code or a review note is not playing
   const code = keyCode(e); if (!code) return;
   if (code === e.code) { if (!e.repeat) onKey(e); keys.add(code); return; }
   if (!softKeys.has(code)) onKey({ code, repeat: false, target: e.target, preventDefault: () => e.preventDefault() });
@@ -1846,7 +1891,7 @@ async function boot() {
     },
     respawn: () => { game.teleport(L.SPAWN.x, L.SPAWN.z); profile.stats.hp = Save.maxHp(profile); save(); refresh(); ui.dialogue([{ who: L.NAME === 'village' ? 'Tom' : 'Pip', en: L.NAME === 'village' ? 'You fainted, so I carried you home. Rest, then try again!' : 'You fainted, so I carried you back to the gate. Rest, then try again!', vi: (L.NAME === 'village' ? 'Con hết máu nên được đưa về làng.' : 'Con hết máu nên được đưa về lối vào của vùng.') + ' Máu đã đầy lại. Mua trang bị tốt hơn, mang bánh (Q) rồi quay lại nhé.' }]); } });
   wild.addMap1(map1Model).catch((e) => console.warn('map 1 monsters', e));
-  spells = new Spells({ scene, wild, player, camera, canvas, profile: () => profile, sfx, ui, onChange: () => {} });      // (20/11) magic skills: keys 1-4, the skill book T
+  spells = new Spells({ scene, wild, player, camera, canvas, profile: () => profile, sfx, ui, onChange: () => {}, shake: fxShake, flash: fxFlash });      // (20/11) magic skills: keys 1-4, the skill book T
   packUI = new PackUI({ profile: () => profile, sfx, toast: (t) => ui.toast(t), changed: () => { save(); refresh(); }, hpMax: () => Save.maxHp(profile), focus: creatorCamera, look: () => { setSword(); setWear(); }, swing: () => player.swing() });      // (21/11) the hero stands beside the bag and shows each piece
   skillUI = new SkillUI({ profile: () => profile, spells, sfx, usePotion, toast: (t) => ui.toast(t), atk: () => playerAtk(profile), changed: () => { save(); refresh(); } });      // the Blender monsters replace the shapes a moment after the game starts (not awaited: a slow download must not hold the boot)
   mini = new MiniGames({ scene, player, ui, sfx, track, gate: (who, game, go) => gameGate(who, game, go), profile: () => profile, save, onNote: refresh, board: (id, st) => {
@@ -1860,6 +1905,10 @@ async function boot() {
     }
     if (id === 'lantern_fair') { const activities = [fireflies, vault, courier, workshop]; ui.choose({ who: 'Hội Đèn Làng', en: 'Where shall we go tonight?', vi: 'Chọn một trò để bắt đầu.' }, ['Lối đom đóm · Nối chữ', 'Hầm thẻ đồng · Mở khóa', 'Chuyến thư đêm · Lái xe', 'Hồ sơ xưởng đồng hồ · Điều tra', 'Trở về làng'], (i) => { if (activities[i]) gameGate('Leo', 'lantern_fair', () => arcade.start(activities[i](unitCards))); }); return; } const t = tierOf(profile.stats.level), go = async () => { let g; if (id.startsWith('race2')) { try { raceAssets = raceAssets || await loadRaceAssets(gltf); g = raceGame3d({ assets: raceAssets, cards: unitCards, tier: t, variant: id === 'race2h' ? 'harbor' : id === 'race2f' ? 'forest' : 'village' }); } catch (e) { console.warn('race3d: ' + e.message); g = raceGame(Math.random, [], t); } } else g = ({ candy: () => candyGame(Math.random, t), blocks: () => blocksGame(Math.random, unitCards, t), sling: () => slingGame(Math.random, t) })[id](); arcade.start(withTier(g, t)); }; gameGate(id === 'candy' ? 'Mimi' : id === 'blocks' ? 'Max' : id === 'sling' ? 'Rex' : id === 'race2h' ? 'Marina' : id === 'race2f' ? 'Rowan' : 'Leo', id.startsWith('race2') ? 'race' : id, go); } });
   await mini.addHosts(ownLook);      // a host by each mini game
+  notesUI = new NotesPanel({ allowed: () => !!(profile && profile.admin), guard: (on) => { if (!profile) return; if (on) { noteGod = !!profile.god; profile.god = true; } else profile.god = noteGod; }, context: noteContext, capture: noteCapture, pickWorld: notePick, go: noteGo, marks: noteMarks, toast: (t) => ui.toast(t), sfx,
+    spells: () => SK.SPELLS.map((n) => ({ id: n.id, en: n.en || n.id, vi: n.vi || '', el: n.el })), demo: (id) => (room ? 'place' : spells.demo(id)), slow: (k) => { spells.slow = k; },
+    meta: () => ({ build: (document.querySelector('meta[name="eq-build"]') || {}).content || '', quality, screen: `${innerWidth}x${innerHeight}`, gpu: (() => { try { const gl = renderer.getContext(), e = gl.getExtension('WEBGL_debug_renderer_info'); return e ? gl.getParameter(e.UNMASKED_RENDERER_WEBGL) : ''; } catch { return ''; } })() }),
+    saveFile: (name, text) => { try { if (globalThis.eqDesktop && globalThis.eqDesktop.saveNotes) return globalThis.eqDesktop.saveNotes(name, text) || ''; } catch { /* fall back to a download */ } const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: 'application/json' })); a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000); return ''; } });      // (27/11, turn 72) the admin's review notes on F1
   admin = new AdminPanel({ online: { get: onlineSet, set: (o) => { try { if (o.off != null) localStorage.setItem('eq-online-off', o.off ? '1' : '0'); if (o.own != null) localStorage.setItem('eq-online-server', o.own); } catch { /* no storage */ } if (online && online.code && !onlineServer()) online.leave(); if (toolbar) toolbar.sync(profile); } }, profile: () => profile, profiles: () => store.profiles, visitHome: (o) => goHome(o, true, false, true), deleteProfile: adminDelete, places: adminPlaces, go: adminGo, unlockAll: adminUnlock, setStep: adminStep,
     resetForest: () => { delete profile.quests.forest; if (L.NAME === 'forest') enterRegion('forest'); }, setGrade: (g) => { profile.grade = g; save(); chooseProfile(profile); },
     setLevel: adminLevel, addGold: (n) => { profile.stats.gold += n; }, changed: () => { save(); refresh(); setSword(); setWear(); }, toast: (t) => ui.toast(t) });
@@ -1902,7 +1951,10 @@ function frame() {
   else for (let left = real; left > 1e-4; left -= 0.05) player.update(Math.min(0.05, left), input, cam.yaw, frozen, sfx);
   if (hadRoute && !player.route) minimap.clearRoute();
   if (walkMark && walkMark.visible) { walkMark.userData.t += real; walkMark.scale.setScalar(1 + Math.sin(walkMark.userData.t * 6) * 0.15); if (!player.route) walkMark.visible = false; }
-  cam.update(real, player.pos); guideArrow(real); swimHud(); if (fishing) fishing.update(real, performance.now() / 1000);
+  cam.update(real, player.pos);
+  if (shakeAmp > 0.004) { const a = shakeAmp * 0.2; camera.position.x += (Math.random() - 0.5) * a; camera.position.y += (Math.random() - 0.5) * a; camera.position.z += (Math.random() - 0.5) * a; shakeAmp *= Math.exp(-real * 9); } else shakeAmp = 0;
+  if (fxLightT > 0) { fxLightT -= real; fxLight.intensity = fxLightPow * Math.max(0, fxLightT / 0.26); } else if (fxLight.intensity) fxLight.intensity = 0;
+  guideArrow(real); swimHud(); if (fishing) fishing.update(real, performance.now() / 1000);
   const talkingTo = ui.busy && ui.pages ? ui.pages[0].who : '';
   tom.update(dt, player.pos, talkingTo === 'Tom'); sam.update(dt, player.pos, talkingTo === 'Sam'); ben.update(dt, player.pos, talkingTo === 'Ben');
   for (const f of friends) f.npc.update(dt, player.pos, talkingTo === f.who);

@@ -11,4 +11,5 @@ contextBridge.exposeInMainWorld('eqDesktop', {
   onHidden: (fn) => ipcRenderer.on('eq-hidden', (_e, hidden) => fn(!!hidden)),
   musicList: () => ipcRenderer.sendSync('eq-music-list'),
   musicFolder: () => ipcRenderer.sendSync('eq-music-folder'),
+  saveNotes: (name, text) => ipcRenderer.sendSync('eq-save-notes', String(name), String(text)),      // (27/11) the admin's review notes: one file in Documents/EnglishQuest/gop-y
 });

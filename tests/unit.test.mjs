@@ -1438,3 +1438,32 @@ test('world map: the levels shown for a land start at the top level of the land 
   assert.deepEqual(W.levelsOf(W.mapById('village')), [1, 5]); assert.deepEqual(W.levelsOf(W.mapById('desert')), [20, 25]); assert.deepEqual(W.levelsOf(W.mapById('mountain')), [25, 30]); assert.deepEqual(W.levelsOf(W.mapById('ruins')), [30, 35]); assert.deepEqual(W.levelsOf(W.mapById('dream')), [65, 70]);
   for (let i = 1; i < byNo.length; i++) { const [lo, hi] = W.levelsOf(byNo[i]); assert.equal(lo, W.levelsOf(byNo[i - 1])[1], byNo[i].id + ' starts where ' + byNo[i - 1].id + ' ends'); assert.ok(hi > lo); }
 });
+
+// (27/11, turn 72) the parent's review notes (F1 panel of the admin): kept with their place, exported as one file, read back
+test('review notes: a note keeps its place, the list survives a full storage, the file reads back, the text is plain', async () => {
+  const N = await import('../src/core/notes.js');
+  const mem = (() => { const m = {}; return { getItem: (k) => (k in m ? m[k] : null), setItem: (k, v) => { m[k] = String(v); }, _m: m }; })();
+  assert.deepEqual(N.load(mem), []);
+  const list = [], shot = 'data:image/jpeg;base64,' + 'A'.repeat(4000);
+  const a = N.add(list, { kind: 'vfx', level: 'must', text: '  Quả cầu lửa nhỏ quá, cho to gấp đôi  ', where: { region: 'village', land: 'Làng Khởi Đầu', x: 66.04, z: 30.26, spell: 'fireball', mob: 'Red Slime (cấp 4, cách 5 m)', quality: 'medium', evil: '<script>' }, shot }, new Date('2026-11-27T10:00:00Z'));
+  const b = N.add(list, { kind: 'nope', level: 'nope', text: 'Câu này sai chính tả', where: { region: 'desert', dialog: 'Zara: Welcom to the desert!', picked: 'Welcom to the desert! [#dialog]' } });
+  assert.equal(N.add(list, { text: '   ' }), null, 'an empty note is not kept'); assert.equal(list.length, 2);
+  assert.equal(a.id, 1); assert.equal(b.id, 2); assert.equal(a.text, 'Quả cầu lửa nhỏ quá, cho to gấp đôi'); assert.equal(a.where.x, 66); assert.equal(a.where.z, 30.3); assert.equal(a.where.evil, undefined); assert.equal(a.at, '2026-11-27T10:00:00.000Z');
+  assert.equal(b.kind, 'other'); assert.equal(b.level, 'must'); assert.equal(b.shot, '');
+  assert.equal(N.cleanNote({ text: 'x', shot: 'javascript:alert(1)' }).shot, '', 'only a picture is kept as a picture'); assert.equal(N.cleanNote({ text: 'x', shot: 'data:image/png;base64,' + 'A'.repeat(500000) }).shot, '', 'a huge picture is dropped');
+  const line = N.whereLine(a.where); assert.ok(line.includes('Làng Khởi Đầu (66, 30.3)') && line.includes('chiêu: fireball') && line.includes('Red Slime'), line);
+  assert.ok(N.whereLine(b.where).includes('Welcom to the desert'));
+  assert.deepEqual(N.save(list, mem), { ok: true, dropped: 0 }); const back = N.load(mem); assert.equal(back.length, 2); assert.equal(back[0].shot, shot); assert.equal(back[1].where.picked, 'Welcom to the desert! [#dialog]');
+  assert.deepEqual(N.here(list, 'desert').map((n) => n.id), [2]);
+  // a storage that only takes 3000 characters: the picture goes, the words stay
+  const small = { getItem: () => null, setItem(k, v) { if (v.length > 3000) throw new Error('quota'); this.v = v; } }; const r = N.save(list, small); assert.equal(r.ok, true); assert.equal(r.dropped, 1); assert.equal(list[0].shot, ''); assert.ok(small.v.includes('Quả cầu lửa'));
+  list[0].shot = shot;
+  const file = N.exportFile(list, { build: 'abc123', quality: 'medium', screen: '1920x1080', gpu: 'x'.repeat(300) }, new Date('2026-11-27T11:00:00Z')), read = N.parse(file);
+  assert.equal(read.notes.length, 2); assert.equal(read.made, '2026-11-27T11:00:00.000Z'); assert.equal(read.game.build, 'abc123'); assert.equal(read.game.gpu.length, 120); assert.equal(read.notes[0].shot, shot); assert.deepEqual(read.notes[1].where, list[1].where);
+  assert.equal(N.parse('not json'), null); assert.equal(N.parse('{"kind":"other"}'), null); assert.equal(N.parse(JSON.stringify(list)).notes.length, 2, 'the list kept in the storage reads too');
+  list[1].done = true; const text = N.exportText(list, new Date('2026-11-27T11:00:00Z'));
+  assert.ok(text.includes('1 ghi chú') && text.includes('## Hiệu ứng chiêu (1)') && text.includes('#1 [Cần sửa] Quả cầu lửa') && text.includes('có ảnh trong file') && !text.includes('sai chính tả') && !text.includes('base64'), text);
+  assert.ok(/^english-quest-gop-y-\d{8}-\d{4}\.json$/.test(N.fileName(new Date(2026, 10, 27, 9, 5)))); assert.equal(N.fileName(new Date(2026, 10, 27, 9, 5)), 'english-quest-gop-y-20261127-0905.json');
+  assert.equal(N.remove(list, 1), true); assert.equal(N.remove(list, 99), false); assert.equal(N.add(list, { text: 'mới' }).id, 3, 'a new note never takes the number of an old one that is still there');
+  assert.ok(N.KINDS.some((k) => k[0] === 'vfx') && N.LEVELS.length === 3 && N.kindVi('vfx') === 'Hiệu ứng chiêu' && N.levelVi('idea') === 'Ý tưởng');
+});
