@@ -481,9 +481,9 @@ test('shop: selling pays half, takes the item off, bread one by one, nothing for
 
 import { spawnSync } from 'node:child_process';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
-test('every source file parses (catches a stray brace or comment before the browser does)', () => {
+test('every source file parses (catches a stray brace or comment before the browser does)', async () => {
   const walk = (d) => readdirSync(d).flatMap((f) => { const p = d + '/' + f; return statSync(p).isDirectory() ? walk(p) : p.endsWith('.js') ? [p] : []; });
-  for (const f of walk(new URL('../src', import.meta.url).pathname)) {
+  for (const f of walk((await import('node:url')).fileURLToPath(new URL('../src', import.meta.url)))) {
     const r = spawnSync(process.execPath, ['--input-type=module', '--check'], { input: readFileSync(f) });
     assert.equal(r.status, 0, f + ': ' + String(r.stderr).split('\n').slice(0, 4).join(' '));
   }
@@ -1356,7 +1356,7 @@ test('land games, the second three (27/11): runes make the sentence, balloon row
     assert.ok(o.text.includes(w.head) && o.text.includes(w.legs) && !/undefined/.test(o.text), o.text); if (k < 2) assert.ok(o.text.includes(`${w.body} body`)); else if (k < 4) assert.ok(/same colour as the (head|legs)/.test(o.text) && (w.body === w.head || w.body === w.legs)); else { assert.ok(o.text.includes(`If the head is ${w.head}, the body is ${w.body}.`)); const other = /If the head is (\w+), the body is (\w+)\. The legs/.exec(o.text); assert.ok(other && other[1] !== w.head, 'the second if is about another head: ' + o.text); } }
 });
 test('no code hides behind a // comment in the middle of a line (27/11: the mini games\' signs and hosts vanished this way)', async () => {
-  const fs = await import('node:fs'), path = await import('node:path'), root = new URL('../src/', import.meta.url).pathname, files = [];
+  const fs = await import('node:fs'), path = await import('node:path'), root = (await import('node:url')).fileURLToPath(new URL('../src/', import.meta.url)), files = [];
   const walk = (d) => { for (const e of fs.readdirSync(d, { withFileTypes: true })) { const f = path.join(d, e.name); if (e.isDirectory()) walk(f); else if (f.endsWith('.js')) files.push(f); } }; walk(root);
   const bad = [];
   for (const f of files) fs.readFileSync(f, 'utf8').split('\n').forEach((line, n) => {
